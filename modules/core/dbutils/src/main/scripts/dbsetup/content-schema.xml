@@ -314,27 +314,36 @@
 
     </table>
 
-    <table name="RHQ_KICKSTARTABLE_TREE">
+    <table name="RHQ_DISTRIBUTION_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+
+    </table>
+
+    <table name="RHQ_DISTRIBUTION">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DISTRIBUTION_TYPE_ID" type="INTEGER"  required="true" references="RHQ_DISTRIBUTION_TYPE"/>
         <column name="LABEL" size="64" type="VARCHAR2" required="true"/>
         <column name="BASE_PATH" size="256" type="VARCHAR2" required="true"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
 
-        <index name="RHQ_KICKSTART_IDX" unique="true">
+        <index name="RHQ_DISTRIBUTION_IDX" unique="true">
             <field ref="LABEL"/>
             <field ref="BASE_PATH"/>
         </index>
+
     </table>
 
-    <table name="RHQ_REPO_KS_TREE">
+    <table name="RHQ_REPO_DISTRIBUTION">
         <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
-        <column name="KICKSTART_TREE_ID" type="INTEGER" required="true" references="RHQ_KICKSTARTABLE_TREE"/>
+        <column name="DISTRIBUTION_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
 
-        <constraint name="RHQ_REPO_KS_MAP_KEY">
+        <constraint name="RHQ_REPO_DIST_MAP_KEY">
             <primaryKey>
                 <field ref="REPO_ID"/>
-                <field ref="KICKSTART_TREE_ID"/>
+                <field ref="DISTRIBUTION_ID"/>
             </primaryKey>
         </constraint>
     </table>

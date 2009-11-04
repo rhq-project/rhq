@@ -29,12 +29,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
 /**
- * This is the composite primary key for the {@link RepoKickstartTree} entity. That entity is an explicit
+ * This is the composite primary key for the {@link RepoDistribution} entity. That entity is an explicit
  * many-to-many mapping table, so this composite key is simply the foreign keys to both ends of that relationship.
  *
  * @author Pradeep Kilambi
  */
-public class RepoKickstartTreePK implements Serializable {
+public class RepoDistributionPK implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /*
@@ -49,12 +49,12 @@ public class RepoKickstartTreePK implements Serializable {
 
     @JoinColumn(name = "KICKSTART_TREE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private KickstartableTree kstree;
+    private Distribution kstree;
 
-    public RepoKickstartTreePK() {
+    public RepoDistributionPK() {
     }
 
-    public RepoKickstartTreePK(Repo repo, KickstartableTree kstree) {
+    public RepoDistributionPK(Repo repo, Distribution kstree) {
         this.repo = repo;
         this.kstree = kstree;
     }
@@ -67,11 +67,11 @@ public class RepoKickstartTreePK implements Serializable {
         this.repo = repo;
     }
 
-    public KickstartableTree getKickstartTree() {
+    public Distribution getKickstartTree() {
         return kstree;
     }
 
-    public void setContentSource(KickstartableTree kstree) {
+    public void setContentSource(Distribution kstree) {
         this.kstree = kstree;
     }
 
@@ -98,7 +98,7 @@ public class RepoKickstartTreePK implements Serializable {
             return false;
         }
 
-        final RepoKickstartTreePK other = (RepoKickstartTreePK) obj;
+        final RepoDistributionPK other = (RepoDistributionPK) obj;
 
         if (repo == null) {
             if (other.repo != null) {

@@ -36,17 +36,17 @@ import javax.persistence.Table;
 
 /**
  * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
- * package versions. It is an explicit relationship mapping entity between {@link Repo} and {@link KickstartableTree}.
+ * package versions. It is an explicit relationship mapping entity between {@link Repo} and {@link Distribution}.
  *
  * @author Pradeep Kilambi
  */
 @Entity
-@IdClass(RepoKickstartTreePK.class)
+@IdClass(RepoDistributionPK.class)
 @NamedQueries( {
-    @NamedQuery(name = RepoKickstartTree.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoKickstartTree rkt WHERE rkt.kstree.id = :KsTreeId"),
-    @NamedQuery(name = RepoKickstartTree.DELETE_BY_REPO_ID, query = "DELETE RepoKickstartTree rkt WHERE rkt.repo.id = :repoId") })
+    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.kstree.id = :KsTreeId"),
+    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
 @Table(name = "RHQ_REPO_KS_MAP_KEY")
-public class RepoKickstartTree implements Serializable {
+public class RepoDistribution implements Serializable {
     public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoKickstartTree.deleteByKickstartTreeId";
     public static final String DELETE_BY_REPO_ID = "RepoKickstartTree.deleteByRepoId";
 
@@ -65,24 +65,24 @@ public class RepoKickstartTree implements Serializable {
     @Id
     //   @ManyToOne
     //   @JoinColumn(name = "KICKSTART_TREE_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private KickstartableTree kstree;
+    private Distribution kstree;
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long last_modified;
 
-    protected RepoKickstartTree() {
+    protected RepoDistribution() {
     }
 
-    public RepoKickstartTree(Repo repo, KickstartableTree kstree) {
+    public RepoDistribution(Repo repo, Distribution kstree) {
         this.repo = repo;
         this.kstree = kstree;
     }
 
-    public RepoKickstartTreePK getRepoKickstartTreePK() {
-        return new RepoKickstartTreePK(repo, kstree);
+    public RepoDistributionPK getRepoKickstartTreePK() {
+        return new RepoDistributionPK(repo, kstree);
     }
 
-    public void setRepoKickstartTreePK(RepoKickstartTreePK pk) {
+    public void setRepoKickstartTreePK(RepoDistributionPK pk) {
         this.repo = pk.getRepo();
         this.kstree = pk.getKickstartTree();
     }
@@ -123,11 +123,11 @@ public class RepoKickstartTree implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof RepoKickstartTree))) {
+        if ((obj == null) || (!(obj instanceof RepoDistribution))) {
             return false;
         }
 
-        final RepoKickstartTree other = (RepoKickstartTree) obj;
+        final RepoDistribution other = (RepoDistribution) obj;
 
         if (repo == null) {
             if (repo != null) {

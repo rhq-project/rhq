@@ -41,15 +41,18 @@ import java.io.Serializable;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = KickstartableTree.QUERY_FIND_PATH_BY_KSTREE_LABEL,
-            query = "SELECT ks.base_path FROM KickstartableTree AS ks WHERE ks.label = :label")})
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_KICKSTARTABLE_TREE_ID_SEQ")
-@Table(name = "RHQ_KICKSTARTABLE_TREE")
-public class KickstartableTree implements Serializable {
+    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_LABEL,
+            query = "SELECT ks.base_path FROM Distribution AS ks WHERE ks.label = :label"),
+    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_PATH,
+            query = "SELECT ks.base_path FROM Distribution AS ks WHERE ks.base_path = :path")})
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
+@Table(name = "RHQ_DISTRIBUTION")
+public class Distribution implements Serializable {
     
     private static final long serialVersionUID = 1L;
-
-    public static final String QUERY_FIND_PATH_BY_KSTREE_LABEL = "Package.findPathByKSTreeLabel";
+    public static final String QUERY_FIND_ALL = "Distribution.findAll";
+    public static final String QUERY_FIND_PATH_BY_KSTREE_LABEL = "Distribution.findPathByKSTreeLabel";
+    public static final String QUERY_FIND_PATH_BY_KSTREE_PATH  =  "Distribution.findPathByKSTreePath";
 
     // Attributes  --------------------------------------------
 
@@ -73,10 +76,10 @@ public class KickstartableTree implements Serializable {
 
     // Constructor ----------------------------------------
 
-    public KickstartableTree() {
+    public Distribution() {
     }
 
-    public KickstartableTree(String label, String basepathIn) {
+    public Distribution(String label, String basepathIn) {
         setLabel(label);
         setBasePath(basepathIn);
     }
@@ -101,7 +104,7 @@ public class KickstartableTree implements Serializable {
 
     @Override
     public String toString() {
-        return "Kickstart Tree[label=" + label + ",basePath=" + base_path + "]";
+        return "Distribtuion [label=" + label + ",basePath=" + base_path + "]";
     }
 
     @Override
@@ -114,11 +117,11 @@ public class KickstartableTree implements Serializable {
             return false;
         }
 
-        if (!(o instanceof KickstartableTree)) {
+        if (!(o instanceof Distribution)) {
             return false;
         }
 
-        KickstartableTree kstree = (KickstartableTree) o;
+        Distribution kstree = (Distribution) o;
 
         if ((label != null) ? (!label.equals(kstree.label)) : (kstree.label != null)) {
             return false;

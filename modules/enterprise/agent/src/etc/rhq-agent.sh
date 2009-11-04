@@ -32,11 +32,34 @@ debug_msg ()
 }
 
 # ----------------------------------------------------------------------
+# Try to determine the fallback JAVA_HOME if not already set
+# ----------------------------------------------------------------------
+set_java_home ()
+{
+   if [ "x$JAVA_HOME" = "x" ]; then
+      _WHICH_JAVA=`which java 2>/dev/null`
+      if [ "x$_WHICH_JAVA" != "x" ]; then
+         _WHICH_JAVA_BIN_DIR=`dirname "$_WHICH_JAVA"`
+         JAVA_HOME=`dirname "$_WHICH_JAVA_BIN_DIR"`
+         debug_msg "JAVA_HOME determined by which: ${JAVA_HOME}"
+      elif [ "x$_DARWIN" != "x" ]; then
+         JAVA_HOME=/usr
+         debug_msg "Running on Mac OS X, setting JAVA_HOME to ${JAVA_HOME}"
+      elif [ "x$_LINUX" != "x" ]; then
+         JAVA_HOME=/usr/lib/jvm/jre
+         debug_msg "Running on Linux, setting JAVA_HOME to ${JAVA_HOME}"
+      fi
+   fi
+}
+
+# ----------------------------------------------------------------------
 # Determine what specific platform we are running on.
 # Set some platform-specific variables.
 # ----------------------------------------------------------------------
 case "`uname`" in
    CYGWIN*) _CYGWIN=true
+            ;;
+   Linux*)  _LINUX=true
             ;;
    Darwin*) _DARWIN=true
             ;;
@@ -72,17 +95,6 @@ RHQ_AGENT_HOME=`pwd`
 debug_msg "RHQ_AGENT_HOME: $RHQ_AGENT_HOME"
 
 # ----------------------------------------------------------------------
-# If we are on a Mac and JAVA_HOME is not set, then set it to /usr
-# as this is the default location.
-# ----------------------------------------------------------------------
-if [ "x$JAVA_HOME" = "x" ]; then
-   if [ "x$_DARWIN" != "x" ]; then
-     debug_msg "Running on Mac OS X, setting JAVA_HOME to /usr"
-     JAVA_HOME=/usr
-   fi
-fi
-
-# ----------------------------------------------------------------------
 # Find the Java executable and verify we have a VM available
 # ----------------------------------------------------------------------
 
@@ -91,6 +103,7 @@ if [ "x$RHQ_AGENT_JAVA_EXE_FILE_PATH" = "x" ]; then
       RHQ_AGENT_JAVA_HOME="${RHQ_AGENT_HOME}/jre"
       debug_msg "Using the embedded JRE"
       if [ ! -d "$RHQ_AGENT_JAVA_HOME" ]; then
+         set_java_home
          debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
          RHQ_AGENT_JAVA_HOME="$JAVA_HOME"
       fi

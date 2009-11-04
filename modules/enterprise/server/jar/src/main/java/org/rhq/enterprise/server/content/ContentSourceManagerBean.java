@@ -1176,7 +1176,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // for all repos that are associated with this content source, add this package version directly to them
             if (associatedRepos == null) {
-                q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
+                q = entityManager.createNamedQuery(Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS);
                 q.setParameter("id", contentSource.getId());
                 associatedRepos = q.getResultList();
             }

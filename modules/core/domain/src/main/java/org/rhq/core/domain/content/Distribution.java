@@ -47,9 +47,9 @@ import java.io.Serializable;
             query = "SELECT dt FROM Distribution dt"),
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
         + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
-    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_LABEL,
+    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_LABEL,
             query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.label = :label"),
-    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_KSTREE_PATH,
+    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_PATH,
             query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.base_path = :path")})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
@@ -57,8 +57,8 @@ public class Distribution implements Serializable {
     
     private static final long serialVersionUID = 1L;
     public static final String QUERY_FIND_ALL = "Distribution.findAll";
-    public static final String QUERY_FIND_PATH_BY_KSTREE_LABEL =  "Distribution.findPathByKSTreeLabel";
-    public static final String QUERY_FIND_PATH_BY_KSTREE_PATH  =  "Distribution.findPathByKSTreePath";
+    public static final String QUERY_FIND_PATH_BY_DIST_LABEL =  "Distribution.findPathByDistLabel";
+    public static final String QUERY_FIND_PATH_BY_DIST_PATH =  "Distribution.findPathByDistPath";
     public static final String QUERY_FIND_PATH_BY_DIST_TYPE  =  "Distribution.findPathByDistType";
 
     // Attributes  --------------------------------------------

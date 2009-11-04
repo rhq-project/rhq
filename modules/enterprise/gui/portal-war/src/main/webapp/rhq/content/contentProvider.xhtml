@@ -473,6 +473,8 @@
                
                   <h:outputLink value="packageVersion.xhtml">
                      <f:param name="id" value="#{pvitem.packageVersionContentSourcePK.packageVersion.id}"/>
+                     <f:param name="content_source_id" value="#{param.id}"/>
+                     <f:param name="content_source_name" value="#{ContentProviderDetailsUIBean.contentSource.name}"/>
                      <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.displayName}" />
                   </h:outputLink>
                </rich:column>

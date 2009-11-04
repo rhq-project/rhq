@@ -9,24 +9,39 @@ import java.net.URL;
 import java.util.Map;
 
 import org.apache.xmlrpc.XmlRpcException;
+import org.rhq.enterprise.server.plugins.rhnhosted.RHNConstants;
 
 public class RhnDownloader {
 
     protected XmlRpcExecutor satHandler;
     protected String serverUrl;
     protected String SAT_HANDLER = "/SAT";
+    protected String sslCertPath;
 
-    public RhnDownloader(String serverUrlIn) {
+    public RhnDownloader(String serverUrlIn, String sslCertPathIn) {
         serverUrl = serverUrlIn;
         satHandler = XmlRpcExecutorFactory.getClient(serverUrl + SAT_HANDLER);
+        sslCertPath = sslCertPathIn;
+    }
+
+    public RhnDownloader(String serverUrlIn) {
+        this(serverUrlIn, RHNConstants.DEFAULT_SSL_CERT_PATH);
     }
 
     public String getServerUrl() {
         return this.serverUrl;
     }
 
+    public void setSSLCertPath(String sslCertPathIn) {
+        sslCertPath = sslCertPathIn;
+    }
+
+    public String getSSLCertPath() {
+        return sslCertPath;
+    }
+
     protected HttpURLConnection getNewConnection(String urlIn) throws IOException {
-        return (HttpURLConnection) RhnHttpURLConnectionFactory.openConnection(new URL(urlIn));
+        return (HttpURLConnection) RhnHttpURLConnectionFactory.openConnection(new URL(urlIn), sslCertPath);
     }
 
     /**

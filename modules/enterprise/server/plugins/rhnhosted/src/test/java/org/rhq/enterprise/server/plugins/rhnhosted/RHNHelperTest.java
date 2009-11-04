@@ -1,36 +1,33 @@
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import junit.framework.TestCase;
-
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.ApacheXmlRpcExecutor;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnHttpURLConnection;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnXmlRpcExecutor;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnHttpURLConnectionFactory;
 
 /**
  * RHNHelper Tester.
  *
  * @author pkilambi
  */
-public class RHNHelperTest extends TestCase {
+public class RHNHelperTest extends BaseRHNTest {
 
-    private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/";
     private static final String REPO_LABEL = "rhel-i386-server-vt-5";
 
     private RHNHelper helper;
 
-    public RHNHelperTest(String name) {
-        super(name);
-    }
-
     public void setUp() throws Exception {
         super.setUp();
-        helper = new RHNHelper(TEST_SERVER_URL, REPO_LABEL);
+        System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
+        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
+            .getName());
+        helper = new RHNHelper(TEST_SERVER_URL, REPO_LABEL, SYSTEM_ID);
     }
 
     public void testGetPackageDetails() throws Exception {
@@ -71,11 +68,4 @@ public class RHNHelperTest extends TestCase {
         assertTrue(success);
     }
 
-    protected String readSystemId() throws Exception {
-        try {
-            return FileUtils.readFileToString(new File(RHNConstants.DEFAULT_SYSTEM_ID));
-        } catch (IOException e) {
-            return "";
-        }
-    }
 }

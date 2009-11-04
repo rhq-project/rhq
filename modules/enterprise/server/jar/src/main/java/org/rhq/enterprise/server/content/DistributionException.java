@@ -17,17 +17,29 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugins.rhnhosted;
+package org.rhq.enterprise.server.content;
 
 /**
- * @author pkilambi
- * 
+ * custom distribution exception for kickstart like content
+ * @author Pradeep Kilambi
+ *
  */
-public final class RHNConstants {
+public class DistributionException extends ContentException {
 
-    public static final String DEFAULT_WEBAPP_GPG_KEY_RING = "/etc/webapp-keyring.gpg";
-    public static final String DEFAULT_SYSTEM_ID = "/etc/sysconfig/rhn/systemid";
-    public static final String DEFAULT_HANDLER = "/rpc/api";
-    public static final String DEFAULT_SSL_CERT_PATH = "/usr/share/rhn/RHNS-CA-CERT";
+    private static final long serialVersionUID = 1L;
 
+    public DistributionException() {
+    }
+
+    public DistributionException(String message) {
+        super(message);
+    }
+
+    public DistributionException(Throwable cause) {
+        super(cause);
+    }
+
+    public DistributionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

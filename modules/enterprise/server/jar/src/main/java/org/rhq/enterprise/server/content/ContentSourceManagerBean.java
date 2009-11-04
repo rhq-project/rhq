@@ -171,7 +171,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // the files for those package bits that were stored on the filesystem.
         for (PackageVersionFile pvFile : pvFiles) {
             try {
-                File doomed = getPackageBitsLocalFilesystemFile(pvFile.getPackageVersionId(), pvFile.getFileName());
+                File doomed = getPackageBitsLocalFileAndCreateParentDir(pvFile.getPackageVersionId(), pvFile
+                    .getFileName());
                 if (doomed.exists()) {
                     doomed.delete();
                 }
@@ -310,8 +311,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         pc.initDefaultOrderingField("c.id");
 
         Query query = PersistenceUtility
-            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID);
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);
@@ -603,8 +604,29 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         List<PackageVersionContentSource> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
+        PageList<PackageVersionContentSource> dbList = new PageList<PackageVersionContentSource>(results, (int) count,
+            pc);
+        // Setup a HashSet so we can add missing files to the results list without getting dupes in the Set
+        // Then translate at the end to a List.
+        HashSet<PackageVersionContentSource> uniquePVs = new HashSet<PackageVersionContentSource>();
+        uniquePVs.addAll(dbList);
 
-        return new PageList<PackageVersionContentSource>(results, (int) count, pc);
+        ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
+        // Only check if it is a FILESYSTEM backed contentsource
+        if (contentSource.getDownloadMode().equals(DownloadMode.FILESYSTEM)) {
+            List<PackageVersionContentSource> allPackageVersions = contentSourceManager
+                .getPackageVersionsFromContentSource(subject, contentSourceId, pc);
+            for (PackageVersionContentSource item : allPackageVersions) {
+                PackageVersion pv = item.getPackageVersionContentSourcePK().getPackageVersion();
+                File verifyFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                if (!verifyFile.exists()) {
+                    log.info("Missing file from ContentProvider, adding to list: " + verifyFile.getAbsolutePath());
+                    uniquePVs.add(item);
+                }
+            }
+        }
+        // Take the hit and convert to a List
+        return new PageList<PackageVersionContentSource>(uniquePVs, pc);
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -668,7 +690,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 } else {
                     // store content to local file system
-                    File outputFile = getPackageBitsLocalFilesystemFile(pv.getId(), pv.getFileName());
+                    File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
                     log.info("OutPutFile is located at: " + outputFile);
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
@@ -1124,7 +1146,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // for all repos that are associated with this content source, add this package version directly to them
             if (associatedRepos == null) {
-                q = entityManager.createNamedQuery(Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS);
+                q = entityManager.createNamedQuery(Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS);
                 q.setParameter("id", contentSource.getId());
                 associatedRepos = q.getResultList();
             }
@@ -1343,8 +1365,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // make sure no one deleted the file.  If the file is deleted, let's simply download it again.
             if (!composite.isPackageBitsInDatabase()) {
                 try {
-                    File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
-                        .getFileName());
+                    File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
+                        composite.getFileName());
                     if (!bitsFile.exists()) {
                         log.warn("Package version [" + packageDetailsKey + "] has had its bits file [" + bitsFile
                             + "] deleted. Will attempt to download it again.");
@@ -1436,8 +1458,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 } else {
                     // this is  DownloadMode.FILESYSTEM - put the bits on the filesystem
-                    File bitsFile = getPackageBitsLocalFilesystemFile(composite.getPackageVersionId(), composite
-                        .getFileName());
+                    File bitsFile = getPackageBitsLocalFileAndCreateParentDir(composite.getPackageVersionId(),
+                        composite.getFileName());
                     if (!bitsFile.exists()) {
                         throw new RuntimeException("Package bits at [" + bitsFile + "] are missing for ["
                             + packageDetailsKey + "]");
@@ -1553,7 +1575,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return same;
     }
 
-    private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) throws Exception {
+    private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
         final String filesystemProperty = "rhq.server.content.filesystem";
         String filesystem = System.getProperty(filesystemProperty);
 
@@ -1584,6 +1606,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         File parentDir = new File(filesystem, idGroup);
         File packageBitsFile = new File(parentDir, bitsFileName.toString());
+        return packageBitsFile;
+    }
+
+    private File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {
+
+        File packageBitsFile = getPackageBitsLocalFilesystemFile(packageVersionId, fileName);
+        File parentDir = packageBitsFile.getParentFile();
 
         if (!parentDir.isDirectory()) {
             if (!parentDir.exists()) {

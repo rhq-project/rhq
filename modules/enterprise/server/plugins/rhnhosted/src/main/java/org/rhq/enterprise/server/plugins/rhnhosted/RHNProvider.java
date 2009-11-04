@@ -83,6 +83,7 @@ public class RHNProvider implements ContentProvider, PackageSource {
 
         location = trim(location);
         log.info("Initialized with location: " + location);
+        certificate = certificate.trim();
 
         // check location field validity
         try {
@@ -116,7 +117,7 @@ public class RHNProvider implements ContentProvider, PackageSource {
         log.info("Syncable Channel list :" + repos);
 
         // RHQ Server is now active, initialize the handler for the bits.
-        helper = new RHNHelper(locationIn, repos);
+        helper = new RHNHelper(locationIn, repos, rhnObject.getSystemid());
     }
 
     /**

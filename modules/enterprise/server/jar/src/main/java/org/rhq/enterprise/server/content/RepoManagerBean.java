@@ -118,8 +118,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public PageList<Repo> findRepos(Subject subject, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_ALL_IMPORTED_REPOS);
 
         List<Repo> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();

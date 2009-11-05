@@ -98,7 +98,7 @@ public class CommStreamTest {
         Preferences prefs2 = getPrefs1();
         prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR2_BIND_PORT);
         prefs2.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs2.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target/data2");

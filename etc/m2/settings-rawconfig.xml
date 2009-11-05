@@ -31,8 +31,9 @@
         <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqrawconfig</rhq.test.ds.connection-url>
         <DatabaseTest.nofail>true</DatabaseTest.nofail>
         
-        <!-- agent config properties -->
+        <!-- comm and agent config properties -->
         <rhq.comm.test.connectorBindPort>98989</rhq.comm.test.connectorBindPort>
+        <rhq.comm.test.connector2BindPort>62628</rhq.comm.test.connector2BindPort>
         <agent1.cfg.file>test-agent1-cfg-mvn.xml</agent1.cfg.file>
         <agent2.cfg.file>test-agent2-cfg-mvn.xml</agent2.cfg.file>
         <agent1.server.bind-port>55555</agent1.server.bind-port>

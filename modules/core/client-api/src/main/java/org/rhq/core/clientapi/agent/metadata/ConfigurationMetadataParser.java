@@ -95,7 +95,7 @@ public class ConfigurationMetadataParser {
     private static org.rhq.core.domain.configuration.definition.ConfigurationFormat getConfigurationFormat(
         ConfigurationDescriptor descriptor) {
         if (descriptor.getConfigurationFormat() == null) {
-            return null;
+            return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
         }
 
         switch (descriptor.getConfigurationFormat()) {

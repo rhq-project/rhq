@@ -33,6 +33,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.pluginapi.plugin.PluginContext;
+import org.rhq.core.domain.plugin.Plugin;
 
 import java.net.URL;
 import java.net.MalformedURLException;
@@ -52,6 +53,8 @@ public class PluginManagerTest {
 
     static final String AUGEAS_PLUGIN = "org/rhq/rhq-augeas-plugin/1.4.0-SNAPSHOT/rhq-augeas-plugin-1.4.0-SNAPSHOT.jar";
 
+    static final String JMX_PLUGIN = "org/rhq/rhq-jmx-plugin/1.4.0-SNAPSHOT/rhq-jmx-plugin-1.4.0-SNAPSHOT.jar";
+
     String m2RepoDir;
 
     PluginDescriptor platformDescriptor;
@@ -59,6 +62,8 @@ public class PluginManagerTest {
     PluginDescriptor hostsDescriptor;
 
     PluginDescriptor augeasDescriptor;
+
+    PluginDescriptor jmxDescriptor;
 
     @BeforeClass
     public void initClass() throws Exception {
@@ -82,6 +87,7 @@ public class PluginManagerTest {
         platformDescriptor = loadPluginDescriptor(getPlatformPluginURL());
         augeasDescriptor = loadPluginDescriptor(getAugeasPluginURL());
         hostsDescriptor = loadPluginDescriptor(getHostsPluginURL());
+        jmxDescriptor = loadPluginDescriptor(getJMXPluginURL());
     }
 
     void assertPluginJarFileExists(String pluginPath) {
@@ -129,6 +135,58 @@ public class PluginManagerTest {
         pluginMgr.shutdown();
 
         verifyPluginsShutdownInCorrectOrder(pluginLifecycleListenerMgr);
+    }
+
+    @Test
+    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEmbeddedMode() throws Exception {
+        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
+        configuration.setPluginFinder(new PluginFinder() {
+            public Collection<URL> findPlugins() {
+                List<URL> pluginURLs = new ArrayList<URL>();
+                pluginURLs.add(getJMXPluginURL());
+
+                return pluginURLs;
+            }
+        });
+
+        PluginManager pluginMgr = new PluginManager();
+        pluginMgr.setConfiguration(configuration);
+        pluginMgr.initialize();
+
+        String expectedAmpsVersion = jmxDescriptor.getAmpsVersion();
+        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
+
+        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
+                jmxDescriptor.getName() + "' plugin");
+    }
+
+    @Test
+    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEnterpriseMode() throws Exception {
+        Plugin plugin = new Plugin();
+        plugin.setName(jmxDescriptor.getName());
+        plugin.setAmpsVersion("2.1");
+
+        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
+        configuration.setInsideAgent(true);
+        configuration.getPluginsOnServer().add(plugin);
+        configuration.setPluginFinder(new PluginFinder() {
+            public Collection<URL> findPlugins() {
+                List<URL> pluginURLs = new ArrayList<URL>();
+                pluginURLs.add(getJMXPluginURL());
+
+                return pluginURLs;
+            }
+        });
+
+        PluginManager pluginMgr = new PluginManager();
+        pluginMgr.setConfiguration(configuration);
+        pluginMgr.initialize();
+
+        String expectedAmpsVersion = plugin.getAmpsVersion();
+        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
+
+        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
+                jmxDescriptor.getName() + "' plugin");
     }
 
     private PluginContainerConfiguration createConfiguration() {
@@ -225,6 +283,10 @@ public class PluginManagerTest {
 
     URL getAugeasPluginURL() {
         return toURL(new File(m2RepoDir, AUGEAS_PLUGIN));
+    }
+
+    URL getJMXPluginURL() {
+        return toURL(new File(m2RepoDir, JMX_PLUGIN));
     }
 
     URL toURL(File file) {

@@ -302,6 +302,15 @@ public class PluginManager implements ContainerService {
         return this.classLoaderManager;
     }
 
+    public String getAmpsVersion(String pluginName) {
+        for (Plugin plugin : loadedPlugins) {
+            if (plugin.getName().equals(pluginName)) {
+                return plugin.getAmpsVersion();
+            }
+        }
+        return null;
+    }
+
     /**
      * This will create a {@link PluginEnvironment} for the plugin at the given URL. The plugin's descriptor is parsed.
      * Once this method returns, the plugin's components are ready to be created and used.

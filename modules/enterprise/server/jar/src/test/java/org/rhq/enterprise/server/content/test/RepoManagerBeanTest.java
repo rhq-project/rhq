@@ -31,27 +31,40 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 import java.util.Set;
+import java.util.HashSet;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     private final static boolean ENABLED = true;
 
     private RepoManagerLocal repoManager;
+    private ContentSourceManagerLocal contentSourceManager;
+    private ContentSourceMetadataManagerLocal contentSourceMetadataManager;
+
     private Subject overlord;
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
         TransactionManager tx = getTransactionManager();
         tx.begin();
+
         repoManager = LookupUtil.getRepoManagerLocal();
+        contentSourceManager = LookupUtil.getContentSourceManager();
+        contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
+
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -109,6 +122,29 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert group == null;
 
         entityManager.remove(groupType);
+    }
+
+    @Test(enabled = ENABLED)
+    public void createFindDeleteCandidateRepo() throws Exception {
+        // Setup
+        Repo repo = new Repo("test candidate repo");
+
+        // Test
+        repo = repoManager.createCandidateRepo(overlord, repo);
+
+        // Verify
+        try {
+            assert repo.isCandidate();
+
+            // Should not be returned from this call since its a candidate repo
+            PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
+            assert importedRepos.size() == 0;
+
+            assert repoManager.getRepo(overlord, repo.getId()) != null;
+        }
+        finally {
+            repoManager.deleteRepo(overlord, repo.getId());
+        }
     }
 
     @Test(enabled = ENABLED)
@@ -216,4 +252,48 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         // Cleanup handled by rollback in tear down method
     }
+
+    @Test(enabled = ENABLED)
+    public void findCandidatesByContentProvider() throws Exception {
+        // Setup
+        String candidateRepoName = "candidate with source";
+
+        //   Create a content source type and a content source
+        ContentSourceType type = new ContentSourceType("testGetSyncResultsListCST");
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>();
+        types.add(type);
+        contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
+        ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
+        contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
+
+        //   Create an imported (non-candidate) repo associated with the source
+        Repo importedRepo = new Repo("imported repo");
+        importedRepo.addContentSource(contentSource);
+        importedRepo = repoManager.createRepo(overlord, importedRepo);
+        
+        //   Create a candidate repo associated with that source
+        Repo candidateRepo = new Repo(candidateRepoName);
+        candidateRepo.addContentSource(contentSource);
+        candidateRepo = repoManager.createCandidateRepo(overlord, candidateRepo);
+
+        // Test
+        RepoCriteria criteria = new RepoCriteria();
+        criteria.addFilterCandidate(true);
+        criteria.addFilterContentSourceIds(contentSource.getId());
+        criteria.fetchRepoContentSources(true);
+
+        PageList<Repo> foundRepos = repoManager.findReposByCriteria(overlord, criteria);
+
+        // Verify
+
+        //   Make sure only one of the two repos from above came back
+        assert foundRepos.size() == 1;
+
+        Repo foundRepo = foundRepos.get(0);
+        assert foundRepo.getName().equals(candidateRepoName);
+        assert foundRepo.isCandidate();
+
+        // Cleanup handled by rollback in tear down method
+    }
+
 }

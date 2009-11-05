@@ -289,11 +289,24 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
 
+        repo.setCandidate(false);
+
         log.debug("User [" + subject + "] is creating repo [" + repo + "]");
         entityManager.persist(repo);
         log.debug("User [" + subject + "] created repo [" + repo + "]");
 
         return repo; // now has the ID set
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException {
+        validateRepo(repo);
+
+        repo.setCandidate(true);
+
+        entityManager.persist(repo);
+
+        return repo;
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

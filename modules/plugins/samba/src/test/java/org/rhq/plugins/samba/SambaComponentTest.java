@@ -52,12 +52,12 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
     protected Configuration getChangedResourceConfig() {
         Configuration config = new Configuration();
 
-        config.put(new PropertySimple("workgroup", "SCOOBY"));
-        config.put(new PropertySimple("server string", "MysteryMachine"));
-        config.put(new PropertySimple("security", "user"));
-        config.put(new PropertySimple("encrypt passwords", "yes"));
-        config.put(new PropertySimple("load printers", "no"));
-        config.put(new PropertySimple("cups options", "raw"));
+        config.put(new PropertySimple("workgroup", "DUMBCHANGE"));
+        config.put(new PropertySimple("server string", "DUMBCHANGE"));
+        config.put(new PropertySimple("security", "DUMBCHANGE"));
+        config.put(new PropertySimple("encrypt passwords", "DUMBCHANGE"));
+        config.put(new PropertySimple("load printers", "DUMBCHANGE"));
+        config.put(new PropertySimple("cups options", "DUMBCHANGE"));
 
         return config;
     }

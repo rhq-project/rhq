@@ -131,7 +131,7 @@ public class CommStreamTest {
         return;
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() {
         if (sender1 != null) {
             sender1.stopSending(false);

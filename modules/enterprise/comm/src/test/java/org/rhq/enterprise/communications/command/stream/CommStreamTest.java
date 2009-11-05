@@ -115,7 +115,8 @@ public class CommStreamTest {
         serviceContainer2.addRemotePojo(pojoImpl, ICommTestStreamPojo.class);
 
         // setup the client to server #2
-        RemoteCommunicator comm = new JBossRemotingRemoteCommunicator("socket://127.0.0.1:22222/?force_remote=true");
+        RemoteCommunicator comm = new JBossRemotingRemoteCommunicator("socket://127.0.0.1:" + 
+            CommTestConstants.CONNECTOR2_BIND_PORT + "/?force_remote=true");
         ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
         config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
         config.defaultTimeoutMillis = 60000L;

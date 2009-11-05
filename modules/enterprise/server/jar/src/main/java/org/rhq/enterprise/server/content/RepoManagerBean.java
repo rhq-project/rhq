@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.plugin.content.ContentProviderPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -368,7 +368,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         log.debug("User [" + subject + "] is adding content sources to repo [" + repo + "]");
 
-        ContentProviderPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
         Query q = entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH);
 
         for (int id : contentSourceIds) {

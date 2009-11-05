@@ -26,12 +26,12 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 
 @Test
 public class XmlIndexParserTest {

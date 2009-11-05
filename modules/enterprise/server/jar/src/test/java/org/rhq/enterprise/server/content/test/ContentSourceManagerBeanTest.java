@@ -34,9 +34,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -65,8 +62,11 @@ import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.test.TestContentSourcePluginService;
+import org.rhq.enterprise.server.test.TestServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
@@ -123,7 +123,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
     private ResourceType resourceType1;
     private Resource resource1;
-    private TestContentSourcePluginService pluginService;
+    private TestServerPluginService pluginService;
 
     @BeforeClass
     public void setupBeforeClass() throws Exception {
@@ -151,8 +151,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
-        pluginService = prepareContentSourcePluginService();
-        pluginService.startPluginContainer();
+        pluginService = prepareServerPluginService();
+        pluginService.startMasterPluginContainer();
 
         cleanupPreviousTestRuns();
     }
@@ -160,7 +160,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
         tearDownTestEnvironment();
-        unprepareContentSourcePluginService();
+        unprepareServerPluginService();
         unprepareScheduler();
     }
 

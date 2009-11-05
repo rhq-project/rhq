@@ -75,14 +75,14 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerBean;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerBean;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerBean;
@@ -121,6 +121,7 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
@@ -528,17 +529,24 @@ public final class LookupUtil {
     }
 
     public static CoreServerMBean getCoreServer() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
             CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
         return jonServer;
     }
 
     public static AgentPluginDeploymentScannerMBean getAgentPluginDeploymentScanner() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locate();
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
         AgentPluginDeploymentScannerMBean scanner = (AgentPluginDeploymentScannerMBean) MBeanProxyExt.create(
             AgentPluginDeploymentScannerMBean.class, AgentPluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
         return scanner;
+    }
+
+    public static ServerPluginServiceManagement getServerPluginService() {
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
+            ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
+        return service;
     }
 
     private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {

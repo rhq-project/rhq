@@ -44,23 +44,23 @@ import javax.xml.validation.SchemaFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.descriptor.DescriptorPackages;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.ConfigurationType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.ListPropertyType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.MapPropertyType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.ObjectFactory;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.PackageDetailsKeyType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.PackageDetailsType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.PackageType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.ResourceVersionsType;
-import org.rhq.core.clientapi.descriptor.contentsource.packagedetails.SimplePropertyType;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.xmlschema.XmlSchemas;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.ConfigurationType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.ListPropertyType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.MapPropertyType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.ObjectFactory;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.PackageDetailsKeyType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.PackageDetailsType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.PackageType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.ResourceVersionsType;
+import org.rhq.enterprise.server.xmlschema.generated.contentsource.packagedetails.SimplePropertyType;
 
 /**
  * Parses the index XML file whose format follows the package details schema.
@@ -80,7 +80,7 @@ public class XmlIndexParser implements IndexParser {
     protected Map<String, RemotePackageInfo> jaxbParse(InputStream indexStream, URL indexUrl, String rootUrlString)
         throws Exception {
 
-        JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.CONTENTSOURCE_PACKAGEDETAILS);
+        JAXBContext jaxbContext = JAXBContext.newInstance(XmlSchemas.PKG_CONTENTSOURCE_PACKAGEDETAILS);
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
 
         // Enable schema validation
@@ -264,7 +264,7 @@ public class XmlIndexParser implements IndexParser {
 
             File index = new File(directory, "content-index.xml");
 
-            JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.CONTENTSOURCE_PACKAGEDETAILS);
+            JAXBContext jaxbContext = JAXBContext.newInstance(XmlSchemas.PKG_CONTENTSOURCE_PACKAGEDETAILS);
             Marshaller marshaller = jaxbContext.createMarshaller();
             PackageType packagesXml = new PackageType();
             PrintWriter writer = new PrintWriter(index);

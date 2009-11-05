@@ -19,10 +19,12 @@
 package org.rhq.plugins.samba;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
 public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest {
+
 
     @Override
     protected Configuration getExpectedResourceConfig() {
@@ -45,20 +47,6 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
 
     @Override
     protected String getResourceTypeName() {
-        return "Samba Server";
-    }
-
-    @Override
-    protected Configuration getChangedResourceConfig() {
-        Configuration config = new Configuration();
-
-        config.put(new PropertySimple("workgroup", "DUMBCHANGE"));
-        config.put(new PropertySimple("server string", "DUMBCHANGE"));
-        config.put(new PropertySimple("security", "DUMBCHANGE"));
-        config.put(new PropertySimple("encrypt passwords", "DUMBCHANGE"));
-        config.put(new PropertySimple("load printers", "DUMBCHANGE"));
-        config.put(new PropertySimple("cups options", "DUMBCHANGE"));
-
-        return config;
+        return "Samba Server"; 
     }
 }

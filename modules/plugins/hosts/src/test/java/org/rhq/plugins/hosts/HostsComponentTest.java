@@ -31,7 +31,7 @@ import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
  *
  * @author Ian Springer
  */
-public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest {
+public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest {    
     @Override
     protected String getPluginName() {
         return "Hosts";
@@ -92,12 +92,5 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
         } catch (ClassNotFoundException e) {
             throw new IllegalStateException("Could not find component class " + componentClass, e);
         }
-    }
-
-    @Override
-    protected Configuration getChangedResourceConfig() {
-        // TODO Auto-generated method stub
-        //TODO NEED TO FIX THIS 
-        return null;
-    }
+    }    
 }

@@ -318,6 +318,39 @@ class PluginMetadataParserTest {
     )
   }
 
+  @Test
+  void configurationFormatShouldDefaultToStructuredWhenNotDeclaredInDescriptor() {
+    def pluginDescriptor = toPluginDescriptor(
+    """
+    <plugin name="TestServer" displayName="Test Server" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+      <server name="testServer"
+              class="TestServer"
+              discovery="TestServerDiscoveryComponent">
+        <resource-configuration>
+          <c:simple-property name="foo" defaultValue="bar"/>
+        </resource-configuration>
+      </server>
+    </plugin>
+    """
+    )
+
+    def parsersByPlugin = [:]
+
+    def parser = new PluginMetadataParser(pluginDescriptor, parsersByPlugin)
+
+    def serverResourceType = parser.allTypes.find { it.name == "testServer" }
+    def resourceConfigurationDefinition = serverResourceType.resourceConfigurationDefinition
+
+    assertEquals(
+        resourceConfigurationDefinition.configurationFormat,
+        ConfigurationFormat.STRUCTURED,
+        "The configurationFormat property of the configuration definition should default to stuctured when it is not declared in the plugin descriptor."
+    )
+  }
+
   static PluginDescriptor toPluginDescriptor(String string) {
     JAXBContext jaxbContext = JAXBContext.newInstance(DescriptorPackages.PC_PLUGIN)
     URL pluginSchemaURL = PluginMetadataParser.class.getClassLoader().getResource("rhq-plugin.xsd")

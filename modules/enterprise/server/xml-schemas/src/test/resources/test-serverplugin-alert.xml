@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<alert-plugin apiVersion="11.22"
+              version="100.999"
+              description="alert plugin wotgorilla?"
+              displayName="alert plugin display name"
+              name="alert plugin name"
+              package="org.alert.package.name.here"
+              pluginLifecycleListener="alertPluginLifecycleListener"
+              xmlns="urn:xmlns:rhq-serverplugin.alert"
+              xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+              xmlns:c="urn:xmlns:rhq-configuration"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="alertprop1" />
+    </serverplugin:plugin-configuration>
+
+</alert-plugin>

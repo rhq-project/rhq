@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:config="urn:xmlns:rhq-configuration"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           targetNamespace="urn:xmlns:rhq-serverplugin"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for all server-side plugins. All server side plugin types
+            will define their own schema that get embedded in this schema.
+            Since there are only a strictly defined number of plugin types,
+            each plugin type's schema will be explicitly included in this
+            schema, under the plugin element's choice definition.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="server-plugin" type="serverplugin:ServerPluginDescriptorType" abstract="true">
+        <xs:annotation>
+            <xs:documentation>
+                Root element of a server-side plugin descriptor. All server side plugins
+                will have this as their root element; however, child elements of this
+                root element will be plugin-type-specific. Note this is an abstract element,
+                it will actually be substituted with other elements of the concrete plugin types.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="ServerPluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:complexType name="ServerPluginDescriptorType">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+           <xs:element name="plugin-configuration" type="config:configuration" />
+        </xs:sequence>
+        <xs:attribute name="name" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    Name of the plugin. This should be unique across all plugins deployed in the system.
+                </xs:documentation>
+            </xs:annotation>
+            <xs:simpleType>
+                <xs:restriction base="xs:string">
+                    <xs:minLength value="1" />
+                    <xs:maxLength value="200" />
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="displayName" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Formatted name displayed to the user. If this is omitted, the "name" attribute will be used.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Summary of what the plugin provides to be displayed to the user.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="package" type="serverplugin:classNameType" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    Package in which all component classes in this plugin reside. These component
+                    classes may use classes in other packages, however non-qualified classnames
+                    are assumed to be in this package.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="pluginLifecycleListener" type="serverplugin:classNameType" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    A class that performs global initialization and shutdown of the plugin. If specified,
+                    this class will be notified when the plugin is loaded and unloaded. This provides a place
+                    for plugin developers to allocate global resources needed by all plugin components and
+                    a place to clean up those resources.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="version" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    The version of this plugin in an OSGI compatible format. (e.g. 2.0.4 or 3.1.beta2)
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="apiVersion" type="xs:string">
+            <xs:annotation>
+                <xs:documentation>
+                    The version of the server-side API this plugin requires in OSGI compatible format. (e.g. 2.0)
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:simpleType name="classNameType">
+        <xs:restriction base="xs:string">
+            <xs:whiteSpace value="collapse" />
+            <xs:minLength value="1" />
+            <xs:maxLength value="500" />
+            <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*" />
+        </xs:restriction>
+    </xs:simpleType>
+</xs:schema>

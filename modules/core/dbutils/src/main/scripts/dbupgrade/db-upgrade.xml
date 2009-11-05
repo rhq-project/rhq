@@ -1953,10 +1953,88 @@
             REFERENCES RHQ_KICKSTARTABLE_TREE ( ID )
           </statement>
         </schema-directSQL>
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="ID" nullable="false" />
+        <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" nullable="false" />
+        <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+        <schema-directSQL>
 
+          <statement>
+            INSERT INTO
+            RHQ_DISTRIBUTION_TYPE ( ID, NAME )
+            VALUES ( 1, 'kickstart', 'Linux kickstart distribution' )
+          </statement>
+          <statement>
+            INSERT INTO
+            RHQ_DISTRIBUTION_TYPE ( ID, NAME )
+            VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
+          </statement>
+        </schema-directSQL>
+        <schema-directSQL>
+         <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_KS_TREE RENAME TO RHQ_REPO_DISTRIBUTION
+         </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_KS_TREE RENAME TO RHQ_REPO_DISTRIBUTION
+         </statement>
+         <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_KICKSTARTABLE_TREE RENAME TO RHQ_DISTRIBUTION
+         </statement>
+         <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_KICKSTARTABLE_TREE RENAME TO RHQ_DISTRIBUTION
+         </statement>
+         <statement targetDBVendor="oracle">
+             ALTER TABLE  RHQ_REPO_DISTRIBUTION RENAME CONSTRAINT
+             RHQ_REPO_KS_TREE_ID_FKEY TO  RHQ_REPO_DIST_ID_FKEY
+         </statement>
+          <statement targetDBVendor="postgresql">
+             ALTER TABLE  RHQ_REPO_DISTRIBUTION RENAME CONSTRAINT
+             RHQ_REPO_KS_TREE_ID_FKEY TO  RHQ_REPO_DIST_ID_FKEY
+         </statement>
+         <statement targetDBVendor="oracle">
+             ALTER TABLE  RHQ_REPO_DISTRIBUTION RENAME CONSTRAINT
+             RHQ_REPO_KS_MAP_KEY TO RHQ_REPO_DIST_MAP_KEY
+         </statement>
+          <statement targetDBVendor="postgresql">
+             ALTER TABLE  RHQ_REPO_DISTRIBUTION RENAME CONSTRAINT
+             RHQ_REPO_KS_MAP_KEY TO RHQ_REPO_DIST_MAP_KEY
+         </statement>
+          <statement targetDBVendor="oracle">
+             ALTER INDEX RHQ_KICKSTART_IDX RENAME TO RHQ_DISTRIBUTION_IDX
+         </statement>
+          <statement targetDBVendor="postgresql">
+             ALTER INDEX RHQ_KICKSTART_IDX RENAME TO RHQ_DISTRIBUTION_IDX
+         </statement>
+         </schema-directSQL>
+
+         <schema-directSQL>
+             <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_DISTRIBUTION
+            ADD CONSTRAINT RHQ_DIST_FKEY
+            FOREIGN KEY ( DISTRIBUTION_TYPE_ID)
+            REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
+          </statement>
+         <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_DISTRIBUTION
+            ADD CONSTRAINT RHQ_DIST_FKEY
+            FOREIGN KEY ( DISTRIBUTION_TYPE_ID)
+            REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
+          </statement>
+
+        </schema-directSQL>
       </schemaSpec>
 
-      <schemaSpec version="2.62">
+      <schemaSpec version="2.62.1">
+          <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
+          <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
+      </schemaSpec>
+
+      <schemaSpec version="2.62.2">
         <schema-addColumn table="RHQ_CONFIG_DEF" column="CONFIG_FORMAT" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_CONFIG_DEF" column="CONFIG_FORMAT" nullable="true" />
       </schemaSpec>

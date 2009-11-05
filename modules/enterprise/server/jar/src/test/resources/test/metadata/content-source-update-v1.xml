@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="TestPlugin" 
+<content-plugin name="TestPlugin" 
         xmlns="urn:xmlns:rhq-serverplugin.content"
         xmlns:c="urn:xmlns:rhq-configuration">
 
@@ -45,4 +45,4 @@
 
    </contentSourceType>
    
-</plugin>
+</content-plugin>

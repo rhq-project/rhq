@@ -41,6 +41,12 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.rhq</groupId>
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
          <scope>provided</scope> <!-- by ear -->

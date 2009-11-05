@@ -150,7 +150,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         simulatedOperation_Timeout = false;
         simulatedOperation_Sleep = 20000L; // the operation timeout is defined at 10 seconds, we'll block it for 20s
 
-        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date());
+        Trigger trigger = new SimpleTrigger("tgrname", "tgrgroup", new Date(System.currentTimeMillis() + 5000L));
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(superuser, resource.getId(),
             "testOp", null, trigger, "desc");
         List<ResourceOperationSchedule> schedules;
@@ -158,7 +158,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedules != null;
         assert schedules.size() == 1;
 
-        Thread.sleep(12000L); // wait for it to timeout
+        Thread.sleep(17000L); // wait for it to timeout
 
         // this will change all INPROGRESS histories that have timed out to FAILURE
         operationManager.checkForTimedOutOperations(superuser);

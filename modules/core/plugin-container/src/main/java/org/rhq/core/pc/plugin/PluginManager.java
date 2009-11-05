@@ -85,16 +85,12 @@ public class PluginManager implements ContainerService {
      */
     private List<Plugin> loadedPlugins;
 
-    /**
-     * Cached instances of objects used to initialize and shutdown individual plugins.
-     * Only plugins that declare their own lifecycle listener will have objects in this cache.
-     */
-    private Map<String, PluginLifecycleListener> pluginLifecycleListenerCache;
-
     private PluginMetadataManager metadataManager;
     private ClassLoaderManager classLoaderManager;
     private PluginContainerConfiguration configuration;
     private UpdateLoadedPlugins updateLoadedPlugins;
+
+    private PluginLifecycleListenerManager pluginLifecycleListenerMgr = new PluginLifecycleListenerManagerImpl();
 
     /**
      * Finds all plugins using the plugin finder defined in the
@@ -106,7 +102,6 @@ public class PluginManager implements ContainerService {
     public void initialize() {
         loadedPluginEnvironments = new HashMap<String, PluginEnvironment>();
         loadedPlugins = new ArrayList<Plugin>();
-        pluginLifecycleListenerCache = new HashMap<String, PluginLifecycleListener>();
         metadataManager = new PluginMetadataManager();
 
         initUpdateLoadedPluginsCallback();
@@ -214,7 +209,7 @@ public class PluginManager implements ContainerService {
         // We want to shut them down in the reverse order that we initialized them.
         Collections.reverse(this.loadedPlugins);
         for (Plugin plugin : loadedPlugins) {
-            PluginLifecycleListener listener = this.pluginLifecycleListenerCache.get(plugin.getName());
+            PluginLifecycleListener listener = pluginLifecycleListenerMgr.getListener(plugin.getName());
             if (listener != null) {
                 try {
                     ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
@@ -244,8 +239,7 @@ public class PluginManager implements ContainerService {
         this.loadedPlugins.clear();
         this.loadedPlugins = null;
 
-        this.pluginLifecycleListenerCache.clear();
-        this.pluginLifecycleListenerCache = null;
+        pluginLifecycleListenerMgr.shutdown();;
 
         this.metadataManager = null;
         this.classLoaderManager = null;
@@ -258,6 +252,10 @@ public class PluginManager implements ContainerService {
      */
     public void setConfiguration(PluginContainerConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    public void setPluginLifecycleListenerManager(PluginLifecycleListenerManager pluginLifecycleListenerManager) {
+        this.pluginLifecycleListenerMgr = pluginLifecycleListenerManager;
     }
 
     /**
@@ -337,12 +335,12 @@ public class PluginManager implements ContainerService {
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
-            this.pluginLifecycleListenerCache.put(pluginName, overseer);
         }
 
         // everything is loaded and initialized
         this.loadedPluginEnvironments.put(pluginName, pluginEnvironment);
         this.metadataManager.loadPlugin(pluginDescriptor);
+        pluginLifecycleListenerMgr.setListener(pluginDescriptor.getName(), overseer);
         updateLoadedPlugins.execute(pluginDescriptor, pluginUrl);
 
         return;
@@ -367,19 +365,7 @@ public class PluginManager implements ContainerService {
     private PluginLifecycleListener getPluginLifecycleListener(String pluginName, PluginEnvironment pluginEnvironment,
         PluginDescriptor pluginDescriptor) throws PluginContainerException {
 
-        PluginLifecycleListener instance = pluginLifecycleListenerCache.get(pluginName);
-
-        if (instance == null) {
-            String className = getPluginLifecycleListenerClass(pluginDescriptor);
-
-            if (className != null) {
-                log.debug("Creating plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
-                instance = (PluginLifecycleListener) instantiatePluginClass(pluginEnvironment, className);
-                log.debug("Created plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
-            }
-        }
-
-        return instance;
+        return pluginLifecycleListenerMgr.loadListener(pluginDescriptor, pluginEnvironment);
     }
 
     private String getPluginLifecycleListenerClass(PluginDescriptor pluginDescriptor) {

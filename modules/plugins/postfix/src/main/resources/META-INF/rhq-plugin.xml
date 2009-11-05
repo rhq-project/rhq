@@ -29,10 +29,19 @@
 
       <resource-configuration>
         <c:group name="Basic Configurations">
-
             <c:simple-property displayName="Hostname" name="myhostname" description="Server's fully qualified domain name" required="false"/>
             <c:simple-property displayName="Origin" name="myorigin" description="Domain used in outgoing mail" required="false"/>
-
+            <c:simple-property displayName="Networks" name="mynetworks" description="List of clients that can relay mail" required="false"/>
+            <c:simple-property displayName="Destinations" name="mydestinations" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
+            <c:simple-property displayName="Interfaces" name="inet_interfaces" description="Network interfaces that Postfix will bind to" required="false"/>
+            <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="true"/>
+        </c:group>
+        <c:group name="Security">
+            <c:simple-property displayName="Supress VRFY" name="disable_vrfy_command" type="boolean"  default="true" required="false" description="Supress Response to SMTP VRFY requests by default"/>
+            <c:simple-property displayName="Force HELO" name="smtpd_helo_required" type="boolean"  default="true" required="false" description="Force clients to start connection with HELO"/>
+            <c:simple-property displayName="Always send EHLO" name="smtp_always_send_ehlo" type="boolean"  default="true" required="true" description="Always send a correct EHLO greeting"/>
+            <c:simple-property displayName="In Flow Delay" name="in_flow_delay" required="false" description="Number of seconds to delay before accepting messages if arriving faster than delivering"/>
+            <c:simple-property displayName="Concurrency Delivery" name="local_destination_concurrency_limit" required="false" description="Number of messages delivered simultaneously to the same local recipient"/>
         </c:group>
        </resource-configuration>
 

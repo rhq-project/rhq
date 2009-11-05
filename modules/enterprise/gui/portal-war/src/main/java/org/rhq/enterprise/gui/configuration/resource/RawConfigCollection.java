@@ -23,6 +23,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -37,7 +39,7 @@ public class RawConfigCollection implements Serializable {
 
     /*This is for development, to prevent actually going to the EJBs.
     TODO It should be set to false prior to check in*/
-    private static final boolean useMock = false;
+    private static final boolean useMock = true;
 
     /**
      * These values are transient due to the need to save and restore the view.  
@@ -47,14 +49,24 @@ public class RawConfigCollection implements Serializable {
     transient private Configuration configuration = null;
 
     private final Log log = LogFactory.getLog(RawConfigCollection.class);
-    private int resourceId;
+    private int resourceId = 0;
     private static final long serialVersionUID = 4837157548556168146L;
     private String selectedPath;
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     private RawConfiguration current = null;
+    private ConfigurationDefinition configurationDefinition = null;
 
     public RawConfigCollection() {
+    }
+
+    void nullify() {
+        resourceId = 0;
+        selectedPath = null;
+        raws = null;
+        modified.clear();
+        current = null;
+        configurationDefinition = null;
     }
 
     public void fileUploadListener(UploadEvent event) throws Exception {
@@ -105,7 +117,7 @@ public class RawConfigCollection implements Serializable {
     @Create
     @Begin
     public void init() {
-        resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        //        resourceId = EnterpriseFacesContextUtility.getResource().getId();
     }
 
     /**
@@ -115,6 +127,9 @@ public class RawConfigCollection implements Serializable {
     * where seeing the resource id conflicts with the rich upload tag.
     */
     public int getResourceId() {
+        if (resourceId == 0) {
+            resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        }
         return resourceId;
     }
 
@@ -139,28 +154,32 @@ public class RawConfigCollection implements Serializable {
     }
 
     public int getConfigId() {
-
         return getConfiguration().getId();
     }
 
+    public String discard() {
+        nullify();
+        return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
+    }
+
     @End
-    public void commit() {
-        //        configurationManager.findRawConfigurationsByConfigurationId(getConfigId());   
+    public String commit() {
 
         for (RawConfiguration raw : modified.values()) {
             getRaws().put(raw.getPath(), raw);
         }
-        getConfigurationManager();
-        //        getConfigurationManager().setRawConfigurations(configId, raws.values());
 
-        this.configuration = null;
-        raws = null;
-        modified = null;
+        getConfiguration().getRawConfigurations().clear();
+        getConfiguration().getRawConfigurations().addAll(getRaws().values());
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        getConfigurationManager().updateResourceConfiguration(subject, getResourceId(), getConfiguration());
 
+        nullify();
+
+        return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
     }
 
     public TreeMap<String, RawConfiguration> getRaws() {
-
         if (null == raws) {
             raws = new TreeMap<String, RawConfiguration>();
             if (useMock) {
@@ -277,5 +296,30 @@ public class RawConfigCollection implements Serializable {
             configurationManager = LookupUtil.getConfigurationManager();
         }
         return configurationManager;
+    }
+
+    private ConfigurationDefinition getConfigurationDefinition() {
+        if (null == configurationDefinition) {
+
+            configurationDefinition = getConfigurationManager().getResourceConfigurationDefinitionForResourceType(
+                EnterpriseFacesContextUtility.getSubject(),
+                EnterpriseFacesContextUtility.getResource().getResourceType().getId());
+        }
+        return configurationDefinition;
+    }
+
+    private ConfigurationFormat getConfigurationFormat() {
+        if (useMock)
+            return ConfigurationFormat.STRUCTURED_AND_RAW;
+
+        return getConfigurationDefinition().getConfigurationFormat();
+    }
+
+    public boolean isRawSupported() {
+        return getConfigurationFormat().isRawSupported();
+    }
+
+    public boolean isStructuredSupported() {
+        return getConfigurationFormat().isStructuredSupported();
     }
 }

@@ -38,4 +38,12 @@ public enum ConfigurationFormat {
         return displayName;
     }
 
+    public boolean isRawSupported() {
+        return this.equals(RAW) || this.equals(STRUCTURED_AND_RAW);
+    }
+
+    public boolean isStructuredSupported() {
+        return this.equals(STRUCTURED) || this.equals(STRUCTURED_AND_RAW);
+    }
+
 }

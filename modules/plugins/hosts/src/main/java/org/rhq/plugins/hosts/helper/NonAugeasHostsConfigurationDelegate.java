@@ -51,7 +51,7 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
 
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration resourceConfig = new Configuration();
-        File hostsFile = (File)this.hostsComponent.getConfigurationFiles().get(0);
+        File hostsFile = this.hostsComponent.getConfigurationFile();
         Hosts hosts = Hosts.load(hostsFile);
         resourceConfig.setNotes("Loaded at " + new Date());
 
@@ -135,7 +135,7 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
             return;
         }
 
-        File hostsFile = (File)this.hostsComponent.getConfigurationFiles().get(0);
+        File hostsFile = this.hostsComponent.getConfigurationFile();
         try {
             Hosts.store(newHosts, hostsFile);
         }

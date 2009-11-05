@@ -18,15 +18,43 @@
  */
 package org.rhq.plugins.samba;
 
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
-
+import java.io.File;
+import java.util.HashSet;
 import java.util.Set;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
 
-public class SambaServerDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
+/**
+ * @author Greg Hinkle
+ */
+public class SambaServerDiscoveryComponent implements ResourceDiscoveryComponent {
 
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException, Exception {
-        return super.discoverResources(resourceDiscoveryContext);
+
+        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
+
+        File confFile = new File("/etc/samba/smb.conf");
+
+        ProcessExecution pe = new ProcessExecution("/usr/sbin/smbd");
+        pe.setArguments(new String[]{"--version"});
+        pe.setCaptureOutput(true);
+        ProcessExecutionResults per =
+                resourceDiscoveryContext.getSystemInformation().executeProcess(pe);
+        String data = per.getCapturedOutput();
+        String version = data.replace("Version","").trim();
+        
+        if (confFile.exists()) {
+            DiscoveredResourceDetails resource =
+                new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(), "samba", "Samba Server",
+                    version, "Samba services", null, null);
+
+            details.add(resource);
+        }
+
+        return details;
     }
 }

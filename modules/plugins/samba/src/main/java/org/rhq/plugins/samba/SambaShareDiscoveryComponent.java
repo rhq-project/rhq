@@ -29,8 +29,10 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 
+/**
+ * @author Greg Hinkle
+ */
 public class SambaShareDiscoveryComponent implements ResourceDiscoveryComponent<SambaServerComponent> {
 
 
@@ -42,23 +44,28 @@ public class SambaShareDiscoveryComponent implements ResourceDiscoveryComponent<
         SambaServerComponent serverComponent = discoveryContext.getParentResourceComponent();
 
         Augeas augeas = serverComponent.getAugeas();
-        augeas.load();
+        String augeasPath = serverComponent.getAugeasPath();
 
-        List<String> matches = augeas.match("/files/etc/samba/smb.conf/target[. != 'global']");
+        List<String> matches = augeas.match(augeasPath);
         for (String match : matches) {
-            String name = augeas.get(match);
-            Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-            pluginConfig.put(new PropertySimple("targetName", name));
-            DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
+            if (match.startsWith("target")) {
+                String name = augeas.get(match);
+                if (!name.equals("global")) {
+
+                    Configuration config = discoveryContext.getDefaultPluginConfiguration();
+
+                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                         discoveryContext.getResourceType(),
-                        name,
-                        name + " share",
-                        null,
-                        "Samba Share [" + name + "]",
-                        pluginConfig,
-                        null
-                );
-            details.add(detail);
+                            name,
+                            name + " share",
+                            null,
+                            "Samba Share [" + name + "]",
+                            config,
+                            null
+                    );
+                    details.add(detail);
+                }
+            }
         }
         
         return details;

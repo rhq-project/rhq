@@ -36,7 +36,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
-import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
@@ -91,10 +90,8 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
                 EmsBean warBean = connection.getBean(resource.getResourceKey());
                 // this refresh is important in case EMS is caching a stale version of this object. It can happen if
                 // a user deletes and then recreates the same object.
-                List<EmsAttribute> contextRootAttribs = warBean.refreshAttributes(EMS_ATTRIBUTE_PATH);                
-                String contextRoot = (String) contextRootAttribs.get(0).getValue();
-                List<EmsAttribute> docBaseAttribs = warBean.refreshAttributes(EMS_ATTRIBUTE_DOC_BASE);
-                String docBase = (String) docBaseAttribs.get(0).getValue();
+                String contextRoot = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_PATH).get(0).getValue();
+                String docBase = (String) warBean.refreshAttributes(EMS_ATTRIBUTE_DOC_BASE).get(0).getValue();
                 File docBaseFile = new File(docBase);
                 String filename = (docBaseFile.isAbsolute()) ? docBase
                     : (deployDirectoryPath + File.separator + docBase);
@@ -220,7 +217,7 @@ public class TomcatWarDiscoveryComponent extends MBeanResourceDiscoveryComponent
      * JMX discovered applications.
      *
      * @param  defaultConfiguration default plugin configuration for the application's resource type
-     * @param  name name of the web app
+     * @param  contextRoot contextRoot of the web app
      *
      * @return resource key to use for the indicated application file
      */

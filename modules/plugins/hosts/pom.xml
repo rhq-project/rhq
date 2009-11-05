@@ -42,28 +42,9 @@
           <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
        </dependency>
-
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-augeas-plugin</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-       </dependency>              
        
    </dependencies>
 
-   <build>
-      <plugins>
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-               <skip>true</skip>
-            </configuration>
-         </plugin>
-      </plugins>
-   </build>
-    
    <profiles>
       <profile>
          <id>integration-tests</id>
@@ -89,6 +70,14 @@
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
                               <mkdir dir="target/itest/lib" />
+                              <copy toDir="target/itest/plugins" flatten="true">
+                                 <fileset dir="${settings.localRepository}/">
+                                    <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                 </fileset>
+                                 <fileset dir="${project.build.directory}">
+                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                 </fileset>
+                              </copy>
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>
@@ -115,38 +104,6 @@
                   </executions>
                </plugin>
 
-             <plugin>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                   <execution>
-                      <id>copy-dependencies</id>
-                      <phase>pre-integration-test</phase>
-                      <goals>
-                         <goal>copy</goal>
-                      </goals>
-                      <configuration>
-                         <artifactItems>
-                            <artifactItem>
-                               <groupId>org.rhq</groupId>
-                               <artifactId>rhq-platform-plugin</artifactId>
-                            </artifactItem>
-                            <artifactItem>
-                               <groupId>org.rhq</groupId>
-                               <artifactId>rhq-augeas-plugin</artifactId>
-                            </artifactItem>
-                            <artifactItem>
-                               <groupId>org.rhq</groupId>
-                               <artifactId>${project.artifactId}</artifactId>
-                               <version>${project.version}</version>
-                            </artifactItem>
-                         </artifactItems>
-                         <outputDirectory>target/itest/plugins</outputDirectory>
-                      </configuration>
-                   </execution>
-
-                </executions>
-             </plugin>
-
                <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
@@ -163,7 +120,7 @@
                         <configuration>
                            <skip>${maven.test.skip}</skip>
                            <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                           <useSystemClassLoader>true</useSystemClassLoader>
+                           <useSystemClassLoader>false</useSystemClassLoader>
                            <argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>
                            <!--<argLine>-Dorg.hyperic.sigar.path=${basedir}/target/itest/lib -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>-->
                            <systemProperties>

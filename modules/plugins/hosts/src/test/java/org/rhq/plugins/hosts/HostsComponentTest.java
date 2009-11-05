@@ -18,79 +18,69 @@
  */
 package org.rhq.plugins.hosts;
 
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import java.util.Collection;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
 /**
- * An integration test for {@link HostsComponent}.
- *
- * @author Ian Springer
+ * @author Jason Dobies
  */
-public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest {    
-    @Override
-    protected String getPluginName() {
-        return "Hosts";
+public class HostsComponentTest {
+
+    private HostsComponent component = new HostsComponent();
+
+    private Configuration pluginConfiguration = new Configuration();
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
+    @BeforeSuite
+    public void initPluginConfiguration() throws Exception {
+        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/local/share/augeas/lenses"));
+        pluginConfiguration.put(new PropertySimple("root-path", "/"));
+        pluginConfiguration.put(new PropertySimple("hosts-path", "/etc/hosts"));
+        pluginConfiguration.put(new PropertySimple("augeas-hosts-path", "/files/etc/hosts/*"));
     }
 
-    @Override
-    protected String getResourceTypeName() {
-        return "Hosts File";
-    }
-
-    @Override
-    protected Configuration getExpectedResourceConfig() {
-        Configuration config = new Configuration();
-        PropertyList entries = new PropertyList(".");
-        config.put(entries);
-
-        PropertyMap entry;
-
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "127.0.0.1"));
-        entry.put(new PropertySimple("canonical", "localhost"));
-        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost4\nlocalhost4.localdomain4"));
-        entries.getList().add(entry);
-
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "::1"));
-        entry.put(new PropertySimple("canonical", "localhost"));
-        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost6\nlocalhost6.localdomain6"));
-        entries.getList().add(entry);
-
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "1.1.1.1"));
-        entry.put(new PropertySimple("canonical", "one-one-one-one.com"));
-        entry.put(new PropertySimple("alias", null));
-        entries.getList().add(entry);
-
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "2.2.2.2"));
-        entry.put(new PropertySimple("canonical", "two-two-two-two.com"));
-        entry.put(new PropertySimple("alias", "alias"));
-        entries.getList().add(entry);
-
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "3.3.3.3"));
-        entry.put(new PropertySimple("canonical", "three-three-three-three.com"));
-        entry.put(new PropertySimple("alias", "alias1\nalias2"));
-        entries.getList().add(entry);
-
-        return config;
-    }
-
-    private boolean supportsFacet(Class<?> facetInterface) {
-        PluginMetadataManager manager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        String componentClass = manager.getComponentClass(getResourceType());
-
+    @Test(enabled = false)
+    public void loadResourceConfiguration() throws Exception {
+        Configuration configuration;
         try {
-            return facetInterface.isAssignableFrom(Class.forName(componentClass));
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Could not find component class " + componentClass, e);
+            configuration = component.loadResourceConfiguration();
+        } catch (UnsatisfiedLinkError ule) {
+            // Skip tests if augeas not available
+            return;
         }
-    }    
+
+        assert configuration != null : "Null configuration returned from load call";
+
+        Collection<Property> allProperties = configuration.getProperties();
+
+        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
+            + allProperties.size();
+
+        PropertyList entryList = (PropertyList) allProperties.iterator().next();
+
+        for (Property property : entryList.getList()) {
+            PropertyMap entry = (PropertyMap) property;
+
+            Property ipProperty = entry.get("ip");
+            Property canonicalProperty = entry.get("canonical");
+
+            assert ipProperty != null : "IP was null in entry";
+            assert canonicalProperty != null : "Canonical was null in entry";
+
+            log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
+            log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
+        }
+
+    }
 }

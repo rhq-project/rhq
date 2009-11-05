@@ -23,7 +23,7 @@
 
     <table name="RHQ_CONFIG_PROP_DEF">
         <column name="ID" type="INTEGER" required="true" default="sequence-only" initial="10001" primarykey="true"/>
-        <column name="NAME" type="VARCHAR2" required="false" size="255"/>
+        <column name="NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DISPLAY_NAME" type="VARCHAR2" required="false" size="100"/>
         <column name="DESCRIPTION" type="VARCHAR2" required="false" size="1000"/>
         <column name="DEFAULT_VALUE" type="VARCHAR2" required="false" size="2000"/>
@@ -78,7 +78,7 @@
         <column name="CONFIGURATION_ID" type="INTEGER" required="false" references="RHQ_CONFIG" ondelete="cascade"/>
         <column name="STRING_VALUE" type="VARCHAR2" required="false" size="2000"/>
         <column name="OVERRIDE" type="BOOLEAN" required="false"/>
-        <column name="NAME" type="VARCHAR2" required="true" size="255"/>
+        <column name="NAME" type="VARCHAR2" required="true" size="100"/>
         <column name="DTYPE" type="VARCHAR2" required="true" size="10"/>
         <!-- Recursive cascade path to RHQ_CONFIG_PROPERTY causes constraint creation errors on SQL Server, see
              http://support.microsoft.com/kb/321843 -->

@@ -46,7 +46,6 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
@@ -246,37 +245,36 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         }
     }
 
-    private TestContentSourcePluginService contentSourcePluginService;
+    private TestServerPluginService serverPluginService;
 
     /**
-     * If you need to test content source server plugins, you must first prepare the content source plugin service via
+     * If you need to test content source server plugins, or other server plugins, you must first prepare the server plugin service via
      * this method. The caller must explicitly start the PC by using the appropriate API on the returned object; this
-     * method will only start the service, it will NOT start the PC.
+     * method will only start the service, it will NOT start the master PC.
      *
      * @return the object that will house your test server plugins
      *
      * @throws RuntimeException
      */
-    public TestContentSourcePluginService prepareContentSourcePluginService() {
+    public TestServerPluginService prepareServerPluginService() {
         try {
             MBeanServer mbs = getJBossMBeanServer();
-            TestContentSourcePluginService mbean = new TestContentSourcePluginService();
+            TestServerPluginService mbean = new TestServerPluginService();
             mbean.start();
-            mbs.registerMBean(mbean, ObjectNameFactory.create(TestContentSourcePluginService.OBJECT_NAME_STR));
-            contentSourcePluginService = mbean;
+            mbs.registerMBean(mbean, TestServerPluginService.OBJECT_NAME);
+            serverPluginService = mbean;
             return mbean;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void unprepareContentSourcePluginService() throws Exception {
-        if (contentSourcePluginService != null) {
-            contentSourcePluginService.stopPluginContainer();
-            contentSourcePluginService.stop();
-            getJBossMBeanServer().unregisterMBean(
-                ObjectNameFactory.create(TestContentSourcePluginService.OBJECT_NAME_STR));
-            contentSourcePluginService = null;
+    public void unprepareServerPluginService() throws Exception {
+        if (serverPluginService != null) {
+            serverPluginService.stopMasterPluginContainer();
+            serverPluginService.stop();
+            getJBossMBeanServer().unregisterMBean(TestServerPluginService.OBJECT_NAME);
+            serverPluginService = null;
         }
     }
 

@@ -28,9 +28,9 @@ import java.util.zip.GZIPOutputStream;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.core.domain.content.PackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugins.yum.Repodata.Meta;
 
 /**
@@ -221,8 +221,8 @@ public class Repo {
         String name = p.getChildText("name", Repodata.yumns);
         String version = encodeVersion(p);
         String arch = p.getChildText("arch", Repodata.yumns);
-        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch, "Linux",
-            "Platforms");
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
+            "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
         String filename = filename(p);
         pkg.setDisplayName(filename);

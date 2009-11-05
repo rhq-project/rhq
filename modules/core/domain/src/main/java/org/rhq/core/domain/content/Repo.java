@@ -53,11 +53,11 @@ import org.rhq.core.domain.resource.Resource;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Repo.QUERY_FIND_ALL, query = "SELECT c FROM Repo c"),
+    @NamedQuery(name = Repo.QUERY_FIND_ALL_IMPORTED_REPOS, query = "SELECT c FROM Repo c WHERE c.candidate = false"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_IDS, query = "SELECT c FROM Repo c WHERE c.id IN ( :ids )"),
     @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
-    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
-    @NamedQuery(name = Repo.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id"),
+    @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
+    @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
     @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceRepo rc WHERE rc.repo.id = :id"),
     @NamedQuery(name = Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceRepo rc JOIN rc.repo c WHERE rc.resource.id = :resourceId "),
@@ -78,20 +78,22 @@ import org.rhq.core.domain.resource.Resource;
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
+        + "AND c.candidate is false "
         + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
-        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) ") })
+        + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
+        + "AND c.candidate = false ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable {
     // Constants  --------------------------------------------
 
-    public static final String QUERY_FIND_ALL = "Repo.findAll";
+    public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
     public static final String QUERY_FIND_BY_IDS = "Repo.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Repo.findByName";
-    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
-    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
+    public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
+    public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Repo.findSubscriberResources";
     public static final String QUERY_FIND_REPOS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
@@ -119,6 +121,9 @@ public class Repo implements Serializable {
 
     @Column(name = "LAST_MODIFIED_TIME", nullable = false)
     private long lastModifiedDate;
+
+    @Column(name = "IS_CANDIDATE", nullable = false)
+    private boolean candidate;
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
@@ -199,6 +204,18 @@ public class Repo implements Serializable {
 
     public void setLastModifiedDate(long lastModifiedDate) {
         this.lastModifiedDate = lastModifiedDate;
+    }
+
+    /**
+     * Indicates if the repo is a "real" repo in RHQ or is just a candidate for import, such as those introduced by
+     * a content provider.
+     */
+    public boolean isCandidate() {
+        return candidate;
+    }
+
+    public void setCandidate(boolean candidate) {
+        this.candidate = candidate;
     }
 
     /**

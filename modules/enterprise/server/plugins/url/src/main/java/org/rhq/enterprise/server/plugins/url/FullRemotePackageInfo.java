@@ -20,7 +20,7 @@ package org.rhq.enterprise.server.plugins.url;
 
 import java.net.URL;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 
 /**
  * Contains the full metadata about package content.

@@ -30,7 +30,4 @@ package org.rhq.core.clientapi.descriptor;
 public interface DescriptorPackages {
     String CONFIGURATION = "org.rhq.core.clientapi.descriptor.configuration";
     String PC_PLUGIN = "org.rhq.core.clientapi.descriptor.plugin";
-    String PERSPECTIVE = "org.rhq.core.clientapi.descriptor.perspective";
-    String CONTENT = "org.rhq.core.clientapi.descriptor.serverplugin.content";
-    String CONTENTSOURCE_PACKAGEDETAILS = "org.rhq.core.clientapi.descriptor.contentsource.packagedetails";
 }

@@ -298,40 +298,40 @@
 
    </service>
 
-   <service name="RHQ Server Content Source Server Plugin Subsystem"
+   <service name="RHQ Server Plugin Subsystem"
             discovery="org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent"
             class="org.rhq.plugins.jmx.MBeanResourceComponent"
-            description="Details on the content source server plugin subsystem">
+            description="Details on the server-side plugin container subsystem">
 
       <runs-inside>
          <parent-resource-type name="JBossAS Server" plugin="JBossAS"/>
       </runs-inside>
 
       <plugin-configuration>
-         <c:simple-property name="objectName" readOnly="true" default="rhq.serverplugin:service=ContentSourcePluginService"/>
-         <c:simple-property name="nameTemplate" default="RHQ Server Content Source Server Plugin Subsystem"/>
-         <c:simple-property name="descriptionTemplate" default="Details on the content source server plugin subsystem"/>
+         <c:simple-property name="objectName" readOnly="true" default="rhq.serverplugin:service=ServerPluginService"/>
+         <c:simple-property name="nameTemplate" default="RHQ Server Plugin Subsystem"/>
+         <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem"/>
       </plugin-configuration>
 
-      <operation name="startPluginContainer" displayName="Start Plugin Container"
-                 description="Starts the plugin container which will load and initialize all content source plugins. Once started, content source feed data will be able to start to flow">
+      <operation name="startMasterPluginContainer" displayName="Start Master Plugin Container"
+                 description="Starts the master plugin container which will load and initialize all server-side plugins.">
       </operation>
 
-      <operation name="stopPluginContainer" displayName="Stop Plugin Container"
-                 description="Stops the plugin container which will shutdown all content source plugins. Once stopped, content source feed data will not be able to flow">
+      <operation name="stopMasterPluginContainer" displayName="Stop Master Plugin Container"
+                 description="Stops the master plugin container which will shutdown all server-side plugins.">
       </operation>
 
-      <operation name="restartPluginContainer" displayName="Restart Plugin Container"
-                 description="Convienence operation that first stops and then immediately restarts the plugin container.">
+      <operation name="restartMasterPluginContainer" displayName="Restart Plugin Container"
+                 description="Convienence operation that first stops and then immediately restarts the master plugin container.">
       </operation>
 
-      <metric property="{pluginContainer.configuration.pluginDirectory}"
+      <metric property="{masterPluginContainer.configuration.pluginDirectory}"
               displayName="Plugin Directory"
               dataType="trait"
               displayType="detail"
               description="The location where this plugin container expects to find all of its plugins."/>
 
-      <metric property="{pluginContainer.configuration.temporaryDirectory}"
+      <metric property="{masterPluginContainer.configuration.temporaryDirectory}"
               displayName="Temporary Directory"
               dataType="trait"
               displayType="detail"

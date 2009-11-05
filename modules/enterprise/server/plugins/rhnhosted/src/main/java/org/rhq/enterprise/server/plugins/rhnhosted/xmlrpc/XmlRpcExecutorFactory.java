@@ -28,6 +28,7 @@ import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 import org.rhq.enterprise.server.util.MethodUtil;
+import org.rhq.enterprise.server.plugins.rhnhosted.RHNConstants;
 
 /**
  * Class responsible for handing out XmlRpcClient classes, either real or mocked.
@@ -35,6 +36,7 @@ import org.rhq.enterprise.server.util.MethodUtil;
 public class XmlRpcExecutorFactory {
 
     protected static String XML_DUMP_VERSION = "3.3";
+    protected static String sslCertPath = RHNConstants.DEFAULT_SSL_CERT_PATH;
 
     private static XmlRpcExecutor getExecutor(XmlRpcClient wrappedClient) {
         Object[] args = { wrappedClient };
@@ -44,6 +46,10 @@ public class XmlRpcExecutorFactory {
     }
 
     public static XmlRpcExecutor getJaxbClient(String url) {
+        return getJaxbClient(url, sslCertPath);
+    }
+
+    public static XmlRpcExecutor getJaxbClient(String url, String sslCertPathIn) {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 
         try {
@@ -58,11 +64,16 @@ public class XmlRpcExecutorFactory {
         transportFactory.setRequestProperties(getRequestProperties());
         transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
         transportFactory.setDumpMessageToFile(false);
+        transportFactory.setSSLCert(sslCertPathIn);
         client.setTransportFactory(transportFactory);
         return getExecutor(client);
     }
 
     public static XmlRpcExecutor getClient(String url) {
+        return getClient(url, sslCertPath);
+    }
+
+    public static XmlRpcExecutor getClient(String url, String sslCertPathIn) {
         XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
 
         try {
@@ -75,6 +86,7 @@ public class XmlRpcExecutorFactory {
         client.setConfig(config);
         CustomReqPropTransportFactory transportFactory = new CustomReqPropTransportFactory(client);
         transportFactory.setRequestProperties(getRequestProperties());
+        transportFactory.setSSLCert(sslCertPathIn);
         client.setTransportFactory(transportFactory);
 
         return getExecutor(client);

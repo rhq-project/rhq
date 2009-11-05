@@ -29,13 +29,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 
 /**
  * @author pkilambi

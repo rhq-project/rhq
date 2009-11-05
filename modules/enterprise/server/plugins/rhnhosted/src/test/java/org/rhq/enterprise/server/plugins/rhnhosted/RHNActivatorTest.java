@@ -19,28 +19,15 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-import junit.framework.TestCase;
-
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.ApacheXmlRpcExecutor;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnHttpURLConnection;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.MockRhnXmlRpcExecutor;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnCommTest;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnHttpURLConnectionFactory;
-
-public class RHNActivatorTest extends TestCase {
+public class RHNActivatorTest extends BaseRHNTest {
 
     private static final String TEST_SERVER_URL = "http://satellite.rhn.redhat.com/rpc/api";
-    private static final String TEST_SYSTEM_ID = RHNConstants.DEFAULT_SYSTEM_ID;
 
     private RHNActivator rhnObject;
 
     public void setUp() throws Exception {
-        /* OVERRIDE THE XMLRPC CLIENT WITH A MOCK OBJECT */
-        System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
-        System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
-            .getName());
-
-        rhnObject = new RHNActivator(RhnCommTest.SYSTEM_ID, ENT_CERT, TEST_SERVER_URL);
+        super.setUp();
+        rhnObject = new RHNActivator(SYSTEM_ID, ENT_CERT, TEST_SERVER_URL);
 
         assertNotNull(rhnObject);
 
@@ -58,7 +45,6 @@ public class RHNActivatorTest extends TestCase {
     }
 
     public final void testDeActivate() throws Exception {
-        String systemid = RhnCommTest.SYSTEM_ID;
         boolean success = true;
         try {
             rhnObject.processDeActivation();

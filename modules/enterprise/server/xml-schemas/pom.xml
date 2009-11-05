@@ -1,0 +1,227 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-parent</artifactId>
+        <version>1.4.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+    <packaging>jar</packaging>
+
+    <name>RHQ Server XML Schemas</name>
+    <description>Server side XML schemas and JAXB APIs used mailing to support the RHQ Server plugin container</description>
+
+    <scm>
+       <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/xml-schemas/</connection>
+       <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/xml-schemas/</developerConnection>
+    </scm>
+
+    <properties>
+       <scm.module.path>modules/enterprise/server/xml-schemas/</scm.module.path>
+    </properties>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${rhq.groupId}</groupId>
+            <artifactId>rhq-core-client-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+        </dependency>
+
+        <dependency>
+            <groupId>com.sun.xml.bind</groupId>
+            <artifactId>jaxb-impl</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <!--<scope>test</scope>  not sure about this -->
+        </dependency>
+
+        <!--
+            TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent
+            classes; it is fixed in JDK 6.
+        -->
+        <dependency>
+            <groupId>jboss.jboss-embeddable-ejb3</groupId>
+            <artifactId>hibernate-all</artifactId>
+            <version>1.0.0.Alpha9</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.sun.tools.xjc.maven2</groupId>
+                <artifactId>maven-jaxb-plugin</artifactId>
+                <version>1.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>generate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <generateDirectory>${basedir}/target/generated-sources/xjc</generateDirectory>
+                    <schemaDirectory>${basedir}/target/classes</schemaDirectory>
+                    <includeSchemas>
+                        <includeSchema>*.xsd</includeSchema>
+                    </includeSchemas>
+                </configuration>
+            </plugin>
+
+            <!--
+                Because the JAXB generator needs all .xsd's available and in one place so they can reference each other
+                and to properly generate code AND because we want to reuse the rhq-configuration .xsd schema, we are
+                forced to copy all .xsds (including the config schema from client-api module) into target/classes now in
+                the initialize phase (so the generate-sources phase has them available). This also makes the JAXB
+                generator re-generate the configuration schema objects. But we already have them in the client-api jar.
+                So this antrun plugin task simply removes the duplicated code that we were forced to generate. This is
+                OK because during runtime we will have a dependency on the client-api jar and thus will have access to
+                the original configuration schema classes generated as part of the client-api module build. Note that
+                we still have a duplicate copy of the .xsd in our jar, but this is OK because it is a true duplicate
+                so it doesn't really matter that we have one copy here and one copy in client-api jar.
+            -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>Copy the schemas in one place, including rhq-configuration.xsd schema so we can reuse it</id>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${basedir}/target/classes" />
+                                <copy todir="${basedir}/target/classes">
+                                    <fileset dir="${basedir}/src/main/resources">
+                                        <include name="*.xsd" />
+                                    </fileset>
+                                    <fileset dir="${basedir}/../../../core/client-api/src/main/resources">
+                                        <include name="rhq-configuration.xsd" />
+                                    </fileset>
+                                </copy>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>purge duplicated JAXB-generated configuration schema classes</id>
+                        <phase>process-sources</phase>
+                        <configuration>
+                            <tasks>
+                                <delete dir="${basedir}/target/generated-sources/xjc/org/rhq/core" />
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.5</source>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>java.net</id>
+            <name>java.net Maven Repository</name>
+            <url>http://download.java.net/maven/1/</url>
+            <layout>legacy</layout>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <repositories>
+        <repository>
+            <id>java.net</id>
+            <name>java.net Maven Repository</name>
+            <url>http://download.java.net/maven/1/</url>
+            <layout>legacy</layout>
+        </repository>
+    </repositories>
+
+    <profiles>
+
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/lib</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <mkdir dir="${rhq.deploymentDir}" />
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Updating ${deployment.file}...</echo>
+                                        <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                                        <echo>*** Deleting ${deployment.file}...</echo>
+                                        <delete file="${deployment.file}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
+</project>

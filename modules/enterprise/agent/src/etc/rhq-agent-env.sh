@@ -30,7 +30,7 @@
 #                          If this and RHQ_AGENT_JAVA_EXE_FILE_PATH are
 #                          not set, the agent's embedded JRE will be used.
 #
-#RHQ_AGENT_JAVA_HOME="/usr/lib/jvm/java"
+#RHQ_AGENT_JAVA_HOME="/usr/lib/jvm/jre"
 
 #    RHQ_AGENT_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 #                                   executable to use. If this is set,
@@ -52,7 +52,7 @@
 #                          use RHQ_AGENT_ADDITIONAL_JAVA_OPTS instead.
 #
 #RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
- RHQ_AGENT_JAVA_OPTS="-Don.perftest.scenario=configurable-1 -Don.perftest.server-a-count=1 -Don.perftest.service-a-count=2"
+
 #    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 #                                   endorsed dirs for the agent's VM. If this
 #                                   is not defined this script will pass in a

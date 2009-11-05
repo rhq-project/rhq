@@ -20,15 +20,13 @@ package org.rhq.enterprise.server.content;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.server.plugin.content.*;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -37,9 +35,14 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -165,7 +168,7 @@ public interface ContentSourceManagerLocal {
      * 
      * @return The created content source.
      */
-    ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException, InitializationException;
+    ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
 
     /**
      * Update an existing {@link ContentSource} object and restarts its underlying adapter. This also forces the adapter
@@ -359,7 +362,8 @@ public interface ContentSourceManagerLocal {
      *         was done
      */
     ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, ContentSourceSyncResults syncResults);
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        ContentSourceSyncResults syncResults);
 
     void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 
@@ -490,6 +494,5 @@ public interface ContentSourceManagerLocal {
      * @throws ContentSourceException if the content source cannot be created, such as if the data in
      *                                the given object are not valid
      */
-    ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource)
-        throws ContentSourceException;
+    ContentSource simpleCreateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
 }

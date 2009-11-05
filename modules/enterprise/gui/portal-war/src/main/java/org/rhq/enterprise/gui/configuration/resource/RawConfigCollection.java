@@ -37,7 +37,7 @@ public class RawConfigCollection implements Serializable {
 
     /*This is for development, to prevent actually going to the EJBs.
     TODO It should be set to false prior to check in*/
-    private static final boolean useMock = true;
+    private static final boolean useMock = false;
 
     /**
      * These values are transient due to the need to save and restore the view.  

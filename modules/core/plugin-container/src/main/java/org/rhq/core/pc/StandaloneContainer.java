@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -345,12 +344,7 @@ public class StandaloneContainer {
         case WAIT:
             Thread.sleep(Integer.valueOf(tokens[1]));
             break;
-        case P_CONFIG:
-            showPluginConfig();
-            break;
-        case R_CONFIG:
-            showResourceConfig();
-            break;
+
         }
 
         return false;
@@ -665,30 +659,6 @@ public class StandaloneContainer {
         return config;
     }
 
-    private void showPluginConfig() {
-        if (resourceId == 0) {
-            System.err.println("You must first set the resource to work with.");
-            return;
-        }
-        
-        Configuration config = pc.getInventoryManager().getResourceContainer(resourceId).getResource().getPluginConfiguration();
-        showConfig(config);
-    }
-    
-    private void showResourceConfig() throws PluginContainerException {
-        if (resourceId == 0) {
-            System.err.println("You must first set the resource to work with.");
-            return;
-        }
-        
-        Configuration config = pc.getConfigurationManager().loadResourceConfiguration(resourceId);
-        showConfig(config);
-    }
-    
-    private void showConfig(Configuration config) {
-        System.out.println(config.getProperties());
-    }
-    
     /**
      * List of possible commands
      */
@@ -709,10 +679,8 @@ public class StandaloneContainer {
         RESOURCES("res", "", 0, "Shows the discovere resources"), //
         SET("set", "resourceId n", 2,
             "Sets the resource id to work with. N can be a number or '$r' as result of last find resource call"), //
-        WAIT("w", "milliseconds", 1, "Waits the given amount of time"),
-        P_CONFIG("pc", "", 0, "Shows the plugin configuration of the current resource."),
-        R_CONFIG("rc", "", 0, "Shows the resource configuration of the current resource.");
-        
+        WAIT("w", "milliseconds", 1, "Waits the given amount of time");
+
         private String abbrev;
         private String args;
         private String help;

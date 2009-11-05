@@ -19,8 +19,6 @@
 package org.rhq.plugins.hosts;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -56,7 +54,7 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
     }
 
     @Override
-    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext discoveryContext)
+    protected File getConfigurationFile(ResourceDiscoveryContext discoveryContext)
     {
         File hostsFile;
         if (IS_WINDOWS) {
@@ -65,12 +63,7 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
         } else {
             hostsFile = new File("/etc/hosts");
         }
-        return Collections.singletonList(hostsFile.getAbsolutePath());
-    }
-
-    @Override
-    protected List<String> determineExcludeGlobs(ResourceDiscoveryContext discoveryContext) {
-        return null;
+        return hostsFile;
     }
 
     private File getWindowsDir() {

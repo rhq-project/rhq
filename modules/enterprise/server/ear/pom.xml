@@ -247,12 +247,6 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
-                  <artifactId>rhq-cron-plugin</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                
-                <artifactItem>
-                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-database-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
@@ -332,12 +326,6 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
-                  <artifactId>rhq-samba-plugin</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-
-                <artifactItem>
-                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-script-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
@@ -353,13 +341,6 @@
                   <artifactId>rhq-sshd-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
-                
-                <artifactItem>
-                  <groupId>org.rhq</groupId>
-                  <artifactId>rhq-sudoers-plugin</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                
 <!-- TODO: Uncomment once errors in virt plugin have been fixed.
                 <artifactItem>
                   <groupId>org.rhq</groupId>

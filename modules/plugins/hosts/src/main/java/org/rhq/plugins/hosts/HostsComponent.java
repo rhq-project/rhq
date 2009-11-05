@@ -21,7 +21,6 @@ package org.rhq.plugins.hosts;
 import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.*;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -87,11 +86,6 @@ public class HostsComponent extends AugeasConfigurationComponent {
         } else {
             new NonAugeasHostsConfigurationDelegate(this).updateResourceConfiguration(report);
         }
-    }
-
-    @Override
-    protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap, int listIndex) {
-        return new AugeasNode(listNode, "0" + listIndex);
     }
 
     @Override

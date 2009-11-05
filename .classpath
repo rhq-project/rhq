@@ -91,9 +91,7 @@
 	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/samba/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/sudoers/src/test/java"/>
-    <classpathentry kind="src" path="modules/plugins/sudoers/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/cron/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/cron/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/sudoers/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/apt/src/main/java"/>
@@ -101,8 +99,7 @@
 	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
-    <classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>    
+	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>

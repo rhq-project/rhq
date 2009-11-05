@@ -272,7 +272,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * Updates statuses according to the inventory rules. This is used internally - never call this yourself without
+     * Updates statuses according to the inventory rules This is used internally. Never call this yourself without
      * knowing what you do. See {@link #updateInventoryStatus(Subject, List, List, InventoryStatus)} for the "public"
      * version.
      */

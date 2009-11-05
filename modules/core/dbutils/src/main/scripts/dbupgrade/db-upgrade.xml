@@ -2034,7 +2034,7 @@
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
 
-      <schemaSpec version="2.62">
+      <schemaSpec version="2.62.2">
         <schema-addColumn table="RHQ_CONFIG_DEF" column="CONFIG_FORMAT" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_CONFIG_DEF" column="CONFIG_FORMAT" nullable="true" />
       </schemaSpec>

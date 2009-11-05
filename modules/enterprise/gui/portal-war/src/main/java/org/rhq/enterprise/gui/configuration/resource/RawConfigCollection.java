@@ -28,55 +28,16 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Name("RawConfigCollection")
-@Scope(ScopeType.CONVERSATION)
+@Scope(ScopeType.SESSION)
+/**
+ * The backing class for all Web based activities for manipulating the set of
+ * raw configuration files associated with a resource
+ */
 public class RawConfigCollection implements Serializable {
-    private final Log log = LogFactory.getLog(RawConfigCollection.class);
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 4837157548556168146L;
-    private String selectedPath;
-    private TreeMap<String, RawConfiguration> raws;
-    private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
-    private RawConfiguration current = null;
-
-    File uploadFile;
-
-    public void fileUploadListener(UploadEvent event) throws Exception {
-        log.error("fileUploadListener called");
-        uploadFile = event.getUploadItem().getFile();
-        if (uploadFile != null) {
-            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
-        }
-    }
-
-    void setFileSize(int size) {
-        System.out.println(size);
-    }
-
-    public void upload() {
-        log.error("upload called");
-        if (uploadFile != null) {
-            try {
-                FileReader fileReader = new FileReader(uploadFile);
-                char[] buff = new char[1024];
-                StringBuffer stringBuffer = new StringBuffer();
-                for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
-                    stringBuffer.append(buff, 0, count);
-                }
-                setCurrentContents(stringBuffer.toString());
-            } catch (IOException e) {
-                log.error("problem reading uploaded file", e);
-            }
-        }
-    }
-
-    @Create
-    @Begin
-    public void init() {
-
-    }
+    /*This is for development, to prevent actually going to the EJBs.
+    TODO It should be set to false prior to check in*/
+    private static final boolean useMock = false;
 
     /**
      * These values are transient due to the need to save and restore the view.  
@@ -85,13 +46,82 @@ public class RawConfigCollection implements Serializable {
     transient private ConfigurationManagerLocal configurationManager;
     transient private Configuration configuration = null;
 
-    //This is for development, to prevent actually going to the EJBs.
-    //It should be set to false prior to check in
-    private static final boolean useMock = true;
+    private final Log log = LogFactory.getLog(RawConfigCollection.class);
+    private int resourceId;
+    private static final long serialVersionUID = 4837157548556168146L;
+    private String selectedPath;
+    private TreeMap<String, RawConfiguration> raws;
+    private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
+    private RawConfiguration current = null;
 
     public RawConfigCollection() {
     }
 
+    public void fileUploadListener(UploadEvent event) throws Exception {
+        File uploadFile;
+        log.error("fileUploadListener called");
+        uploadFile = event.getUploadItem().getFile();
+        if (uploadFile != null) {
+            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
+            log.debug("content type is " + event.getUploadItem().getContentType());
+            if (uploadFile != null) {
+                try {
+                    FileReader fileReader = new FileReader(uploadFile);
+                    char[] buff = new char[1024];
+                    StringBuffer stringBuffer = new StringBuffer();
+                    for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
+                        stringBuffer.append(buff, 0, count);
+                    }
+                    setCurrentContents(stringBuffer.toString());
+                } catch (IOException e) {
+                    log.error("problem reading uploaded file", e);
+                }
+            }
+        }
+    }
+
+    /**
+     * This is a no-op, since the upload work was done by upload file
+     * But is kept as a target for the "action" value 
+     */
+    public void upload() {
+    }
+
+    /**
+     * This is a no-op, since the upload work was done by upload file
+     * But is kept as a target for the "save" icon from the full screen page
+     */
+    public String update() {
+        log.error("update called");
+
+        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+    }
+
+    /**
+     * Hack Alert.  This bean needs to be initialized on one of the pages that has id or resourceId set
+     * In order to capture the resource.  It will then Keep track of that particular resources until
+     * commit is called.  Ideally, this should be a conversation scoped bean, but that has other issues
+     */
+    @Create
+    @Begin
+    public void init() {
+        resourceId = EnterpriseFacesContextUtility.getResource().getId();
+    }
+
+    /**
+    *      
+    * @return the id associated with the resource.  
+    * The value Cached in order to be available on the upload page, 
+    * where seeing the resource id conflicts with the rich upload tag.
+    */
+    public int getResourceId() {
+        return resourceId;
+    }
+
+    /**
+     * Indicates which of the raw configuration files is currently selected.
+     * @param s
+     */
     public void select(String s) {
         this.selectedPath = s;
         setCurrentPath(selectedPath);
@@ -100,7 +130,6 @@ public class RawConfigCollection implements Serializable {
     public Configuration getConfiguration() {
         if (null == configuration) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            int resourceId = EnterpriseFacesContextUtility.getResource().getId();
             AbstractResourceConfigurationUpdate configurationUpdate = this.getConfigurationManager()
                 .getLatestResourceConfigurationUpdate(subject, resourceId);
             configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
@@ -123,6 +152,10 @@ public class RawConfigCollection implements Serializable {
         }
         getConfigurationManager();
         //        getConfigurationManager().setRawConfigurations(configId, raws.values());
+
+        this.configuration = null;
+        raws = null;
+        modified = null;
 
     }
 
@@ -179,18 +212,34 @@ public class RawConfigCollection implements Serializable {
     }
 
     public void setCurrentContents(String updated) {
-        String u2 = updated.substring(2);
+
+        log.error("setCurrent Called");
+
+        //String u2 = updated.substring(2);
         String original = new String(getCurrent().getContents());
-        if (!u2.equals(original)) {
+        if (!updated.equals(original)) {
+            log.error("original:" + original + ":");
+            log.error("updated :" + updated + ":");
+            {
+
+                byte[] oBytes = original.getBytes();
+                byte[] uBytes = updated.getBytes();
+
+                int max = oBytes.length < uBytes.length ? oBytes.length : uBytes.length;
+                for (int i = 0; i < max; ++i) {
+                    log.error("original = " + Byte.toString(oBytes[i]) + ": updated = " + Byte.toString(uBytes[i]));
+                }
+            }
+
             current = current.deepCopy();
             current.setContents(updated.getBytes());
             //TODO update other values like MD5
-            modified.put(current.getPath(), current);
+            getModified().put(current.getPath(), current);
         }
     }
 
     public void setCurrentPath(String path) {
-        RawConfiguration raw = modified.get(path);
+        RawConfiguration raw = getModified().get(path);
         if (null == raw) {
             raw = getRaws().get(path);
         }
@@ -212,15 +261,21 @@ public class RawConfigCollection implements Serializable {
         modified.put(raw.getPath(), raw);
     }
 
+    public TreeMap<String, RawConfiguration> getModified() {
+        if (modified == null) {
+            modified = new TreeMap<String, RawConfiguration>();
+        }
+        return modified;
+    }
+
     public boolean isModified(String path) {
-        return modified.keySet().contains(path);
+        return getModified().keySet().contains(path);
     }
 
     private ConfigurationManagerLocal getConfigurationManager() {
         if (null == configurationManager) {
             configurationManager = LookupUtil.getConfigurationManager();
         }
-
         return configurationManager;
     }
 }

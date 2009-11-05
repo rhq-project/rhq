@@ -7,7 +7,8 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:s="http://jboss.com/products/seam/taglib">
 
 <ui:composition template="/rhq/layout/main.xhtml">
 <ui:param name="pageTitle" value="Upload Configuration File"/>
@@ -19,7 +20,6 @@
        <h:outputText value="Upload Plugin"/>
     </f:facet>
 
-    <div><h:outputText id="contents" value="#{RawConfigCollection.currentContents}" /></div>
     <h:panelGrid columns="1" width="100%">
     <h:form id="uploadform" enctype="multipart/form-data">
         <rich:fileUpload  
@@ -30,12 +30,16 @@
             immediateUpload="true"
             autoclear="false"
             allowFlash="false">
-            <a4j:support event="onuploadcomplete" action="#{RawConfigCollection.upload}" reRender="contents"/>
+            <a4j:support event="onuploadcomplete" action="#{RawConfigCollection.upload}" />
         </rich:fileUpload>
         </h:form>
     </h:panelGrid>
-
+	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
+		<h:outputText value=" Done" />
+		<f:param name="currentResourceId" value="#{RawConfigCollection.resourceId}" />		
+	</h:outputLink>
 </rich:panel>
+
 
 </ui:define>
 

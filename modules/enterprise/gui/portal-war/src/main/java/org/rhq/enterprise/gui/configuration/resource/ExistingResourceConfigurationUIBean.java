@@ -49,6 +49,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractResourceConfigu
         return SUCCESS_OUTCOME;
     }
 
+    public String editRawConfiguration() {
+        return SUCCESS_OUTCOME;
+    }
+
     public String updateConfiguration() {
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();

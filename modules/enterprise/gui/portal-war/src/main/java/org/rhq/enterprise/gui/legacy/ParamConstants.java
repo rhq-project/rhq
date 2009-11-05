@@ -524,6 +524,8 @@ public interface ParamConstants {
     @Deprecated
     public static final String APPDEF_RES_TYPE_ID = "aetid";
 
+    public static final String CURRENT_RESOURCE_ID_PARAM = "currentResourceId";
+
     /**
      * A request parameter that specifies the {@link AbstractResourceConfigurationUpdate} id for a Resource
      * Configuration to be viewed or edited.

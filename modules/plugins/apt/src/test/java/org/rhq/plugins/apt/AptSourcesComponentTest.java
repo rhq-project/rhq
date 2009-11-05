@@ -19,15 +19,17 @@
 package org.rhq.plugins.apt;
 
 import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Jason Dobies
@@ -49,15 +51,11 @@ public class AptSourcesComponentTest {
         pluginConfiguration.put(new PropertySimple("augeas-apt-sources-path", "/files/etc/apt/sources.list/*"));
     }
 
-    @Test
-    public void dummyTest() {
-        // Fake test to keep maven happy while this test is readdressed
-    }
-
     public void loadResourceConfiguration() throws Exception {
-
-        // Temporarily disabled test until it is better flushed out to only run on apt based systems
-
+        // Just bail because this test wont work yet
+        if (true) {
+            return;
+        }
         Configuration configuration;
         try {
             configuration = component.loadResourceConfiguration(pluginConfiguration);
@@ -70,12 +68,13 @@ public class AptSourcesComponentTest {
 
         Collection<Property> allProperties = configuration.getProperties();
 
-        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: " + allProperties.size();
+        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
+            + allProperties.size();
 
-        PropertyList entryList = (PropertyList)allProperties.iterator().next();
+        PropertyList entryList = (PropertyList) allProperties.iterator().next();
 
         for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap)property;
+            PropertyMap entry = (PropertyMap) property;
 
             Property typeProperty = entry.get("type");
             Property uriProperty = entry.get("uri");
@@ -85,9 +84,9 @@ public class AptSourcesComponentTest {
             assert uriProperty != null : "URI was null in entry";
             assert distributionProperty != null : "Distribution was null in entry";
 
-            log.info("Type: " + ((PropertySimple)typeProperty).getStringValue());
-            log.info("URI: " + ((PropertySimple)uriProperty).getStringValue());
-            log.info("Distribution: " + ((PropertySimple)distributionProperty).getStringValue());
+            log.info("Type: " + ((PropertySimple) typeProperty).getStringValue());
+            log.info("URI: " + ((PropertySimple) uriProperty).getStringValue());
+            log.info("Distribution: " + ((PropertySimple) distributionProperty).getStringValue());
         }
 
     }

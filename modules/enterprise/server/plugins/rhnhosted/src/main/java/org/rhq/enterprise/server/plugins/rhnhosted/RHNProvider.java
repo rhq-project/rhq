@@ -32,7 +32,12 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
@@ -47,6 +52,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
+
 
 /**
  * @author pkilambi
@@ -125,6 +131,12 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
 
         // RHQ Server is now active, initialize the handler for the bits.
         helper = new RHNHelper(locationIn, repos, rhnObject.getSystemid());
+
+        // Now that the server is activated, spawn all syncable channels
+        ArrayList<String> channels = helper.getSyncableChannels();
+
+        // Eventually we should pass in a subset of selected channels to spawn
+        initializeRepos(channels);
     }
 
     /**
@@ -229,6 +241,26 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     private PublicKeyRing readDefaultKeyRing() throws KeyException, IOException {
         InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
         return new PublicKeyRing(keyringStream);
+    }
+
+    /**
+     * Spawns a list of repos for all available channels from RHN hosted.
+     * @param channels The list of channels to be initialized as repos
+     * @throws RepoException
+     */
+    public void initializeRepos(ArrayList<String> channels) throws RepoException {
+        log.info("list of channels: " + channels);
+        if (channels.size() == 0) {
+            // No repos to create
+            return;
+        }
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        Subject subject = LookupUtil.getSubjectManager().getOverlord();
+        for (String clabel : channels) {
+            Repo newRepo = new Repo(clabel.toString());
+            newRepo = repoManager.createRepo(subject, newRepo);
+            log.info("New " + newRepo + " repo created");
+        }
     }
 
     /**

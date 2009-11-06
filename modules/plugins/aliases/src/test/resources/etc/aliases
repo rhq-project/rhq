@@ -1,0 +1,7 @@
+# General redirections for pseudo accounts.
+bin:            root
+daemon:         root
+adm:            root
+lp:             root
+sync:           root
+shutdown:       root

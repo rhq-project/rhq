@@ -32,10 +32,13 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
 import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 
 /**
  * @author pkilambi
@@ -48,6 +51,9 @@ public class RHNHelper {
     private final RhnComm rhndata;
     private final RhnDownloader rhndownload;
     private final String systemid;
+    
+    //TODO: Need to determine what the ksTreeType should be for RHN Kickstarts
+    private final String ksTreeType = "CHANGE_ME";
 
     private final Log log = LogFactory.getLog(RHNHelper.class);
 
@@ -66,6 +72,22 @@ public class RHNHelper {
         this.rhndownload = new RhnDownloader(baseurl);
         this.systemid = systemIdIn;
 
+    }
+
+    public List<DistributionDetails> getDistributionDetails(List<String> ksLabels)
+            throws IOException, XmlRpcException {
+
+        List<DistributionDetails> ddList = new ArrayList<DistributionDetails>();
+        List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, ksLabels);
+        for (RhnKickstartableTreeType ksTree: ksTreeTypes) {
+            List<RhnKickstartFileType> ksFiles = ksTree.getRhnKickstartFiles().getRhnKickstartFile();
+            for (RhnKickstartFileType ksFile: ksFiles) {
+                String path = ksTree.getBasePath() + "/" + ksFile.getRelativePath();
+                //TODO:  Should add fileSize and md5sum to DistributionDetails
+                ddList.add(new DistributionDetails(ksTree.getLabel(), path, ksTreeType));
+            }
+        }
+        return ddList;
     }
 
     /**
@@ -168,11 +190,15 @@ public class RHNHelper {
         return allchannels;
     }
 
-    public List<String> getSyncableKickstartLabels() throws IOException, XmlRpcException {
-        List<String> ksLabels = new ArrayList<String>();
 
+    public List<String> getSyncableKickstartLabels() throws IOException, XmlRpcException {
         List<String> allChannels = getSyncableChannels();
-        List<RhnChannelType> rct = rhndata.getChannels(this.systemid, allChannels);
+        return getSyncableKickstartLabels(allChannels);
+    }
+
+    public List<String> getSyncableKickstartLabels(List<String> channelLabels) throws IOException, XmlRpcException {
+        List<String> ksLabels = new ArrayList<String>();
+        List<RhnChannelType> rct = rhndata.getChannels(this.systemid, channelLabels);
         for (RhnChannelType ct: rct) {
             String ksTrees = ct.getKickstartableTrees();
             String[] trees = ksTrees.split(" ");
@@ -180,6 +206,7 @@ public class RHNHelper {
         }
         return ksLabels;
     }
+
 
     /**
      * Open an input stream to specifed relative url. Prepends the baseurl to the <i>url</i> and opens and opens and

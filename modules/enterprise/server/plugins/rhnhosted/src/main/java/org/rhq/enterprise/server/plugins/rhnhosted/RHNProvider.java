@@ -38,15 +38,22 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 
 /**
  * @author pkilambi
  *
  */
-public class RHNProvider implements ContentProvider, PackageSource {
+public class RHNProvider implements ContentProvider, PackageSource, DistributionSource
+{
 
     private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNActivator rhnObject;
@@ -127,6 +134,7 @@ public class RHNProvider implements ContentProvider, PackageSource {
         log.debug("shutdown");
     }
 
+
     /**
      * Get an input stream for the specified package (bits).
      *
@@ -180,6 +188,25 @@ public class RHNProvider implements ContentProvider, PackageSource {
             log.info("synchronizing with repo: " + helper + " finished\n" + summary);
         }
 
+    }
+
+    public void synchronizeDistribution(DistributionSyncReport report) throws Exception {
+        // hard coding a kickstart label for testing.
+        List<String> distLabels = new ArrayList<String>();
+        distLabels.add("ks-rhel-i386-server-5");
+        synchronizeDistribution(report, distLabels);
+    }
+
+    public void synchronizeDistribution(DistributionSyncReport report, List<String> distLabels) throws Exception {
+
+        // Goal:
+        //   This method will create the metadata representing what kickstart tree files need to be downloaded.
+        //       the metadata will be returned through the DistributionSyncReport object.
+        //   NOTE:  This method DOES not do the actual downloading of data.
+        List<DistributionDetails> ddList = helper.getDistributionDetails(distLabels);
+        //TODO:  Need to add logic to determine what has already been synced, what needs to be synced.
+
+        report.addDistros(ddList);
     }
 
     /**

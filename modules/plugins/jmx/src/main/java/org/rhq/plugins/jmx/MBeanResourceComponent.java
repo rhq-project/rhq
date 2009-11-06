@@ -524,7 +524,8 @@ public class MBeanResourceComponent<T extends JMXComponent> implements Measureme
         Object[] parameterValues = new Object[operation.getParameters().size()];
 
         int i = 0;
-        for (EmsParameter param : operation.getParameters()) {
+        List<EmsParameter> params = operation.getParameters();
+        for (EmsParameter param : params) {
             PropertySimple ps = parameters.getSimple(param.getName());
             if (param.getType().equals(String.class.getName())) {
                 parameterValues[i] = (ps == null) ? null : ps.getStringValue();

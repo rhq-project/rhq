@@ -66,10 +66,12 @@ public class AgentCommTestBase {
     @BeforeMethod
     public void setUp() throws Exception {
         m_agent1Test = new AgentTestClass();
-        m_agent1Test.setConfigurationFile("test-agent-configuration.xml", "test");
+        String agent1CfgFile = System.getProperty("agent1.cfg.file", "test-agent-configuration.xml");
+        m_agent1Test.setConfigurationFile(agent1CfgFile, "test");
 
         m_agent2Test = new AgentTestClass();
-        m_agent2Test.setConfigurationFile("test-agent2-configuration.xml", "test2");
+        String agent2CfgFile = System.getProperty("agent2.cfg.file", "test-agent2-configuration.xml");
+        m_agent2Test.setConfigurationFile(agent2CfgFile, "test2");
 
         // make sure we create keystore files - some tests needs both existing at the same time as soon as they begin
         File keystore_file1 = new File("target/testdata/keystore.dat");

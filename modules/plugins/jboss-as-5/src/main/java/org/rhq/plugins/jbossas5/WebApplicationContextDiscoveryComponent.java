@@ -56,27 +56,24 @@ import org.rhq.plugins.jbossas5.util.ResourceComponentUtils;
  *
  * @author Ian Springer
  */
-public class WebApplicationContextDiscoveryComponent
-        implements ResourceDiscoveryComponent<AbstractManagedDeploymentComponent>
-{
+public class WebApplicationContextDiscoveryComponent implements
+    ResourceDiscoveryComponent<AbstractManagedDeploymentComponent> {
     private static final String CONTEXT_COMPONENT_NAME = "ContextMO";
 
     // A regex for the names of all MBean:WebApplication components for a WAR
     // (one component per vhost that WAR is deployed to).
-    private static final String WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE =
-            "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//[^/]+%"
-                    + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%";
+    private static final String WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE = "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//[^/]+%"
+        + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%";
 
     // The name of the MBean:WebApplicationManager component for a WAR.
-    private static final String WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE =
-            "jboss.web:host=%" + WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY + "%,"
-                    + "path=%" + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager"; // TODO check cluster case
+    private static final String WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE = "jboss.web:host=%"
+        + WebApplicationContextComponent.VIRTUAL_HOST_PROPERTY + "%," + "path=%"
+        + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%,type=Manager"; // TODO check cluster case
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<AbstractManagedDeploymentComponent> discoveryContext) throws Exception
-    {
+        ResourceDiscoveryContext<AbstractManagedDeploymentComponent> discoveryContext) throws Exception {
         ResourceType resourceType = discoveryContext.getResourceType();
         log.trace("Discovering " + resourceType.getName() + " Resources...");
 
@@ -90,8 +87,7 @@ public class WebApplicationContextDiscoveryComponent
         String contextPath = getContextPath(discoveryContext);
         Set<ManagedComponent> webApplicationComponents = getWebApplicationComponents(contextPath, managementView);
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet(webApplicationComponents.size());
-        for (ManagedComponent webApplicationComponent : webApplicationComponents)
-        {
+        for (ManagedComponent webApplicationComponent : webApplicationComponents) {
             String virtualHost = getWebApplicationComponentVirtualHost(webApplicationComponent);
             String resourceName = "//" + virtualHost + contextPath;
             //noinspection UnnecessaryLocalVariable
@@ -106,20 +102,13 @@ public class WebApplicationContextDiscoveryComponent
             pluginConfig.put(new PropertySimple(WebApplicationContextComponent.CONTEXT_PATH_PROPERTY, contextPath));
 
             // e.g. "jboss.web:J2EEApplication=none,J2EEServer=none,j2eeType=WebModule,name=//localhost/jmx-console"
-            String webApplicationManagerComponentName =
-                    ResourceComponentUtils.replacePropertyExpressionsInTemplate(WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE,
-                            pluginConfig);
+            String webApplicationManagerComponentName = ResourceComponentUtils.replacePropertyExpressionsInTemplate(
+                WEB_APPLICATION_MANAGER_COMPONENT_NAME_TEMPLATE, pluginConfig);
             pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
-                    webApplicationManagerComponentName));
+                webApplicationManagerComponentName));
 
-            DiscoveredResourceDetails resource =
-                    new DiscoveredResourceDetails(resourceType,
-                            resourceKey,
-                            resourceName,
-                            resourceVersion,
-                            resourceType.getDescription(),
-                            pluginConfig,
-                            null);
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
+                resourceVersion, resourceType.getDescription(), pluginConfig, null);
 
             discoveredResources.add(resource);
         }
@@ -138,67 +127,54 @@ public class WebApplicationContextDiscoveryComponent
      */
     @Nullable
     private String getContextPath(ResourceDiscoveryContext<AbstractManagedDeploymentComponent> discoveryContext)
-            throws NoSuchDeploymentException
-    {
+        throws NoSuchDeploymentException {
         AbstractManagedDeploymentComponent parentWarComponent = discoveryContext.getParentResourceComponent();
         ManagedDeployment deployment = parentWarComponent.getManagedDeployment();
         ManagedComponent contextComponent = deployment.getComponent(CONTEXT_COMPONENT_NAME);
         // e.g. "/jmx-console"
-        if (contextComponent != null)
-        {
-            return (String)ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
-        }
-        else
-        {
+        if (contextComponent != null) {
+            return (String) ManagedComponentUtils.getSimplePropertyValue(contextComponent, "contextRoot");
+        } else {
             return null;
         }
     }
 
-    static Set<String> getVirtualHosts(String contextPath, ManagementView managementView) throws Exception
-    {
+    static Set<String> getVirtualHosts(String contextPath, ManagementView managementView) throws Exception {
         Set<String> virtualHosts = new HashSet();
-        Set<ManagedComponent> webApplicationManagerComponents = getWebApplicationComponents(contextPath,
-                managementView);
-        for (ManagedComponent webApplicationManagerComponent : webApplicationManagerComponents)
-        {
+        Set<ManagedComponent> webApplicationManagerComponents = getWebApplicationComponents(contextPath, managementView);
+        for (ManagedComponent webApplicationManagerComponent : webApplicationManagerComponents) {
             virtualHosts.add(getWebApplicationComponentVirtualHost(webApplicationManagerComponent));
         }
         return virtualHosts;
     }
 
     private static Set<ManagedComponent> getWebApplicationComponents(String contextPath, ManagementView managementView)
-            throws Exception
-    {
-        if (contextPath == null)
-        {
+        throws Exception {
+        if (contextPath == null) {
             // This means the WAR is stopped, which means it has no contexts associated with it.
             return Collections.emptySet();
         }
-        String webApplicationManagerComponentNamesRegex =
-                WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE.replaceAll("%"
-                        + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
+        String webApplicationManagerComponentNamesRegex = WEB_APPLICATION_COMPONENT_NAMES_REGEX_TEMPLATE.replaceAll("%"
+            + WebApplicationContextComponent.CONTEXT_PATH_PROPERTY + "%", contextPath);
         ComponentType webApplicationComponentType = MoreKnownComponentTypes.MBean.WebApplication.getType();
         //return managementView.getMatchingComponents(webApplicationManagerComponentNamesRegex,
         //        webApplicationComponentType, new RegularExpressionNameMatcher());
         return ManagedComponentUtils.getManagedComponents(managementView, webApplicationComponentType,
-                webApplicationManagerComponentNamesRegex, new RegularExpressionNameMatcher());
+            webApplicationManagerComponentNamesRegex, new RegularExpressionNameMatcher());
 
     }
 
-    private static String getWebApplicationComponentVirtualHost(ManagedComponent webApplicationComponent)
-    {
+    private static String getWebApplicationComponentVirtualHost(ManagedComponent webApplicationComponent) {
         ObjectName objectName;
-        try
-        {
+        try {
             objectName = new ObjectName(webApplicationComponent.getName());
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalStateException("'" + webApplicationComponent.getName()
+                + "' is not a valid JMX ObjectName.");
         }
-        catch (MalformedObjectNameException e)
-        {
-            throw new IllegalStateException("'" + webApplicationComponent.getName() + "' is not a valid JMX ObjectName.");
-        }
-        // e.g. "//localhost/jmx-console"
-        String name = objectName.getKeyProperty("name");
-        // Return just the host portion, e.g. "localhost".
-        return name.substring(2, name.lastIndexOf('/'));
+        // name like "//localhost/foo/bar", return just the host portion, e.g. "localhost".
+        String hostName = objectName.getKeyProperty("name").substring(2);
+        hostName = hostName.substring(0, hostName.indexOf("/"));
+        return hostName;
     }
 }

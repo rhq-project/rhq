@@ -27,7 +27,11 @@ package org.rhq.enterprise.communications;
  */
 public class CommTestConstants {
     private static final String CONNECTOR_BIND_PORT_SYSPROP = "rhq.comm.test.connectorBindPort";
+    private static final String CONNECTOR2_BIND_PORT_SYSPROP = "rhq.comm.test.connector2BindPort";
+    private static final String DEFAULT_CONNECTOR2_BIND_PORT = "62621";
     private static final String DEFAULT_CONNECTOR_BIND_PORT = "33333";
     public static final String CONNECTOR_BIND_PORT = System.getProperty(CONNECTOR_BIND_PORT_SYSPROP,
-            DEFAULT_CONNECTOR_BIND_PORT);    
+            DEFAULT_CONNECTOR_BIND_PORT);
+    public static final String CONNECTOR2_BIND_PORT = System.getProperty(CONNECTOR2_BIND_PORT_SYSPROP,
+            DEFAULT_CONNECTOR2_BIND_PORT);
 }

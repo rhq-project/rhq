@@ -37,8 +37,8 @@
         <DatabaseTest.nofail>true</DatabaseTest.nofail>
 
         <!-- comm and agent config properties -->
-        <rhq.comm.test.connectorBindport>89898</rhq.comm.test.connectorBindPort>
-        <rhq.comm.test.connector2Bindport>62627</rhq.comm.test.connector2BindPort>
+        <rhq.comm.test.connectorBindPort>89898</rhq.comm.test.connectorBindPort>
+        <rhq.comm.test.connector2BindPort>62627</rhq.comm.test.connector2BindPort>
         <agent1.cfg.file>test-agent1-cfg-mvn.xml</agent1.cfg.file>
         <agent2.cfg.file>test-agent2-cfg-mvn.xml</agent2.cfg.file>
         <agent1.server.bind-port>77777</agent1.server.bind-port>

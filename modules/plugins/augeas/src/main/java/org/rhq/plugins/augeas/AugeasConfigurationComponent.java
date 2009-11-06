@@ -93,7 +93,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
 
-        this.augeasRootPath = pluginConfig.getSimpleValue(AUGEAS_ROOT_PATH_PROP, DEFAULT_AUGEAS_ROOT_PATH);
+        this.augeasRootPath = DEFAULT_AUGEAS_ROOT_PATH;
+        if (System.getProperty(AUGEAS_ROOT_PATH_PROP) != null) {
+            this.augeasRootPath = System.getProperty(AUGEAS_ROOT_PATH_PROP);
+        }
         log.debug("Augeas Root Path = \"" + this.augeasRootPath + "\"");
 
         initGlobs(pluginConfig);
@@ -462,22 +465,30 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return propSimple.getStringValue();
     }
 
+    protected String getNodeInsertionPoint(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
+        PropertySimple propSimple) {
+        return String.format("%s/*[following-sibling::*[1]=%s[1]]", node.getParent().getPath(), node.getPath());
+    }
+
     protected void setNodeFromPropertySimple(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
         PropertySimple propSimple) {
         String value = toNodeValue(augeas, node, propDefSimple, propSimple);
         if (propDefSimple.getType() == PropertySimpleType.LONG_STRING) {
             // First remove the existing items.
-            List<String> childPaths = augeas.match(node.getPath());
-            for (String childPath : childPaths) {
-                augeas.remove(childPath);
-            }
-
+            //get the node position first, needed to say insert after node x
+            String varName = "path";
+            String nodeExpression = getNodeInsertionPoint(augeas, node, propDefSimple, propSimple);
+            augeas.defineNode(varName, nodeExpression, null);
+            augeas.remove(node.getPath());
             // Now add the updated items.
             String[] tokens = value.trim().split("\\s+");
-            for (int i = 0, tokensLength = tokens.length; i < tokensLength; i++) {
-                String itemPath = node.getPath() + "[" + (i + 1) + "]";
-                String itemValue = tokens[i];
-                augeas.set(itemPath, itemValue);
+            for (int i = tokens.length; i > 0; i--) {
+                String itemValue = tokens[i - 1];
+                if (itemValue != null && itemValue.trim().length() != 0) {
+                    augeas.insert("$" + varName, node.getName(), false);
+                    augeas.set(node.getPath() + "[1]", itemValue);
+                }
+
             }
         } else {
             // Update the value of the existing node.

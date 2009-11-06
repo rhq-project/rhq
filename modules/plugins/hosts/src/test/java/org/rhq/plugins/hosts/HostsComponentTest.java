@@ -18,12 +18,10 @@
  */
 package org.rhq.plugins.hosts;
 
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pc.PluginContainer;
 import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
 /**
@@ -83,21 +81,43 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
         return config;
     }
 
-    private boolean supportsFacet(Class<?> facetInterface) {
-        PluginMetadataManager manager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        String componentClass = manager.getComponentClass(getResourceType());
-
-        try {
-            return facetInterface.isAssignableFrom(Class.forName(componentClass));
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Could not find component class " + componentClass, e);
-        }
-    }
-
     @Override
     protected Configuration getChangedResourceConfig() {
-        // TODO Auto-generated method stub
-        //TODO NEED TO FIX THIS 
-        return null;
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+
+        PropertyMap entry;
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "127.0.0.1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "hehe\nlocalhost4\nlocalhost4.localdomain4"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "::1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost6\nlocalhost6.localdomain6"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "1.1.1.1"));
+        entry.put(new PropertySimple("canonical", "one-one-one-one.com"));
+        entry.put(new PropertySimple("alias", ""));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "2.2.2.2"));
+        entry.put(new PropertySimple("canonical", "two-two-two-two.com"));
+        entry.put(new PropertySimple("alias", ""));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "3.3.3.3"));
+        entry.put(new PropertySimple("canonical", "three-three-three-three.com"));
+        entry.put(new PropertySimple("alias", "aliast1.org\nalias2.org"));
+        entries.getList().add(entry);
+        return config;
     }
 }

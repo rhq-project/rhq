@@ -111,26 +111,25 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             case PLATFORM:
                 throw new IllegalStateException("Huh? Using Augeas to configure a platform?");
             }
+            resetAugeasConfigs();
             Resource resource = getResource();
             Configuration pluginConfig = resource.getPluginConfiguration();
-
-            resetAugeasConfigs(pluginConfig);
-
             inventoryManager.updatePluginConfiguration(resource.getId(), pluginConfig);
         } catch (Exception e) {
             fail("Failed to update Augeas root in plugin configuration.", e);
         }
     }
 
-    public void resetAugeasConfigs(Configuration pluginConfig) throws IOException {
+    public void resetAugeasConfigs() throws IOException {
         String tmpDirPath = System.getProperty("java.io.tmpdir");
         File tmpDir = new File(tmpDirPath);
         File augeasRootPath = new File(tmpDir, "rhq-itest-augeas-root-path");
         if (!augeasRootPath.exists()) {
             augeasRootPath.mkdirs();
         }
-
-        pluginConfig.put(new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath));
+        System.setProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath.getAbsolutePath());
+        Resource resource = getResource();
+        Configuration pluginConfig = resource.getPluginConfiguration();
 
         PropertySimple includes = pluginConfig.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
         List<String> includeGlobs = new ArrayList<String>();
@@ -149,6 +148,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
 
     @AfterSuite(groups = TEST_GROUP)
     public void stop() {
+        System.clearProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP);
         System.out.println("Stopping PC...");
         PluginContainer.getInstance().shutdown();
         System.out.println("PC stopped.");
@@ -215,7 +215,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
                 assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
                     + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
             } finally {
-                resetAugeasConfigs(getResource().getPluginConfiguration());
+                resetAugeasConfigs();
             }
         }
     }

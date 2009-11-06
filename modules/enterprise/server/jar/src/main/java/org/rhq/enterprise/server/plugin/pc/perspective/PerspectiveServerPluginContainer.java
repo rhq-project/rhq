@@ -36,14 +36,6 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
     }
 
     @Override
-    public void initialize() throws Exception {
-    }
-
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
     public ServerPluginType getSupportedServerPluginType() {
         return new ServerPluginType(PerspectivePluginDescriptorType.class);
     }

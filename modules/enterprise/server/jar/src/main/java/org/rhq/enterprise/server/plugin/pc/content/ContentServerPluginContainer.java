@@ -28,6 +28,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.PluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
@@ -43,7 +44,6 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     private static final String SYNC_JOB_GROUP_NAME = "syncContentSource";
 
-    private ContentProviderPluginManager pluginManager;
     private ContentProviderManager adapterManager;
 
     public ContentServerPluginContainer(MasterServerPluginContainer master) {
@@ -52,20 +52,18 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     @Override
     public void initialize() throws Exception {
-        getLog().debug("Content server plugin container has been initialized");
-
-        this.pluginManager = createPluginManager();
-        this.adapterManager = createAdapterManager(this.pluginManager);
-
-        return;
+        getLog().debug("Content server plugin container initializing");
+        super.initialize();
+        this.adapterManager = createAdapterManager((ContentProviderPluginManager) getPluginManager()); // initializes, too
+        getLog().debug("Content server plugin container initialized");
     }
 
     @Override
     public void shutdown() {
-        getLog().debug("Content server plugin container is being shutdown");
-
+        getLog().debug("Content server plugin container is shutting down");
         this.adapterManager.shutdown();
-        this.pluginManager.shutdown();
+        super.shutdown();
+        getLog().debug("Content server plugin container is shutdown");
     }
 
     @Override
@@ -81,18 +79,6 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      */
     public ContentProviderManager getAdapterManager() {
         return this.adapterManager;
-    }
-
-    /**
-     * Returns the object that is responsible for managing all plugins and their metadata.
-     *
-     * <p>This is protected to only allow subclasses access to this - external clients to this PC should never have
-     * direct access to this plugin manager.</p>
-     *
-     * @return plugin manager
-     */
-    protected ContentProviderPluginManager getPluginManager() {
-        return this.pluginManager;
     }
 
     /**
@@ -188,18 +174,9 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         return;
     }
 
-    /**
-     * Creates, configures and initializes the plugin manager that the PC will use.
-     *
-     * <p>This is protected scope so subclasses can define their own plugin manager to use. This is mainly to support
-     * tests.</p>
-     *
-     * @return the new plugin manager
-     */
-    protected ContentProviderPluginManager createPluginManager() {
-        ContentProviderPluginManager pm = new ContentProviderPluginManager(this);
-        pm.initialize();
-        return pm;
+    @Override
+    protected PluginManager createPluginManager() {
+        return new ContentProviderPluginManager(this);
     }
 
     /**

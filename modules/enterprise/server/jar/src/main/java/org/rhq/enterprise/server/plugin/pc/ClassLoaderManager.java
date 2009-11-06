@@ -95,7 +95,11 @@ public class ClassLoaderManager {
     public void shutdown() {
         for (ClassLoader doomedCL : getUniqueServerPluginClassLoaders()) {
             if (doomedCL instanceof ServerPluginClassLoader) {
-                ((ServerPluginClassLoader) doomedCL).destroy();
+                try {
+                    ((ServerPluginClassLoader) doomedCL).destroy();
+                } catch (Exception e) {
+                    log.warn("Failed to destroy classloader: " + doomedCL, e);
+                }
             }
         }
         this.serverPluginClassLoaders.clear();
@@ -107,8 +111,10 @@ public class ClassLoaderManager {
         Set<ClassLoader> classLoaders;
         StringBuilder str = new StringBuilder(this.getClass().getSimpleName());
 
+        str.append(" tmp-dir=[").append(this.tmpDir).append(']');
+
         classLoaders = getUniqueServerPluginClassLoaders();
-        str.append(" [#plugin CLs=").append(classLoaders.size());
+        str.append(", #plugin CLs=[").append(classLoaders.size());
         classLoaders.clear(); // help out the GC, clear out the shallow copy container
 
         str.append(']');
@@ -137,12 +143,12 @@ public class ClassLoaderManager {
 
         if (cl == null) {
             URL pluginJarUrl = this.pluginNamesUrls.get(pluginName);
-            ClassLoader parentClassLoader = this.rootClassLoader;
 
             if (log.isDebugEnabled()) {
                 log.debug("Creating classloader for plugin [" + pluginName + "] from URL [" + pluginJarUrl + ']');
             }
 
+            ClassLoader parentClassLoader = this.rootClassLoader;
             cl = createClassLoader(pluginJarUrl, null, parentClassLoader);
             this.serverPluginClassLoaders.put(pluginName, cl);
         }

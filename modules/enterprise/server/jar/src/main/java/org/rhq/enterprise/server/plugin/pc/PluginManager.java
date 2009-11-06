@@ -51,6 +51,29 @@ public class PluginManager {
     }
 
     /**
+     * Initializes the plugin manager to prepare it to start loading plugins.
+     * 
+     * @throws Exception if failed to initialize
+     */
+    public void initialize() throws Exception {
+        return; // no-op
+    }
+
+    /**
+     * Shuts down this manager. This should be called only after all of its plugins
+     * have been {@link #unloadPlugin(ServerPluginEnvironment) unloaded}.
+     */
+    public void shutdown() {
+        if (this.loadedPlugins.size() > 0) {
+            log.warn("Server plugin manager is being shutdown while some plugins are still loaded: "
+                + this.loadedPlugins);
+        }
+
+        this.loadedPlugins.clear();
+        return;
+    }
+
+    /**
      * Informs the plugin manager that a plugin with the given environment needs to be loaded.
      * Once this method returns, the plugin's components are ready to be created and used.
      *
@@ -59,10 +82,7 @@ public class PluginManager {
      * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
      */
     public void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Loading server plugin [" + env.getPluginName() + "] from: " + env.getPluginUrl());
-        }
-
+        log.debug("Loading server plugin [" + env.getPluginName() + "] from: " + env.getPluginUrl());
         this.loadedPlugins.put(env.getPluginName(), env);
         return;
     }
@@ -76,10 +96,7 @@ public class PluginManager {
      * @throws Exception if the plugin manager cannot unload the plugin
      */
     public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Unloading server plugin [" + env.getPluginName() + "]");
-        }
-
+        log.debug("Unloading server plugin [" + env.getPluginName() + "]");
         this.loadedPlugins.remove(env.getPluginName());
         return;
     }
@@ -91,6 +108,19 @@ public class PluginManager {
      */
     public Collection<ServerPluginEnvironment> getPluginEnvironments() {
         return this.loadedPlugins.values();
+    }
+
+    /**
+     * Given a plugin name, this returns that plugin's environment.
+     * 
+     * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
+     * (e.g. &ltserver-plugin name="thePluginName").</p>
+     *
+     * @param pluginName the plugin whose environment is to be returned
+     * @return given plugin's environment
+     */
+    public ServerPluginEnvironment getPluginEnvironment(String pluginName) {
+        return this.loadedPlugins.get(pluginName);
     }
 
     public AbstractTypeServerPluginContainer getParentPluginContainer() {

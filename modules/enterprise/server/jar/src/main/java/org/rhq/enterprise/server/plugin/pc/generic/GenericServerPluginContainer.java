@@ -37,14 +37,6 @@ public class GenericServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     @Override
-    public void initialize() throws Exception {
-    }
-
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
     public ServerPluginType getSupportedServerPluginType() {
         return new ServerPluginType(GenericPluginDescriptorType.class);
     }

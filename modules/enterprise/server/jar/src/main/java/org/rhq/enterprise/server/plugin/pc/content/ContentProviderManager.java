@@ -575,7 +575,7 @@ public class ContentProviderManager {
             apiClassName = type.getContentSourceApiClass();
             pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
 
-            ServerPluginEnvironment pluginEnv = this.pluginManager.getPlugin(pluginName);
+            ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
             ClassLoader pluginClassloader = pluginEnv.getClassLoader();
 
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
@@ -649,7 +649,7 @@ public class ContentProviderManager {
             throw new RuntimeException("There is no adapter for content source [" + adapter + "]");
         }
 
-        ServerPluginEnvironment env = this.pluginManager.getPlugin(contentSource.getContentSourceType());
+        ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(contentSource.getContentSourceType());
         if (env == null) {
             throw new RuntimeException("There is no plugin env. for content source [" + contentSource + "]");
         }

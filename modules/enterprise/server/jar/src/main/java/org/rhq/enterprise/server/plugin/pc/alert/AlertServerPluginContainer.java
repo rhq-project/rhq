@@ -36,14 +36,6 @@ public class AlertServerPluginContainer extends AbstractTypeServerPluginContaine
     }
 
     @Override
-    public void initialize() throws Exception {
-    }
-
-    @Override
-    public void shutdown() {
-    }
-
-    @Override
     public ServerPluginType getSupportedServerPluginType() {
         return new ServerPluginType(AlertPluginDescriptorType.class);
     }

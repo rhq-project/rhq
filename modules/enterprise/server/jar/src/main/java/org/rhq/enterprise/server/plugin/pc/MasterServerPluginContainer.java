@@ -22,6 +22,7 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class MasterServerPluginContainer {
      */
     public void initialize(MasterServerPluginContainerConfiguration config) {
         try {
-            log.debug("Master server plugin container has been initialized with config: " + config);
+            log.debug("Master server plugin container is being initialized with config: " + config);
 
             this.configuration = config;
 
@@ -66,40 +67,58 @@ public class MasterServerPluginContainer {
             ClassLoader rootClassLoader = createRootServerPluginClassLoader();
             File tmpDir = this.configuration.getTemporaryDirectory();
             this.classLoaderManager = createClassLoaderManager(plugins, rootClassLoader, tmpDir);
+            log.debug("Created classloader manager: " + this.classLoaderManager);
 
             // create all known child plugin containers and map them to their supported plugin types
             List<AbstractTypeServerPluginContainer> pcs = createPluginContainers();
             for (AbstractTypeServerPluginContainer pc : pcs) {
                 this.pluginContainers.put(pc.getSupportedServerPluginType(), pc);
             }
+            log.debug("Created server plugin containers: " + this.pluginContainers.keySet());
 
             // initialize all the plugin containers
-            for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers
-                .entrySet()) {
-                log.info("Master PC is initializing plugin container for plugin type [" + entry.getKey() + "]");
+            Iterator<Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer>> iterator;
+            iterator = this.pluginContainers.entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry = iterator.next();
+
+                ServerPluginType pluginType = entry.getKey();
+                AbstractTypeServerPluginContainer pc = entry.getValue();
+
+                log.debug("Master PC is initializing server plugin container for plugin type [" + pluginType + "]");
                 try {
-                    entry.getValue().initialize();
+                    pc.initialize();
+                    log.info("Master PC initialized server plugin container for plugin type [" + pluginType + "]");
                 } catch (Exception e) {
-                    log.warn("Failed to initialize plugin container for plugin type [" + entry.getKey() + "]", e);
+                    log.warn("Failed to initialize server plugin container for plugin type [" + pluginType + "]", e);
+                    iterator.remove();
                 }
             }
 
-            // create classloaders for all plugins and load plugins into their plugin containers
-            // Note that we do not care what order we load plugins - in the future we may want dependencies
+            // Create classloaders/environments for all plugins and load plugins into their plugin containers.
+            // Note that we do not care what order we load plugins - in the future we may want dependencies.
             for (Map.Entry<URL, ? extends ServerPluginDescriptorType> entry : plugins.entrySet()) {
                 URL pluginUrl = entry.getKey();
                 ServerPluginDescriptorType descriptor = entry.getValue();
-                String pluginName = entry.getValue().getName();
-                ClassLoader parentCL = this.classLoaderManager.obtainServerPluginClassLoader(pluginName);
-                ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, parentCL, tmpDir, descriptor);
+                String pluginName = descriptor.getName();
+                ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginName);
                 AbstractTypeServerPluginContainer pc = getPluginContainerByDescriptor(descriptor);
                 if (pc != null) {
-                    log.debug("Loading plugin [" + pluginUrl + "] into its plugin container");
-                    pc.loadPlugin(env);
+                    log.debug("Loading server plugin [" + pluginUrl + "] into its plugin container");
+                    try {
+                        ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader, descriptor);
+                        pc.loadPlugin(env);
+                        log.info("Loaded server plugin [" + pluginUrl + "]");
+                    } catch (Exception e) {
+                        log.warn("Failed to load server plugin [" + pluginUrl + "]", e);
+                    }
                 } else {
-                    log.warn("Failed to get a plugin container for plugin: " + pluginUrl);
+                    log.warn("There is no server plugin container to support plugin: " + pluginUrl);
                 }
             }
+
+            log.info("Master server plugin container has been initialized");
 
         } catch (Throwable t) {
             shutdown();
@@ -115,22 +134,29 @@ public class MasterServerPluginContainer {
     public void shutdown() {
         log.debug("Master server plugin container is being shutdown");
 
-        // shutdown all the plugin containers which in turn shuts down all their plugins
+        // Shutdown all the plugin containers which in turn shuts down all their plugins.
         for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
-            log.info("Master PC is shutting down plugin container for plugin type [" + entry.getKey() + "]");
+            ServerPluginType pluginType = entry.getKey();
+            AbstractTypeServerPluginContainer pc = entry.getValue();
+
+            log.debug("Master PC is shutting down server plugin container for plugin type [" + pluginType + "]");
             try {
-                entry.getValue().shutdown();
+                pc.shutdown();
+                log.info("Master PC shutdown server plugin container for plugin type [" + pluginType + "]");
             } catch (Exception e) {
-                log.error("Failed to shutdown plugin container for plugin type [" + entry.getKey() + "]", e);
+                log.error("Failed to shutdown server plugin container for plugin type [" + pluginType + "]", e);
             }
         }
 
         // now shutdown the classloader manager, destroying the classloaders it created
         this.classLoaderManager.shutdown();
+        log.debug("Shutdown classloader manager: " + this.classLoaderManager);
 
         this.pluginContainers.clear();
         this.classLoaderManager = null;
         this.configuration = null;
+
+        log.info("Master server plugin container has been shutdown");
     }
 
     /**

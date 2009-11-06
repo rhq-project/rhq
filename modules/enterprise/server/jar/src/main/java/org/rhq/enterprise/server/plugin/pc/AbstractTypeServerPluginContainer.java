@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,7 +34,7 @@ public abstract class AbstractTypeServerPluginContainer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final MasterServerPluginContainer master;
-    private final PluginManager pluginManager;
+    private PluginManager pluginManager;
 
     /**
      * Instantiates the plugin container. All subclasses must support this and only this
@@ -42,32 +44,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public AbstractTypeServerPluginContainer(MasterServerPluginContainer master) {
         this.master = master;
-        this.pluginManager = createPluginManager();
     }
-
-    /**
-     * Returns the master plugin container that is responsible for managing this instance.
-     * 
-     * @return this plugin container's master
-     */
-    public MasterServerPluginContainer getMasterServerPluginContainer() {
-
-        return this.master;
-    }
-
-    /**
-     * The initialize method that all plugin container subclasses must implement in order to initialize
-     * themselves.
-     * 
-     * @throws Exception if the plugin container failed to initialize for some reason
-     */
-    public abstract void initialize() throws Exception;
-
-    /**
-     * The shutdown method that all plugin container subclasses must implement in order to shutdown
-     * themselves.
-     */
-    public abstract void shutdown();
 
     /**
      * Each plugin container will tell the master which plugins it can support via this method; this
@@ -79,6 +56,60 @@ public abstract class AbstractTypeServerPluginContainer {
     public abstract ServerPluginType getSupportedServerPluginType();
 
     /**
+     * Returns the master plugin container that is responsible for managing this instance.
+     * 
+     * @return this plugin container's master
+     */
+    public MasterServerPluginContainer getMasterServerPluginContainer() {
+        return this.master;
+    }
+
+    /**
+     * Returns the object that manages the plugins.
+     * 
+     * @return the plugin manager for this container
+     */
+    public PluginManager getPluginManager() {
+        return this.pluginManager;
+    }
+
+    /**
+     * The initialize method that prepares the plugin container.
+     * 
+     * Subclasses are free to perform additional tasks by overriding this method.
+     *
+     * @throws Exception if the plugin container failed to initialize for some reason
+     */
+    public void initialize() throws Exception {
+        this.pluginManager = createPluginManager();
+        this.pluginManager.initialize();
+    }
+
+    /**
+     * The shutdown method that will stop and unload all plugins.
+     * 
+     * Subclasses are free to perform additional tasks by overriding this method.
+     */
+    public void shutdown() {
+        Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
+        for (ServerPluginEnvironment env : envs) {
+            try {
+                unloadPlugin(env);
+            } catch (Exception e) {
+                this.log.warn("Failed to unload plugin [" + env.getPluginName() + "].", e);
+            }
+        }
+
+        try {
+            this.pluginManager.shutdown();
+        } finally {
+            this.pluginManager = null;
+        }
+
+        return;
+    }
+
+    /**
      * Informs the plugin container that it has a plugin that it must being to start managing.
      * 
      * @param env the plugin environment, including the plugin jar and its descriptor
@@ -87,6 +118,18 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public void loadPlugin(ServerPluginEnvironment env) throws Exception {
         this.pluginManager.loadPlugin(env);
+    }
+
+    /**
+     * Informs the plugin container that a plugin should be unloaded and any of its resources
+     * should be released.
+     * 
+     * @param env the plugin environment, including the plugin jar and its descriptor
+     *
+     * @throws Exception if failed to unload the plugin 
+     */
+    public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+        this.pluginManager.unloadPlugin(env);
     }
 
     /**

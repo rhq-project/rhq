@@ -29,12 +29,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
-import javax.persistence.ManyToOne;
-import javax.persistence.JoinColumn;
 
 /**
  * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
@@ -45,7 +45,7 @@ import javax.persistence.JoinColumn;
 @Entity
 @IdClass(RepoDistributionPK.class)
 @NamedQueries( {
-    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :KsTreeId"),
+    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :distId"),
     @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
 @Table(name = "RHQ_REPO_DIST_MAP_KEY")
 public class RepoDistribution implements Serializable {
@@ -68,7 +68,6 @@ public class RepoDistribution implements Serializable {
     @ManyToOne
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Distribution dist;
-
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long last_modified;

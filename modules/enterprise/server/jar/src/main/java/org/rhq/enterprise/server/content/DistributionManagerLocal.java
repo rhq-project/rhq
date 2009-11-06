@@ -25,7 +25,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
 
-
 /**
  * @author Pradeep Kilambi
  */
@@ -41,7 +40,7 @@ public interface DistributionManagerLocal {
      * @return newly created distribution tree object
      */
     Distribution createDistribution(Subject subject, String kslabel, String basepath, DistributionType disttype)
-            throws DistributionException;
+        throws DistributionException;
 
     /**
      * Deletes a given instance of distribution object. If the object does not exist
@@ -53,9 +52,9 @@ public interface DistributionManagerLocal {
     /**
      * Deletes a given instance of distribution object. If the object does not exist
      * @param subject
-     * @param kstreeId
+     * @param distId
      */
-    void deleteDistributionByKSTreeId(Subject subject, int kstreeId);
+    void deleteDistributionByDistId(Subject subject, int distId);
 
     /**
      * get the kickstart tree bits either from database or filesystem based on kickstart label
@@ -79,7 +78,4 @@ public interface DistributionManagerLocal {
      */
     Distribution getDistributionByPath(String basepath);
 
-
-
-    
 }

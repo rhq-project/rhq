@@ -18,16 +18,16 @@
  */
 package org.rhq.enterprise.server.content;
 
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionType;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.system.ServerVersion;
-
-import javax.jws.soap.SOAPBinding;
-import javax.jws.WebService;
+import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
-import javax.ejb.Remote;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionType;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
  * @author Pradeep Kilambi
@@ -47,10 +47,10 @@ public interface DistributionManagerRemote {
      */
     @WebMethod
     Distribution createDistribution( //
-            @WebParam(name = "subject") Subject subject, //
-            @WebParam(name = "kslabel") String kslabel, //
-            @WebParam(name = "basepath") String basepath, //
-            @WebParam(name = "disttype") DistributionType disttype) throws DistributionException;
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "kslabel") String kslabel, //
+        @WebParam(name = "basepath") String basepath, //
+        @WebParam(name = "disttype") DistributionType disttype) throws DistributionException;
 
     /**
      * Deletes a given instance of kickstart tree object. If the object does not exist
@@ -60,19 +60,19 @@ public interface DistributionManagerRemote {
      */
     @WebMethod
     void deleteDistributionByRepo( //
-            @WebParam(name = "subject") Subject subject, //                  
-            @WebParam(name = "repoId") int repoId) throws Exception;
+        @WebParam(name = "subject") Subject subject, //                  
+        @WebParam(name = "repoId") int repoId) throws Exception;
 
     /**
      * Deletes a given instance of kickstart tree object. If the object does not exist
      * @param subject
-     * @param kstreeId
+     * @param distId
      *
      */
     @WebMethod
-    void deleteDistributionByKSTreeId( //
-            @WebParam(name = "subject") Subject subject, //
-            @WebParam(name = "kstreeId") int kstreeId) throws Exception;
+    void deleteDistributionByDistId( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "distId") int distId) throws Exception;
 
     /**
      * get the kickstart tree bits either from database or filesystem based on kickstart label
@@ -81,9 +81,8 @@ public interface DistributionManagerRemote {
      * @return
      */
     @WebMethod
-    void getDistributionBits(
-            @WebParam(name = "subject") Subject subject, //
-            @WebParam(name = "kslabel") String kslabel) throws Exception;
+    void getDistributionBits(@WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "kslabel") String kslabel) throws Exception;
 
     /**
      * get kickstart tree based on a given label
@@ -91,8 +90,7 @@ public interface DistributionManagerRemote {
      * @return kickstart tree object
      */
     @WebMethod
-    Distribution getDistributionByLabel(
-            @WebParam(name = "kslabel") String kslabel);
+    Distribution getDistributionByLabel(@WebParam(name = "kslabel") String kslabel);
 
     /**
      * get kickstart tree based on base path
@@ -100,10 +98,5 @@ public interface DistributionManagerRemote {
      * @return kstree object
      */
     @WebMethod
-    Distribution getDistributionByPath(
-            @WebParam(name = "basepath") String basepath);
+    Distribution getDistributionByPath(@WebParam(name = "basepath") String basepath);
 }
-
-
-
-

@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,8 +40,9 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.CascadeType;
 
+import org.rhq.core.domain.common.Tag;
+import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -78,15 +80,14 @@ import org.rhq.core.domain.resource.Resource;
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate is false "
-        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+        + "AND c.candidate is false " + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
         + "AND c.candidate = false ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
-public class Repo implements Serializable {
+public class Repo implements Serializable, Taggable {
     // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
@@ -136,9 +137,11 @@ public class Repo implements Serializable {
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
-    
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
+
+    private Set<Tag> tags;
 
     // Constructor ----------------------------------------
 
@@ -532,8 +535,6 @@ public class Repo implements Serializable {
         return doomed;
     }
 
-    
-    
     /**
      * Returns the explicit mapping entities.
      *
@@ -612,8 +613,6 @@ public class Repo implements Serializable {
         return doomed;
     }
 
-    
-    
     @Override
     public String toString() {
         return "Repo: id=[" + this.id + "], name=[" + this.name + "]";
@@ -658,4 +657,53 @@ public class Repo implements Serializable {
     void onUpdate() {
         this.lastModifiedDate = System.currentTimeMillis();
     }
+
+    @Override
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    @Override
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
+
+    @Override
+    public boolean hasTag(Tag tag) {
+        if ((this.tags == null) || (tag == null)) {
+            return false;
+        }
+
+        if (name == null) {
+            if (tag.getName() != null) {
+                return false;
+            }
+        } else if (!name.equals(tag.getName())) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    @Override
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            this.tags = new HashSet<Tag>();
+        }
+
+        this.tags.add(tag);
+    }
+
+    @Override
+    public void removeTag(Tag tag) {
+        if ((this.tags == null) || (tag == null)) {
+            return;
+        }
+
+        if (tags.contains(tag)) {
+            tags.remove(tag);
+        }
+    }
+
 }

@@ -28,9 +28,11 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 
 /**
  * The container responsible for managing the lifecycle of content server-side plugins.
@@ -64,6 +66,11 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
         this.adapterManager.shutdown();
         this.pluginManager.shutdown();
+    }
+
+    @Override
+    public ServerPluginType getSupportedServerPluginType() {
+        return new ServerPluginType(ContentPluginDescriptorType.class);
     }
 
     /**

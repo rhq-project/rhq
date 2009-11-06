@@ -32,6 +32,7 @@ public abstract class AbstractTypeServerPluginContainer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final MasterServerPluginContainer master;
+    private final PluginManager pluginManager;
 
     /**
      * Instantiates the plugin container. All subclasses must support this and only this
@@ -41,6 +42,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public AbstractTypeServerPluginContainer(MasterServerPluginContainer master) {
         this.master = master;
+        this.pluginManager = createPluginManager();
     }
 
     /**
@@ -66,6 +68,36 @@ public abstract class AbstractTypeServerPluginContainer {
      * themselves.
      */
     public abstract void shutdown();
+
+    /**
+     * Each plugin container will tell the master which plugins it can support via this method; this
+     * method returns the type of plugin that the plugin container can process. Only one
+     * plugin container can support a plugin type.
+     * 
+     * @return the type of plugin that this plugin container instance can support
+     */
+    public abstract ServerPluginType getSupportedServerPluginType();
+
+    /**
+     * Informs the plugin container that it has a plugin that it must being to start managing.
+     * 
+     * @param env the plugin environment, including the plugin jar and its descriptor
+     *
+     * @throws Exception if failed to load the plugin 
+     */
+    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
+        this.pluginManager.loadPlugin(env);
+    }
+
+    /**
+     * This will be called when its time for this plugin container to create its plugin manager.
+     * Subclasses are free to override this if they need their own specialized plugin manager.
+     * 
+     * @return the plugin manager for use by this plugin container
+     */
+    protected PluginManager createPluginManager() {
+        return new PluginManager(this);
+    }
 
     /**
      * Returns the logger that can be used to log messages. A convienence object so all

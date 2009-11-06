@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +32,6 @@ import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
@@ -62,8 +63,10 @@ public class TestServerPluginService extends ServerPluginService implements Test
      */
     class TestMasterServerPluginContainer extends MasterServerPluginContainer {
         @Override
-        protected void createPluginContainers(Map<ServerPluginType, AbstractTypeServerPluginContainer> pcs) {
-            pcs.put(ServerPluginType.CONTENT, new TestContentServerPluginContainer(this));
+        protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
+            ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
+            pcs.add(new TestContentServerPluginContainer(this));
+            return pcs;
         }
     }
 

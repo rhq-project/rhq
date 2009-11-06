@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.plugin.pc.perspective;
 
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 
 /**
  * Manages perspective plugins.
@@ -41,4 +43,8 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
     public void shutdown() {
     }
 
+    @Override
+    public ServerPluginType getSupportedServerPluginType() {
+        return new ServerPluginType(PerspectivePluginDescriptorType.class);
+    }
 }

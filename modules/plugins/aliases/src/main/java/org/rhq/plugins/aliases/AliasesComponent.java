@@ -43,12 +43,14 @@ public class AliasesComponent extends AugeasConfigurationComponent {
     }
 
     public AvailabilityType getAvailability() {
-        return super.getAvailability();
+        AvailabilityType aType = super.getAvailability();
+        return aType;
     }
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        return super.loadResourceConfiguration();
+        Configuration config = super.loadResourceConfiguration();
+        return config;
     }
 
     @Override
@@ -58,7 +60,9 @@ public class AliasesComponent extends AugeasConfigurationComponent {
 
     @Override
     protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap, int listIndex) {
-        return new AugeasNode(listNode, "0" + listIndex);
+        PropertyDefinitionMap member = listMemberPropDefMap;
+        AugeasNode node = new AugeasNode(listNode, "0" + listIndex);
+        return node;
     }
 
     protected AugeasNode getExistingChildNodeForListMemberPropertyMap(AugeasNode parentNode,

@@ -33,19 +33,17 @@ import java.util.Set;
  */
 public class AliasesDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
     @Override
     public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
             Exception {
-        return super.discoverResources(discoveryContext);
+        Set discoverResources = super.discoverResources(discoveryContext);
+        return discoverResources;
     }
 
     @Override
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
          ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
-        return super.discoverResource(pluginConfig, discoveryContext);
+        DiscoveredResourceDetails details = super.discoverResource(pluginConfig, discoveryContext);
+        return details;
     }
-
-
 }

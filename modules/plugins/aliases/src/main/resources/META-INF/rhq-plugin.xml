@@ -15,7 +15,11 @@
             discovery="AliasesDiscoveryComponent"
             class="AliasesComponent"
             supportsManualAdd="true">
-      
+
+       <runs-inside>
+         <parent-resource-type name="Linux"  plugin="Platforms"/>
+       </runs-inside>
+
       <plugin-configuration>
           <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Aliases" required="true" readOnly="true"
                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
@@ -24,7 +28,7 @@
                              default="/etc/aliases"
                              description="the absolute paths of the configuration files, delimited with pipe characters"/>
           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
-                              default="/files/etc/aliases"/>
+                              default="/files/etc/aliases/*"/>
       </plugin-configuration>
 
       <resource-configuration>
@@ -35,7 +39,6 @@
 
                <c:simple-property name="value" displayName="Value" type="string" required="true"
                                   description="Username or Alias name value"/>
-
             </c:map-property>
          </c:list-property>
       </resource-configuration>

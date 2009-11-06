@@ -75,11 +75,9 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         throws DistributionException {
 
         Distribution kstree = new Distribution(kslabel, basepath, disttype);
-        System.out.println("NEW DISTRO CREATED" + kstree);
-        validateDistTree(kstree);
 
+        validateDistTree(kstree);
         entityManager.persist(kstree);
-        System.out.println("persisted" + kstree);
 
         return kstree;
     }
@@ -104,7 +102,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteDistributionByDistId(Subject user, int distId) {
         log.debug("User [" + user + "] is deleting distribution tree [" + distId + "]");
 

@@ -1,8 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-        
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -13,50 +9,55 @@
    </parent>
 
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-hosts-plugin</artifactId>
+   <artifactId>rhq-postfix-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Hosts File Plugin</name>
-   <description>A plugin for managing the system hosts file</description>
+   <name>RHQ Augeas-based Postfix Plugin</name>
+   <description>A plugin for managing the RHEL Postfix server</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/hosts</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postfix</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/postfix</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/hosts/</scm.module.path>
+      <scm.module.path>modules/plugins/postfix/</scm.module.path>
    </properties>
 
    <dependencies>
-
        <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-augeas-plugin</artifactId>
+        <groupId>${rhq.groupId}</groupId>
+        <artifactId>rhq-platform-plugin</artifactId>
+             <version>${project.version}</version>
+             <scope>provided</scope>
+       </dependency>
+       <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
+        <version>${project.version}</version>
+       </dependency>
+       <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
+           <type>test-jar</type>
+           <scope>test</scope>
        </dependency>
 
-       <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-augeas-plugin</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-       </dependency>              
-       
+
    </dependencies>
 
-   <build>
-      <plugins>
-         <plugin>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-               <skip>true</skip>
-            </configuration>
-         </plugin>
-      </plugins>
-   </build>
-    
+    <build>
+       <plugins>
+          <plugin>
+             <artifactId>maven-surefire-plugin</artifactId>
+             <configuration>
+                <skip>true</skip>
+             </configuration>
+          </plugin>
+       </plugins>
+    </build>
+
    <profiles>
       <profile>
          <id>integration-tests</id>
@@ -76,10 +77,10 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <echo>Setting up integration test plugin container environment under target/itest/...</echo>                              
-                              
-                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />                              
-                              
+                              <echo>Setting up integration test plugin container environment under target/itest/...</echo>
+
+                              <property name="settings.localRepository" location="${user.home}/.m2/repository" />
+
                               <mkdir dir="target/itest/plugins" />
                               <copy toDir="target/itest/plugins" flatten="true" verbose="true">
                                  <!-- the plugin jar for this plugin -->
@@ -87,12 +88,12 @@
                                  <!-- the plugin jars for the plugins this plugin depends on -->
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
-                                    <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />                                     
+                                    <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
                                  </fileset>
                               </copy>
-                                        
-                              <!-- copy SIGAR jar and native libs into the lib dir -->                                        
-                              <mkdir dir="target/itest/lib" />                              
+
+                              <!-- copy SIGAR jar and native libs into the lib dir -->
+                              <mkdir dir="target/itest/lib" />
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>

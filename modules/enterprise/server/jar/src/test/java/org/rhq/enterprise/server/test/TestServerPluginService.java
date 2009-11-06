@@ -37,8 +37,8 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -92,14 +92,13 @@ public class TestServerPluginService extends ServerPluginService implements Test
         }
 
         @Override
-        protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
+        protected ContentProviderManager createAdapterManager() {
             TestContentProviderManager am = new TestContentProviderManager();
-            am.initialize(pluginManager);
             return am;
         }
 
         @Override
-        protected ContentProviderPluginManager createPluginManager() {
+        protected ContentServerPluginManager createPluginManager() {
             TestContentProviderPluginManager pm = new TestContentProviderPluginManager(this);
             return pm;
         }
@@ -108,7 +107,7 @@ public class TestServerPluginService extends ServerPluginService implements Test
     /**
      * The test plugin manager.
      */
-    class TestContentProviderPluginManager extends ContentProviderPluginManager {
+    class TestContentProviderPluginManager extends ContentServerPluginManager {
         public TestContentProviderPluginManager(ContentServerPluginContainer pc) {
             super(pc);
         }
@@ -124,7 +123,7 @@ public class TestServerPluginService extends ServerPluginService implements Test
         }
 
         @Override
-        protected void initialize(ContentProviderPluginManager pluginManager) {
+        protected void initialize(ContentServerPluginManager pluginManager) {
             createInitialAdaptersMap();
         }
 

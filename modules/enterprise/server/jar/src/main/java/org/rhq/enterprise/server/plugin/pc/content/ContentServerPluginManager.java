@@ -36,11 +36,11 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.Conten
  *
  * @author John Mazzitelli
  */
-public class ContentProviderPluginManager extends PluginManager {
+public class ContentServerPluginManager extends PluginManager {
 
     private ContentSourcePluginMetadataManager metadataManager;
 
-    public ContentProviderPluginManager(ContentServerPluginContainer pc) {
+    public ContentServerPluginManager(ContentServerPluginContainer pc) {
         super(pc);
     }
 

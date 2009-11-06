@@ -74,7 +74,8 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
-     * The initialize method that prepares the plugin container.
+     * The initialize method that prepares the plugin container. This should get the plugin
+     * container ready to accept plugins.
      * 
      * Subclasses are free to perform additional tasks by overriding this method.
      *
@@ -83,6 +84,23 @@ public abstract class AbstractTypeServerPluginContainer {
     public void initialize() throws Exception {
         this.pluginManager = createPluginManager();
         this.pluginManager.initialize();
+    }
+
+    /**
+     * This method informs the plugin container that all of its plugins have been loaded.
+     * Once this is called, the plugin container can assume all plugins that it will
+     * ever know about have been {@link #loadPlugin(ServerPluginEnvironment) loaded}.
+     */
+    public void start() {
+        return; // no-op
+    }
+
+    /**
+     * This will inform the plugin container that it must stop doing its work. Once called,
+     * the plugin container must assume that soon it will be asked to {@link #shutdown()}.
+     */
+    public void stop() {
+        return; // no-op
     }
 
     /**

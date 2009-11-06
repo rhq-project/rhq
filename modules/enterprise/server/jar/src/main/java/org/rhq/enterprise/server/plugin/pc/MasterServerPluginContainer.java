@@ -89,7 +89,7 @@ public class MasterServerPluginContainer {
                 log.debug("Master PC is initializing server plugin container for plugin type [" + pluginType + "]");
                 try {
                     pc.initialize();
-                    log.info("Master PC initialized server plugin container for plugin type [" + pluginType + "]");
+                    log.debug("Master PC initialized server plugin container for plugin type [" + pluginType + "]");
                 } catch (Exception e) {
                     log.warn("Failed to initialize server plugin container for plugin type [" + pluginType + "]", e);
                     iterator.remove();
@@ -118,6 +118,24 @@ public class MasterServerPluginContainer {
                 }
             }
 
+            // now that all plugins have been loaded, we need to tell all the plugin containers to start
+            iterator = this.pluginContainers.entrySet().iterator();
+
+            while (iterator.hasNext()) {
+                Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry = iterator.next();
+
+                ServerPluginType pluginType = entry.getKey();
+                AbstractTypeServerPluginContainer pc = entry.getValue();
+
+                log.debug("Master PC is starting server plugin container for plugin type [" + pluginType + "]");
+                try {
+                    pc.start();
+                    log.info("Master PC started server plugin container for plugin type [" + pluginType + "]");
+                } catch (Exception e) {
+                    log.warn("Failed to start server plugin container for plugin type [" + pluginType + "]", e);
+                }
+            }
+
             log.info("Master server plugin container has been initialized");
 
         } catch (Throwable t) {
@@ -134,7 +152,21 @@ public class MasterServerPluginContainer {
     public void shutdown() {
         log.debug("Master server plugin container is being shutdown");
 
-        // Shutdown all the plugin containers which in turn shuts down all their plugins.
+        // stop all the plugin containers, giving them a chance to do things like stop threads they have running
+        for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
+            ServerPluginType pluginType = entry.getKey();
+            AbstractTypeServerPluginContainer pc = entry.getValue();
+
+            log.debug("Master PC is stopping server plugin container for plugin type [" + pluginType + "]");
+            try {
+                pc.shutdown();
+                log.debug("Master PC stopped server plugin container for plugin type [" + pluginType + "]");
+            } catch (Exception e) {
+                log.error("Failed to stop server plugin container for plugin type [" + pluginType + "]", e);
+            }
+        }
+
+        // shutdown all the plugin containers which in turn shuts down all their plugins.
         for (Map.Entry<ServerPluginType, AbstractTypeServerPluginContainer> entry : this.pluginContainers.entrySet()) {
             ServerPluginType pluginType = entry.getKey();
             AbstractTypeServerPluginContainer pc = entry.getValue();

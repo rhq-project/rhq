@@ -68,7 +68,7 @@ public class ContentProviderManager {
 
     private static final String PARENT_RELATIONSHIP_NAME = "parent";
 
-    private ContentProviderPluginManager pluginManager;
+    private ContentServerPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
     // This is used as a monitor lock to the synchronizeContentSource method;
@@ -432,6 +432,8 @@ public class ContentProviderManager {
      * <p>If there is already an adapter currently started for the given content source, this returns silently.</p>
      *
      * @param contentSource the new content source that was added
+     * 
+     * @throws InitializationException failed to initialize the adapter that processes the content source
      */
     public void startAdapter(ContentSource contentSource) throws InitializationException {
         synchronized (this.adapters) {
@@ -450,9 +452,10 @@ public class ContentProviderManager {
             adapter.initialize(contentSource.getConfiguration());
         } catch (Exception e) {
             log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", e);
-            throw new InitializationException(e.getCause());
+            throw new InitializationException(e);
         }
 
+        return;
     }
 
     /**
@@ -502,7 +505,7 @@ public class ContentProviderManager {
      *
      * @param pluginManager the plugin manager this object can use to obtain information from (like classloaders)
      */
-    protected void initialize(ContentProviderPluginManager pluginManager) throws InitializationException {
+    protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
 
         ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();
@@ -524,9 +527,15 @@ public class ContentProviderManager {
         // let's initalize all adapters for all content sources
         if (contentSources != null) {
             for (ContentSource contentSource : contentSources) {
-                startAdapter(contentSource);
+                try {
+                    startAdapter(contentSource);
+                } catch (Exception e) {
+                    log.warn("Failed to start adapator for content source [" + contentSource + "]");
+                }
             }
         }
+
+        return;
     }
 
     /**

@@ -54,8 +54,14 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     public void initialize() throws Exception {
         getLog().debug("Content server plugin container initializing");
         super.initialize();
-        this.adapterManager = createAdapterManager((ContentProviderPluginManager) getPluginManager()); // initializes, too
+        this.adapterManager = createAdapterManager();
         getLog().debug("Content server plugin container initialized");
+    }
+
+    @Override
+    public void start() {
+        super.start();
+        this.adapterManager.initialize((ContentServerPluginManager) getPluginManager());
     }
 
     @Override
@@ -176,24 +182,19 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     @Override
     protected PluginManager createPluginManager() {
-        return new ContentProviderPluginManager(this);
+        return new ContentServerPluginManager(this);
     }
 
     /**
-     * Creates, configures and initializes the adapter manager that the PC will use.
+     * Creates the adapter manager that the PC will use.
      *
      * <p>This is protected scope so subclasses can define their own adapter manager to use. This is mainly to support
      * tests.</p>
      *
-     * @param  pluginManager the plugin manager that was {@link #createPluginManager() created} for use in the PC. The
-     *                       adapter manager can use this to obtain information about plugins.
-     *
      * @return the new adapter manager
      */
-    protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager)
-        throws InitializationException {
+    protected ContentProviderManager createAdapterManager() {
         ContentProviderManager am = new ContentProviderManager();
-        am.initialize(pluginManager);
         return am;
     }
 }

@@ -149,8 +149,10 @@ public class MasterServerPluginContainer {
         }
 
         // now shutdown the classloader manager, destroying the classloaders it created
-        this.classLoaderManager.shutdown();
-        log.debug("Shutdown classloader manager: " + this.classLoaderManager);
+        if (this.classLoaderManager != null) {
+            this.classLoaderManager.shutdown();
+            log.debug("Shutdown classloader manager: " + this.classLoaderManager);
+        }
 
         this.pluginContainers.clear();
         this.classLoaderManager = null;

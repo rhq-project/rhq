@@ -88,7 +88,6 @@ public class TestServerPluginService extends ServerPluginService implements Test
         @Override
         protected ContentProviderPluginManager createPluginManager() {
             TestContentProviderPluginManager pm = new TestContentProviderPluginManager(this);
-            pm.initialize();
             return pm;
         }
     }
@@ -99,14 +98,6 @@ public class TestServerPluginService extends ServerPluginService implements Test
     class TestContentProviderPluginManager extends ContentProviderPluginManager {
         public TestContentProviderPluginManager(ContentServerPluginContainer pc) {
             super(pc);
-        }
-
-        @Override
-        public void initialize() {
-        }
-
-        @Override
-        public void shutdown() {
         }
     }
 

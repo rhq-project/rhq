@@ -35,6 +35,7 @@
         <module>portal-war</module>
         <module>installer-war</module>
         <module>webdav-war</module>
+        <module>perspectives</module>        
       </modules>
     </profile>
 

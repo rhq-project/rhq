@@ -92,7 +92,7 @@ public class RhnDownloader {
         return true;
     }
 
-    public InputStream getRPMStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
+    public InputStream getFileStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
 
         HttpURLConnection conn = getNewConnection(locationUrl);
         Map props = login(systemId);
@@ -120,4 +120,5 @@ public class RhnDownloader {
         InputStream in = conn.getInputStream();
         return in;
     }
+
 }

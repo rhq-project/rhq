@@ -68,4 +68,16 @@ public class RHNHelperTest extends BaseRHNTest {
         assertTrue(success);
     }
 
+    public void testGetSyncableKickstartTrees() throws Exception {
+        boolean success = true;
+        try {
+            List<String> ksLabels = helper.getSyncableKickstartLabels();
+            assertTrue(ksLabels.size() > 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
 }

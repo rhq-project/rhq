@@ -168,6 +168,19 @@ public class RHNHelper {
         return allchannels;
     }
 
+    public List<String> getSyncableKickstartLabels() throws IOException, XmlRpcException {
+        List<String> ksLabels = new ArrayList<String>();
+
+        List<String> allChannels = getSyncableChannels();
+        List<RhnChannelType> rct = rhndata.getChannels(this.systemid, allChannels);
+        for (RhnChannelType ct: rct) {
+            String ksTrees = ct.getKickstartableTrees();
+            String[] trees = ksTrees.split(" ");
+            ksLabels.addAll(Arrays.asList(trees));
+        }
+        return ksLabels;
+    }
+
     /**
      * Open an input stream to specifed relative url. Prepends the baseurl to the <i>url</i> and opens and opens and
      * input stream. Files with a .gz suffix will be unziped (inline).
@@ -183,7 +196,7 @@ public class RHNHelper {
     public InputStream openStream(String location) throws IOException, XmlRpcException {
 
         log.info("Package Fetched from: " + location);
-        return rhndownload.getRPMStream(this.systemid, location);
+        return rhndownload.getFileStream(this.systemid, location);
     }
 
     /**
@@ -195,6 +208,19 @@ public class RHNHelper {
     private String constructPackageUrl(String channelName, String rpmName) {
 
         String appendurl = "/SAT/$RHN/" + channelName + "/getPackage/" + rpmName;
+        return baseurl + appendurl;
+    }
+
+     /**
+     * Constructs a downloadable url for package downloads.
+     * @param channelName channel label to be synced.
+     * @param ksTreeLabel kickstart tree label name
+     * @param ksFilePath path to kickstart file
+     * @return a valid url location to fetch the rpm from.
+     */
+    private String constructKickstartFileUrl(String channelName, String ksTreeLabel, String ksFilePath) {
+
+        String appendurl = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
         return baseurl + appendurl;
     }
 

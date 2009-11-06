@@ -34,4 +34,8 @@ public interface ResourceConfigurationFacet {
 
     Set<RawConfiguration> loadRawConfigurations();
 
+    void mergeRawConfiguration(Configuration from, RawConfiguration to);
+
+    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+
 }

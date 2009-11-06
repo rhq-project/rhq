@@ -279,7 +279,7 @@ public class PluginTransformerTest {
 
         Manifest manifest = new Manifest();
 
-        File jarFile = new File(url.getPath(), "test-plugin.jar");
+        File jarFile = new File(url.getPath(), "test-plugin-without-version.jar");
         JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile), manifest);
 
         stream.flush();

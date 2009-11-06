@@ -63,17 +63,6 @@ THIS TEXT WILL BE REMOVED.
                      nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>
 
-         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-                             
-			<h:commandButton value="RAW" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
-                             title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-         </h:panelGrid>
-
       </h:form>
 
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">

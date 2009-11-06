@@ -20,8 +20,10 @@ package org.rhq.enterprise.server.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Used as a mock service for the content source plugin container.
@@ -67,6 +70,16 @@ public class TestServerPluginService extends ServerPluginService implements Test
             ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
             pcs.add(new TestContentServerPluginContainer(this));
             return pcs;
+        }
+
+        @Override
+        protected ClassLoader createRootServerPluginClassLoader() {
+            return this.getClass().getClassLoader();
+        }
+
+        @Override
+        protected Map<URL, ? extends ServerPluginDescriptorType> preloadAllPlugins() throws Exception {
+            return new HashMap<URL, ServerPluginDescriptorType>();
         }
     }
 

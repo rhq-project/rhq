@@ -56,7 +56,7 @@ public class PluginManager {
      * 
      * @throws Exception if failed to initialize
      */
-    public void initialize() throws Exception {
+    public synchronized void initialize() throws Exception {
         return; // no-op
     }
 
@@ -64,7 +64,7 @@ public class PluginManager {
      * Shuts down this manager. This should be called only after all of its plugins
      * have been {@link #unloadPlugin(ServerPluginEnvironment) unloaded}.
      */
-    public void shutdown() {
+    public synchronized void shutdown() {
         if (this.loadedPlugins.size() > 0) {
             log.warn("Server plugin manager is being shutdown while some plugins are still loaded: "
                 + this.loadedPlugins);
@@ -82,7 +82,7 @@ public class PluginManager {
      *
      * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
      */
-    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
         log.debug("Loading server plugin [" + env.getPluginName() + "] from: " + env.getPluginUrl());
         this.loadedPlugins.put(env.getPluginName(), env);
         return;
@@ -96,7 +96,7 @@ public class PluginManager {
      *
      * @throws Exception if the plugin manager cannot unload the plugin
      */
-    public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
         log.debug("Unloading server plugin [" + env.getPluginName() + "]");
         this.loadedPlugins.remove(env.getPluginName());
         return;
@@ -108,7 +108,7 @@ public class PluginManager {
      *
      * @return environments for all the plugins
      */
-    public Collection<ServerPluginEnvironment> getPluginEnvironments() {
+    public synchronized Collection<ServerPluginEnvironment> getPluginEnvironments() {
         return new ArrayList<ServerPluginEnvironment>(this.loadedPlugins.values());
     }
 
@@ -121,7 +121,7 @@ public class PluginManager {
      * @param pluginName the plugin whose environment is to be returned
      * @return given plugin's environment
      */
-    public ServerPluginEnvironment getPluginEnvironment(String pluginName) {
+    public synchronized ServerPluginEnvironment getPluginEnvironment(String pluginName) {
         return this.loadedPlugins.get(pluginName);
     }
 

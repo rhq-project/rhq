@@ -92,7 +92,7 @@ public class ClassLoaderManager {
     /**
      * Cleans up this object and all classloaders it has created.
      */
-    public void shutdown() {
+    public synchronized void shutdown() {
         for (ClassLoader doomedCL : getUniqueServerPluginClassLoaders()) {
             if (doomedCL instanceof ServerPluginClassLoader) {
                 try {
@@ -179,7 +179,7 @@ public class ClassLoaderManager {
         return new HashMap<String, ClassLoader>(this.serverPluginClassLoaders);
     }
 
-    private Set<ClassLoader> getUniqueServerPluginClassLoaders() {
+    private synchronized Set<ClassLoader> getUniqueServerPluginClassLoaders() {
         HashSet<ClassLoader> uniqueClassLoaders = new HashSet<ClassLoader>(this.serverPluginClassLoaders.values());
         return uniqueClassLoaders;
     }

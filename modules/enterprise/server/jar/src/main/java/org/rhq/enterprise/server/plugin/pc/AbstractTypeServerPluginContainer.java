@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ public abstract class AbstractTypeServerPluginContainer {
      *
      * @throws Exception if the plugin container failed to initialize for some reason
      */
-    public void initialize() throws Exception {
+    public synchronized void initialize() throws Exception {
         this.pluginManager = createPluginManager();
         this.pluginManager.initialize();
     }
@@ -91,7 +91,7 @@ public abstract class AbstractTypeServerPluginContainer {
      * Once this is called, the plugin container can assume all plugins that it will
      * ever know about have been {@link #loadPlugin(ServerPluginEnvironment) loaded}.
      */
-    public void start() {
+    public synchronized void start() {
         return; // no-op
     }
 
@@ -99,7 +99,7 @@ public abstract class AbstractTypeServerPluginContainer {
      * This will inform the plugin container that it must stop doing its work. Once called,
      * the plugin container must assume that soon it will be asked to {@link #shutdown()}.
      */
-    public void stop() {
+    public synchronized void stop() {
         return; // no-op
     }
 
@@ -108,20 +108,22 @@ public abstract class AbstractTypeServerPluginContainer {
      * 
      * Subclasses are free to perform additional tasks by overriding this method.
      */
-    public void shutdown() {
-        Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
-        for (ServerPluginEnvironment env : envs) {
-            try {
-                unloadPlugin(env);
-            } catch (Exception e) {
-                this.log.warn("Failed to unload plugin [" + env.getPluginName() + "].", e);
+    public synchronized void shutdown() {
+        if (this.pluginManager != null) {
+            Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
+            for (ServerPluginEnvironment env : envs) {
+                try {
+                    unloadPlugin(env);
+                } catch (Exception e) {
+                    this.log.warn("Failed to unload plugin [" + env.getPluginName() + "].", e);
+                }
             }
-        }
 
-        try {
-            this.pluginManager.shutdown();
-        } finally {
-            this.pluginManager = null;
+            try {
+                this.pluginManager.shutdown();
+            } finally {
+                this.pluginManager = null;
+            }
         }
 
         return;
@@ -134,8 +136,12 @@ public abstract class AbstractTypeServerPluginContainer {
      *
      * @throws Exception if failed to load the plugin 
      */
-    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        this.pluginManager.loadPlugin(env);
+    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.loadPlugin(env);
+        } else {
+            throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
+        }
     }
 
     /**
@@ -146,8 +152,12 @@ public abstract class AbstractTypeServerPluginContainer {
      *
      * @throws Exception if failed to unload the plugin 
      */
-    public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
-        this.pluginManager.unloadPlugin(env);
+    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.unloadPlugin(env);
+        } else {
+            throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
+        }
     }
 
     /**

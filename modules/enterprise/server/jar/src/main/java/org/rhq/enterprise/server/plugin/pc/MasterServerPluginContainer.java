@@ -54,7 +54,7 @@ public class MasterServerPluginContainer {
      *
      * @param config the master configuration
      */
-    public void initialize(MasterServerPluginContainerConfiguration config) {
+    public synchronized void initialize(MasterServerPluginContainerConfiguration config) {
         try {
             log.debug("Master server plugin container is being initialized with config: " + config);
 
@@ -149,7 +149,7 @@ public class MasterServerPluginContainer {
     /**
      * Stops all plugins and cleans up after them.
      */
-    public void shutdown() {
+    public synchronized void shutdown() {
         log.debug("Master server plugin container is being shutdown");
 
         // stop all the plugin containers, giving them a chance to do things like stop threads they have running
@@ -205,22 +205,6 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * Get the plugin container of the given class. This method provides a strongly typed return value,
-     * based on the type of plugin container the caller wants returned.
-     * 
-     * @param clazz the class name of the plugin container that the caller wants
-     * @return the plugin container of the given class (<code>null</code> if none found)
-     */
-    public <T extends AbstractTypeServerPluginContainer> T getPluginContainer(Class<T> clazz) {
-        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
-            if (clazz.isInstance(pc)) {
-                return (T) pc;
-            }
-        }
-        return null;
-    }
-
-    /**
      * Returns the manager that is responsible for created classloaders for plugins.
      * 
      * @return classloader manager
@@ -230,19 +214,38 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * Get the plugin container of the given class. This method provides a strongly typed return value,
+     * based on the type of plugin container the caller wants returned.
+     * 
+     * @param clazz the class name of the plugin container that the caller wants
+     * @return the plugin container of the given class (<code>null</code> if none found)
+     */
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(Class<T> clazz) {
+        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+            if (clazz.isInstance(pc)) {
+                return (T) pc;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Given a plugin's descriptor, this will return the plugin container that can manage the plugin.
      * 
      * @param descriptor descriptor to identify a plugin whose container is to be returned
      * @return a plugin container that can handle the plugin with the given descriptor
      */
-    protected AbstractTypeServerPluginContainer getPluginContainerByDescriptor(ServerPluginDescriptorType descriptor) {
+    protected synchronized AbstractTypeServerPluginContainer getPluginContainerByDescriptor(
+        ServerPluginDescriptorType descriptor) {
+
         ServerPluginType pluginType = new ServerPluginType(descriptor.getClass());
         AbstractTypeServerPluginContainer pc = this.pluginContainers.get(pluginType);
         return pc;
     }
 
     /**
-     * Finds all plugins and parses their descriptors.
+     * Finds all plugins and parses their descriptors. This is only called during
+     * this master plugin container's {@link #initialize(MasterServerPluginContainerConfiguration) initialization}.
      * 
      * If a plugin fails to load, it will be ignored - other plugins will still load.
      * 

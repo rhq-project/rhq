@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -103,11 +104,12 @@ public class PluginManager {
 
     /**
      * Returns the {@link ServerPluginEnvironment}s for every plugin this manager has loaded.
+     * The returned collection is a copy and not backed by this manager.
      *
      * @return environments for all the plugins
      */
     public Collection<ServerPluginEnvironment> getPluginEnvironments() {
-        return this.loadedPlugins.values();
+        return new ArrayList<ServerPluginEnvironment>(this.loadedPlugins.values());
     }
 
     /**

@@ -159,7 +159,7 @@ public class MasterServerPluginContainer {
 
             log.debug("Master PC is stopping server plugin container for plugin type [" + pluginType + "]");
             try {
-                pc.shutdown();
+                pc.stop();
                 log.debug("Master PC stopped server plugin container for plugin type [" + pluginType + "]");
             } catch (Exception e) {
                 log.error("Failed to stop server plugin container for plugin type [" + pluginType + "]", e);

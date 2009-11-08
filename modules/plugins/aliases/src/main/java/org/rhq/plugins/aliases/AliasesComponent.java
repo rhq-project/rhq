@@ -26,8 +26,10 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
+import org.rhq.plugins.augeas.helper.AugeasUtility;
 import net.augeas.Augeas;
 
 import java.util.List;
@@ -59,8 +61,12 @@ public class AliasesComponent extends AugeasConfigurationComponent {
     }
 
     @Override
+    public CreateResourceReport createResource(CreateResourceReport report) {
+      return super.createResource(report); 
+    }
+
+    @Override
     protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap, int listIndex) {
-        PropertyDefinitionMap member = listMemberPropDefMap;
         AugeasNode node = new AugeasNode(listNode, "0" + listIndex);
         return node;
     }
@@ -70,12 +76,14 @@ public class AliasesComponent extends AugeasConfigurationComponent {
         // First find all child nodes with the same 'name' value as the PropertyMap.
         Augeas augeas = getAugeas();
 
-        String name = propMap.getSimple("name").getStringValue();
-        String nameFilter = parentNode.getPath() + "/name";
-        List<String> namePaths = augeas.match(String.format(nameFilter + "/name[.='%s']", name));
+        String nameFilter = parentNode.getPath() + "/*/name";
+        String canonical = propMap.getSimple("name").getStringValue();
+        List<String> namePaths = AugeasUtility.matchFilter(augeas, nameFilter, canonical);
+
         if (namePaths == null || namePaths.isEmpty()) {
             return null;
         }
+
         AugeasNode node = new AugeasNode(namePaths.get(0));
         return node.getParent();
     }

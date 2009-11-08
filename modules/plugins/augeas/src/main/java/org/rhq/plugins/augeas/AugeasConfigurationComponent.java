@@ -514,14 +514,20 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         PropertyDefinitionMap listMemberPropDefMap = (PropertyDefinitionMap) listMemberPropDef;
 
         int listIndex = 0;
+
+        // grab all the list member paths
         String listMemberPropDefMapPath = getAugeasPathRelativeToParent(listMemberPropDefMap, listNode, augeas);
         List<String> existingListMemberPaths = augeas.match(listNode.getPath() + AugeasNode.SEPARATOR_CHAR
             + listMemberPropDefMapPath);
+
+        // now turn paths into augeas nodes
         List<AugeasNode> existingListMemberNodes = new ArrayList<AugeasNode>();
         for (String existingListMemberPath : existingListMemberPaths) {
             existingListMemberNodes.add(new AugeasNode(existingListMemberPath));
         }
+
         Set<AugeasNode> updatedListMemberNodes = new HashSet<AugeasNode>();
+
         for (Property listMemberProp : propList.getList()) {
             PropertyMap listMemberPropMap = (PropertyMap) listMemberProp;
             AugeasNode memberNodeToUpdate = getExistingChildNodeForListMemberPropertyMap(listNode, propDefList,
@@ -535,7 +541,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
                 // being added, so create a new node for the map to add to the list.
                 AugeasNode basePathNode = getNewListMemberNode(listNode, listMemberPropDefMap, listIndex);
                 String var = "prop" + listIndex;
-                augeas.defineNode(var, basePathNode.getPath(), null);
+                String bpath = basePathNode.getPath();
+                augeas.defineNode(var, bpath, null);
                 memberNodeToUpdate = new AugeasNode("$" + var);
                 listIndex++;
             }

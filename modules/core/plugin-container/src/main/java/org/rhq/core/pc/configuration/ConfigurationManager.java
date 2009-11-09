@@ -72,6 +72,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private InventoryService inventoryService;
 
+    private ResourceConfigurationStrategyFactory loadConfigStrategyFactory;
+
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
     }
@@ -104,6 +106,10 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     public void setInventoryService(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
+    }
+
+    public void setLoadConfigStrategyFactory(ResourceConfigurationStrategyFactory factory) {
+        loadConfigStrategyFactory = factory;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
@@ -157,62 +163,16 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public Configuration loadResourceConfiguration(int resourceId, boolean fromStructured)
         throws PluginContainerException {
 
-        String ampsVersion = inventoryService.getAmpsVersion(resourceId);
+        ResourceConfigurationStrategy strategy = loadConfigStrategyFactory.getStrategy(resourceId);
+        Configuration configuration = strategy.loadConfiguration(resourceId, fromStructured);
 
-        ResourceType resourceType = inventoryService.getResourceType(resourceId);
-
-        FacetLockType lockType = FacetLockType.READ;
-        boolean daemonThread = (lockType != FacetLockType.WRITE);
-        boolean onlyIfStarted = true;
-
-        if (isLegacyPlugin(ampsVersion)) {
-            ConfigurationFacet configurationFacet = inventoryService.getComponent(resourceId, ConfigurationFacet.class,
-                lockType, FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
-
-            try {
-                Configuration configuration = configurationFacet.loadResourceConfiguration();
-
-                if (configuration == null) {
-                    throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-                            + "] Resource with id [" + resourceId + "] returned a null Configuration.");
-                }
-                return configuration;
-            } catch (Exception e) {
-                throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-                    new WrappedRemotingException(e));
-            }
+        if (configuration == null) {
+            ResourceType resourceType = inventoryService.getResourceType(resourceId);
+            throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
+                    + "] Resource with id [" + resourceId + "] returned a null Configuration.");
         }
-        else {
-            ResourceConfigurationFacet configurationFacet = inventoryService.getComponent(resourceId,
-                ResourceConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
 
-            ConfigurationFormat configFormat = resourceType.getResourceConfigurationDefinition()
-                    .getConfigurationFormat();
-
-            Configuration config = null;
-
-            switch (configFormat) {
-                case RAW:
-                    config = configurationFacet.loadRawConfigurations();
-                    break;
-                case STRUCTURED:
-                    config = configurationFacet.loadStructuredConfiguration();
-                    break;
-                default:
-                    if (fromStructured) {
-                        config = configurationFacet.loadStructuredConfiguration();
-                    }
-                    else {
-                        config = configurationFacet.loadRawConfigurations();
-                    }
-            }
-
-            return null;
-        }
-    }
-
-    private boolean isLegacyPlugin(String ampsVersion) {
-        return new ComparableVersion(ampsVersion).compareTo(NON_LEGACY_VERSION) < 0; 
+        return configuration;
     }
 
     public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {

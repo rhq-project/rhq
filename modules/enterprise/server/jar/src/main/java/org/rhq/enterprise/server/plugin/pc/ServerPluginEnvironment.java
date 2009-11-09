@@ -58,7 +58,7 @@ public class ServerPluginEnvironment {
         return this.pluginUrl;
     }
 
-    public ClassLoader getClassLoader() {
+    public ClassLoader getPluginClassLoader() {
         return this.pluginClassLoader;
     }
 

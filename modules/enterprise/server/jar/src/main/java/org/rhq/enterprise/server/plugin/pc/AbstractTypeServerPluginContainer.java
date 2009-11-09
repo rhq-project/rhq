@@ -34,7 +34,7 @@ public abstract class AbstractTypeServerPluginContainer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final MasterServerPluginContainer master;
-    private PluginManager pluginManager;
+    private ServerPluginManager pluginManager;
 
     /**
      * Instantiates the plugin container. All subclasses must support this and only this
@@ -69,7 +69,7 @@ public abstract class AbstractTypeServerPluginContainer {
      * 
      * @return the plugin manager for this container
      */
-    public PluginManager getPluginManager() {
+    public ServerPluginManager getPluginManager() {
         return this.pluginManager;
     }
 
@@ -82,6 +82,7 @@ public abstract class AbstractTypeServerPluginContainer {
      * @throws Exception if the plugin container failed to initialize for some reason
      */
     public synchronized void initialize() throws Exception {
+        log.debug("Server plugin container initializing");
         this.pluginManager = createPluginManager();
         this.pluginManager.initialize();
     }
@@ -92,7 +93,9 @@ public abstract class AbstractTypeServerPluginContainer {
      * ever know about have been {@link #loadPlugin(ServerPluginEnvironment) loaded}.
      */
     public synchronized void start() {
-        return; // no-op
+        log.debug("Server plugin container starting");
+        this.pluginManager.startPlugins();
+        return;
     }
 
     /**
@@ -100,7 +103,9 @@ public abstract class AbstractTypeServerPluginContainer {
      * the plugin container must assume that soon it will be asked to {@link #shutdown()}.
      */
     public synchronized void stop() {
-        return; // no-op
+        log.debug("Server plugin container stopping");
+        this.pluginManager.stopPlugins();
+        return;
     }
 
     /**
@@ -109,6 +114,8 @@ public abstract class AbstractTypeServerPluginContainer {
      * Subclasses are free to perform additional tasks by overriding this method.
      */
     public synchronized void shutdown() {
+        log.debug("Server plugin container shutting down");
+
         if (this.pluginManager != null) {
             Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
             for (ServerPluginEnvironment env : envs) {
@@ -166,8 +173,8 @@ public abstract class AbstractTypeServerPluginContainer {
      * 
      * @return the plugin manager for use by this plugin container
      */
-    protected PluginManager createPluginManager() {
-        return new PluginManager(this);
+    protected ServerPluginManager createPluginManager() {
+        return new ServerPluginManager(this);
     }
 
     /**

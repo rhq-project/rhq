@@ -585,7 +585,7 @@ public class ContentProviderManager {
             pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
 
             ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
-            ClassLoader pluginClassloader = pluginEnv.getClassLoader();
+            ClassLoader pluginClassloader = pluginEnv.getPluginClassLoader();
 
             ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
             try {
@@ -663,7 +663,7 @@ public class ContentProviderManager {
             throw new RuntimeException("There is no plugin env. for content source [" + contentSource + "]");
         }
 
-        ClassLoader classLoader = env.getClassLoader();
+        ClassLoader classLoader = env.getPluginClassLoader();
         IsolatedInvocationHandler handler = new IsolatedInvocationHandler(adapter, classLoader);
 
         List<Class<?>> ifacesList = new ArrayList<Class<?>>(1);

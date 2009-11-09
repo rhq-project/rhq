@@ -28,7 +28,7 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.PluginManager;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
@@ -181,7 +181,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     @Override
-    protected PluginManager createPluginManager() {
+    protected ServerPluginManager createPluginManager() {
         return new ContentServerPluginManager(this);
     }
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="CustomGenericPlugin"
+                displayName="My Custom Generic Plugin"
+                description="A custom generic plugin."
+                package="org.custom"
+                pluginLifecycleListener="MyLifecycleListener"
+                version="1.0"
+                apiVersion="2.0" 
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+
+      <serverplugin:plugin-configuration>
+         <c:simple-property name="myCustomProperty" type="string" required="true" description="A property my plugin needs to be properly configured" />
+      </serverplugin:plugin-configuration>
+
+</generic-plugin>

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 /**
  * Used as a mock service for the content source plugin container.
  */
-public class TestServerPluginService extends ServerPluginService implements TestServerPluginServiceMBean {
+public class TestContentServerPluginService extends ServerPluginService implements TestContentServerPluginServiceMBean {
     // public so tests can directly set these
     public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
@@ -56,7 +57,9 @@ public class TestServerPluginService extends ServerPluginService implements Test
     @Override
     protected MasterServerPluginContainer createMasterPluginContainer() {
         this.master = new TestMasterServerPluginContainer();
-        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
+        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
+        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration(dir, dir, dir,
+            null);
         this.master.initialize(config);
         return this.master;
     }

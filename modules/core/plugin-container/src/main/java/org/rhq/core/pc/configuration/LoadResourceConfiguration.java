@@ -23,22 +23,22 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 
-public interface ResourceConfigurationStrategy {
+public interface LoadResourceConfiguration {
 
     static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
-    InventoryService getComponentService();
+    ComponentService getComponentService();
 
-    void setComponentService(InventoryService componentService);
+    void setComponentService(ComponentService componentService);
 
     ConfigurationUtilityService getConfigurationUtilityService();
 
     void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
 
-    Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException;
+    Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException;
 
 }

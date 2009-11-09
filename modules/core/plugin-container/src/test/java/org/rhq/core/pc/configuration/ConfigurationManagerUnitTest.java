@@ -27,7 +27,7 @@ import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import static org.testng.Assert.assertSame;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -44,31 +44,31 @@ public class ConfigurationManagerUnitTest extends JMockTest {
 
     int resourceId = -1;
 
-    ResourceConfigurationStrategyFactory factory;
+    LoadResourceConfigurationFactory loadConfigFactory;
 
-    InventoryService componentService;
+    ComponentService componentService;
 
     ConfigurationManager configurationMgr;
 
     @BeforeMethod
     public void setup() {
-        factory = context.mock(ResourceConfigurationStrategyFactory.class);
+        loadConfigFactory = context.mock(LoadResourceConfigurationFactory.class);
 
-        componentService = context.mock(InventoryService.class);
+        componentService = context.mock(ComponentService.class);
 
         configurationMgr = new ConfigurationManager();
-        configurationMgr.setLoadConfigStrategyFactory(factory);
-        configurationMgr.setInventoryService(componentService);
+        configurationMgr.setLoadConfigFactory(loadConfigFactory);
+        configurationMgr.setComponentService(componentService);
     }
 
     @Test
     public void factoryShouldBeCalledToGetStrategy() throws Exception {
-        final ResourceConfigurationStrategy strategy = context.mock(ResourceConfigurationStrategy.class);
+        final LoadResourceConfiguration loadConfig = context.mock(LoadResourceConfiguration.class);
         
         context.checking(new Expectations() {{
-            atLeast(1).of(factory).getStrategy(resourceId); will(returnValue(strategy));
+            atLeast(1).of(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            allowing(strategy).loadConfiguration(resourceId, FROM_STRUCTURED); will(returnValue(new Configuration()));
+            allowing(loadConfig).execute(resourceId, FROM_STRUCTURED); will(returnValue(new Configuration()));
         }});
 
         configurationMgr.loadResourceConfiguration(resourceId, true);
@@ -78,28 +78,28 @@ public class ConfigurationManagerUnitTest extends JMockTest {
     public void strategyShouldBeCalledToLoadConfig() throws Exception {
         final Configuration expectedConfig = new Configuration();
 
-        final ResourceConfigurationStrategy strategy = context.mock(ResourceConfigurationStrategy.class);
+        final LoadResourceConfiguration loadConfig = context.mock(LoadResourceConfiguration.class);
 
         context.checking(new Expectations() {{
-            allowing(factory).getStrategy(resourceId); will(returnValue(strategy));
+            allowing(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            atLeast(1).of(strategy).loadConfiguration(resourceId, FROM_STRUCTURED);
+            atLeast(1).of(loadConfig).execute(resourceId, FROM_STRUCTURED);
             will(returnValue(expectedConfig));
         }});
 
         Configuration actualConfig = configurationMgr.loadResourceConfiguration(resourceId, FROM_STRUCTURED);
 
-        assertSame(actualConfig, expectedConfig, "Expected the configuration from the strategy object to be returned.");
+        assertSame(actualConfig, expectedConfig, "Expected the configuration from the loadConfig object to be returned.");
     }
 
     @Test(expectedExceptions = {PluginContainerException.class})
     public void exceptionShouldBeThrownIfConfigIsNull() throws Exception {
-        final ResourceConfigurationStrategy strategy = context.mock(ResourceConfigurationStrategy.class);
+        final LoadResourceConfiguration loadConfig = context.mock(LoadResourceConfiguration.class);
 
         context.checking(new Expectations() {{
-            allowing(factory).getStrategy(resourceId); will(returnValue(strategy));
+            allowing(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            allowing(strategy).loadConfiguration(resourceId, FROM_STRUCTURED); will(returnValue(null));
+            allowing(loadConfig).execute(resourceId, FROM_STRUCTURED); will(returnValue(null));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
         }});

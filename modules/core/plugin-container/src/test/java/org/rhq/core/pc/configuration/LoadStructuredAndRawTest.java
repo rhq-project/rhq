@@ -25,7 +25,7 @@ package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
 
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
@@ -38,13 +38,13 @@ import org.jmock.Expectations;
 
 import java.util.Random;
 
-public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest {
+public class LoadStructuredAndRawTest extends JMockTest {
 
     static final boolean FROM_STRUCTURED = true;
 
     static final boolean FROM_RAW = false;
 
-    InventoryService componentService;
+    ComponentService componentService;
 
     ConfigurationUtilityService configUtilityService;
 
@@ -56,20 +56,20 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
 
     boolean onlyIfStarted = true;
 
-    StructuredAndRawResourceConfigurationStrategy strategy;
+    LoadStructuredAndRaw loadStructuredAndRaw;
 
     Random random = new Random();
 
     @BeforeMethod
     public void setup() {
-        componentService = context.mock(InventoryService.class);
+        componentService = context.mock(ComponentService.class);
         configUtilityService = context.mock(ConfigurationUtilityService.class);
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        strategy = new StructuredAndRawResourceConfigurationStrategy();
-        strategy.setComponentService(componentService);
-        strategy.setConfigurationUtilityService(configUtilityService);
+        loadStructuredAndRaw = new LoadStructuredAndRaw();
+        loadStructuredAndRaw.setComponentService(componentService);
+        loadStructuredAndRaw.setConfigurationUtilityService(configUtilityService);
     }
 
     @Test
@@ -78,7 +78,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
-                                                         ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));
@@ -88,7 +88,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
     }
 
     @Test
@@ -97,7 +97,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -107,7 +107,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
     }
 
     @Test
@@ -127,7 +127,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -143,7 +143,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
     }
 
     @Test
@@ -152,7 +152,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -164,7 +164,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_RAW);
+        loadStructuredAndRaw.execute(resourceId, FROM_RAW);
     }
 
     @Test
@@ -182,7 +182,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -198,11 +198,11 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_RAW);
+        loadStructuredAndRaw.execute(resourceId, FROM_RAW);
     }
 
     @Test
-    public void theStrategyShouldReturnTheConfig() throws Exception {
+    public void theConfigReceivedFromTheFacetShouldBeReturned() throws Exception {
         final Configuration configuration = new Configuration();
 
         final ResourceType resourceType = new ResourceType();
@@ -212,7 +212,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -224,12 +224,12 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        Configuration loadedConfig = strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
 
         assertSame(
             loadedConfig,
             configuration,
-            "The strategy should return the configuration it receives from the facet component."
+            "The loadRawConfig should return the configuration it receives from the facet component."
         );
     }
 
@@ -244,7 +244,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -256,7 +256,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             ignoring(configUtilityService);
         }});
 
-        Configuration loadedConfig = strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
 
         String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
 
@@ -274,7 +274,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -288,7 +288,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
     }
 
     @Test
@@ -302,7 +302,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
-                                                    ResourceConfigurationStrategy.FACET_METHOD_TIMEOUT,
+                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
                                                     daemonThread,
                                                     onlyIfStarted);
             will(returnValue(configFacet));
@@ -316,7 +316,7 @@ public class StructuredAndRawResourceConfigurationStrategyTest extends JMockTest
             atLeast(1).of(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
         }});
 
-        strategy.loadConfiguration(resourceId, FROM_STRUCTURED);
+        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
     }
 
     RawConfiguration createRawConfiguration(String path) {

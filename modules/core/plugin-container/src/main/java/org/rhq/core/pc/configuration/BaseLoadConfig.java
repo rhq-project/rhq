@@ -23,23 +23,22 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 
-public abstract class BaseResourceConfigurationStrategy implements ResourceConfigurationStrategy {
+public abstract class BaseLoadConfig implements LoadResourceConfiguration {
 
-    protected InventoryService componentService;
+    protected ComponentService componentService;
 
     protected ConfigurationUtilityService configUtilityService;
 
-    public InventoryService getComponentService() {
+    public ComponentService getComponentService() {
         return componentService;
     }
 
-    public void setComponentService(InventoryService componentService) {
+    public void setComponentService(ComponentService componentService) {
         this.componentService = componentService;
     }
 

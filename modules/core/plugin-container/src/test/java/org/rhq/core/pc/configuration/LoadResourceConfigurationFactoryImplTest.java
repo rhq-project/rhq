@@ -27,71 +27,71 @@ import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.jmock.Expectations;
 
-public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
+public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
 
     static final String LEGACY_AMPS_VERSION = "2.0";
 
     static final String NON_LEGACY_AMPS_VERSION = "2.1";
 
-    InventoryService componentService;
+    ComponentService componentService;
 
     int resourceId = -1;
 
-    ResourceConfigurationStrategyFactoryImpl factory;
+    LoadResourceConfigurationFactoryImpl factory;
 
     @BeforeMethod
     public void setup() {
-        componentService = context.mock(InventoryService.class);
+        componentService = context.mock(ComponentService.class);
 
-        factory = new ResourceConfigurationStrategyFactoryImpl();
+        factory = new LoadResourceConfigurationFactoryImpl();
         factory.setComponentService(componentService);
     }
 
     @Test
-    public void factoryShouldReturnLegacyStrategyWhenAmpsVersionIsLessThan2dot1() throws Exception {
+    public void factoryShouldReturnLegacyLoadConfigWhenAmpsVersionIsLessThan2dot1() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            strategy instanceof LegacyResourceConfigurationStrategy,
-            "Expected to get an instance of " + LegacyResourceConfigurationStrategy.class.getSimpleName() + " when the " +
+            loadConfig instanceof LegacyLoadConfig,
+            "Expected to get an instance of " + LegacyLoadConfig.class.getSimpleName() + " when the " +
             "resource is from a plugin having an ampsVersion less than " + NON_LEGACY_AMPS_VERSION
         );
     }
 
     @Test
-    public void factoryShouldInitializeLegacyStrategyWithComponentService() throws Exception {
+    public void factoryShouldInitializeLegacyLoadConfigWithComponentService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertComponentServiceInitialized(strategy);
+        assertComponentServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldInitializeLegacyStrategyWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeLegacyLoadConfigWithConfigurationUtilityService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertConfigurationUtilityServiceInitialized(strategy);
+        assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldReturnStructuredStrategyWhenAmpsVersionIs2dot1AndFormatIsStructured() throws Exception {
+    public void factoryShouldReturnStructuredLoadConfigWhenAmpsVersionIs2dot1AndFormatIsStructured() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -99,18 +99,18 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            strategy instanceof StructuredResourceConfigurationStrategy,
-            "Expected to get an instance of " + StructuredResourceConfigurationStrategy.class.getSimpleName() +
+            loadConfig instanceof LoadStructured,
+            "Expected to get an instance of " + LoadStructured.class.getSimpleName() +
             "when resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
             "configuration format is structured."
         );
     }
 
     @Test
-    public void factoryShouldInitializeStructuredStrategyWithComponentService() throws Exception {
+    public void factoryShouldInitializeLoadStructuredWithComponentService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -118,13 +118,13 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertComponentServiceInitialized(strategy);
+        assertComponentServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldInitializeStructuredStrategyWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeLoadStructuredWithConfigurationUtilityService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -132,13 +132,13 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertConfigurationUtilityServiceInitialized(strategy);
+        assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldReturnRawStrategyWhenAmpsVersionIs2dot1AndFormatIsRaw() throws Exception {
+    public void factoryShouldReturnLoadRawWhenAmpsVersionIs2dot1AndFormatIsRaw() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -146,18 +146,18 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsRaw()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            strategy instanceof RawResourceConfigurationStrategy,
-            "Expected to get an instance of " + RawResourceConfigurationStrategy.class.getSimpleName() + " when " +
+            loadConfig instanceof LoadRaw,
+            "Expected to get an instance of " + LoadRaw.class.getSimpleName() + " when " +
             "resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
             "configuration format is raw."
         );
    }
 
    @Test
-    public void factoryShouldInitializeRawStrategyWithComponentService() throws Exception {
+    public void factoryShouldInitializeLoadRawWithComponentService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -165,13 +165,13 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertComponentServiceInitialized(strategy);
+        assertComponentServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldInitializeRawStrategyWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeLoadRawWithConfigurationUtilityService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -179,13 +179,13 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertConfigurationUtilityServiceInitialized(strategy);
+        assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldReturnStructuredAndRawStrategyWhenAmpsVersionIs2dot1AndFormatIsBoth() throws Exception {
+    public void factoryShouldReturnLoadStructuredAndRawWhenAmpsVersionIs2dot1AndFormatIsBoth() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -193,18 +193,18 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructuredAndRaw()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            strategy instanceof StructuredAndRawResourceConfigurationStrategy,
-            "Expected to get an instance of" + StructuredAndRawResourceConfigurationStrategy.class.getSimpleName() +
+            loadConfig instanceof LoadStructuredAndRaw,
+            "Expected to get an instance of" + LoadStructuredAndRaw.class.getSimpleName() +
             " when resource is from a plugin having an ampsVersion >= " + NON_LEGACY_AMPS_VERSION + " and the " +
             "resource configuration format is both (structured and raw)."
         );
     }
 
     @Test
-    public void factoryShouldInitializeStructuredAndRawStrategyWithComponentService() throws Exception {
+    public void factoryShouldInitializeLoadStructuredAndRawWithComponentService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -212,13 +212,13 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertComponentServiceInitialized(strategy);
+        assertComponentServiceInitialized(loadConfig);
     }
 
     @Test
-    public void factoryShouldInitializeStructuredAndRawStrategyWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService() throws Exception {
         context.checking(new Expectations() {{
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
 
@@ -226,19 +226,19 @@ public class ResourceConfigurationFactoryStrategyImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ResourceConfigurationStrategy strategy = factory.getStrategy(resourceId);
+        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
 
-        assertConfigurationUtilityServiceInitialized(strategy);
+        assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
-    void assertComponentServiceInitialized(ResourceConfigurationStrategy strategy) {
-        assertNotNull(strategy.getComponentService(), "The factory must initialize the componentService " +
-                "property of the strategy object.");
+    void assertComponentServiceInitialized(LoadResourceConfiguration loadConfig) {
+        assertNotNull(loadConfig.getComponentService(), "The factory must initialize the componentService " +
+                "property of the loadConfig object.");
     }
 
-    void assertConfigurationUtilityServiceInitialized(ResourceConfigurationStrategy strategy) {
-        assertNotNull(strategy.getConfigurationUtilityService(), "The factory must initialize the " +
-                "configurationUtilityService property of the strategy object.");
+    void assertConfigurationUtilityServiceInitialized(LoadResourceConfiguration loadConfig) {
+        assertNotNull(loadConfig.getConfigurationUtilityService(), "The factory must initialize the " +
+                "configurationUtilityService property of the loadConfig object.");
     }
 
     ResourceType createResourceType() {

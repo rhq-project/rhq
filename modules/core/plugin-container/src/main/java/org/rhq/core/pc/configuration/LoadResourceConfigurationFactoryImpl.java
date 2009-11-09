@@ -25,54 +25,54 @@ package org.rhq.core.pc.configuration;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.*;
 
-import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.inventory.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-public class ResourceConfigurationStrategyFactoryImpl implements ResourceConfigurationStrategyFactory {
+public class LoadResourceConfigurationFactoryImpl implements LoadResourceConfigurationFactory {
 
     private static final ComparableVersion NON_LEGACY_AMPS_VERSION = new ComparableVersion("2.1");
 
-    private InventoryService componentService;
+    private ComponentService componentService;
 
     private ConfigurationUtilityService configUtilityService = new ConfigurationUtilityServiceImpl();
 
-    public void setComponentService(InventoryService componentService) {
+    public void setComponentService(ComponentService componentService) {
         this.componentService = componentService;
     }
 
-    public ResourceConfigurationStrategy getStrategy(int resourceId) throws PluginContainerException {
-        ResourceConfigurationStrategy strategy = createStrategy(resourceId);
-        initStrategyDependencies(strategy);
+    public LoadResourceConfiguration getStrategy(int resourceId) throws PluginContainerException {
+        LoadResourceConfiguration loadConfig = createStrategy(resourceId);
+        initStrategyDependencies(loadConfig);
 
-        return strategy;
+        return loadConfig;
     }
 
-    private void initStrategyDependencies(ResourceConfigurationStrategy strategy) {
-        strategy.setComponentService(componentService);
-        strategy.setConfigurationUtilityService(configUtilityService);
+    private void initStrategyDependencies(LoadResourceConfiguration loadConfig) {
+        loadConfig.setComponentService(componentService);
+        loadConfig.setConfigurationUtilityService(configUtilityService);
     }
 
-    private ResourceConfigurationStrategy createStrategy(int resourceId) throws PluginContainerException {
+    private LoadResourceConfiguration createStrategy(int resourceId) throws PluginContainerException {
         String ampsVersion = componentService.getAmpsVersion(resourceId);
 
         if (isLegacyVersion(ampsVersion)) {
-            return new LegacyResourceConfigurationStrategy();
+            return new LegacyLoadConfig();
         }
 
         ResourceType resourceType = componentService.getResourceType(resourceId);
 
         if (isStructured(resourceType)) {
-            return new StructuredResourceConfigurationStrategy();
+            return new LoadStructured();
         }
 
         if (isRaw(resourceType)) {
-            return new RawResourceConfigurationStrategy();
+            return new LoadRaw();
         }
 
         // else format is both structured and raw
-        return new StructuredAndRawResourceConfigurationStrategy();
+        return new LoadStructuredAndRaw();
     }
 
     private boolean isLegacyVersion(String ampsVersion) {

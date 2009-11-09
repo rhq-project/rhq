@@ -27,17 +27,16 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pc.util.FacetLockType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
-public class StructuredResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+public class LoadStructured extends BaseLoadConfig {
 
-    private final Log log = LogFactory.getLog(StructuredResourceConfigurationStrategy.class);
+    private final Log log = LogFactory.getLog(LoadStructured.class);
 
-    public Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException {
+    public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Configuration configuration = facet.loadStructuredConfiguration();

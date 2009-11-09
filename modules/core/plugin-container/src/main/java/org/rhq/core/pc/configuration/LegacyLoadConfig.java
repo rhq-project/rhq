@@ -35,11 +35,11 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
-public class LegacyResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+public class LegacyLoadConfig extends BaseLoadConfig {
 
-    private static final Log log = LogFactory.getLog(LegacyResourceConfigurationStrategy.class);
+    private static final Log log = LogFactory.getLog(LegacyLoadConfig.class);
 
-    public Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException {
+    public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
         Configuration configuration = loadConfigFromFacet(resourceId);
         ResourceType resourceType = componentService.getResourceType(resourceId);
 

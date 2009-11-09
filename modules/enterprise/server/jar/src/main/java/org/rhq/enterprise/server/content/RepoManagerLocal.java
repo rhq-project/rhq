@@ -34,6 +34,7 @@ import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 
 @Local
 public interface RepoManagerLocal {
@@ -139,6 +140,16 @@ public interface RepoManagerLocal {
      */
     Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException;
 
+    /**
+     * Handles a repo report from a content provider, adding and removing candidate repos as necessary into the
+     * database.
+     *
+     * @param subject         user triggering the report processing
+     * @param report          cannot be <code>null</code>
+     * @param contentSourceId identifies the content source that
+     * @param result          buffer used to store the results of dealing with the report
+     */
+    void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId, StringBuilder result);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //

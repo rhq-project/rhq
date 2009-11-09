@@ -66,8 +66,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
 
-    private static final String PARENT_RELATIONSHIP_NAME = "parent";
-
     private ContentProviderPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
@@ -171,51 +169,15 @@ public class ContentProviderManager {
                 // Call to the plugin
                 RepoImportReport report = repoSource.importRepos();
 
-                // Import groups first
-                List<RepoGroupDetails> repoGroups = report.getRepoGroups();
-
-                for (RepoGroupDetails createMe : repoGroups) {
-                    String name = createMe.getName();
-
-                    RepoGroup existingGroup = repoManager.getRepoGroupByName(name);
-                    if (existingGroup == null) {
-                        existingGroup = new RepoGroup(name);
-                        existingGroup.setDescription(createMe.getDescription());
-
-                        RepoGroupType groupType = repoManager.getRepoGroupTypeByName(overlord, createMe.getTypeName());
-                        existingGroup.setRepoGroupType(groupType);
-
-                        repoManager.createRepoGroup(overlord, existingGroup);
-                    }
-                }
-                progress.append("Number of repo groups imported: ").append(repoGroups.size());
-
-                // Once the groups are in the system, import any repos that were added
-                List<RepoDetails> repos = report.getRepos();
-
-                for (RepoDetails createMe : repos) {
-
-                    // Will add repos with a parent afterwards to prevent issues where both the parent and
-                    // child are specified in this report.
-                    if (createMe.getParentRepoName() == null) {
-                        processRepo(contentSourceId, createMe);
-                    }
-                }
-
-                // Take a second pass through the list checking for any repos that were created to be
-                // a child of another repo
-                for (RepoDetails createMe : repos) {
-
-                    if (createMe.getParentRepoName() != null) {
-                        processRepo(contentSourceId, createMe);
-                    }
-                }
+                repoManager.processRepoImportReport(overlord, report, contentSourceId, progress);
 
                 log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
                     + (System.currentTimeMillis() - start) + ")ms");
-
-                progress.append("Number of new repos imported: ").append(repos.size());
             }
+
+            // ------------------
+            // NOTE: This is being moved to the repo synchronization as part of Core Team A - Sprint 2
+            // ------------------
 
             // If the provider is capable of handling packages, perform the package synchronization portion of the sync
             if (provider instanceof PackageSource) {
@@ -335,61 +297,12 @@ public class ContentProviderManager {
             throw new Exception("Failed to sync content source [" + contentSourceId + "]", t);
         } finally {
             if (results != null) {
-                results.setEndTime(new Long(System.currentTimeMillis()));
+                results.setEndTime(System.currentTimeMillis());
                 manager.mergeContentSourceSyncResults(results);
             }
         }
 
         return true;
-    }
-
-    private void processRepo(int contentSourceId, RepoDetails createMe) throws Exception {
-
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
-        Subject overlord = subjMgr.getOverlord();
-
-        String name = createMe.getName();
-
-        List<Repo> existingRepo = repoManager.getRepoByName(name);
-        Repo repo;
-
-        // If the repo doesn't exist, create it.
-        if (existingRepo.size() == 0) {
-            repo = new Repo(name);
-            repo.setDescription(createMe.getDescription());
-
-            String createMeGroup = createMe.getRepoGroup();
-            if (createMeGroup != null) {
-                RepoGroup group = repoManager.getRepoGroupByName(createMeGroup);
-                repo.addRepoGroup(group);
-            }
-
-            repo = repoManager.createRepo(overlord, repo);
-
-            String parentName = createMe.getParentRepoName();
-            if (parentName != null) {
-                List<Repo> parentList = repoManager.getRepoByName(parentName);
-
-                if (parentList.size() == 0) {
-                    String error = "Attempting to create repo [" + name + "] with parent [" + parentName
-                        + "] but cannot find the parent";
-                    log.error(error);
-                    throw new RepoException(error);
-                } else {
-                    Repo parent = parentList.get(0);
-                    repoManager.addRepoRelationship(overlord, repo.getId(), parent.getId(), PARENT_RELATIONSHIP_NAME);
-                }
-            }
-
-        } else {
-            repo = existingRepo.get(0);
-        }
-
-        // This call is safe even if the content source is already associated.
-        // We either need to associate the content source with the newly created repo, or
-        // associate the content source with the repo that was created elsewhere.
-        repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
     }
 
     /**

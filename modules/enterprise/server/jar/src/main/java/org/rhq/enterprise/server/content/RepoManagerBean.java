@@ -58,15 +58,29 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
 public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
+
+    /**
+     * Refers to the default repo relationship created at DB setup time to represent a parent/child repo
+     * relationship.
+     * <p/>
+     * This probably isn't the best place to store this, but for now this is the primary usage of this
+     * relationship type.
+     */
+    private static final String PARENT_RELATIONSHIP_NAME = "parent";
+
     private final Log log = LogFactory.getLog(RepoManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -74,9 +88,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @EJB
     private AuthorizationManagerLocal authzManager;
+
     @IgnoreDependency
     @EJB
     private ContentSourceManagerLocal contentSourceManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteRepo(Subject subject, int repoId) {
@@ -307,6 +325,108 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         entityManager.persist(repo);
 
         return repo;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void processRepoImportReport(Subject subject, RepoImportReport report,
+                                        int contentSourceId, StringBuilder result) {
+
+        // Import groups first
+        List<RepoGroupDetails> repoGroups = report.getRepoGroups();
+        int repoGroupCounter = 0;
+
+        for (RepoGroupDetails createMe : repoGroups) {
+            String name = createMe.getName();
+
+            RepoGroup existingGroup = getRepoGroupByName(name);
+            if (existingGroup == null) {
+                existingGroup = new RepoGroup(name);
+                existingGroup.setDescription(createMe.getDescription());
+
+                RepoGroupType groupType = getRepoGroupTypeByName(subject, createMe.getTypeName());
+                existingGroup.setRepoGroupType(groupType);
+
+                // Don't let the whole report blow up if one of these fails,
+                // but be sure to mention it to the report
+                try {
+                    createRepoGroup(subject, existingGroup);
+                    repoGroupCounter++;
+                }
+                catch (RepoException e) {
+
+                    if (e.getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
+                        result.append("Skipping existing repo group [").append(name).append("]").append('\n');
+                    }
+                    else {
+                        log.error("Error adding repo group [" + name + "]", e);
+                        result.append("Could not add repo group [").append(name).append("]. See log for more information.").append('\n');
+                    }
+                }
+            }
+        }
+        result.append("Imported [").append(repoGroupCounter).append("] repo groups.").append('\n');
+
+        // Hold on to all current candidate repos for the content provider. If any were not present in this
+        // report, remove them from the system (the rationale being, the content provider no longer knows
+        // about them and thus they cannot be imported).
+        RepoCriteria candidateReposCriteria = new RepoCriteria();
+        candidateReposCriteria.addFilterContentSourceIds(contentSourceId);
+        candidateReposCriteria.addFilterCandidate(true);
+
+        PageList<Repo> candidatesForThisProvider = findReposByCriteria(subject, candidateReposCriteria);
+
+        // Once the groups are in the system, import any repos that were added
+        List<RepoDetails> repos = report.getRepos();
+        int repoCounter = 0;
+
+        // First add repos that have no parent. We later add repos with a parent afterwards to prevent
+        // issues where both the parent and child are specified in this report.
+        for (RepoDetails createMe : repos) {
+
+            if (createMe.getParentRepoName() == null) {
+                try {
+                    addCandidateRepo(contentSourceId, createMe);
+                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);
+                    repoCounter++;
+                }
+                catch (Exception e) {
+
+                    if (e instanceof RepoException &&
+                        ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
+                        result.append("Skipping addition of existing repo [").append(createMe.getName()).append("]").append('\n');
+                    }
+                    else {
+                        log.error("Error processing repo [" + createMe + "]", e);
+                        result.append("Could not add repo [").append(createMe.getName()).append("]. See log for more information.").append('\n');
+                    }
+                }
+            }
+        }
+
+        // Take a second pass through the list checking for any repos that were created to be
+        // a child of another repo.
+        for (RepoDetails createMe : repos) {
+
+            if (createMe.getParentRepoName() != null) {
+                try {
+                    addCandidateRepo(contentSourceId, createMe);
+                    removeRepoFromList(createMe.getName(), candidatesForThisProvider);
+                    repoCounter++;
+                }
+                catch (Exception e) {
+                    log.error("Error processing repo [" + createMe + "]", e);
+                    result.append("Could not add repo [").append(createMe.getName()).append("]. See log for more information.").append('\n');
+                }
+            }
+        }
+
+        result.append("Imported [").append(repoCounter).append("] repos.").append('\n');
+
+        // Any repos that haven't been removed from candidatesForThisProvider were not returned in this
+        // report, so remove them from the database.
+        for (Repo deleteMe : candidatesForThisProvider) {
+            deleteRepo(subject, deleteMe.getId());
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -604,7 +724,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         List<Repo> repos = getRepoByName(c.getName());
         if (repos.size() != 0) {
-            throw new RepoException("There is already a repo with the name of [" + c.getName() + "]");
+            RepoException e =
+                new RepoException("There is already a repo with the name of [" + c.getName() + "]");
+            e.setType(RepoException.RepoExceptionType.NAME_ALREADY_EXISTS);
+            throw e;
         }
     }
 
@@ -622,8 +745,81 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         RepoGroup existingRepoGroup = getRepoGroupByName(repoGroup.getName());
         if (existingRepoGroup != null) {
-            throw new RepoException("There is already a repo group with the name [" + repoGroup.getName() + "]");
+            RepoException e =
+                new RepoException("There is already a repo group with the name [" + repoGroup.getName() + "]");
+            e.setType(RepoException.RepoExceptionType.NAME_ALREADY_EXISTS);
+            throw e;
         }
     }
 
+    /**
+     * Performs the necessary logic to determine if a candidate repo should be added to the system, adding it
+     * in the process if it needs to. If the repo already exists in the system, this method is a no-op.
+     * <p/>
+     * Calling this method with a repo that has a parent assumes the parent has already been created. This call
+     * assumes the repo group has been created as well.
+     *
+     * @param contentSourceId identifies the content provider that introduced the candidate into the system
+     * @param createMe        describes the candidate to be created
+     * @throws Exception if there is an error associating the content source with the repo or if the repo
+     *                   indicates a parent or repo group that does not exist
+     */
+    private void addCandidateRepo(int contentSourceId, RepoDetails createMe) throws Exception {
+
+        Subject overlord = subjectManager.getOverlord();
+        String name = createMe.getName();
+
+        List<Repo> existingRepo = getRepoByName(name);
+
+        // If the repo doesn't exist, create it.
+        if (existingRepo.size() != 0) {
+            return;
+        }
+
+        // Create and populate the repo
+        Repo addMe = new Repo(name);
+        addMe.setDescription(createMe.getDescription());
+
+        String createMeGroup = createMe.getRepoGroup();
+        if (createMeGroup != null) {
+            RepoGroup group = getRepoGroupByName(createMeGroup);
+            addMe.addRepoGroup(group);
+        }
+
+        // Add the new candidate to the database
+        addMe = createCandidateRepo(overlord, addMe);
+
+        // Associate the content provider that introduced the candidate with the repo
+        addContentSourcesToRepo(overlord, addMe.getId(), new int[] { contentSourceId });
+
+        // If the repo indicates it has a parent, create that relationship
+        String parentName = createMe.getParentRepoName();
+        if (parentName != null) {
+            List<Repo> parentList = getRepoByName(parentName);
+
+            if (parentList.size() == 0) {
+                String error = "Attempting to create repo [" + name + "] with parent [" + parentName
+                    + "] but cannot find the parent";
+                log.error(error);
+                throw new RepoException(error);
+            } else {
+                Repo parent = parentList.get(0);
+                addRepoRelationship(overlord, addMe.getId(), parent.getId(), PARENT_RELATIONSHIP_NAME);
+            }
+        }
+    }
+
+    private void removeRepoFromList(String repoName, List<Repo> repoList) {
+        Repo deleteMe = null;
+        for (Repo checkMe : repoList) {
+            if (checkMe.getName().equals(repoName)) {
+                deleteMe = checkMe;
+                break;
+            }
+        }
+
+        if (deleteMe != null) {
+            repoList.remove(deleteMe);
+        }
+    }
 }

@@ -71,6 +71,11 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     private static final String PACKAGE_VERSION = "1.0";
     private static final String PACKAGE_ARCH = "noarch";
 
+    private static final String EXISTING_IMPORTED_REPO_NAME = "testRepoImportedExisting";
+    private static final String EXISTING_CANDIDATE_REPO_NAME = "testRepoCandidateExisting";
+
+    private static final String PREVIOUS_CANDIDATE_REPO_NAME = "testPreviousCandidate";
+
     // The following variables need to be cleaned up at the end of the test
 
     private ContentSourceType testSourceType;
@@ -189,13 +194,33 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     public void synchronizeContentSource() throws Exception {
 
         // Setup
+        // --------------------------------------------
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject overlord = subjectManager.getOverlord();
 
         TestContentProviderManager providerManager = new TestContentProviderManager();
 
+        // -> Add an already imported repo to the system so it already exists when the report introduces it
+        Repo existingImportedRepo = new Repo(EXISTING_IMPORTED_REPO_NAME);
+        existingImportedRepo.setCandidate(false);
+        existingImportedRepo.addContentSource(testSource);
+        repoManager.createRepo(overlord, existingImportedRepo);
+
+        // -> Simulate a candidate repo from a previous import that will be in this report as well
+        Repo existingCandidateRepo = new Repo(EXISTING_CANDIDATE_REPO_NAME);
+        existingCandidateRepo.setCandidate(true);
+        existingCandidateRepo.addContentSource(testSource);
+        repoManager.createCandidateRepo(overlord, existingCandidateRepo);
+
+        // -> Simulate a candidate repo from a previous import that will *NOT* be in this report
+        Repo previousRepo = new Repo(PREVIOUS_CANDIDATE_REPO_NAME);
+        previousRepo.setCandidate(true);
+        previousRepo.addContentSource(testSource);
+        repoManager.createCandidateRepo(overlord, previousRepo);
+
         // Test
+        // --------------------------------------------
         boolean completed = providerManager.synchronizeContentSource(testSource.getId());
         assert completed;
 
@@ -205,16 +230,19 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         repoGroupsToDelete.add(repoGroup.getId());
 
         // Verify Repos
+        // --------------------------------------------
         List<Repo> retrievedRepos;
 
         // -> Simple Repo
         retrievedRepos = repoManager.getRepoByName("testRepo1");
         assert retrievedRepos.size() == 1;
+        assert retrievedRepos.get(0).isCandidate();
         reposToDelete.add(retrievedRepos.get(0).getId());
 
         // -> Repo in a group
         retrievedRepos = repoManager.getRepoByName("testRepo2");
         assert retrievedRepos.size() == 1;
+        assert retrievedRepos.get(0).isCandidate();
         reposToDelete.add(retrievedRepos.get(0).getId());
 
         Repo repoInGroup = retrievedRepos.get(0);
@@ -236,11 +264,13 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         // -> Repo with a parent
         retrievedRepos = repoManager.getRepoByName("testRepo3");
         assert retrievedRepos.size() == 1;
+        assert retrievedRepos.get(0).isCandidate();
         reposToDelete.add(retrievedRepos.get(0).getId());
         relatedRepoId = retrievedRepos.get(0).getId();
 
         retrievedRepos = repoManager.getRepoByName("testRepo4");
         assert retrievedRepos.size() == 1;
+        assert retrievedRepos.get(0).isCandidate();
         reposToDelete.add(retrievedRepos.get(0).getId());
         repoId = retrievedRepos.get(0).getId();
 
@@ -254,11 +284,27 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         Set<RepoRepoRelationship> childRepoRepoRelationship = childRepo.getRepoRepoRelationships();
         assert childRepoRepoRelationship.size() == 1;
 
+        // -> Repo that was already imported in the system (make sure there is still only one)
+        retrievedRepos = repoManager.getRepoByName(EXISTING_IMPORTED_REPO_NAME);
+        assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
+
+        // -> Repo that was already a candidate in the system (make sure it's not added again)
+        retrievedRepos = repoManager.getRepoByName(EXISTING_CANDIDATE_REPO_NAME);
+        assert retrievedRepos.size() == 1;
+        reposToDelete.add(retrievedRepos.get(0).getId());
+
+        // -> Make sure a repo that was previously a candidate of this content provider but did not
+        //    come back in the latest sync is removed
+        retrievedRepos = repoManager.getRepoByName(PREVIOUS_CANDIDATE_REPO_NAME);
+        assert retrievedRepos.size() == 0;
+
         // -> Non-existent repo
         retrievedRepos = repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
 
         // Verify Packages
+        // --------------------------------------------
         TransactionManager tx = getTransactionManager();
         tx.begin();
         EntityManager entityManager = getEntityManager();
@@ -311,6 +357,14 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             repo4.setParentRepoName("testRepo3");
             report.addRepo(repo4);
 
+            // Repo that was already imported in the system
+            RepoDetails repo5 = new RepoDetails(EXISTING_IMPORTED_REPO_NAME);
+            report.addRepo(repo5);
+
+            // Repo that was already a candidate in the system
+            RepoDetails repo6 = new RepoDetails(EXISTING_CANDIDATE_REPO_NAME);
+            report.addRepo(repo6);
+
             return report;
         }
 
@@ -340,7 +394,6 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             // No-op
             return null;
         }
-
     }
 
     /**

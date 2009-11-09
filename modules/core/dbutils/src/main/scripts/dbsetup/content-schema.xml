@@ -354,6 +354,18 @@
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
     </table>
+
+    <table name="RHQ_DISTRIBUTION_FILE">
+        <column name="DISTRIBUTION_ID" type="INTEGER" primarykey="true" required="true" references="RHQ_DISTRIBUTION"/>
+        <column name="RELATIVE_FILENAME" size="256" type="VARCHAR2" required="true"/>
+        <column name="MD5SUM" size="64" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        
+        <index name="RHQ_DISTRIBUTION_FILE_IDX" unique="true">
+            <field ref="DISTRIBUTION_ID"/>
+            <field ref="RELATIVE_FILENAME"/>
+        </index>
+    </table>
            
 
 </dbsetup>

@@ -28,13 +28,7 @@ import java.io.Serializable;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
-/**
- * This is the composite primary key for the {@link RepoDistribution} entity. That entity is an explicit
- * many-to-many mapping table, so this composite key is simply the foreign keys to both ends of that relationship.
- *
- * @author Pradeep Kilambi
- */
-public class RepoDistributionPK implements Serializable {
+public class DistributionFilePK implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /*
@@ -43,48 +37,34 @@ public class RepoDistributionPK implements Serializable {
      * entity itself.
      */
 
-    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
-    private Repo repo;
-
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne
-    private Distribution dist;
+    private Distribution distribution;
 
-    public RepoDistributionPK() {
+    public DistributionFilePK() {
     }
 
-    public RepoDistributionPK(Repo repo, Distribution dist) {
-        this.repo = repo;
-        this.dist = dist;
-    }
-
-    public Repo getRepo() {
-        return repo;
-    }
-
-    public void setRepo(Repo repo) {
-        this.repo = repo;
+    public DistributionFilePK(Distribution dist) {
+        this.distribution = dist;
     }
 
     public Distribution getDistribution() {
-        return dist;
+        return distribution;
     }
 
     public void setDistribution(Distribution kstree) {
-        this.dist = kstree;
+        this.distribution = kstree;
     }
 
     @Override
     public String toString() {
-        return "RepoDistributionPK: repo=[" + repo + "]; distribution=[" + dist + "]";
+        return "DistributionFilePK: Distribution=[" + distribution + "]";
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
-        result = (31 * result) + ((dist == null) ? 0 : dist.hashCode());
+        result = (31 * result) + ((distribution == null) ? 0 : distribution.hashCode());
         return result;
     }
 
@@ -94,25 +74,17 @@ public class RepoDistributionPK implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof RepoDistributionPK))) {
+        if ((obj == null) || (!(obj instanceof DistributionFilePK))) {
             return false;
         }
 
-        final RepoDistributionPK other = (RepoDistributionPK) obj;
+        final DistributionFilePK other = (DistributionFilePK) obj;
 
-        if (repo == null) {
-            if (other.repo != null) {
+        if (distribution == null) {
+            if (other.distribution != null) {
                 return false;
             }
-        } else if (!repo.equals(other.repo)) {
-            return false;
-        }
-
-        if (dist == null) {
-            if (other.dist != null) {
-                return false;
-            }
-        } else if (!dist.equals(other.dist)) {
+        } else if (!distribution.equals(other.distribution)) {
             return false;
         }
 

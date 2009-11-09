@@ -2046,23 +2046,64 @@
           <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
-
-
-      <!-- Generic tagging support -->
+    	
+    	<!-- Generic tagging support -->
       <schemaSpec version="2.64">
-        <schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
-        <schema-directSQL>
-          <statement>
-            CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
-          </statement>
+    	<schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
+    	  <schema-directSQL>
+    	    <statement>
+    	      CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
+    	    </statement>
+    	  </schema-directSQL>
+    	 <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
+    	 <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
+    	 <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
+    	 <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+      </schemaSpec>
+    	
+   	  <!-- Distribution Files -->
+      <schemaSpec version="2.65">
+      	 <schema-directSQL>
+      	    <statement>
+      	        CREATE TABLE RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID INTEGER )
+      	    </statement>
+      	 </schema-directSQL>
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false" />
+      	<schema-directSQL>
+      	  <statement targetDBVendor="postgresql">
+      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+      	  </statement>
+      	  <statement targetDBVendor="oracle">
+      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+      	  </statement>
+      	</schema-directSQL>
+      	<schema-directSQL>
+      	 <statement targetDBVendor="oracle">
+      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
+      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+      	  FOREIGN KEY ( DISTRIBUTION_ID)
+      	  REFERENCES RHQ_DISTRIBUTION ( ID )
+      	 </statement>
+      	 <statement targetDBVendor="postgresql">
+      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
+      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+      	  FOREIGN KEY ( DISTRIBUTION_ID)
+      	  REFERENCES RHQ_DISTRIBUTION ( ID )
+      	 </statement>
         </schema-directSQL>
-        <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
-        <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
-        <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
-        <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+      	
       </schemaSpec>
 
 
+      
     </dbupgrade>
   </target>
 </project>

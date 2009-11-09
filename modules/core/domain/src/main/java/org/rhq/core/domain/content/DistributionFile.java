@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.content;
 
-import java.io.Serializable;
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -37,20 +36,19 @@ import javax.persistence.PrePersist;
 import javax.persistence.Table;
 
 /**
- * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
- * package versions. It is an explicit relationship mapping entity between {@link Repo} and {@link Distribution}.
+ * This is the many-to-many entity that correlates a distribution with its associated files.
  *
  * @author Pradeep Kilambi
  */
 @Entity
-@IdClass(RepoDistributionPK.class)
+@IdClass(DistributionFilePK.class)
 @NamedQueries( {
-    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :distId"),
-    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
-@Table(name = "RHQ_REPO_DISTRIBUTION")
-public class RepoDistribution implements Serializable {
-    public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoDistribution.deleteByKickstartTreeId";
-    public static final String DELETE_BY_REPO_ID = "RepoDistribution.deleteByRepoId";
+    @NamedQuery(name = DistributionFile.SELECT_BY_DIST_ID, query = "SELECT df from DistributionFile df WHERE df.distribution.id = :distId"),
+    @NamedQuery(name = DistributionFile.DELETE_BY_DIST_ID, query = "DELETE DistributionFile df WHERE df.distribution.id = :distId") })
+@Table(name = "RHQ_DISTRIBUTION_FILE")
+public class DistributionFile {
+    public static final String SELECT_BY_DIST_ID = "DistributionFile.selectByDistId";
+    public static final String DELETE_BY_DIST_ID = "DistributionFile.deleteByDistId";
 
     private static final long serialVersionUID = 1L;
 
@@ -59,42 +57,64 @@ public class RepoDistribution implements Serializable {
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
      */
-    @Id
-    @ManyToOne
-    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private Repo repo;
 
     @Id
     @ManyToOne
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private Distribution dist;
+    private Distribution distribution;
+
+    @Column(name = "RELATIVE_FILENAME", nullable = false)
+    private String relative_filename;
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long last_modified;
 
-    protected RepoDistribution() {
+    @Column(name = "MD5SUM", nullable = false)
+    private String md5sum;
+
+    protected DistributionFile() {
     }
 
-    public RepoDistribution(Repo repo, Distribution dist) {
-        this.repo = repo;
-        this.dist = dist;
+    public DistributionFile(Distribution dist, String filenameIn, String md5sum) {
+        this.distribution = dist;
+        this.relative_filename = filenameIn;
+        this.md5sum = md5sum;
     }
 
-    public RepoDistributionPK getRepoDistributionPK() {
-        return new RepoDistributionPK(repo, dist);
+    public DistributionFilePK getDistributionFilePK() {
+        return new DistributionFilePK(distribution);
     }
 
-    public void setRepoDistributionPK(RepoDistributionPK pk) {
-        this.repo = pk.getRepo();
-        this.dist = pk.getDistribution();
+    public void setDistributionFilePK(DistributionFilePK pk) {
+        this.distribution = pk.getDistribution();
     }
 
-    /**
-     * This is the epoch time when this mapping was first created; in other words, when the repo was first associated
-     * with the content source.
-     */
     public long getLastModified() {
         return last_modified;
+    }
+
+    public Distribution getDistribution() {
+        return distribution;
+    }
+
+    public void setDistribution(Distribution dist) {
+        this.distribution = dist;
+    }
+
+    public String getRelativeFilename() {
+        return relative_filename;
+    }
+
+    public void setRelativeFilename(String relative_filename) {
+        this.relative_filename = relative_filename;
+    }
+
+    public String getMd5sum() {
+        return md5sum;
+    }
+
+    public void setMd5sum(String md5sum) {
+        this.md5sum = md5sum;
     }
 
     @PrePersist
@@ -104,18 +124,18 @@ public class RepoDistribution implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("RepoDistribution: ");
+        StringBuilder str = new StringBuilder("DistributionFile: ");
         str.append("ctime=[").append(new Date(this.last_modified)).append("]");
-        str.append(", ch=[").append(this.repo).append("]");
-        str.append(", cs=[").append(this.dist).append("]");
+        str.append(", ch=[").append(this.relative_filename).append("]");
+        str.append(", ch=[").append(this.md5sum).append("]");
+        str.append(", cs=[").append(this.distribution).append("]");
         return str.toString();
     }
 
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((repo == null) ? 0 : repo.hashCode());
-        result = (31 * result) + ((dist == null) ? 0 : dist.hashCode());
+        result = (31 * result) + ((distribution == null) ? 0 : distribution.hashCode());
         return result;
     }
 
@@ -125,28 +145,21 @@ public class RepoDistribution implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof RepoDistribution))) {
+        if ((obj == null) || (!(obj instanceof DistributionFile))) {
             return false;
         }
 
-        final RepoDistribution other = (RepoDistribution) obj;
+        final DistributionFile other = (DistributionFile) obj;
 
-        if (repo == null) {
-            if (repo != null) {
+        if (distribution == null) {
+            if (distribution != null) {
                 return false;
             }
-        } else if (!repo.equals(other.repo)) {
-            return false;
-        }
-
-        if (dist == null) {
-            if (dist != null) {
-                return false;
-            }
-        } else if (!dist.equals(other.dist)) {
+        } else if (!distribution.equals(other.distribution)) {
             return false;
         }
 
         return true;
     }
+
 }

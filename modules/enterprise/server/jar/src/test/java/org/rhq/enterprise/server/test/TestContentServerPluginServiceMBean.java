@@ -20,5 +20,5 @@ package org.rhq.enterprise.server.test;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 
-public interface TestServerPluginServiceMBean extends ServerPluginServiceManagement {
+public interface TestContentServerPluginServiceMBean extends ServerPluginServiceManagement {
 }

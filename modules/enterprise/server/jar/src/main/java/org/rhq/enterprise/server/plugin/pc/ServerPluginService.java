@@ -113,21 +113,22 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     protected MasterServerPluginContainer createMasterPluginContainer() {
         MasterServerPluginContainer pc = new MasterServerPluginContainer();
 
-        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
-
         String pluginDirStr = System.getProperty(ServerConfig.SERVER_HOME_DIR);
         File pluginDir = new File(pluginDirStr, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
-        config.setPluginDirectory(pluginDir);
+
+        String dataDirStr = System.getProperty(ServerConfig.SERVER_DATA_DIR);
+        File dataDir = new File(dataDirStr, "server-plugins");
+        dataDir.mkdirs(); // make sure the data directory exists
 
         String tmpDirStr = System.getProperty(ServerConfig.SERVER_TEMP_DIR);
-        config.setTemporaryDirectory(new File(tmpDirStr));
+        File tmpDir = new File(tmpDirStr);
 
         // TODO: determine what things to hide from our war classloader
         //StringBuilder defaultRegex = new StringBuilder();
         //defaultRegex.append("(package\\.with\\.classes\\.to\\.hide\\..*)|");
 
-        config.setRootPluginClassLoaderRegex(null);
-
+        MasterServerPluginContainerConfiguration config;
+        config = new MasterServerPluginContainerConfiguration(pluginDir, dataDir, tmpDir, null);
         pc.initialize(config);
 
         return pc;

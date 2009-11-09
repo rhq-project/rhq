@@ -23,8 +23,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.enterprise.server.plugin.pc.PluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 
@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.Conten
  *
  * @author John Mazzitelli
  */
-public class ContentServerPluginManager extends PluginManager {
+public class ContentServerPluginManager extends ServerPluginManager {
 
     private ContentSourcePluginMetadataManager metadataManager;
 
@@ -91,7 +91,7 @@ public class ContentServerPluginManager extends PluginManager {
         for (ContentSourceType newType : newTypesCopy) {
             try {
                 String className = newType.getContentSourceApiClass();
-                Class<?> apiClass = Class.forName(className, false, env.getClassLoader());
+                Class<?> apiClass = Class.forName(className, false, env.getPluginClassLoader());
 
                 if (!ContentProvider.class.isAssignableFrom(apiClass)) {
                     throw new Exception("The API class [" + className + "] should implement ["

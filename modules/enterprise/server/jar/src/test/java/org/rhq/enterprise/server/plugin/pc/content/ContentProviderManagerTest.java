@@ -90,7 +90,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         // Plugin service setup
         prepareScheduler();
-        TestContentServerPluginService pluginService = prepareContentServerPluginService();
+        TestContentServerPluginService pluginService = new TestContentServerPluginService();
+        prepareCustomServerPluginService(pluginService);
         pluginService.startMasterPluginContainer();
 
         // Because of the (current) transaction settings of some of the nested methods (i.e. REQUIRES_NEW),

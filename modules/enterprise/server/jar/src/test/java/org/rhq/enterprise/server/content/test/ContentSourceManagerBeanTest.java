@@ -151,7 +151,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
-        pluginService = prepareContentServerPluginService();
+        TestContentServerPluginService pluginService = new TestContentServerPluginService();
+        prepareCustomServerPluginService(pluginService);
         pluginService.startMasterPluginContainer();
 
         cleanupPreviousTestRuns();

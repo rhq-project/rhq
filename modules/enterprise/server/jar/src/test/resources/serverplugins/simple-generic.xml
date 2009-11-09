@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="TestSimpleGenericPlugin"
+                displayName="Test Simple Generic Plugin"
+                description="A test generic plugin that is simple."
+                pluginLifecycleListener="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener"
+                version="1.0"
+                apiVersion="2.0" 
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+
+</generic-plugin>

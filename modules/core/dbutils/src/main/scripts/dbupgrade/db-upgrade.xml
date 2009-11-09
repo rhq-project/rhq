@@ -2048,6 +2048,21 @@
       </schemaSpec>
 
 
+      <!-- Generic tagging support -->
+      <schemaSpec version="2.64">
+        <schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
+        <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
+        <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+      </schemaSpec>
+
+
     </dbupgrade>
   </target>
 </project>

@@ -1,5 +1,9 @@
 package org.rhq.enterprise.server.content.test;
 
+import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
@@ -8,6 +12,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -56,5 +61,25 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
         distManager.deleteDistributionByDistId(overlord, id);
         distro = distManager.getDistributionByLabel(kslabel);
         assert distro == null;
+    }
+
+    @Test(enabled = ENABLED)
+    public void testDistributionFiles() throws Exception {
+        String kslabel = "testCreateDeleteRepo";
+        String kspath = "/tmp";
+        int id = distManager.createDistribution(overlord, kslabel, kspath, distType).getId();
+        Distribution distro = distManager.getDistributionByLabel(kslabel);
+
+        DistributionFile distfile = new DistributionFile(distro, "vmlinux", "d41d8cd98f00b204e9800998ecf8427e");
+
+        EntityManager em = getEntityManager();
+        em.persist(distfile);
+        Query query = em.createNamedQuery(distfile.SELECT_BY_DIST_ID);
+
+        query.setParameter("distId", distro.getId());
+        List<DistributionFile> results = query.getResultList();
+
+        assert results.size() != 0;
+
     }
 }

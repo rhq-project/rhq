@@ -21,12 +21,15 @@ package org.rhq.plugins.aliases;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
 import java.util.Set;
+import java.util.List;
 
 /**
  * The ResourceDiscoveryComponent for the "Aliases File" ResourceType.
@@ -45,5 +48,11 @@ public class AliasesDiscoveryComponent extends AugeasConfigurationDiscoveryCompo
          ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
         DiscoveredResourceDetails details = super.discoverResource(pluginConfig, discoveryContext);
         return details;
+    }
+
+    @Override
+    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext discoveryContext) {
+        List<String> s = super.determineIncludeGlobs(discoveryContext);
+        return s;
     }
 }

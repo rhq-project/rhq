@@ -23,12 +23,27 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.pc.inventory.InventoryService;
 
-public class RawResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+public abstract class BaseResourceConfigurationStrategy implements ResourceConfigurationStrategy {
 
-    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
-        return null;
+    protected InventoryService componentService;
+
+    protected ConfigurationUtilityService configUtilityService;
+
+    public InventoryService getComponentService() {
+        return componentService;
+    }
+
+    public void setComponentService(InventoryService componentService) {
+        this.componentService = componentService;
+    }
+
+    public ConfigurationUtilityService getConfigurationUtilityService() {
+        return configUtilityService;
+    }
+
+    public void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService) {
+        this.configUtilityService = configUtilityService;
     }
 }

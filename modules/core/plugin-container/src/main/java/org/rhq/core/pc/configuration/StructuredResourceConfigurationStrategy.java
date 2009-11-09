@@ -23,5 +23,26 @@
 
 package org.rhq.core.pc.configuration;
 
-public class StructuredResourceConfigurationStrategy implements ResourceConfigurationStrategy {
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pc.util.FacetLockType;
+
+public class StructuredResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+
+    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+
+        ResourceConfigurationFacet facet = componentService.getComponent(resourceId,
+                                                                         ResourceConfigurationFacet.class,
+                                                                         FacetLockType.READ,
+                                                                         FACET_METHOD_TIMEOUT,
+                                                                         daemonOnly,
+                                                                         onlyIfStarted);
+
+        Configuration configuration = facet.loadStructuredConfiguration();
+
+        return null;
+    }
 }

@@ -24,11 +24,19 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 
-public class RawResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+import java.util.List;
 
-    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
-        return null;
+public class ConfigurationUtilityServiceImpl implements ConfigurationUtilityService {
+
+    public void normalizeConfiguration(Configuration configuration, ConfigurationDefinition configurationDefinition) {
+        ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
+    }
+
+    public List<String> validateConfiguration(Configuration configuration,
+            ConfigurationDefinition configurationDefinition) {
+        return ConfigurationUtility.validateConfiguration(configuration, configurationDefinition);
     }
 }

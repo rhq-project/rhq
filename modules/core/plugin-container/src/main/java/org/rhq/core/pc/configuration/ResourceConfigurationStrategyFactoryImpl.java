@@ -36,11 +36,25 @@ public class ResourceConfigurationStrategyFactoryImpl implements ResourceConfigu
 
     private InventoryService componentService;
 
+    private ConfigurationUtilityService configUtilityService = new ConfigurationUtilityServiceImpl();
+
     public void setComponentService(InventoryService componentService) {
         this.componentService = componentService;
     }
 
     public ResourceConfigurationStrategy getStrategy(int resourceId) throws PluginContainerException {
+        ResourceConfigurationStrategy strategy = createStrategy(resourceId);
+        initStrategyDependencies(strategy);
+
+        return strategy;
+    }
+
+    private void initStrategyDependencies(ResourceConfigurationStrategy strategy) {
+        strategy.setComponentService(componentService);
+        strategy.setConfigurationUtilityService(configUtilityService);
+    }
+
+    private ResourceConfigurationStrategy createStrategy(int resourceId) throws PluginContainerException {
         String ampsVersion = componentService.getAmpsVersion(resourceId);
 
         if (isLegacyVersion(ampsVersion)) {

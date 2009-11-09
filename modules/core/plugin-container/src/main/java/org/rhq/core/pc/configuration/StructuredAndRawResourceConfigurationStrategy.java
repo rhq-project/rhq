@@ -23,5 +23,12 @@
 
 package org.rhq.core.pc.configuration;
 
-public class StructuredAndRawResourceConfigurationStrategy implements ResourceConfigurationStrategy {
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.clientapi.agent.PluginContainerException;
+
+public class StructuredAndRawResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
+
+    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
+        return null;
+    }
 }

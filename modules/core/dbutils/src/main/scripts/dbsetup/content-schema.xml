@@ -348,6 +348,12 @@
             </primaryKey>
         </constraint>
     </table>
+
+    <table name="RHQ_TAG">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
            
 
 </dbsetup>

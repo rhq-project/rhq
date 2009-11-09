@@ -24,31 +24,47 @@ package org.rhq.core.domain.common;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
 /**
  * A generic tag that can be associated with domain objects such as 
  * Repository, Content Provider, Resource, Package etc. 
  * @author Sayli Karmarkar
  */
 
-//@Entity
-//@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_TAG_ID_SEQ")
-//@Table(name = "RHQ_TAG")
+@Entity
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_TAG_ID_SEQ")
+@Table(name = "RHQ_TAG")
 public class Tag implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    //@Column(name = "ID", nullable = false)
-    //@GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
-    //@Id
-    //private int id;
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
+    private int id;
 
-    //@Column(name = "NAME", nullable = false)
+    @Column(name = "NAME", nullable = false)
     private String name;
 
-    //@Column(name = "DESCRIPTION", nullable = true)
+    @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
     public Tag() {
+    }
+
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     /**

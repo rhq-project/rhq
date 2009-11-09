@@ -49,6 +49,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -245,10 +246,10 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         }
     }
 
-    private TestServerPluginService serverPluginService;
+    private ServerPluginService serverPluginService;
 
     /**
-     * If you need to test content source server plugins, or other server plugins, you must first prepare the server plugin service via
+     * If you need to test content source server plugins, you must first prepare the server plugin service via
      * this method. The caller must explicitly start the PC by using the appropriate API on the returned object; this
      * method will only start the service, it will NOT start the master PC.
      *
@@ -256,12 +257,12 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
      *
      * @throws RuntimeException
      */
-    public TestServerPluginService prepareServerPluginService() {
+    public TestContentServerPluginService prepareContentServerPluginService() {
         try {
             MBeanServer mbs = getJBossMBeanServer();
-            TestServerPluginService mbean = new TestServerPluginService();
+            TestContentServerPluginService mbean = new TestContentServerPluginService();
             mbean.start();
-            mbs.registerMBean(mbean, TestServerPluginService.OBJECT_NAME);
+            mbs.registerMBean(mbean, TestContentServerPluginService.OBJECT_NAME);
             serverPluginService = mbean;
             return mbean;
         } catch (Exception e) {
@@ -273,7 +274,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
         if (serverPluginService != null) {
             serverPluginService.stopMasterPluginContainer();
             serverPluginService.stop();
-            getJBossMBeanServer().unregisterMBean(TestServerPluginService.OBJECT_NAME);
+            getJBossMBeanServer().unregisterMBean(ServerPluginService.OBJECT_NAME);
             serverPluginService = null;
         }
     }

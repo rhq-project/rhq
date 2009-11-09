@@ -110,6 +110,7 @@
     <classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>    
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
+	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>

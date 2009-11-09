@@ -153,6 +153,9 @@ public abstract class ServerPluginDescriptorUtil {
 
         if (descriptor == null) {
             descriptor = loadPluginDescriptorFromUrl(pluginFile.toURI().toURL());
+            if (descriptor == null) {
+                throw new Exception("Plugin is missing a descriptor: " + pluginFile);
+            }
         }
 
         String version = descriptor.getVersion();
@@ -177,13 +180,14 @@ public abstract class ServerPluginDescriptorUtil {
     }
 
     /**
-     * Loads a plugin descriptor from the given plugin jar and returns it.
-     * 
-     * This is a static method to provide a convienence method for others to be able to use.
+     * Loads a plugin descriptor from the given plugin jar and returns it. If the given jar does not
+     * have a server plugin descriptor, <code>null</code> will be returned, meaning this is not
+     * a server plugin jar.
      *  
      * @param pluginJarFileUrl URL to a plugin jar file
-     * @return the plugin descriptor found in the given plugin jar file
-     * @throws Exception if failed to find or parse a descriptor file in the plugin jar
+     * @return the plugin descriptor found in the given plugin jar file, or <code>null</code> if there
+     *         is no plugin descriptor in the jar file
+     * @throws Exception if failed to parse the descriptor file found in the plugin jar
      */
     public static ServerPluginDescriptorType loadPluginDescriptorFromUrl(URL pluginJarFileUrl) throws Exception {
 
@@ -192,7 +196,10 @@ public abstract class ServerPluginDescriptorUtil {
         if (pluginJarFileUrl == null) {
             throw new Exception("A valid plugin JAR URL must be supplied.");
         }
-        logger.debug("Loading plugin descriptor from plugin jar at [" + pluginJarFileUrl + "]...");
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("Loading plugin descriptor from plugin jar at [" + pluginJarFileUrl + "]...");
+        }
 
         testPluginJarIsReadable(pluginJarFileUrl);
 
@@ -211,27 +218,28 @@ public abstract class ServerPluginDescriptorUtil {
                 }
             }
 
-            if (descriptorEntry == null) {
-                throw new Exception("The plugin descriptor does not exist");
-            }
-
-            Unmarshaller unmarshaller = null;
             ServerPluginDescriptorType pluginDescriptor = null;
-            try {
-                unmarshaller = getServerPluginDescriptorUnmarshaller();
-                pluginDescriptor = ((JAXBElement<? extends ServerPluginDescriptorType>) unmarshaller.unmarshal(jis))
-                    .getValue();
-            } finally {
-                if (unmarshaller != null) {
-                    for (ValidationEvent ev : ((ValidationEventCollector) unmarshaller.getEventHandler()).getEvents()) {
-                        logger.debug("Plugin [" + pluginJarFileUrl + "] descriptor event {Severity: "
-                            + ev.getSeverity() + ", Message: " + ev.getMessage() + ", Exception: "
-                            + ev.getLinkedException() + "}");
+
+            if (descriptorEntry != null) {
+                Unmarshaller unmarshaller = null;
+                try {
+                    unmarshaller = getServerPluginDescriptorUnmarshaller();
+                    Object jaxbElement = unmarshaller.unmarshal(jis);
+                    pluginDescriptor = ((JAXBElement<? extends ServerPluginDescriptorType>) jaxbElement).getValue();
+                } finally {
+                    if (unmarshaller != null) {
+                        for (ValidationEvent ev : ((ValidationEventCollector) unmarshaller.getEventHandler())
+                            .getEvents()) {
+                            logger.debug("Plugin [" + pluginJarFileUrl + "] descriptor event {Severity: "
+                                + ev.getSeverity() + ", Message: " + ev.getMessage() + ", Exception: "
+                                + ev.getLinkedException() + "}");
+                        }
                     }
                 }
             }
 
             return pluginDescriptor;
+
         } catch (Exception e) {
             throw new Exception("Could not successfully parse the plugin descriptor [" + PLUGIN_DESCRIPTOR_PATH
                 + "] found in plugin jar at [" + pluginJarFileUrl + "]", e);

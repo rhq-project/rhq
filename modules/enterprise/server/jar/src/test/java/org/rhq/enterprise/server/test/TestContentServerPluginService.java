@@ -19,9 +19,14 @@
 package org.rhq.enterprise.server.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,19 +35,19 @@ import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Used as a mock service for the content source plugin container.
  */
-public class TestServerPluginService extends ServerPluginService implements TestServerPluginServiceMBean {
+public class TestContentServerPluginService extends ServerPluginService implements TestContentServerPluginServiceMBean {
     // public so tests can directly set these
     public Map<ContentSource, ContentProvider> testAdapters;
     public PackageSyncReport testLastSyncReport;
@@ -52,7 +57,9 @@ public class TestServerPluginService extends ServerPluginService implements Test
     @Override
     protected MasterServerPluginContainer createMasterPluginContainer() {
         this.master = new TestMasterServerPluginContainer();
-        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
+        File dir = new File(System.getProperty("java.io.tmpdir"), "test-server-plugins");
+        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration(dir, dir, dir,
+            null);
         this.master.initialize(config);
         return this.master;
     }
@@ -62,8 +69,20 @@ public class TestServerPluginService extends ServerPluginService implements Test
      */
     class TestMasterServerPluginContainer extends MasterServerPluginContainer {
         @Override
-        protected void createPluginContainers(Map<ServerPluginType, AbstractTypeServerPluginContainer> pcs) {
-            pcs.put(ServerPluginType.CONTENT, new TestContentServerPluginContainer(this));
+        protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
+            ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(1);
+            pcs.add(new TestContentServerPluginContainer(this));
+            return pcs;
+        }
+
+        @Override
+        protected ClassLoader createRootServerPluginClassLoader() {
+            return this.getClass().getClassLoader();
+        }
+
+        @Override
+        protected Map<URL, ? extends ServerPluginDescriptorType> preloadAllPlugins() throws Exception {
+            return new HashMap<URL, ServerPluginDescriptorType>();
         }
     }
 
@@ -76,16 +95,14 @@ public class TestServerPluginService extends ServerPluginService implements Test
         }
 
         @Override
-        protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager) {
+        protected ContentProviderManager createAdapterManager() {
             TestContentProviderManager am = new TestContentProviderManager();
-            am.initialize(pluginManager);
             return am;
         }
 
         @Override
-        protected ContentProviderPluginManager createPluginManager() {
+        protected ContentServerPluginManager createPluginManager() {
             TestContentProviderPluginManager pm = new TestContentProviderPluginManager(this);
-            pm.initialize();
             return pm;
         }
     }
@@ -93,17 +110,9 @@ public class TestServerPluginService extends ServerPluginService implements Test
     /**
      * The test plugin manager.
      */
-    class TestContentProviderPluginManager extends ContentProviderPluginManager {
+    class TestContentProviderPluginManager extends ContentServerPluginManager {
         public TestContentProviderPluginManager(ContentServerPluginContainer pc) {
             super(pc);
-        }
-
-        @Override
-        public void initialize() {
-        }
-
-        @Override
-        public void shutdown() {
         }
     }
 
@@ -117,7 +126,7 @@ public class TestServerPluginService extends ServerPluginService implements Test
         }
 
         @Override
-        protected void initialize(ContentProviderPluginManager pluginManager) {
+        protected void initialize(ContentServerPluginManager pluginManager) {
             createInitialAdaptersMap();
         }
 

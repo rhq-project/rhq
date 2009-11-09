@@ -33,14 +33,12 @@
 	}
 </script>
 	
-	
 	  You are viewing this in files mode. Switch to 
            <h:outputLink value="edit.xhtml">
 			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" structured mode" />
 		</h:outputLink>
-
 
 		<table class="summary-props-table" style="">
 			<a4j:form id="editResourceConfigurationForm">
@@ -49,27 +47,27 @@
 				<tr>
 					<td bgcolor="lightblue" width="25%" valign="top">Files <h:panelGroup
 						id="changedFiles" layout="vertical">
-						<ui:repeat value="#{RawConfigCollection.paths}" var="path">
+						<ui:repeat value="#{rawConfigCollection.paths}" var="path">
 							<div><h:outputText value="*"
-								rendered="#{RawConfigCollection.isModified(path) }" /> <h:commandLink
-								value="#{path}" action="#{RawConfigCollection.select(path)}"
-								rendered="#{path != RawConfigCollection.current.path}">
+								rendered="#{rawConfigCollection.isModified(path) }" /> <h:commandLink
+								value="#{path}" action="#{rawConfigCollection.select(path)}"
+								rendered="#{path != rawConfigCollection.current.path}">
 								<f:param name="currentPath" value="#{path}" />
 							</h:commandLink> <h:outputText value="#{path}"
-								rendered="#{path == RawConfigCollection.current.path}" /></div>
+								rendered="#{path == rawConfigCollection.current.path}" /></div>
 						</ui:repeat>
 					</h:panelGroup>
 					<div>______________________________________</div>
 					<div>* File contains uncommitted changes.</div>
-					<a4j:commandButton action="#{RawConfigCollection.commit}"
+					<a4j:commandButton action="#{rawConfigCollection.commit}"
 						value="commit changes" reRender="changedFiles" /> <a4j:commandButton
-						action="#{RawConfigCollection.discard}" value="discard changes"
+						action="#{rawConfigCollection.discard}" value="discard changes"
 						reRender="changedFiles" /></td>
 					<td>
 					<div>Current File: <h:outputText
-						value="#{RawConfigCollection.current.path}" styleClass="outhello" />
+						value="#{rawConfigCollection.current.path}" styleClass="outhello" />
 					</div>
-					<h:outputLink value="edit-raw-full.xhtml" action="navigateToUpload">
+					<h:outputLink value="edit-raw-full.xhtml" action="navigateToFullScreen">
 						<img src="/images/viewfullscreen.png" />
 						<h:outputText value=" Full Screen " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
@@ -79,19 +77,20 @@
 						<h:outputText value=" Upload " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
 						<f:param name="conversationId" value="#{conversation.id}" />
-					</h:outputLink> <h:outputLink value="download.jsp" action="navigateToFullpage">
-						<img src="/images/download.png" />
-						<h:outputText value=" Download " />
+					</h:outputLink> <s:link action="#{rawConfigDownload.download}">
+		            	<img src="/images/download.png" />
+		            	<h:outputText value=" Download " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
-						<f:param name="conversationId" value="#{conversation.id}" />
-					</h:outputLink>
+		            </s:link>	
+									
 					<div><h:inputTextarea cols="80" rows="40"
-						value="#{RawConfigCollection.currentContents}" /></div>
+						value="#{rawConfigCollection.currentContents}" /></div>
 					</td>
 				</tr>
 
 			</a4j:form>
-		</table>
+		</table>	
+		
 	</ui:define>
 
 </ui:composition>

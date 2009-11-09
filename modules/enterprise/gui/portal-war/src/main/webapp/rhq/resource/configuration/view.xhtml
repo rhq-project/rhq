@@ -49,10 +49,10 @@ THIS TEXT WILL BE REMOVED.
                       
             <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and RawConfigCollection.structuredSupported}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported}" />
 			<h:commandButton value="EDIT FILES" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and RawConfigCollection.rawSupported}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported}" />
          </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
@@ -68,6 +68,7 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
+
 
    </ui:define>
 

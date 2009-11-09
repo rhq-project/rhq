@@ -24,19 +24,19 @@
     <h:form id="uploadform" enctype="multipart/form-data">
         <rich:fileUpload  
             id="upload"
-            fileUploadListener="#{RawConfigCollection.fileUploadListener}"
+            fileUploadListener="#{rawConfigCollection.fileUploadListener}"
             maxFilesQuantity="10"
             noDuplicate="true"
             immediateUpload="true"
             autoclear="false"
             allowFlash="false">
-            <a4j:support event="onuploadcomplete" action="#{RawConfigCollection.upload}" />
+            <a4j:support event="onuploadcomplete" action="#{rawConfigCollection.upload}" />
         </rich:fileUpload>
         </h:form>
     </h:panelGrid>
 	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
 		<h:outputText value=" Done" />
-		<f:param name="id" value="#{RawConfigCollection.resourceId}" />		
+		<f:param name="id" value="#{rawConfigCollection.resourceId}" />		
 	</h:outputLink>
 </rich:panel>
 

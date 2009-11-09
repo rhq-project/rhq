@@ -27,6 +27,7 @@ import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
@@ -36,15 +37,18 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.inventory.InventoryService;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
@@ -61,8 +65,12 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
+    private static final ComparableVersion NON_LEGACY_VERSION = new ComparableVersion("2.1");
+
     private PluginContainerConfiguration pluginContainerConfiguration;
     private ScheduledExecutorService threadPool;
+
+    private InventoryService inventoryService;
 
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
@@ -92,6 +100,10 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     public void setConfiguration(PluginContainerConfiguration configuration) {
         pluginContainerConfiguration = configuration;
+    }
+
+    public void setInventoryService(InventoryService inventoryService) {
+        this.inventoryService = inventoryService;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
@@ -140,6 +152,67 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
 
         return response;
+    }
+
+    public Configuration loadResourceConfiguration(int resourceId, boolean fromStructured)
+        throws PluginContainerException {
+
+        String ampsVersion = inventoryService.getAmpsVersion(resourceId);
+
+        ResourceType resourceType = inventoryService.getResourceType(resourceId);
+
+        FacetLockType lockType = FacetLockType.READ;
+        boolean daemonThread = (lockType != FacetLockType.WRITE);
+        boolean onlyIfStarted = true;
+
+        if (isLegacyPlugin(ampsVersion)) {
+            ConfigurationFacet configurationFacet = inventoryService.getComponent(resourceId, ConfigurationFacet.class,
+                lockType, FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+
+            try {
+                Configuration configuration = configurationFacet.loadResourceConfiguration();
+
+                if (configuration == null) {
+                    throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
+                            + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+                }
+                return configuration;
+            } catch (Exception e) {
+                throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
+                    new WrappedRemotingException(e));
+            }
+        }
+        else {
+            ResourceConfigurationFacet configurationFacet = inventoryService.getComponent(resourceId,
+                ResourceConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+
+            ConfigurationFormat configFormat = resourceType.getResourceConfigurationDefinition()
+                    .getConfigurationFormat();
+
+            Configuration config = null;
+
+            switch (configFormat) {
+                case RAW:
+                    config = configurationFacet.loadRawConfigurations();
+                    break;
+                case STRUCTURED:
+                    config = configurationFacet.loadStructuredConfiguration();
+                    break;
+                default:
+                    if (fromStructured) {
+                        config = configurationFacet.loadStructuredConfiguration();
+                    }
+                    else {
+                        config = configurationFacet.loadRawConfigurations();
+                    }
+            }
+
+            return null;
+        }
+    }
+
+    private boolean isLegacyPlugin(String ampsVersion) {
+        return new ComparableVersion(ampsVersion).compareTo(NON_LEGACY_VERSION) < 0; 
     }
 
     public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {

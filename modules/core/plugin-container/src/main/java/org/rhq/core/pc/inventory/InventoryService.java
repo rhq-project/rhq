@@ -21,21 +21,19 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.core.pc.inventory;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.pc.util.FacetLockType;
 
-import java.util.Set;
+public interface InventoryService {
 
-public interface ResourceConfigurationFacet {
+    ResourceType getResourceType(int resourceId) throws PluginContainerException;
 
-    Configuration loadStructuredConfiguration();
+    <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType, long timeout,
+            boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException;
 
-    Configuration loadRawConfigurations();
-
-    void mergeRawConfiguration(Configuration from, RawConfiguration to);
-
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+    String getAmpsVersion(int resourceId);
 
 }

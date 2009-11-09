@@ -130,7 +130,6 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         System.setProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath.getAbsolutePath());
         Resource resource = getResource();
         Configuration pluginConfig = resource.getPluginConfiguration();
-
         PropertySimple includes = pluginConfig.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
         List<String> includeGlobs = new ArrayList<String>();
         includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
@@ -138,9 +137,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             InputStream inputStream = this.getClass().getResourceAsStream(includeGlob);
             if (inputStream != null) {
                 File outputFile = new File(augeasRootPath, includeGlob);
-                if (!outputFile.getParentFile().exists()) {
-                    outputFile.getParentFile().mkdirs();
-                }
+                outputFile.getParentFile().mkdirs();
                 FileUtil.writeFile(inputStream, outputFile);
             }
         }

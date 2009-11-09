@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:c="urn:xmlns:rhq-configuration"
+           xmlns:alert="urn:xmlns:rhq-serverplugin.alert"
+           targetNamespace="urn:xmlns:rhq-serverplugin.alert"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+    <xs:import namespace="urn:xmlns:rhq-configuration" schemaLocation="rhq-configuration.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for alert server-side plugins.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="alert-plugin" type="alert:AlertPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines an alert plugin. This type of plugin allows you to create your own
+                alert handlers, enabling you to send alerts to custom endpoints.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="AlertPluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="AlertPluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+               <xs:sequence>
+                  <!-- alert specific schema goes here. note, serverplugin xsd gives you global <plugin-configuration> already -->
+               </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>

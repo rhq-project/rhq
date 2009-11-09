@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:config="urn:xmlns:rhq-configuration"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:perspective="urn:xmlns:rhq-serverplugin.perspective"           
+           targetNamespace="urn:xmlns:rhq-serverplugin.perspective"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for the definition Perspective service objects
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="perspective-plugin" type="perspective:PerspectivePluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a generic plugin. This type of plugin does not
+                need any additional support from the server plugin container other than
+                simple lifecycle management (for example, be told when to start and stop).
+                The plugin is otherwise standalone and can do everything it needs to do
+                without additional help from the server plugin container.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="PerspectivePluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+    <xs:complexType name="PerspectivePluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+               <xs:sequence>
+                  <!--...put specific perspective schema definitions here...-->
+               </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+</xs:schema>

@@ -98,7 +98,7 @@ public class CommStreamTest {
         Preferences prefs2 = getPrefs1();
         prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_TRANSPORT, "socket");
         prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, "127.0.0.1");
-        prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, "22222");
+        prefs2.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, CommTestConstants.CONNECTOR2_BIND_PORT);
         prefs2.put(ServiceContainerConfigurationConstants.CONFIG_SCHEMA_VERSION, ""
             + ServiceContainerConfigurationConstants.CURRENT_CONFIG_SCHEMA_VERSION);
         prefs2.put(ServiceContainerConfigurationConstants.DATA_DIRECTORY, "target/data2");
@@ -115,7 +115,8 @@ public class CommStreamTest {
         serviceContainer2.addRemotePojo(pojoImpl, ICommTestStreamPojo.class);
 
         // setup the client to server #2
-        RemoteCommunicator comm = new JBossRemotingRemoteCommunicator("socket://127.0.0.1:22222/?force_remote=true");
+        RemoteCommunicator comm = new JBossRemotingRemoteCommunicator("socket://127.0.0.1:" + 
+            CommTestConstants.CONNECTOR2_BIND_PORT + "/?force_remote=true");
         ClientCommandSenderConfiguration config = new ClientCommandSenderConfiguration();
         config.maxConcurrent = Integer.MAX_VALUE; // let the sender send as fast as it can
         config.defaultTimeoutMillis = 60000L;
@@ -130,7 +131,7 @@ public class CommStreamTest {
         return;
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void afterMethod() {
         if (sender1 != null) {
             sender1.stopSending(false);

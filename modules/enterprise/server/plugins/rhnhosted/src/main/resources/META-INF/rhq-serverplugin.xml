@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<content-plugin name="RHNHostedPlugin" 
+        version="1.0"
+        apiVersion="2.0"
+        xmlns="urn:xmlns:rhq-serverplugin.content"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <contentSourceType name="RHNSource"
+                      displayName="RHN Hosted Source"
+                      description="This plugin facilitates communication with Red Hat Network."
+                      lazyLoad="false"
+                      downloadMode="filesystem"
+                      apiClass="org.rhq.enterprise.server.plugins.rhnhosted.RHNProvider">
+
+      <configuration>
+          <c:simple-property
+                  name="location"
+                  type="string"
+                  required="true"
+                  default="http://satellite.rhn.redhat.com/"
+                  description="RHN Hosted server url for connection."/>
+          
+          <c:simple-property
+                  name="certificate"
+                  type="longString"
+                  required="true"
+                  description="RHQ subscription Certificate for activation ."/>
+
+         <!--<c:group name="repos" displayName="repo list">
+              <c:simple-property name="repos" type="string" default="rhn-tools-rhel-i386-server-5"/>
+         </c:group>-->
+
+          <c:simple-property name="SyncableChannels" required="true" default="rhel-i386-server-vt-5"
+                                 description="list of syncable channels.">
+                  <c:property-options>
+                     <c:option name="rhel-i386-server-5"  value="rhel-i386-server-5"/>
+                     <c:option name="rhn-tools-rhel-i386-server-5"   value="rhn-tools-rhel-i386-server-5"/>
+                     <c:option name="rhel-i386-server-vt-5"   value="rhel-i386-server-vt-5"/>
+                     <c:option name="rhel-x86_64-server-5"  value="rhel-x86_64-server-5"/>
+                     <c:option name="rhn-tools-rhel-x86_64-server-5"   value="rhn-tools-rhel-x86_64-server-5"/>
+                     <c:option name="rhel-x86_64-server-vt-5"   value="rhel-x86_64-server-vt-5"/> 
+                  </c:property-options>
+           </c:simple-property>
+
+          
+      </configuration>
+
+   </contentSourceType>
+
+</content-plugin>

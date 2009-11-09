@@ -24,6 +24,16 @@
     <scm.module.path>modules/enterprise/server/plugins/</scm.module.path>
   </properties>
 
+  <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
+  <dependencies>
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-server</artifactId>
+      <version>${project.version}</version>
+      <type>ejb</type>
+    </dependency>
+  </dependencies>
+
   <modules>
     <module>disk</module>
     <module>yum</module>

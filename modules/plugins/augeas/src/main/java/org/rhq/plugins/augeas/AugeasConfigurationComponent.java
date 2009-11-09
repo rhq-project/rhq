@@ -89,14 +89,18 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
 
+    public static String getAugeasRootPath() {
+        if (System.getProperty(AUGEAS_ROOT_PATH_PROP) != null) {
+            return System.getProperty(AUGEAS_ROOT_PATH_PROP);
+        }
+        return DEFAULT_AUGEAS_ROOT_PATH;
+    }
+
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
 
-        this.augeasRootPath = DEFAULT_AUGEAS_ROOT_PATH;
-        if (System.getProperty(AUGEAS_ROOT_PATH_PROP) != null) {
-            this.augeasRootPath = System.getProperty(AUGEAS_ROOT_PATH_PROP);
-        }
+        this.augeasRootPath = getAugeasRootPath();
         log.debug("Augeas Root Path = \"" + this.augeasRootPath + "\"");
 
         initGlobs(pluginConfig);

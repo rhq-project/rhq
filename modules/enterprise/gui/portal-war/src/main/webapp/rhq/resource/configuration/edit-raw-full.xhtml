@@ -16,11 +16,11 @@
 <ui:define name="body">
 
 <h:form id="editResourceConfigurationForm" >
-<input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}" />
+<input type="hidden" name="id" value="#{ResourceUIBean.id}" />
 <h:commandLink action="#{RawConfigCollection.update}" >
     <img src="/images/save.png" alt="Save" title="Save"/> 
 	<f:param name="conversationId" value="#{conversation.id}"/>
-    <f:param name="currentResourceId" value="#{ResourceUIBean.id}"/>
+    <f:param name="id" value="#{ResourceUIBean.id}"/>
 </h:commandLink> 
 <h:commandButton action="#{RawConfigCollection.update}"/>
 <div>

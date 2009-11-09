@@ -37,7 +37,7 @@
 	  You are viewing this in files mode. Switch to 
         <h:outputLink value="view.xhtml">
 			<s:conversationId/>
-			<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
+			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" structured mode" />
 		</h:outputLink>
 
@@ -46,7 +46,7 @@
 					<td bgcolor="lightblue" width="25%" valign="top">Files 
 						<h:panelGroup id="changedFiles" layout="vertical">
 							<h:form>
-							<input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}" />							
+							<input type="hidden" name="id" value="#{ResourceUIBean.id}" />							
 							<ui:repeat value="#{RawConfigCollection.paths}" var="path">
 								<div>
 									<h:outputText value="*" rendered="#{RawConfigCollection.isModified(path) }" /> 
@@ -72,13 +72,13 @@
 						<h:outputLink value="view-raw-full.xhtml"  action="navigateToUpload" >
 							<img src="/images/viewfullscreen.png" /> 
 							<h:outputText value=" Full Screen " />
-							<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
+							<f:param name="id" value="#{ResourceUIBean.id}" />
 						</h:outputLink>
 						
 						<h:outputLink value="download.jsp"  action="navigateToFullpage" >
 						    <img src="/images/download.png" />
 							<h:outputText value=" Download " />
-							<f:param name="currentResourceId" value="#{ResourceUIBean.id}" />
+							<f:param name="id" value="#{ResourceUIBean.id}" />
 						</h:outputLink>
 						<div>
 						<h:outputText value="#{RawConfigCollection.currentContents}" />

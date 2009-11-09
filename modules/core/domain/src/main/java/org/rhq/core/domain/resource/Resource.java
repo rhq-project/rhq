@@ -66,6 +66,8 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.Tag;
+import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
@@ -729,7 +731,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-public class Resource implements Comparable<Resource>, Externalizable {
+public class Resource implements Comparable<Resource>, Externalizable, Taggable {
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT = "Resource.findProblemResourcesAlert";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT = "Resource.findProblemResourcesAlertCount";
@@ -1017,7 +1019,8 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
 
-    //private Set<Tag> tags;
+    @OneToMany()
+    private Set<Tag> tags;
 
     public Resource() {
         this.uuid = UUID.randomUUID().toString();
@@ -1810,52 +1813,52 @@ public class Resource implements Comparable<Resource>, Externalizable {
         this.currentAvailability = new ResourceAvailability(this, null);
     }
 
-    //    @Override
-    //    public Set<Tag> getTags() {
-    //        return tags;
-    //    }
-    //
-    //    @Override
-    //    public void setTags(Set<Tag> tags) {
-    //        this.tags = tags;
-    //    }
-    //
-    //    @Override
-    //    public boolean hasTag(Tag tag) {
-    //        if ((this.tags == null) || (tag == null)) {
-    //            return false;
-    //        }
-    //
-    //        if (name == null) {
-    //            if (tag.getName() != null) {
-    //                return false;
-    //            }
-    //        } else if (!name.equals(tag.getName())) {
-    //            return false;
-    //        }
-    //
-    //        return true;
-    //
-    //    }
-    //
-    //    @Override
-    //    public void addTag(Tag tag) {
-    //        if (this.tags == null) {
-    //            this.tags = new HashSet<Tag>();
-    //        }
-    //
-    //        this.tags.add(tag);
-    //    }
-    //
-    //    @Override
-    //    public void removeTag(Tag tag) {
-    //        if ((this.tags == null) || (tag == null)) {
-    //            return;
-    //        }
-    //
-    //        if (tags.contains(tag)) {
-    //            tags.remove(tag);
-    //        }
-    //    }
-    //
+    @Override
+    public Set<Tag> getTags() {
+        return tags;
+    }
+
+    @Override
+    public void setTags(Set<Tag> tags) {
+        this.tags = tags;
+    }
+
+    @Override
+    public boolean hasTag(Tag tag) {
+        if ((this.tags == null) || (tag == null)) {
+            return false;
+        }
+
+        if (name == null) {
+            if (tag.getName() != null) {
+                return false;
+            }
+        } else if (!name.equals(tag.getName())) {
+            return false;
+        }
+
+        return true;
+
+    }
+
+    @Override
+    public void addTag(Tag tag) {
+        if (this.tags == null) {
+            this.tags = new HashSet<Tag>();
+        }
+
+        this.tags.add(tag);
+    }
+
+    @Override
+    public void removeTag(Tag tag) {
+        if ((this.tags == null) || (tag == null)) {
+            return;
+        }
+
+        if (tags.contains(tag)) {
+            tags.remove(tag);
+        }
+    }
+
 }

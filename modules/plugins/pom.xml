@@ -117,6 +117,7 @@
       <module>perftest</module>
       <module>samba</module>
       <module>postfix</module>
+      <module>aliases</module>
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>

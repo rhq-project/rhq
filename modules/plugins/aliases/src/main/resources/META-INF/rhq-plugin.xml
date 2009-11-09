@@ -28,7 +28,7 @@
                              default="/etc/aliases"
                              description="the absolute paths of the configuration files, delimited with pipe characters"/>
           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
-                              default="/files/etc/aliases/*"/>
+                              default="/files/etc/aliases"/>
       </plugin-configuration>
 
       <resource-configuration>

@@ -39,7 +39,7 @@ public class LegacyResourceConfigurationStrategy extends BaseResourceConfigurati
 
     private static final Log log = LogFactory.getLog(LegacyResourceConfigurationStrategy.class);
 
-    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
+    public Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException {
         Configuration configuration = loadConfigFromFacet(resourceId);
         ResourceType resourceType = componentService.getResourceType(resourceId);
 

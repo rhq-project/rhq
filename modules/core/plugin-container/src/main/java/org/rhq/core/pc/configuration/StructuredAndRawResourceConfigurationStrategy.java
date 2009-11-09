@@ -24,11 +24,71 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.util.Set;
+import java.util.HashSet;
+import java.util.List;
 
 public class StructuredAndRawResourceConfigurationStrategy extends BaseResourceConfigurationStrategy {
 
-    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
-        return null;
+    private final Log log = LogFactory.getLog(StructuredAndRawResourceConfigurationStrategy.class);
+
+    public Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException {
+        ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
+
+        Configuration configuration;
+        if (fromStructured) {
+            configuration = facet.loadStructuredConfiguration();
+            if (configuration == null) {
+                return null;
+            }
+            mergeStructured(configuration, facet);
+        }
+        else {
+            configuration = facet.loadRawConfigurations();
+            if (configuration == null) {
+                return null;
+            }
+            mergeRaw(configuration, facet);
+        }
+
+        ResourceType resourceType = componentService.getResourceType(resourceId);
+
+        if (configuration.getNotes() == null) {
+            configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+        }
+
+        configUtilityService.normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
+        List<String> errorMsgs = configUtilityService.validateConfiguration(configuration,
+            resourceType.getResourceConfigurationDefinition());
+
+        logErrorMsgs(errorMsgs, resourceType);
+
+        return configuration;
+    }
+
+    private void mergeStructured(Configuration configuration, ResourceConfigurationFacet configFacet) {
+        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+            configFacet.mergeStructuredConfiguration(rawConfig, configuration);            
+        }
+    }
+
+    private void mergeRaw(Configuration configuration, ResourceConfigurationFacet configFacet) {
+        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+            configFacet.mergeRawConfiguration(configuration, rawConfig);
+        }
+    }
+
+    private void logErrorMsgs(List<String> errorMsgs, ResourceType resourceType) {
+        for (String errorMessage : errorMsgs) {
+            log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
+                + resourceType.getPlugin() + " plugin - " + errorMessage);
+            }
     }
 }

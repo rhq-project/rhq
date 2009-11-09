@@ -39,6 +39,6 @@ public interface ResourceConfigurationStrategy {
 
     void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
 
-    Configuration loadConfiguration(int resourceId) throws PluginContainerException;
+    Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException;
 
 }

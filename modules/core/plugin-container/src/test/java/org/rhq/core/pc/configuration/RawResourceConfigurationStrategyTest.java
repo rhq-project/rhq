@@ -35,13 +35,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.jmock.Expectations;
 
-public class StructuredResourceConfigurationStrategyTest extends JMockTest {
+public class RawResourceConfigurationStrategyTest extends JMockTest {
 
     InventoryService componentService;
 
     ConfigurationUtilityService configUtilityService;
-
-    ResourceConfigurationFacet configFacet;
 
     int resourceId = -1;
 
@@ -49,7 +47,9 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
     boolean onlyIfStarted = true;
 
-    StructuredResourceConfigurationStrategy strategy;
+    ResourceConfigurationFacet configFacet;
+
+    RawResourceConfigurationStrategy strategy;
 
     @BeforeMethod
     public void setup() {
@@ -58,7 +58,7 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        strategy = new StructuredResourceConfigurationStrategy();
+        strategy = new RawResourceConfigurationStrategy();
         strategy.setComponentService(componentService);
         strategy.setConfigurationUtilityService(configUtilityService);
     }
@@ -78,7 +78,7 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, true);
+        strategy.loadConfiguration(resourceId, false);
     }
 
     @Test
@@ -92,12 +92,12 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
                                                     onlyIfStarted);
             will(returnValue(configFacet));
 
-            atLeast(1).of(configFacet).loadStructuredConfiguration();
+            atLeast(1).of(configFacet).loadRawConfigurations();
 
             ignoring(configUtilityService);
         }});
 
-        strategy.loadConfiguration(resourceId, true);
+        strategy.loadConfiguration(resourceId, false);
     }
 
     @Test
@@ -118,12 +118,12 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
 
             ignoring(configUtilityService);
         }});
 
-        Configuration loadedConfig = strategy.loadConfiguration(resourceId, true);
+        Configuration loadedConfig = strategy.loadConfiguration(resourceId, false);
 
         String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
 
@@ -148,14 +148,14 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
 
             atLeast(1).of(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
 
             allowing(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
         }});
 
-        strategy.loadConfiguration(resourceId, true);
+        strategy.loadConfiguration(resourceId, false);
     }
 
     @Test
@@ -176,14 +176,14 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
 
             allowing(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
 
             atLeast(1).of(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
         }});
 
-        strategy.loadConfiguration(resourceId, true);
+        strategy.loadConfiguration(resourceId, false);
     }
 
     @Test
@@ -204,12 +204,12 @@ public class StructuredResourceConfigurationStrategyTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
 
             ignoring(configUtilityService);
         }});
 
-        Configuration loadedConfig = strategy.loadConfiguration(resourceId, true);
+        Configuration loadedConfig = strategy.loadConfiguration(resourceId, false);
 
         assertSame(
             loadedConfig,

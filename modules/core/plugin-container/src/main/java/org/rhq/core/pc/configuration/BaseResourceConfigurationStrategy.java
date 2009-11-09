@@ -24,7 +24,10 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 
 public abstract class BaseResourceConfigurationStrategy implements ResourceConfigurationStrategy {
 
@@ -47,5 +50,12 @@ public abstract class BaseResourceConfigurationStrategy implements ResourceConfi
     public void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService) {
         this.configUtilityService = configUtilityService;
     }
-        
+
+    protected ResourceConfigurationFacet loadResouceConfiguratonFacet(int resourceId) throws PluginContainerException {
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+
+        return componentService.getComponent(resourceId, ResourceConfigurationFacet.class, FacetLockType.READ,
+                FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+    }
 }

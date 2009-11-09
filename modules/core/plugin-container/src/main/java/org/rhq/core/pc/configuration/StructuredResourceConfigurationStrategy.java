@@ -37,16 +37,8 @@ public class StructuredResourceConfigurationStrategy extends BaseResourceConfigu
 
     private final Log log = LogFactory.getLog(StructuredResourceConfigurationStrategy.class);
 
-    public Configuration loadConfiguration(int resourceId) throws PluginContainerException {
-        boolean daemonOnly = true;
-        boolean onlyIfStarted = true;
-
-        ResourceConfigurationFacet facet = componentService.getComponent(resourceId,
-                                                                         ResourceConfigurationFacet.class,
-                                                                         FacetLockType.READ,
-                                                                         FACET_METHOD_TIMEOUT,
-                                                                         daemonOnly,
-                                                                         onlyIfStarted);
+    public Configuration loadConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException {
+        ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Configuration configuration = facet.loadStructuredConfiguration();
 

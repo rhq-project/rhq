@@ -259,10 +259,24 @@ public class RawConfigCollection implements Serializable {
         String[] files = { "/etc/mock/file1", "/etc/mock/file2", "/etc/mock/file3", "/etc/mock/me/will/you",
             "/etc/mock/turtle/soup", "/etc/mock/mysmock/iclean/yourclock" };
 
+        String[] filesContents = {
+            "Omni Patria Gaulia es divis in tres partes",
+            "I've seen all good people \n turn their heads each day \n So Satisfied\n I'm on my way",
+            "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor \nincididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis\n nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.\n Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu\n fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in \nculpa qui officia deserunt mollit anim id est laborum.",
+            "/etc/mock/me/will/you",
+            "\"The time has come,\" the Walrus said,\n" + "To talk of many things:\n"
+                + "Of shoes--and ships--and sealing-wax--\n" + "Of cabbages--and kings--\n"
+                + "And why the sea is boiling hot--\n" + "And whether pigs have wings.",
+            "My grandfather's clock\n" + "Was too large for the shelf,\n" + "So it stood ninety years on the floor;\n"
+                + "It was taller by half\n" + "Than the old man himself,\n"
+                + "Though it weighed not a pennyweight more.\n" + "It was bought on the morn\n"
+                + "Of the day that he was born,\n" + "It was always his treasure and pride;" + "But it stopped short\n"
+                + "Never to go again,\n" + "When the old man died." };
+        int i = 0;
         for (String file : files) {
             RawConfiguration raw = new RawConfiguration();
             raw.setPath(file);
-            raw.setContents(("contents of file" + file).getBytes());
+            raw.setContents((filesContents[i++]).getBytes());
             getRawConfigDelegate().raws.put(file, raw);
         }
 

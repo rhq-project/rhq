@@ -1322,7 +1322,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 agentPingedSuccessfully = agentClient.ping(5000L);
 
             if (!pingAgentFirst || agentPingedSuccessfully) {
-                liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId());
+                liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId(), true);
                 if (liveConfig == null) {
                     // This should really never occur - the PC should never return a null, always at least an empty config.
                     log.debug("ConfigurationAgentService.loadResourceConfiguration() returned a null Configuration.");

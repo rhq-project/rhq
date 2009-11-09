@@ -78,4 +78,6 @@ public interface ConfigurationAgentService {
      * @throws PluginContainerException if a runtime or plugin error occurs a PluginContainerException is thrown
      */
     Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException;
+
+    Configuration loadResourceConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException;
 }

@@ -151,6 +151,17 @@ public interface RepoManagerLocal {
      */
     void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId, StringBuilder result);
 
+    /**
+     * Changes the specified repos from being candidates in the system into full blown repositories,
+     * allowing their packages to be syncced and resources to subscribe to them.
+     *
+     * @param subject user performing the import
+     * @param repoIds the repos being imported; they must refer to repos in the database and must be flagged
+     *                as candidates (i.e. an error will occur if an already imported repo is specified)
+     * @throws RepoException if one or more of the repo IDs does not exist in the DB or is not a candidate
+     */
+    void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException;
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

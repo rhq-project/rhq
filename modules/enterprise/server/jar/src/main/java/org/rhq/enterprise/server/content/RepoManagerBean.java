@@ -430,6 +430,24 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException {
+
+        for (Integer repoId : repoIds) {
+            Repo repo = entityManager.find(Repo.class, repoId);
+
+            if (repo == null) {
+                throw new RepoException("Unable to find candidate repo for import. ID: " + repoId);
+            }
+
+            if (!repo.isCandidate()) {
+                throw new RepoException("Unable to import repo, repo is already imported. ID: " + repoId);
+            }
+
+            repo.setCandidate(false);
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
         validateRepoGroup(repoGroup);
 

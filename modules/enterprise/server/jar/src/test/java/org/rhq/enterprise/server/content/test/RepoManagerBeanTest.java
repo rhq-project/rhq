@@ -45,6 +45,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 import java.util.Set;
 import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -296,4 +298,59 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         // Cleanup handled by rollback in tear down method
     }
 
+    @Test(enabled = ENABLED)
+    public void importCandidateRepo() throws Exception {
+        // Setup
+        Repo candidate = new Repo("create me");
+        Repo created = repoManager.createCandidateRepo(overlord, candidate);
+
+        // Test
+        List<Integer> repoIds = new ArrayList<Integer>(1);
+        repoIds.add(created.getId());
+        repoManager.importCandidateRepo(overlord, repoIds);
+
+        // Verify
+        RepoCriteria repoCriteria = new RepoCriteria();
+        repoCriteria.addFilterId(created.getId());
+
+        PageList<Repo> repoList = repoManager.findReposByCriteria(overlord, repoCriteria);
+        assert repoList.size() == 1;
+
+        Repo verify = repoList.get(0);
+        assert verify != null;
+        assert !verify.isCandidate();
+    }
+
+    @Test(enabled = ENABLED)
+    public void importCandidateRepoBadId() throws Exception {
+        // Test
+        try {
+            List<Integer> repoIds = new ArrayList<Integer>(1);
+            repoIds.add(12345);
+            repoManager.importCandidateRepo(overlord, repoIds);
+            assert false;
+        }
+        catch (RepoException e) {
+            // Expected
+        }
+    }
+
+    @Test(enabled = ENABLED)
+    public void importNonCandidateRepo() throws Exception {
+        // Setup
+        Repo nonCandidate = new Repo("create me");
+        Repo created = repoManager.createRepo(overlord, nonCandidate);
+
+        // Test
+        try {
+            List<Integer> repoIds = new ArrayList<Integer>(1);
+            repoIds.add(created.getId());
+            repoManager.importCandidateRepo(overlord, repoIds);
+            assert false;
+        }
+        catch (RepoException e) {
+            // Expected
+        }
+
+    }
 }

@@ -24,6 +24,7 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.pc.inventory.InventoryService;
+import org.rhq.core.domain.configuration.Configuration;
 
 public abstract class BaseResourceConfigurationStrategy implements ResourceConfigurationStrategy {
 
@@ -46,4 +47,5 @@ public abstract class BaseResourceConfigurationStrategy implements ResourceConfi
     public void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService) {
         this.configUtilityService = configUtilityService;
     }
+        
 }

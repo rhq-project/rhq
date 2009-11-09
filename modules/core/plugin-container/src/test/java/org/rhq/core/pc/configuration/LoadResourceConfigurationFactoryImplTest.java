@@ -27,7 +27,7 @@ import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;

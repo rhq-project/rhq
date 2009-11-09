@@ -41,7 +41,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;

@@ -25,7 +25,7 @@ package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
 
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;

@@ -27,7 +27,7 @@ import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import static org.testng.Assert.assertSame;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

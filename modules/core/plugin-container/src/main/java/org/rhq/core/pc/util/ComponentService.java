@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pc.inventory;
+package org.rhq.core.pc.util;
 
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -34,6 +34,6 @@ public interface ComponentService {
     <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType, long timeout,
             boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException;
 
-    String getAmpsVersion(int resourceId);
+    String getAmpsVersion(int resourceId) throws PluginContainerException;
 
 }

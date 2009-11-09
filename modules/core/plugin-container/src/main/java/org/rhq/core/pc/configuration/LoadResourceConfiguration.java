@@ -23,7 +23,7 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 

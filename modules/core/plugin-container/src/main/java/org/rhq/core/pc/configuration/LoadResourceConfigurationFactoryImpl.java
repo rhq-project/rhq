@@ -25,7 +25,7 @@ package org.rhq.core.pc.configuration;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.*;
 
-import org.rhq.core.pc.inventory.ComponentService;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.apache.maven.artifact.versioning.ComparableVersion;

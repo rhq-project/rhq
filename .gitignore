@@ -13,7 +13,6 @@ logs
 *.ipr
 *.iws
 dev-container
-modules/dev-container
 dev-agent
 antlr-generated/
 *.tokens

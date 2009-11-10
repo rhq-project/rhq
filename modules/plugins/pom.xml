@@ -102,6 +102,7 @@
       <!--  other, possibly experimental plugins -->
       <module>augeas</module>
       <module>apt</module>
+      <module>cron</module>
       <module>script</module>
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
@@ -115,6 +116,7 @@
       <module>oracle</module>
       <module>perftest</module>
       <module>samba</module>
+      <module>postfix</module>
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>

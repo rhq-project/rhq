@@ -406,7 +406,12 @@
             <include name="jaxb-impl.jar" />
          </fileset>
       </move>
-
+      
+      <echo>Deploying perspective WARs ...</echo>
+      <mkdir dir="${jboss.deploy.dir}/rhq-sample-perspective.war" />
+      <unwar src="${settings.localRepository}/org/rhq/rhq-sample-perspective/${rhq.version}/rhq-sample-perspective-${rhq.version}.war"
+             dest="${jboss.deploy.dir}/rhq-sample-perspective.war" />
+      
    </target>
 
    <target name="package-connectors" if="package-connectors">

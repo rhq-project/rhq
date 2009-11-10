@@ -18,71 +18,104 @@
  */
 package org.rhq.plugins.sudoers;
 
-import java.util.Collection;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
 /**
  * @author Partha Aji
  */
-public class SudoersComponentTest {
+public class SudoersComponentTest extends AbstractAugeasConfigurationComponentTest {
 
-    private SudoersComponent component = new SudoersComponent();
+    @Override
+    protected Configuration getExpectedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+        PropertyMap entry;
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "root"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "ALL"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
 
-    private Configuration pluginConfiguration = new Configuration();
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "%wheel"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "ALL"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
 
-    private final Log log = LogFactory.getLog(this.getClass());
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "apache"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "/bin/env"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
 
-    @BeforeSuite
-    public void initPluginConfiguration() throws Exception {
-        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/local/share/augeas/lenses"));
-        pluginConfiguration.put(new PropertySimple("root-path", "/tmp"));
-        pluginConfiguration.put(new PropertySimple("sudoers-path", "/etc/sudoers"));
-        pluginConfiguration.put(new PropertySimple("augeas-sudoers-path", "/files/etc/sudoers/spec[*]"));
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "foo"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "NETWORKING"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
+        return config;
     }
 
-    @Test(enabled = false)
-    public void loadResourceConfiguration() throws Exception {
-        Configuration configuration;
-        try {
-            configuration = component.loadResourceConfiguration();
-        } catch (UnsatisfiedLinkError ule) {
-            // Skip tests if augeas not available
-            return;
-        }
+    @Override
+    protected Configuration getChangedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+        PropertyMap entry;
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "root"));
+        entry.put(new PropertySimple("host_group/host", "fooo"));
+        entry.put(new PropertySimple("host_group/command", "/bin/env"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
 
-        assert configuration != null : "Null configuration returned from load call";
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "%wheel"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "ALL"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "ALL"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
 
-        Collection<Property> allProperties = configuration.getProperties();
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "apache"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "/bin/env"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", false));
+        entries.getList().add(entry);
 
-        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
-            + allProperties.size();
+        entry = new PropertyMap("spec");
+        entry.put(new PropertySimple("user", "foo"));
+        entry.put(new PropertySimple("host_group/host", "ALL"));
+        entry.put(new PropertySimple("host_group/command", "NETWORKING"));
+        entry.put(new PropertySimple("host_group/command/runas_user", "root"));
+        entry.put(new PropertySimple("host_group/command/tag", true));
+        entries.getList().add(entry);
+        return config;
+    }
 
-        PropertyList entryList = (PropertyList) allProperties.iterator().next();
+    @Override
+    protected String getPluginName() {
+        return "Sudoers";
+    }
 
-        for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap) property;
-
-            Property user = entry.get("user");
-            Property host = entry.get("host");
-
-            assert user != null : "IP was null in entry";
-            assert host != null : "Canonical was null in entry";
-
-            System.out.println(entry);
-
-            log.info("USER: " + ((PropertySimple) user).getStringValue());
-            log.info("host: " + ((PropertySimple) host).getStringValue());
-        }
-
+    @Override
+    protected String getResourceTypeName() {
+        return "Sudoers";
     }
 }

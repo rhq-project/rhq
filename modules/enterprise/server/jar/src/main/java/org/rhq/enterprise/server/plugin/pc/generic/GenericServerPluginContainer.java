@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.plugin.pc.generic;
 
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 /**
  * Manages generic plugins. This plugin container is very simple because it provides
@@ -35,11 +37,7 @@ public class GenericServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     @Override
-    public void initialize() throws Exception {
+    public ServerPluginType getSupportedServerPluginType() {
+        return new ServerPluginType(GenericPluginDescriptorType.class);
     }
-
-    @Override
-    public void shutdown() {
-    }
-
 }

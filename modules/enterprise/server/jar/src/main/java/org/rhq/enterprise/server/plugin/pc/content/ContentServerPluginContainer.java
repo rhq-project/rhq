@@ -28,9 +28,12 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 
 /**
  * The container responsible for managing the lifecycle of content server-side plugins.
@@ -41,7 +44,6 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     private static final String SYNC_JOB_GROUP_NAME = "syncContentSource";
 
-    private ContentProviderPluginManager pluginManager;
     private ContentProviderManager adapterManager;
 
     public ContentServerPluginContainer(MasterServerPluginContainer master) {
@@ -50,20 +52,29 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     @Override
     public void initialize() throws Exception {
-        getLog().debug("Content server plugin container has been initialized");
+        getLog().debug("Content server plugin container initializing");
+        super.initialize();
+        this.adapterManager = createAdapterManager();
+        getLog().debug("Content server plugin container initialized");
+    }
 
-        this.pluginManager = createPluginManager();
-        this.adapterManager = createAdapterManager(this.pluginManager);
-
-        return;
+    @Override
+    public void start() {
+        super.start();
+        this.adapterManager.initialize((ContentServerPluginManager) getPluginManager());
     }
 
     @Override
     public void shutdown() {
-        getLog().debug("Content server plugin container is being shutdown");
-
+        getLog().debug("Content server plugin container is shutting down");
         this.adapterManager.shutdown();
-        this.pluginManager.shutdown();
+        super.shutdown();
+        getLog().debug("Content server plugin container is shutdown");
+    }
+
+    @Override
+    public ServerPluginType getSupportedServerPluginType() {
+        return new ServerPluginType(ContentPluginDescriptorType.class);
     }
 
     /**
@@ -74,18 +85,6 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      */
     public ContentProviderManager getAdapterManager() {
         return this.adapterManager;
-    }
-
-    /**
-     * Returns the object that is responsible for managing all plugins and their metadata.
-     *
-     * <p>This is protected to only allow subclasses access to this - external clients to this PC should never have
-     * direct access to this plugin manager.</p>
-     *
-     * @return plugin manager
-     */
-    protected ContentProviderPluginManager getPluginManager() {
-        return this.pluginManager;
     }
 
     /**
@@ -181,35 +180,21 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         return;
     }
 
-    /**
-     * Creates, configures and initializes the plugin manager that the PC will use.
-     *
-     * <p>This is protected scope so subclasses can define their own plugin manager to use. This is mainly to support
-     * tests.</p>
-     *
-     * @return the new plugin manager
-     */
-    protected ContentProviderPluginManager createPluginManager() {
-        ContentProviderPluginManager pm = new ContentProviderPluginManager(this);
-        pm.initialize();
-        return pm;
+    @Override
+    protected ServerPluginManager createPluginManager() {
+        return new ContentServerPluginManager(this);
     }
 
     /**
-     * Creates, configures and initializes the adapter manager that the PC will use.
+     * Creates the adapter manager that the PC will use.
      *
      * <p>This is protected scope so subclasses can define their own adapter manager to use. This is mainly to support
      * tests.</p>
      *
-     * @param  pluginManager the plugin manager that was {@link #createPluginManager() created} for use in the PC. The
-     *                       adapter manager can use this to obtain information about plugins.
-     *
      * @return the new adapter manager
      */
-    protected ContentProviderManager createAdapterManager(ContentProviderPluginManager pluginManager)
-        throws InitializationException {
+    protected ContentProviderManager createAdapterManager() {
         ContentProviderManager am = new ContentProviderManager();
-        am.initialize(pluginManager);
         return am;
     }
 }

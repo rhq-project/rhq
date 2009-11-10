@@ -19,7 +19,10 @@
 package org.rhq.plugins.augeas;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -31,33 +34,34 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.helper.Glob;
 
 /**
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class AugeasConfigurationDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> implements
+    ResourceDiscoveryComponent<T>, ManualAddFacet<T> {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
-        Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<T> discoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>(1);
 
-        File configFile = getConfigurationFile(discoveryContext);
-        if (!configFile.isAbsolute()) {
-            throw new IllegalStateException("getConfigurationFile() returned a non-absolute file.");
-        }
-        if (!configFile.exists()) {
-            throw new IllegalStateException("getConfigurationFile() returned a non-existent file.");
-        }
-        if (configFile.isDirectory()) {
-            throw new IllegalStateException("getConfigurationFile() returned a directory.");
-        }
+        List<String> includes = determineIncludeGlobs(discoveryContext);
+        List<String> excludes = determineExcludeGlobs(discoveryContext);
 
         Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        pluginConfig
-            .put(new PropertySimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP, configFile.getPath()));
+        PropertySimple includeProps = getGlobList(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, includes);
+        PropertySimple excludeProps = getGlobList(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP, excludes);
+        pluginConfig.put(includeProps);
+        pluginConfig.put(excludeProps);
+
+        checkFiles(pluginConfig);
+
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         discoveredResources.add(resource);
         log.debug("Discovered " + discoveryContext.getResourceType().getName() + " Resource with key ["
@@ -67,43 +71,117 @@ public class AugeasConfigurationDiscoveryComponent implements ResourceDiscoveryC
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-        ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException {
-        String configFilePath = pluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP)
-            .getStringValue();
+        ResourceDiscoveryContext<T> discoveryContext) throws InvalidPluginConfigurationException {
 
-        File configFile = new File(configFilePath);
-        if (!configFile.isAbsolute()) {
-            throw new InvalidPluginConfigurationException("Location specified by '"
-                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
-                + "' connection property is not an absolute path.");
-        }
-        if (!configFile.exists()) {
-            throw new InvalidPluginConfigurationException("Location specified by '"
-                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP + "' connection property does not exist.");
-        }
-        if (configFile.isDirectory()) {
-            throw new InvalidPluginConfigurationException("Location specified by '"
-                + AugeasConfigurationComponent.CONFIGURATION_FILE_PROP
-                + "' connection property is a directory, not a regular file.");
-        }
+        checkFiles(pluginConfig);
 
         DiscoveredResourceDetails resource = createResourceDetails(discoveryContext, pluginConfig);
         return resource;
     }
 
-    protected File getConfigurationFile(ResourceDiscoveryContext discoveryContext) {
-        Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
-        String configFilePath = defaultPluginConfig.getSimple(AugeasConfigurationComponent.CONFIGURATION_FILE_PROP)
-            .getStringValue();
-        return new File(configFilePath);
-    }
-
-    protected DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
+    protected DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<T> discoveryContext,
         Configuration pluginConfig) {
         ResourceType resourceType = discoveryContext.getResourceType();
-        String resourceKey = getConfigurationFile(discoveryContext).getPath();
+        String resourceKey = composeResourceKey(pluginConfig);
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceType
             .getName(), null, resourceType.getDescription(), pluginConfig, null);
         return resource;
+    }
+
+    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
+        Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+
+        List<String> ret = getGlobList(includeGlobsProp);
+        if (ret == null || ret.size() == 0) {
+            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
+        }
+
+        return ret;
+    }
+
+    protected List<String> determineExcludeGlobs(ResourceDiscoveryContext<T> discoveryContext) {
+        Configuration pluginConfiguration = discoveryContext.getDefaultPluginConfiguration();
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
+        List<String> ret = getGlobList(excludeGlobsProp);
+
+        return ret;
+    }
+
+    private void checkFiles(Configuration pluginConfiguration) {
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
+        String augeasRootPath = AugeasConfigurationComponent.getAugeasRootPath();
+        File root = new File(augeasRootPath);
+
+        List<String> includeGlobs = getGlobList(includeGlobsProp);
+
+        if (includeGlobsProp == null) {
+            throw new IllegalStateException("Expecting at least one inclusion pattern for configuration files.");
+        }
+
+        List<File> files = Glob.matchAll(root, includeGlobs);
+
+        if (excludeGlobsProp != null) {
+            List<String> excludeGlobs = getGlobList(excludeGlobsProp);
+            Glob.excludeAll(files, excludeGlobs);
+        }
+
+        for (File configFile : files) {
+            if (!configFile.isAbsolute()) {
+                throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
+            }
+            if (!configFile.exists()) {
+                throw new IllegalStateException("Configuration files inclusion patterns refer to a non-existent file.");
+            }
+            if (configFile.isDirectory()) {
+                throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+            }
+        }
+    }
+
+    private String composeResourceKey(Configuration pluginConfiguration) {
+        PropertySimple includeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
+        PropertySimple excludeGlobsProp = pluginConfiguration
+            .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
+
+        StringBuilder bld = new StringBuilder();
+
+        bld.append(includeGlobsProp.getStringValue());
+
+        if (excludeGlobsProp != null && excludeGlobsProp.getStringValue().length() > 0) {
+            bld.append("---");
+            bld.append(excludeGlobsProp.getStringValue());
+        }
+
+        return bld.toString();
+    }
+
+    public static PropertySimple getGlobList(String name, List<String> simples) {
+        StringBuilder bld = new StringBuilder();
+        if (simples != null) {
+            for (String s : simples) {
+                bld.append(s).append("|");
+            }
+        }
+        if (bld.length() > 0) {
+            bld.deleteCharAt(bld.length() - 1);
+        }
+        return new PropertySimple(name, bld);
+    }
+
+    public static List<String> getGlobList(PropertySimple list) {
+        if (list != null) {
+            return Arrays.asList(list.getStringValue().split("\\s*\\|\\s*"));
+        } else {
+            return Collections.emptyList();
+        }
     }
 }

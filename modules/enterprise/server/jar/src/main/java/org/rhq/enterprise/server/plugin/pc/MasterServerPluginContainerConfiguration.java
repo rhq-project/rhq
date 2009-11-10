@@ -27,31 +27,41 @@ import java.io.File;
  */
 public class MasterServerPluginContainerConfiguration {
     private File pluginDirectory;
+    private File dataDirectory;
     private File tmpDirectory;
     private String rootClassLoaderRegex;
+
+    public MasterServerPluginContainerConfiguration(File pluginDirectory, File dataDirectory, File tmpDirectory,
+        String rootClassLoaderRegex) {
+
+        if (pluginDirectory == null) {
+            throw new IllegalArgumentException("pluginDirectory == null");
+        }
+        this.pluginDirectory = pluginDirectory;
+
+        if (dataDirectory == null) {
+            throw new IllegalArgumentException("dataDirectory == null");
+        }
+        this.dataDirectory = dataDirectory;
+
+        if (tmpDirectory == null) {
+            tmpDirectory = new File(System.getProperty("java.io.tmpdir", "."));
+        }
+        this.tmpDirectory = tmpDirectory;
+
+        this.rootClassLoaderRegex = rootClassLoaderRegex;
+    }
 
     public File getPluginDirectory() {
         return this.pluginDirectory;
     }
 
-    public void setPluginDirectory(File pluginDirectory) {
-        if (pluginDirectory == null) {
-            throw new IllegalArgumentException("pluginDirectory == null");
-        }
-
-        this.pluginDirectory = pluginDirectory;
+    public File getDataDirectory() {
+        return this.dataDirectory;
     }
 
     public File getTemporaryDirectory() {
-        if (this.tmpDirectory != null) {
-            return this.tmpDirectory;
-        }
-
-        return new File(System.getProperty("java.io.tmpdir", "."));
-    }
-
-    public void setTemporaryDirectory(File tmpDir) {
-        this.tmpDirectory = tmpDir;
+        return this.tmpDirectory;
     }
 
     /**
@@ -70,26 +80,17 @@ public class MasterServerPluginContainerConfiguration {
         return this.rootClassLoaderRegex;
     }
 
-    /**
-     * Sets the regex that defines what classes the plugin container should hide from its plugins.
-     * 
-     * @param regex regular expression
-     *
-     * @see RootServerPluginClassLoader
-     */
-    public void setRootPluginClassLoaderRegex(String regex) {
-        this.rootClassLoaderRegex = regex;
-    }
-
     @Override
     public String toString() {
         File pdir = getPluginDirectory();
         File tdir = getTemporaryDirectory();
+        File ddir = getDataDirectory();
         String regex = getRootServerPluginClassLoaderRegex();
 
         StringBuilder str = new StringBuilder(MasterServerPluginContainerConfiguration.class + ": ");
         str.append("plugin-dir=[" + ((pdir != null) ? pdir.getAbsolutePath() : "<null>"));
         str.append("], tmp-dir=[" + ((tdir != null) ? tdir.getAbsolutePath() : "<null>"));
+        str.append("], data-dir=[" + ((ddir != null) ? ddir.getAbsolutePath() : "<null>"));
         str.append("], root-cl-regex=[" + ((regex != null) ? regex : "<null>"));
         str.append("]");
 

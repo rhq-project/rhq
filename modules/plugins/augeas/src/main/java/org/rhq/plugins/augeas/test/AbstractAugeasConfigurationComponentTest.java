@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.plugins.augeas;
+package org.rhq.plugins.augeas.test;
 
 import static org.testng.Assert.fail;
 
@@ -45,6 +45,7 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
 /**
  * An base class for integration tests for instances of {@link AugeasConfigurationComponent}.

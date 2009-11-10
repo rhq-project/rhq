@@ -22,7 +22,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 /**
  * An integration test for {@link HostsComponent}.

@@ -1,0 +1,22 @@
+<testng-results>
+  <reporter-output>
+  </reporter-output>
+  <suite name="Custom suite">
+    <groups>
+    </groups>
+    <test name="rhq">
+      <class name="org.rhq.core.pc.plugin.PluginManagerTest">
+        <test-method status="PASS" signature="pluginsShouldBeLoadedInCorrectOrder()" name="pluginsShouldBeLoadedInCorrectOrder" duration-ms="2098" started-at="2009-11-09T22:20:09Z" finished-at="2009-11-09T22:20:11Z">
+        </test-method>
+        <test-method status="PASS" signature="initClass()" name="initClass" is-config="true" duration-ms="2907" started-at="2009-11-09T22:20:05Z" finished-at="2009-11-09T22:20:08Z">
+        </test-method>
+        <test-method status="PASS" signature="initializeShouldLoadDiscoveredPlugins()" name="initializeShouldLoadDiscoveredPlugins" duration-ms="1241" started-at="2009-11-09T22:20:13Z" finished-at="2009-11-09T22:20:14Z">
+        </test-method>
+        <test-method status="PASS" signature="pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEmbeddedMode()" name="pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEmbeddedMode" duration-ms="1008" started-at="2009-11-09T22:20:08Z" finished-at="2009-11-09T22:20:09Z">
+        </test-method>
+        <test-method status="PASS" signature="pluginsShouldBeShutdownInCorrectOrder()" name="pluginsShouldBeShutdownInCorrectOrder" duration-ms="2124" started-at="2009-11-09T22:20:11Z" finished-at="2009-11-09T22:20:13Z">
+        </test-method>
+      </class>
+    </test>
+  </suite>
+</testng-results>

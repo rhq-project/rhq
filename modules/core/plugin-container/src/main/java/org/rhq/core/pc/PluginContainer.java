@@ -355,10 +355,11 @@ public class PluginContainer implements ContainerService {
             for (AgentServiceLifecycleListener agentServiceListener : agentServiceListeners) {
                 agentService.addLifecycleListener(agentServiceListener);
             }
-        }
-        else if (containerService instanceof ConfigurationManager) {
-            ConfigurationManagerInitializer initializer = new ConfigurationManagerInitializer();
-            initializer.initialize((ConfigurationManager)containerService);
+
+            if (containerService instanceof ConfigurationManager) {
+                ConfigurationManagerInitializer initializer = new ConfigurationManagerInitializer();
+                initializer.initialize((ConfigurationManager)containerService);
+            }
         }
 
         containerService.initialize();

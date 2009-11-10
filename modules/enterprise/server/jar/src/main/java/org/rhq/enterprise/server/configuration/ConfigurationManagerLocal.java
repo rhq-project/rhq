@@ -96,6 +96,9 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
+    
+    Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
+            boolean fromStructured) throws Exception;
 
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
@@ -424,6 +427,9 @@ public interface ConfigurationManagerLocal {
      */
     @Nullable
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
+
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
+        boolean fromStructured);
 
     boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
 

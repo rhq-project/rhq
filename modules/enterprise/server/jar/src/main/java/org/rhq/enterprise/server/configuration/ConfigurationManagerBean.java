@@ -292,8 +292,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return result;
     }
 
-    @Nullable
-    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
+        boolean fromStructured) {
         log.debug("Getting current resource configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -340,7 +340,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // ask the agent to get us the live, most up-to-date configuration for the resource,
         // then compare it to make sure what we think is the latest configuration is really the latest
-        Configuration liveConfig = getLiveResourceConfiguration(resource, true);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, true, fromStructured);
 
         if (liveConfig != null) {
             Configuration currentConfig = (current != null) ? current.getConfiguration() : null;
@@ -369,6 +369,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return current;
+    }
+
+    @Nullable
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
+        return getLatestResourceConfigurationUpdate(subject, resourceId, true);
     }
 
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
@@ -690,6 +695,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception {
+        return getLiveResourceConfiguration(subject, resourceId, pingAgentFirst, true);
+    }
+
+    public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
+            boolean fromStructured) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -702,7 +712,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // ask the agent to get us the live, most up-to-date configuration for the resource
-        Configuration liveConfig = getLiveResourceConfiguration(resource, pingAgentFirst);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, pingAgentFirst, fromStructured);
 
         return liveConfig;
     }
@@ -1307,7 +1317,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      *
      * @return the resource's live configuration or <code>null</code> if it could not be retrieved from the agent
      */
-    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst) {
+    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst,
+            boolean fromStructured) {
         Configuration liveConfig = null;
 
         try {
@@ -1322,7 +1333,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 agentPingedSuccessfully = agentClient.ping(5000L);
 
             if (!pingAgentFirst || agentPingedSuccessfully) {
-                liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId(), true);
+                liveConfig = agentClient.getConfigurationAgentService().loadResourceConfiguration(resource.getId(),
+                        fromStructured);
                 if (liveConfig == null) {
                     // This should really never occur - the PC should never return a null, always at least an empty config.
                     log.debug("ConfigurationAgentService.loadResourceConfiguration() returned a null Configuration.");
@@ -1339,6 +1351,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         return liveConfig;
     }
+
+
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AbstractResourceConfigurationUpdate mergeConfigurationUpdate(

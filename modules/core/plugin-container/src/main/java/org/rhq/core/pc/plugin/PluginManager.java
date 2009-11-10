@@ -173,23 +173,31 @@ public class PluginManager implements ContainerService {
     }
 
     private void initUpdateLoadedPluginsCallback() {
-        if (configuration.isInsideAgent()) {
-            updateLoadedPlugins = new UpdateLoadedPlugins() {
-                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
-                    loadPluginIfFoundInListFromServer(pluginDescriptor);
-                }
-            };
-        }
-        else {
-            updateLoadedPlugins = new UpdateLoadedPlugins() {
-                PluginTransformer transformer = new PluginTransformer();
+//        if (configuration.isInsideAgent()) {
+//            updateLoadedPlugins = new UpdateLoadedPlugins() {
+//                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+//                    loadPluginIfFoundInListFromServer(pluginDescriptor);
+//                }
+//            };
+//        }
+//        else {
+//            updateLoadedPlugins = new UpdateLoadedPlugins() {
+//                PluginTransformer transformer = new PluginTransformer();
+//
+//                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+//                    Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
+//                    loadedPlugins.add(plugin);
+//                }
+//            };
+//        }
+        updateLoadedPlugins = new UpdateLoadedPlugins() {
+            PluginTransformer transformer = new PluginTransformer();
 
-                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
-                    Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
-                    loadedPlugins.add(plugin);
-                }
-            };
-        }
+            public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
+                Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
+                loadedPlugins.add(plugin);
+            }
+        };
     }
 
     private void loadPluginIfFoundInListFromServer(PluginDescriptor pluginDescriptor) {

@@ -24,12 +24,18 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.pc.util.ComponentServiceImpl;
+import org.rhq.core.pc.util.ComponentService;
 
 public class ConfigurationManagerInitializer {
 
     public void initialize(ConfigurationManager manager) {
-        manager.setComponentService(new ComponentServiceImpl());
-        manager.setLoadConfigFactory(new LoadResourceConfigurationFactoryImpl());
+        ComponentService componentService = new ComponentServiceImpl();
+
+        LoadResourceConfigurationFactoryImpl factory = new LoadResourceConfigurationFactoryImpl();
+        factory.setComponentService(componentService);
+
+        manager.setComponentService(componentService);
+        manager.setLoadConfigFactory(factory);
     }
 
 }

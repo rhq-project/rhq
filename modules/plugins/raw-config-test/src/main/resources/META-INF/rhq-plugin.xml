@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="RawConfigTest"
+        displayName="Raw Config Test Plugin"
+        package="org.rhq.plugins.test.rawconfig"
+        version="1.0"
+        ampsVersion="2.1"
+        description="A plugin for testing raw configuration"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+  <server name="Raw Config Server"
+          class="RawConfigServer"
+          discovery="RawConfigDiscoveryComponent"
+          description="A fake server component that supports both structured and raw configuration">
+    <resource-configuration configurationFormat="both">
+      <c:simple-property name="x"/>
+      <c:simple-property name="y"/>
+      <c:simple-property name="z"/>
+    </resource-configuration>
+  </server>
+</plugin>

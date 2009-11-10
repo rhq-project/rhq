@@ -42,7 +42,25 @@
 
     <xs:complexType name="ServerPluginDescriptorType">
         <xs:sequence minOccurs="0" maxOccurs="1">
-           <xs:element name="plugin-configuration" type="config:configuration" />
+            <xs:element name="lifecycle-listener" minOccurs="0" maxOccurs="1" type="serverplugin:LifecycleListenerType">
+                <xs:annotation>
+                    <xs:documentation>
+                        A class that performs global initialization and shutdown of the plugin. If specified,
+                        this class will be notified when the plugin is loaded and unloaded. This provides a place
+                        for plugin developers to allocate global resources needed by all plugin components and
+                        a place to clean up those resources. It can also be scheduled to perform periodic work.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="plugin-configuration" minOccurs="0" maxOccurs="1" type="config:configuration">
+                <xs:annotation>
+                    <xs:documentation>
+                        Plugin-wide configuration that can be useful to define the behavior of the plugin as
+                        a whole. This is optional; only those plugins that require global configuration
+                        will need to define plugin configuration.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="name" use="required">
             <xs:annotation>
@@ -80,16 +98,6 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="pluginLifecycleListener" type="serverplugin:classNameType" use="optional">
-            <xs:annotation>
-                <xs:documentation>
-                    A class that performs global initialization and shutdown of the plugin. If specified,
-                    this class will be notified when the plugin is loaded and unloaded. This provides a place
-                    for plugin developers to allocate global resources needed by all plugin components and
-                    a place to clean up those resources.
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
         <xs:attribute name="version" type="xs:string">
             <xs:annotation>
                 <xs:documentation>
@@ -104,6 +112,51 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="LifecycleListenerType">
+        <xs:sequence>
+            <xs:element name="schedule" minOccurs="0" maxOccurs="1" type="serverplugin:ScheduleType">
+                <xs:annotation>
+                    <xs:documentation>
+                        A schedule that defines when and how often to invoke the plugin listener. This is optional; only
+                        those plugins that need to do work periodically will define a schedule.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+                <xs:annotation>
+                    <xs:documentation>
+                        The class that will be instantiated. This is a stateful object, once initialized, the same
+                        instance will be used to start, stop and shutdown the plugin.
+                    </xs:documentation>
+                </xs:annotation>
+        </xs:attribute>    
+    </xs:complexType>
+
+    <xs:complexType name="ScheduleType">
+        <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:choice>
+                <xs:element name="period" type="xs:long">
+                    <xs:annotation>
+                        <xs:documentation>
+                            A time period, in milliseconds, that define how often the schedule will trigger.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="cron" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            A "cron expression" which defines when the schedule should fire. A cron expression can be evaluated
+                            to mean things such as: "At 8:00am every Monday through Friday" or "At 1:30am every last Friday of the month".
+                            The cron expression syntax follows the rules defined by Quartz - see
+                            http://www.opensymphony.com/quartz/api/org/quartz/CronExpression.html 
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:choice>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:simpleType name="classNameType">

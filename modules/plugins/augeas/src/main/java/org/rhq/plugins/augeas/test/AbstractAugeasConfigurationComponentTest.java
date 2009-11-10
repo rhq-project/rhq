@@ -126,7 +126,9 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         File tmpDir = new File(tmpDirPath);
         File augeasRootPath = new File(tmpDir, "rhq-itest-augeas-root-path");
         if (!augeasRootPath.exists()) {
-            augeasRootPath.mkdirs();
+            if (!augeasRootPath.mkdirs()) {
+                throw new IOException("Could not create the augeasRootPath " + augeasRootPath);
+            }
         }
         System.setProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath.getAbsolutePath());
         Resource resource = getResource();
@@ -138,7 +140,9 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             InputStream inputStream = this.getClass().getResourceAsStream(includeGlob);
             if (inputStream != null) {
                 File outputFile = new File(augeasRootPath, includeGlob);
-                outputFile.getParentFile().mkdirs();
+                if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs()) {
+                    throw new IOException("Could not create the component base path " + outputFile.getParentFile());
+                }
                 FileUtil.writeFile(inputStream, outputFile);
             }
         }

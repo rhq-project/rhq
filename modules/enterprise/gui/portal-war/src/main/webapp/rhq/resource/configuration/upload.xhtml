@@ -13,6 +13,9 @@
 <ui:composition template="/rhq/layout/main.xhtml">
 <ui:param name="pageTitle" value="Upload Configuration File"/>
 
+<ui:define name="breadcrumbs"></ui:define>
+
+
 <ui:define name="body">
 
 <rich:panel>
@@ -25,17 +28,17 @@
         <rich:fileUpload  
             id="upload"
             fileUploadListener="#{rawConfigCollection.fileUploadListener}"
-            maxFilesQuantity="10"
+            maxFilesQuantity="1"
             noDuplicate="true"
             immediateUpload="true"
             autoclear="false"
-            allowFlash="false">
+            allowFlash="false"            >
             <a4j:support event="onuploadcomplete" action="#{rawConfigCollection.upload}" />
         </rich:fileUpload>
         </h:form>
     </h:panelGrid>
 	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
-		<h:outputText value=" Done" />
+		<h:outputText value=" Upload Complete" />
 		<f:param name="id" value="#{rawConfigCollection.resourceId}" />		
 	</h:outputLink>
 </rich:panel>

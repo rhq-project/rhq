@@ -29,6 +29,8 @@ import java.util.Map.Entry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.LifecycleListenerType;
+
 /**
  * Provides functionality to manage plugins for a plugin container. Plugin containers
  * can install their own plugin managers that are extensions to this class if they need to.
@@ -269,8 +271,9 @@ public class ServerPluginManager {
         String pluginName = environment.getPluginName();
         ServerPluginLifecycleListener instance = null;
 
-        String className = environment.getPluginDescriptor().getPluginLifecycleListener();
-        if (className != null) {
+        LifecycleListenerType lifecycleListener = environment.getPluginDescriptor().getLifecycleListener();
+        if (lifecycleListener != null) {
+            String className = lifecycleListener.getClazz();
             String pkg = environment.getPluginDescriptor().getPackage();
             if ((className.indexOf('.') == -1) && (pkg != null)) {
                 className = pkg + '.' + className;

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<generic-plugin apiVersion="1.2"
+                        version="2.3"
+                        name="generic name"
+                        displayName="generic display"
+                        description="generic description"
+                        package="generic.package"
+                        xmlns="urn:xmlns:rhq-serverplugin.generic"
+                        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                        xmlns:c="urn:xmlns:rhq-configuration"
+                        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:lifecycle-listener class="generic.plugin.lifecycle.listener">
+        <serverplugin:schedule>
+            <!-- Fire at 10:15am every weekday -->
+            <serverplugin:cron>0 15 10 ? * MON-FRI</serverplugin:cron>
+        </serverplugin:schedule>
+    </serverplugin:lifecycle-listener>
+
+    <serverplugin:plugin-configuration>
+       <c:simple-property name="prop1" />
+    </serverplugin:plugin-configuration>
+</generic-plugin>

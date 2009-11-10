@@ -81,5 +81,15 @@ public class DistributionManagerBeanTest extends AbstractEJB3Test {
 
         assert results.size() != 0;
 
+        Query querydel = em.createNamedQuery(distfile.DELETE_BY_DIST_ID);
+
+        querydel.setParameter("distId", distro.getId());
+
+        querydel.executeUpdate();
+
+        List<DistributionFile> resultsdel = query.getResultList();
+
+        assert resultsdel.size() == 0;
+
     }
 }

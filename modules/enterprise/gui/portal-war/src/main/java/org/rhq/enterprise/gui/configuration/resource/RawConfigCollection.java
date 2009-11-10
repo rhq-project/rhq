@@ -354,6 +354,7 @@ public class RawConfigCollection implements Serializable {
      * This is a no-op, since the upload work was done by upload file
      * But is kept as a target for the "action" value 
      */
-    public void upload() {
+    public String upload() {
+        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 }

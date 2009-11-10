@@ -27,21 +27,32 @@ THIS TEXT WILL BE REMOVED.
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
+	  You are viewing this in structured mode. Switch to 
+        <h:outputLink value="view-raw.xhtml">
+			<f:param name="id" value="#{ResourceUIBean.id}" />
+			<h:outputText value=" files mode" />
+		</h:outputLink>
+
+
       <h:outputText value="You do not have permission to edit this resource's configuration" rendered="#{!ResourceUIBean.permissions.configure}"/>
 
       <h:form id="viewResourceConfigurationForm">
          <!--  TODO remove the id version -->
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+
+
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">		          
+                      
             <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-			<h:commandButton value="RAW" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported}" />
+			<h:commandButton value="EDIT FILES" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported}" />
          </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
@@ -52,22 +63,12 @@ THIS TEXT WILL BE REMOVED.
                      nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>
 
-         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-                             
-			<h:commandButton value="RAW" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
-                             title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-         </h:panelGrid>
-
       </h:form>
 
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
+
 
    </ui:define>
 

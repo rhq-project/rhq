@@ -35,6 +35,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -46,8 +48,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Enumerated;
-import javax.persistence.EnumType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +102,7 @@ public class ConfigurationDefinition implements Serializable {
     private Map<String, ConfigurationTemplate> templates;
 
     @Column(name = "config_format")
-    @Enumerated(EnumType.STRING)    
+    @Enumerated(EnumType.STRING)
     private ConfigurationFormat configurationFormat;
 
     protected ConfigurationDefinition() {
@@ -148,6 +148,9 @@ public class ConfigurationDefinition implements Serializable {
      * plugin that was developed prior to raw configuration being supported.
      */
     public ConfigurationFormat getConfigurationFormat() {
+        if (null == configurationFormat) {
+            configurationFormat = ConfigurationFormat.STRUCTURED;
+        }
         return configurationFormat;
     }
 

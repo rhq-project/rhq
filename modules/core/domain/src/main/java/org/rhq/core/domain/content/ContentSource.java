@@ -448,17 +448,14 @@ public class ContentSource implements Serializable, Taggable {
         return true;
     }
 
-    @Override
     public Set<Tag> getTags() {
         return tags;
     }
 
-    @Override
     public void setTags(Set<Tag> tags) {
         this.tags = tags;
     }
 
-    @Override
     public boolean hasTag(Tag tag) {
         if ((this.tags == null) || (tag == null)) {
             return false;
@@ -476,7 +473,6 @@ public class ContentSource implements Serializable, Taggable {
 
     }
 
-    @Override
     public void addTag(Tag tag) {
         if (this.tags == null) {
             this.tags = new HashSet<Tag>();
@@ -485,7 +481,6 @@ public class ContentSource implements Serializable, Taggable {
         this.tags.add(tag);
     }
 
-    @Override
     public void removeTag(Tag tag) {
         if ((this.tags == null) || (tag == null)) {
             return;

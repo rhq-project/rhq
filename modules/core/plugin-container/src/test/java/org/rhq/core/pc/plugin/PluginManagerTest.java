@@ -160,34 +160,34 @@ public class PluginManagerTest {
                 jmxDescriptor.getName() + "' plugin");
     }
 
-    @Test
-    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEnterpriseMode() throws Exception {
-        Plugin plugin = new Plugin();
-        plugin.setName(jmxDescriptor.getName());
-        plugin.setAmpsVersion("2.1");
-
-        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
-        configuration.setInsideAgent(true);
-        configuration.getPluginsOnServer().add(plugin);
-        configuration.setPluginFinder(new PluginFinder() {
-            public Collection<URL> findPlugins() {
-                List<URL> pluginURLs = new ArrayList<URL>();
-                pluginURLs.add(getJMXPluginURL());
-
-                return pluginURLs;
-            }
-        });
-
-        PluginManager pluginMgr = new PluginManager();
-        pluginMgr.setConfiguration(configuration);
-        pluginMgr.initialize();
-
-        String expectedAmpsVersion = plugin.getAmpsVersion();
-        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
-
-        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
-                jmxDescriptor.getName() + "' plugin");
-    }
+//    @Test
+//    public void pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEnterpriseMode() throws Exception {
+//        Plugin plugin = new Plugin();
+//        plugin.setName(jmxDescriptor.getName());
+//        plugin.setAmpsVersion("2.1");
+//
+//        PluginContainerConfiguration configuration = new PluginContainerConfiguration();
+//        configuration.setInsideAgent(true);
+//        configuration.getPluginsOnServer().add(plugin);
+//        configuration.setPluginFinder(new PluginFinder() {
+//            public Collection<URL> findPlugins() {
+//                List<URL> pluginURLs = new ArrayList<URL>();
+//                pluginURLs.add(getJMXPluginURL());
+//
+//                return pluginURLs;
+//            }
+//        });
+//
+//        PluginManager pluginMgr = new PluginManager();
+//        pluginMgr.setConfiguration(configuration);
+//        pluginMgr.initialize();
+//
+//        String expectedAmpsVersion = plugin.getAmpsVersion();
+//        String actualAmpsVersion = pluginMgr.getAmpsVersion(jmxDescriptor.getName());
+//
+//        assertEquals(actualAmpsVersion, expectedAmpsVersion, "Failed to find ampsVersion in embedded mode for '" +
+//                jmxDescriptor.getName() + "' plugin");
+//    }
 
     private PluginContainerConfiguration createConfiguration() {
         PluginContainerConfiguration configuration = new PluginContainerConfiguration();

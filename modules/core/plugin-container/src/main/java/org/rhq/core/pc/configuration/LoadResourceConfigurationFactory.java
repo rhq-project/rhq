@@ -21,21 +21,12 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.core.pc.configuration;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 
-import java.util.Set;
+public interface LoadResourceConfigurationFactory {
 
-public interface ResourceConfigurationFacet {
-
-    Configuration loadStructuredConfiguration();
-
-    Configuration loadRawConfigurations();
-
-    void mergeRawConfiguration(Configuration from, RawConfiguration to);
-
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+    LoadResourceConfiguration getStrategy(int resourceId) throws PluginContainerException;
 
 }

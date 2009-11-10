@@ -21,21 +21,31 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.core.pc.configuration;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+import org.testng.IHookable;
+import org.testng.IHookCallBack;
+import org.testng.ITestResult;
+import org.testng.annotations.BeforeMethod;
+import org.jmock.Mockery;
 
-import java.util.Set;
+public class JMockTest implements IHookable {
 
-public interface ResourceConfigurationFacet {
+    protected Mockery context;
 
-    Configuration loadStructuredConfiguration();
+    @BeforeMethod
+    void initContext() {
+        context = new Mockery();
+    }
 
-    Configuration loadRawConfigurations();
-
-    void mergeRawConfiguration(Configuration from, RawConfiguration to);
-
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
-
+    public void run(IHookCallBack iHookCallBack, ITestResult iTestResult) {
+        iHookCallBack.runTestMethod(iTestResult);
+        try {
+            context.assertIsSatisfied();
+        }
+        catch (Throwable t) {
+            iTestResult.setStatus(ITestResult.FAILURE);
+            iTestResult.setThrowable(t);
+        }
+    }
 }

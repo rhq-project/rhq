@@ -21,21 +21,24 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.core.pc.configuration;
 
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 
-import java.util.Set;
+public interface LoadResourceConfiguration {
 
-public interface ResourceConfigurationFacet {
+    static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
-    Configuration loadStructuredConfiguration();
+    ComponentService getComponentService();
 
-    Configuration loadRawConfigurations();
+    void setComponentService(ComponentService componentService);
 
-    void mergeRawConfiguration(Configuration from, RawConfiguration to);
+    ConfigurationUtilityService getConfigurationUtilityService();
 
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+    void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
+
+    Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException;
 
 }

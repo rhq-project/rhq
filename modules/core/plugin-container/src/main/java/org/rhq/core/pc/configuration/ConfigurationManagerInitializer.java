@@ -21,21 +21,21 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.core.pc.configuration;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.pc.util.ComponentServiceImpl;
+import org.rhq.core.pc.util.ComponentService;
 
-import java.util.Set;
+public class ConfigurationManagerInitializer {
 
-public interface ResourceConfigurationFacet {
+    public void initialize(ConfigurationManager manager) {
+        ComponentService componentService = new ComponentServiceImpl();
 
-    Configuration loadStructuredConfiguration();
+        LoadResourceConfigurationFactoryImpl factory = new LoadResourceConfigurationFactoryImpl();
+        factory.setComponentService(componentService);
 
-    Configuration loadRawConfigurations();
-
-    void mergeRawConfiguration(Configuration from, RawConfiguration to);
-
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+        manager.setComponentService(componentService);
+        manager.setLoadConfigFactory(factory);
+    }
 
 }

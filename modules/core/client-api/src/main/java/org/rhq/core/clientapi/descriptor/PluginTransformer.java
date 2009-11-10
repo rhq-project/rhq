@@ -63,7 +63,7 @@ public class PluginTransformer {
                 plugin.setDisplayName(pluginDescriptor.getDisplayName());
             }
 
-            plugin.setAmpsVersion(pluginDescriptor.getAmpsVersion());
+            plugin.setAmpsVersion(getAmpsVersion(pluginDescriptor));
             plugin.setDescription(pluginDescriptor.getDescription());
             plugin.setPath(pluginURL.getPath());
             plugin.setMtime(pluginURL.openConnection().getLastModified());
@@ -76,6 +76,13 @@ public class PluginTransformer {
         catch (IOException e) {
             throw new PluginTransformException("Failed to create plugin.", e);
         }
+    }
+
+    private String getAmpsVersion(PluginDescriptor pluginDescriptor) {
+        if (pluginDescriptor.getAmpsVersion() == null) {
+            return "2.0";
+        }
+        return pluginDescriptor.getAmpsVersion();
     }
 
     private String getHelp(PluginDescriptor pluginDescriptor) {

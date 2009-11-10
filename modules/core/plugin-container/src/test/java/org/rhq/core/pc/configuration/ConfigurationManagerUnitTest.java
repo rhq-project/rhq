@@ -23,14 +23,20 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.testng.Assert.*;
+
 import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
-import static org.testng.Assert.assertSame;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Random;
 
 public class ConfigurationManagerUnitTest extends JMockTest {
 
@@ -44,11 +50,17 @@ public class ConfigurationManagerUnitTest extends JMockTest {
 
     int resourceId = -1;
 
+    boolean daemonThread = true;
+
+    boolean onlyIfStarted = true;
+
     LoadResourceConfigurationFactory loadConfigFactory;
 
     ComponentService componentService;
 
     ConfigurationManager configurationMgr;
+
+    Random random;
 
     @BeforeMethod
     public void setup() {
@@ -59,6 +71,8 @@ public class ConfigurationManagerUnitTest extends JMockTest {
         configurationMgr = new ConfigurationManager();
         configurationMgr.setLoadConfigFactory(loadConfigFactory);
         configurationMgr.setComponentService(componentService);
+
+        random = new Random();
     }
 
     @Test
@@ -105,6 +119,85 @@ public class ConfigurationManagerUnitTest extends JMockTest {
         }});
 
         configurationMgr.loadResourceConfiguration(resourceId, FROM_STRUCTURED);
+    }
+
+    @Test
+    public void theFacetShouldMergeTheStructuredIntoEachRawWhenFromStructured() throws Exception {
+        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/raw2.txt");
+        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/raw3.txt");
+
+        final Configuration configuration = new Configuration();
+        configuration.addRawConfiguration(rawConfig1);
+        configuration.addRawConfiguration(rawConfig2);
+        configuration.addRawConfiguration(rawConfig3);
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations(){{
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            oneOf(facet).mergeRawConfiguration(configuration, rawConfig1);
+            oneOf(facet).mergeRawConfiguration(configuration, rawConfig2);
+            oneOf(facet).mergeRawConfiguration(configuration, rawConfig3);
+        }});
+
+        Configuration actualConfig = configurationMgr.merge(configuration, resourceId, FROM_STRUCTURED);
+
+        assertNotNull(actualConfig, "Expected a non-null " + Configuration.class.getSimpleName() + " to be returned.");
+    }
+
+    @Test
+    public void theFacetShouldMergeEachRawIntoTheStructuredWhenFromRaw() throws Exception {
+        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/raw2.txt");
+        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/raw3.txt");
+
+        final Configuration configuration = new Configuration();
+        configuration.addRawConfiguration(rawConfig1);
+        configuration.addRawConfiguration(rawConfig2);
+        configuration.addRawConfiguration(rawConfig3);
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations(){{
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            oneOf(facet).mergeStructuredConfiguration(rawConfig1, configuration);
+            oneOf(facet).mergeStructuredConfiguration(rawConfig2, configuration);
+            oneOf(facet).mergeStructuredConfiguration(rawConfig3, configuration);
+        }});
+
+        Configuration actualConfig = configurationMgr.merge(configuration, resourceId, FROM_RAW);
+
+        assertNotNull(actualConfig, "Expected a non-null " + Configuration.class.getSimpleName() + " to be returned.");
+    }
+
+    RawConfiguration createRawConfiguration(String path) {
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(randomBytes());
+        rawConfig.setPath(path);
+
+        return rawConfig;
+    }
+
+    byte[] randomBytes() {
+        byte[] bytes = new byte[10];
+        random.nextBytes(bytes);
+
+        return bytes;
     }
 
 }

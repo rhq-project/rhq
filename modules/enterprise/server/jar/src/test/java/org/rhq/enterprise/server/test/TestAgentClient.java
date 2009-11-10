@@ -148,6 +148,11 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return null;
     }
 
+    public Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
+        throws PluginContainerException {
+        return null;
+    }
+
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
     }
 

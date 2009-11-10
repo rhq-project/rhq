@@ -1098,6 +1098,11 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             return savedConfiguration;
         }
 
+        public Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
+            throws PluginContainerException {
+            return null;
+        }
+
         public void disableServiceScans(int serverResourceId) {
         }
 

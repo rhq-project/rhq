@@ -482,4 +482,7 @@ public interface ConfigurationManagerLocal {
 
     RawConfiguration findRawConfigurationById(int rawConfigId);
 
+    Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException;
+
 }

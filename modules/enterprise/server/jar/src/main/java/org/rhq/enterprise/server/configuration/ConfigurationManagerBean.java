@@ -49,6 +49,8 @@ import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -1876,4 +1878,32 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public RawConfiguration findRawConfigurationById(int rawConfigId) {
         return entityManager.find(RawConfiguration.class, rawConfigId);
     }
+
+    public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException {
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+        }
+
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+
+        try {
+            Agent agent = resource.getAgent();
+            AgentClient agentClient = this.agentManager.getAgentClient(agent);
+            ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
+
+            return configService.merge(configuration, resourceId, fromStructured);
+        }
+        catch (PluginContainerException e) {
+            log.error("An error occurred while trying to translate the configuration.", e);
+            return null;
+        }
+    }
+    
 }

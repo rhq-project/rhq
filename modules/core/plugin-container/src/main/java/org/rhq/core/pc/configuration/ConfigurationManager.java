@@ -36,6 +36,7 @@ import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
@@ -47,6 +48,7 @@ import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
@@ -156,6 +158,29 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
 
         return response;
+    }
+
+    public Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
+        throws PluginContainerException {
+
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+
+        ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
+            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+
+        if (fromStructured) {
+            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                facet.mergeRawConfiguration(configuration, rawConfig);
+            }
+        }
+        else {
+            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                facet.mergeStructuredConfiguration(rawConfig, configuration);
+            }
+        }
+
+        return configuration;
     }
 
     public Configuration loadResourceConfiguration(int resourceId, boolean fromStructured)

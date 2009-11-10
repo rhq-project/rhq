@@ -29,7 +29,13 @@ import java.util.Map.Entry;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
+import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.LifecycleListenerType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduleType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Provides functionality to manage plugins for a plugin container. Plugin containers
@@ -241,12 +247,39 @@ public class ServerPluginManager {
     }
 
     protected ServerPluginContext createServerPluginContext(ServerPluginEnvironment env) {
+        String pluginName = env.getPluginName();
+        ServerPluginDescriptorType pluginDescriptor = env.getPluginDescriptor();
+
         MasterServerPluginContainer masterPC = this.parentPluginContainer.getMasterServerPluginContainer();
         MasterServerPluginContainerConfiguration masterConfig = masterPC.getConfiguration();
-        File dataDir = new File(masterConfig.getDataDirectory(), env.getPluginName());
+        File dataDir = new File(masterConfig.getDataDirectory(), pluginName);
         File tmpDir = masterConfig.getTemporaryDirectory();
 
-        ServerPluginContext context = new ServerPluginContext(env, dataDir, tmpDir);
+        // TODO: today we have no way in the UI to customize the plugin config values
+        //       for now, just use the defaults as defined in the descriptor
+        Configuration config = null;
+        try {
+            ConfigurationDefinition configDef = ConfigurationMetadataParser.parse(pluginName, pluginDescriptor
+                .getPluginConfiguration());
+            config = configDef.getDefaultTemplate().createConfiguration();
+        } catch (InvalidPluginDescriptorException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+        Schedule schedule = null;
+        if (pluginDescriptor.getLifecycleListener() != null) {
+            ScheduleType scheduleType = pluginDescriptor.getLifecycleListener().getSchedule();
+            if (scheduleType != null) {
+                if (scheduleType.getPeriod() != null) {
+                    schedule = new PeriodicSchedule(scheduleType.getPeriod().longValue());
+                } else {
+                    schedule = new CronSchedule(scheduleType.getCron());
+                }
+            }
+        }
+
+        ServerPluginContext context = new ServerPluginContext(env, dataDir, tmpDir, config, schedule);
         return context;
     }
 

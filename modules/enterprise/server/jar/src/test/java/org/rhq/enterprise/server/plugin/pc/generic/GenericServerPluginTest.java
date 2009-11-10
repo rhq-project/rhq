@@ -29,7 +29,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.plugin.pc.PeriodicSchedule;
+import org.rhq.enterprise.server.plugin.pc.Schedule;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericPluginManager;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericServerPluginContainer;
@@ -55,19 +58,28 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
     }
 
     public void testSimpleGenericPlugin() throws Exception {
-        // tests that the lifecycle of the plugin container and the listener is correct
-        createPluginJar("testSimpleGenericPlugin.jar", "serverplugins/simple-generic.xml");
+        createPluginJar("testSimpleGenericPlugin.jar", "serverplugins/simple-generic-serverplugin.xml");
         this.pluginService.startMasterPluginContainer();
 
+        // make sure everything is started
         TestGenericServerPluginContainer pc = this.pluginService.genericPC;
         assert pc.state == State.STARTED;
-
         TestGenericPluginManager pm = (TestGenericPluginManager) pc.getPluginManager();
         TestLifecycleListener listener = (TestLifecycleListener) pm.listeners.values().iterator().next();
         assert listener.state == LifecycleState.STARTED;
 
-        this.pluginService.stopMasterPluginContainer();
+        // make sure the context is correct
+        Configuration config = listener.context.getPluginConfiguration();
+        assert config != null;
+        assert config.getSimple("plugin-simple-prop-1") != null;
 
+        Schedule schedule = listener.context.getSchedule();
+        assert schedule != null;
+        assert schedule instanceof PeriodicSchedule;
+        assert ((PeriodicSchedule) schedule).getPeriod() == 60000L;
+
+        // make sure everything is shutdown
+        this.pluginService.stopMasterPluginContainer();
         assert pc.state == State.UNINITIALIZED;
         assert listener.state == LifecycleState.UNINITIALIZED;
     }

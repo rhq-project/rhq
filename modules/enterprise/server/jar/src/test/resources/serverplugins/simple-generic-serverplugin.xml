@@ -10,6 +10,12 @@
                 xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:lifecycle-listener class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
-        
+        <serverplugin:schedule>
+            <serverplugin:period>60000</serverplugin:period>
+        </serverplugin:schedule>
     </serverplugin:lifecycle-listener>
+
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="plugin-simple-prop-1" defaultValue="prop1value" required="true" />
+    </serverplugin:plugin-configuration>
 </generic-plugin>

@@ -1095,7 +1095,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         public Configuration loadResourceConfiguration(int resourceId, boolean fromStructured)
             throws PluginContainerException {
-            return null;
+            return savedConfiguration;
         }
 
         public void disableServiceScans(int serverResourceId) {

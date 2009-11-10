@@ -110,6 +110,21 @@ public class PluginTransformerTest {
     }
 
     @Test
+    public void pluginAmpsVersionShouldBeSetToDefaultWhenDescriptorAmpsVersionIsNull() throws Exception {
+        PluginDescriptor pluginDescriptor = new PluginDescriptor();
+
+        PluginTransformer transformer = new PluginTransformer();
+
+        Plugin plugin = transformer.toPlugin(pluginDescriptor, getTestPluginURL());
+
+        assertEquals(
+            plugin.getAmpsVersion(),
+            "2.0",
+            "The Plugin.ampsVersion property should default to 2.0 when it is not defined in the plugin descriptor"
+        );
+    }
+
+    @Test
     public void pluginDescriptionShouldBeSetToDescriptorDescription() throws Exception {
         PluginDescriptor pluginDescriptor = new PluginDescriptor();
         pluginDescriptor.setDescription("description");

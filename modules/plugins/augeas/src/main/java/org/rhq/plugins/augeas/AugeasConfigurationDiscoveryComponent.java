@@ -117,7 +117,8 @@ public class AugeasConfigurationDiscoveryComponent<T extends ResourceComponent> 
         PropertySimple excludeGlobsProp = pluginConfiguration
             .getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP);
 
-        String augeasRootPath = AugeasConfigurationComponent.getAugeasRootPath();
+        String augeasRootPath = pluginConfiguration.getSimpleValue(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP,
+                AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
         File root = new File(augeasRootPath);
 
         List<String> includeGlobs = getGlobList(includeGlobsProp);

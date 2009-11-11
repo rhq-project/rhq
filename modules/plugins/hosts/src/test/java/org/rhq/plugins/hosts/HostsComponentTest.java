@@ -82,7 +82,7 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
     }
 
     @Override
-    protected Configuration getChangedResourceConfig() {
+    protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");
         config.put(entries);

@@ -48,7 +48,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
     }
 
     @Override
-    protected Configuration getChangedResourceConfig() {
+    protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
 
         config.put(new PropertySimple("workgroup", "DUMBCHANGE"));

@@ -24,6 +24,7 @@
 package org.rhq.plugins.augeas.helper;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -88,8 +89,12 @@ public class Glob {
         } else {
             globPattern = parentPath.getAbsolutePath() + globPattern;            
         }
-        
-        return Arrays.asList(parentPath.listFiles(new GlobFilter(globPattern)));
+
+        File[] files = parentPath.listFiles(new GlobFilter(globPattern));
+        if (files == null) {
+            throw new IllegalStateException("Could not list files in " + parentPath);
+        }
+        return Arrays.asList(files);
     }
     
     public static List<File> matchAll(File parentPath, String... globPattern) {

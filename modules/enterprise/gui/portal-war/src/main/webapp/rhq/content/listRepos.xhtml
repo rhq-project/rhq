@@ -136,6 +136,11 @@
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
 
+                        <h:commandButton action="#{ListReposUIBean.importRepos}"
+                                         value="IMPORT" styleClass="on-pager-button buttonsmall">
+                           <f:param name="mode" value="new"/>
+                        </h:commandButton>
+
                         <onc:selectCommandButton action="#{ListReposUIBean.deleteSelectedRepos}"
                                                  value="DELETE SELECTED" target="selectedRepos" styleClass="on-pager-button buttonsmall"/>
 

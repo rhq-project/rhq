@@ -45,6 +45,10 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         return "createNewRepo";
     }
 
+    public String importRepos() {
+        return "importRepos";
+    }
+
     public String deleteSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
@@ -56,7 +60,8 @@ public class ListReposUIBean extends PagedDataTableUIBean {
                     repoManager.deleteRepo(subject, id);
                 }
 
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repositories.");
+                FacesContextUtility
+                    .addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repositories.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
             }

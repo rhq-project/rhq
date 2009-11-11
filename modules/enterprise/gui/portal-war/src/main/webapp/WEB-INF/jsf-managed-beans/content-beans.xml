@@ -90,6 +90,13 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/content/importRepos.xhtml -->
+   <managed-bean>
+      <managed-bean-name>RepoImportUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RepoImportUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/content/createContentProvider.xhtml -->
    <managed-bean>
       <managed-bean-name>CreateContentSourceUIBean</managed-bean-name>

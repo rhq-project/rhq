@@ -148,7 +148,7 @@ public class RHNProviderTest
         List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
         try {
             provider.initializeForTest(config);
-            provider.synchronizePackages(report, existingPackages);
+            provider.synchronizePackages("testRepo", report, existingPackages);
         }
         catch (Exception e) {
             e.printStackTrace();

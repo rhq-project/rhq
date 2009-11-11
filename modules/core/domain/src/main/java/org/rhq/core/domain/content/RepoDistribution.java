@@ -46,11 +46,13 @@ import javax.persistence.Table;
 @IdClass(RepoDistributionPK.class)
 @NamedQueries( {
     @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :distId"),
-    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
+    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId"),
+    @NamedQuery(name = RepoDistribution.QUERY_FIND_BY_REPO_ID, query = "SELECT rkt FROM RepoDistribution rkt where rkt.repo.id = :repoId") })
 @Table(name = "RHQ_REPO_DISTRIBUTION")
 public class RepoDistribution implements Serializable {
     public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoDistribution.deleteByKickstartTreeId";
     public static final String DELETE_BY_REPO_ID = "RepoDistribution.deleteByRepoId";
+    public static final String QUERY_FIND_BY_REPO_ID = "RepoDistribution.queryFindByRepoId";
 
     private static final long serialVersionUID = 1L;
 

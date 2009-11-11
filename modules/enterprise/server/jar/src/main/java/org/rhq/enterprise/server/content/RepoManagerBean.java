@@ -39,10 +39,12 @@ import org.jboss.annotation.IgnoreDependency;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
+import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoPackageVersion;
@@ -63,9 +65,9 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
-import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -328,8 +330,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void processRepoImportReport(Subject subject, RepoImportReport report,
-                                        int contentSourceId, StringBuilder result) {
+    public void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId,
+        StringBuilder result) {
 
         // Import groups first
         List<RepoGroupDetails> repoGroups = report.getRepoGroups();
@@ -351,15 +353,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 try {
                     createRepoGroup(subject, existingGroup);
                     repoGroupCounter++;
-                }
-                catch (RepoException e) {
+                } catch (RepoException e) {
 
                     if (e.getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
                         result.append("Skipping existing repo group [").append(name).append("]").append('\n');
-                    }
-                    else {
+                    } else {
                         log.error("Error adding repo group [" + name + "]", e);
-                        result.append("Could not add repo group [").append(name).append("]. See log for more information.").append('\n');
+                        result.append("Could not add repo group [").append(name).append(
+                            "]. See log for more information.").append('\n');
                     }
                 }
             }
@@ -388,16 +389,16 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                     addCandidateRepo(contentSourceId, createMe);
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);
                     repoCounter++;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
 
-                    if (e instanceof RepoException &&
-                        ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
-                        result.append("Skipping addition of existing repo [").append(createMe.getName()).append("]").append('\n');
-                    }
-                    else {
+                    if (e instanceof RepoException
+                        && ((RepoException) e).getType() == RepoException.RepoExceptionType.NAME_ALREADY_EXISTS) {
+                        result.append("Skipping addition of existing repo [").append(createMe.getName()).append("]")
+                            .append('\n');
+                    } else {
                         log.error("Error processing repo [" + createMe + "]", e);
-                        result.append("Could not add repo [").append(createMe.getName()).append("]. See log for more information.").append('\n');
+                        result.append("Could not add repo [").append(createMe.getName()).append(
+                            "]. See log for more information.").append('\n');
                     }
                 }
             }
@@ -412,10 +413,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                     addCandidateRepo(contentSourceId, createMe);
                     removeRepoFromList(createMe.getName(), candidatesForThisProvider);
                     repoCounter++;
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     log.error("Error processing repo [" + createMe + "]", e);
-                    result.append("Could not add repo [").append(createMe.getName()).append("]. See log for more information.").append('\n');
+                    result.append("Could not add repo [").append(createMe.getName()).append(
+                        "]. See log for more information.").append('\n');
                 }
             }
         }
@@ -742,8 +743,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         List<Repo> repos = getRepoByName(c.getName());
         if (repos.size() != 0) {
-            RepoException e =
-                new RepoException("There is already a repo with the name of [" + c.getName() + "]");
+            RepoException e = new RepoException("There is already a repo with the name of [" + c.getName() + "]");
             e.setType(RepoException.RepoExceptionType.NAME_ALREADY_EXISTS);
             throw e;
         }
@@ -763,8 +763,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         RepoGroup existingRepoGroup = getRepoGroupByName(repoGroup.getName());
         if (existingRepoGroup != null) {
-            RepoException e =
-                new RepoException("There is already a repo group with the name [" + repoGroup.getName() + "]");
+            RepoException e = new RepoException("There is already a repo group with the name [" + repoGroup.getName()
+                + "]");
             e.setType(RepoException.RepoExceptionType.NAME_ALREADY_EXISTS);
             throw e;
         }
@@ -839,5 +839,30 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         if (deleteMe != null) {
             repoList.remove(deleteMe);
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public long getDistributionCountFromRepo(Subject subject, int repoId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoDistribution.QUERY_FIND_BY_REPO_ID);
+
+        countQuery.setParameter("repoId", repoId);
+
+        return ((Long) countQuery.getSingleResult()).longValue();
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @SuppressWarnings("unchecked")
+    public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc) {
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoDistribution.QUERY_FIND_BY_REPO_ID,
+            pc);
+
+        query.setParameter("repoId", repoid);
+
+        List<Distribution> results = query.getResultList();
+        long count = getDistributionCountFromRepo(subject, repoid);
+
+        return new PageList<Distribution>(results, (int) count, pc);
+
     }
 }

@@ -495,6 +495,84 @@
          </rich:panel>
       </a4j:region>
       </h:form>
+            
+      <h:form id="repoDistributionListForm">
+      <a4j:region id="distributionList">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Distribution Trees Associated To This Repository"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+
+            <ui:param name="repoDistributionDataModel" value="#{RepoDistributionUIBean.dataModel}"/>
+            <rich:dataTable id="repoDistributionDataTable"
+                            rows="#{PageControl.RepoDistributionList.pageSize}"
+                            value="#{repoDistributionDataModel}"
+                            var="pvitem"
+                            width="100%"
+                            columnsWidth="5%,20%, 10%, 5%, 60%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="RepoDistributionList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.label">
+                        <h:outputText styleClass="headerText" value="Label" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.base_path">
+                        <h:outputText styleClass="headerText" value="Base Path" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="pv.last_modified">
+                        <h:outputText styleClass="headerText" value="Last Modified" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 5:4 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="repoDistributionDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoDistributionDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoDistributionList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </a4j:region>
+      </h:form>   
 
    </ui:define>
 </ui:composition>

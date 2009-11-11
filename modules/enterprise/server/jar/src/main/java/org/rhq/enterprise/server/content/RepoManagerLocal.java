@@ -23,14 +23,15 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.composite.RepoComposite;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -110,8 +111,7 @@ public interface RepoManagerLocal {
 
     /**
      */
-    void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds)
-        throws RepoException;
+    void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException;
 
     /**
      */
@@ -253,5 +253,10 @@ public interface RepoManagerLocal {
      * @see RepoManagerRemote#updateRepo(Subject, Repo)
      */
     Repo updateRepo(Subject subject, Repo repo) throws RepoException;
+
+    /**
+     * @see RepoManagerRemote#findAssociatedDistributions(Subject, int, PageControl)
+     */
+    PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
 
 }

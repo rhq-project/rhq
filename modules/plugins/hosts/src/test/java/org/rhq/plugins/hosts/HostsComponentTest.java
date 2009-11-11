@@ -120,9 +120,4 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
         entries.getList().add(entry);
         return config;
     }
-
-    @Override
-    protected String[] getAssociatedConfigs() {
-        return new String[] { "/etc/hosts" };
-    }
 }

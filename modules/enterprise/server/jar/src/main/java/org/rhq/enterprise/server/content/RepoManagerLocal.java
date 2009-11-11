@@ -106,6 +106,22 @@ public interface RepoManagerLocal {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
+     * Get the overall sync status of this Repository.  This is a summation of all the syncs.
+     * 
+     * There is a weight to the status since this returns the most 'relevant' status:
+     * 
+     * 1) ContentSourceSyncStatus.FAILURE
+     * 2) ContentSourceSyncStatus.INPROGRESS
+     * 3) ContentSourceSyncStatus.SUCCESS
+     * 
+
+     * @param subject caller
+     * @param repoId to calc status for
+     * @return String summary of the status of this Repository
+     */
+    String calculateSyncStatus(Subject subject, int repoId);
+
+    /**
      */
     void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
 

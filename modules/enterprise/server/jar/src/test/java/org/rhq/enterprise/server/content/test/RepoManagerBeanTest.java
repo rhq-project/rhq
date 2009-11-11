@@ -18,35 +18,38 @@
  */
 package org.rhq.enterprise.server.content.test;
 
-import javax.transaction.TransactionManager;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+
 import javax.persistence.EntityManager;
+import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSourceSyncResults;
+import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
-import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.criteria.RepoCriteria;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-
-import java.util.Set;
-import java.util.HashSet;
-import java.util.List;
-import java.util.ArrayList;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -76,6 +79,48 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         if (tx != null) {
             tx.rollback();
         }
+    }
+
+    @Test(enabled = ENABLED)
+    public void createABunchOfRepos() throws Exception {
+        PageList<Repo> repos = repoManager.findRepos(overlord, new PageControl());
+        int origsize = 0;
+        if (repos != null) {
+            origsize = repos.size();
+        }
+        for (int i = 0; i < 10; i++) {
+            Random r = new Random(System.currentTimeMillis());
+            Repo repo = new Repo(r.nextLong() + "");
+            repoManager.createRepo(overlord, repo).getId();
+        }
+        repos = repoManager.findRepos(overlord, new PageControl());
+
+        assert repos.size() == (origsize + 10);
+
+    }
+
+    @Test(enabled = ENABLED)
+    public void testSyncStatus() throws Exception {
+        Repo repo = new Repo("testSyncStatus");
+        repoManager.createRepo(overlord, repo).getId();
+
+        ContentSourceType cst = new ContentSourceType("testSyncStatus");
+        ContentSource cs = new ContentSource("testSyncStatus", cst);
+        ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
+        repo.addContentSource(cs);
+
+        EntityManager em = getEntityManager();
+        em.persist(cst);
+        em.persist(cs);
+        em.persist(results);
+        cs.addSyncResult(results);
+        em.flush();
+        em.close();
+
+        // Check sync status
+        String status = repoManager.calculateSyncStatus(overlord, repo.getId());
+        assert status.equals(ContentSourceSyncStatus.INPROGRESS.toString());
+
     }
 
     @Test(enabled = ENABLED)
@@ -131,6 +176,12 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         // Setup
         Repo repo = new Repo("test candidate repo");
 
+        PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
+        int origSize = 0;
+        if (importedRepos != null) {
+            origSize = importedRepos.size();
+        }
+
         // Test
         repo = repoManager.createCandidateRepo(overlord, repo);
 
@@ -139,12 +190,10 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
             assert repo.isCandidate();
 
             // Should not be returned from this call since its a candidate repo
-            PageList<Repo> importedRepos = repoManager.findRepos(overlord, new PageControl());
-            assert importedRepos.size() == 0;
-
+            importedRepos = repoManager.findRepos(overlord, new PageControl());
+            assert importedRepos.size() == origSize;
             assert repoManager.getRepo(overlord, repo.getId()) != null;
-        }
-        finally {
+        } finally {
             repoManager.deleteRepo(overlord, repo.getId());
         }
     }
@@ -174,8 +223,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         try {
             repoManager.createRepoGroup(overlord, existing);
             assert false;
-        }
-        catch (RepoException e) {
+        } catch (RepoException e) {
             // Expected
         }
 
@@ -183,7 +231,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         repoManager.deleteRepoGroup(overlord, existing.getId());
         existing = repoManager.getRepoGroup(overlord, existing.getId());
         assert existing == null;
-        
+
         entityManager.remove(groupType);
     }
 
@@ -249,8 +297,10 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         RepoRepoRelationship relationship = relationships.iterator().next();
         assert relationship.getRepoRepoRelationshipPK().getRepo().getName().equals("repo1");
-        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRelatedRepo().getName().equals("repo2");
-        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRepoRelationshipType().getName().equals(relationshipTypeName);
+        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRelatedRepo().getName()
+            .equals("repo2");
+        assert relationship.getRepoRepoRelationshipPK().getRepoRelationship().getRepoRelationshipType().getName()
+            .equals(relationshipTypeName);
 
         // Cleanup handled by rollback in tear down method
     }
@@ -272,7 +322,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         Repo importedRepo = new Repo("imported repo");
         importedRepo.addContentSource(contentSource);
         importedRepo = repoManager.createRepo(overlord, importedRepo);
-        
+
         //   Create a candidate repo associated with that source
         Repo candidateRepo = new Repo(candidateRepoName);
         candidateRepo.addContentSource(contentSource);
@@ -329,8 +379,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
             repoIds.add(12345);
             repoManager.importCandidateRepo(overlord, repoIds);
             assert false;
-        }
-        catch (RepoException e) {
+        } catch (RepoException e) {
             // Expected
         }
     }
@@ -347,8 +396,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
             repoIds.add(created.getId());
             repoManager.importCandidateRepo(overlord, repoIds);
             assert false;
-        }
-        catch (RepoException e) {
+        } catch (RepoException e) {
             // Expected
         }
 

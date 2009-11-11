@@ -18,10 +18,17 @@
  */
 package org.rhq.enterprise.gui.content;
 
+import java.util.Iterator;
+import java.util.Set;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -30,13 +37,18 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListReposUIBean extends PagedDataTableUIBean {
+
+    private final Log log = LogFactory.getLog(ListReposUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "ListReposUIBean";
 
     private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+    private ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
     public ListReposUIBean() {
     }
@@ -47,6 +59,40 @@ public class ListReposUIBean extends PagedDataTableUIBean {
 
     public String importRepos() {
         return "importRepos";
+    }
+
+    public String syncSelectedContentSources() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selected = getSelectedRepos();
+        Integer[] ids = getIntegerArray(selected);
+        int syncCount = 0;
+        if (ids.length > 0) {
+            try {
+                for (Integer id : ids) {
+                    Repo r = repoManager.getRepo(subject, id);
+                    Set<ContentSource> sources = r.getContentSources();
+                    Iterator<ContentSource> i = sources.iterator();
+                    while (i.hasNext()) {
+                        ContentSource source = i.next();
+                        contentSourceManager.synchronizeAndLoadContentSource(subject, source.getId());
+                        syncCount++;
+                        log.debug("Initiating sync: " + source.getId());
+                    }
+                }
+                if (syncCount > 0) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
+                        + "] content sources.");
+                } else {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                        "Selected Repositories have no content to sync.");
+                }
+            } catch (Exception e) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to synchronized content sources.",
+                    e);
+            }
+        }
+
+        return "success";
     }
 
     public String deleteSelectedRepos() {
@@ -91,6 +137,9 @@ public class ListReposUIBean extends PagedDataTableUIBean {
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
             PageList<Repo> results = manager.findRepos(subject, pc);
+            for (Repo repo : results) {
+                repo.setSyncStatus(manager.calculateSyncStatus(subject, repo.getId()));
+            }
             return results;
         }
     }

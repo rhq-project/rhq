@@ -40,6 +40,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
@@ -88,6 +89,7 @@ import org.rhq.core.domain.resource.Resource;
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable, Taggable {
+
     // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
@@ -143,6 +145,9 @@ public class Repo implements Serializable, Taggable {
 
     @OneToMany()
     private Set<Tag> tags;
+
+    @Transient
+    private String syncStatus;
 
     // Constructor ----------------------------------------
 
@@ -306,6 +311,22 @@ public class Repo implements Serializable, Taggable {
      */
     public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
+    }
+
+    /**
+     * Get the overall sync status of this Repository.  This is a summation of all the syncs.
+     * 
+     * There is a weight to the status since this returns the most 'relevant' status:
+     * 
+     * 1) ContentSourceSyncStatus.FAILURE
+     * 2) ContentSourceSyncStatus.INPROGRESS
+     * 3) ContentSourceSyncStatus.SUCCESS
+     * 
+     * @return String summary of the status of this Repository
+     */
+    @Transient
+    public String getSyncStatus() {
+        return this.syncStatus;
     }
 
     /**
@@ -702,4 +723,12 @@ public class Repo implements Serializable, Taggable {
         }
     }
 
+    /**
+     * Set the sync status for this repo.
+     * @param syncStatusIn
+     */
+    @Transient
+    public void setSyncStatus(String syncStatusIn) {
+        this.syncStatus = syncStatusIn;
+    }
 }

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +40,8 @@ import org.jboss.annotation.IgnoreDependency;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSourceSyncResults;
+import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
@@ -865,4 +868,30 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<Distribution>(results, (int) count, pc);
 
     }
+
+    @Override
+    public String calculateSyncStatus(Subject subject, int repoId) {
+        Repo found = this.getRepo(subject, repoId);
+        Set<ContentSourceSyncStatus> stati = new HashSet<ContentSourceSyncStatus>();
+        Set<ContentSource> contentSources = found.getContentSources();
+        Iterator<ContentSource> i = contentSources.iterator();
+        while (i.hasNext()) {
+            ContentSource cs = i.next();
+            List<ContentSourceSyncResults> results = cs.getSyncResults();
+            for (ContentSourceSyncResults result : results) {
+                stati.add(result.getStatus());
+            }
+        }
+        if (stati.contains(ContentSourceSyncStatus.FAILURE)) {
+            return ContentSourceSyncStatus.FAILURE.toString();
+        }
+        if (stati.contains(ContentSourceSyncStatus.INPROGRESS)) {
+            return ContentSourceSyncStatus.INPROGRESS.toString();
+        }
+        if (stati.contains(ContentSourceSyncStatus.SUCCESS)) {
+            return ContentSourceSyncStatus.SUCCESS.toString();
+        }
+        return null;
+    }
+
 }

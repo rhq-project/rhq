@@ -135,6 +135,17 @@
           <!--
           <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
           -->
+            <systemProperties>
+                <property>
+                    <!--
+                    set this to true if you want to run a test with RHNProvider
+                    against RHN Hosted.  It will sync packages & kickstart trees
+                    This should be set to false by default
+                    -->
+                    <name>RunRHNProviderTest</name>
+                        <value>false</value>
+                </property>
+            </systemProperties>
         </configuration>
       </plugin>
 

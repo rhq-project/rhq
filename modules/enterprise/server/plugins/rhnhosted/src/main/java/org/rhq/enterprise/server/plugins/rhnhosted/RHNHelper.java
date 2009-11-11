@@ -39,6 +39,8 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
+
 
 /**
  * @author pkilambi
@@ -51,6 +53,7 @@ public class RHNHelper {
     private final RhnComm rhndata;
     private final RhnDownloader rhndownload;
     private final String systemid;
+    private final String distributionType;
     
     //TODO: Need to determine what the ksTreeType should be for RHN Kickstarts
     private final String ksTreeType = "CHANGE_ME";
@@ -71,23 +74,35 @@ public class RHNHelper {
         this.rhndata = new RhnComm(baseurl);
         this.rhndownload = new RhnDownloader(baseurl);
         this.systemid = systemIdIn;
+        this.distributionType = "Kickstart";
 
     }
 
-    public List<DistributionDetails> getDistributionDetails(List<String> ksLabels)
+    public List<DistributionDetails> getDistributionMetaData(List<String> labels)
             throws IOException, XmlRpcException {
 
-        List<DistributionDetails> ddList = new ArrayList<DistributionDetails>();
-        List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, ksLabels);
+        List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
+        List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, labels);
         for (RhnKickstartableTreeType ksTree: ksTreeTypes) {
+            DistributionDetails details =
+                    new DistributionDetails(ksTree.getLabel(), ksTree.getBasePath(), distributionType);
+            distros.add(details);
+
             List<RhnKickstartFileType> ksFiles = ksTree.getRhnKickstartFiles().getRhnKickstartFile();
             for (RhnKickstartFileType ksFile: ksFiles) {
-                String path = ksTree.getBasePath() + "/" + ksFile.getRelativePath();
-                //TODO:  Should add fileSize and md5sum to DistributionDetails
-                ddList.add(new DistributionDetails(ksTree.getLabel(), path, ksTreeType));
+                if (log.isDebugEnabled()) {
+                    log.debug("RHNHelper::getDistributionMetaData<ksLabel=" + ksTree.getLabel() +
+                        "> current file = " + ksFile.getRelativePath() + ", md5sum = " + ksFile.getMd5Sum() +
+                        ", lastModified = " + ksFile.getLastModified() + ", fileSize = " + ksFile.getFileSize());
+                }
+                Long lastMod = Long.parseLong(ksFile.getLastModified());
+                DistributionFileDetails dFile = new DistributionFileDetails(ksFile.getRelativePath(), lastMod, ksFile.getMd5Sum());
+                Long fileSize = Long.parseLong(ksFile.getFileSize());
+                dFile.setFileSize(fileSize);
+                details.addFile(dFile);
             }
         }
-        return ddList;
+        return distros;
     }
 
     /**
@@ -97,10 +112,8 @@ public class RHNHelper {
      * @throws Exception On all errors
      */
     public List<ContentProviderPackageDetails> getPackageDetails(List packageIds) throws Exception {
-
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
-
         for (RhnPackageType pkg : pkgs) {
             try {
                 pdlist.add(getDetails(pkg));
@@ -143,6 +156,16 @@ public class RHNHelper {
         //pkg.setMetadata();
         return pkg;
 
+    }
+
+    /**
+     * Get List of kickstart labels for the channel associated to this instance.
+     * @return List of all kickstart labels associate to the channel
+     * @throws IOException on io errors on systemid reads
+     * @throws XmlRpcException on xmlrpc faults
+     */
+    public List<String> getChannelKickstartLabels() throws IOException, XmlRpcException {
+        return getSyncableKickstartLabels(Arrays.asList(this.repolabel));
     }
 
     /**

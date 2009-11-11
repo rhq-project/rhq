@@ -33,7 +33,7 @@ import java.util.Collection;
  */
 public class DistributionSyncReport {
     private List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
-
+    private List<DistributionDetails> deletedDistros = new ArrayList<DistributionDetails>();
 
     public DistributionSyncReport() {
     }
@@ -42,12 +42,23 @@ public class DistributionSyncReport {
         return distros;
     }
 
-    public void addRepo(DistributionDetails distro) {
-        distros.add(distro);
+    public void addDistro(DistributionDetails distroIn) {
+        distros.add(distroIn);
     }
 
-    public void addDistros(Collection<DistributionDetails> distros) {
-        distros.addAll(distros);
+    public void addDistros(Collection<DistributionDetails> distrosIn) {
+        distros.addAll(distrosIn);
     }
 
+    public List<DistributionDetails> getDeletedDistributions() {
+        return deletedDistros;
+    }
+
+    public void addDeletedDistro(DistributionDetails distroIn) {
+        deletedDistros.add(distroIn);
+    }
+
+    public void addDeletedDistros(Collection<DistributionDetails> distrosIn) {
+        deletedDistros.addAll(distrosIn);
+    }
 }

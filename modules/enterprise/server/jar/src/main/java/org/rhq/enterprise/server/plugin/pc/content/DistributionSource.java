@@ -23,6 +23,7 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.InputStream;
+import java.util.Collection;
 
 /**
  * Indicates a content provider has the capability to provide distributions into the server.
@@ -39,7 +40,7 @@ public interface DistributionSource {
      * @throws Exception if the source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizeDistribution(DistributionSyncReport report)
+    void synchronizeDistribution(DistributionSyncReport report, Collection<DistributionDetails> existingDistros)
         throws Exception;
 
     /**

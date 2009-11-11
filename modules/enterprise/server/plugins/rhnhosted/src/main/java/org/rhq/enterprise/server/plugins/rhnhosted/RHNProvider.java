@@ -49,9 +49,6 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 
 
 /**
@@ -64,6 +61,13 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNActivator rhnObject;
     private RHNHelper helper;
+    private boolean testMode = false;
+
+    public void initializeForTest(Configuration configuration) throws Exception {
+        log.info("**TEST MODE  RHNProvider is running in a test configuration**");
+        testMode = true;
+        initialize(configuration);
+    }
 
     /**
      * Initializes the adapter with the specified configuration.
@@ -131,12 +135,17 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
 
         // RHQ Server is now active, initialize the handler for the bits.
         helper = new RHNHelper(locationIn, repos, rhnObject.getSystemid());
+        log.info("RHNProvider initialized RHNHelper with repos: " + repos);
 
         // Now that the server is activated, spawn all syncable channels
         ArrayList<String> channels = helper.getSyncableChannels();
 
-        // Eventually we should pass in a subset of selected channels to spawn
-        initializeRepos(channels);
+
+        // when running under a test we are restricting behavior to not setup up Repos through RHQ
+        if (!testMode) {
+            // Eventually we should pass in a subset of selected channels to spawn
+            initializeRepos(channels);
+        }
     }
 
     /**
@@ -170,11 +179,11 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
         List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
         log.info("Report" + report);
-
         // sync now
         try {
             summary.markStarted();
             ArrayList pkgIds = helper.getChannelPackages();
+            log.info("RHNProvider::  helper.getChannelPackages returned  " + pkgIds.size() + " packages");
             for (ContentProviderPackageDetails p : helper.getPackageDetails(pkgIds)) {
                 log.debug("Processing package at (" + p.getLocation());
                 deletedPackages.remove(p);
@@ -184,7 +193,6 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
                     summary.added++;
                 }
             }
-
             for (ContentProviderPackageDetails p : deletedPackages) {
                 log.debug("Package at (" + p.getDisplayName() + ") marked as deleted");
                 report.addDeletePackage(p);
@@ -199,25 +207,44 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
             report.setSummary(summary.toString());
             log.info("synchronizing with repo: " + helper + " finished\n" + summary);
         }
-
     }
 
-    public void synchronizeDistribution(DistributionSyncReport report) throws Exception {
-        // hard coding a kickstart label for testing.
-        List<String> distLabels = new ArrayList<String>();
-        distLabels.add("ks-rhel-i386-server-5");
-        synchronizeDistribution(report, distLabels);
-    }
-
-    public void synchronizeDistribution(DistributionSyncReport report, List<String> distLabels) throws Exception {
+    public void synchronizeDistribution(DistributionSyncReport report, Collection<DistributionDetails> existingDistros) throws Exception {
 
         // Goal:
         //   This method will create the metadata representing what kickstart tree files need to be downloaded.
         //       the metadata will be returned through the DistributionSyncReport object.
         //   NOTE:  This method DOES not do the actual downloading of data.
-        List<DistributionDetails> ddList = helper.getDistributionDetails(distLabels);
-        //TODO:  Need to add logic to determine what has already been synced, what needs to be synced.
 
+        List<String> existingLabels = new ArrayList<String>();
+        for (DistributionDetails d: existingDistros) {
+            existingLabels.add(d.getLabel());
+        }
+        List<String> toSyncDistros = new ArrayList<String>();
+        List<String> deletedDistros = new ArrayList<String>();  //Existing distros we want to remove.
+        deletedDistros.addAll(existingLabels);
+
+        List<String> availableLabels = helper.getChannelKickstartLabels();
+        log.debug("Found " + availableLabels.size() + " available kickstart trees");
+        for (String label: availableLabels) {
+            log.debug("Processing kickstart: " + label);
+            deletedDistros.remove(label);
+            if (!existingLabels.contains(label)) {
+                log.debug("New kickstart to sync: " + label);
+                toSyncDistros.add(label);
+            }
+        }
+
+        // Determine what distros are to be removed, i.e. they are synced by RHQ but no longer exist from RHN
+        for (String label: deletedDistros) {
+            for (DistributionDetails dd: existingDistros) {
+                if (dd.getLabel().compareToIgnoreCase(label) == 0) {
+                    report.addDeletedDistro(dd);
+                }
+            }
+        }
+
+        List<DistributionDetails> ddList = helper.getDistributionMetaData(toSyncDistros);
         report.addDistros(ddList);
     }
 

@@ -23,6 +23,9 @@
 
 package org.rhq.enterprise.server.plugin.pc.content;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Pradeep Kilambi
  */
@@ -32,6 +35,7 @@ public class DistributionDetails {
 
     private String distType;
     private String distpath;
+    private List<DistributionFileDetails> files;
 
     public DistributionDetails(String labelIn, String disttypeIn) {
         setLabel(labelIn);
@@ -42,6 +46,25 @@ public class DistributionDetails {
         setLabel(labelIn);
         setDistributionPath(distpathIn);
         setDistributionType(disttypeIn);
+    }
+
+    public void addFile(DistributionFileDetails file) {
+        if (files == null) {
+            files = new ArrayList<DistributionFileDetails>();
+        }
+        files.add(file);
+    }
+
+    public void addFiles(List<DistributionFileDetails> filesIn) {
+        files.addAll(filesIn);
+    }
+
+    public List<DistributionFileDetails> getFiles() {
+        return files;
+    }
+
+    public void setFiles(List<DistributionFileDetails> filesIn) {
+        files = filesIn;
     }
 
     /**

@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.test;
+package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;

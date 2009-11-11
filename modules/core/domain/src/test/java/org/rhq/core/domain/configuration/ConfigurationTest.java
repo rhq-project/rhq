@@ -26,9 +26,14 @@ package org.rhq.core.domain.configuration;
 import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
+import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 import java.util.Random;
 import java.util.Set;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 
 /**
  * This class has tests for Configuration just like org.rhq.core.domain.configuration.test.ConfigurationTest. These
@@ -354,4 +359,128 @@ public class ConfigurationTest {
         return copy;
     }
 
+    @Test
+    public void agentSerializationShouldCopyId() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        int id = -1;
+
+        Configuration config = new Configuration();
+        config.setId(id);
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertEquals(serializedConfig.getId(), id, "Failed to properly serialize the id property");
+    }
+
+    @Test
+    public void agentSerializationShouldCopyPropertiesMap() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "1"));
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertEquals(serializedConfig.getMap(), config.getMap(), "Failed to property serialize the map property");
+    }
+
+    @Test
+    public void agentSerializationShouldCopyNotes() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        config.setNotes("notes");
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertEquals(serializedConfig.getNotes(), config.getNotes(), "Failed to properly serialize the notes property");
+    }
+
+    @Test
+    public void agentSerializationShouldCopyVersion() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        config.setVersion(1L);
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertEquals(
+            serializedConfig.getVersion(),
+            config.getVersion(),
+            "Failed to properly serialize the version property"
+        );
+    }
+
+    @Test
+    public void agentSerializationShouldCopyModifiedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        updateModifiedTime(config);
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+
+        assertEquals(
+            serializedConfig.getModifiedTime(),
+            config.getModifiedTime(),
+            "Failed to properly serialize the modifiedTime property"
+        );
+    }
+
+    @Test
+    public void agentSerializationShouldCopyCreatedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        updateCreatedTime(config);
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertEquals(
+            serializedConfig.getCreatedTime(),
+            config.getCreatedTime(),
+            "Failed to properly serialize the createdTime property"
+        );
+    }
+
+    @Test
+    public void agentSerializationShouldCopyRawConfigurations() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
+        config.addRawConfiguration(createRawConfiguration("/tmp/bar.txt"));
+
+        Configuration serializedConfig = serializeAndDeserialize(config);
+
+        assertRawConfigurationsEquals(
+            serializedConfig.getRawConfigurations(),
+            config.getRawConfigurations(),
+            "Failed to properly serialize rawConfigurations property"
+        );
+    }
+
+    private void updateModifiedTime(Configuration config) {
+        config.onUpdate();
+    }
+
+    private void updateCreatedTime(Configuration config) {
+        config.onPersist();
+    }
+
+    private Configuration serializeAndDeserialize(Configuration config) throws Exception {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream ostream = new ObjectOutputStream(byteOutputStream);
+
+        ostream.writeObject(config);
+
+        ByteArrayInputStream byteInputStream = new ByteArrayInputStream(byteOutputStream.toByteArray());
+        ObjectInputStream istream = new ObjectInputStream(byteInputStream);
+
+        return (Configuration) istream.readObject();
+    }
+    
 }

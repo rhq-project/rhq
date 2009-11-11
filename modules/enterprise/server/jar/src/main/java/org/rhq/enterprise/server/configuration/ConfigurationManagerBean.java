@@ -1098,7 +1098,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             return null;
         }
 
-        Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+        //Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+        Configuration zeroedConfiguration = newConfiguration.deepCopyWithoutProxies();
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
         ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,

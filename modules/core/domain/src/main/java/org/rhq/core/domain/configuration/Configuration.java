@@ -493,17 +493,24 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         Configuration copy = new Configuration();
         copy.notes = this.notes;
         copy.version = this.version;
-
-        for (Property property : this.properties.values()) {
-            copy.put(property.deepCopy());
-        }
-
-        for (RawConfiguration rawConfig : rawConfigurations) {
-            copy.addRawConfiguration(rawConfig.deepCopy());    
-        }
+        createDeepCopyOfProperties(copy);
+        createDeepCopyOfRawConfigs(copy);
 
         return copy;
     }
+
+    private void createDeepCopyOfRawConfigs(Configuration copy) {
+        for (RawConfiguration rawConfig : rawConfigurations) {
+            copy.addRawConfiguration(rawConfig.deepCopy());
+        }
+    }
+
+    private void createDeepCopyOfProperties(Configuration copy) {
+        for (Property property : this.properties.values()) {
+            copy.put(property.deepCopy());
+        }
+    }
+
 
     /**
      * Clones this object in the same manner as {@link #deepCopy()}.
@@ -634,11 +641,28 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      */
     public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(id);
-        out.writeObject(HibernateUtil.safeMap(getMap()));
+        out.writeObject(createDeepCopyOfMap());
+        out.writeObject(createDeepCopyOfRawConfigs());
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);
         out.writeLong(mtime);
+    }
+
+    private Map<String, Property> createDeepCopyOfMap() {
+        Map<String, Property> copy = new HashMap<String, Property>();
+        for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
+            copy.put(entry.getKey(), entry.getValue().deepCopy());
+        }
+        return copy;
+    }
+
+    private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
+        Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
+        for (RawConfiguration rawConfig : this.rawConfigurations) {
+            copy.add(rawConfig.deepCopy());
+        }
+        return copy;
     }
 
     /**
@@ -648,6 +672,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         properties = (HashMap<String, Property>) in.readObject();
+        rawConfigurations = (Set<RawConfiguration>) in.readObject();
         notes = in.readUTF();
         version = in.readLong();
         ctime = in.readLong();

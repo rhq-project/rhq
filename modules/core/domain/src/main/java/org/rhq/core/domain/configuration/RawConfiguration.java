@@ -38,6 +38,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.Transient;
 import java.io.Serializable;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
 /**
  * Resources support structured configuration as well as raw configuration which is represented by this class. A raw
@@ -85,7 +87,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     private Configuration configuration;
 
     @Transient
-    private MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
+    private transient MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
 
     public int getId() {
         return id;
@@ -252,4 +254,15 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
         return copy;
     }
+
+    private void readObject(ObjectInputStream istream) throws IOException, ClassCastException {
+        try {
+            istream.defaultReadObject();
+            sha256Generator = new MessageDigestGenerator("SHA-256");
+        }
+        catch (ClassNotFoundException e) {
+            throw new RuntimeException("Failed to deserialize " + getClass().getName(), e);
+        }
+    }
+
 }

@@ -28,6 +28,13 @@ import static org.testng.Assert.*;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.testng.annotations.Test;
+import org.rhq.core.util.MessageDigestGenerator;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
 public class RawConfigurationTest {
 
@@ -77,9 +84,8 @@ public class RawConfigurationTest {
 
         assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
 
-        byte[] contents = rawConfig.getContents();
-        contents[4] = 15;
-        rawConfig.setContents(contents);
+        byte[] newContents = new byte[] {1, 3, 5, 7, 11, 13, 17, 19, 23};
+        rawConfig.setContents(newContents);
 
         actualSha256 = rawConfig.getSha256();
 
@@ -240,5 +246,42 @@ public class RawConfigurationTest {
         RawConfiguration copy = original.deepCopy();
 
         assertFalse(original.getId() == copy.getId(), "The id property should not be copied.");
+    }
+
+    @Test
+    public void deserializationShouldInitializeSha256Generator() throws Exception {
+        MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
+
+        RawConfiguration rawConfig = new RawConfiguration();
+        rawConfig.setContents(new byte[] {1, 2, 3, 4, 5});
+        rawConfig.setPath("/tmp/foo.txt");
+
+        RawConfiguration serializedRawConfig = serializeAndDeserialize(rawConfig);
+
+        assertEquals(serializedRawConfig, rawConfig, "Failed to properly serialize/deserialize the raw configuration");
+
+        byte[] newContents = new byte[] {1, 3, 5, 7, 11, 13, 17};
+        String expectedSha256 = calculateSHA256(newContents);
+
+        serializedRawConfig.setContents(newContents);
+        String actualSha256 = serializedRawConfig.getSha256();
+
+        assertEquals(
+            actualSha256,
+            expectedSha256,
+            "The sha256Generator field was not properly initialized during deserialization."
+        );
+    }
+
+    private RawConfiguration serializeAndDeserialize(RawConfiguration rawConfig) throws Exception {
+        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
+        ObjectOutputStream ostream = new ObjectOutputStream(byteOutputStream);
+
+        ostream.writeObject(rawConfig);
+
+        ByteArrayInputStream byteInputStream = new ByteArrayInputStream(byteOutputStream.toByteArray());
+        ObjectInputStream istream = new ObjectInputStream(byteInputStream);
+
+        return (RawConfiguration) istream.readObject();
     }
 }

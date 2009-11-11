@@ -20,9 +20,32 @@
 package org.rhq.enterprise.server.plugin.pc;
 
 /**
- * Defines a schedule for a plugin component.
+ * Defines a schedule for a server plugin component.
  * 
  * @author John Mazzitelli
  */
 public abstract class Schedule {
+    private final boolean concurrent;
+
+    /**
+     * Builds the schedule object.
+     * 
+     * @param concurrent if true, multiple jobs can run concurrently. If false, only one
+     *                   scheduled job will run at any one time across the RHQ Server cloud.
+     */
+    public Schedule(boolean concurrent) {
+        this.concurrent = concurrent;
+    }
+
+    /**
+     * If true, multiple jobs can execute at any one time. If false, only a single job will be allowed
+     * to run at any one time (across all servers in the RHQ server cloud). Even if the schedule
+     * is triggered multiple times, if a job is still running, any future jobs that are triggered will
+     * be delayed.
+     * 
+     * @return concurrent flag
+     */
+    public boolean isConcurrent() {
+        return concurrent;
+    }
 }

@@ -75,6 +75,7 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
 
         Schedule schedule = listener.context.getSchedule();
         assert schedule != null;
+        assert schedule.isConcurrent() == false;
         assert schedule instanceof PeriodicSchedule;
         assert ((PeriodicSchedule) schedule).getPeriod() == 60000L;
 

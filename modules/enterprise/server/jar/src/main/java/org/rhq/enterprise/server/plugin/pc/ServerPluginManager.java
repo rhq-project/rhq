@@ -271,10 +271,11 @@ public class ServerPluginManager {
         if (pluginDescriptor.getLifecycleListener() != null) {
             ScheduleType scheduleType = pluginDescriptor.getLifecycleListener().getSchedule();
             if (scheduleType != null) {
+                boolean concurrent = scheduleType.isConcurrent();
                 if (scheduleType.getPeriod() != null) {
-                    schedule = new PeriodicSchedule(scheduleType.getPeriod().longValue());
+                    schedule = new PeriodicSchedule(concurrent, scheduleType.getPeriod().longValue());
                 } else {
-                    schedule = new CronSchedule(scheduleType.getCron());
+                    schedule = new CronSchedule(concurrent, scheduleType.getCron());
                 }
             }
         }

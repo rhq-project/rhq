@@ -10,7 +10,7 @@
                 xmlns:c="urn:xmlns:rhq-configuration">
 
     <serverplugin:lifecycle-listener class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
-        <serverplugin:schedule>
+        <serverplugin:schedule concurrent="false">
             <serverplugin:period>60000</serverplugin:period>
         </serverplugin:schedule>
     </serverplugin:lifecycle-listener>

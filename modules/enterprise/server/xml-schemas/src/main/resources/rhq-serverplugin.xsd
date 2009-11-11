@@ -157,6 +157,20 @@
                 </xs:element>
             </xs:choice>
         </xs:sequence>
+        <xs:attribute name="concurrent" type="xs:boolean" use="optional" default="true">
+            <xs:annotation>
+                <xs:documentation>
+                    If true, multiple invocations of the scheduled job are allowed to
+                    occur at the same time. If false, only one invocation will ever run at any
+                    one time. This means that if a schedule triggers again while the previous
+                    scheduled invocation is still running, the second invocation will be delayed
+                    until after the previous invocation completes. If there is more than one
+                    RHQ Server in the system, and this is false, you can be assured that only
+                    a single server will handle the invocation at any one time (i.e. multiple servers
+                    will not run invocations at the same time).
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
     <xs:simpleType name="classNameType">

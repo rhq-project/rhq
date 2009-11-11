@@ -27,7 +27,8 @@ package org.rhq.enterprise.server.plugin.pc;
 public class PeriodicSchedule extends Schedule {
     private final long period;
 
-    public PeriodicSchedule(long period) {
+    public PeriodicSchedule(boolean concurrent, long period) {
+        super(concurrent);
         this.period = period;
     }
 

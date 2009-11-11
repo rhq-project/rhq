@@ -27,7 +27,8 @@ package org.rhq.enterprise.server.plugin.pc;
 public class CronSchedule extends Schedule {
     private final String cronExpression;
 
-    public CronSchedule(String cronExpression) {
+    public CronSchedule(boolean concurrent, String cronExpression) {
+        super(concurrent);
         this.cronExpression = cronExpression;
     }
 

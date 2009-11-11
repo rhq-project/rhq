@@ -89,9 +89,7 @@
 	<classpathentry kind="src" path="modules/plugins/samba/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/sudoers/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/sudoers/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/postfix/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/postfix/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/cron/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/cron/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>

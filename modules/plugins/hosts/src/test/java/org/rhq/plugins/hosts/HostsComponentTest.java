@@ -41,6 +41,12 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
     }
 
     @Override
+    protected boolean isResourceConfigSupported() {
+        // The hosts plugin will use Augeas if it's available but will fall back to direct file parsing if it's not.
+        return true;
+    }
+
+    @Override
     protected Configuration getExpectedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");

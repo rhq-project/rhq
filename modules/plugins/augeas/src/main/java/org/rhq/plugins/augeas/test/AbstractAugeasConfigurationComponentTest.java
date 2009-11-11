@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
@@ -72,9 +74,11 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         AUGEAS_ROOT = new File(tmpDir, "rhq-itest-augeas-root-path");
     }
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     @BeforeSuite(groups = TEST_GROUP)
     public void start() {
-        if (!isAugeasAvailable()) {
+        if (!isResourceConfigSupported()) {
             String message;
             if (IS_WINDOWS) {
                 message = "Augeas is not available on Windows. Augeas-based configuration functionality will *not* be tested.";
@@ -92,14 +96,15 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             pluginContainer.initialize();
             Set<String> pluginNames = pluginContainer.getPluginManager().getMetadataManager().getPluginNames();
             System.out.println("Plugin container started with the following plugins: " + pluginNames);
-
+           
             System.out.println("Updating Augeas root in default plugin config...");
             ResourceType resourceType = getResourceType();
             ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
             ConfigurationTemplate defaultPluginConfigTemplate = pluginConfigDef.getDefaultTemplate();
             Configuration defaultPluginConfig = defaultPluginConfigTemplate.getConfiguration();
             resetConfigFiles(defaultPluginConfig);
-            PropertySimple rootPathProp = new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, null);
+            PropertySimple rootPathProp = new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP,
+                    AUGEAS_ROOT);
             defaultPluginConfig.put(rootPathProp);
 
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
@@ -132,7 +137,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
         catch (PluginContainerException e)
         {
-            if (isAugeasAvailable()) {
+            if (isResourceConfigSupported()) {
                 throw e;
             }
         }
@@ -147,7 +152,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
                 resource.getId());
         configurationManager.updateResourceConfiguration(updateRequest);
 
-        if (isAugeasAvailable()) {
+        if (isResourceConfigSupported()) {
             // Give the component and the managed resource some time to properly persist the update.
             Thread.sleep(500);
 
@@ -159,14 +164,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
 
     @AfterSuite(groups = TEST_GROUP)
     public void stop() {
-        try
-        {
-            FileUtils.purge(AUGEAS_ROOT, true);
-        }
-        catch (IOException e)
-        {
-            // ignore
-        }
+        deleteAugeasRootDir();
         System.out.println("Stopping plugin container...");
         PluginContainer.getInstance().shutdown();
         System.out.println("Plugin container stopped.");
@@ -231,6 +229,8 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     }
 
     protected void resetConfigFiles(Configuration pluginConfig) throws IOException {
+        deleteAugeasRootDir();
+        AUGEAS_ROOT.mkdirs();
         String includes = pluginConfig.getSimpleValue(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, null);
         if (includes != null) {
             List<String> includeGlobs = new ArrayList<String>();
@@ -246,12 +246,27 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
     }
 
-    protected boolean isAugeasAvailable() {
+    protected boolean isResourceConfigSupported() {
+        return isAugeasAvailable();
+    }
+
+    private boolean isAugeasAvailable() {
         try {
             Aug aug = Aug.INSTANCE;
             return true;
         } catch (Error e) {
             return false;
+        }
+    }
+
+    private void deleteAugeasRootDir() {
+        try
+        {
+            FileUtils.purge(AUGEAS_ROOT, true);
+        }
+        catch (IOException e)
+        {
+            log.warn("Failed to delete Augeas root dir (" + AUGEAS_ROOT + ").");
         }
     }
 }

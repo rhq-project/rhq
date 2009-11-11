@@ -30,19 +30,20 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * The ResourceDiscoveryComponent for the "Hosts File" ResourceType.
  *
  * @author Ian Springer
  */
-public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
+public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PlatformComponent> {
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
+    public Set discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws InvalidPluginConfigurationException,
             Exception
     {
         return super.discoverResources(discoveryContext);
@@ -56,21 +57,15 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
     }
 
     @Override
-    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext discoveryContext)
+    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
     {
-        File hostsFile;
         if (IS_WINDOWS) {
             File windowsDir = getWindowsDir();
-            hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
+            File hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
+            return Collections.singletonList(hostsFile.getPath());
         } else {
-            hostsFile = new File("/etc/hosts");
+            return super.determineIncludeGlobs(discoveryContext);
         }
-        return Collections.singletonList(hostsFile.getAbsolutePath());
-    }
-
-    @Override
-    protected List<String> determineExcludeGlobs(ResourceDiscoveryContext discoveryContext) {
-        return null;
     }
 
     private File getWindowsDir() {

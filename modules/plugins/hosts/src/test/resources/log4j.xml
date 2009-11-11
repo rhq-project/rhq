@@ -25,7 +25,14 @@
       </layout>
    </appender>
 
+   <category name="org.rhq.plugins">
+      <priority value="DEBUG"/>
+   </category>
+
    <root>
+      <!-- default log priority -->
+      <priority value="INFO"/>
+
       <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>
    </root>

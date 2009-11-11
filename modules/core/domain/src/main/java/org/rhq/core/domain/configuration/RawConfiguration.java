@@ -23,10 +23,7 @@
 
 package org.rhq.core.domain.configuration;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import org.rhq.core.util.MessageDigestGenerator;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -40,8 +37,9 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-
-import org.rhq.core.util.MessageDigestGenerator;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 /**
  * Resources support structured configuration as well as raw configuration which is represented by this class. A raw
@@ -83,13 +81,13 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
     @Column(name = "MTIME", nullable = false)
     private long mtime = System.currentTimeMillis();
-
+    
     @ManyToOne(optional = false)
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
     @Transient
-    private transient MessageDigestGenerator sha256Generator = null;
+    private transient MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
 
     public int getId() {
         return id;
@@ -139,8 +137,8 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     }
 
     private void updateSha256() {
-        getSha256Generator().add(contents);
-        sha256 = getSha256Generator().getDigestString();
+        sha256Generator.add(contents);
+        sha256 = sha256Generator.getDigestString();
     }
 
     /** @return A SHA-256 hash of the bytes for this raw configuration, which can be accessed via {@link #getContents()} */
@@ -213,7 +211,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
                 if (this.path == null && that.path == null) {
                     return true;
                 }
-                if ((this.path != null && that.path != null) && this.path.equals(that.path)) {
+                if ((this.path !=null && that.path != null) && this.path.equals(that.path)) {
                     return true;
                 }
             }
@@ -237,9 +235,14 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
     @Override
     public String toString() {
-        return new StringBuilder().append(getClass().getSimpleName()).append("[id=").append(id).append(", path=")
-            .append(path).append(", sha256=").append(sha256).append(", configuration=").append(configuration).append(
-                "]").toString();
+        return new StringBuilder()
+            .append(getClass().getSimpleName())
+            .append("[id=").append(id)
+            .append(", path=").append(path)
+            .append(", sha256=").append(sha256)
+            .append(", configuration=").append(configuration)
+            .append("]")
+            .toString();
     }
 
     public RawConfiguration deepCopy() {
@@ -252,22 +255,14 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         return copy;
     }
 
-    private void writeObject(ObjectOutputStream ostream) throws IOException {
-        ostream.defaultWriteObject();
-    }
-
     private void readObject(ObjectInputStream istream) throws IOException, ClassNotFoundException {
         try {
             istream.defaultReadObject();
-        } catch (ClassNotFoundException e) {
+            sha256Generator = new MessageDigestGenerator("SHA-256");
+        }
+        catch (ClassNotFoundException e) {
             throw new RuntimeException("Failed to deserialize " + getClass().getName(), e);
         }
     }
 
-    private MessageDigestGenerator getSha256Generator() {
-        if (null == sha256Generator) {
-            sha256Generator = new MessageDigestGenerator("SHA-256");
-        }
-        return sha256Generator;
-    }
 }

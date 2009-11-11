@@ -278,7 +278,7 @@
       <repository>
          <id>java.net-m1-releases</id>
          <name>Java.net Maven1 Repository</name>
-         <url>https://maven-repository.dev.java.net/repository/</url>
+         <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
 

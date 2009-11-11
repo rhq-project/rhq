@@ -869,7 +869,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     }
 
-    @Override
     public String calculateSyncStatus(Subject subject, int repoId) {
         Repo found = this.getRepo(subject, repoId);
         Set<ContentSourceSyncStatus> stati = new HashSet<ContentSourceSyncStatus>();

@@ -105,7 +105,7 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        Configuration resourceConfig = report.getConfiguration();
+        Configuration resourceConfig = report.getConfiguration();                
         Hosts newHosts = new Hosts();
 
         PropertyList entriesProp = resourceConfig.getList(".");

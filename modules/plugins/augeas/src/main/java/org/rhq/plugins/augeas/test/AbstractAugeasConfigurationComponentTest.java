@@ -28,10 +28,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.pluginapi.util.FileUtils;
-import org.testng.SkipException;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.BeforeTest;
@@ -72,16 +72,14 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         AUGEAS_ROOT = new File(tmpDir, "rhq-itest-augeas-root-path");
     }
 
-    private boolean augeasAvailable;
-
     @BeforeSuite(groups = TEST_GROUP)
     public void start() {
         if (!isAugeasAvailable()) {
             String message;
             if (IS_WINDOWS) {
-                message = "Augeas is not available on Windows. Skipping tests that rely on it...";
+                message = "Augeas is not available on Windows. Augeas-based configuration functionality will *not* be tested.";
             } else {
-                message = "Augeas not found. If on Fedora or RHEL, `yum install augeas`. Skipping tests that rely on it...";
+                message = "Augeas not found. If on Fedora or RHEL, `yum install augeas`.  Augeas-based configuration functionality will *not* be tested.";
             }
             System.out.println(message);
         }
@@ -122,37 +120,41 @@ public abstract class AbstractAugeasConfigurationComponentTest {
 
     @Test(groups = TEST_GROUP)
     public void testResourceConfigLoad() throws Exception {
-        skipTestIfAugeasNotAvailable();
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         Resource resource = getResource();
-        Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-        Configuration expectedResourceConfig = getExpectedResourceConfig();
-        assert resourceConfig.equals(expectedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
-            + expectedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
-    }
-
-    private void skipTestIfAugeasNotAvailable()
-    {
-        if (!isAugeasAvailable()) {
-            throw new SkipException("Skipping test since Augeas is not available.");
+        Configuration resourceConfig = null;
+        try
+        {
+            resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+            Configuration expectedResourceConfig = getExpectedResourceConfig();
+            assert resourceConfig.equals(expectedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                + expectedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+        }
+        catch (PluginContainerException e)
+        {
+            if (isAugeasAvailable()) {
+                throw e;
+            }
         }
     }
 
     @Test(groups = TEST_GROUP)
     public void testResourceConfigUpdate() throws Exception {
-        skipTestIfAugeasNotAvailable();
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
         Resource resource = getResource();
         Configuration updatedResourceConfig = getUpdatedResourceConfig();
-        configurationManager.updateResourceConfiguration(new ConfigurationUpdateRequest(0,
-            updatedResourceConfig, resource.getId()));
+        ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(0, updatedResourceConfig,
+                resource.getId());
+        configurationManager.updateResourceConfiguration(updateRequest);
 
-        // Give the component and the managed resource some time to properly persist the update.
-        Thread.sleep(500);
+        if (isAugeasAvailable()) {
+            // Give the component and the managed resource some time to properly persist the update.
+            Thread.sleep(500);
 
-        Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-        assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
-            + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+            Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+            assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+        }
     }
 
     @AfterSuite(groups = TEST_GROUP)
@@ -163,7 +165,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
         catch (IOException e)
         {
-            System.err.println("Failed to purge Augeas root dir '" + AUGEAS_ROOT + "' - cause: " + e);
+            // ignore
         }
         System.out.println("Stopping plugin container...");
         PluginContainer.getInstance().shutdown();

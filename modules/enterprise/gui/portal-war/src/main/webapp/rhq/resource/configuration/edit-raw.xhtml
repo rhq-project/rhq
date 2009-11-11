@@ -33,19 +33,24 @@
 	}
 </script>
 	
-	  You are viewing this in files mode. Switch to 
+	<h:outputText value="#{messages.youareviewingraw}" />
+	<h:outputText value=" #{messages.switch2}" />
            <h:outputLink value="edit.xhtml">
 			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
-			<h:outputText value=" structured mode" />
+			<h:outputText value=" #{messages.structured}" />
 		</h:outputLink>
 
-		<table class="summary-props-table" style="">
+ 		<table class="summary-props-table" style="">
 			<a4j:form id="editResourceConfigurationForm">
 				<input type="hidden" name="id"
 					value="#{ResourceUIBean.id}" />
 				<tr>
-					<td bgcolor="lightblue" width="25%" valign="top">Files <h:panelGroup
+					<td bgcolor="lightblue" width="25%" valign="top">
+                    <h:outputText value="#{messages.files}" />
+					<div>______________________________________</div>
+					
+					 <h:panelGroup
 						id="changedFiles" layout="vertical">
 						<ui:repeat value="#{rawConfigCollection.paths}" var="path">
 							<div><h:outputText value="*"
@@ -58,28 +63,30 @@
 						</ui:repeat>
 					</h:panelGroup>
 					<div>______________________________________</div>
-					<div>* File contains uncommitted changes.</div>
+					<div>* <h:outputText value="#{messages.uncommitted}" /></div>
 					<a4j:commandButton action="#{rawConfigCollection.commit}"
 						value="commit changes" reRender="changedFiles" /> <a4j:commandButton
-						action="#{rawConfigCollection.discard}" value="discard changes"
+						action="#{rawConfigCollection.discard}" value="#{messages.discard}"
 						reRender="changedFiles" /></td>
 					<td>
-					<div>Current File: <h:outputText
+					<div>
+					<h:outputText value="#{messages.currentfile}" />
+					: <h:outputText
 						value="#{rawConfigCollection.current.path}" styleClass="outhello" />
 					</div>
 					<h:outputLink value="edit-raw-full.xhtml" action="navigateToFullScreen">
 						<img src="/images/viewfullscreen.png" />
-						<h:outputText value=" Full Screen " />
+						<h:outputText value=" #{messages.fullscreen}" />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
 						<f:param name="conversationId" value="#{conversation.id}" />
 					</h:outputLink> <h:outputLink value="upload.xhtml" action="navigateToUpload">
 						<img src="/images/upload.png" />
-						<h:outputText value=" Upload " />
+						<h:outputText value=" #{messages.upload} " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
 						<f:param name="conversationId" value="#{conversation.id}" />
 					</h:outputLink> <s:link action="#{rawConfigDownload.download}">
 		            	<img src="/images/download.png" />
-		            	<h:outputText value=" Download " />
+		            	<h:outputText value="  #{messages.download} " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
 		            </s:link>	
 									

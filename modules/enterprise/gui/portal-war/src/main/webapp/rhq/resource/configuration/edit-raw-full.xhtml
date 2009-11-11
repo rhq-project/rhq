@@ -21,7 +21,7 @@
 <h:form id="editResourceConfigurationForm" >
 <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
 <h:commandLink action="#{rawConfigCollection.update}" >
-    <img src="/images/save.png" alt="Save" title="Save"/> 
+    <img src="/images/save.png" alt="#{messages.save}" title="#{messages.save}"/> 
 	<f:param name="conversationId" value="#{conversation.id}"/>
     <f:param name="id" value="#{ResourceUIBean.id}"/>
 </h:commandLink> 

@@ -27,14 +27,15 @@ THIS TEXT WILL BE REMOVED.
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
-	  You are viewing this in structured mode. Switch to 
+
+    	<h:outputText value="#{messages.youareviewingstructured}" />
         <h:outputLink value="view-raw.xhtml">
 			<f:param name="id" value="#{ResourceUIBean.id}" />
-			<h:outputText value=" files mode" />
+			<h:outputText value=" #{messages.raw}" />
 		</h:outputLink>
 
 
-      <h:outputText value="You do not have permission to edit this resource's configuration" rendered="#{!ResourceUIBean.permissions.configure}"/>
+      <h:outputText value=" #{messages.nopermissionedit}" rendered="#{!ResourceUIBean.permissions.configure}"/>
 
       <h:form id="viewResourceConfigurationForm">
          <!--  TODO remove the id version -->
@@ -47,10 +48,10 @@ THIS TEXT WILL BE REMOVED.
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">		          
                       
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported}" />
-			<h:commandButton value="EDIT FILES" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported}" />
          </h:panelGrid>

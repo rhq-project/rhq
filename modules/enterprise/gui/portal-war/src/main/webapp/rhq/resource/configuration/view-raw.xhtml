@@ -33,14 +33,14 @@
 	}
 </script>
 	
-	
-	  You are viewing this in files mode. Switch to 
-        <h:outputLink value="view.xhtml">
-			<s:conversationId/>
+		<h:outputText value="#{messages.youareviewingraw}" />
+    	<h:outputText value=" #{messages.switch2}" />
+           <h:outputLink value="view.xhtml">
+			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
-			<h:outputText value=" structured mode" />
+			<h:outputText value=" #{messages.structured}" />
 		</h:outputLink>
-
+	
 		<table class="summary-props-table" style="">
 				<tr>
 					<td bgcolor="lightblue" width="25%" valign="top">Files 

@@ -29,8 +29,6 @@ import java.util.Set;
 
 import javax.ejb.Stateless;
 import javax.jws.WebService;
-import javax.jws.WebMethod;
-import javax.jws.WebParam;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
@@ -49,15 +47,15 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.EventCriteria;
 import org.rhq.core.domain.criteria.GroupOperationHistoryCriteria;
@@ -66,6 +64,7 @@ import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.criteria.OperationDefinitionCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -102,9 +101,9 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
+import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.exception.LoginException;
@@ -238,13 +237,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findReposByCriteria(subject, criteria);
     }
 
-    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter,
-        PageControl pc) {
+    public PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc) {
         return repoManager.findPackageVersionsInRepo(subject, repoId, filter, pc);
     }
 
-    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject,
-        PackageVersionCriteria criteria) {
+    public PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria) {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
@@ -256,8 +253,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.getRepo(subject, repoId);
     }
 
-    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup)
-        throws RepoException {
+    public RepoGroup createRepoGroup(Subject subject, RepoGroup repoGroup) throws RepoException {
         return repoManager.createRepoGroup(subject, repoGroup);
     }
 
@@ -879,6 +875,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         if (criteria == null) {
             throw new IllegalArgumentException("Criteria cannot be null.");
         }
+    }
+
+    public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoId, PageControl pc) {
+        return repoManager.findAssociatedDistributions(subject, repoId, pc);
     }
 
 }

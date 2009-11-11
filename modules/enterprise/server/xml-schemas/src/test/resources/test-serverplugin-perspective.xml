@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<perspective-plugin
+   apiVersion="1.0"
+   version="1.0"
+   description="A Sample Perspective Utilizing Every Extension Point and Filter"
+   displayName="Sample Perspective"
+   name="SamplePerspective"
+   package="org.rhq.perspective.sample"
+   pluginLifecycleListener="perspectivePluginLifecycleListener"
+   xmlns="urn:xmlns:rhq-serverplugin.perspective"
+   xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+</perspective-plugin>

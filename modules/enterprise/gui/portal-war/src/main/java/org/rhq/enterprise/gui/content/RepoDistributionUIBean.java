@@ -31,10 +31,12 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
 
 public class RepoDistributionUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "RepoDistributionUIBean";
-
+    private final Log log = LogFactory.getLog(RepoDistributionUIBean.class);
     public RepoDistributionUIBean() {
     }
 
@@ -58,7 +60,6 @@ public class RepoDistributionUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
-
             PageList<Distribution> results = manager.findAssociatedDistributions(subject, id, pc);
             return results;
         }

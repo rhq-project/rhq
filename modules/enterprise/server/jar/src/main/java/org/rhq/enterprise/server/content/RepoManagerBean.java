@@ -862,10 +862,16 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         query.setParameter("repoId", repoid);
 
-        List<Distribution> results = query.getResultList();
+        List<RepoDistribution> results = query.getResultList();
+
+        ArrayList<Distribution> distros = new ArrayList();
+        for (RepoDistribution result : results) {
+            distros.add(result.getRepoDistributionPK().getDistribution());
+
+        }
         long count = getDistributionCountFromRepo(subject, repoid);
 
-        return new PageList<Distribution>(results, (int) count, pc);
+        return new PageList<Distribution>(distros, (int) count, pc);
 
     }
 

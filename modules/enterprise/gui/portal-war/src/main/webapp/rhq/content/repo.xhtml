@@ -513,9 +513,9 @@
             <rich:dataTable id="repoDistributionDataTable"
                             rows="#{PageControl.RepoDistributionList.pageSize}"
                             value="#{repoDistributionDataModel}"
-                            var="pvitem"
+                            var="dist"
                             width="100%"
-                            columnsWidth="5%,20%, 10%, 5%, 60%"
+                            columnsWidth="20%,30%,50%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -528,30 +528,37 @@
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pv.label">
-                        <h:outputText styleClass="headerText" value="Label" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Distribution Label" />
                   </f:facet>
+                   <h:outputText value="#{dist.label}"/>
+
+               </rich:column>
+
+
+               <rich:column>
+                  <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Distribution Type" />
+                  </f:facet>
+                   <h:outputText value="#{dist.distributionType}"/>
 
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pv.base_path">
-                        <h:outputText styleClass="headerText" value="Base Path" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Base Path" />
                   </f:facet>
+                   <h:outputText value="#{dist.basePath}"/>
 
                </rich:column>
-               
-               <rich:column>
+
+                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pv.last_modified">
-                        <h:outputText styleClass="headerText" value="Last Modified" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Last Modified" />
                   </f:facet>
+                   <h:outputText value="#{dist.lastModifiedDate}"/>
 
                </rich:column>
+
 
                <f:facet name="footer">
                   <rich:columnGroup>

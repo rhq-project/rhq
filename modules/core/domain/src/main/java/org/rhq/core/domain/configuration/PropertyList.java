@@ -68,7 +68,7 @@ public class PropertyList extends Property {
     @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
     //@IndexColumn(name = "list_index")  TODO GH: This seems broken
-    private List<Property> list;
+    private List<Property> list = new ArrayList<Property>();
 
     @Transient
     String memberPropertyName;

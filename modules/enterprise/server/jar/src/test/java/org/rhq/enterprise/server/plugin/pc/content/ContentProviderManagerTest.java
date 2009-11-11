@@ -368,8 +368,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             return report;
         }
 
-        public void synchronizePackages(PackageSyncReport report,
-            Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        public void synchronizePackages(String repoName, PackageSyncReport report,
+                                        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
             ContentProviderPackageDetailsKey key1 = new ContentProviderPackageDetailsKey(PACKAGE_NAME, PACKAGE_VERSION,
                 PACKAGE_TYPE_NAME, PACKAGE_ARCH, RESOURCE_TYPE_NAME, PLUGIN_NAME);
             ContentProviderPackageDetails pkg1 = new ContentProviderPackageDetails(key1);

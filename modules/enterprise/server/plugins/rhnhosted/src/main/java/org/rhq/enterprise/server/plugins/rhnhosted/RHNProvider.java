@@ -173,7 +173,8 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     /**
      * Synchronize package content for selected channel labels
      */
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
+    public void synchronizePackages(String repoName, PackageSyncReport report,
+                                    Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
         RHNSummary summary = new RHNSummary(helper);
         List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();

@@ -538,6 +538,22 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<PackageVersionContentSource>(results, (int) count, pc);
     }
 
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject,
+                                                                                        int contentSourceId,
+                                                                                        int repoId) {
+
+        Query query =
+            entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_REPO_ID);
+        query.setParameter("content_source_id", contentSourceId);
+        query.setParameter("repo_id", repoId);
+
+        List<PackageVersionContentSource> results = query.getResultList();
+
+        return results;
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageVersionCountFromContentSource(Subject subject, int contentSourceId) {
         Query countQuery = PersistenceUtility.createCountQuery(entityManager,

@@ -221,6 +221,21 @@ public interface ContentSourceManagerLocal {
         PageControl pc);
 
     /**
+     * Returns all packages from the given repo. This call takes into account the content source to provide any
+     * extra data on the package versions that exist for the particular mapping of content source and package,
+     * such as the location attribute.
+     *
+     * @param subject         user retrieving the data
+     * @param contentSourceId content source from which the packages are retrieved
+     * @param repoId          repo from which the packages are retrieved
+     *
+     * @return all package versions that the content source will be providing content for. The object returned also
+     *         contains the location where those package versions are located in the content source
+     */
+    List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject, int contentSourceId,
+                                                                                 int repoId);
+
+    /**
      * Returns count of PackageVersions associated with the given content source.
      *
      * @param  subject         caller requesting count
@@ -256,6 +271,8 @@ public interface ContentSourceManagerLocal {
      */
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject, int[] contentSourceIds,
         PageControl pc);
+
+    
 
     /**
      * Returns all the package versions that are served by the content source identified by the given ID but whose

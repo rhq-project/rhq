@@ -44,13 +44,12 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoGroup;
-import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
@@ -67,7 +66,6 @@ public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
     
     private ContentServerPluginManager pluginManager;
-    private static final String PARENT_RELATIONSHIP_NAME = "parent";
     private Map<ContentSource, ContentProvider> adapters;
 
     // This is used as a monitor lock to the synchronizeContentSource method;
@@ -115,16 +113,18 @@ public class ContentProviderManager {
      */
     public boolean synchronizeContentSource(int contentSourceId) throws Exception {
 
-        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+        ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+
         ContentProvider provider = getIsolatedContentProvider(contentSourceId);
         ContentSourceSyncResults results = null;
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
         Subject overlord = subjMgr.getOverlord();
         StringBuilder progress = new StringBuilder(); // append to this as we go along, building a status report
-        long start;
+        long start = System.currentTimeMillis();
 
         try {
-            ContentSource contentSource = manager.getContentSource(overlord, contentSourceId);
+            ContentSource contentSource = contentSourceManager.getContentSource(overlord, contentSourceId);
             if (contentSource == null) {
                 throw new Exception("Cannot sync a non-existing content source [" + contentSourceId + "]");
             }
@@ -143,7 +143,7 @@ public class ContentProviderManager {
                 progress.append("Getting currently known list of content source packages...");
                 results = new ContentSourceSyncResults(contentSource);
                 results.setResults(progress.toString());
-                results = manager.persistContentSourceSyncResults(results);
+                results = contentSourceManager.persistContentSourceSyncResults(results);
             }
 
             if (results == null) {
@@ -162,7 +162,6 @@ public class ContentProviderManager {
                 progress.append(new Date()).append(": ");
                 progress.append("Asking content provider for repositories to import...");
 
-                RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
                 RepoSource repoSource = (RepoSource) provider;
 
                 start = System.currentTimeMillis();
@@ -177,90 +176,71 @@ public class ContentProviderManager {
             }
 
             // ------------------
-            // NOTE: This is being moved to the repo synchronization as part of Core Team A - Sprint 2
+            // NOTE: Ultimately, this will be moved out as repos get their own schedules. For now, simply
+            //       synchronize *all* repos for this provider.
             // ------------------
 
             // If the provider is capable of handling packages, perform the package synchronization portion of the sync
             if (provider instanceof PackageSource) {
                 PackageSource packageSource = (PackageSource) provider;
 
-                PackageSyncReport report; // the plugin will fill this in for us
-                List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
+                RepoCriteria reposForContentSource = new RepoCriteria();
+                reposForContentSource.addFilterContentSourceIds(contentSourceId);
 
-                Set<ContentProviderPackageDetails> allDetails; // what we tell the plugin about what we know
-                Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
+                List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
 
-                start = System.currentTimeMillis();
-                report = new PackageSyncReport();
-                PageControl pc = PageControl.getUnlimitedInstance(); // gulp - I assume we can fit all package versions in mem
-                existingPVCS = manager.getPackageVersionsFromContentSource(subjMgr.getOverlord(),
-                    contentSource.getId(), pc);
-                int existingCount = existingPVCS.size();
-                keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
-                allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
+                // Temporary functionality: loop for all repos that use this content source
+                for (Repo repo : repos) {
 
-                for (PackageVersionContentSource pvcs : existingPVCS) {
-                    PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
-                    Package p = pv.getGeneralPackage();
-                    ResourceType rt = p.getPackageType().getResourceType();
+                    // Convert the existing package list for this repo into DTOs for the API
+                    // --------------------------------------------
+                    List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
+                    Set<ContentProviderPackageDetails> allDetails; // what we tell the plugin about what we know
+                    Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
 
-                    ContentProviderPackageDetailsKey key;
-                    key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType()
-                        .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
+                    start = System.currentTimeMillis();
 
-                    ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
-                    details.setClassification(pv.getGeneralPackage().getClassification());
-                    details.setDisplayName(pv.getDisplayName());
-                    details.setDisplayVersion(pv.getDisplayVersion());
-                    details.setExtraProperties(pv.getExtraProperties());
-                    details.setFileCreatedDate(pv.getFileCreatedDate());
-                    details.setFileName(pv.getFileName());
-                    details.setFileSize(pv.getFileSize());
-                    details.setLicenseName(pv.getLicenseName());
-                    details.setLicenseVersion(pv.getLicenseVersion());
-                    details.setLocation(pvcs.getLocation());
-                    details.setLongDescription(pv.getLongDescription());
-                    details.setMD5(pv.getMD5());
-                    details.setMetadata(pv.getMetadata());
-                    details.setSHA256(pv.getSHA256());
-                    details.setShortDescription(pv.getShortDescription());
+                    existingPVCS = contentSourceManager.getPackageVersionsFromContentSourceForRepo(subjMgr.getOverlord(),
+                        contentSource.getId(), repo.getId());
 
-                    allDetails.add(details);
-                    keyPVCSMap.put(key, pvcs);
+                    int existingCount = existingPVCS.size();
+                    keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
+                    allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
+
+                    translateDomainToDto(existingPVCS, allDetails, keyPVCSMap);
+
+                    log.info("synchronizePackages: [" + contentSource.getName() + "]: loaded existing list of size=["
+                        + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
+
+                    progress.append(existingCount).append('\n');
+                    progress.append(new Date()).append(": ");
+                    progress.append("Asking content source to update the list of packages...");
+                    results.setResults(progress.toString());
+                    results = contentSourceManager.mergeContentSourceSyncResults(results);
+                    start = System.currentTimeMillis();
+
+                    PackageSyncReport report; // the plugin will fill this in for us
+                    report = new PackageSyncReport();
+
+                    packageSource.synchronizePackages(repo.getName(), report, allDetails);
+
+                    log.info("synchronizePackages: [" + contentSource.getName() + "]: got sync report from adapter=["
+                        + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
+
+                    progress.append("new=").append(report.getNewPackages().size());
+                    progress.append(", updated=").append(report.getUpdatedPackages().size());
+                    progress.append(", deleted=").append(report.getDeletedPackages().size()).append('\n');
+                    progress.append(new Date()).append(": ");
+                    progress.append("FULL SUMMARY FOLLOWS:").append('\n');
+                    progress.append(report.getSummary()).append('\n');
+                    progress.append(new Date()).append(": ");
+                    progress.append("Merging the updated list of packages to database").append('\n');
+                    results.setResults(progress.toString());
+                    results = contentSourceManager.mergeContentSourceSyncResults(results);
+                    start = System.currentTimeMillis();
+
+                    results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
                 }
-
-                log.info("synchronizePackages: [" + contentSource.getName() + "]: loaded existing list of size=["
-                    + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                progress.append(existingCount).append('\n');
-                progress.append(new Date()).append(": ");
-                progress.append("Asking content source to update the list of packages...");
-                results.setResults(progress.toString());
-                results = manager.mergeContentSourceSyncResults(results);
-                start = System.currentTimeMillis();
-
-                packageSource.synchronizePackages(report, allDetails);
-
-                log.info("synchronizePackages: [" + contentSource.getName() + "]: got sync report from adapter=["
-                    + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                progress.append("new=").append(report.getNewPackages().size());
-                progress.append(", updated=").append(report.getUpdatedPackages().size());
-                progress.append(", deleted=").append(report.getDeletedPackages().size());
-                progress.append('\n');
-                progress.append(new Date()).append(": ");
-                progress.append("FULL SUMMARY FOLLOWS:");
-                progress.append('\n');
-                progress.append(report.getSummary());
-                progress.append('\n');
-                progress.append(new Date()).append(": ");
-                progress.append("Merging the updated list of packages to database");
-                progress.append('\n');
-                results.setResults(progress.toString());
-                results = manager.mergeContentSourceSyncResults(results);
-                start = System.currentTimeMillis();
-
-                results = manager.mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
 
                 // let's reset our progress string to the full results including the text added by the merge
                 progress.setLength(0);
@@ -272,12 +252,12 @@ public class ContentProviderManager {
                 progress.append(new Date()).append(": ").append("DONE.");
                 results.setResults(progress.toString());
                 results.setStatus(ContentSourceSyncStatus.SUCCESS);
-                results = manager.mergeContentSourceSyncResults(results);
+                results = contentSourceManager.mergeContentSourceSyncResults(results);
             }
         } catch (Throwable t) {
             if (results != null) {
                 // try to reload the results in case it was updated by the SLSB before the exception happened
-                ContentSourceSyncResults reloadedResults = manager.getContentSourceSyncResults(results.getId());
+                ContentSourceSyncResults reloadedResults = contentSourceManager.getContentSourceSyncResults(results.getId());
                 if (reloadedResults != null) {
                     results = reloadedResults;
                     if (results.getResults() != null) {
@@ -299,7 +279,7 @@ public class ContentProviderManager {
         } finally {
             if (results != null) {
                 results.setEndTime(System.currentTimeMillis());
-                manager.mergeContentSourceSyncResults(results);
+                contentSourceManager.mergeContentSourceSyncResults(results);
             }
         }
 
@@ -346,8 +326,7 @@ public class ContentProviderManager {
      * <p>If there is already an adapter currently started for the given content source, this returns silently.</p>
      *
      * @param contentSource the new content source that was added
-     * 
-     * @throws InitializationException failed to initialize the adapter that processes the content source
+     * @throws InitializationException if the provider throws an error on its startup
      */
     public void startAdapter(ContentSource contentSource) throws InitializationException {
         synchronized (this.adapters) {
@@ -406,6 +385,7 @@ public class ContentProviderManager {
      * {@link ContentSource#getConfiguration() configuration} has changed.
      *
      * @param contentSource the content source whose adapter is to be restarted
+     * @throws Exception if there is an error asking the provider to shutdown or start
      */
     public void restartAdapter(ContentSource contentSource) throws Exception {
         shutdownAdapter(contentSource);
@@ -418,6 +398,7 @@ public class ContentProviderManager {
      * <p>This is protected so only the plugin container and subclasses can use it.</p>
      *
      * @param pluginManager the plugin manager this object can use to obtain information from (like classloaders)
+     * @throws InitializationException if any of the providers throw an error on startup
      */
     protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
@@ -479,54 +460,6 @@ public class ContentProviderManager {
      */
     protected void createInitialAdaptersMap() {
         this.adapters = new HashMap<ContentSource, ContentProvider>();
-    }
-
-    /**
-     * Creates a provider instance that will service the give {@link ContentSource}.
-     *
-     * @param  contentSource the source that the adapter will connect to
-     *
-     * @return an adapter instance; will be <code>null</code> if failed to create adapter
-     */
-    private ContentProvider instantiateAdapter(ContentSource contentSource) {
-        ContentProvider adapter = null;
-        String apiClassName = "?";
-        String pluginName = "?";
-
-        try {
-            ContentSourceType type = contentSource.getContentSourceType();
-            apiClassName = type.getContentSourceApiClass();
-            pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
-
-            ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
-            ClassLoader pluginClassloader = pluginEnv.getPluginClassLoader();
-
-            ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
-            try {
-                Thread.currentThread().setContextClassLoader(pluginClassloader);
-
-                Class<?> apiClass = Class.forName(apiClassName, true, pluginClassloader);
-
-                if (ContentProvider.class.isAssignableFrom(apiClass)) {
-                    adapter = (ContentProvider) apiClass.newInstance();
-                } else {
-                    log.warn("The API class [" + apiClassName + "] does not implement ["
-                        + ContentProvider.class.getName() + "] in plugin [" + pluginName + "]");
-                }
-            } finally {
-                Thread.currentThread().setContextClassLoader(startingClassLoader);
-            }
-        } catch (Throwable t) {
-            log.warn("Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName + "]", t);
-        }
-
-        if (adapter != null) {
-            synchronized (this.adapters) {
-                this.adapters.put(contentSource, adapter);
-            }
-        }
-
-        return adapter;
     }
 
     /**
@@ -593,6 +526,98 @@ public class ContentProviderManager {
         Class<?>[] ifaces = ifacesList.toArray(new Class<?>[ifacesList.size()]);
 
         return (ContentProvider) Proxy.newProxyInstance(classLoader, ifaces, handler);
+    }
+
+    /**
+     * Creates a provider instance that will service the give {@link ContentSource}.
+     *
+     * @param  contentSource the source that the adapter will connect to
+     *
+     * @return an adapter instance; will be <code>null</code> if failed to create adapter
+     */
+    private ContentProvider instantiateAdapter(ContentSource contentSource) {
+        ContentProvider adapter = null;
+        String apiClassName = "?";
+        String pluginName = "?";
+
+        try {
+            ContentSourceType type = contentSource.getContentSourceType();
+            apiClassName = type.getContentSourceApiClass();
+            pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
+
+            ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
+            ClassLoader pluginClassloader = pluginEnv.getPluginClassLoader();
+
+            ClassLoader startingClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(pluginClassloader);
+
+                Class<?> apiClass = Class.forName(apiClassName, true, pluginClassloader);
+
+                if (ContentProvider.class.isAssignableFrom(apiClass)) {
+                    adapter = (ContentProvider) apiClass.newInstance();
+                } else {
+                    log.warn("The API class [" + apiClassName + "] does not implement ["
+                        + ContentProvider.class.getName() + "] in plugin [" + pluginName + "]");
+                }
+            } finally {
+                Thread.currentThread().setContextClassLoader(startingClassLoader);
+            }
+        } catch (Throwable t) {
+            log.warn("Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName + "]", t);
+        }
+
+        if (adapter != null) {
+            synchronized (this.adapters) {
+                this.adapters.put(contentSource, adapter);
+            }
+        }
+
+        return adapter;
+    }
+
+    /**
+     * Translates the domain representation of a list of packages into DTOs used in the plugin APIs. During the
+     * translation the two collections (allDetails and keyPVCSMap) will be populated with different
+     * views into the data.
+     *
+     * @param existingPVCS list of packages in the form of the wrapper object linking them to the content source
+     * @param allDetails   set of all translated package DTOs
+     * @param keyPVCSMap   mapping of package version key to package domain object 
+     */
+    private void translateDomainToDto(List<PackageVersionContentSource> existingPVCS,
+                                      Set<ContentProviderPackageDetails> allDetails,
+                                      Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap) {
+
+        for (PackageVersionContentSource pvcs : existingPVCS) {
+            PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
+            Package p = pv.getGeneralPackage();
+            ResourceType rt = p.getPackageType().getResourceType();
+
+            ContentProviderPackageDetailsKey key;
+            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType()
+                .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
+
+            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
+            details.setClassification(pv.getGeneralPackage().getClassification());
+            details.setDisplayName(pv.getDisplayName());
+            details.setDisplayVersion(pv.getDisplayVersion());
+            details.setExtraProperties(pv.getExtraProperties());
+            details.setFileCreatedDate(pv.getFileCreatedDate());
+            details.setFileName(pv.getFileName());
+            details.setFileSize(pv.getFileSize());
+            details.setLicenseName(pv.getLicenseName());
+            details.setLicenseVersion(pv.getLicenseVersion());
+            details.setLocation(pvcs.getLocation());
+            details.setLongDescription(pv.getLongDescription());
+            details.setMD5(pv.getMD5());
+            details.setMetadata(pv.getMetadata());
+            details.setSHA256(pv.getSHA256());
+            details.setShortDescription(pv.getShortDescription());
+
+            allDetails.add(details);
+            keyPVCSMap.put(key, pvcs);
+        }
     }
 
     /**

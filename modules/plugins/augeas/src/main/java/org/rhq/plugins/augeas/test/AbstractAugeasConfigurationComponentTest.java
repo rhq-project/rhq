@@ -23,11 +23,9 @@ import static org.testng.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -35,7 +33,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
@@ -46,7 +43,6 @@ import org.rhq.core.pc.plugin.FileSystemPluginFinder;
 import org.rhq.core.pc.plugin.PluginManager;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-
 /**
  * An base class for integration tests for instances of {@link AugeasConfigurationComponent}.
  *
@@ -60,6 +56,7 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     @BeforeSuite(groups = TEST_GROUP)
     public void start() {
         try {
+            resetAugeasConfigs();
             PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
             File pluginsDir = new File(ITEST_DIR, "plugins");
             pcConfig.setPluginFinder(new FileSystemPluginFinder(pluginsDir));
@@ -96,7 +93,6 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     public void updatePluginConfiguration() {
         try {
             System.out.println("Updating Augeas root in plugin configuration...");
-
             // We need to have the Resource inventoried in order to update its plugin config.
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             ResourceType resourceType = getResourceType();
@@ -112,7 +108,6 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             case PLATFORM:
                 throw new IllegalStateException("Huh? Using Augeas to configure a platform?");
             }
-            resetAugeasConfigs();
             Resource resource = getResource();
             Configuration pluginConfig = resource.getPluginConfiguration();
             inventoryManager.updatePluginConfiguration(resource.getId(), pluginConfig);
@@ -121,38 +116,38 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         }
     }
 
-    public void resetAugeasConfigs() throws IOException {
+    private File makeRootDir() throws IOException {
         String tmpDirPath = System.getProperty("java.io.tmpdir");
         File tmpDir = new File(tmpDirPath);
         File augeasRootPath = new File(tmpDir, "rhq-itest-augeas-root-path");
-        if (!augeasRootPath.exists()) {
-            if (!augeasRootPath.mkdirs()) {
-                throw new IOException("Could not create the augeasRootPath " + augeasRootPath);
-            }
+        if (!augeasRootPath.exists() && !augeasRootPath.mkdirs()) {
+            throw new IOException("Could not create the augeasRootPath " + augeasRootPath);
         }
         System.setProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, augeasRootPath.getAbsolutePath());
-        Resource resource = getResource();
-        Configuration pluginConfig = resource.getPluginConfiguration();
-        PropertySimple includes = pluginConfig.getSimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP);
-        List<String> includeGlobs = new ArrayList<String>();
-        includeGlobs.addAll(Arrays.asList(includes.getStringValue().split("\\s*\\|\\s*")));
-        for (String includeGlob : includeGlobs) {
-            InputStream inputStream = this.getClass().getResourceAsStream(includeGlob);
+        return augeasRootPath;
+    }
+
+    public void resetAugeasConfigs() throws IOException {
+        File augeasRootPath = makeRootDir();
+        for (String config : getAssociatedConfigs()) {
+            InputStream inputStream = this.getClass().getResourceAsStream(config);
             if (inputStream != null) {
-                File outputFile = new File(augeasRootPath, includeGlob);
-                if (!outputFile.getParentFile().exists() && !outputFile.getParentFile().mkdirs()) {
-                    throw new IOException("Could not create the component base path " + outputFile.getParentFile());
-                }
+                File outputFile = new File(augeasRootPath, config);
+                outputFile.getParentFile().mkdirs();
                 FileUtil.writeFile(inputStream, outputFile);
             }
         }
     }
 
     @AfterSuite(groups = TEST_GROUP)
-    public void stop() {
+    public void stop() throws Exception {
+        String path = System.getProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP);
+        File root = new File(path);
+        FileUtils.deleteQuietly(root);
         System.clearProperty(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP);
         System.out.println("Stopping PC...");
         PluginContainer.getInstance().shutdown();
+
         System.out.println("PC stopped.");
     }
 
@@ -221,4 +216,6 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             }
         }
     }
+
+    protected abstract String[] getAssociatedConfigs();
 }

@@ -118,4 +118,10 @@ public class SudoersComponentTest extends AbstractAugeasConfigurationComponentTe
     protected String getResourceTypeName() {
         return "Sudoers";
     }
+
+    @Override
+    protected String[] getAssociatedConfigs() {
+        return new String[] { "/etc/sudoers" };
+    }
+
 }

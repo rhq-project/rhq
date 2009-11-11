@@ -37,6 +37,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
 
         return config;
     }
+
     @Override
     protected String getPluginName() {
         return "Samba";
@@ -60,4 +61,10 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
 
         return config;
     }
+
+    @Override
+    protected String[] getAssociatedConfigs() {
+        return new String[] { "/etc/samba/smb.conf" };
+    }
+
 }

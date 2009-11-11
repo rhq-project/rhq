@@ -13,7 +13,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for the definition Perspective service objects
+            Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.  
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -25,11 +25,10 @@
     <xs:element name="perspective-plugin" type="perspective:PerspectivePluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
-                Defines a generic plugin. This type of plugin does not
-                need any additional support from the server plugin container other than
-                simple lifecycle management (for example, be told when to start and stop).
-                The plugin is otherwise standalone and can do everything it needs to do
-                without additional help from the server plugin container.
+                Defines a Perspective plugin. A Perspective is deployed as a Server Plugin.
+                The Server Plugin Container (SPC) handles simple lifecycle management for
+                the deployed plugins (e.g. start, stop).  The plugin is otherwise standalone
+                and can do everything it needs to do without additional help from the SPC.
             </xs:documentation>
             <xs:appinfo>
                 <jaxb:class name="PerspectivePluginElement" />

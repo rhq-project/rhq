@@ -390,7 +390,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
             this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
             false);
-        resource.setResourceConfiguration(liveConfig.deepCopy(false));
+        //resource.setResourceConfiguration(liveConfig.deepCopy(false));
+        resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
         return update;
     }
 

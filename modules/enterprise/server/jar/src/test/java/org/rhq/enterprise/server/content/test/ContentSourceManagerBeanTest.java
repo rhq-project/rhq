@@ -65,8 +65,8 @@ import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLo
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
-import org.rhq.enterprise.server.test.TestContentServerPluginService;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Test
@@ -151,7 +151,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
-        pluginService = prepareContentServerPluginService();
+        TestContentServerPluginService pluginService = new TestContentServerPluginService();
+        prepareCustomServerPluginService(pluginService);
         pluginService.startMasterPluginContainer();
 
         cleanupPreviousTestRuns();

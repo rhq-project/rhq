@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -249,22 +250,21 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
     private ServerPluginService serverPluginService;
 
     /**
-     * If you need to test content source server plugins, you must first prepare the server plugin service via
-     * this method. The caller must explicitly start the PC by using the appropriate API on the returned object; this
-     * method will only start the service, it will NOT start the master PC.
+     * If you need to test server plugins, you must first prepare the server plugin service.
+     * After this returns, the caller must explicitly start the PC by using the appropriate API
+     * on the given mbean; this method will only start the service, it will NOT start the master PC.
      *
-     * @return the object that will house your test server plugins
+     * @param testServiceMBean the object that will house your test server plugins
      *
      * @throws RuntimeException
      */
-    public TestContentServerPluginService prepareContentServerPluginService() {
+    public void prepareCustomServerPluginService(ServerPluginService testServiceMBean) {
         try {
             MBeanServer mbs = getJBossMBeanServer();
-            TestContentServerPluginService mbean = new TestContentServerPluginService();
-            mbean.start();
-            mbs.registerMBean(mbean, TestContentServerPluginService.OBJECT_NAME);
-            serverPluginService = mbean;
-            return mbean;
+            testServiceMBean.start();
+            mbs.registerMBean(testServiceMBean, ServerPluginServiceManagement.OBJECT_NAME);
+            serverPluginService = testServiceMBean;
+            return;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

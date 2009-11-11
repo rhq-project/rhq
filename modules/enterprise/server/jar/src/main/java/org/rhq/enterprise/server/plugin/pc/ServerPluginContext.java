@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.plugin.pc;
 
 import java.io.File;
 
+import org.rhq.core.domain.configuration.Configuration;
+
 /**
  * A global context containing information about a server-side plugin.
  * 
@@ -30,18 +32,25 @@ public class ServerPluginContext {
     private final ServerPluginEnvironment pluginEnvironment;
     private final File temporaryDirectory;
     private final File dataDirectory;
+    private final Configuration pluginConfiguration;
+    private final Schedule schedule;
 
     /**
      * Creates a new {@link ServerPluginContext} object. The plugin container is responsible for instantiating these
      * objects; plugin writers should never have to actually create context objects.
      *
-     * @param env           the environment of the plugin - includes the plugin name and other info
+     * @param env the environment of the plugin - includes the plugin name and other info
      * @param dataDirectory a directory where plugins can store persisted data that survives server restarts
-     * @param tmpDirectory  a temporary directory for plugin use
+     * @param tmpDirectory a temporary directory for plugin use
+     * @param pluginConfiguration the configuration for the plugin itself
+     * @param schedule if not <code>null</code>, the plugin will be invoked periodically via the schedule facet
      */
-    public ServerPluginContext(ServerPluginEnvironment env, File dataDirectory, File tmpDirectory) {
+    public ServerPluginContext(ServerPluginEnvironment env, File dataDirectory, File tmpDirectory,
+        Configuration pluginConfiguration, Schedule schedule) {
         this.pluginEnvironment = env;
         this.dataDirectory = dataDirectory;
+        this.pluginConfiguration = pluginConfiguration;
+        this.schedule = schedule;
         if (tmpDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "SERVERPLUGIN_TMP");
             this.temporaryDirectory.mkdirs();
@@ -81,5 +90,26 @@ public class ServerPluginContext {
      */
     public File getDataDirectory() {
         return this.dataDirectory;
+    }
+
+    /**
+     * Returns the configuration for the plugin itself. This may return <code>null</code> if the plugin did not
+     * define configuration metadata in its plugin descriptor.
+     * 
+     * @return the configuration for the entire plugin (may be <code>null</code>)
+     */
+    public Configuration getPluginConfiguration() {
+        return this.pluginConfiguration;
+    }
+
+    /**
+     * The schedule in which the plugin should be periodically invoked via the schedule job facet.
+     * When this is non-null, the plugin's lifecycle listener must be prepared to be periodically
+     * invoked by the plugin container's scheduler.
+     * 
+     * @return the schedule, or <code>null</code> if the plugin should not be scheduled
+     */
+    public Schedule getSchedule() {
+        return this.schedule;
     }
 }

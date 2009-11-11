@@ -259,21 +259,28 @@ public class MasterServerPluginContainer {
 
         plugins = new HashMap<URL, ServerPluginDescriptorType>();
 
-        File[] pluginFiles = this.configuration.getPluginDirectory().listFiles();
-        for (File pluginFile : pluginFiles) {
-            if (pluginFile.getName().endsWith(".jar")) {
-                URL pluginUrl = pluginFile.toURI().toURL();
+        File pluginDirectory = this.configuration.getPluginDirectory();
 
-                try {
-                    ServerPluginDescriptorType descriptor;
-                    descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
-                    if (descriptor != null) {
-                        log.debug("pre-loaded server plugin from URL: " + pluginUrl);
-                        plugins.put(pluginUrl, descriptor);
+        if (pluginDirectory != null) {
+            File[] pluginFiles = pluginDirectory.listFiles();
+
+            if (pluginFiles != null) {
+                for (File pluginFile : pluginFiles) {
+                    if (pluginFile.getName().endsWith(".jar")) {
+                        URL pluginUrl = pluginFile.toURI().toURL();
+
+                        try {
+                            ServerPluginDescriptorType descriptor;
+                            descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
+                            if (descriptor != null) {
+                                log.debug("pre-loaded server plugin from URL: " + pluginUrl);
+                                plugins.put(pluginUrl, descriptor);
+                            }
+                        } catch (Throwable t) {
+                            // for some reason, the plugin failed to load - it will be ignored
+                            log.error("Plugin at [" + pluginUrl + "] could not be pre-loaded. Ignoring it.", t);
+                        }
                     }
-                } catch (Throwable t) {
-                    // for some reason, the plugin failed to load - it will be ignored
-                    log.error("Plugin at [" + pluginUrl + "] could not be pre-loaded. Ignoring it.", t);
                 }
             }
         }

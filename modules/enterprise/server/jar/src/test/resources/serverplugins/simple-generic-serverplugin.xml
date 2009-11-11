@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="TestSimpleGenericPlugin"
+                displayName="Test Simple Generic Plugin"
+                description="A test generic plugin that is simple."
+                version="1.0"
+                apiVersion="2.0" 
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:lifecycle-listener class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
+        <serverplugin:schedule concurrent="false">
+            <serverplugin:period>60000</serverplugin:period>
+        </serverplugin:schedule>
+    </serverplugin:lifecycle-listener>
+
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="plugin-simple-prop-1" defaultValue="prop1value" required="true" />
+    </serverplugin:plugin-configuration>
+</generic-plugin>

@@ -42,6 +42,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * 
  * @author John Mazzitelli
  */
+//TODO: need a R/W lock to make this class thread safe
 public class ServerPluginManager {
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -82,7 +83,7 @@ public class ServerPluginManager {
      * 
      * @throws Exception if failed to initialize
      */
-    public synchronized void initialize() throws Exception {
+    public void initialize() throws Exception {
         log.debug("Plugin manager initializing");
         return; // no-op
     }
@@ -91,7 +92,7 @@ public class ServerPluginManager {
      * Shuts down this manager. This should be called only after all of its plugins
      * have been {@link #unloadPlugin(ServerPluginEnvironment) unloaded}.
      */
-    public synchronized void shutdown() {
+    public void shutdown() {
         log.debug("Plugin manager shutting down");
 
         if (this.loadedPlugins.size() > 0) {
@@ -114,7 +115,7 @@ public class ServerPluginManager {
      *
      * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
      */
-    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
+    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
         String pluginName = env.getPluginName();
         log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
@@ -141,7 +142,7 @@ public class ServerPluginManager {
         return;
     }
 
-    public synchronized void startPlugins() {
+    public void startPlugins() {
         log.debug("Starting plugins");
 
         // tell all lifecycle listeners to start
@@ -177,7 +178,7 @@ public class ServerPluginManager {
         return;
     }
 
-    public synchronized void stopPlugins() {
+    public void stopPlugins() {
         log.debug("Stopping plugins");
 
         // tell all lifecycle listeners to stop
@@ -208,7 +209,7 @@ public class ServerPluginManager {
      *
      * @throws Exception if the plugin manager cannot unload the plugin
      */
-    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+    public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
         String pluginName = env.getPluginName();
         log.debug("Unloading server plugin [" + pluginName + "]");
 
@@ -241,7 +242,7 @@ public class ServerPluginManager {
      *
      * @return environments for all the plugins
      */
-    public synchronized Collection<ServerPluginEnvironment> getPluginEnvironments() {
+    public Collection<ServerPluginEnvironment> getPluginEnvironments() {
         return new ArrayList<ServerPluginEnvironment>(this.loadedPlugins.values());
     }
 
@@ -254,7 +255,7 @@ public class ServerPluginManager {
      * @param pluginName the plugin whose environment is to be returned
      * @return given plugin's environment
      */
-    public synchronized ServerPluginEnvironment getPluginEnvironment(String pluginName) {
+    public ServerPluginEnvironment getPluginEnvironment(String pluginName) {
         return this.loadedPlugins.get(pluginName);
     }
 
@@ -268,7 +269,7 @@ public class ServerPluginManager {
      *         return <code>null</code> if the plugin has not defined a lifecycle listener. 
      *         <code>null</code> is also returned if the plugin is not initialized yet. 
      */
-    public synchronized ServerPluginLifecycleListener getServerPluginLifecycleListener(String pluginName) {
+    public ServerPluginLifecycleListener getServerPluginLifecycleListener(String pluginName) {
         return this.pluginLifecycleListenerCache.get(pluginName);
     }
 
@@ -280,7 +281,7 @@ public class ServerPluginManager {
         return this.log;
     }
 
-    protected synchronized ServerPluginContext getServerPluginContext(ServerPluginEnvironment env) {
+    protected ServerPluginContext getServerPluginContext(ServerPluginEnvironment env) {
 
         String pluginName = env.getPluginName();
         ServerPluginContext context = this.pluginContextCache.get(pluginName);

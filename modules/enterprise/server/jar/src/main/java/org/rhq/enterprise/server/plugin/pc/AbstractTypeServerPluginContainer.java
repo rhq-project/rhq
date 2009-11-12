@@ -174,6 +174,45 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
+     * If a plugin has scheduled jobs, this method will schedule them now.
+     * This particular method implementation schedules the global job as defined in the
+     * plugin descriptors. If a plugin has a global scheduled job, its lifecycle listener
+     * will be the job handler class.
+     * 
+     * Subclasses are free to extend this method to schedule additional plugin jobs, but must
+     * ensure they call this method so the global scheduled jobs get added to the scheduler.
+     * 
+     * Note that this is separate from the {@link #start()} method because it is possible that
+     * the plugin container has been started before the scheduler has. In this case, the caller
+     * must wait for the scheduler to be started before this method is called to schedule jobs.
+     * 
+     * @throws Exception if failed to schedule jobs
+     */
+    public synchronized void schedulePluginJobs() throws Exception {
+        if (this.pluginManager != null) {
+            // if there are any global schedules defined, schedule them now.
+            // note that we know if there is no lifecycle listener, then there can't be a global schedule
+            for (ServerPluginEnvironment pluginEnv : this.pluginManager.getPluginEnvironments()) {
+                String pluginName = pluginEnv.getPluginName();
+                if (this.pluginManager.getServerPluginLifecycleListener(pluginName) != null) {
+                    Schedule schedule = this.pluginManager.getServerPluginContext(pluginEnv).getSchedule();
+                    if (schedule != null) {
+                        try {
+                            scheduleJob(schedule, pluginName, "__globalScheduleJob", null, null);
+                        } catch (Throwable t) {
+                            log.warn("Failed to schedule the global plugin job for plugin [" + pluginName + "]", t);
+                        }
+                    }
+                }
+            }
+        } else {
+            throw new Exception("Cannot schedule plugins jobs; plugin container is not initialized yet");
+        }
+
+        return;
+    }
+
+    /**
      * This will be called when its time for this plugin container to create its plugin manager.
      * Subclasses are free to override this if they need their own specialized plugin manager.
      * 

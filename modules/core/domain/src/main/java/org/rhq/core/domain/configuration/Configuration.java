@@ -454,6 +454,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return the new copy
      */
     public Configuration deepCopy(boolean keepIds) {
+        if (!keepIds) {
+            return deepCopyWithoutProxies();
+        }
+
         Configuration copy;
 
         try {
@@ -640,11 +644,13 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
      */
     public void writeExternalAgent(ObjectOutput out) throws IOException {
+//        Configuration copy = deepCopyWithoutProxies();
+
         out.writeInt(id);
         out.writeObject(HibernateUtil.safeMap(properties));
-//        out.writeObject(createDeepCopyOfMap());
-//        out.writeObject(createDeepCopyOfRawConfigs());
         out.writeObject(HibernateUtil.safeSet(rawConfigurations));
+//        out.writeObject(copy.properties);
+//        out.writeObject(copy.rawConfigurations);
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);

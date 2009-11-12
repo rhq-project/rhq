@@ -69,7 +69,8 @@ public abstract class AbstractResourceConfigurationUpdate extends AbstractConfig
      */
     protected AbstractResourceConfigurationUpdate(Configuration config, String subjectName) {
         super(subjectName);
-        this.configuration = config.deepCopy(false);
+        //this.configuration = config.deepCopy(false);
+        this.configuration = config.deepCopyWithoutProxies(); 
     }
 
     public int getId() {

@@ -434,6 +434,8 @@
                 <phase>package</phase>
                 <configuration>
                   <tasks>
+                    <mkdir dir="${earDirectory}/license" />
+                    <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml"/>                       
                     <property name="deployment.dir" location="${rhq.deploymentDir}" />
                     <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
                     <copy todir="${deployment.dir}" verbose="${rhq.verbose}">

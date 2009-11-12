@@ -641,8 +641,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      */
     public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(id);
-        out.writeObject(createDeepCopyOfMap());
-        out.writeObject(createDeepCopyOfRawConfigs());
+        out.writeObject(HibernateUtil.safeMap(properties));
+//        out.writeObject(createDeepCopyOfMap());
+//        out.writeObject(createDeepCopyOfRawConfigs());
+        out.writeObject(HibernateUtil.safeSet(rawConfigurations));
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);

@@ -200,6 +200,12 @@
          <to-view-id>/rhq/content/createRepo.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
+
+      <navigation-case>
+         <from-outcome>importRepos</from-outcome>
+         <to-view-id>/rhq/content/importRepos.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
       
       <navigation-case>
          <!-- sorting rule --> 

@@ -18,30 +18,45 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+
 /**
  * Defines the types of server-side plugins that are currently supported.
  * 
  * @author John Mazzitelli
  */
-public enum ServerPluginType {
-    /**
-     * Generic plugins need only be started and stopped by the plugin container, but otherwise has no
-     * dependencies or needs that are provided to it by the plugin container.
-     */
-    GENERIC,
+public class ServerPluginType {
+    private final Class<? extends ServerPluginDescriptorType> descriptorType;
 
-    /**
-     * Content plugins obtain repos and packages from remote locations.
-     */
-    CONTENT,
+    public ServerPluginType(Class<? extends ServerPluginDescriptorType> descriptorType) {
+        if (descriptorType == null) {
+            throw new NullPointerException("descriptorType must not be null");
+        }
+        this.descriptorType = descriptorType;
+    }
 
-    /**
-     * Perspective plugins allow customization of the management interface.
-     */
-    PERSPECTIVE,
+    public Class<? extends ServerPluginDescriptorType> getDescriptorType() {
+        return descriptorType;
+    }
 
-    /**
-     * Alert plugins allow alerts to be sent to custom endpoints.
-     */
-    ALERT
+    @Override
+    public String toString() {
+        return this.descriptorType.getSimpleName().replace("DescriptorType", "");
+    }
+
+    @Override
+    public int hashCode() {
+        return this.descriptorType.getName().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ServerPluginType)) {
+            return false;
+        }
+        return this.descriptorType.getName().equals(((ServerPluginType) obj).descriptorType.getName());
+    }
 }

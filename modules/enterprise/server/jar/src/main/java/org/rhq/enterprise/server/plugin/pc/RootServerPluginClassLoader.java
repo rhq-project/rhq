@@ -65,7 +65,7 @@ public class RootServerPluginClassLoader extends URLClassLoader {
      * @throws PatternSyntaxException if the given regex is invalid (see {@link Pattern#compile(String)})
      */
     public RootServerPluginClassLoader(URL[] urls, ClassLoader parent, String... classesToHideRegexStr) {
-        super(urls, parent);
+        super((urls != null) ? urls : new URL[0], parent);
 
         Pattern pattern;
 
@@ -85,7 +85,7 @@ public class RootServerPluginClassLoader extends URLClassLoader {
         this.classesToHideRegex = pattern;
 
         log.debug("Root server plugin classloader: regex=[" + this.classesToHideRegex + "], urls="
-            + Arrays.asList(urls));
+            + Arrays.asList((urls != null) ? urls : new URL[0]));
     }
 
     protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {

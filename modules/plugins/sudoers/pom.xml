@@ -37,6 +37,13 @@
           <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
        </dependency>
+       <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-augeas-plugin</artifactId>
+          <version>${project.version}</version>
+          <type>test-jar</type>
+          <scope>test</scope>
+       </dependency>          
    </dependencies>
 
    <profiles>
@@ -58,20 +65,23 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
-                              </echo>
+                              <echo>Setting up integration test plugin container environment under target/itest/...</echo>
+
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
-                              <mkdir dir="target/itest" />
+
                               <mkdir dir="target/itest/plugins" />
-                              <mkdir dir="target/itest/lib" />
-                              <copy toDir="target/itest/plugins" flatten="true">
+                              <copy toDir="target/itest/plugins" flatten="true" verbose="true">
+                                 <!-- the plugin jar for this plugin -->
+                                 <fileset dir="${project.build.directory}" includes="${project.artifactId}-${project.version}.jar" />
+                                 <!-- the plugin jars for the plugins this plugin depends on -->
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
-                                 </fileset>
-                                 <fileset dir="${project.build.directory}">
-                                    <include name="${project.artifactId}-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
                                  </fileset>
                               </copy>
+
+                              <!-- copy SIGAR jar and native libs into the lib dir -->
+                              <mkdir dir="target/itest/lib" />
                               <unzip dest="target/itest/lib">
                                  <fileset dir="${settings.localRepository}/org/hyperic/sigar-dist/${sigar.version}" includes="*.zip" />
                                  <patternset>

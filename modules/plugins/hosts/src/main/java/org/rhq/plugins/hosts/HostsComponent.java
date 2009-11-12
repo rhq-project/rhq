@@ -18,9 +18,22 @@
  */
 package org.rhq.plugins.hosts;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import net.augeas.Augeas;
-import org.rhq.core.domain.configuration.*;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -30,28 +43,19 @@ import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.AugeasUtility;
 import org.rhq.plugins.hosts.helper.NonAugeasHostsConfigurationDelegate;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * The ResourceComponent for the "Hosts File" ResourceType.
  *
  * @author Ian Springer
  */
 public class HostsComponent extends AugeasConfigurationComponent {
-    private static final String IPV4_ADDRESS_REGEX =
-            "((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)";
+    private static final String IPV4_ADDRESS_REGEX = "((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)\\.){3}(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]\\d|\\d)";
     private static final Pattern IPV4_ADDRESS_PATTERN = Pattern.compile(IPV4_ADDRESS_REGEX);
 
-    private static final String IPV6_ADDRESS_REGEX =
-            "((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})))(%.+)?";
+    private static final String IPV6_ADDRESS_REGEX = "((([0-9A-Fa-f]{1,4}:){7}(([0-9A-Fa-f]{1,4})|:))|(([0-9A-Fa-f]{1,4}:){6}(:|((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})|(:[0-9A-Fa-f]{1,4})))|(([0-9A-Fa-f]{1,4}:){5}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){4}(:[0-9A-Fa-f]{1,4}){0,1}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){3}(:[0-9A-Fa-f]{1,4}){0,2}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:){2}(:[0-9A-Fa-f]{1,4}){0,3}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(([0-9A-Fa-f]{1,4}:)(:[0-9A-Fa-f]{1,4}){0,4}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(:(:[0-9A-Fa-f]{1,4}){0,5}((:((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})?)|((:[0-9A-Fa-f]{1,4}){1,2})))|(((25[0-5]|2[0-4]\\d|[01]?\\d{1,2})(\\.(25[0-5]|2[0-4]\\d|[01]?\\d{1,2})){3})))(%.+)?";
     private static final Pattern IPV6_ADDRESS_PATTERN = Pattern.compile(IPV6_ADDRESS_REGEX);
 
-    private static final String DOMAIN_NAME_REGEX =
-            "(([a-zA-Z\\d]|[a-zA-Z\\d][a-zA-Z\\d\\-]*[a-zA-Z\\d])\\.)*([A-Za-z]|[A-Za-z][A-Za-z\\d\\-]*[A-Za-z\\d])";
+    private static final String DOMAIN_NAME_REGEX = "(([a-zA-Z\\d]|[a-zA-Z\\d][a-zA-Z\\d\\-]*[a-zA-Z\\d])\\.)*([A-Za-z]|[A-Za-z][A-Za-z\\d\\-]*[A-Za-z\\d])";
     private static final Pattern DOMAIN_NAME_PATTERN = Pattern.compile(DOMAIN_NAME_REGEX);
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -67,8 +71,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
     }
 
     @Override
-    public Configuration loadResourceConfiguration() throws Exception
-    {
+    public Configuration loadResourceConfiguration() throws Exception {
         Configuration resourceConfig;
         if (getAugeas() != null) {
             resourceConfig = super.loadResourceConfiguration();
@@ -79,13 +82,27 @@ public class HostsComponent extends AugeasConfigurationComponent {
     }
 
     @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport report)
-    {
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         if (getAugeas() != null) {
             super.updateResourceConfiguration(report);
         } else {
             new NonAugeasHostsConfigurationDelegate(this).updateResourceConfiguration(report);
         }
+    }
+
+    @Override
+    protected String getNodeInsertionPoint(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
+        PropertySimple propSimple) {
+        if ("alias".equals(propSimple.getName())) {
+            return String.format("%s/canonical", node.getParent().getPath());
+        }
+        return super.getNodeInsertionPoint(augeas, node, propDefSimple, propSimple);
+    }
+
+    @Override
+    protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap,
+        int listIndex) {
+        return new AugeasNode(listNode, "0" + listIndex);
     }
 
     @Override
@@ -123,36 +140,26 @@ public class HostsComponent extends AugeasConfigurationComponent {
                     ipv4DuplicateCanonicalNames.add(canonical);
                 }
             }
-            PropertySimple aliasProp = entryPropMap.getSimple("alias");
-            String aliasValue = (aliasProp != null) ? aliasProp.getStringValue() : null;
-            if (aliasValue != null) {
-                String[] aliases = aliasValue.trim().split("\\s+");
-                Set<String> invalidAliases = new HashSet<String>();
-                for (String alias : aliases) {
-                    if (!validateDomainName(alias)) {
-                       invalidAliasCanonicalNames.add(canonical);
-                    }
-                }
-                if (!invalidAliases.isEmpty()) {
-                    aliasProp.setErrorMessage("Invalid domain name" + ((invalidAliases.size() > 1) ? "s" : "") + ": "
-                            + invalidAliases);
-                }
-            }
         }
         if (!invalidDomainNameCanonicalNames.isEmpty()) {
-            errorMessage.append("The entries with the following canonical names have invalid canonical names: ").append(invalidDomainNameCanonicalNames).append(".\n");
+            errorMessage.append("The entries with the following canonical names have invalid canonical names: ")
+                .append(invalidDomainNameCanonicalNames).append(".\n");
         }
         if (!invalidIpAddressCanonicalNames.isEmpty()) {
-            errorMessage.append("The entries with the following canonical names have invalid IP addresses: ").append(invalidIpAddressCanonicalNames).append(".\n");
+            errorMessage.append("The entries with the following canonical names have invalid IP addresses: ").append(
+                invalidIpAddressCanonicalNames).append(".\n");
         }
         if (!invalidAliasCanonicalNames.isEmpty()) {
-            errorMessage.append("The entries with the following canonical names have one or more invalid aliases: ").append(invalidAliasCanonicalNames).append(".\n");
+            errorMessage.append("The entries with the following canonical names have one or more invalid aliases: ")
+                .append(invalidAliasCanonicalNames).append(".\n");
         }
         if (!ipv4DuplicateCanonicalNames.isEmpty()) {
-            errorMessage.append("More than one IPv4 address is defined for the following canonical names: ").append(ipv4DuplicateCanonicalNames).append(".\n");
+            errorMessage.append("More than one IPv4 address is defined for the following canonical names: ").append(
+                ipv4DuplicateCanonicalNames).append(".\n");
         }
         if (!ipv6DuplicateCanonicalNames.isEmpty()) {
-            errorMessage.append("More than one IPv6 address is defined for the following canonical names: ").append(ipv6DuplicateCanonicalNames).append(".\n");
+            errorMessage.append("More than one IPv6 address is defined for the following canonical names: ").append(
+                ipv6DuplicateCanonicalNames).append(".\n");
         }
         boolean isValid;
         if (errorMessage.length() != 0) {
@@ -165,8 +172,7 @@ public class HostsComponent extends AugeasConfigurationComponent {
     }
 
     protected AugeasNode getExistingChildNodeForListMemberPropertyMap(AugeasNode parentNode,
-                                                                      PropertyDefinitionList propDefList,
-                                                                      PropertyMap propMap) {                        
+        PropertyDefinitionList propDefList, PropertyMap propMap) {
         // First find all child nodes with the same 'canonical' value as the PropertyMap.
         Augeas augeas = getAugeas();
         String canonicalFilter = parentNode.getPath() + "/*/canonical";

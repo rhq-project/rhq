@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,8 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.util.Collection;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +34,7 @@ public abstract class AbstractTypeServerPluginContainer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private final MasterServerPluginContainer master;
+    private ServerPluginManager pluginManager;
 
     /**
      * Instantiates the plugin container. All subclasses must support this and only this
@@ -44,28 +47,135 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
+     * Each plugin container will tell the master which plugins it can support via this method; this
+     * method returns the type of plugin that the plugin container can process. Only one
+     * plugin container can support a plugin type.
+     * 
+     * @return the type of plugin that this plugin container instance can support
+     */
+    public abstract ServerPluginType getSupportedServerPluginType();
+
+    /**
      * Returns the master plugin container that is responsible for managing this instance.
      * 
      * @return this plugin container's master
      */
     public MasterServerPluginContainer getMasterServerPluginContainer() {
-
         return this.master;
     }
 
     /**
-     * The initialize method that all plugin container subclasses must implement in order to initialize
-     * themselves.
+     * Returns the object that manages the plugins.
      * 
-     * @throws Exception if the plugin container failed to initialize for some reason
+     * @return the plugin manager for this container
      */
-    public abstract void initialize() throws Exception;
+    public ServerPluginManager getPluginManager() {
+        return this.pluginManager;
+    }
 
     /**
-     * The shutdown method that all plugin container subclasses must implement in order to shutdown
-     * themselves.
+     * The initialize method that prepares the plugin container. This should get the plugin
+     * container ready to accept plugins.
+     * 
+     * Subclasses are free to perform additional tasks by overriding this method.
+     *
+     * @throws Exception if the plugin container failed to initialize for some reason
      */
-    public abstract void shutdown();
+    public synchronized void initialize() throws Exception {
+        log.debug("Server plugin container initializing");
+        this.pluginManager = createPluginManager();
+        this.pluginManager.initialize();
+    }
+
+    /**
+     * This method informs the plugin container that all of its plugins have been loaded.
+     * Once this is called, the plugin container can assume all plugins that it will
+     * ever know about have been {@link #loadPlugin(ServerPluginEnvironment) loaded}.
+     */
+    public synchronized void start() {
+        log.debug("Server plugin container starting");
+        this.pluginManager.startPlugins();
+        return;
+    }
+
+    /**
+     * This will inform the plugin container that it must stop doing its work. Once called,
+     * the plugin container must assume that soon it will be asked to {@link #shutdown()}.
+     */
+    public synchronized void stop() {
+        log.debug("Server plugin container stopping");
+        this.pluginManager.stopPlugins();
+        return;
+    }
+
+    /**
+     * The shutdown method that will stop and unload all plugins.
+     * 
+     * Subclasses are free to perform additional tasks by overriding this method.
+     */
+    public synchronized void shutdown() {
+        log.debug("Server plugin container shutting down");
+
+        if (this.pluginManager != null) {
+            Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
+            for (ServerPluginEnvironment env : envs) {
+                try {
+                    unloadPlugin(env);
+                } catch (Exception e) {
+                    this.log.warn("Failed to unload plugin [" + env.getPluginName() + "].", e);
+                }
+            }
+
+            try {
+                this.pluginManager.shutdown();
+            } finally {
+                this.pluginManager = null;
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Informs the plugin container that it has a plugin that it must being to start managing.
+     * 
+     * @param env the plugin environment, including the plugin jar and its descriptor
+     *
+     * @throws Exception if failed to load the plugin 
+     */
+    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.loadPlugin(env);
+        } else {
+            throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
+        }
+    }
+
+    /**
+     * Informs the plugin container that a plugin should be unloaded and any of its resources
+     * should be released.
+     * 
+     * @param env the plugin environment, including the plugin jar and its descriptor
+     *
+     * @throws Exception if failed to unload the plugin 
+     */
+    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.unloadPlugin(env);
+        } else {
+            throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
+        }
+    }
+
+    /**
+     * This will be called when its time for this plugin container to create its plugin manager.
+     * Subclasses are free to override this if they need their own specialized plugin manager.
+     * 
+     * @return the plugin manager for use by this plugin container
+     */
+    protected ServerPluginManager createPluginManager() {
+        return new ServerPluginManager(this);
+    }
 
     /**
      * Returns the logger that can be used to log messages. A convienence object so all

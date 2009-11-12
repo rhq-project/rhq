@@ -18,79 +18,46 @@
  */
 package org.rhq.plugins.samba;
 
-import java.util.Collection;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 
-/**
- * @author Jason Dobies
- */
-public class SambaComponentTest {
+public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest {
 
-    private SambaServerComponent component = new SambaServerComponent();
+    @Override
+    protected Configuration getExpectedResourceConfig() {
+        Configuration config = new Configuration();
 
-    private Configuration pluginConfiguration = new Configuration();
+        config.put(new PropertySimple("workgroup", "SCOOBY"));
+        config.put(new PropertySimple("server string", "MysteryMachine"));
+        config.put(new PropertySimple("security", "user"));
+        config.put(new PropertySimple("encrypt passwords", "yes"));
+        config.put(new PropertySimple("load printers", "yes"));
+        config.put(new PropertySimple("cups options", "raw"));
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    @BeforeSuite
-    public void initPluginConfiguration() throws Exception {
-        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/share/augeas/lenses"));
-        pluginConfiguration.put(new PropertySimple("root-path", "/"));
-        pluginConfiguration.put(new PropertySimple("hosts-path", "/etc/hosts"));
-        pluginConfiguration.put(new PropertySimple("augeas-hosts-path", "/files/etc/hosts/*"));
+        return config;
+    }
+    @Override
+    protected String getPluginName() {
+        return "Samba";
     }
 
-    @Test
-    public void dummyTest() {
-        // Fake test to get maven to be happy with no tests in here
-        // Spearhead team is working on setting up an augeas based test framework
-        // which will fix this test
+    @Override
+    protected String getResourceTypeName() {
+        return "Samba Server";
     }
 
-    public void loadResourceConfiguration() throws Exception {
-        // Just bail because this test wont work yet
-        if (true) {
-            return;
-        }
-        Configuration configuration;
-        try {
-            configuration = component.loadResourceConfiguration(pluginConfiguration);
-        } catch (UnsatisfiedLinkError ule) {
-            // Skip tests if augeas not available
-            return;
-        }
+    @Override
+    protected Configuration getChangedResourceConfig() {
+        Configuration config = new Configuration();
 
-        assert configuration != null : "Null configuration returned from load call";
+        config.put(new PropertySimple("workgroup", "DUMBCHANGE"));
+        config.put(new PropertySimple("server string", "DUMBCHANGE"));
+        config.put(new PropertySimple("security", "DUMBCHANGE"));
+        config.put(new PropertySimple("encrypt passwords", "DUMBCHANGE"));
+        config.put(new PropertySimple("load printers", "DUMBCHANGE"));
+        config.put(new PropertySimple("cups options", "DUMBCHANGE"));
 
-        Collection<Property> allProperties = configuration.getProperties();
-
-        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
-            + allProperties.size();
-
-        PropertyList entryList = (PropertyList) allProperties.iterator().next();
-
-        for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap) property;
-
-            Property ipProperty = entry.get("ip");
-            Property canonicalProperty = entry.get("canonical");
-
-            assert ipProperty != null : "IP was null in entry";
-            assert canonicalProperty != null : "Canonical was null in entry";
-
-            log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
-            log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
-        }
-
+        return config;
     }
 }

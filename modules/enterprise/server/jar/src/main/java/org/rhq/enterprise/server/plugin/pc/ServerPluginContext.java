@@ -25,6 +25,8 @@ import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * A global context containing information about a server-side plugin.
+ *
+ * This is an immutable object, plugins are not allowed to alter these values. 
  * 
  * @author John Mazzitelli
  */

@@ -22,6 +22,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * Defines the types of server-side plugins that are currently supported.
+ * Server side plugin types are identified uniquely by their plugin descriptor types.
  * 
  * @author John Mazzitelli
  */
@@ -35,8 +36,33 @@ public class ServerPluginType {
         this.descriptorType = descriptorType;
     }
 
+    /**
+     * Given a string that was returned by a call to {@link #stringify()}, this
+     * will create its server plugin type.
+     *  
+     * @param stringifiedType string representation of a server plugin type.
+     *
+     * @throws Exception if the string was invalid
+     */
+    @SuppressWarnings("unchecked")
+    public ServerPluginType(String stringifiedType) throws Exception {
+        this((Class<? extends ServerPluginDescriptorType>) Class.forName(stringifiedType));
+    }
+
     public Class<? extends ServerPluginDescriptorType> getDescriptorType() {
-        return descriptorType;
+        return this.descriptorType;
+    }
+
+    /**
+     * Returns a "serialized" form of this instance by returning a string
+     * representation of the type. This is not the same as {@link #toString()}.
+     * The returned string can be used to reconstitute the type via
+     * the constructor {@link ServerPluginType#ServerPluginType(String)}.
+     * 
+     * @return string representation of this type
+     */
+    public String stringify() {
+        return this.descriptorType.getName();
     }
 
     @Override

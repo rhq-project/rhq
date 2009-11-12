@@ -207,7 +207,7 @@
 
                      <execution>
                         <id>deploy</id>
-                        <phase>compile</phase>
+                        <phase>package</phase>
                         <configuration>
                           <tasks>
                             <mkdir dir="${rhq.deploymentDir}" />

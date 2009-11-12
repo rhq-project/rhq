@@ -130,15 +130,26 @@ public interface ContentSourceManagerLocal {
     ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName);
 
     /**
-     * Gets the list of repos that are associated with a given content source.
+     * Gets the list of imported repos that are associated with a given content source.
      *
-     * @param  subject user asking to perform this
-     * @param  contentSourceId The id of a content source.
-     * @param  pc pagination controls
+     * @param  subject         user asking to perform this
+     * @param  contentSourceId the id of a content source.
+     * @param  pc              pagination controls
      *
      * @return list of associated repos
      */
     PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc);
+
+    /**
+     * Gets the list of candidate repos that are associated with a given content source.
+     *
+     * @param  subject         user asking to perform this
+     * @param  contentSourceId the id of a content source.
+     * @param  pc              pagination controls
+     *
+     * @return list of candidate repos
+     */
+    PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc);
 
     /**
      * Allows the caller to page through a list of historical sync results for a content source.

@@ -80,7 +80,7 @@
                </rich:column>
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cs.id">
+                     <onc:sortableColumnHeader sort="c.id">
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -88,7 +88,7 @@
                </rich:column>
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="cs.name">
+                     <onc:sortableColumnHeader sort="c.name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
@@ -104,7 +104,7 @@
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
                         <onc:selectCommandButton action="#{RepoImportUIBean.importSelected}"
                                          value="IMPORT SELECTED"
-                                         target="selectedReposa"
+                                         target="selectedRepos"
                                          styleClass="on-pager-button buttonsmall"/>
                         <ui:param name="paginationDataTableName" value="repoTable"/>
                         <ui:param name="paginationDataModel" value="#{repoModel}"/>

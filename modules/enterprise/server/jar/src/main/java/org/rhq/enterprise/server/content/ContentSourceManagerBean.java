@@ -323,6 +323,22 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return new PageList<Repo>(results, (int) count, pc);
     }
 
+    public PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc) {
+        pc.initDefaultOrderingField("c.name");
+
+        Query query = PersistenceUtility
+            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID);
+
+        query.setParameter("id", contentSourceId);
+        countQuery.setParameter("id", contentSourceId);
+
+        List<Repo> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<Repo>(results, (int) count, pc);
+    }
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<ContentSourceSyncResults> getContentSourceSyncResults(Subject subject, int contentSourceId,

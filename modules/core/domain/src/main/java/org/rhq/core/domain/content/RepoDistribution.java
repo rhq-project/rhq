@@ -48,10 +48,7 @@ import javax.persistence.Table;
     @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :distId"),
     @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId"),
     @NamedQuery(name = RepoDistribution.QUERY_FIND_BY_REPO_ID,
-            query =   "SELECT kt FROM " 
-                    + "Distribution kt, RepoDistribution as rkt "
-                    + "where rkt.repo.id = :repoId "
-                    + "and kt.id = rkt.distibution.id") })
+            query =   "SELECT rkt FROM RepoDistribution rkt where rkt.repo.id = :repoId ") })
 
 @Table(name = "RHQ_REPO_DISTRIBUTION")
 public class RepoDistribution implements Serializable {

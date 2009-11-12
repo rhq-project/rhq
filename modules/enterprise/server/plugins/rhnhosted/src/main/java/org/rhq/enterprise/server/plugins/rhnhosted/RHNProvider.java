@@ -286,7 +286,7 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
         Subject subject = LookupUtil.getSubjectManager().getOverlord();
         for (String clabel : channels) {
             Repo newRepo = new Repo(clabel.toString());
-            newRepo = repoManager.createRepo(subject, newRepo);
+            newRepo = repoManager.createCandidateRepo(subject, newRepo);
             log.info("New " + newRepo + " repo created");
         }
     }

@@ -24,6 +24,9 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.DistributionFile;
+
+import java.util.List;
 
 /**
  * @author Pradeep Kilambi
@@ -78,4 +81,18 @@ public interface DistributionManagerLocal {
      */
     Distribution getDistributionByPath(String basepath);
 
+    /**
+     * get list of distribution files
+     * @param distid
+     * @return list of distro file by dist id
+     */
+    List<DistributionFile> getDistributionFilesByDistId(int distid);
+
+     /**
+     * delete list of distribution files
+      * @param subject
+     * @param distid
+     *
+     */
+    void deleteDistributionFilesByDistId(Subject subject, int distid);
 }

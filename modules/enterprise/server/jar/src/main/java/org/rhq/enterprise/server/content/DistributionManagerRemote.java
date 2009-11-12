@@ -27,7 +27,10 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.enterprise.server.system.ServerVersion;
+
+import java.util.List;
 
 /**
  * @author Pradeep Kilambi
@@ -99,4 +102,22 @@ public interface DistributionManagerRemote {
      */
     @WebMethod
     Distribution getDistributionByPath(@WebParam(name = "basepath") String basepath);
+
+    /**
+     * get distribution file based on distro id
+     * @param distid
+     * @return
+     */
+    @WebMethod
+    List<DistributionFile> getDistributionFilesByDistId(@WebParam(name = "distid") int distid);
+
+    /**
+     * delete distribution file based on distro id
+     * @param distid
+     */
+    @WebMethod
+    void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject, //
+         @WebParam(name = "distid") int distid);
+
+   
 }

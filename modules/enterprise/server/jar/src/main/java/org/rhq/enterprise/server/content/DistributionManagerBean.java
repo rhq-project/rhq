@@ -36,6 +36,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.RepoDistribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -159,6 +160,51 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
             return null;
         }
 
+    }
+
+    /**
+     * Returns a list of available distribution files for requested distribution
+     * @param distId
+     * @return A list of Distributionfile objects associated to a given distribution
+     */
+    @SuppressWarnings("unchecked")
+    public List<DistributionFile> getDistributionFilesByDistId(int distId) {
+        Query query = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+
+        query.setParameter("distId", distId);
+        List<DistributionFile> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * deletes list of available distribution files for requested distribution
+     * @param distId
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteDistributionFilesByDistId(Subject user, int distId) {
+        log.debug("User [" + user + "] is deleting distribution file from distribution [" + distId + "]");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Query querydel = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+
+        querydel.setParameter("distId", distId);
+
+        querydel.executeUpdate();
+
+        DistributionFile distFile = entityManager.find(DistributionFile.class, distId);
+        if (distFile != null) {
+            entityManager.remove(distFile);
+            log.debug("User [" + user + "] deleted distribution file [" + distFile + "]");
+        } else {
+            log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
+        }
     }
 
     /**

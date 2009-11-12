@@ -82,6 +82,8 @@ public class HostsComponent extends AugeasConfigurationComponent {
             resourceConfig = super.loadResourceConfiguration();
         } else {
             resourceConfig = new NonAugeasHostsConfigurationDelegate(this).loadResourceConfiguration();
+            // This will add error messages to any PropertySimples with invalid values, so they can be displayed by the GUI.
+            validateResourceConfiguration(new ConfigurationUpdateReport(resourceConfig));
         }
         return resourceConfig;
     }
@@ -92,10 +94,8 @@ public class HostsComponent extends AugeasConfigurationComponent {
             super.updateResourceConfiguration(report);
         } else {
             if (!validateResourceConfiguration(report)) {
-                log.debug("Validation of updated Resource configuration for "
-                    + this.getResourceContext().getResourceType() + " Resource with key '"
-                    + this.getResourceContext().getResourceKey() + "' failed with the following errors: "
-                    + report.getErrorMessage());
+                log.debug("Validation of updated Resource configuration for " + getResourceDescription()
+                    + " failed with the following errors: " + report.getErrorMessage());
                 report.setStatus(ConfigurationUpdateStatus.FAILURE);
                 return;
             }

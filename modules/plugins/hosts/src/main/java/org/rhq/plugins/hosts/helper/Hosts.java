@@ -37,12 +37,10 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A set of hosts file entries. The set may contain duplicate entries (i.e. entries for different IP addresses
- * containing the same name, either as the canonical name or as an alias).
+ * A set of hosts file entries.
  *
  * @author Ian Springer
  */
@@ -50,39 +48,25 @@ public class Hosts {
     private static final Log LOG = LogFactory.getLog(Hosts.class);
 
     private Set<HostsEntry> entries = new LinkedHashSet<HostsEntry>();
-    private Map<String, Set<HostsEntry>> ipAddressToEntriesMap = new HashMap<String, Set<HostsEntry>>();
-    private Map<String, Set<HostsEntry>> nameToEntriesMap = new HashMap<String, Set<HostsEntry>>();
-    private Set<String> namesWithDuplicateEntries = new HashSet<String>();
-    private Set<String> ipAddressesWithDuplicateEntries = new HashSet<String>();
+    private Map<String, Set<HostsEntry>> nameToIpv4EntriesMap = new HashMap<String, Set<HostsEntry>>();
+    private Map<String, Set<HostsEntry>> nameToIpv6EntriesMap = new HashMap<String, Set<HostsEntry>>();
 
     public Hosts() {
     }
 
     public void addEntry(HostsEntry entry) {
         this.entries.add(entry);
-        String ipAddress = entry.getIpAddress();
-        Set<HostsEntry> entriesForIpAddress = this.ipAddressToEntriesMap.get(ipAddress);
-        if (entriesForIpAddress == null) {
-            entriesForIpAddress = new LinkedHashSet(1);
-            this.ipAddressToEntriesMap.put(ipAddress, entriesForIpAddress);
-        } else {
-            this.ipAddressesWithDuplicateEntries.add(ipAddress);
-        }
-        entriesForIpAddress.add(entry);
         String canonicalName = entry.getCanonicalName();
-        updateNameToEntriesMap(entry, canonicalName);
-        for (String alias : entry.getAliases()) {
-            updateNameToEntriesMap(entry, alias);
-        }
+        updateNameToEntriesMaps(entry, canonicalName);
     }
 
-    private void updateNameToEntriesMap(HostsEntry entry, String canonicalName) {
-        Set<HostsEntry> entriesForCanonicalName = this.nameToEntriesMap.get(canonicalName);
+    private void updateNameToEntriesMaps(HostsEntry entry, String canonicalName) {
+        Map<String, Set<HostsEntry>> nameToEntriesMap = (entry.getIpVersion() == 4) ?
+                this.nameToIpv4EntriesMap : this.nameToIpv6EntriesMap;
+        Set<HostsEntry> entriesForCanonicalName = nameToEntriesMap.get(canonicalName);
         if (entriesForCanonicalName == null) {
             entriesForCanonicalName = new LinkedHashSet(1);
-            this.nameToEntriesMap.put(canonicalName, entriesForCanonicalName);
-        } else {
-            this.namesWithDuplicateEntries.add(canonicalName);
+            nameToEntriesMap.put(canonicalName, entriesForCanonicalName);
         }
         entriesForCanonicalName.add(entry);
     }
@@ -91,23 +75,14 @@ public class Hosts {
         return this.entries;
     }
 
-    @NotNull
-    public Set<HostsEntry> getEntriesByIpAddress(String ipAddress) {
-        Set<HostsEntry> entries = this.ipAddressToEntriesMap.get(ipAddress);
+    public Set<HostsEntry> getIpv4EntriesByName(String canonicalName) {
+        Set<HostsEntry> entries = this.nameToIpv4EntriesMap.get(canonicalName);
         return (entries != null) ? entries : Collections.<HostsEntry> emptySet();
     }
 
-    public Set<HostsEntry> getEntriesByName(String canonicalName) {
-        Set<HostsEntry> entries = this.nameToEntriesMap.get(canonicalName);
+    public Set<HostsEntry> getIpv6EntriesByName(String canonicalName) {
+        Set<HostsEntry> entries = this.nameToIpv6EntriesMap.get(canonicalName);
         return (entries != null) ? entries : Collections.<HostsEntry> emptySet();
-    }
-
-    public Set<String> getIpAddressesWithDuplicateEntries() {
-        return this.ipAddressesWithDuplicateEntries;
-    }
-
-    public Set<String> getNamesWithDuplicateEntries() {
-        return this.namesWithDuplicateEntries;
     }
 
     public static Hosts load(File hostsFile) throws IOException {
@@ -130,19 +105,14 @@ public class Hosts {
     }
 
     public static void store(Hosts hosts, File hostsFile) throws IOException {
-        //        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
-        //        if (!namesWithDuplicateEntries.isEmpty()) {
-        //            throw new IllegalArgumentException("Hosts contains duplicate entries for the following names: "
-        //                    + namesWithDuplicateEntries);
-        //        }
-
         if (!hostsFile.exists()) {
             // If a hosts file doesn't already exist, create an empty one.
             FileOutputStream hostsFileWriter = new FileOutputStream(hostsFile);
             hostsFileWriter.close();
         }
 
-        Set<String> storedCanonicalNames = new HashSet<String>();
+        Set<String> storedIpv4CanonicalNames = new HashSet<String>();
+        Set<String> storedIpv6CanonicalNames = new HashSet<String>();
         File newHostsFile = new File(hostsFile.getPath() + "-" + System.currentTimeMillis());
         PrintWriter newHostsFileWriter = new PrintWriter(new FileWriter(newHostsFile));
         try {
@@ -150,7 +120,8 @@ public class Hosts {
             SimpleUnixConfigFileReader hostsFileReader = new SimpleUnixConfigFileReader(new FileReader(hostsFile));
             try {
                 while ((line = hostsFileReader.readLine()) != null) {
-                    StringBuilder newLine = createNewLine(hosts, hostsFile, line, storedCanonicalNames);
+                    StringBuilder newLine = createNewLine(hosts, hostsFile, line, storedIpv4CanonicalNames,
+                            storedIpv6CanonicalNames);
                     if (newLine != null) {
                         newHostsFileWriter.println(newLine);
                     }
@@ -161,6 +132,8 @@ public class Hosts {
 
             // Write out any entries for IP addresses that did not have entries in the original file.
             for (HostsEntry newEntry : hosts.getEntries()) {
+                Set<String> storedCanonicalNames = (newEntry.getIpVersion() == 4) ? storedIpv4CanonicalNames :
+                        storedIpv6CanonicalNames;
                 if (!storedCanonicalNames.contains(newEntry.getCanonicalName())) {
                     StringBuilder newLine = new StringBuilder(newEntry.getIpAddress()).append("\t").append(
                         newEntry.getCanonicalName());
@@ -240,13 +213,16 @@ public class Hosts {
 
     @Nullable
     private static StringBuilder createNewLine(Hosts hosts, File hostsFile, SimpleUnixConfigFileLine existingLine,
-        Set<String> storedCanonicalNames) {
+                                               Set<String> storedIpv4CanonicalNames,
+                                               Set<String> storedIpv6CanonicalNames) {
         StringBuilder newLine;
         String nonComment = existingLine.getNonComment();
         String comment = existingLine.getComment();
         HostsEntry existingEntry = parseEntry(nonComment, hostsFile);
         if (existingEntry != null) {
-            Set<HostsEntry> newEntries = hosts.getEntriesByName(existingEntry.getCanonicalName());
+            Set<HostsEntry> newEntries = (existingEntry.getIpVersion() == 4) ?
+                    hosts.getIpv4EntriesByName(existingEntry.getCanonicalName()) :
+                    hosts.getIpv6EntriesByName(existingEntry.getCanonicalName());
             // TODO: Look up entries for existing entry's aliases too?
             if (!newEntries.isEmpty()) {
                 // replace the existing entry
@@ -261,6 +237,8 @@ public class Hosts {
                 if (comment != null) {
                     newLine.append(" #").append(comment);
                 }
+                Set<String> storedCanonicalNames = (newEntry.getIpVersion() == 4) ? storedIpv4CanonicalNames :
+                        storedIpv6CanonicalNames;
                 storedCanonicalNames.add(newEntry.getCanonicalName());
             } else {
                 LOG.debug("Removing entry [" + existingEntry + "] from hosts file...");

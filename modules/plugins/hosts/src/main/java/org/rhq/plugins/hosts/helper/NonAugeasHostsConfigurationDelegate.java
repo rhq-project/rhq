@@ -24,8 +24,6 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -41,8 +39,6 @@ import org.rhq.plugins.hosts.HostsComponent;
  */
 public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
 {
-    private final Log log = LogFactory.getLog(this.getClass());
-
     private HostsComponent hostsComponent;
 
     public NonAugeasHostsConfigurationDelegate(HostsComponent hostsComponent) {
@@ -58,47 +54,21 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
         PropertyList entriesProp = new PropertyList(".");
         resourceConfig.put(entriesProp);
 
-        Set<String> ipAddressesWithDuplicateEntries = hosts.getIpAddressesWithDuplicateEntries();
-        if (!ipAddressesWithDuplicateEntries.isEmpty()) {
-            log.debug("Hosts file [" + hostsFile + "] contains duplicate entries for the following IP addresses: "
-                    + ipAddressesWithDuplicateEntries);
-        }
-        Set<String> namesWithDuplicateEntries = hosts.getNamesWithDuplicateEntries();
-        if (!namesWithDuplicateEntries.isEmpty()) {
-            log.error("Hosts file [" + hostsFile + "] contains duplicate entries for the following names: "
-                    + namesWithDuplicateEntries);
-        }
-
         for (HostsEntry entry : hosts.getEntries()) {
-            PropertyMap entryProp = new PropertyMap("entry");
+            PropertyMap entryProp = new PropertyMap("*[canonical]");
             entriesProp.add(entryProp);
 
-            PropertySimple ipAddressProp = new PropertySimple("ipaddr", entry.getIpAddress());
-            entryProp.put(ipAddressProp);
-
-            PropertySimple canonicalNameProp = new PropertySimple("canonical", entry.getCanonicalName());
-            if (namesWithDuplicateEntries.contains(entry.getCanonicalName())) {
-                canonicalNameProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
-            }
-            entryProp.put(canonicalNameProp);
-
-            StringBuilder aliasesPropValue = new StringBuilder();
-            boolean foundDuplicateName = false;
+            entryProp.put(new PropertySimple("ipaddr", entry.getIpAddress()));
+            entryProp.put(new PropertySimple("canonical", entry.getCanonicalName()));
+            StringBuilder aliasPropValue = new StringBuilder();
             for (String alias : entry.getAliases()) {
-                if (namesWithDuplicateEntries.contains(alias)) {
-                    foundDuplicateName = true;
-                }
-                aliasesPropValue.append(alias).append("\n");
+                aliasPropValue.append(alias).append("\n");
             }
             if (!entry.getAliases().isEmpty()) {
                 // Chop the final newline char.
-                aliasesPropValue.deleteCharAt(aliasesPropValue.length() - 1);
+                aliasPropValue.deleteCharAt(aliasPropValue.length() - 1);
             }
-            PropertySimple aliasesProp = new PropertySimple("alias", aliasesPropValue);
-            if (foundDuplicateName) {
-                aliasesProp.setErrorMessage("At the time of loading, there was more than one entry containing this name - please remove or fix duplicate entries before saving.");
-            }
-            entryProp.put(aliasesProp);
+            entryProp.put(new PropertySimple("alias", aliasPropValue));
         }
 
         return  resourceConfig;
@@ -126,13 +96,6 @@ public class NonAugeasHostsConfigurationDelegate implements ConfigurationFacet
             }
             HostsEntry entry = new HostsEntry(ipAddress, canonicalName, aliasSet);
             newHosts.addEntry(entry);
-        }
-
-        Set<String> namesWithDuplicateEntries = newHosts.getNamesWithDuplicateEntries();
-        if (!namesWithDuplicateEntries.isEmpty()) {
-            report.setErrorMessage("There are duplicate entries for the following names: "
-                    + namesWithDuplicateEntries);
-            return;
         }
 
         File hostsFile = (File)this.hostsComponent.getConfigurationFiles().get(0);

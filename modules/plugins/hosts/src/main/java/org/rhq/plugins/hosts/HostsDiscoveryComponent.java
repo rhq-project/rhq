@@ -26,9 +26,11 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 import org.rhq.plugins.platform.PlatformComponent;
 
@@ -59,16 +61,23 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
     @Override
     protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
     {
-        if (IS_WINDOWS) {
-            File windowsDir = getWindowsDir();
-            File hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
-            return Collections.singletonList(hostsFile.getPath());
-        } else {
+        Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
+        String includeGlobs = defaultPluginConfig.getSimpleValue(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, null);
+        if (includeGlobs != null) {
             return super.determineIncludeGlobs(discoveryContext);
-        }
+        } else {
+            File hostsFile;
+            if (IS_WINDOWS) {
+                File windowsDir = getWindowsDir(discoveryContext);
+                hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
+            } else {
+                hostsFile = new File("/etc/hosts");
+            }
+            return Collections.singletonList(hostsFile.getPath());
+        }        
     }
 
-    private File getWindowsDir() {
+    private File getWindowsDir(ResourceDiscoveryContext<PlatformComponent> discoveryContext) {
         File windowsDir = null;
         String windowsDirPath = System.getenv().get("SystemRoot");
         if (windowsDirPath != null) {
@@ -92,6 +101,7 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
         if (windowsDir == null) {
             throw new IllegalStateException("Failed to determine Windows directory.");
         }
+
         log.debug("Windows directory: " + windowsDir);
         return windowsDir;
     }

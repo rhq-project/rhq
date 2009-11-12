@@ -65,7 +65,6 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
-import org.rhq.core.domain.util.serial.HibernateUtil;
 
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
@@ -620,37 +619,39 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
 
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-        } else {
-            writeExternalAgent(out);
+        if (isAgentOrRemoteAPISerialization(strategy.id())) {
+            writeExternalAgentOrRemote(out);
+        }
+        else {
+            EntitySerializer.writeExternalRemote(this, out);            
         }
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-        } else {
-            readExternalAgent(in);
+
+        if (isAgentOrRemoteAPISerialization(c)) {
+            readExternalAgentOrRemote(in);
         }
+        else {
+            EntitySerializer.readExternalRemote(this, in);
+        }
+    }
+
+    private boolean isAgentOrRemoteAPISerialization(char strategy) {
+        return strategy == ExternalizableStrategy.Subsystem.AGENT.id() ||
+               strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
     }
 
     /**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
      */
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
-//        Configuration copy = deepCopyWithoutProxies();
+    public void writeExternalAgentOrRemote(ObjectOutput out) throws IOException {
+        Configuration copy = deepCopyWithoutProxies();
 
         out.writeInt(id);
-        out.writeObject(HibernateUtil.safeMap(properties));
-        out.writeObject(HibernateUtil.safeSet(rawConfigurations));
-//        out.writeObject(copy.properties);
-//        out.writeObject(copy.rawConfigurations);
+        out.writeObject(createDeepCopyOfMap());
+        out.writeObject(createDeepCopyOfRawConfigs());
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);
@@ -677,31 +678,10 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
      */
     @SuppressWarnings("unchecked")
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgentOrRemote(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         properties = (HashMap<String, Property>) in.readObject();
         rawConfigurations = (Set<RawConfiguration>) in.readObject();
-        notes = in.readUTF();
-        version = in.readLong();
-        ctime = in.readLong();
-        mtime = in.readLong();
-    }
-
-    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-        out.writeInt(id);
-        out.writeObject(HibernateUtil.safeMap(properties));
-        out.writeUTF((notes == null) ? "null" : notes);
-        out.writeLong(version);
-        out.writeLong(ctime);
-        out.writeLong(mtime);
-        // Explicitly do not send the history relationship
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        properties = (HashMap<String, Property>) in.readObject();
         notes = in.readUTF();
         version = in.readLong();
         ctime = in.readLong();

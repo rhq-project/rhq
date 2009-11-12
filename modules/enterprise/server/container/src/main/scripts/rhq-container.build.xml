@@ -371,13 +371,6 @@
       <!-- optionally package the connectors -->
       <antcall target="package-connectors" />
 
-      <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
-      <echo>Deploying the license file ...</echo>
-    <copy file="${basedir}/src/main/license/license.xml"
-          todir="${jboss.deploy.dir}/${rhq.earName}/license"
-          verbose="true"
-          failonerror="false"/>
-
       <echo>Enabling server to run on Java 6 ...</echo>
       <move todir="${jboss.home}/lib/endorsed" verbose="true">
          <fileset dir="${jboss.home}/client">

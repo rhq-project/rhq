@@ -31,12 +31,17 @@ public interface ScheduledJob {
      * Called when the job triggers.
      * 
      * @param jobId the job identifier that was used when creating the job
-     * @param pluginContext the global plugin context for the plugin whose job is being triggered
+     * @param lifecycleListener if the plugin has a lifecycle listener, this will be it.
+     *                          Use this object to obtain the plugin context and any other
+     *                          stateful plugin data specific to the plugin being invoked.
+     *                          This may be <code>null</code> if the plugin did not define
+     *                          a global lifecycle listener.
      * @param callbackData a map of data that was used when creating the job whose values are
      *                     passed back to this method as they were when the job was created.
      *
      * @throws Exception on any error that should cause the schedule to not fire. If an exception
      *                   is thrown, the schedule will not trigger again until the plugin is restarted
      */
-    void execute(String jobId, ServerPluginContext pluginContext, Properties callbackData) throws Exception;
+    void execute(String jobId, ServerPluginLifecycleListener lifecycleListener, Properties callbackData)
+        throws Exception;
 }

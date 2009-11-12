@@ -113,10 +113,11 @@ abstract class AbstractJobWrapper implements Job {
         ScheduledJob pluginJob;
         ServerPluginManager pluginManager = pc.getPluginManager();
         ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
+        ServerPluginLifecycleListener lifecycleListener = pluginManager.getServerPluginLifecycleListener(pluginName);
 
         if (scheduledJobClass == null) {
             try {
-                pluginJob = (ScheduledJob) pluginManager.getServerPluginLifecycleListener(pluginName);
+                pluginJob = (ScheduledJob) lifecycleListener;
                 if (pluginJob == null) {
                     log.error(logMsg(pluginName, pluginType, jobId, "no lifecycle listener to process job", null));
                     throw new UnsupportedOperationException("no lifecycle listener available to process the job");
@@ -140,11 +141,16 @@ abstract class AbstractJobWrapper implements Job {
             }
         }
 
-        ServerPluginContext pluginContext = pluginManager.createServerPluginContext(pluginEnv);
-
         // now actually tell the plugin its time to do the scheduled job
+
         try {
-            pluginJob.execute(jobId, pluginContext, callbackData);
+            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
+                pluginJob.execute(jobId, lifecycleListener, callbackData);
+            } finally {
+                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+            }
             log.info(logMsg(pluginName, pluginType, jobId, "scheduled job executed", null));
         } catch (Throwable t) {
             // any exception thrown out of the job will mean the job is to be unscheduled

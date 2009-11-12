@@ -80,7 +80,7 @@
 
                <execution>
                   <id>add-war</id>
-                  <phase>install</phase>
+                  <phase>verify</phase>
                   <configuration>
                      <tasks>
                         <property

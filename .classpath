@@ -97,7 +97,9 @@
 	<classpathentry kind="src" path="modules/plugins/apt/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+    <classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/aliases/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>

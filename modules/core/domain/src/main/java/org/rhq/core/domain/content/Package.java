@@ -24,9 +24,7 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -43,9 +41,6 @@ import javax.persistence.Table;
 
 import org.hibernate.annotations.NamedQueries;
 import org.hibernate.annotations.NamedQuery;
-
-import org.rhq.core.domain.common.Tag;
-import org.rhq.core.domain.common.Taggable;
 
 /**
  * Represents a package inventoried in the system. A package can be created by either a {@link ContentSource} (on the
@@ -69,7 +64,7 @@ import org.rhq.core.domain.common.Taggable;
         + "AND p.packageType.resourceType.id = :resourceTypeId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE")
-public class Package implements Serializable, Taggable {
+public class Package implements Serializable {
     // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
@@ -97,9 +92,6 @@ public class Package implements Serializable, Taggable {
     // make sure you do not make this eager load, see join fetches in queries in PackageVersionContentSource
     @OneToMany(mappedBy = "generalPackage", fetch = FetchType.LAZY, cascade = { CascadeType.ALL })
     private List<PackageVersion> versions;
-
-    @OneToMany()
-    private Set<Tag> tags;
 
     // Constructor ----------------------------------------
 
@@ -221,46 +213,4 @@ public class Package implements Serializable, Taggable {
         return result;
     }
 
-    public Set<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<Tag> tags) {
-        this.tags = tags;
-    }
-
-    public boolean hasTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
-            return false;
-        }
-
-        if (name == null) {
-            if (tag.getName() != null) {
-                return false;
-            }
-        } else if (!name.equals(tag.getName())) {
-            return false;
-        }
-
-        return true;
-
-    }
-
-    public void addTag(Tag tag) {
-        if (this.tags == null) {
-            this.tags = new HashSet<Tag>();
-        }
-
-        this.tags.add(tag);
-    }
-
-    public void removeTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
-            return;
-        }
-
-        if (tags.contains(tag)) {
-            tags.remove(tag);
-        }
-    }
 }

@@ -49,8 +49,6 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.rhq.core.domain.common.Tag;
-import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -80,7 +78,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "          WHERE ccs.repo.id = :repoId ) ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SOURCE_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SOURCE")
-public class ContentSource implements Serializable, Taggable {
+public class ContentSource implements Serializable {
     public static final String QUERY_FIND_ALL = "ContentSource.findAll";
     public static final String QUERY_FIND_ALL_WITH_CONFIG = "ContentSource.findAllWithConfig";
     public static final String QUERY_FIND_BY_NAME_AND_TYPENAME = "ContentSource.findByNameAndTypeName";
@@ -139,9 +137,6 @@ public class ContentSource implements Serializable, Taggable {
 
     @OneToMany(mappedBy = "contentSource", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<RepoContentSource> repoContentSources;
-
-    @OneToMany()
-    private Set<Tag> tags;
 
     // Constructor
 
@@ -448,46 +443,4 @@ public class ContentSource implements Serializable, Taggable {
         return true;
     }
 
-    public Set<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(Set<Tag> tags) {
-        this.tags = tags;
-    }
-
-    public boolean hasTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
-            return false;
-        }
-
-        if (name == null) {
-            if (tag.getName() != null) {
-                return false;
-            }
-        } else if (!name.equals(tag.getName())) {
-            return false;
-        }
-
-        return true;
-
-    }
-
-    public void addTag(Tag tag) {
-        if (this.tags == null) {
-            this.tags = new HashSet<Tag>();
-        }
-
-        this.tags.add(tag);
-    }
-
-    public void removeTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
-            return;
-        }
-
-        if (tags.contains(tag)) {
-            tags.remove(tag);
-        }
-    }
 }

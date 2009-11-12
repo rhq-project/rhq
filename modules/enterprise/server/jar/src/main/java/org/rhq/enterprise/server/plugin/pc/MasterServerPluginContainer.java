@@ -220,6 +220,7 @@ public class MasterServerPluginContainer {
      * @param clazz the class name of the plugin container that the caller wants
      * @return the plugin container of the given class (<code>null</code> if none found)
      */
+    @SuppressWarnings("unchecked")
     public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(Class<T> clazz) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             if (clazz.isInstance(pc)) {
@@ -235,11 +236,22 @@ public class MasterServerPluginContainer {
      * @param descriptor descriptor to identify a plugin whose container is to be returned
      * @return a plugin container that can handle the plugin with the given descriptor
      */
+    protected synchronized AbstractTypeServerPluginContainer getPluginContainerByPluginType(ServerPluginType pluginType) {
+        AbstractTypeServerPluginContainer pc = this.pluginContainers.get(pluginType);
+        return pc;
+    }
+
+    /**
+     * Given a plugin's descriptor, this will return the plugin container that can manage the plugin.
+     * 
+     * @param descriptor descriptor to identify a plugin whose container is to be returned
+     * @return a plugin container that can handle the plugin with the given descriptor
+     */
     protected synchronized AbstractTypeServerPluginContainer getPluginContainerByDescriptor(
         ServerPluginDescriptorType descriptor) {
 
         ServerPluginType pluginType = new ServerPluginType(descriptor.getClass());
-        AbstractTypeServerPluginContainer pc = this.pluginContainers.get(pluginType);
+        AbstractTypeServerPluginContainer pc = getPluginContainerByPluginType(pluginType);
         return pc;
     }
 

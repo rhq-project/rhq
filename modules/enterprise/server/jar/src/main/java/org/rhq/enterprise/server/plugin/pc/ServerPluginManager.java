@@ -238,6 +238,20 @@ public class ServerPluginManager {
         return this.loadedPlugins.get(pluginName);
     }
 
+    /**
+     * Returns the lifecycle listener instance that is responsible for initializing and managing
+     * the plugin. This will return <code>null</code> if a plugin has not defined a lifecycle listener.
+     * 
+     * @param pluginName the name of the plugin whose lifecycle listener is to be returned
+     * 
+     * @return the lifecycle listener instance that initialized and is managing a plugin. Will
+     *         return <code>null</code> if the plugin has not defined a lifecycle listener. 
+     *         <code>null</code> is also returned if the plugin is not initialized yet. 
+     */
+    public synchronized ServerPluginLifecycleListener getServerPluginLifecycleListener(String pluginName) {
+        return this.pluginLifecycleListenerCache.get(pluginName);
+    }
+
     public AbstractTypeServerPluginContainer getParentPluginContainer() {
         return this.parentPluginContainer;
     }

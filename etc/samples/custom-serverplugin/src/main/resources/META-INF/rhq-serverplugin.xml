@@ -10,11 +10,15 @@
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
 
-      <serverplugin:lifecycle-listener class="MyLifecycleListener">
-      </serverplugin:lifecycle-listener>
+    <serverplugin:lifecycle-listener class="MyLifecycleListener">
+        <serverplugin:schedule concurrent="true">
+            <serverplugin:period>30000</serverplugin:period>
+        </serverplugin:schedule>
+    </serverplugin:lifecycle-listener>
 
-      <serverplugin:plugin-configuration>
-         <c:simple-property name="myCustomProperty" type="string" required="true" description="A property my plugin needs to be properly configured" />
-      </serverplugin:plugin-configuration>
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="myCustomProperty" type="string" required="true"
+                           description="A property my plugin needs to be properly configured" />
+    </serverplugin:plugin-configuration>
 
 </generic-plugin>

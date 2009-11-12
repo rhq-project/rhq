@@ -54,7 +54,6 @@ import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
-import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.AsyncResourceDeleteJob;
@@ -384,14 +383,16 @@ public class StartupServlet extends HttpServlet {
             log("Cannot schedule data purge job: " + e.getMessage());
         }
 
-        // Content Source Sync Jobs
+        // Server Plugin Jobs
         try {
             ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
             MasterServerPluginContainer masterPC = mbean.getMasterPluginContainer();
-            masterPC.getPluginContainer(ContentServerPluginContainer.class).scheduleSyncJobs();
+            masterPC.scheduleAllPluginJobs();
         } catch (Exception e) {
-            log("Cannot schedule content source sync jobs: " + e.getMessage());
+            log("Cannot schedule server plugin jobs: " + e.getMessage());
         }
+
+        return;
     }
 
     /**
@@ -534,7 +535,7 @@ public class StartupServlet extends HttpServlet {
 
         try {
             ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
-            mbean.startMasterPluginContainer();
+            mbean.startMasterPluginContainerWithoutSchedulingJobs();
         } catch (Exception e) {
             throw new ServletException("Cannot start the master server plugin container!", e);
         }

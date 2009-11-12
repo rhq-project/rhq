@@ -126,7 +126,7 @@ abstract class AbstractJobWrapper implements Job {
                 // no valid lifecycle listener that implements job interface - we need to unschedule this, do not refire
                 log.error(logMsg(pluginName, pluginType, jobId, "invaild lifecycle listener", t));
                 JobExecutionException jobException = new JobExecutionException(t, false);
-                jobException.setUnscheduleFiringTrigger(true);
+                jobException.setUnscheduleAllTriggers(true);
                 throw jobException;
             }
         } else {
@@ -136,7 +136,7 @@ abstract class AbstractJobWrapper implements Job {
                 // invalid class - we need to unschedule this, do not refire since it will never work
                 log.error(logMsg(pluginName, pluginType, jobId, "invalid schedule job class", t));
                 JobExecutionException jobException = new JobExecutionException(t, false);
-                jobException.setUnscheduleFiringTrigger(true);
+                jobException.setUnscheduleAllTriggers(true);
                 throw jobException;
             }
         }

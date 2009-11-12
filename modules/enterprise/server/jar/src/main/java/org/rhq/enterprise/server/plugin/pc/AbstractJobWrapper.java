@@ -112,6 +112,8 @@ abstract class AbstractJobWrapper implements Job {
 
         ScheduledJob pluginJob;
         ServerPluginManager pluginManager = pc.getPluginManager();
+        ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
+
         if (scheduledJobClass == null) {
             try {
                 pluginJob = (ScheduledJob) pluginManager.getServerPluginLifecycleListener(pluginName);
@@ -127,7 +129,6 @@ abstract class AbstractJobWrapper implements Job {
                 throw jobException;
             }
         } else {
-            ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
             try {
                 pluginJob = (ScheduledJob) pluginManager.instantiatePluginClass(pluginEnv, scheduledJobClass);
             } catch (Throwable t) {
@@ -139,9 +140,11 @@ abstract class AbstractJobWrapper implements Job {
             }
         }
 
+        ServerPluginContext pluginContext = pluginManager.createServerPluginContext(pluginEnv);
+
         // now actually tell the plugin its time to do the scheduled job
         try {
-            pluginJob.execute(jobId, callbackData);
+            pluginJob.execute(jobId, pluginContext, callbackData);
             log.info(logMsg(pluginName, pluginType, jobId, "scheduled job executed", null));
         } catch (Throwable t) {
             // any exception thrown out of the job will mean the job is to be unscheduled

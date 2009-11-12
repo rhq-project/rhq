@@ -36,9 +36,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.Serializable;
 
 /**
@@ -81,13 +78,10 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
     @Column(name = "MTIME", nullable = false)
     private long mtime = System.currentTimeMillis();
-    
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
-
-    @Transient
-    private transient MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
 
     public int getId() {
         return id;
@@ -137,6 +131,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     }
 
     private void updateSha256() {
+        MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
         sha256Generator.add(contents);
         sha256 = sha256Generator.getDigestString();
     }
@@ -255,14 +250,5 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         return copy;
     }
 
-    private void readObject(ObjectInputStream istream) throws IOException, ClassNotFoundException {
-        try {
-            istream.defaultReadObject();
-            sha256Generator = new MessageDigestGenerator("SHA-256");
-        }
-        catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to deserialize " + getClass().getName(), e);
-        }
-    }
-
 }
+

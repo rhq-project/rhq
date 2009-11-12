@@ -162,19 +162,6 @@ public class ServerPluginManager {
             }
         }
 
-        // if there are any global schedules defined, schedule them now.
-        // note that we know if there is no lifecycle listener, then there can't be a schedule
-        for (String pluginName : this.pluginLifecycleListenerCache.keySet()) {
-            Schedule schedule = getServerPluginContext(this.loadedPlugins.get(pluginName)).getSchedule();
-            if (schedule != null) {
-                try {
-                    this.parentPluginContainer.scheduleJob(schedule, pluginName, "__globalScheduleJob", null, null);
-                } catch (Throwable t) {
-                    log.warn("Failed to schedule the global plugin job for plugin [" + pluginName + "]", t);
-                }
-            }
-        }
-
         return;
     }
 

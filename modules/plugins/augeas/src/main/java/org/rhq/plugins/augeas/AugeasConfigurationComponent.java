@@ -69,54 +69,45 @@ import org.rhq.plugins.augeas.helper.Glob;
  */
 public class AugeasConfigurationComponent<T extends ResourceComponent> implements ResourceComponent<T>,
     ConfigurationFacet, CreateChildResourceFacet, DeleteResourceFacet {
+    /* Plugin config prop names */
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String RESOURCE_CONFIGURATION_ROOT_NODE_PROP = "resourceConfigurationRootNode";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
     public static final String AUGEAS_ROOT_PATH_PROP = "augeasRootPath";
 
-    public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
-
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
+    public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";
     private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ResourceContext<T> resourceContext;
+    private String resourceDescription;
     private List<String> includeGlobs;
     private List<String> excludeGlobs;
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
-
-    public static String getAugeasRootPath() {
-        if (System.getProperty(AUGEAS_ROOT_PATH_PROP) != null) {
-            return System.getProperty(AUGEAS_ROOT_PATH_PROP);
-        }
-        return DEFAULT_AUGEAS_ROOT_PATH;
-    }
-
+    
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
+                    + this.resourceContext.getResourceKey() + "]";
+        initGlobs();
 
-        this.augeasRootPath = getAugeasRootPath();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        this.augeasRootPath = pluginConfig.getSimpleValue(AUGEAS_ROOT_PATH_PROP, DEFAULT_AUGEAS_ROOT_PATH);
         log.debug("Augeas Root Path = \"" + this.augeasRootPath + "\"");
 
-        initGlobs(pluginConfig);
-
-        this.augeas = createAugeas();
-
-        if (this.augeas != null) {
-            String resourceConfigRootPath = getResourceConfigurationRootPath();
-            if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
-                // root path is relative - make it absolute
-                this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
+        if (isAugeasAvailable()) {
+            initAugeas();
+        } else {
+            if (IS_WINDOWS) {
+                log.debug("Augeas not found - this is expected, since Augeas is not currently available for Windows.");
             } else {
-                // root path is already absolute
-                this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
+                log.warn("Augeas not found - if on Fedora or RHEL, `yum install augeas`.");
             }
-
         }
     }
 
@@ -132,6 +123,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        abortIfAugeasNotAvailable();
+
         // Load the config file from disk and build a tree representation of it.
         loadConfigurationFiles(this.augeas);
 
@@ -146,14 +139,25 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             loadProperty(propDef, resourceConfig, this.augeas, this.resourceConfigRootNode);
         }
 
+        // This will add error messages to any PropertySimples with invalid values, so they can be displayed by the GUI.
+        validateResourceConfiguration(new ConfigurationUpdateReport(resourceConfig));
         return resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        try
+        {
+            abortIfAugeasNotAvailable();
+        }
+        catch (Exception e)
+        {
+            report.setErrorMessage(e.getLocalizedMessage());
+            return;
+        }
+
         if (!validateResourceConfiguration(report)) {
-            log.debug("Validation of updated Resource configuration for " + this.getResourceContext().getResourceType()
-                + " Resource with key '" + this.getResourceContext().getResourceKey()
-                + "' failed with the following errors: " + report.getErrorMessage());
+            log.debug("Validation of updated Resource configuration for " + this.resourceDescription
+                + " failed with the following errors: " + report.getErrorMessage());
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             return;
         }
@@ -280,7 +284,12 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public ResourceContext<T> getResourceContext() {
-        return resourceContext;
+        return this.resourceContext;
+    }
+
+    public String getResourceDescription()
+    {
+        return this.resourceDescription;
     }
 
     public List<File> getConfigurationFiles() {
@@ -297,11 +306,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String augeasModuleName = pluginConfig.getSimpleValue(AUGEAS_MODULE_NAME_PROP, null);
         if (augeasModuleName == null) {
-            return null;
-        }
-
-        if (!initAugeasJnaProxy()) {
-            return null;
+            throw new IllegalStateException("Plugin config property '" + AUGEAS_MODULE_NAME_PROP + "' is required.");
         }
 
         Augeas augeas;
@@ -320,19 +325,16 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
             loadConfigurationFiles(augeas);
         } catch (RuntimeException e) {
             augeas = null;
-            log.warn("Failed to initialize Augeas Java API.", e);
+            log.error("Failed to initialize Augeas Java API.", e);
         }
         return augeas;
     }
 
-    private boolean initAugeasJnaProxy() {
+    protected boolean isAugeasAvailable() {
         Aug aug;
         try {
             aug = Aug.INSTANCE;
-        } catch (NoClassDefFoundError e) {
-            if (!IS_WINDOWS) {
-                log.warn("Augeas shared library not found. If on Fedora or RHEL, yum install augeas.");
-            }
+        } catch (Error e) {
             return false;
         }
         if (log.isTraceEnabled()) {
@@ -613,9 +615,11 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
     }
 
-    private void initGlobs(Configuration pluginConfiguration) {
-        PropertySimple includes = pluginConfiguration.getSimple(INCLUDE_GLOBS_PROP);
-        PropertySimple excludes = pluginConfiguration.getSimple(EXCLUDE_GLOBS_PROP);
+    private void initGlobs() {
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+
+        PropertySimple includes = pluginConfig.getSimple(INCLUDE_GLOBS_PROP);
+        PropertySimple excludes = pluginConfig.getSimple(EXCLUDE_GLOBS_PROP);
 
         includeGlobs = new ArrayList<String>();
         excludeGlobs = new ArrayList<String>();
@@ -657,5 +661,42 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
 
         return summary.toString();
+    }
+
+    protected void initAugeas() {
+        this.augeas = createAugeas();
+        String resourceConfigRootPath = getResourceConfigurationRootPath();
+        if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
+            // root path is relative - make it absolute
+            this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
+        } else {
+            // root path is already absolute
+            this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
+        }
+        log.debug("Resource Config Root Node = \"" + this.resourceConfigRootNode + "\"");
+    }
+
+    private void abortIfAugeasNotAvailable()
+            throws Exception
+    {
+        if (getAugeas() == null) {
+            if (isAugeasAvailable()) {
+                initAugeas();
+                if (getAugeas() == null) {
+                    throw new Exception("Failed to initialize Augeas Java API.");
+                }
+            } else {
+                String message;
+                if (IS_WINDOWS) {
+                    message = "Configuration of " + getResourceContext().getResourceType().getName()
+                        + " Resources is not supported on Windows.";
+                } else {
+                    message = "Configuration of " + getResourceContext().getResourceType().getName()
+                        + " Resources requires that the Augeas shared library be installed on the Agent system."
+                        + " If on Fedora or RHEL, `yum install augeas`.";
+                }
+                throw new Exception(message);
+            }
+        }
     }
 }

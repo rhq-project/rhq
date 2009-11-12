@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,11 +18,16 @@
  */
 package org.rhq.plugins.hosts;
 
+import java.io.File;
+import java.io.IOException;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
+import org.testng.annotations.BeforeTest;
 
 /**
  * An integration test for {@link HostsComponent}.
@@ -30,14 +35,38 @@ import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
  * @author Ian Springer
  */
 public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest {
+    private static final String PLUGIN_NAME = "Hosts";
+    private static final String RESOURCE_TYPE_NAME = "Hosts File";
+
     @Override
     protected String getPluginName() {
-        return "Hosts";
+        return PLUGIN_NAME;
     }
 
     @Override
     protected String getResourceTypeName() {
-        return "Hosts File";
+        return RESOURCE_TYPE_NAME;
+    }
+
+    @Override
+    protected boolean isResourceConfigSupported() {
+        // The hosts plugin will use Augeas if it's available but will fall back to direct file parsing if it's not.
+        return true;
+    }
+
+    @Override
+    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig)
+    {
+        super.tweakDefaultPluginConfig(defaultPluginConfig);
+        String hostsFilePath = new File("/etc/hosts").getAbsolutePath();
+        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, hostsFilePath));
+    }
+
+    @BeforeTest
+    @Override
+    public void resetConfigFiles() throws IOException
+    {
+        super.resetConfigFiles();
     }
 
     @Override
@@ -82,7 +111,7 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
     }
 
     @Override
-    protected Configuration getChangedResourceConfig() {
+    protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");
         config.put(entries);

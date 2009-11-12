@@ -26,7 +26,10 @@ import java.util.regex.Pattern;
 
 import net.augeas.Augeas;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -58,6 +61,8 @@ public class HostsComponent extends AugeasConfigurationComponent {
     private static final String DOMAIN_NAME_REGEX = "(([a-zA-Z\\d]|[a-zA-Z\\d][a-zA-Z\\d\\-]*[a-zA-Z\\d])\\.)*([A-Za-z]|[A-Za-z][A-Za-z\\d\\-]*[A-Za-z\\d])";
     private static final Pattern DOMAIN_NAME_PATTERN = Pattern.compile(DOMAIN_NAME_REGEX);
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
     }
@@ -77,6 +82,8 @@ public class HostsComponent extends AugeasConfigurationComponent {
             resourceConfig = super.loadResourceConfiguration();
         } else {
             resourceConfig = new NonAugeasHostsConfigurationDelegate(this).loadResourceConfiguration();
+            // This will add error messages to any PropertySimples with invalid values, so they can be displayed by the GUI.
+            validateResourceConfiguration(new ConfigurationUpdateReport(resourceConfig));
         }
         return resourceConfig;
     }
@@ -86,6 +93,12 @@ public class HostsComponent extends AugeasConfigurationComponent {
         if (getAugeas() != null) {
             super.updateResourceConfiguration(report);
         } else {
+            if (!validateResourceConfiguration(report)) {
+                log.debug("Validation of updated Resource configuration for " + getResourceDescription()
+                    + " failed with the following errors: " + report.getErrorMessage());
+                report.setStatus(ConfigurationUpdateStatus.FAILURE);
+                return;
+            }
             new NonAugeasHostsConfigurationDelegate(this).updateResourceConfiguration(report);
         }
     }

@@ -18,13 +18,11 @@
  */
 package org.rhq.plugins.aliases;
 
-import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 /**
  * An integration test for {@link AliasesComponent}.
@@ -32,12 +30,12 @@ import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
 public class AliasesComponentTest extends AbstractAugeasConfigurationComponentTest {
     @Override
     protected String getPluginName() {
-        return "Hosts";
+        return "Aliases";
     }
 
     @Override
     protected String getResourceTypeName() {
-        return "Hosts File";
+        return "Aliases File";
     }
 
     @Override
@@ -48,54 +46,52 @@ public class AliasesComponentTest extends AbstractAugeasConfigurationComponentTe
 
         PropertyMap entry;
 
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "127.0.0.1"));
-        entry.put(new PropertySimple("canonical", "localhost"));
-        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost4\nlocalhost4.localdomain4"));
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "bin"));
+        entry.put(new PropertySimple("value", "root"));
         entries.getList().add(entry);
 
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "::1"));
-        entry.put(new PropertySimple("canonical", "localhost"));
-        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost6\nlocalhost6.localdomain6"));
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "daemon"));
+        entry.put(new PropertySimple("value", "root"));
         entries.getList().add(entry);
 
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "1.1.1.1"));
-        entry.put(new PropertySimple("canonical", "one-one-one-one.com"));
-        entry.put(new PropertySimple("alias", null));
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "adm"));
+        entry.put(new PropertySimple("value", "root"));
         entries.getList().add(entry);
 
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "2.2.2.2"));
-        entry.put(new PropertySimple("canonical", "two-two-two-two.com"));
-        entry.put(new PropertySimple("alias", "alias"));
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "lp"));
+        entry.put(new PropertySimple("value", "root"));
         entries.getList().add(entry);
 
-        entry = new PropertyMap("*[canonical]");
-        entry.put(new PropertySimple("ipaddr", "3.3.3.3"));
-        entry.put(new PropertySimple("canonical", "three-three-three-three.com"));
-        entry.put(new PropertySimple("alias", "alias1\nalias2"));
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "sync"));
+        entry.put(new PropertySimple("value", "root"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "shutdown"));
+        entry.put(new PropertySimple("value", "root"));
         entries.getList().add(entry);
 
         return config;
     }
 
-    private boolean supportsFacet(Class<?> facetInterface) {
-        PluginMetadataManager manager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        String componentClass = manager.getComponentClass(getResourceType());
-
-        try {
-            return facetInterface.isAssignableFrom(Class.forName(componentClass));
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Could not find component class " + componentClass, e);
-        }
-    }
-
     @Override
-    protected Configuration getChangedResourceConfig() {
-        // TODO Auto-generated method stub
-        //TODO NEED TO FIX THIS 
-        return null;
+    protected Configuration getUpdatedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+
+        PropertyMap entry;
+
+        entry = new PropertyMap("*[name]");
+        entry.put(new PropertySimple("name", "shutdown"));
+        entry.put(new PropertySimple("value", "parthaa"));
+        entries.getList().add(entry);
+
+        return config;
     }
 }

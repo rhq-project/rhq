@@ -37,14 +37,13 @@
             <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="true"/>
         </c:group>
         <c:group name="Security">
-            <c:simple-property displayName="Supress VRFY" name="disable_vrfy_command" type="boolean"  default="true" required="false" description="Supress Response to SMTP VRFY requests by default"/>
+            <c:simple-property displayName="Suppress VRFY" name="disable_vrfy_command" type="boolean"  default="true" required="false" description="Supress Response to SMTP VRFY requests by default"/>
             <c:simple-property displayName="Force HELO" name="smtpd_helo_required" type="boolean"  default="true" required="false" description="Force clients to start connection with HELO"/>
             <c:simple-property displayName="Always send EHLO" name="smtp_always_send_ehlo" type="boolean"  default="true" required="true" description="Always send a correct EHLO greeting"/>
             <c:simple-property displayName="In Flow Delay" name="in_flow_delay" required="false" description="Number of seconds to delay before accepting messages if arriving faster than delivering"/>
             <c:simple-property displayName="Concurrency Delivery" name="local_destination_concurrency_limit" required="false" description="Number of messages delivered simultaneously to the same local recipient"/>
         </c:group>
        </resource-configuration>
-
 
    </server>
 

@@ -2079,6 +2079,49 @@
         </schema-directSQL>
       	
       </schemaSpec>
+
+
+      <!-- RHQ_REPO_TAG_MAP -->
+      <schemaSpec version="2.66">
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_REPO_TAG_MAP ( REPO_ID INTEGER )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="REPO_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" nullable="false" />
+        <schema-directSQL>
+          <statement>
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_KEY
+            PRIMARY KEY ( REPO_ID, TAG_ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_TAG_ID_FKEY
+            FOREIGN KEY ( TAG_ID )
+            REFERENCES RHQ_TAG ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD FOREIGN KEY ( TAG_ID )
+            REFERENCES RHQ_TAG ( ID )
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
     </dbupgrade>
   </target>
 </project>

@@ -143,8 +143,8 @@ public class Repo implements Serializable, Taggable {
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
 
-    @OneToMany()
-    private Set<Tag> tags;
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    private Set<RepoTag> repoTags;
 
     @Transient
     private String syncStatus;
@@ -680,46 +680,95 @@ public class Repo implements Serializable, Taggable {
         this.lastModifiedDate = System.currentTimeMillis();
     }
 
-    public Set<Tag> getTags() {
-        return tags;
+    public Set<RepoTag> getRepoTags() {
+        return repoTags;
     }
 
-    public void setTags(Set<Tag> tags) {
-        this.tags = tags;
+    public void setRepoTags(Set<RepoTag> tags) {
+        this.repoTags = repoTags;
     }
 
     public boolean hasTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
+        if ((this.repoTags == null) || (tag == null)) {
             return false;
         }
 
-        if (name == null) {
-            if (tag.getName() != null) {
-                return false;
+        for (RepoTag rt : this.repoTags) {
+            if (tag.equals(rt.getRepoTagPK().getTag())) {
+                return true;
             }
-        } else if (!name.equals(tag.getName())) {
-            return false;
         }
-
-        return true;
+        return false;
 
     }
 
+    /**
+     * The tags associated with this repo.
+     */
+    public Set<Tag> getTags() {
+        HashSet<Tag> tags = new HashSet<Tag>();
+
+        if (repoTags != null) {
+            for (RepoTag rt : repoTags) {
+                tags.add(rt.getRepoTagPK().getTag());
+            }
+        }
+
+        return tags;
+    }
+
+    /**
+     * Add a tag association with this repo.
+     *
+     * @param  tag
+     */
     public void addTag(Tag tag) {
-        if (this.tags == null) {
-            this.tags = new HashSet<Tag>();
+        if (this.repoTags == null) {
+            this.repoTags = new HashSet<RepoTag>();
         }
 
-        this.tags.add(tag);
+        RepoTag mapping = new RepoTag(this, tag);
+        this.repoTags.add(mapping);
     }
 
+    /**
+     * Set tag associations with this repo.
+     *
+     * @param  tag
+     */
+    public void setTags(Set<Tag> tags) {
+        if (this.repoTags == null) {
+            this.repoTags = new HashSet<RepoTag>();
+        } else {
+            this.repoTags.clear();
+        }
+
+        for (Tag t : tags) {
+            RepoTag mapping = new RepoTag(this, t);
+            this.repoTags.add(mapping);
+        }
+
+    }
+
+    /**
+     * Removes association with a tag, if it exists. 
+     */
     public void removeTag(Tag tag) {
-        if ((this.tags == null) || (tag == null)) {
+        if ((this.repoTags == null) || (tag == null)) {
             return;
         }
 
-        if (tags.contains(tag)) {
-            tags.remove(tag);
+        RepoTag doomed = null;
+
+        for (RepoTag rt : this.repoTags) {
+            if (tag.equals(rt.getRepoTagPK().getTag())) {
+                doomed = rt;
+                break;
+            }
+        }
+
+        if (doomed != null) {
+            this.repoTags.remove(doomed);
         }
     }
 

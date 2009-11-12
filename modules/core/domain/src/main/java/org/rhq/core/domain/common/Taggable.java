@@ -28,7 +28,7 @@ public interface Taggable {
 
     public Set<Tag> getTags();
 
-    void setTags(Set<Tag> tags);
+    public void setTags(Set<Tag> tags);
 
     public boolean hasTag(Tag tag);
 

@@ -199,7 +199,7 @@ public class RHNHelper {
      * @throws IOException on systemid reads
      * @throws XmlRpcException on xmlrpc faults
      */
-    public ArrayList getSyncableChannels() throws IOException, XmlRpcException {
+    public List<String> getSyncableChannels() throws IOException, XmlRpcException {
         ArrayList<String> allchannels = new ArrayList();
         List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
         for (RhnChannelFamilyType cf : cfts) {

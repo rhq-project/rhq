@@ -46,6 +46,9 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
@@ -55,7 +58,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
  * @author pkilambi
  *
  */
-public class RHNProvider implements ContentProvider, PackageSource, DistributionSource
+public class RHNProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource
 {
 
     private final Log log = LogFactory.getLog(RHNProvider.class);
@@ -136,34 +139,17 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
         // RHQ Server is now active, initialize the handler for the bits.
         helper = new RHNHelper(locationIn, repos, rhnObject.getSystemid());
         log.info("RHNProvider initialized RHNHelper with repos: " + repos);
-
-        // Now that the server is activated, spawn all syncable channels
-        ArrayList<String> channels = helper.getSyncableChannels();
-
-
-        // when running under a test we are restricting behavior to not setup up Repos through RHQ
-        if (!testMode) {
-            // Eventually we should pass in a subset of selected channels to spawn
-            initializeRepos(channels);
-        }
     }
 
     /**
-     * Shutdown the adapter.
+     * @inheritDoc
      */
     public void shutdown() {
         log.debug("shutdown");
     }
 
-
     /**
-     * Get an input stream for the specified package (bits).
-     *
-     * @param  location The location relative to the baseurl.
-     *
-     * @return An open stream that <b>must</b> be closed by the caller.
-     *
-     * @throws Exception On all errors.
+     * @inheritDoc
      */
     public InputStream getInputStream(String location) throws Exception {
         log.debug("opening: " + location);
@@ -171,7 +157,7 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     }
 
     /**
-     * Synchronize package content for selected channel labels
+     * @inheritDoc
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
                                     Collection<ContentProviderPackageDetails> existingPackages)
@@ -210,6 +196,9 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public void synchronizeDistribution(DistributionSyncReport report, Collection<DistributionDetails> existingDistros) throws Exception {
 
         // Goal:
@@ -250,13 +239,27 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     }
 
     /**
-      * Test's the adapter's connection.
-      *
-      * @throws Exception When connection is not functional for any reason.
-      */
+     * @inheritDoc
+     */
     public void testConnection() throws Exception {
         rhnObject.processDeActivation();
         rhnObject.processActivation();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public RepoImportReport importRepos() throws Exception {
+        RepoImportReport report = new RepoImportReport();
+
+        List<String> channels = helper.getSyncableChannels();
+        for (String clabel : channels) {
+            log.info("Importing repo: " + clabel);
+            RepoDetails repo = new RepoDetails(clabel);
+            report.addRepo(repo);
+        }
+
+        return report;
     }
 
     /**
@@ -269,26 +272,6 @@ public class RHNProvider implements ContentProvider, PackageSource, Distribution
     private PublicKeyRing readDefaultKeyRing() throws KeyException, IOException {
         InputStream keyringStream = new FileInputStream(RHNConstants.DEFAULT_WEBAPP_GPG_KEY_RING);
         return new PublicKeyRing(keyringStream);
-    }
-
-    /**
-     * Spawns a list of repos for all available channels from RHN hosted.
-     * @param channels The list of channels to be initialized as repos
-     * @throws RepoException
-     */
-    public void initializeRepos(ArrayList<String> channels) throws RepoException {
-        log.info("list of channels: " + channels);
-        if (channels.size() == 0) {
-            // No repos to create
-            return;
-        }
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        Subject subject = LookupUtil.getSubjectManager().getOverlord();
-        for (String clabel : channels) {
-            Repo newRepo = new Repo(clabel.toString());
-            newRepo = repoManager.createCandidateRepo(subject, newRepo);
-            log.info("New " + newRepo + " repo created");
-        }
     }
 
     /**

@@ -43,21 +43,19 @@ THIS TEXT WILL BE REMOVED.
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
 
-
-
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">		          
                       
             <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationViewUIBean.updateInProgress}" />
 			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationViewUIBean.updateInProgress}" />
          </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                     configuration="#{rawConfigCollection.configuration}"
                      accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
                      readOnly="true"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"

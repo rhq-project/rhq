@@ -25,6 +25,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,7 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * The backing class for all Web based activities for manipulating the set of
  * raw configuration files associated with a resource
  */
-public class RawConfigCollection implements Serializable {
+public class RawConfigCollection extends AbstractConfigurationUIBean implements Serializable {
 
     private RawConfigDelegate rawConfigDelegate = null;
     private RawConfigDelegateMap rawConfigDelegateMap;
@@ -63,18 +64,21 @@ public class RawConfigCollection implements Serializable {
     @End
     public String commit() {
 
-        for (RawConfiguration raw : getRawConfigDelegate().modified.values()) {
-            getRaws().put(raw.getPath(), raw);
-        }
-
-        getConfiguration().getRawConfigurations().clear();
-        getConfiguration().getRawConfigurations().addAll(getRaws().values());
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        getConfigurationManager().updateResourceConfiguration(subject, getResourceId(), getConfiguration());
+        getConfigurationManager().updateResourceConfiguration(subject, getResourceId(), getMergedConfiguration());
 
         nullify();
 
         return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
+    }
+
+    private Configuration getMergedConfiguration() {
+        for (RawConfiguration raw : getRawConfigDelegate().modified.values()) {
+            getRaws().put(raw.getPath(), raw);
+        }
+        getConfiguration().getRawConfigurations().clear();
+        getConfiguration().getRawConfigurations().addAll(getRaws().values());
+        return getConfiguration();
     }
 
     public String discard() {
@@ -120,7 +124,8 @@ public class RawConfigCollection implements Serializable {
         return configuration;
     }
 
-    private ConfigurationDefinition getConfigurationDefinition() {
+    //TODO Sync this up with the baseclass
+    public ConfigurationDefinition getConfigurationDefinition() {
         if (null == getRawConfigDelegate().configurationDefinition) {
 
             getRawConfigDelegate().configurationDefinition = getConfigurationManager()
@@ -199,7 +204,7 @@ public class RawConfigCollection implements Serializable {
         if (null == getRawConfigDelegate().raws) {
             getRawConfigDelegate().raws = new TreeMap<String, RawConfiguration>();
             if (useMock) {
-                rawConfigDelegate.populateRawsMock(this);
+                MockSupport.populateRawsMock(this);
             } else {
                 populateRaws(this);
             }
@@ -328,4 +333,54 @@ public class RawConfigCollection implements Serializable {
     public String upload() {
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
+
+    public String switchToraw() {
+        log.error("switch2raw called");
+        configuration = getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRawConfigDelegate().raws.put(raw.getPath(), raw);
+        }
+        getRawConfigDelegate().current = null;
+        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+    }
+
+    public String switchTostructured() {
+        log.error("switch2structured called");
+        configuration = getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRawConfigDelegate().raws.put(raw.getPath(), raw);
+        }
+        getRawConfigDelegate().current = null;
+
+        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
+    }
+
+    @Override
+    protected int getConfigurationDefinitionKey() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    protected int getConfigurationKey() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    protected Configuration lookupConfiguration() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected ConfigurationDefinition lookupConfigurationDefinition() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
 }

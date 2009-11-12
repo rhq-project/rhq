@@ -28,11 +28,11 @@ THIS TEXT WILL BE REMOVED.
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
            You are viewing this in structured mode. Switch to 
-           <h:outputLink value="edit-raw.xhtml">
+           <h:commandLink action="#{rawConfigCollection.switchToraw}">
              <f:param name="conversationId" value="#{conversation.id}"/>
              <f:param name="id" value="#{ResourceUIBean.id}"/>
              <h:outputText value=" files mode"/>
-           </h:outputLink>
+           </h:commandLink>
   
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"

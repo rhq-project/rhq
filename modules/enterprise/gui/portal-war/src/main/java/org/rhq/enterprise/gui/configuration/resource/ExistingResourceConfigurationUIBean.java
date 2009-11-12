@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,7 +36,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Ian Springer
  */
-public class ExistingResourceConfigurationUIBean extends AbstractResourceConfigurationUIBean {
+public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
     // =========== actions ===========
@@ -50,6 +51,15 @@ public class ExistingResourceConfigurationUIBean extends AbstractResourceConfigu
     }
 
     public String editRawConfiguration() {
+        return SUCCESS_OUTCOME;
+    }
+
+    public String switchToRaw() {
+        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
+        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        this.configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
+            resourceId, getConfiguration(), true);
+
         return SUCCESS_OUTCOME;
     }
 

@@ -32,17 +32,17 @@
 		
 	}
 </script>
-	
+	<a4j:form id="editResourceConfigurationForm">
+			
 	<h:outputText value="#{messages.youareviewingraw}" />
 	<h:outputText value=" #{messages.switch2}" />
-           <h:outputLink value="edit.xhtml">
+           <h:commandLink  action="#{rawConfigCollection.switchTostructured}">
 			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" #{messages.structured}" />
-		</h:outputLink>
+		</h:commandLink>
 
  		<table class="summary-props-table" style="">
-			<a4j:form id="editResourceConfigurationForm">
 				<input type="hidden" name="id"
 					value="#{ResourceUIBean.id}" />
 				<tr>
@@ -95,9 +95,9 @@
 					</td>
 				</tr>
 
-			</a4j:form>
+			
 		</table>	
-		
+		</a4j:form>
 	</ui:define>
 
 </ui:composition>

@@ -55,8 +55,8 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
     }
 
     /* At load-time ensure that any WAR files packaged with the server plugin are deployed to the RHQ
-     * Server.  Perspective apps are deployed along-side the rhq.ear and can access the same shared
-     * components.
+     * Server.  Note, perspective apps are logically deployed along-side, not inside the rhq.ear (although physically
+     * under the default/work). They should have access to the same shared components.
      *  
      * @see org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer#loadPlugin(org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment)
      */
@@ -71,7 +71,6 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
                     deployWar(entry.getName(), plugin.getInputStream(entry));
                 }
             }
-
         } catch (Exception e) {
             getLog().error("Failed to deploy " + env.getPluginName() + "#" + name, e);
         }
@@ -88,11 +87,11 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
             Context ic = new InitialContext();
             MBeanServerConnection server = (MBeanServerConnection) ic.lookup("jmx/invoker/RMIAdaptor");
 
-            // get reference to CacheMgmtInterceptor MBean
+            // get reference to MainDeployer MBean
             ObjectName mainDeployer = new ObjectName("jboss.system:service=MainDeployer");
 
-            // configure a filter to only receive node created and removed events
-            server.invoke(mainDeployer, "deploy", new Object[] { tempFile.getAbsolutePath() }, null);
+            server.invoke(mainDeployer, "deploy", new Object[] { tempFile.getAbsolutePath() },
+                new String[] { String.class.getName() });
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -101,11 +100,11 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
     private File writeWarToTempFile(String name, InputStream iStream) throws Exception {
 
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File tempFile = new File(tempDir.getAbsolutePath(), name + System.currentTimeMillis());
+        File tempFile = new File(tempDir.getAbsolutePath(), name);
 
-        // The temp file shouldn't be there, but check and delete it if it is
+        // Delete any previous instance of the file
         if (tempFile.exists()) {
-            getLog().warn("Existing temporary file found and will be deleted at: " + tempFile);
+            getLog().debug("Existing temporary file found and will be deleted at: " + tempFile);
             tempFile.delete();
         }
 
@@ -118,6 +117,50 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
         }
 
         return tempFile;
+    }
+
+    /* At unload-time ensure that any WAR files packaged with the server plugin are un-deployed on
+     * the RHQ Server.
+     * 
+     * @see org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer#unloadPlugin(org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment)
+     */
+    @Override
+    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+        String name = null;
+        try {
+            JarFile plugin = new JarFile(env.getPluginUrl().getFile());
+            for (JarEntry entry : Collections.list(plugin.entries())) {
+                name = entry.getName();
+                if (name.toLowerCase().endsWith(".war")) {
+                    undeployWar(entry.getName());
+                }
+            }
+
+        } catch (Exception e) {
+            getLog().error("Failed to deploy " + env.getPluginName() + "#" + name, e);
+        }
+
+        super.unloadPlugin(env);
+    }
+
+    private void undeployWar(String name) {
+        try {
+            // get reference to MBean server
+            Context ic = new InitialContext();
+            MBeanServerConnection server = (MBeanServerConnection) ic.lookup("jmx/invoker/RMIAdaptor");
+
+            // get reference to MainDeployer MBean
+            ObjectName mainDeployer = new ObjectName("jboss.system:service=MainDeployer");
+
+            Boolean isDeployed = (Boolean) server.invoke(mainDeployer, "isDeployed", new Object[] { name },
+                new String[] { String.class.getName() });
+
+            if (isDeployed) {
+                server.invoke(mainDeployer, "undeploy", new Object[] { name }, new String[] { String.class.getName() });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

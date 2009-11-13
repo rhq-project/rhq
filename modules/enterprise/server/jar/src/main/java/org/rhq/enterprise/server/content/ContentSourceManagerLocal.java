@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -393,6 +394,19 @@ public interface ContentSourceManagerLocal {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults);
 
+    /**
+     * After a sync has happened, this is responsible for persisting the results.
+     *
+     * @param  contentSource content source that was just sync'ed
+     * @param  report        information on what the current inventory should look like
+     * @param  syncResults   sync results object that should be updated to track this method's progress
+     *
+     * @return the updated syncResults that includes more summary information in the results string that indicates what
+     *         was done
+     */
+    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults);
+
     void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
@@ -408,6 +422,12 @@ public interface ContentSourceManagerLocal {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
+    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults, StringBuilder progress);
+
+    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
+    
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
      * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that

@@ -73,6 +73,9 @@ import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoPackageVersion;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -87,6 +90,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
@@ -96,6 +100,9 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 
 /**
@@ -839,6 +846,49 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
+    public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults) {
+        try {
+            StringBuilder progress = new StringBuilder();
+            if (syncResults.getResults() != null) {
+                progress.append(syncResults.getResults());
+            }
+
+            //////////////////
+            // REMOVE
+            syncResults = contentSourceManager._mergeContentSourceSyncReportREMOVE(contentSource, report, syncResults, progress);
+
+            //////////////////
+            // ADD
+            syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, report, syncResults, progress);
+
+            // if we added/updated/deleted anything, change the last modified time of all repos
+            // that get content from this content source
+            if ((report.getDistributions().size() > 0) || (report.getDeletedDistributions().size() > 0)) {
+                contentSourceManager._mergeContentSourceSyncReportUpdateRepo(contentSource.getId());
+            }
+
+            // let our sync results object know that we completed the merge
+            // don't mark it as successful yet, let the caller do that
+            progress.append(new Date()).append(": ").append("MERGE COMPLETE.\n");
+            syncResults.setResults(progress.toString());
+            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        } catch (Throwable t) {
+            // ThrowableUtil will dump SQL nextException messages, too
+            String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
+                + ThrowableUtil.getAllMessages(t);
+            log.error(errorMsg);
+            throw new RuntimeException(errorMsg, t);
+        }
+
+        return syncResults;
+    }
+
+
+
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults) {
@@ -986,6 +1036,34 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
 
         progress.append("...").append(removeCount).append('\n');
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+
+        return syncResults;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        progress.append(new Date()).append(": ").append("Removing");
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // remove all distributions that are no longer available on the remote repository
+        for (DistributionDetails doomedDetails: report.getDeletedDistributions()) {
+            Distribution doomedDist = distManager.getDistributionByLabel(doomedDetails.getLabel());
+            distManager.deleteDistributionByDistId(overlord, doomedDist.getId());
+            distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
+            progress.append("Removed distribution & distribution files for: " + doomedDetails.getLabel());
+            syncResults.setResults(progress.toString());
+            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        }
+
+        progress.append("Finished Distribution removal...").append('\n');
         syncResults.setResults(progress.toString());
         syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
 
@@ -1207,6 +1285,41 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         return syncResults;
     }
+
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<DistributionDetails> newDetails = report.getDistributions();
+        for (DistributionDetails detail: newDetails) {
+            try {
+                DistributionType distType = new DistributionType();
+                distType.setName(detail.getDistributionType());
+                distType.setDescription(detail.getDescription());
+                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(),
+                    detail.getDistributionPath(), distType);
+                List<DistributionFileDetails> files = detail.getFiles();
+                for (DistributionFileDetails f: files) {
+                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
+                    df.setLastModified(f.getLastModified());
+                    entityManager.persist(df);
+                }
+            }
+            catch (DistributionException e) {
+                progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
+                progress.append("Error is: " + e.getMessage());
+                syncResults.setResults(progress.toString());
+                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                log.error(e);
+            }
+        }
+        return syncResults;
+    }
+
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource,

@@ -93,6 +93,10 @@ public class DistributionFile {
         return last_modified;
     }
 
+    public void setLastModified(long lastModifiedIn) {
+        this.last_modified = lastModifiedIn;
+    }
+
     public Distribution getDistribution() {
         return distribution;
     }

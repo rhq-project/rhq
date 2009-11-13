@@ -36,11 +36,13 @@ public interface DistributionSource {
     /**
      * Requests that this distribution source perform a synchronization with its external repository.
      *
+     * @param repoName          repo name used to look up distributions
      * @param report           used to accumulate the collection of distros
      * @throws Exception if the source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizeDistribution(DistributionSyncReport report, Collection<DistributionDetails> existingDistros)
+    void synchronizeDistribution(String repoName, DistributionSyncReport report,
+                                 Collection<DistributionDetails> existingDistros)
         throws Exception;
 
     /**

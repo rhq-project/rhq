@@ -44,6 +44,8 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -51,6 +53,7 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
@@ -253,6 +256,74 @@ public class ContentProviderManager {
                 results.setResults(progress.toString());
                 results.setStatus(ContentSourceSyncStatus.SUCCESS);
                 results = contentSourceManager.mergeContentSourceSyncResults(results);
+            }
+            if (provider instanceof DistributionSource) {
+                log.info("synchronizeContentSource(" + contentSourceId + "):  this source is a DistributionSource");
+                log.info("We will skip the sync for now until PackageSource is working.");
+                /**
+                DistributionSource distSource = (DistributionSource) provider;
+                RepoCriteria reposForContentSource = new RepoCriteria();
+                reposForContentSource.addFilterContentSourceIds(contentSourceId);
+                List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
+
+                // Temporary functionality: loop for all repos that use this content source
+                for (Repo repo : repos) {
+                    start = System.currentTimeMillis();
+
+                    PageControl pc = PageControl.getUnlimitedInstance();
+                    log.debug("Looking up existing distributions for repoId: " + repo.getId());
+                    List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pc);
+                    log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
+
+                    progress.append(dists.size()).append('\n');
+                    progress.append(new Date()).append(": ");
+                    progress.append("Asking content source to update the list of packages...");
+
+                    DistributionSyncReport distReport = new DistributionSyncReport();
+                    List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(dists.size());
+                    translateDomainToDto(dists, distDetails);
+                
+                    distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
+
+                    log.info("synchronizeDistributions: [" + contentSource.getName() + "]: loaded existing list of size=["
+                        + dists.size() + "] (" + (System.currentTimeMillis() - start) + ")ms");
+
+                    results.setResults(progress.toString());
+                    results = contentSourceManager.mergeContentSourceSyncResults(results);
+                    start = System.currentTimeMillis();
+
+
+                    distSource.synchronizeDistribution(distReport, distDetails);
+                    log.info("synchronizeDistributions: [" + contentSource.getName() + "]: got sync report from adapter=["
+                        + distReport + "] (" + (System.currentTimeMillis() - start) + ")ms");
+
+                    progress.append("new=").append(distReport.getDistributions().size());
+                    //TODO: Consider Update case, i.e. rhel-5-u2 was prev synced, and now a
+                    // single DistributionFile has changed
+
+                    progress.append(", deleted=").append(distReport.getDeletedDistributions().size()).append('\n');
+                    //progress.append(new Date()).append(": ");
+                    //progress.append("FULL SUMMARY FOLLOWS:").append('\n');
+                    //progress.append(distReport.getSummary()).append('\n');
+                    //progress.append(new Date()).append(": ");
+                    //progress.append("Merging the updated list of packages to database").append('\n');
+                    results.setResults(progress.toString());
+                    results = contentSourceManager.mergeContentSourceSyncResults(results);
+                    start = System.currentTimeMillis();
+                    results = contentSourceManager.mergeContentSourceSyncReport(contentSource, distReport, results);
+                }
+                // let's reset our progress string to the full results including the text added by the merge
+                progress.setLength(0);
+                progress.append(results.getResults());
+
+                log.info("synchronizeDistributions: [" + contentSource.getName() + "]: report has been merged ("
+                    + (System.currentTimeMillis() - start) + ")ms");
+
+                progress.append(new Date()).append(": ").append("DONE.");
+                results.setResults(progress.toString());
+                results.setStatus(ContentSourceSyncStatus.SUCCESS);
+                results = contentSourceManager.mergeContentSourceSyncResults(results);
+                 */
             }
         } catch (Throwable t) {
             if (results != null) {
@@ -617,6 +688,24 @@ public class ContentProviderManager {
 
             allDetails.add(details);
             keyPVCSMap.put(key, pvcs);
+        }
+    }
+
+    private void translateDomainToDto(List<Distribution>dists, List<DistributionDetails> distDetails) {
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+
+        for (Distribution d: dists) {
+            DistributionDetails detail = new DistributionDetails(d.getLabel(), d.getDistributionType().getName());
+            detail.setLabel(d.getLabel());
+            detail.setDistributionPath(d.getBasePath());
+            detail.setDescription(d.getDistributionType().getDescription());
+            List<DistributionFile> files = distManager.getDistributionFilesByDistId(d.getId());
+            for (DistributionFile f: files) {
+                DistributionFileDetails dfd =
+                        new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(), f.getMd5sum());
+                detail.addFile(dfd);
+            }
+            distDetails.add(detail);
         }
     }
 

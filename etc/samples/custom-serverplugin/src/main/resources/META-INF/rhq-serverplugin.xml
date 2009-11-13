@@ -16,6 +16,14 @@
         </serverplugin:schedule>
     </serverplugin:lifecycle-listener>
 
+    <serverplugin:scheduled-job jobId="first-scheduled-job" concurrent="false" class="MyScheduledJob">
+        <serverplugin:cron>0 0/5 * * * ?</serverplugin:cron>
+    </serverplugin:scheduled-job>
+
+    <serverplugin:scheduled-job jobId="sample-job-2" concurrent="true" class="MyScheduledJob">
+        <serverplugin:period>60000</serverplugin:period>
+    </serverplugin:scheduled-job>
+
     <serverplugin:plugin-configuration>
         <c:simple-property name="myCustomProperty" type="string" required="true"
                            description="A property my plugin needs to be properly configured" />

@@ -49,6 +49,15 @@
                         this class will be notified when the plugin is loaded and unloaded. This provides a place
                         for plugin developers to allocate global resources needed by all plugin components and
                         a place to clean up those resources. It can also be scheduled to perform periodic work.
+                        A lifecycle listener object is stateful - the instance lives for as long as the plugin
+                        is initialized.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="scheduled-job" minOccurs="0" maxOccurs="unbounded" type="serverplugin:ScheduledJobType">
+                <xs:annotation>
+                    <xs:documentation>
+                        A scheduled job that is called to periodically perform work on behalf of the plugin.
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
@@ -171,6 +180,34 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="ScheduledJobType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ScheduleType">
+                <xs:attribute name="jobId" type="xs:string" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            A unique identifier for this job. Job IDs need to be unique
+                            within a plugin. When the scheduled job is invoked, this job ID
+                            will be passed to it.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+                <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The classname of the ScheduledJob implementation that will be instantiated
+                            whenever the schedule is triggered. This job instance will not be stateful,
+                            a new instance of the class is created for each schedule trigger. Each job
+                            invocation is handed a reference to the plugin's lifecycle listener (if one
+                            was defined for the plugin), thus providing a way to obtain stateful
+                            information from the plugin.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:simpleType name="classNameType">

@@ -21,10 +21,10 @@
 
            <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
                               default="/etc/postfix/main.cf"
-                              description="the absolute path of the samba configuration"/>
+                              description="the absolute path of the postfix configuration"/>
 
            <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
-                              default="/files/etc/postfix/main.cf/*"/>
+                              default="/files/etc/postfix/main.cf"/>
        </plugin-configuration>
 
       <resource-configuration>
@@ -32,7 +32,7 @@
             <c:simple-property displayName="Hostname" name="myhostname" description="Server's fully qualified domain name" required="false"/>
             <c:simple-property displayName="Origin" name="myorigin" description="Domain used in outgoing mail" required="false"/>
             <c:simple-property displayName="Networks" name="mynetworks" description="List of clients that can relay mail" required="false"/>
-            <c:simple-property displayName="Destinations" name="mydestinations" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
+            <c:simple-property displayName="Destinations" name="mydestination" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
             <c:simple-property displayName="Interfaces" name="inet_interfaces" description="Network interfaces that Postfix will bind to" required="false"/>
             <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="true"/>
         </c:group>
@@ -45,6 +45,34 @@
         </c:group>
        </resource-configuration>
 
+      <service name="Access" discovery="PostfixAccessDiscoveryComponent" class="PostfixAccessComponent"               
+               description="Access List in the  Postfix System">
+       <plugin-configuration>
+           <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Postfix_Access" required="true" readOnly="true"
+                              description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+
+           <c:simple-property name="configurationFilesInclusionPatterns" displayName="File Path" type="file" required="true" readOnly="true"
+                              default="/etc/postfix/access"
+                              description="the absolute path of the postfix configuration"/>
+
+           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
+                              default="/files/etc/postfix/access"/>
+       </plugin-configuration>
+      <resource-configuration>
+         <c:list-property name="." displayName="Entries">
+            <c:map-property name="*[pattern]">
+               <c:simple-property name="pattern" displayName="Filtering Pattern" type="string" required="true" 
+                                  description="The filtering pattern. Example  Ip address 1.2.3"/>
+
+               <c:simple-property name="action" displayName="Action" type="string" required="true"
+                                  description="The action to undergo, for example REJECT/ACCEPT"/>
+
+				<c:simple-property name="parameters" displayName="Arguments" type="string" required="false"
+                                  description="These depend on the action selected. For example you may choose to use this to be the message for 'DISCARD' action. "/>                                  
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+      </service>
    </server>
 
 </plugin>

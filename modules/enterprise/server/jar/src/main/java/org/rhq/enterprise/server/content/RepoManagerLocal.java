@@ -280,6 +280,6 @@ public interface RepoManagerLocal {
      * @param repoIds to syncronize
      * @return count of the number of repositories synced.
      */
-    int syncronizeRepos(Subject subject, Integer[] repoIds);
+    int synchronizeRepos(Subject subject, Integer[] repoIds);
 
 }

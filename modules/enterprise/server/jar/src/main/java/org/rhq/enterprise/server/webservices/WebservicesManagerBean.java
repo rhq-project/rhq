@@ -287,8 +287,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     @Override
-    public int syncronizeRepos(Subject subject, Integer[] repoIds) {
-        return repoManager.syncronizeRepos(subject, repoIds);
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+        return repoManager.synchronizeRepos(subject, repoIds);
     }
 
     //REPOMANAGER: END ----------------------------------

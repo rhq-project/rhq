@@ -63,7 +63,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         Integer[] repoIds = getIntegerArray(selected);
 
         if (repoIds.length > 0) {
-            int syncCount = repoManager.syncronizeRepos(subject, repoIds);
+            int syncCount = repoManager.synchronizeRepos(subject, repoIds);
             if (syncCount > 0) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
                     + "] content sources.");

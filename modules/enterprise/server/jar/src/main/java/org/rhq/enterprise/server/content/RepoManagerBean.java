@@ -900,7 +900,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @Override
-    public int syncronizeRepos(Subject subject, Integer[] repoIds) {
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
         int syncCount = 0;
 
         for (Integer id : repoIds) {

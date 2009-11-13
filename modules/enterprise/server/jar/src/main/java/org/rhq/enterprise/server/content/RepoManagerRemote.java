@@ -266,6 +266,6 @@ public interface RepoManagerRemote {
         @WebParam(name = "pageControl") PageControl pc);
 
     @WebMethod
-    int syncronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds);
+    int synchronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds);
 
 }

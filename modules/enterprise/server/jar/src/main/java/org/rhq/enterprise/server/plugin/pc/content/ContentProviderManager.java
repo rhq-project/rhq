@@ -189,6 +189,7 @@ public class ContentProviderManager {
 
                 RepoCriteria reposForContentSource = new RepoCriteria();
                 reposForContentSource.addFilterContentSourceIds(contentSourceId);
+                reposForContentSource.addFilterCandidate(false); // Don't sync packages for candidates
 
                 List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
 

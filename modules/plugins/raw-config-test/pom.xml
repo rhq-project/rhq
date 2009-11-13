@@ -25,6 +25,12 @@
       <artifactId>groovy-all</artifactId>
       <version>1.6.4</version>
     </dependency>
+
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
+       <version>1.1</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -67,6 +73,11 @@
                   <groupId>org.codehaus.groovy</groupId>
                   <artifactId>groovy-all</artifactId>
                   <version>1.6.4</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-configuration</groupId>
+                  <artifactId>commons-configuration</artifactId>
+                  <version>1.1</version>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

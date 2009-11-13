@@ -899,4 +899,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return null;
     }
 
+    @Override
+    public int syncronizeRepos(Subject subject, Integer[] repoIds) {
+        int syncCount = 0;
+
+        for (Integer id : repoIds) {
+            Repo r = this.getRepo(subject, id);
+            Set<ContentSource> sources = r.getContentSources();
+            Iterator<ContentSource> i = sources.iterator();
+            while (i.hasNext()) {
+                ContentSource source = i.next();
+                contentSourceManager.synchronizeAndLoadContentSource(subject, source.getId());
+                syncCount++;
+                log.debug("Initiating sync: " + source.getId());
+            }
+        }
+
+        return syncCount;
+    }
+
 }

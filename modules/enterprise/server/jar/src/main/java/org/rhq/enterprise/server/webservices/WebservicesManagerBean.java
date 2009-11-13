@@ -286,6 +286,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
+    @Override
+    public int syncronizeRepos(Subject subject, Integer[] repoIds) {
+        return repoManager.syncronizeRepos(subject, repoIds);
+    }
+
     //REPOMANAGER: END ----------------------------------
 
     //CONFIGURATIONMANAGER: BEGIN ----------------------------------

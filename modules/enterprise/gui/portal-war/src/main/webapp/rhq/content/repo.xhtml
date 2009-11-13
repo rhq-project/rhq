@@ -83,6 +83,12 @@
                      </h:outputText>
                   </td>
                </tr>
+               <tr>
+                  <td align="right"><b>Syncronization Status:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{RepoDetailsUIBean.repo.syncStatus}"/>
+                  </td>
+               </tr>
             </table>
          </rich:panel>
 
@@ -90,6 +96,9 @@
             <h:commandButton rendered="${mode ne 'edit'}"
                              value="EDIT" action="#{RepoDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
+                             alt="Synchronize" styleClass="buttonmed" id="syncButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
                              value="SAVE" action="#{RepoDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>

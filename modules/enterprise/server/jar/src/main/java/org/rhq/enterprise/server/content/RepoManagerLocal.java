@@ -275,4 +275,11 @@ public interface RepoManagerLocal {
      */
     PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
 
+    /**
+     * Syncronize the content associated with the repoIds passed in.
+     * @param repoIds to syncronize
+     * @return count of the number of repositories synced.
+     */
+    int syncronizeRepos(Subject subject, Integer[] repoIds);
+
 }

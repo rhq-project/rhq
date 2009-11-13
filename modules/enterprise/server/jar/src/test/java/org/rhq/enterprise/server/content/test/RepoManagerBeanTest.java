@@ -100,6 +100,24 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLED)
+    public void testSyncRepos() throws Exception {
+        Repo repo = new Repo("testSyncStatus");
+        repoManager.createRepo(overlord, repo).getId();
+        Integer[] ids = { repo.getId() };
+        int syncCount = repoManager.syncronizeRepos(overlord, ids);
+
+        assert syncCount == 0;
+
+        ContentSourceType cst = new ContentSourceType("testSyncStatus");
+        ContentSource cs = new ContentSource("testSyncStatus", cst);
+        repo.addContentSource(cs);
+        syncCount = repoManager.syncronizeRepos(overlord, ids);
+
+        assert syncCount == 1;
+
+    }
+
+    @Test(enabled = ENABLED)
     public void testSyncStatus() throws Exception {
         Repo repo = new Repo("testSyncStatus");
         repoManager.createRepo(overlord, repo).getId();

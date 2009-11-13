@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.gui.content;
 
-import java.util.Iterator;
-import java.util.Set;
-
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
@@ -28,7 +25,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -64,31 +60,16 @@ public class ListReposUIBean extends PagedDataTableUIBean {
     public String syncSelectedContentSources() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
-        Integer[] ids = getIntegerArray(selected);
-        int syncCount = 0;
-        if (ids.length > 0) {
-            try {
-                for (Integer id : ids) {
-                    Repo r = repoManager.getRepo(subject, id);
-                    Set<ContentSource> sources = r.getContentSources();
-                    Iterator<ContentSource> i = sources.iterator();
-                    while (i.hasNext()) {
-                        ContentSource source = i.next();
-                        contentSourceManager.synchronizeAndLoadContentSource(subject, source.getId());
-                        syncCount++;
-                        log.debug("Initiating sync: " + source.getId());
-                    }
-                }
-                if (syncCount > 0) {
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
-                        + "] content sources.");
-                } else {
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                        "Selected Repositories have no content to sync.");
-                }
-            } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to synchronized content sources.",
-                    e);
+        Integer[] repoIds = getIntegerArray(selected);
+
+        if (repoIds.length > 0) {
+            int syncCount = repoManager.syncronizeRepos(subject, repoIds);
+            if (syncCount > 0) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
+                    + "] content sources.");
+            } else {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                    "Selected Repositories have no content to sync.");
             }
         }
 

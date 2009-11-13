@@ -24,8 +24,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoDetailsUIBean {
@@ -38,6 +38,24 @@ public class RepoDetailsUIBean {
 
     public String edit() {
         return "edit";
+    }
+
+    public String getSyncStatus() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+    }
+
+    public String sync() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
+        int syncCount = LookupUtil.getRepoManagerLocal().syncronizeRepos(subject, repoIds);
+        if (syncCount > 0) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository is syncing.");
+        } else {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Nothing to sync for this Repository.");
+        }
+        return "success";
     }
 
     public String save() {
@@ -65,6 +83,7 @@ public class RepoDetailsUIBean {
             Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
             this.repo = manager.getRepo(subject, id);
+            this.repo.setSyncStatus(manager.calculateSyncStatus(subject, id));
         }
     }
 }

@@ -22,7 +22,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 /**
  * @author Partha Aji
@@ -70,7 +70,7 @@ public class SudoersComponentTest extends AbstractAugeasConfigurationComponentTe
     }
 
     @Override
-    protected Configuration getChangedResourceConfig() {
+    protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");
         config.put(entries);

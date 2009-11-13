@@ -19,6 +19,9 @@
 
 package org.custom;
 
+import java.util.Properties;
+
+import org.rhq.enterprise.server.plugin.pc.ScheduledJob;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
 
@@ -26,7 +29,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
  * A sample lifecycle listener for the sample generic plugin. This listener will be
  * the main interface the server uses to start and stop the plugin.
  */
-public class MyLifecycleListener implements ServerPluginLifecycleListener {
+public class MyLifecycleListener implements ServerPluginLifecycleListener, ScheduledJob {
 
     private ServerPluginContext context;
 
@@ -45,6 +48,12 @@ public class MyLifecycleListener implements ServerPluginLifecycleListener {
 
     public void shutdown() {
         System.out.println("The sample plugin has been shut down!!! : " + this);
+    }
+
+    @Override
+    public void execute(String jobId, ServerPluginLifecycleListener lifecycleListener, Properties callbackData)
+        throws Exception {
+        System.out.println("The sample plugin scheduled job [" + jobId + "] has triggered!!! : " + this);
     }
 
     @Override

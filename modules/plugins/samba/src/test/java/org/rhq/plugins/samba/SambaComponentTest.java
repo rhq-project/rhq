@@ -20,7 +20,7 @@ package org.rhq.plugins.samba;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AbstractAugeasConfigurationComponentTest;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest {
 
@@ -50,7 +50,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
 
 
     @Override
-    protected Configuration getChangedResourceConfig() {
+    protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
 
         config.put(new PropertySimple("workgroup", "DUMBCHANGE"));

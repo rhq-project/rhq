@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -39,6 +40,7 @@ import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.LifecycleListenerType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduleType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduledJobType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
@@ -75,6 +77,14 @@ public class ServerPluginDescriptorUtilTest {
         assert schedule.getCron().equals("0 15 10 ? * MON-FRI");
         assert schedule.getPeriod() == null;
 
+        List<ScheduledJobType> scheduledJobs = descriptor.getScheduledJob();
+        scheduledJobs.get(0).getJobId().equals("generic-job-1");
+        scheduledJobs.get(0).getClazz().equals("generic.scheduled.job1");
+        scheduledJobs.get(0).getPeriod().equals("123");
+        scheduledJobs.get(1).getJobId().equals("generic-job-2");
+        scheduledJobs.get(1).getClazz().equals("generic.scheduled.job2");
+        scheduledJobs.get(1).getCron().equals("0 30 11 ? * WED-FRI");
+
         ConfigurationDescriptor config = descriptor.getPluginConfiguration();
         assert config != null;
         assert config.getConfigurationProperty().get(0).getValue().getName().equals("prop1");
@@ -100,6 +110,8 @@ public class ServerPluginDescriptorUtilTest {
         assert lifecycleListener.getClazz().equals("alertPluginLifecycleListener");
         assert schedule.getCron() == null;
         assert schedule.getPeriod().longValue() == 1000L;
+
+        assert descriptor.getScheduledJob().size() == 0;
 
         ConfigurationDescriptor config = descriptor.getPluginConfiguration();
         assert config != null;

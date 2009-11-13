@@ -62,6 +62,13 @@ public class Glob {
      * @return the list of matches
      */
     public static List<File> match(File parentPath, String globPattern) {
+        if (!parentPath.exists()) {
+            throw new IllegalArgumentException("Path '" + parentPath + "' does not exist.");
+        }
+        if (!parentPath.isDirectory()) {
+            throw new IllegalArgumentException("Path '" + parentPath + "' is not a directory.");
+        }
+
         String rootPortion = rootPortion(globPattern);
         globPattern = globPattern.substring(rootPortion.length());
         
@@ -75,7 +82,7 @@ public class Glob {
         }
         
         if (specialCharIdx > 0) {
-            //now search for the first path separator preceeding the special char
+            //now search for the first path separator preceding the special char
             int globParentIdx = globPattern.lastIndexOf(File.separatorChar, specialCharIdx);
             if (globParentIdx > 0) {
                 //move the parent path down to the nearest parent of the wildcard part of the 
@@ -88,8 +95,13 @@ public class Glob {
         } else {
             globPattern = parentPath.getAbsolutePath() + globPattern;            
         }
-        
-        return Arrays.asList(parentPath.listFiles(new GlobFilter(globPattern)));
+
+        globPattern = new File(globPattern).getAbsolutePath();
+        File[] files = parentPath.listFiles(new GlobFilter(globPattern));
+        if (files == null) {
+            throw new IllegalStateException("Could not list files in " + parentPath);
+        }
+        return Arrays.asList(files);
     }
     
     public static List<File> matchAll(File parentPath, String... globPattern) {

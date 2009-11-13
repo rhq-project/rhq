@@ -35,14 +35,6 @@
           <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
        </dependency>
-
-       <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-augeas-plugin</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-       </dependency>              
        
    </dependencies>
 

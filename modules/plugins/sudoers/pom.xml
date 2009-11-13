@@ -25,25 +25,13 @@
    </properties>
 
    <dependencies>
-      <dependency>
-         <groupId>${rhq.groupId}</groupId>
-         <artifactId>rhq-platform-plugin</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
+   
        <dependency>
           <groupId>org.rhq</groupId>
           <artifactId>rhq-augeas-plugin</artifactId>
           <version>${project.version}</version>
        </dependency>
-       <dependency>
-          <groupId>org.rhq</groupId>
-          <artifactId>rhq-augeas-plugin</artifactId>
-          <version>${project.version}</version>
-          <type>test-jar</type>
-          <scope>test</scope>
-       </dependency>          
+
    </dependencies>
 
    <profiles>

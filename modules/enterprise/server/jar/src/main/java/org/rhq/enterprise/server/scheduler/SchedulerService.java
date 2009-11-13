@@ -45,7 +45,7 @@ import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.spi.JobFactory;
 
 /**
- * Scheduler MBean service that simply wraps the Quartz scheduler. This expects to wrap Quartz 1.5.2.
+ * Scheduler MBean service that simply wraps the Quartz scheduler.
  */
 public class SchedulerService implements SchedulerServiceMBean, MBeanRegistration {
     private Log log = LogFactory.getLog(SchedulerService.class);

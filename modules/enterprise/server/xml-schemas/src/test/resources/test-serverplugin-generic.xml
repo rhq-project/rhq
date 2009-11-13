@@ -18,6 +18,15 @@
         </serverplugin:schedule>
     </serverplugin:lifecycle-listener>
 
+    <serverplugin:scheduled-job jobId="generic-job-1" class="generic.scheduled.job1" concurrent="false">
+        <serverplugin:period>123</serverplugin:period>
+    </serverplugin:scheduled-job>
+
+    <serverplugin:scheduled-job jobId="generic-job-2" class="generic.scheduled.job2" concurrent="true">
+        <!-- Fire at 11:30am every wed-thru-fri -->
+        <serverplugin:cron>0 30 11 ? * WED-FRI</serverplugin:cron>
+    </serverplugin:scheduled-job>
+
     <serverplugin:plugin-configuration>
        <c:simple-property name="prop1" />
     </serverplugin:plugin-configuration>

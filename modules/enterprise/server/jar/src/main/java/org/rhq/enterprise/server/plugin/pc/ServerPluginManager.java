@@ -339,14 +339,9 @@ public class ServerPluginManager {
         LifecycleListenerType lifecycleListener = environment.getPluginDescriptor().getLifecycleListener();
         if (lifecycleListener != null) {
             String className = lifecycleListener.getClazz();
-            String pkg = environment.getPluginDescriptor().getPackage();
-            if ((className.indexOf('.') == -1) && (pkg != null)) {
-                className = pkg + '.' + className;
-            }
-
             log.debug("Creating plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
             instance = (ServerPluginLifecycleListener) instantiatePluginClass(environment, className);
-            log.debug("Created plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
+            log.debug("Lifecycle listener created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
         }
 
         return instance;
@@ -364,6 +359,11 @@ public class ServerPluginManager {
     protected Object instantiatePluginClass(ServerPluginEnvironment environment, String className) throws Exception {
 
         ClassLoader loader = environment.getPluginClassLoader();
+
+        String pkg = environment.getPluginDescriptor().getPackage();
+        if ((className.indexOf('.') == -1) && (pkg != null)) {
+            className = pkg + '.' + className;
+        }
 
         log.debug("Loading server plugin class [" + className + "]...");
 

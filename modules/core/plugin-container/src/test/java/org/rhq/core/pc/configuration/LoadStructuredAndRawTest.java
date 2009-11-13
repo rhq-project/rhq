@@ -43,7 +43,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.HashSet;
 
-public class LoadStructuredAndRawTest extends JMockTest {
+public class LoadStructuredAndRawTest extends LoadConfigTest {
 
     static final boolean FROM_STRUCTURED = true;
 
@@ -55,17 +55,7 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
     ResourceConfigurationFacet configFacet;
 
-    int resourceId = -1;
-
-    ResourceType resourceType;
-
-    boolean daemonThread = true;
-
-    boolean onlyIfStarted = true;
-
     LoadStructuredAndRaw loadStructuredAndRaw;
-
-    Random random = new Random();
 
     @BeforeMethod
     public void setup() {
@@ -83,7 +73,7 @@ public class LoadStructuredAndRawTest extends JMockTest {
     }
 
     @Test
-    public void rawSConfigshouldBeLoaded() throws Exception {
+    public void rawSConfigshouldGetLoaded() throws Exception {
         Configuration config = new Configuration();
 
         Set<RawConfiguration> rawConfigs = toSet(
@@ -100,7 +90,7 @@ public class LoadStructuredAndRawTest extends JMockTest {
     }
 
     @Test
-    public void structuredConfigShouldBeLoaded() throws Exception {
+    public void structuredConfigShouldGetLoaded() throws Exception {
         Configuration config = new Configuration();
         config.put(new PropertySimple("x", "1"));
         config.put(new PropertySimple("y", "2"));
@@ -121,13 +111,7 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
         Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
 
-        String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
-
-        assertEquals(
-            loadedConfig.getNotes(),
-            expectedNotes,
-            "The notes property should be set to a default when it is not already initialized."
-        );
+        assertNotesSetToDefault(loadedConfig);
     }
 
     @Test
@@ -182,7 +166,7 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
         Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
 
-        assertNull(loadedConfig, "Expected null to be returned when both structured and raw are null");
+        assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }
 
     private void addDefaultExpectations(final Configuration config, final Set<RawConfiguration> rawConfigs)
@@ -204,58 +188,11 @@ public class LoadStructuredAndRawTest extends JMockTest {
             oneOf(configFacet).loadRawConfigurations(); will(returnValue(rawConfigs));
 
             atLeast(1).of(configUtilityService).normalizeConfiguration(with(any(Configuration.class)),
-                with(resourceType.getResourceConfigurationDefinition()));
+                with(getResourceConfigDefinition()));
 
             atLeast(1).of(configUtilityService).validateConfiguration(with(any(Configuration.class)),
-                with(resourceType.getResourceConfigurationDefinition()));
+                with(getResourceConfigDefinition()));
         }});
     }
 
-    void assertRawsLoaded(Set<RawConfiguration> expectedRaws, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getRawConfigurations(),
-            expectedRaws,
-            "The raw configs were not loaded correctly."
-        );
-    }
-
-    void assertStructuredLoaded(Configuration expectedConfig, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getAllProperties(),
-            expectedConfig.getAllProperties(),
-            "The structured configuration was not loaded correctly."
-        );
-    }
-
-    Configuration createStructuredConfig() {
-        Configuration config = new Configuration();
-        config.put(new PropertySimple("x", "1"));
-        config.put(new PropertySimple("y", "2"));
-
-        return config;
-    }
-
-
-    Set<RawConfiguration> toSet(RawConfiguration... rawConfigs) {
-        Set<RawConfiguration> rawConfigSet = new HashSet<RawConfiguration>();
-        for (RawConfiguration rawConfig : rawConfigs) {
-            rawConfigSet.add(rawConfig);
-        }
-        return rawConfigSet;
-    }
-
-    RawConfiguration createRawConfiguration(String path) {
-        RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(randomBytes());
-        rawConfig.setPath(path);
-
-        return rawConfig;
-    }
-
-    byte[] randomBytes() {
-        byte[] bytes = new byte[10];
-        random.nextBytes(bytes);
-
-        return bytes;
-    }
 }

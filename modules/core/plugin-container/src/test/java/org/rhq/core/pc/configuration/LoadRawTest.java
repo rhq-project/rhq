@@ -24,28 +24,26 @@
 package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
+import static java.util.Collections.EMPTY_SET;
 
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.jmock.Expectations;
 
-public class LoadRawTest extends JMockTest {
+import java.util.Set;
+
+public class LoadRawTest extends LoadConfigTest {
 
     ComponentService componentService;
 
     ConfigurationUtilityService configUtilityService;
-
-    int resourceId = -1;
-
-    boolean daemonThread = true;
-
-    boolean onlyIfStarted = true;
 
     ResourceConfigurationFacet configFacet;
 
@@ -64,7 +62,45 @@ public class LoadRawTest extends JMockTest {
     }
 
     @Test
-    public void theResourceConfigFacetShouldGetLoaded() throws Exception {
+    public void rawConfigsShouldGetLoaded() throws Exception {
+        Set<RawConfiguration> rawConfigs = toSet(
+            createRawConfiguration("/tmp/foo.txt"),
+            createRawConfiguration("/tmp/bar.txt")
+        );
+
+        addDefaultExpectations(rawConfigs);
+
+        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+
+        assertRawsLoaded(rawConfigs, loadedConfig);
+    }
+
+    @Test
+    public void theConfigNotesShouldGetSet() throws Exception {
+        final Configuration config = new Configuration();
+        config.setNotes(null);
+
+        addDefaultExpectations(EMPTY_SET);
+
+        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+
+        assertNotesSetToDefault(loadedConfig);
+    }
+
+    @Test
+    public void nullShouldBeReturnedWhenRawIsNull() throws Exception {
+        Set<RawConfiguration> rawConfigs = null;
+        
+        addDefaultExpectations(rawConfigs);
+
+        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+
+        assertNull(loadedConfig, "Expected null to be returned when facet returns null for raw.");
+    }
+
+    private void addDefaultExpectations(final Set<RawConfiguration> rawConfigs)
+        throws Exception {
+
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
@@ -74,148 +110,10 @@ public class LoadRawTest extends JMockTest {
                                                          onlyIfStarted);
             will(returnValue(configFacet));
 
-            ignoring(configFacet);
-            ignoring(configUtilityService);
-        }});
-
-        loadRaw.execute(resourceId, false);
-    }
-
-    @Test
-    public void theConfigShouldGetLoadedByTheFacet() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            atLeast(1).of(configFacet).loadRawConfigurations();
-
-            ignoring(configUtilityService);
-        }});
-
-        loadRaw.execute(resourceId, false);
-    }
-
-    @Test
-    public void theConfigNotesShouldGetSetIfItIsNotAlreadySet() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setName("test resource");
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
+            atLeast(1).of(configFacet).loadRawConfigurations(); will(returnValue(rawConfigs));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
-
-            ignoring(configUtilityService);
         }});
-
-        Configuration loadedConfig = loadRaw.execute(resourceId, false);
-
-        String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
-
-        assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
-    }
-
-    @Test
-    public void theConfigShouldGetNormalized() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
-
-            atLeast(1).of(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            allowing(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadRaw.execute(resourceId, false);
-    }
-
-    @Test
-    public void theConfigShouldGetValidated() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
-
-            allowing(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            atLeast(1).of(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadRaw.execute(resourceId, false);
-    }
-
-    @Test
-    public void theStrategyShouldReturnTheConfig() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
-
-            ignoring(configUtilityService);
-        }});
-
-        Configuration loadedConfig = loadRaw.execute(resourceId, false);
-
-        assertSame(
-            loadedConfig,
-            configuration,
-            "The loadRaw commnand should return the configuration it receives from the facet component."
-        );
     }
 
 }

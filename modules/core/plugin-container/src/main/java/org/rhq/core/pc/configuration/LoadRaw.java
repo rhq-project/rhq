@@ -24,6 +24,7 @@
 package org.rhq.core.pc.configuration;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
@@ -31,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
+import java.util.Set;
 
 public class LoadRaw extends BaseLoadConfig {
 
@@ -39,32 +41,23 @@ public class LoadRaw extends BaseLoadConfig {
     public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
-        Configuration configuration = facet.loadRawConfigurations();
+        Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();
 
-        if (configuration == null) {
+        if (rawConfigs == null) {
             return null;
         }
 
-        ResourceType resourceType = componentService.getResourceType(resourceId);
-
-        if (configuration.getNotes() == null) {
-            configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+        Configuration config = new Configuration();
+        for (RawConfiguration rawConfig : rawConfigs) {
+            config.addRawConfiguration(rawConfig);
         }
 
-        configUtilityService.normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        List<String> errorMsgs = configUtilityService.validateConfiguration(configuration,
-            resourceType.getResourceConfigurationDefinition());
+        if (config.getNotes() == null) {
+            ResourceType resourceType = componentService.getResourceType(resourceId);
+            config.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+        }
 
-        logErrorMsgs(errorMsgs, resourceType);
-
-        return configuration;
-    }
-
-    private void logErrorMsgs(List<String> errorMsgs, ResourceType resourceType) {
-        for (String errorMessage : errorMsgs) {
-            log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-                + resourceType.getPlugin() + " plugin - " + errorMessage);
-            }
+        return config;
     }
 
 }

@@ -23,6 +23,8 @@
 
 package org.rhq.core.pc.configuration;
 
+import static java.util.Collections.EMPTY_SET;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
@@ -32,6 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
+import java.util.Set;
 
 public class LoadStructuredAndRaw extends BaseLoadConfig {
 
@@ -40,20 +43,23 @@ public class LoadStructuredAndRaw extends BaseLoadConfig {
     public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
-        Configuration configuration;
-        if (fromStructured) {
-            configuration = facet.loadStructuredConfiguration();
-            if (configuration == null) {
-                return null;
-            }
-            mergeStructured(configuration, facet);
+        Configuration configuration = facet.loadStructuredConfiguration();
+        Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();
+
+        if (configuration == null && rawConfigs == null) {
+            return null;
         }
-        else {
-            configuration = facet.loadRawConfigurations();
-            if (configuration == null) {
-                return null;
-            }
-            mergeRaw(configuration, facet);
+
+        if (configuration == null) {
+            configuration = new Configuration();
+        }
+
+        if (rawConfigs == null) {
+            rawConfigs = EMPTY_SET;
+        }
+
+        for (RawConfiguration rawConfig : rawConfigs) {
+            configuration.addRawConfiguration(rawConfig);
         }
 
         ResourceType resourceType = componentService.getResourceType(resourceId);
@@ -69,18 +75,6 @@ public class LoadStructuredAndRaw extends BaseLoadConfig {
         logErrorMsgs(errorMsgs, resourceType);
 
         return configuration;
-    }
-
-    private void mergeStructured(Configuration configuration, ResourceConfigurationFacet configFacet) {
-        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-            configFacet.mergeStructuredConfiguration(rawConfig, configuration);            
-        }
-    }
-
-    private void mergeRaw(Configuration configuration, ResourceConfigurationFacet configFacet) {
-        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-            configFacet.mergeRawConfiguration(configuration, rawConfig);
-        }
     }
 
     private void logErrorMsgs(List<String> errorMsgs, ResourceType resourceType) {

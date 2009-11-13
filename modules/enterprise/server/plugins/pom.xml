@@ -39,6 +39,8 @@
     <module>yum</module>
     <module>url</module>
     <module>rhnhosted</module>
+    <!--  temporary sample perspective plugin -->
+    <module>../../../../etc/samples/perspectives/sample-perspective</module>
   </modules>
 
 </project>

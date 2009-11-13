@@ -400,13 +400,6 @@
          </fileset>
       </move>
       
-      <!-- don't do this now that we have a sample perspective to deploy
-      <echo>Deploying perspective WARs ...</echo>
-      <mkdir dir="${jboss.deploy.dir}/rhq-sample-perspective.war" />
-      <unwar src="${settings.localRepository}/org/rhq/rhq-sample-perspective/${rhq.version}/rhq-sample-perspective-${rhq.version}.war"
-             dest="${jboss.deploy.dir}/rhq-sample-perspective.war" />
-      -->
-      
    </target>
 
    <target name="package-connectors" if="package-connectors">

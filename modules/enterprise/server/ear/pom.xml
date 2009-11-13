@@ -399,6 +399,13 @@
                   <version>${project.version}</version>
                 </artifactItem>
 
+                <!--  Temporary Sample Perspective -->
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-sample-perspective</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
               </artifactItems>
               <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
             </configuration>

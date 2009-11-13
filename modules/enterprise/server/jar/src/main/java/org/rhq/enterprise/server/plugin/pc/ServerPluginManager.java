@@ -303,7 +303,8 @@ public class ServerPluginManager {
         try {
             ConfigurationDefinition configDef = ConfigurationMetadataParser.parse(pluginName, pluginDescriptor
                 .getPluginConfiguration());
-            config = configDef.getDefaultTemplate().createConfiguration();
+
+            config = (null == configDef) ? null : configDef.getDefaultTemplate().createConfiguration();
         } catch (InvalidPluginDescriptorException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

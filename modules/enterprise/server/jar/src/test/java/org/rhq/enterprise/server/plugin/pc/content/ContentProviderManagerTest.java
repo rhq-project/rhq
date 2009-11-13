@@ -373,7 +373,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         // -> Verify the correct repos were requested in the package sync
         List<String> reposRequestedInSync = testProvider.getReposRequestedInSync();
-        assert reposRequestedInSync.size() == 2;
+        assert reposRequestedInSync.size() == reposThatShouldBeSyncced.size();
         assert reposRequestedInSync.containsAll(reposThatShouldBeSyncced);
     }
 

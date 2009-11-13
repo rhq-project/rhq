@@ -29,7 +29,7 @@
     <dependency>
       <groupId>commons-configuration</groupId>
       <artifactId>commons-configuration</artifactId>
-       <version>1.1</version>
+       <version>1.6</version>
     </dependency>
   </dependencies>
 
@@ -77,7 +77,32 @@
                 <artifactItem>
                   <groupId>commons-configuration</groupId>
                   <artifactId>commons-configuration</artifactId>
-                  <version>1.1</version>
+                  <version>1.6</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-collections</groupId>
+                  <artifactId>commons-collections</artifactId>
+                  <version>3.2.1</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-lang</groupId>
+                  <artifactId>commons-lang</artifactId>
+                  <version>2.4</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-logging</groupId>
+                  <artifactId>commons-logging</artifactId>
+                  <version>1.1.1</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-digester</groupId>
+                  <artifactId>commons-digester</artifactId>
+                  <version>1.8</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>commons-beanutils</groupId>
+                  <artifactId>commons-beanutils-core</artifactId>
+                  <version>1.8.0</version>
                 </artifactItem>
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

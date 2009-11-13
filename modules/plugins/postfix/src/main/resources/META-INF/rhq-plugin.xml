@@ -24,7 +24,7 @@
                               description="the absolute path of the samba configuration"/>
 
            <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
-                              default="/files/etc/postfix/main.cf/*"/>
+                              default="/files/etc/postfix/main.cf"/>
        </plugin-configuration>
 
       <resource-configuration>
@@ -32,7 +32,7 @@
             <c:simple-property displayName="Hostname" name="myhostname" description="Server's fully qualified domain name" required="false"/>
             <c:simple-property displayName="Origin" name="myorigin" description="Domain used in outgoing mail" required="false"/>
             <c:simple-property displayName="Networks" name="mynetworks" description="List of clients that can relay mail" required="false"/>
-            <c:simple-property displayName="Destinations" name="mydestinations" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
+            <c:simple-property displayName="Destinations" name="mydestination" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
             <c:simple-property displayName="Interfaces" name="inet_interfaces" description="Network interfaces that Postfix will bind to" required="false"/>
             <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="true"/>
         </c:group>

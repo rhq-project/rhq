@@ -83,8 +83,11 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void mergeStructuredConfiguration(RawConfiguration rawConfiguration, Configuration configuration) {
-    def buffer = new String(rawConfiguration.contents)
-    buffer.splitEachLine("=") { tokens -> configuration.put(new PropertySimple(tokens[0], tokens[1]))  }
+    def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
+
+    configuration.put(new PropertySimple("x", rawPropertiesConfig.getString("x")))
+    configuration.put(new PropertySimple("y", rawPropertiesConfig.getString("y")))
+    configuration.put(new PropertySimple("z", rawPropertiesConfig.getString("z")))
   }
 
 }

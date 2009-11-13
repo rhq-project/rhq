@@ -32,10 +32,18 @@ public interface ResourceConfigurationFacet {
 
     Configuration loadStructuredConfiguration();
 
-    Configuration loadRawConfigurations();
+    Set<RawConfiguration> loadRawConfigurations();
 
     void mergeRawConfiguration(Configuration from, RawConfiguration to);
 
     void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
+
+    void persistStructuredConfiguration(Configuration configuration);
+
+    void persistRawConfiguration(RawConfiguration rawConfiguration);
+
+    void validateStructuredConfiguration(Configuration configuration);
+
+    void validateRawConfiguration(RawConfiguration rawConfiguration);
 
 }

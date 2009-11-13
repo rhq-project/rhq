@@ -58,7 +58,7 @@ public class RHNHelperTest extends BaseRHNTest {
     public void testGetChannelPackages() throws Exception {
         boolean success = true;
         try {
-            ArrayList pkgIds = helper.getChannelPackages();
+            List<String> pkgIds = helper.getChannelPackages();
             assertTrue(pkgIds.size() > 0);
         } catch (Exception e) {
             e.printStackTrace();

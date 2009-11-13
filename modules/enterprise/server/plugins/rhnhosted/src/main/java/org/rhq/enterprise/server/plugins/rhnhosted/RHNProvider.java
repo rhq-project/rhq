@@ -169,7 +169,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         // sync now
         try {
             summary.markStarted();
-            ArrayList pkgIds = helper.getChannelPackages();
+            List<String> pkgIds = helper.getChannelPackages(repoName);
             log.info("RHNProvider::  helper.getChannelPackages returned  " + pkgIds.size() + " packages");
             for (ContentProviderPackageDetails p : helper.getPackageDetails(pkgIds)) {
                 log.debug("Processing package at (" + p.getLocation());
@@ -199,7 +199,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
-    public void synchronizeDistribution(DistributionSyncReport report, Collection<DistributionDetails> existingDistros) throws Exception {
+    public void synchronizeDistribution(String repoName, DistributionSyncReport report,
+                                        Collection<DistributionDetails> existingDistros) throws Exception {
 
         // Goal:
         //   This method will create the metadata representing what kickstart tree files need to be downloaded.
@@ -214,7 +215,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         List<String> deletedDistros = new ArrayList<String>();  //Existing distros we want to remove.
         deletedDistros.addAll(existingLabels);
 
-        List<String> availableLabels = helper.getChannelKickstartLabels();
+        List<String> availableLabels = helper.getChannelKickstartLabels(repoName);
         log.debug("Found " + availableLabels.size() + " available kickstart trees");
         for (String label: availableLabels) {
             log.debug("Processing kickstart: " + label);

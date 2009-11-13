@@ -165,7 +165,18 @@ public class RHNHelper {
      * @throws XmlRpcException on xmlrpc faults
      */
     public List<String> getChannelKickstartLabels() throws IOException, XmlRpcException {
-        return getSyncableKickstartLabels(Arrays.asList(this.repolabel));
+        return getChannelKickstartLabels(this.repolabel);
+    }
+
+    /**
+     * Get List of kickstart labels for the channel associated to this instance.
+     * @param channelName channel name
+     * @return List of all kickstart labels associate to the channel
+     * @throws IOException on io errors on systemid reads
+     * @throws XmlRpcException on xmlrpc faults
+     */
+    public List<String> getChannelKickstartLabels(String channelName) throws IOException, XmlRpcException {
+        return getSyncableKickstartLabels(Arrays.asList(channelName));
     }
 
     /**
@@ -174,13 +185,23 @@ public class RHNHelper {
      * @throws IOException  on io errors on systemid reads
      * @throws XmlRpcException on xmlrpc faults
      */
-
-    public ArrayList getChannelPackages() throws IOException, XmlRpcException {
+    public List<String> getChannelPackages() throws IOException, XmlRpcException {
+        return getChannelPackages(this.repolabel);
+    }
+    
+    /**
+     * Get List of packagesIds for Given Channels
+     * @param channelName channel name
+     * @return List of all package ids associated to the channel
+     * @throws IOException  on io errors on systemid reads
+     * @throws XmlRpcException on xmlrpc faults
+     */
+    public List<String> getChannelPackages(String channelName) throws IOException, XmlRpcException {
         ArrayList<String> allPackages = new ArrayList();
 
         log.info("Systemid: " + this.systemid);
         log.info("repolist: " + this.repolabel);
-        List<RhnChannelType> channels = rhndata.getChannels(this.systemid, Arrays.asList(this.repolabel));
+        List<RhnChannelType> channels = rhndata.getChannels(this.systemid, Arrays.asList(channelName));
 
         for (RhnChannelType channel : channels) {
             String packages = channel.getPackages();

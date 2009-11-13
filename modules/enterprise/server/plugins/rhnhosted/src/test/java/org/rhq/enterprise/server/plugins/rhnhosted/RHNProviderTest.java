@@ -148,7 +148,7 @@ public class RHNProviderTest
         List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
         try {
             provider.initializeForTest(config);
-            provider.synchronizePackages("testRepo", report, existingPackages);
+            provider.synchronizePackages(channelName, report, existingPackages);
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -172,7 +172,7 @@ public class RHNProviderTest
         Configuration config = getConfiguration(channelName);
         try {
             provider.initializeForTest(config);
-            provider.synchronizeDistribution(report, existingDistro);
+            provider.synchronizeDistribution(channelName, report, existingDistro);
         }
         catch (Exception e) {
             e.printStackTrace();

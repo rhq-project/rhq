@@ -7,6 +7,7 @@ import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet
 import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
+import org.apache.commons.configuration.PropertiesConfiguration
 
 class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
 
@@ -47,9 +48,6 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   Configuration loadStructuredConfiguration() {
-//    Configuration config = new Configuration()
-//    properties.each { key, value -> config.put(new PropertySimple(key, value)) }
-//    return config
     return loadRawConfigurations()
   }
 
@@ -61,6 +59,27 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
+    def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
+
+    def x = configuration.get("x")
+    def y = configuration.get("y")
+    def z = configuration.get("z")
+
+    rawPropertiesConfig.setProperty("x", x.stringValue)
+    rawPropertiesConfig.setProperty("y", y.stringValue)
+    rawPropertiesConfig.setProperty("z", z.stringValue)
+
+    def stream = new ByteArrayOutputStream()
+    rawPropertiesConfig.save(stream)
+    rawConfiguration.contents = stream.toByteArray()    
+  }
+
+  def loadRawPropertiesConfiguration(rawConfig) {
+    def stream = new ByteArrayInputStream(rawConfig.contents)
+    def rawPropertiesConfig = new PropertiesConfiguration()
+    rawPropertiesConfig.load(stream)
+
+    return rawPropertiesConfig
   }
 
   void mergeStructuredConfiguration(RawConfiguration rawConfiguration, Configuration configuration) {

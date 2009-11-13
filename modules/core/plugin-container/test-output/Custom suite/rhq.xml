@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="rhq" failures="0" tests="4" time="9.399" errors="0">
-  <properties/>
-  <testcase name="pluginManagerShouldReturnAmpsVersionOfLoadedPluginWhenInEmbeddedMode" time="1.008" classname="org.rhq.core.pc.plugin.PluginManagerTest"/>
-  <testcase name="pluginsShouldBeLoadedInCorrectOrder" time="2.098" classname="org.rhq.core.pc.plugin.PluginManagerTest"/>
-  <testcase name="pluginsShouldBeShutdownInCorrectOrder" time="2.124" classname="org.rhq.core.pc.plugin.PluginManagerTest"/>
-  <testcase name="initializeShouldLoadDiscoveredPlugins" time="1.241" classname="org.rhq.core.pc.plugin.PluginManagerTest"/>
-</testsuite>

@@ -147,11 +147,12 @@ public class Distribution implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Distribtuion [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
+        return String.format("Distribution [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
     }
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) {
             return true;
         }
@@ -166,7 +167,7 @@ public class Distribution implements Serializable {
 
         Distribution kstree = (Distribution) o;
 
-        if ((label != null) ? (!label.equals(kstree.label)) : (kstree.label != null)) {
+        if ((getLabel() != null) ? (!getLabel().equals(kstree.getLabel())) : (kstree.getLabel() != null)) {
             return false;
         }
 
@@ -187,7 +188,7 @@ public class Distribution implements Serializable {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result) + ((label == null) ? 0 : label.hashCode());
+        result = (prime * result) + ((getLabel() == null) ? 0 : getLabel().hashCode());
         return result;
     }
 

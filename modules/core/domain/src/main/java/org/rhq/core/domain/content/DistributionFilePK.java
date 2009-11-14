@@ -26,7 +26,6 @@ package org.rhq.core.domain.content;
 import java.io.Serializable;
 
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
 public class DistributionFilePK implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -36,9 +35,7 @@ public class DistributionFilePK implements Serializable {
      * even though this class is an @IdClass and it should not need the mappings here.  The mappings belong in the
      * entity itself.
      */
-
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
     private Distribution distribution;
 
     public DistributionFilePK() {
@@ -64,7 +61,7 @@ public class DistributionFilePK implements Serializable {
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((distribution == null) ? 0 : distribution.hashCode());
+        result = (31 * result) + ((getDistribution() == null) ? 0 : getDistribution().hashCode());
         return result;
     }
 
@@ -80,11 +77,11 @@ public class DistributionFilePK implements Serializable {
 
         final DistributionFilePK other = (DistributionFilePK) obj;
 
-        if (distribution == null) {
-            if (other.distribution != null) {
+        if (getDistribution() == null) {
+            if (other.getDistribution() != null) {
                 return false;
             }
-        } else if (!distribution.equals(other.distribution)) {
+        } else if (!getDistribution().equals(other.getDistribution())) {
             return false;
         }
 

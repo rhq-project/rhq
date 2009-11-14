@@ -356,10 +356,13 @@
     </table>
 
     <table name="RHQ_DISTRIBUTION_FILE">
-        <column name="DISTRIBUTION_ID" type="INTEGER" primarykey="true" required="true" references="RHQ_DISTRIBUTION"/>
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DISTRIBUTION_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
         <column name="RELATIVE_FILENAME" size="256" type="VARCHAR2" required="true"/>
+        <!--<column name="FILE_SIZE" type="NUMBER" required="true"/>-->
         <column name="MD5SUM" size="64" type="VARCHAR2" required="true"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <!--<column name="CTIME" type="LONG" required="true"/>-->
         
         <index name="RHQ_DISTRIBUTION_FILE_IDX" unique="true">
             <field ref="DISTRIBUTION_ID"/>

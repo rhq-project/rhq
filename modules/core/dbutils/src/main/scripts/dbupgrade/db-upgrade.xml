@@ -2122,6 +2122,25 @@
         </schema-directSQL>
       </schemaSpec>
 
+      <schemaSpec version="2.68">
+      	<schema-createSequence name="RHQ_DISTRIBUTION_FILE_SEQ" initial="10001" />
+        <schema-directSQL>
+            <statement>
+                ALTER TABLE RHQ_DISTRIBUTION_FILE DROP CONSTRAINT RHQ_DISTRIBUTION_FILE_PKEY
+            </statement>
+        </schema-directSQL>
+        	
+        <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />
+      	
+      	<schema-directSQL>	
+        	<statement>
+        		ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
+            </statement>
+        </schema-directSQL>
+       </schemaSpec>
+              
+
     </dbupgrade>
   </target>
 </project>

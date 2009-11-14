@@ -24,15 +24,18 @@ package org.rhq.core.domain.content;
 
 import java.util.Date;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
@@ -41,10 +44,11 @@ import javax.persistence.Table;
  * @author Pradeep Kilambi
  */
 @Entity
-@IdClass(DistributionFilePK.class)
+//@IdClass(DistributionFilePK.class)
 @NamedQueries( {
     @NamedQuery(name = DistributionFile.SELECT_BY_DIST_ID, query = "SELECT df from DistributionFile df WHERE df.distribution.id = :distId"),
     @NamedQuery(name = DistributionFile.DELETE_BY_DIST_ID, query = "DELETE DistributionFile df WHERE df.distribution.id = :distId") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_FILE_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION_FILE")
 public class DistributionFile {
     public static final String SELECT_BY_DIST_ID = "DistributionFile.selectByDistId";
@@ -58,9 +62,13 @@ public class DistributionFile {
      * @IdClass.
      */
 
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
-    @ManyToOne
-    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    private int id;
+
+    @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(cascade = { CascadeType.MERGE, CascadeType.PERSIST })
     private Distribution distribution;
 
     @Column(name = "RELATIVE_FILENAME", nullable = false)
@@ -87,6 +95,16 @@ public class DistributionFile {
 
     public void setDistributionFilePK(DistributionFilePK pk) {
         this.distribution = pk.getDistribution();
+    }
+
+    // Public  --------------------------------------------
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public long getLastModified() {
@@ -139,27 +157,24 @@ public class DistributionFile {
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((distribution == null) ? 0 : distribution.hashCode());
+        result = (31 * result) + ((getDistribution() == null) ? 0 : getDistribution().hashCode());
         return result;
     }
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
 
         if ((obj == null) || (!(obj instanceof DistributionFile))) {
             return false;
         }
 
-        final DistributionFile other = (DistributionFile) obj;
+        DistributionFile other = (DistributionFile) obj;
 
-        if (distribution == null) {
-            if (distribution != null) {
+        if (getDistribution() == null) {
+            if (getDistribution() != null) {
                 return false;
             }
-        } else if (!distribution.equals(other.distribution)) {
+        } else if (!getDistribution().equals(other.getDistribution())) {
             return false;
         }
 

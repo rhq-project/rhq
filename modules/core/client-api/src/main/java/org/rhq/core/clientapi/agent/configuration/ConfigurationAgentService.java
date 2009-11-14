@@ -79,8 +79,6 @@ public interface ConfigurationAgentService {
      */
     Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException;
 
-    Configuration loadResourceConfiguration(int resourceId, boolean fromStructured) throws PluginContainerException;
-
     Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
         throws PluginContainerException;
 }

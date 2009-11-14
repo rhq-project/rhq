@@ -23,17 +23,16 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.testng.Assert.*;
-
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import static org.testng.Assert.assertEquals;
 
-import java.util.Set;
 import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 public class LoadConfigTest extends JMockTest {
 

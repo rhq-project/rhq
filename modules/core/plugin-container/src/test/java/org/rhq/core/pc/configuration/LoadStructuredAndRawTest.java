@@ -45,10 +45,6 @@ import java.util.HashSet;
 
 public class LoadStructuredAndRawTest extends LoadConfigTest {
 
-    static final boolean FROM_STRUCTURED = true;
-
-    static final boolean FROM_RAW = false;
-
     ComponentService componentService;
 
     ConfigurationUtilityService configUtilityService;
@@ -73,7 +69,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
     }
 
     @Test
-    public void rawSConfigshouldGetLoaded() throws Exception {
+    public void rawConfigshouldGetLoaded() throws Exception {
         Configuration config = new Configuration();
 
         Set<RawConfiguration> rawConfigs = toSet(
@@ -84,7 +80,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -97,7 +93,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
 
         addDefaultExpectations(config, EMPTY_SET);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         assertStructuredLoaded(config, loadedConfig);
     }
@@ -109,7 +105,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
 
         addDefaultExpectations(config, EMPTY_SET);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -122,7 +118,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         Configuration emptyStructured = new Configuration();
 
@@ -140,7 +136,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         assertRawsLoaded(EMPTY_SET, loadedConfig);
         assertStructuredLoaded(config, loadedConfig);
@@ -164,7 +160,7 @@ public class LoadStructuredAndRawTest extends LoadConfigTest {
             oneOf(configFacet).loadRawConfigurations(); will(returnValue(null));
         }});
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }

@@ -23,22 +23,21 @@
 
 package org.rhq.core.pc.configuration;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
-import java.util.List;
 import java.util.Set;
 
 public class LoadRaw extends BaseLoadConfig {
 
     private final Log log = LogFactory.getLog(LoadRaw.class);
 
-    public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
+    public Configuration execute(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();

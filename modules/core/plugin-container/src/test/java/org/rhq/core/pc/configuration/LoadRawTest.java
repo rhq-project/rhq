@@ -23,20 +23,17 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.testng.Assert.*;
-import static java.util.Collections.EMPTY_SET;
-
+import org.jmock.Expectations;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.resource.ResourceType;
+import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.jmock.Expectations;
 
+import static java.util.Collections.EMPTY_SET;
 import java.util.Set;
 
 public class LoadRawTest extends LoadConfigTest {
@@ -70,7 +67,7 @@ public class LoadRawTest extends LoadConfigTest {
 
         addDefaultExpectations(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+        Configuration loadedConfig = loadRaw.execute(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -82,7 +79,7 @@ public class LoadRawTest extends LoadConfigTest {
 
         addDefaultExpectations(EMPTY_SET);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+        Configuration loadedConfig = loadRaw.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -93,7 +90,7 @@ public class LoadRawTest extends LoadConfigTest {
         
         addDefaultExpectations(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId, false);
+        Configuration loadedConfig = loadRaw.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for raw.");
     }

@@ -36,7 +36,7 @@ public class LoadStructured extends BaseLoadConfig {
 
     private final Log log = LogFactory.getLog(LoadStructured.class);
 
-    public Configuration execute(int resourceId, boolean fromStructured) throws PluginContainerException {
+    public Configuration execute(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Configuration configuration = facet.loadStructuredConfiguration();

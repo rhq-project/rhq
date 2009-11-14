@@ -17,18 +17,20 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.xmlschema;
 
 /**
- * A schedule that triggers periodically every certain number of milliseconds.
+ * A schedule type whose jobs are triggered periodically every certain number of milliseconds.
  * 
  * @author John Mazzitelli
  */
-public class PeriodicSchedule extends Schedule {
+public class PeriodicScheduleType extends AbstractScheduleType {
+    public static final String TYPE_NAME = "periodic";
+
     private final long period;
 
-    public PeriodicSchedule(boolean concurrent, long period) {
-        super(concurrent);
+    public PeriodicScheduleType(boolean concurrent, long period) {
+        super(concurrent, TYPE_NAME);
         this.period = period;
     }
 

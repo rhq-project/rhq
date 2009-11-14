@@ -17,18 +17,20 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.xmlschema;
 
 /**
  * A schedule that triggers based on a cron expression.
  * 
  * @author John Mazzitelli
  */
-public class CronSchedule extends Schedule {
+public class CronScheduleType extends AbstractScheduleType {
+    public static final String TYPE_NAME = "cron";
+
     private final String cronExpression;
 
-    public CronSchedule(boolean concurrent, String cronExpression) {
-        super(concurrent);
+    public CronScheduleType(boolean concurrent, String cronExpression) {
+        super(concurrent, TYPE_NAME);
         this.cronExpression = cronExpression;
     }
 

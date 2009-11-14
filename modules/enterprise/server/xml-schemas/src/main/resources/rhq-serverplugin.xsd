@@ -14,10 +14,7 @@
     <xs:annotation>
         <xs:documentation>
             Schema for all server-side plugins. All server side plugin types
-            will define their own schema that get embedded in this schema.
-            Since there are only a strictly defined number of plugin types,
-            each plugin type's schema will be explicitly included in this
-            schema, under the plugin element's choice definition.
+            will define their own schema that extend this schema.
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -31,7 +28,7 @@
             <xs:documentation>
                 Root element of a server-side plugin descriptor. All server side plugins
                 will have this as their root element; however, child elements of this
-                root element will be plugin-type-specific. Note this is an abstract element,
+                root element can be plugin-type-specific. Note this is an abstract element,
                 it will actually be substituted with other elements of the concrete plugin types.
             </xs:documentation>
             <xs:appinfo>
@@ -42,22 +39,43 @@
 
     <xs:complexType name="ServerPluginDescriptorType">
         <xs:sequence minOccurs="0" maxOccurs="1">
-            <xs:element name="lifecycle-listener" minOccurs="0" maxOccurs="1" type="serverplugin:LifecycleListenerType">
+            <xs:element name="plugin-component" minOccurs="0" maxOccurs="1" type="serverplugin:ServerPluginComponentType">
                 <xs:annotation>
                     <xs:documentation>
-                        A class that performs global initialization and shutdown of the plugin. If specified,
-                        this class will be notified when the plugin is loaded and unloaded. This provides a place
-                        for plugin developers to allocate global resources needed by all plugin components and
-                        a place to clean up those resources. It can also be scheduled to perform periodic work.
-                        A lifecycle listener object is stateful - the instance lives for as long as the plugin
+                        A class that will be notified when the plugin is started and stopped. This provides a place
+                        for plugin developers to allocate global resources needed by the plugin and
+                        a place to clean up those resources. This component can also be scheduled to perform periodic work.
+                        The plugin component object is stateful - the instance lives for as long as the plugin
                         is initialized.
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
-            <xs:element name="scheduled-job" minOccurs="0" maxOccurs="unbounded" type="serverplugin:ScheduledJobType">
+            <xs:element name="scheduled-jobs" minOccurs="0" maxOccurs="1" type="config:configuration">
                 <xs:annotation>
                     <xs:documentation>
-                        A scheduled job that is called to periodically perform work on behalf of the plugin.
+                        Scheduled jobs are pre-defined here in this special configuration. The schema
+                        for this element is the same as the general configuration, however, this
+                        has special semantics that require special properties to be defined.
+                        If you use this element, it must contain map properties where each map:
+                           1) has a name that is a method name of the plugin component. This method
+                              name identifies what is called on the plugin component when the schedule triggers.
+                              You may override this by defining a simple property called "methodName".
+                           2) has simple properties called "scheduleType" and "scheduleTrigger" where
+                              "scheduleType" is either "cron" or "periodic" and "scheduleTrigger" is either
+                              the cron expression or a time period in milliseconds.
+                           3) has a simple property called "concurrent" of type boolean to indicate if 
+                              multiple invocations of the scheduled job are allowed to
+                              occur at the same time. If false, only one invocation will ever run at any
+                              one time. This means that if a schedule triggers again while the previous
+                              scheduled invocation is still running, the second invocation will be delayed
+                              until after the previous invocation completes. If there is more than one
+                              RHQ Server in the system, and this is false, you can be assured that only
+                              a single server will handle the invocation at any one time (i.e. multiple servers
+                              will not run invocations at the same time).
+                           4) has any other simple properties that will be used as custom callback data properties.
+                        You may additionally define one list-of-maps property which can be used to allow a user
+                        to define their own custom jobs. The list-of-maps must contain a map property definition
+                        that follows the same rules as described above.
                     </xs:documentation>
                 </xs:annotation>
             </xs:element>
@@ -123,91 +141,15 @@
         </xs:attribute>
     </xs:complexType>
 
-    <xs:complexType name="LifecycleListenerType">
-        <xs:sequence>
-            <xs:element name="schedule" minOccurs="0" maxOccurs="1" type="serverplugin:ScheduleType">
-                <xs:annotation>
-                    <xs:documentation>
-                        A schedule that defines when and how often to invoke the plugin listener. This is optional; only
-                        those plugins that need to do work periodically will define a schedule.
-                    </xs:documentation>
-                </xs:annotation>
-            </xs:element>
-        </xs:sequence>
+    <xs:complexType name="ServerPluginComponentType">
         <xs:attribute name="class" type="serverplugin:classNameType" use="required">
                 <xs:annotation>
                     <xs:documentation>
                         The class that will be instantiated. This is a stateful object, once initialized, the same
-                        instance will be used to start, stop and shutdown the plugin.
+                        instance will be notified when the plugin is started, stopped or when schedules are triggered.
                     </xs:documentation>
                 </xs:annotation>
         </xs:attribute>    
-    </xs:complexType>
-
-    <xs:complexType name="ScheduleType">
-        <xs:sequence minOccurs="0" maxOccurs="1">
-            <xs:choice>
-                <xs:element name="period" type="xs:long">
-                    <xs:annotation>
-                        <xs:documentation>
-                            A time period, in milliseconds, that define how often the schedule will trigger.
-                        </xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-                <xs:element name="cron" type="xs:string">
-                    <xs:annotation>
-                        <xs:documentation>
-                            A "cron expression" which defines when the schedule should fire. A cron expression can be evaluated
-                            to mean things such as: "At 8:00am every Monday through Friday" or "At 1:30am every last Friday of the month".
-                            The cron expression syntax follows the rules defined by Quartz - see
-                            http://www.opensymphony.com/quartz/api/org/quartz/CronExpression.html 
-                        </xs:documentation>
-                    </xs:annotation>
-                </xs:element>
-            </xs:choice>
-        </xs:sequence>
-        <xs:attribute name="concurrent" type="xs:boolean" use="optional" default="true">
-            <xs:annotation>
-                <xs:documentation>
-                    If true, multiple invocations of the scheduled job are allowed to
-                    occur at the same time. If false, only one invocation will ever run at any
-                    one time. This means that if a schedule triggers again while the previous
-                    scheduled invocation is still running, the second invocation will be delayed
-                    until after the previous invocation completes. If there is more than one
-                    RHQ Server in the system, and this is false, you can be assured that only
-                    a single server will handle the invocation at any one time (i.e. multiple servers
-                    will not run invocations at the same time).
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-    </xs:complexType>
-
-    <xs:complexType name="ScheduledJobType">
-        <xs:complexContent>
-            <xs:extension base="serverplugin:ScheduleType">
-                <xs:attribute name="jobId" type="xs:string" use="required">
-                    <xs:annotation>
-                        <xs:documentation>
-                            A unique identifier for this job. Job IDs need to be unique
-                            within a plugin. When the scheduled job is invoked, this job ID
-                            will be passed to it.
-                        </xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-                <xs:attribute name="class" type="serverplugin:classNameType" use="required">
-                    <xs:annotation>
-                        <xs:documentation>
-                            The classname of the ScheduledJob implementation that will be instantiated
-                            whenever the schedule is triggered. This job instance will not be stateful,
-                            a new instance of the class is created for each schedule trigger. Each job
-                            invocation is handed a reference to the plugin's lifecycle listener (if one
-                            was defined for the plugin), thus providing a way to obtain stateful
-                            information from the plugin.
-                        </xs:documentation>
-                    </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
     </xs:complexType>
 
     <xs:simpleType name="classNameType">

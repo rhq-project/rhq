@@ -9,11 +9,8 @@
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
 
-    <serverplugin:lifecycle-listener class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
-        <serverplugin:schedule concurrent="false">
-            <serverplugin:period>60000</serverplugin:period>
-        </serverplugin:schedule>
-    </serverplugin:lifecycle-listener>
+    <serverplugin:plugin-component class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
+    </serverplugin:plugin-component>
 
     <serverplugin:plugin-configuration>
         <c:simple-property name="plugin-simple-prop-1" defaultValue="prop1value" required="true" />

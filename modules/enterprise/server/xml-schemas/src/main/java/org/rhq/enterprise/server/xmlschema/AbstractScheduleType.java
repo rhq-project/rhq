@@ -17,35 +17,48 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.xmlschema;
 
 /**
- * Defines a schedule for a server plugin component.
+ * Defines a type of schedule for a server plugin job.
  * 
  * @author John Mazzitelli
  */
-public abstract class Schedule {
+
+public abstract class AbstractScheduleType {
+    private final String typeName;
     private final boolean concurrent;
 
     /**
-     * Builds the schedule object.
+     * Builds the schedule type.
      * 
      * @param concurrent if true, multiple jobs can run concurrently. If false, only one
      *                   scheduled job will run at any one time across the RHQ Server cloud.
+     * @param typeName the name of the concrete schedule type (subclasses must provide this)
      */
-    public Schedule(boolean concurrent) {
+    public AbstractScheduleType(boolean concurrent, String typeName) {
+        this.typeName = typeName;
         this.concurrent = concurrent;
     }
 
     /**
+     * The name that identifies this type of schedule.
+     * 
+     * @return type name string
+     */
+    public String getTypeName() {
+        return this.typeName;
+    }
+
+    /**
      * If true, multiple jobs can execute at any one time. If false, only a single job will be allowed
-     * to run at any one time (across all servers in the RHQ server cloud). Even if the schedule
+     * to run at any one time (across all servers in the RHQ Server cloud). Even if the schedule
      * is triggered multiple times, if a job is still running, any future jobs that are triggered will
      * be delayed.
      * 
      * @return concurrent flag
      */
     public boolean isConcurrent() {
-        return concurrent;
+        return this.concurrent;
     }
 }

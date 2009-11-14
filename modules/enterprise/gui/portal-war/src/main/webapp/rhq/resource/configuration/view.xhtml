@@ -23,7 +23,7 @@ THIS TEXT WILL BE REMOVED.
 
    <ui:define name="content">
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
@@ -44,27 +44,27 @@ THIS TEXT WILL BE REMOVED.
 
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">		          
+                      rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">		          
                       
-            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationViewUIBean.updateInProgress}" />
-			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
+			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationViewUIBean.updateInProgress}" />
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
          </h:panelGrid>
          
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{rawConfigCollection.configuration}"
-                     accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
+                     accessMapActionExpression="#{ExistingResourceConfigurationUIBean.accessMap}"
                      readOnly="true"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
+                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>
 
       </h:form>
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
+      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 

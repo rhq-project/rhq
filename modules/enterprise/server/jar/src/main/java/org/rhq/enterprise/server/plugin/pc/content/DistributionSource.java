@@ -54,5 +54,14 @@ public interface DistributionSource {
      */
     InputStream getInputStream(String location) throws Exception;
 
+    /**
+     *
+     * @param repoName Name of repository
+     * @param label Distribution Label
+     * @param relativeFilename relative path of file to fetch
+     * @return a remote location that can be passed into getInputStream to fetch a file from this source.
+     */
+    String getRemoteLocation(String repoName, String label, String relativeFilename);
+
 }
 

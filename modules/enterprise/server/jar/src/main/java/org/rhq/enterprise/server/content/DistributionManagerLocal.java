@@ -95,4 +95,11 @@ public interface DistributionManagerLocal {
      *
      */
     void deleteDistributionFilesByDistId(Subject subject, int distid);
+
+    /**
+     * Returns a DistributionType for given name
+     * @param name name of distribution type
+     * @return distribution type from db
+     */
+    DistributionType getDistributionTypeByName(String name);
 }

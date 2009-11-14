@@ -74,7 +74,7 @@ public class RHNHelper {
         this.rhndata = new RhnComm(baseurl);
         this.rhndownload = new RhnDownloader(baseurl);
         this.systemid = systemIdIn;
-        this.distributionType = "Kickstart";
+        this.distributionType = "kickstart";
 
     }
 
@@ -289,7 +289,7 @@ public class RHNHelper {
      * @param ksFilePath path to kickstart file
      * @return a valid url location to fetch the rpm from.
      */
-    private String constructKickstartFileUrl(String channelName, String ksTreeLabel, String ksFilePath) {
+    public String constructKickstartFileUrl(String channelName, String ksTreeLabel, String ksFilePath) {
 
         String appendurl = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
         return baseurl + appendurl;

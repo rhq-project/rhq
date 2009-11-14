@@ -300,6 +300,16 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
         int contentSourceId, PageControl pc);
 
+
+    /**
+     * This will download all the distribution bits associated with a specific content source.
+     *
+     * @param subject
+     * @param contentSource
+     */
+    void downloadDistributionBits(Subject subject, ContentSource contentSource);
+
+
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package
      * version, and the location of that package version on the remote content source repo, this will download the

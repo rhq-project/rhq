@@ -291,4 +291,10 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         return path;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public String getRemoteLocation(String repoName, String label, String relativeFilename) {
+        return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
+    }
 }

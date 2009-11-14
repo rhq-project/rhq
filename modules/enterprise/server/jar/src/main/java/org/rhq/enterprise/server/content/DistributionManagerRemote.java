@@ -119,5 +119,12 @@ public interface DistributionManagerRemote {
     void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject, //
          @WebParam(name = "distid") int distid);
 
+    /**
+     * Returns a DistributionType for given name
+     * @param name name of distribution type
+     * @return distribution type from db
+     */
+    @WebMethod
+    DistributionType getDistributionTypeByName(@WebParam(name = "name") String name);
    
 }

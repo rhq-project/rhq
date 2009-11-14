@@ -163,6 +163,28 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     }
 
     /**
+     * Returns a DistributionType for given name
+     * @param name name of distribution type
+     * @return distribution type from db
+     */
+    @SuppressWarnings("unchecked")
+    public DistributionType getDistributionTypeByName(String name) {
+        Query query = entityManager.createNamedQuery(DistributionType.QUERY_FIND_BY_NAME);
+
+        query.setParameter("name", name);
+        List<DistributionType> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results.get(0);
+        } else {
+            return null;
+        }
+
+    }
+
+    
+
+    /**
      * Returns a list of available distribution files for requested distribution
      * @param distId
      * @return A list of Distributionfile objects associated to a given distribution

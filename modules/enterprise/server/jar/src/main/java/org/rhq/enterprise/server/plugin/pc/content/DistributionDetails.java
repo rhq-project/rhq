@@ -140,4 +140,8 @@ public class DistributionDetails {
     public void setDistributionPath(String distpath) {
         this.distpath = distpath;
     }
+
+    public String toString() {
+        return "DistributionType = " + distType + ", label = " + label + ", path = " + distpath;
+    }
 }

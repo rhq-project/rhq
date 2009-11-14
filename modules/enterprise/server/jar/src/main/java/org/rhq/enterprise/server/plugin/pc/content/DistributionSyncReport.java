@@ -34,8 +34,21 @@ import java.util.Collection;
 public class DistributionSyncReport {
     private List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
     private List<DistributionDetails> deletedDistros = new ArrayList<DistributionDetails>();
+    private int repoId;
 
-    public DistributionSyncReport() {
+    public int getRepoId()
+    {
+        return repoId;
+    }
+
+    public void setRepoId(int repoIdIn)
+    {
+        this.repoId = repoIdIn;
+    }
+
+    public DistributionSyncReport(int repoIdIn) {
+        repoId = repoIdIn;
+
     }
 
     public List<DistributionDetails> getDistributions() {

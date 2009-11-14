@@ -100,6 +100,32 @@ public class ContentProviderManager {
         return inputStream;
     }
 
+
+    /**
+     * Asks that the adapter responsible for the given content source return a stream to the DistributionFile 
+     * bits for the DistributionFile at the given location.
+     *
+     * @param  contentSourceId the adapter for this content source will be used to stream the bits
+     * @param  location        where the adapter can find the DistributionFile bits on the content source
+     *
+     * @return the stream to the DistributionFile bits
+     *
+     * @throws Exception if the adapter failed to load the bits
+     */
+    public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
+        ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
+
+        DistributionSource distSource = (DistributionSource) adapter;
+        InputStream inputStream = distSource.getInputStream(location);
+
+        if (inputStream == null) {
+            throw new Exception("Adapter for content source [" + contentSourceId
+                + "] failed to give us a stream to the distribution file at location [" + location + "]");
+        }
+
+        return inputStream;
+    }
+
     /**
      * Asks the provider responsible for the given content source to synchronize with its remote repository. This will
      * not attempt to load any package bits - it only synchronizes the repos and package version information. Note
@@ -195,7 +221,6 @@ public class ContentProviderManager {
 
                 // Temporary functionality: loop for all repos that use this content source
                 for (Repo repo : repos) {
-
                     // Convert the existing package list for this repo into DTOs for the API
                     // --------------------------------------------
                     List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
@@ -244,6 +269,7 @@ public class ContentProviderManager {
                     start = System.currentTimeMillis();
 
                     results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
+
                 }
 
                 // let's reset our progress string to the full results including the text added by the merge
@@ -258,17 +284,23 @@ public class ContentProviderManager {
                 results.setStatus(ContentSourceSyncStatus.SUCCESS);
                 results = contentSourceManager.mergeContentSourceSyncResults(results);
             }
+            
+            log.info("Checking if provider: " + provider + " is a DistributionSource");
             if (provider instanceof DistributionSource) {
                 log.info("synchronizeContentSource(" + contentSourceId + "):  this source is a DistributionSource");
                 log.info("We will skip the sync for now until PackageSource is working.");
-                /**
+
                 DistributionSource distSource = (DistributionSource) provider;
                 RepoCriteria reposForContentSource = new RepoCriteria();
                 reposForContentSource.addFilterContentSourceIds(contentSourceId);
+                reposForContentSource.addFilterCandidate(false); // Don't sync packages for candidates
                 List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
 
                 // Temporary functionality: loop for all repos that use this content source
                 for (Repo repo : repos) {
+                    log.info("ContentProviderManager::synchronizeContentSource  DistributionSource would be syncing repo: " + repo.getName());
+
+
                     start = System.currentTimeMillis();
 
                     PageControl pc = PageControl.getUnlimitedInstance();
@@ -280,7 +312,7 @@ public class ContentProviderManager {
                     progress.append(new Date()).append(": ");
                     progress.append("Asking content source to update the list of packages...");
 
-                    DistributionSyncReport distReport = new DistributionSyncReport();
+                    DistributionSyncReport distReport = new DistributionSyncReport(repo.getId());
                     List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(dists.size());
                     translateDomainToDto(dists, distDetails);
                 
@@ -294,20 +326,13 @@ public class ContentProviderManager {
                     start = System.currentTimeMillis();
 
 
-                    distSource.synchronizeDistribution(distReport, distDetails);
+                    distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
                     log.info("synchronizeDistributions: [" + contentSource.getName() + "]: got sync report from adapter=["
                         + distReport + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                     progress.append("new=").append(distReport.getDistributions().size());
-                    //TODO: Consider Update case, i.e. rhel-5-u2 was prev synced, and now a
-                    // single DistributionFile has changed
 
                     progress.append(", deleted=").append(distReport.getDeletedDistributions().size()).append('\n');
-                    //progress.append(new Date()).append(": ");
-                    //progress.append("FULL SUMMARY FOLLOWS:").append('\n');
-                    //progress.append(distReport.getSummary()).append('\n');
-                    //progress.append(new Date()).append(": ");
-                    //progress.append("Merging the updated list of packages to database").append('\n');
                     results.setResults(progress.toString());
                     results = contentSourceManager.mergeContentSourceSyncResults(results);
                     start = System.currentTimeMillis();
@@ -324,7 +349,7 @@ public class ContentProviderManager {
                 results.setResults(progress.toString());
                 results.setStatus(ContentSourceSyncStatus.SUCCESS);
                 results = contentSourceManager.mergeContentSourceSyncResults(results);
-                 */
+
             }
         } catch (Throwable t) {
             if (results != null) {
@@ -544,7 +569,7 @@ public class ContentProviderManager {
      *
      * @throws RuntimeException if there is no content source with the given ID
      */
-    protected ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
+    public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
         synchronized (this.adapters) {
             for (ContentSource contentSource : this.adapters.keySet()) {
                 if (contentSource.getId() == contentProviderId) {
@@ -593,6 +618,9 @@ public class ContentProviderManager {
         }
         if (adapter instanceof PackageSource) {
             ifacesList.add(PackageSource.class);
+        }
+        if (adapter instanceof DistributionSource) {
+            ifacesList.add(DistributionSource.class);
         }
 
         Class<?>[] ifaces = ifacesList.toArray(new Class<?>[ifacesList.size()]);

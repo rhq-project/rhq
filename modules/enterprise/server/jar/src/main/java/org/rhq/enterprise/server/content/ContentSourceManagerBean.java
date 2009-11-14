@@ -76,6 +76,7 @@ import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -86,6 +87,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -103,6 +105,8 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 
 /**
@@ -671,6 +675,84 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(45 * 60)
+    public void downloadDistributionBits(Subject subject, ContentSource contentSource) {
+        try {
+            log.debug("downloadDistributionBits invoked");
+            DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            int contentSourceId = contentSource.getId();
+            ContentProviderManager cpMgr = pc.getAdapterManager();
+            ContentProvider provider = cpMgr.getIsolatedContentProvider(contentSource.getId());
+            assert (provider instanceof DistributionSource);
+            DistributionSource distSource = (DistributionSource)provider;
+
+            //
+            // Following same sort of workaround done in ContentProviderManager for synchronizeContentSource
+            // Assume this will need to be updated when we place syncing in repo layer
+            //
+            RepoCriteria reposForContentSource = new RepoCriteria();
+            reposForContentSource.addFilterContentSourceIds(contentSourceId);
+            reposForContentSource.addFilterCandidate(false); // Don't sync distributions for candidates
+            Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+            List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
+            log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "
+                    + contentSourceId);
+            for (Repo repo: repos) {
+                log.debug("downloadDistributionBits operating on repo: " + repo.getName() + " id = " + repo.getId());
+                // Look up Distributions associated with this ContentSource.
+                PageControl pageControl = PageControl.getUnlimitedInstance();
+                log.debug("Looking up existing distributions for repoId: " + repo.getId());
+                List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pageControl);
+                log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
+
+                for (Distribution dist: dists) {
+                    log.debug("Looking up DistributionFiles for dist: " + dist);
+                    List<DistributionFile> distFiles = distManager.getDistributionFilesByDistId(dist.getId());
+                    log.debug("Found " + distFiles.size() + " DistributionFiles");
+                    for (DistributionFile dFile: distFiles) {
+                        String relPath = dist.getBasePath() + "/" + dFile.getRelativeFilename();
+                        File outputFile =
+                                getDistLocalFileAndCreateParentDir(dist.getLabel(), relPath);
+                        log.debug("Checking if file exists at: " + outputFile.getAbsolutePath());
+                        if (outputFile.exists()) {
+                            log.debug("File " + outputFile.getAbsolutePath() + " exists, checking md5sum");
+                            String expectedMD5 = (dFile.getMd5sum() != null) ? dFile.getMd5sum() : "<unspecified MD5>";
+                            String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
+                            if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
+                                log.error("Expected [" + expectedMD5 + "] versus actual [" +
+                                        actualMD5 + "] md5sums for file " + outputFile.getAbsolutePath() +
+                                        " do not match.");
+                                log.error("Need to re-fetch file.  Will download from DistributionSource" +
+                                        " and overwrite local file.");
+                            } else {
+                                log.info(outputFile + " exists and md5sum matches [" + actualMD5 +
+                                        "] no need to re-download");
+                                continue; // skip the download from bitsStream
+                            }
+                        }
+                        log.debug("Attempting download of " + dFile.getRelativeFilename() +
+                                " from contentSourceId " + contentSourceId);
+                        String remoteFetchLoc = distSource.getRemoteLocation(repo.getName(), dist.getLabel(),
+                                dFile.getRelativeFilename());
+                        InputStream bitsStream = pc.getAdapterManager().loadDistributionFileBits(contentSourceId,
+                                remoteFetchLoc);
+                        StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
+                        bitsStream = null;
+                        log.debug("DistributionFile has been downloaded to: " + outputFile.getAbsolutePath());
+                    }
+                }
+            }
+        }
+        catch (Exception e) {
+            log.error(e);
+            e.printStackTrace();
+        }
+    }
+
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
     public PackageBits downloadPackageBits(Subject subject, PackageVersionContentSource pvcs) {
         PackageVersionContentSourcePK pk = pvcs.getPackageVersionContentSourcePK();
         int contentSourceId = pk.getContentSource().getId();
@@ -1073,6 +1155,50 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<DistributionDetails> newDetails = report.getDistributions();
+        for (DistributionDetails detail: newDetails) {
+            try {
+
+                log.debug("Attempting to create new distribution based off of: " + detail);
+                DistributionType distType = distManager.getDistributionTypeByName(detail.getDistributionType());
+                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(),
+                    detail.getDistributionPath(), distType);
+                log.debug("Created new distribution: " + newDist);
+                Repo repo = repoManager.getRepo(overlord, report.getRepoId());
+                RepoDistribution repoDist = new RepoDistribution(repo, newDist);
+                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() +
+                        ", distId = " + newDist.getId());
+                entityManager.persist(repoDist);
+                List<DistributionFileDetails> files = detail.getFiles();
+                for (DistributionFileDetails f: files) {
+                    log.debug("Creating DistributionFile for: " + f);
+                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
+                    df.setLastModified(f.getLastModified());
+                    entityManager.persist(df);
+                    entityManager.flush();
+                }
+            }
+            catch (DistributionException e) {
+                progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
+                progress.append("Error is: " + e.getMessage());
+                syncResults.setResults(progress.toString());
+                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                log.error(e);
+            }
+        }
+        return syncResults;
+    }
+
+
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
         Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
@@ -1283,40 +1409,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
         }
 
-        return syncResults;
-    }
-
-
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
-
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        List<DistributionDetails> newDetails = report.getDistributions();
-        for (DistributionDetails detail: newDetails) {
-            try {
-                DistributionType distType = new DistributionType();
-                distType.setName(detail.getDistributionType());
-                distType.setDescription(detail.getDescription());
-                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(),
-                    detail.getDistributionPath(), distType);
-                List<DistributionFileDetails> files = detail.getFiles();
-                for (DistributionFileDetails f: files) {
-                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
-                    df.setLastModified(f.getLastModified());
-                    entityManager.persist(df);
-                }
-            }
-            catch (DistributionException e) {
-                progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
-                progress.append("Error is: " + e.getMessage());
-                syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
-                log.error(e);
-            }
-        }
         return syncResults;
     }
 
@@ -1720,6 +1812,24 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return same;
     }
 
+    private File getDistributionFileBitsLocalFilesystemFile(String distLabel, String fileName) {
+        final String filesystemProperty = "rhq.server.content.filesystem";
+        String filesystem = System.getProperty(filesystemProperty);
+
+        if (filesystem == null) {
+            throw new IllegalStateException("Server is misconfigured - missing system property '" + filesystemProperty
+                + "'. Don't know where distribution bits are stored.");
+        }
+
+        // allow the configuration to use ${} system property replacement strings
+        filesystem = StringPropertyReplacer.replaceProperties(filesystem);
+
+        String loc = "dists/" + distLabel;
+        File parentDir = new File(filesystem, loc);
+        File distBitsFile = new File(parentDir, fileName);
+        return distBitsFile;
+    }
+
     private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
         final String filesystemProperty = "rhq.server.content.filesystem";
         String filesystem = System.getProperty(filesystemProperty);
@@ -1752,6 +1862,25 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         File parentDir = new File(filesystem, idGroup);
         File packageBitsFile = new File(parentDir, bitsFileName.toString());
         return packageBitsFile;
+    }
+
+
+    private File getDistLocalFileAndCreateParentDir(String distLabel, String fileName) throws Exception {
+
+        File distBitsFile = getDistributionFileBitsLocalFilesystemFile(distLabel, fileName);
+        File parentDir = distBitsFile.getParentFile();
+
+        if (!parentDir.isDirectory()) {
+            if (!parentDir.exists()) {
+                parentDir.mkdirs();
+            }
+
+            if (!parentDir.isDirectory()) {
+                throw new Exception("Cannot create content filesystem directory [" + parentDir
+                    + "] for distribution bits storage.");
+            }
+        }
+        return distBitsFile;
     }
 
     private File getPackageBitsLocalFileAndCreateParentDir(int packageVersionId, String fileName) throws Exception {

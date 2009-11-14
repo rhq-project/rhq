@@ -75,4 +75,9 @@ public class DistributionFileDetails
     {
         this.md5sum = md5sumIn;
     }
+
+    public String toString() {
+        return "filePath = " + relativeFilename + ", lastModified = " + lastModified + ", md5Sum = " + md5sum;
+    }
 }
+

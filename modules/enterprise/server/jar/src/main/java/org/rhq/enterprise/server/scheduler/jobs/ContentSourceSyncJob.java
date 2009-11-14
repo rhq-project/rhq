@@ -36,6 +36,7 @@ import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
+import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -201,6 +202,20 @@ public class ContentSourceSyncJob implements StatefulJob {
             }
 
             log.info("All package bits for content source [" + contentSourceName + "] have been downloaded."
+                + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
+        }
+
+        // Get DistributionSource bits.
+        // Note:  We are ignoring LazyLoad for Distributions, we will always perform an eager fetch for the "bits".
+        if (!completed) {
+            log.info("Content source [" + contentSourceName + "] is currently being synchronized already. "
+                + "Please wait for the current sync job to finish. [DistributionSync]");
+        } else {
+            log.info("Content source [" + contentSourceName + "] is fully synchronized now. "
+                + "Downloading all Distribution bits now.");
+            long start = System.currentTimeMillis();
+            contentManager.downloadDistributionBits(overlord, contentSource);
+            log.info("All distribution bits for content source [" + contentSourceName + "] have been downloaded."
                 + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
         }
 

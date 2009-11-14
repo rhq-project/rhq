@@ -61,7 +61,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.help, " //
         + "        p.md5, " //
         + "        p.version, " //
-        + "        p.ampsVersion, "
+        + "        p.ampsVersion, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
@@ -79,7 +79,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.help, " //
         + "        p.md5, " //
         + "        p.version, " //
-        + "        p.ampsVersion, "
+        + "        p.ampsVersion, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p "), //
@@ -93,7 +93,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "       p.enabled = :enabled, " //
         + "       p.help = :help, " //
         + "       p.version = :version, " //
-        + "       p.ampsVersion = :ampsVersion,"
+        + "       p.ampsVersion = :ampsVersion," //
         + "       p.path = :path, " //
         + "       p.md5 = :md5, " //
         + "       p.mtime = :mtime " //
@@ -111,7 +111,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.help, " //
         + "         p.md5, " //
         + "         p.version, " //
-        + "         p.ampsVersion, "
+        + "         p.ampsVersion, " //
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //

@@ -27,4 +27,15 @@
           description="A fake server component that supports raw configuration">
     <resource-configuration configurationFormat="raw"/>    
   </server>
+
+  <server name="Structured Server"
+          class="StructuredServer"
+          discovery="StructuredDiscoveryComponent"
+          description="A fake server component that supports structured configuration">
+    <resource-configuration configurationFormat="both">
+      <c:simple-property name="foo"/>
+      <c:simple-property name="bar"/>
+      <c:simple-property name="bam"/>
+    </resource-configuration>
+  </server>
 </plugin>

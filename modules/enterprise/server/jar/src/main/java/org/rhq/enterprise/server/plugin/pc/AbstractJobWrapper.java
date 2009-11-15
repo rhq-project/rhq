@@ -123,7 +123,7 @@ abstract class AbstractJobWrapper implements Job {
         Object pluginJobObject;
         ServerPluginManager pluginManager = pc.getPluginManager();
         ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
-        ServerPluginLifecycleListener pluginComponent = pluginManager.getServerPluginComponent(pluginName);
+        ServerPluginComponent pluginComponent = pluginManager.getServerPluginComponent(pluginName);
 
         if (jobClass == null) {
             pluginJobObject = pluginComponent;

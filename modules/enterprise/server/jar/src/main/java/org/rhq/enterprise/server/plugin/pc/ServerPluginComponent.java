@@ -32,7 +32,7 @@ package org.rhq.enterprise.server.plugin.pc;
  *
  * @author John Mazzitelli
  */
-public interface ServerPluginLifecycleListener {
+public interface ServerPluginComponent {
     /**
      * When a plugin's container loads a plugin, this method will be called.
      * When this is called, no other plugin components have been instantiated

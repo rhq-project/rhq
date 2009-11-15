@@ -20,13 +20,13 @@
 package org.custom;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * A sample lifecycle listener for the sample generic plugin. This listener will be
  * the main plugin component the server uses to start and stop the plugin.
  */
-public class MyLifecycleListener implements ServerPluginLifecycleListener {
+public class MyLifecycleListener implements ServerPluginComponent {
 
     private ServerPluginContext context;
 

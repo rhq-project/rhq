@@ -64,7 +64,7 @@ public class ServerPluginManager {
      * Only plugins that declare their own plugin component will have objects in this cache.
      * This is keyed on plugin name.
      */
-    private final Map<String, ServerPluginLifecycleListener> pluginComponentCache;
+    private final Map<String, ServerPluginComponent> pluginComponentCache;
 
     /**
      * Creates a plugin manager for the given plugin container.
@@ -75,7 +75,7 @@ public class ServerPluginManager {
         this.parentPluginContainer = pc;
         this.loadedPlugins = new HashMap<String, ServerPluginEnvironment>();
         this.pluginContextCache = new HashMap<String, ServerPluginContext>();
-        this.pluginComponentCache = new HashMap<String, ServerPluginLifecycleListener>();
+        this.pluginComponentCache = new HashMap<String, ServerPluginComponent>();
     }
 
     /**
@@ -120,7 +120,7 @@ public class ServerPluginManager {
         log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
         // tell the plugin we are loading it
-        ServerPluginLifecycleListener component = createServerPluginComponent(env);
+        ServerPluginComponent component = createServerPluginComponent(env);
         if (component != null) {
             ServerPluginContext context = getServerPluginContext(env);
             log.debug("Initializing plugin component for server plugin [" + pluginName + "]");
@@ -146,9 +146,9 @@ public class ServerPluginManager {
         log.debug("Starting plugins");
 
         // tell all plugin components to start
-        for (Map.Entry<String, ServerPluginLifecycleListener> entry : this.pluginComponentCache.entrySet()) {
+        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
             String pluginName = entry.getKey();
-            ServerPluginLifecycleListener component = entry.getValue();
+            ServerPluginComponent component = entry.getValue();
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
             log.debug("Starting plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -169,9 +169,9 @@ public class ServerPluginManager {
         log.debug("Stopping plugins");
 
         // tell all plugin components to stop
-        for (Map.Entry<String, ServerPluginLifecycleListener> entry : this.pluginComponentCache.entrySet()) {
+        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
             String pluginName = entry.getKey();
-            ServerPluginLifecycleListener component = entry.getValue();
+            ServerPluginComponent component = entry.getValue();
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
             log.debug("Stopping plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -202,7 +202,7 @@ public class ServerPluginManager {
 
         try {
             // tell the plugin we are unloading it
-            ServerPluginLifecycleListener component = this.pluginComponentCache.get(pluginName);
+            ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
             if (component != null) {
                 log.debug("Shutting down plugin componentfor server plugin [" + pluginName + "]");
                 ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -256,7 +256,7 @@ public class ServerPluginManager {
      *         return <code>null</code> if the plugin has not defined a plugin component. 
      *         <code>null</code> is also returned if the plugin is not initialized yet. 
      */
-    public ServerPluginLifecycleListener getServerPluginComponent(String pluginName) {
+    public ServerPluginComponent getServerPluginComponent(String pluginName) {
         return this.pluginComponentCache.get(pluginName);
     }
 
@@ -323,17 +323,16 @@ public class ServerPluginManager {
      *
      * @throws Exception if failed to create the instance
      */
-    protected ServerPluginLifecycleListener createServerPluginComponent(ServerPluginEnvironment environment)
-        throws Exception {
+    protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment) throws Exception {
 
         String pluginName = environment.getPluginName();
-        ServerPluginLifecycleListener instance = null;
+        ServerPluginComponent instance = null;
 
         ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();
         if (componentXml != null) {
             String className = componentXml.getClazz();
             log.debug("Creating plugin component [" + className + "] for plugin [" + pluginName + "]");
-            instance = (ServerPluginLifecycleListener) instantiatePluginClass(environment, className);
+            instance = (ServerPluginComponent) instantiatePluginClass(environment, className);
             log.debug("Plugin component created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
         }
 

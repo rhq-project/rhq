@@ -22,6 +22,8 @@
   */
 package org.rhq.core.clientapi.agent.metadata;
 
+import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -77,6 +79,10 @@ public class ConfigurationMetadataParser {
         ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
                 descriptor.getNotes());
         configurationDefinition.setConfigurationFormat(getConfigurationFormat(descriptor));
+
+        if (configurationDefinition.getConfigurationFormat() == RAW) {
+            return configurationDefinition;            
+        }
 
         for (ConfigurationTemplateDescriptor templateDescriptor : descriptor.getTemplate()) {
             configurationDefinition.putTemplate(parseTemplate(templateDescriptor));

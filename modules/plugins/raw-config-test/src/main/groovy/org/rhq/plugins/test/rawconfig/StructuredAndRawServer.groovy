@@ -9,7 +9,7 @@ import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
 
-class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
+class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File rawConfigDir
 
@@ -17,7 +17,7 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
 
   void start(ResourceContext context) {
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "rawconfig-test-1.txt")
+    rawConfig1 = new File(rawConfigDir, "structured-and-raw-test-1.txt")
 
     createRawConfigDir()
     createConfigFile()

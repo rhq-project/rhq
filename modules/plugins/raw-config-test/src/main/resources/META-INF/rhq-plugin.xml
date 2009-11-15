@@ -10,14 +10,21 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-  <server name="Raw Config Server"
-          class="RawConfigServer"
-          discovery="RawConfigDiscoveryComponent"
+  <server name="Structured and Raw Server"
+          class="StructuredAndRawServer"
+          discovery="StructuredAndRawDiscoveryComponent"
           description="A fake server component that supports both structured and raw configuration">
     <resource-configuration configurationFormat="both">
       <c:simple-property name="x"/>
       <c:simple-property name="y"/>
       <c:simple-property name="z"/>
     </resource-configuration>
+  </server>
+
+  <server name="Raw Server"
+          class="RawServer"
+          discovery="RawDiscoveryComponent"
+          description="A fake server component that supports raw configuration">
+    <resource-configuration configurationFormat="raw"/>    
   </server>
 </plugin>

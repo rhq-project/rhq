@@ -41,7 +41,7 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server</artifactId>
@@ -178,7 +178,7 @@
                 </execution>
             </executions>
             <configuration>
-                <packageName>org.rhq.enterprise.server.plugins.rhnhosted.xml</packageName> 
+                <packageName>org.rhq.enterprise.server.plugins.rhnhosted.xml</packageName>
                 <outputDirectory>${project.build.outputDirectory}/generated-source</outputDirectory>
             </configuration>
         </plugin>

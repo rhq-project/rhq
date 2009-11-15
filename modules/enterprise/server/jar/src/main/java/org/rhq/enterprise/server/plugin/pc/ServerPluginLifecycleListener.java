@@ -27,7 +27,7 @@ package org.rhq.enterprise.server.plugin.pc;
  * for plugin developers to allocate global resources needed by all plugin components and
  * a place to clean up those resources.
  * 
- * Lifecycle listeners are required of generic server plugins because they provide
+ * Plugin components are required of generic server plugins because they provide
  * the only mechanism to start and stop.
  *
  * @author John Mazzitelli

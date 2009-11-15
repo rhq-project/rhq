@@ -162,9 +162,9 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         }
 
         @Override
-        protected ServerPluginLifecycleListener createServerPluginLifecycleListener(ServerPluginEnvironment environment)
+        protected ServerPluginLifecycleListener createServerPluginComponent(ServerPluginEnvironment environment)
             throws Exception {
-            ServerPluginLifecycleListener listener = super.createServerPluginLifecycleListener(environment);
+            ServerPluginLifecycleListener listener = super.createServerPluginComponent(environment);
             listeners.put(environment.getPluginName(), listener);
             return listener;
         }

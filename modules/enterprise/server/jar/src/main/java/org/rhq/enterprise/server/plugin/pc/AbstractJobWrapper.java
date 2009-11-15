@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.lang.reflect.Method;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -27,6 +28,8 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+
+import org.jboss.seam.async.Schedule;
 
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -65,9 +68,15 @@ abstract class AbstractJobWrapper implements Job {
 
     /**
      * Key to the job data map that indicates which plugin component class should be instantiated
-     * in order to process the job. This must implement {@link ScheduledJob}.
+     * in order to process the job. If not specified, the main plugin component instance is used.
      */
-    public static final String DATAMAP_SCHEDULED_JOB_CLASS = DATAMAP_LEADER + "scheduledJobClass";
+    public static final String DATAMAP_JOB_CLASS = DATAMAP_LEADER + "jobClass";
+
+    /**
+     * Key to the job data map that indicates which method on the job class should be invoked
+     * to run the job.
+     */
+    public static final String DATAMAP_JOB_METHOD_NAME = DATAMAP_LEADER + "jobMethodName";
 
     /**
      * This is the method that quartz calls when the schedule has triggered. This method will
@@ -84,7 +93,8 @@ abstract class AbstractJobWrapper implements Job {
         String pluginName = dataMap.getString(DATAMAP_PLUGIN_NAME);
         String pluginTypeString = dataMap.getString(DATAMAP_PLUGIN_TYPE);
         String jobId = dataMap.getString(DATAMAP_JOB_ID);
-        String scheduledJobClass = dataMap.getString(DATAMAP_SCHEDULED_JOB_CLASS);
+        String jobClass = dataMap.getString(DATAMAP_JOB_CLASS);
+        String jobMethodName = dataMap.getString(DATAMAP_JOB_METHOD_NAME);
 
         // obtain the plugin's own callback data from the datamap
         Properties callbackData = new Properties();
@@ -110,31 +120,47 @@ abstract class AbstractJobWrapper implements Job {
         MasterServerPluginContainer mpc = LookupUtil.getServerPluginService().getMasterPluginContainer();
         AbstractTypeServerPluginContainer pc = mpc.getPluginContainerByPluginType(pluginType);
 
-        ScheduledJob pluginJob;
+        Object pluginJobObject;
         ServerPluginManager pluginManager = pc.getPluginManager();
         ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
-        ServerPluginLifecycleListener lifecycleListener = pluginManager.getServerPluginLifecycleListener(pluginName);
+        ServerPluginLifecycleListener pluginComponent = pluginManager.getServerPluginComponent(pluginName);
 
-        if (scheduledJobClass == null) {
-            try {
-                pluginJob = (ScheduledJob) lifecycleListener;
-                if (pluginJob == null) {
-                    log.error(logMsg(pluginName, pluginType, jobId, "no lifecycle listener to process job", null));
-                    throw new UnsupportedOperationException("no lifecycle listener available to process the job");
-                }
-            } catch (Throwable t) {
-                // no valid lifecycle listener that implements job interface - we need to unschedule this, do not refire
-                log.error(logMsg(pluginName, pluginType, jobId, "invaild lifecycle listener", t));
-                JobExecutionException jobException = new JobExecutionException(t, false);
+        if (jobClass == null) {
+            pluginJobObject = pluginComponent;
+            if (pluginJobObject == null) {
+                JobExecutionException jobException = new JobExecutionException(logMsg(pluginName, pluginType, jobId,
+                    "no plugin component to process job", null), false);
                 jobException.setUnscheduleAllTriggers(true);
                 throw jobException;
             }
         } else {
             try {
-                pluginJob = (ScheduledJob) pluginManager.instantiatePluginClass(pluginEnv, scheduledJobClass);
+                pluginJobObject = pluginManager.instantiatePluginClass(pluginEnv, jobClass);
             } catch (Throwable t) {
                 // invalid class - we need to unschedule this, do not refire since it will never work
-                log.error(logMsg(pluginName, pluginType, jobId, "invalid schedule job class", t));
+                log.error(logMsg(pluginName, pluginType, jobId, "bad schedule job class [" + jobClass + "]", t));
+                JobExecutionException jobException = new JobExecutionException(t, false);
+                jobException.setUnscheduleAllTriggers(true);
+                throw jobException;
+            }
+        }
+
+        // try to find the method to invoke - first, see if the method exists with a parameter
+        // that is the type of our job invocation context. Otherwise, rely on a no-arg method.
+        Method jobMethod;
+        Object[] params;
+
+        try {
+            jobMethod = pluginJobObject.getClass().getMethod(jobMethodName, ScheduledJobInvocationContext.class);
+            params = new Object[1];
+            //    params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext);
+        } catch (NoSuchMethodException e) {
+            try {
+                jobMethod = pluginJobObject.getClass().getMethod(jobMethodName);
+                params = null;
+            } catch (Throwable t) {
+                // invalid method - we need to unschedule this, do not refire since it will never work
+                log.error(logMsg(pluginName, pluginType, jobId, "bad schedule job method [" + jobMethodName + "]", t));
                 JobExecutionException jobException = new JobExecutionException(t, false);
                 jobException.setUnscheduleAllTriggers(true);
                 throw jobException;
@@ -142,12 +168,11 @@ abstract class AbstractJobWrapper implements Job {
         }
 
         // now actually tell the plugin its time to do the scheduled job
-
         try {
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
-                pluginJob.execute(jobId, lifecycleListener, callbackData);
+                jobMethod.invoke(pluginJobObject, params);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }

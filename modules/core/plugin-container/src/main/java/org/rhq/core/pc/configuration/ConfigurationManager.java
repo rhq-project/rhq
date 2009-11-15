@@ -183,11 +183,11 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return configuration;
     }
 
-    public Configuration loadResourceConfiguration(int resourceId, boolean fromStructured)
+    public Configuration loadResourceConfiguration(int resourceId)
         throws PluginContainerException {
 
         LoadResourceConfiguration loadConfig = loadConfigFactory.getStrategy(resourceId);
-        Configuration configuration = loadConfig.execute(resourceId, fromStructured);
+        Configuration configuration = loadConfig.execute(resourceId);
 
         if (configuration == null) {
             ResourceType resourceType = componentService.getResourceType(resourceId);
@@ -198,39 +198,39 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return configuration;
     }
 
-    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
-        ResourceType resourceType = getResourceType(resourceId);
-        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
-        try {
-            Configuration configuration = configComponent.loadResourceConfiguration();
-            if (configuration == null) {
-                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
-            }
-
-            // If the plugin didn't already set the notes field, set it to something useful.
-            if (configuration.getNotes() == null) {
-                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-            }
-
-            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
-
-            // Normalize and validate the config.
-            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
-                configurationDefinition);
-            for (String errorMessage : errorMessages) {
-                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-                    + resourceType.getPlugin() + " plugin - " + errorMessage);
-            }
-
-            return configuration;
-        } catch (Throwable t) {
-            //noinspection ThrowableInstanceNeverThrown
-            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-                new WrappedRemotingException(t));
-        }
-    }
+//    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
+//        ResourceType resourceType = getResourceType(resourceId);
+//        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
+//        try {
+//            Configuration configuration = configComponent.loadResourceConfiguration();
+//            if (configuration == null) {
+//                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
+//                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+//            }
+//
+//            // If the plugin didn't already set the notes field, set it to something useful.
+//            if (configuration.getNotes() == null) {
+//                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+//            }
+//
+//            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
+//
+//            // Normalize and validate the config.
+//            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
+//            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
+//                configurationDefinition);
+//            for (String errorMessage : errorMessages) {
+//                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
+//                    + resourceType.getPlugin() + " plugin - " + errorMessage);
+//            }
+//
+//            return configuration;
+//        } catch (Throwable t) {
+//            //noinspection ThrowableInstanceNeverThrown
+//            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
+//                new WrappedRemotingException(t));
+//        }
+//    }
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a

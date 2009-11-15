@@ -24,25 +24,26 @@
 package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
+import static java.util.Collections.*;
 
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.jmock.Expectations;
+import org.jmock.Sequence;
 
 import java.util.Random;
+import java.util.Set;
+import java.util.HashSet;
 
-public class LoadStructuredAndRawTest extends JMockTest {
-
-    static final boolean FROM_STRUCTURED = true;
-
-    static final boolean FROM_RAW = false;
+public class LoadStructuredAndRawTest extends LoadConfigTest {
 
     ComponentService componentService;
 
@@ -50,18 +51,13 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
     ResourceConfigurationFacet configFacet;
 
-    int resourceId = -1;
-
-    boolean daemonThread = true;
-
-    boolean onlyIfStarted = true;
-
     LoadStructuredAndRaw loadStructuredAndRaw;
-
-    Random random = new Random();
 
     @BeforeMethod
     public void setup() {
+        resourceType = new ResourceType();
+        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
+
         componentService = context.mock(ComponentService.class);
         configUtilityService = context.mock(ConfigurationUtilityService.class);
 
@@ -73,58 +69,83 @@ public class LoadStructuredAndRawTest extends JMockTest {
     }
 
     @Test
-    public void theResourceConfigFacetShouldGetLoaded() throws Exception {
+    public void rawConfigshouldGetLoaded() throws Exception {
+        Configuration config = new Configuration();
+
+        Set<RawConfiguration> rawConfigs = toSet(
+            createRawConfiguration("/tmp/foo.txt"),
+            createRawConfiguration("/tmp/bar.txt")
+        );
+
+
+        addDefaultExpectations(config, rawConfigs);
+
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        assertRawsLoaded(rawConfigs, loadedConfig);
+    }
+
+    @Test
+    public void structuredConfigShouldGetLoaded() throws Exception {
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "1"));
+        config.put(new PropertySimple("y", "2"));
+
+        addDefaultExpectations(config, EMPTY_SET);
+
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        assertStructuredLoaded(config, loadedConfig);
+    }
+
+    @Test
+    public void theConfigNotesShouldGetSet() throws Exception {
+        Configuration config = new Configuration();
+        config.setNotes(null);
+
+        addDefaultExpectations(config, EMPTY_SET);
+
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        assertNotesSetToDefault(loadedConfig);
+    }
+
+    @Test
+    public void nullStructuredShouldBeIgnored() throws Exception {
+        Configuration config = null;
+
+        Set<RawConfiguration> rawConfigs = toSet(createRawConfiguration("/tmp/foo.txt"));
+
+        addDefaultExpectations(config, rawConfigs);
+
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        Configuration emptyStructured = new Configuration();
+
+        assertRawsLoaded(rawConfigs, loadedConfig);
+        assertStructuredLoaded(emptyStructured, loadedConfig);
+    }
+
+    @Test
+    public void nullRawsShouldBeIgnored() throws Exception {
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "1"));
+        config.put(new PropertySimple("y", "2"));
+
+        Set<RawConfiguration> rawConfigs = null;
+
+        addDefaultExpectations(config, rawConfigs);
+
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        assertRawsLoaded(EMPTY_SET, loadedConfig);
+        assertStructuredLoaded(config, loadedConfig);
+    }
+
+    @Test
+    public void nullShouldBeReturnedWhenStructuredAndRawAreNull() throws Exception {
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
-                                                         ResourceConfigurationFacet.class,
-                                                         FacetLockType.READ,
-                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                         daemonThread,
-                                                         onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(configFacet).loadStructuredConfiguration();
-            
-            ignoring(configUtilityService);
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-    }
-
-    @Test
-    public void theStructuredConfigShouldGetLoadedWhenFromStructured() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(configFacet).loadStructuredConfiguration();
-
-            ignoring(configUtilityService);
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-    }
-
-    @Test
-    public void eachRawConfigShouldBeMergedIntoTheStructuredConfigWhenFromStructured() throws Exception {
-        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/foo.txt");
-        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/bar.txt");
-        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/bam.txt");
-
-        final Configuration configuration = new Configuration();
-        configuration.addRawConfiguration(rawConfig1);
-        configuration.addRawConfiguration(rawConfig2);
-        configuration.addRawConfiguration(rawConfig3);
-
-        final ResourceType resourceType = new ResourceType();
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
                                                     LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
@@ -134,82 +155,21 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            atLeast(1).of(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            oneOf(configFacet).loadStructuredConfiguration(); will(returnValue(null));
 
-            oneOf(configFacet).mergeStructuredConfiguration(rawConfig1, configuration);
-            oneOf(configFacet).mergeStructuredConfiguration(rawConfig2, configuration);
-            oneOf(configFacet).mergeStructuredConfiguration(rawConfig3, configuration);
-
-            ignoring(configUtilityService);
+            oneOf(configFacet).loadRawConfigurations(); will(returnValue(null));
         }});
 
-        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
+        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+
+        assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }
 
-    @Test
-    public void theRawConfigShouldGetLoadedWhenFromRaw() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
-
-            atLeast(1).of(configFacet).loadRawConfigurations(); will(returnValue(new Configuration()));
-
-            ignoring(configUtilityService);
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_RAW);
-    }
-
-    @Test
-    public void theStructuredConfigShouldBeMergedIntoEachRawConfigWhenFromRaw() throws Exception {
-        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/foo.txt");
-        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/bar.txt");
-        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/bam.txt");
-
-        final Configuration configuration = new Configuration();
-        configuration.addRawConfiguration(rawConfig1);
-        configuration.addRawConfiguration(rawConfig2);
-        configuration.addRawConfiguration(rawConfig3);
+    private void addDefaultExpectations(final Configuration config, final Set<RawConfiguration> rawConfigs)
+        throws Exception {
 
         context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
-
-            allowing(configFacet).loadRawConfigurations(); will(returnValue(configuration));
-
-            oneOf(configFacet).mergeRawConfiguration(configuration, rawConfig1);
-            oneOf(configFacet).mergeRawConfiguration(configuration, rawConfig2);
-            oneOf(configFacet).mergeRawConfiguration(configuration, rawConfig3);
-
-            ignoring(configUtilityService);
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_RAW);
-    }
-
-    @Test
-    public void theConfigReceivedFromTheFacetShouldBeReturned() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
+            atLeast(1).of(componentService).getComponent(resourceId,
                                                     ResourceConfigurationFacet.class,
                                                     FacetLockType.READ,
                                                     LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
@@ -219,118 +179,16 @@ public class LoadStructuredAndRawTest extends JMockTest {
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            oneOf(configFacet).loadStructuredConfiguration(); will(returnValue(config));
 
-            ignoring(configUtilityService);
+            oneOf(configFacet).loadRawConfigurations(); will(returnValue(rawConfigs));
+
+            atLeast(1).of(configUtilityService).normalizeConfiguration(with(any(Configuration.class)),
+                with(getResourceConfigDefinition()));
+
+            atLeast(1).of(configUtilityService).validateConfiguration(with(any(Configuration.class)),
+                with(getResourceConfigDefinition()));
         }});
-
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-
-        assertSame(
-            loadedConfig,
-            configuration,
-            "The loadRawConfig should return the configuration it receives from the facet component."
-        );
     }
 
-    @Test
-    public void theConfigNotesShouldGetSetIfItIsNotAlreadySet() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setName("test resource");
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            ignoring(configUtilityService);
-        }});
-
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-
-        String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
-
-        assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
-    }
-
-    @Test
-    public void theConfigShouldGetNormalized() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            atLeast(1).of(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            allowing(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-    }
-
-    @Test
-    public void theConfigShouldGetValidated() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            allowing(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            atLeast(1).of(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadStructuredAndRaw.execute(resourceId, FROM_STRUCTURED);
-    }
-
-    RawConfiguration createRawConfiguration(String path) {
-        RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(randomBytes());
-        rawConfig.setPath(path);
-
-        return rawConfig;
-    }
-
-    byte[] randomBytes() {
-        byte[] bytes = new byte[10];
-        random.nextBytes(bytes);
-
-        return bytes;
-    }
 }

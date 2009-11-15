@@ -26,6 +26,7 @@ package org.rhq.core.pc.configuration;
 import static org.testng.Assert.*;
 
 import org.jmock.Expectations;
+import org.jmock.Sequence;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
@@ -33,6 +34,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -44,9 +46,9 @@ public class ConfigurationManagerUnitTest extends JMockTest {
 
     static final String NON_LEGACY_AMPS_VERSION = "2.1";
 
-    static final boolean FROM_STRUCTURED = true;
+    boolean FROM_STRUCTURED = true;
 
-    static final boolean FROM_RAW = false;
+    boolean FROM_RAW = false;
 
     int resourceId = -1;
 
@@ -82,10 +84,10 @@ public class ConfigurationManagerUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             atLeast(1).of(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            allowing(loadConfig).execute(resourceId, FROM_STRUCTURED); will(returnValue(new Configuration()));
+            allowing(loadConfig).execute(resourceId); will(returnValue(new Configuration()));
         }});
 
-        configurationMgr.loadResourceConfiguration(resourceId, true);
+        configurationMgr.loadResourceConfiguration(resourceId);
     }
 
     @Test
@@ -97,11 +99,11 @@ public class ConfigurationManagerUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             allowing(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            atLeast(1).of(loadConfig).execute(resourceId, FROM_STRUCTURED);
+            atLeast(1).of(loadConfig).execute(resourceId);
             will(returnValue(expectedConfig));
         }});
 
-        Configuration actualConfig = configurationMgr.loadResourceConfiguration(resourceId, FROM_STRUCTURED);
+        Configuration actualConfig = configurationMgr.loadResourceConfiguration(resourceId);
 
         assertSame(actualConfig, expectedConfig, "Expected the configuration from the loadConfig object to be returned.");
     }
@@ -113,12 +115,12 @@ public class ConfigurationManagerUnitTest extends JMockTest {
         context.checking(new Expectations() {{
             allowing(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            allowing(loadConfig).execute(resourceId, FROM_STRUCTURED); will(returnValue(null));
+            allowing(loadConfig).execute(resourceId); will(returnValue(null));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
         }});
 
-        configurationMgr.loadResourceConfiguration(resourceId, FROM_STRUCTURED);
+        configurationMgr.loadResourceConfiguration(resourceId);
     }
 
     @Test
@@ -134,6 +136,8 @@ public class ConfigurationManagerUnitTest extends JMockTest {
 
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
+        final Sequence sequence = context.sequence("merge");
+
         context.checking(new Expectations(){{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
@@ -142,6 +146,8 @@ public class ConfigurationManagerUnitTest extends JMockTest {
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(facet));
+
+//            atLeast(1).of(facet).load
 
             oneOf(facet).mergeRawConfiguration(configuration, rawConfig1);
             oneOf(facet).mergeRawConfiguration(configuration, rawConfig2);
@@ -184,6 +190,17 @@ public class ConfigurationManagerUnitTest extends JMockTest {
 
         assertNotNull(actualConfig, "Expected a non-null " + Configuration.class.getSimpleName() + " to be returned.");
     }
+
+//    @Test
+//    public void theUpdateLegacyConfigCmdShouldBeCalledToUpdateLegacyConfig() throws Exception {
+//        UpdateLegacyConfig updateLegacyConfig = context.mock(UpdateLegacyConfig.class);
+//
+//        context.checking(new Expectations() {{
+//            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
+//
+//            //oneOf()
+//        }});
+//    }
 
     RawConfiguration createRawConfiguration(String path) {
         RawConfiguration rawConfig = new RawConfiguration();

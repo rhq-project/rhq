@@ -9,7 +9,7 @@ import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
 
-class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
+class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File rawConfigDir
 
@@ -17,7 +17,7 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
 
   void start(ResourceContext context) {
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "rawconfig-test-1.txt")
+    rawConfig1 = new File(rawConfigDir, "structured-and-raw-test-1.txt")
 
     createRawConfigDir()
     createConfigFile()
@@ -48,14 +48,21 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   Configuration loadStructuredConfiguration() {
-    return loadRawConfigurations()
-  }
+    def propertiesConfig = new PropertiesConfiguration(rawConfig1)
+    def config = new Configuration()
 
-  Configuration loadRawConfigurations() {
-    Configuration config = new Configuration()
-    config.addRawConfiguration(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
+    config.put(new PropertySimple("x", propertiesConfig.getString("x")))
+    config.put(new PropertySimple("y", propertiesConfig.getString("y")))
+    config.put(new PropertySimple("z", propertiesConfig.getString("z")))
 
     return config
+  }
+
+  Set<RawConfiguration> loadRawConfigurations() {
+    def rawConfigs = new HashSet<RawConfiguration>()
+    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
+
+    return rawConfigs
   }
 
   void mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
@@ -88,6 +95,18 @@ class RawConfigServer implements ResourceComponent, ResourceConfigurationFacet {
     configuration.put(new PropertySimple("x", rawPropertiesConfig.getString("x")))
     configuration.put(new PropertySimple("y", rawPropertiesConfig.getString("y")))
     configuration.put(new PropertySimple("z", rawPropertiesConfig.getString("z")))
+  }
+
+  void validateRawConfiguration(RawConfiguration rawConfig) {
+  }
+
+  void validateStructuredConfiguration(Configuration config) {
+  }
+
+  void persistStructuredConfiguration(Configuration config) {
+  }
+
+  void persistRawConfiguration(RawConfiguration rawConfig) {    
   }
 
 }

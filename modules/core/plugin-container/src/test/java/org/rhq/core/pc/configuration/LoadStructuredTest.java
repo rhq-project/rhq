@@ -23,31 +23,23 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.testng.Assert.*;
-
+import org.jmock.Expectations;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.resource.ResourceType;
+import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.jmock.Expectations;
 
-public class LoadStructuredTest extends JMockTest {
+public class LoadStructuredTest extends LoadConfigTest {
 
     ComponentService componentService;
 
     ConfigurationUtilityService configUtilityService;
 
     ResourceConfigurationFacet configFacet;
-
-    int resourceId = -1;
-
-    boolean daemonThread = true;
-
-    boolean onlyIfStarted = true;
 
     LoadStructured loadStructured;
 
@@ -64,7 +56,34 @@ public class LoadStructuredTest extends JMockTest {
     }
 
     @Test
-    public void theResourceConfigFacetShouldGetLoaded() throws Exception {
+    public void structuredConfigShouldGetLoaded() throws Exception {
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "1"));
+        config.put(new PropertySimple("y", "2"));
+
+        addDefaultExpectations(config);
+
+        Configuration loadedConfig = loadStructured.execute(resourceId);
+
+        assertStructuredLoaded(config, loadedConfig);
+    }
+
+    @Test
+    public void theConfigNotesShouldGetSet() throws Exception {
+        final Configuration config = new Configuration();
+        config.setNotes(null);
+
+        addDefaultExpectations(config);
+
+        Configuration loadedConfig = loadStructured.execute(resourceId);
+
+        assertNotesSetToDefault(loadedConfig);
+    }
+
+    @Test
+    public void nullShouldBeReturnedWhenStructuredIsNull() throws Exception {
+        final Configuration config = null;
+
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
@@ -74,148 +93,34 @@ public class LoadStructuredTest extends JMockTest {
                                                          onlyIfStarted);
             will(returnValue(configFacet));
 
-            ignoring(configFacet);
-            ignoring(configUtilityService);
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(configFacet).loadStructuredConfiguration(); will(returnValue(null));    
         }});
 
-        loadStructured.execute(resourceId, true);
+        Configuration loadedConfig = loadStructured.execute(resourceId);
+
+        assertNull(loadedConfig, "Expected null to be returned when facet returns null for structured.");
     }
 
-    @Test
-    public void theConfigShouldGetLoadedByTheFacet() throws Exception {
+    private void addDefaultExpectations(final Configuration config) throws Exception {
         context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            atLeast(1).of(configFacet).loadStructuredConfiguration();
-
-            ignoring(configUtilityService);
-        }});
-
-        loadStructured.execute(resourceId, true);
-    }
-
-    @Test
-    public void theConfigNotesShouldGetSetIfItIsNotAlreadySet() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setName("test resource");
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
             will(returnValue(configFacet));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
+            atLeast(1).of(configFacet).loadStructuredConfiguration(); will(returnValue(config));
 
-            ignoring(configUtilityService);
+            atLeast(1).of(configUtilityService).normalizeConfiguration(config, getResourceConfigDefinition());
+
+            atLeast(1).of(configUtilityService).validateConfiguration(config, getResourceConfigDefinition());
         }});
-
-        Configuration loadedConfig = loadStructured.execute(resourceId, true);
-
-        String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
-
-        assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
-    }
-
-    @Test
-    public void theConfigShouldGetNormalized() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            atLeast(1).of(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            allowing(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadStructured.execute(resourceId, true);
-    }
-
-    @Test
-    public void theConfigShouldGetValidated() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            allowing(configUtilityService).normalizeConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-
-            atLeast(1).of(configUtilityService).validateConfiguration(configuration, resourceType.getResourceConfigurationDefinition());
-        }});
-
-        loadStructured.execute(resourceId, true);
-    }
-
-    @Test
-    public void theConfigReceivedFromTheFacetShouldBeReturned() throws Exception {
-        final Configuration configuration = new Configuration();
-
-        final ResourceType resourceType = new ResourceType();
-        resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        context.checking(new Expectations() {{
-            allowing(componentService).getComponent(resourceId,
-                                                    ResourceConfigurationFacet.class,
-                                                    FacetLockType.READ,
-                                                    LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-                                                    daemonThread,
-                                                    onlyIfStarted);
-            will(returnValue(configFacet));
-
-            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
-
-            allowing(configFacet).loadStructuredConfiguration(); will(returnValue(configuration));
-
-            ignoring(configUtilityService);
-        }});
-
-        Configuration loadedConfig = loadStructured.execute(resourceId, true);
-
-        assertSame(
-            loadedConfig,
-            configuration,
-            "The loadRawConfig should return the configuration it receives from the facet component."
-        );
     }
 
 }

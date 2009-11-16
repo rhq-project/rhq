@@ -218,21 +218,24 @@
 
    <navigation-rule>
       <from-view-id>/rhq/content/importRepos.xhtml</from-view-id>
-
       <navigation-case>
          <!-- catch all navigation-case: if any actions return 'success', go here -->
          <from-outcome>success</from-outcome>
          <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
-
+      <navigation-case>
+         <!-- import failed -->
+         <from-outcome>failed</from-outcome>
+         <to-view-id>/rhq/content/importRepos.xhtml</to-view-id>
+         <redirect/>
+      </navigation-case>
       <navigation-case>
          <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/importRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
-
    </navigation-rule>
 
    <!-- Repo View -->

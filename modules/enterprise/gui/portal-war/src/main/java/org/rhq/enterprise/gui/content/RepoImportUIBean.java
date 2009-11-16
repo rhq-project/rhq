@@ -22,6 +22,7 @@ package org.rhq.enterprise.gui.content;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
 
@@ -122,8 +123,12 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
         try {
             repoManager.importCandidateRepo(subject, repoIds);
         } catch (RepoException e) {
-            // TODO: Handle
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Failed to import one or more Repositories from Content Provider", e);
+            return "failed";
         }
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, selected.length
+            + " Repositories imported from Content Provider");
         return "success";
     }
 

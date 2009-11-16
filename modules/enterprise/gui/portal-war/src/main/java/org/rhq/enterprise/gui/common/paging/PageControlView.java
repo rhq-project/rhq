@@ -30,7 +30,7 @@ import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHist
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceReposUIBean;
-import org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean;
+import org.rhq.enterprise.gui.content.ContentSourceCandidateReposUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceReposUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceSyncResultsUIBean;
 import org.rhq.enterprise.gui.content.DeployPackagesUIBean;
@@ -44,8 +44,8 @@ import org.rhq.enterprise.gui.content.ListReposUIBean;
 import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
 import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
 import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
-import org.rhq.enterprise.gui.content.RepoImportUIBean;
 import org.rhq.enterprise.gui.content.RepoDistributionUIBean;
+import org.rhq.enterprise.gui.content.RepoImportUIBean;
 import org.rhq.enterprise.gui.content.RepoPackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.RepoResourcesUIBean;
 import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
@@ -137,7 +137,7 @@ public enum PageControlView {
     /** */
     RepoResourcesList(RepoResourcesUIBean.class),
     /** */
-    ContentSourcePackageVersionsList(ContentSourcePackageVersionsUIBean.class),
+    ContentSourceCandidateReposList(ContentSourceCandidateReposUIBean.class),
     /** */
     RepoPackageVersionsList(RepoPackageVersionsUIBean.class),
     /** */

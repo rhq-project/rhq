@@ -121,8 +121,8 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
-      <managed-bean-name>ContentSourcePackageVersionsUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean</managed-bean-class>
+      <managed-bean-name>ContentSourceCandidateReposUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceCandidateReposUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 

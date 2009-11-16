@@ -9,8 +9,7 @@
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
 
-    <serverplugin:plugin-component class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener">
-    </serverplugin:plugin-component>
+    <serverplugin:plugin-component class="org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener"></serverplugin:plugin-component>
 
     <serverplugin:plugin-configuration>
         <c:simple-property name="plugin-simple-prop-1" defaultValue="prop1value" required="true" />

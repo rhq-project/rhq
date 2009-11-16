@@ -65,7 +65,7 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
         TestGenericServerPluginContainer pc = this.pluginService.genericPC;
         assert pc.state == State.STARTED;
         TestGenericPluginManager pm = (TestGenericPluginManager) pc.getPluginManager();
-        TestLifecycleListener component = (TestLifecycleListener) pm.listeners.values().iterator().next();
+        TestLifecycleListener component = (TestLifecycleListener) pm.components.values().iterator().next();
         assert component.state == LifecycleState.STARTED;
 
         // make sure the context is correct

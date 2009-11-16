@@ -64,11 +64,11 @@
                               Whether the method name is defined by the map name itself or the optional
                               "methodName" simple property, the method signature must be either
                               a no-arg signature or one that has a single argument of type
-                              ScheduledJobInvocationContext. 
+                              ScheduledJobInvocationContext.
                            2) has simple properties called "scheduleType" and "scheduleTrigger" where
                               "scheduleType" is either "cron" or "periodic" and "scheduleTrigger" is either
                               the cron expression or a time period in milliseconds.
-                           3) has a simple property called "concurrent" of type boolean to indicate if 
+                           3) has a simple property called "concurrent" of type boolean to indicate if
                               multiple invocations of the scheduled job are allowed to
                               occur at the same time. If false, only one invocation will ever run at any
                               one time. This means that if a schedule triggers again while the previous
@@ -81,7 +81,7 @@
                               name of class to be instantiated as the target of the job invocation.
                               If not defined, the target of the job invocation is the stateful plugin component
                               itself. Whatever class is used as the target, it must have a method as defined
-                              in the method name simple property as explained above. 
+                              in the method name simple property as explained above.
                               Typically, plugin developers don't use this class property because you normally
                               want to target the stateful plugin component; however, this class property provides
                               the plugin developer a way to declare stateless jobs if that is needed.
@@ -155,6 +155,7 @@
     </xs:complexType>
 
     <xs:complexType name="ServerPluginComponentType">
+        <xs:sequence></xs:sequence>
         <xs:attribute name="class" type="serverplugin:classNameType" use="required">
                 <xs:annotation>
                     <xs:documentation>
@@ -162,7 +163,7 @@
                         instance will be notified when the plugin is started, stopped or when schedules are triggered.
                     </xs:documentation>
                 </xs:annotation>
-        </xs:attribute>    
+        </xs:attribute>
     </xs:complexType>
 
     <xs:simpleType name="classNameType">

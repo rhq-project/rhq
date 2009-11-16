@@ -363,6 +363,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyId() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertIdFieldSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldNotCopyId() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertIdFieldSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyId() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertIdFieldSerialized();
+    }
+
+    private void assertIdFieldSerialized() throws Exception {
         int id = -1;
 
         Configuration config = new Configuration();
@@ -377,6 +395,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyPropertiesMap() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertPropertiesFieldIsSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyPropertiesMap() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertPropertiesFieldIsSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyPropertiesMap() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertPropertiesFieldIsSerialized();
+    }
+
+    private void assertPropertiesFieldIsSerialized() throws Exception {
         Configuration config = new Configuration();
         config.put(new PropertySimple("x", "1"));
 
@@ -388,6 +424,25 @@ public class ConfigurationTest {
     @Test
     public void agentSerializationShouldCopyNotes() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
+
+        assertNotesFieldSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyNotes() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertNotesFieldSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyNotes() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertNotesFieldSerialized();
+    }
+
+    private void assertNotesFieldSerialized() throws Exception {
 
         Configuration config = new Configuration();
         config.setNotes("notes");
@@ -401,6 +456,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyVersion() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertVersionFieldIsSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyVersion() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertVersionFieldIsSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyVersion() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertVersionFieldIsSerialized();
+    }
+
+    private void assertVersionFieldIsSerialized() throws Exception {
         Configuration config = new Configuration();
         config.setVersion(1L);
 
@@ -417,6 +490,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyModifiedTime() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertModifiedTimeIsSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyModifiedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertModifiedTimeIsSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyModifiedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertModifiedTimeIsSerialized();
+    }
+
+    private void assertModifiedTimeIsSerialized() throws Exception {
         Configuration config = new Configuration();
         updateModifiedTime(config);
 
@@ -434,6 +525,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyCreatedTime() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertCreatedTimeIsSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyCreatedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertCreatedTimeIsSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyCreatedTime() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertCreatedTimeIsSerialized();
+    }
+
+    private void assertCreatedTimeIsSerialized() throws Exception {
         Configuration config = new Configuration();
         updateCreatedTime(config);
 
@@ -450,6 +559,24 @@ public class ConfigurationTest {
     public void agentSerializationShouldCopyRawConfigurations() throws Exception {
         ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.AGENT);
 
+        assertRawConfigurationsIsSerialized();
+    }
+
+    @Test
+    public void reflectiveSerializationShouldCopyRawConfigurations() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION);
+
+        assertRawConfigurationsIsSerialized();
+    }
+
+    @Test
+    public void remoteAPISerializationShouldCopyRawConfigurations() throws Exception {
+        ExternalizableStrategy.setStrategy(ExternalizableStrategy.Subsystem.REMOTEAPI);
+
+        assertRawConfigurationsIsSerialized();
+    }
+
+    private void assertRawConfigurationsIsSerialized() throws Exception {
         Configuration config = new Configuration();
         config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
         config.addRawConfiguration(createRawConfiguration("/tmp/bar.txt"));
@@ -482,5 +609,5 @@ public class ConfigurationTest {
 
         return (Configuration) istream.readObject();
     }
-    
+
 }

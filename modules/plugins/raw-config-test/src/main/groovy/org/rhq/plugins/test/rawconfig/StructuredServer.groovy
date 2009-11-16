@@ -51,9 +51,9 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
     def propertiesConfig = new PropertiesConfiguration(rawConfig1)
     def config = new Configuration()
 
-    config.put(new PropertySimple("x", propertiesConfig.getString("x")))
-    config.put(new PropertySimple("y", propertiesConfig.getString("y")))
-    config.put(new PropertySimple("z", propertiesConfig.getString("z")))
+    config.put(new PropertySimple("foo", propertiesConfig.getString("foo")))
+    config.put(new PropertySimple("bar", propertiesConfig.getString("bar")))
+    config.put(new PropertySimple("bam", propertiesConfig.getString("bam")))
 
     return config
   }

@@ -18,6 +18,10 @@
       <c:simple-property name="x"/>
       <c:simple-property name="y"/>
       <c:simple-property name="z"/>
+      <c:simple-property name="username"/>
+      <c:simple-property name="password"/>
+      <c:simple-property name="rhq.server.hostname"/>
+      <c:simple-property name="rhq.server.port"/>
     </resource-configuration>
   </server>
 
@@ -32,7 +36,7 @@
           class="StructuredServer"
           discovery="StructuredDiscoveryComponent"
           description="A fake server component that supports structured configuration">
-    <resource-configuration configurationFormat="both">
+    <resource-configuration configurationFormat="structured">
       <c:simple-property name="foo"/>
       <c:simple-property name="bar"/>
       <c:simple-property name="bam"/>

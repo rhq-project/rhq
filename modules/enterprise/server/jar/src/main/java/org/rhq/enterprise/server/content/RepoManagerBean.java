@@ -40,7 +40,6 @@ import org.jboss.annotation.IgnoreDependency;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
@@ -882,9 +881,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Iterator<ContentSource> i = contentSources.iterator();
         while (i.hasNext()) {
             ContentSource cs = i.next();
-            List<ContentSourceSyncResults> results = cs.getSyncResults();
-            for (ContentSourceSyncResults result : results) {
-                stati.add(result.getStatus());
+            // Add the most recent sync results status 
+            if (cs.getSyncResults() != null && cs.getSyncResults().get(0) != null) {
+                stati.add(cs.getSyncResults().get(0).getStatus());
+            } else {
+                stati.add(ContentSourceSyncStatus.NONE);
             }
         }
         if (stati.contains(ContentSourceSyncStatus.FAILURE)) {

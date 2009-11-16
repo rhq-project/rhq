@@ -19,6 +19,8 @@
 package org.rhq.enterprise.server.content.test;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -101,25 +103,19 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = ENABLED)
     public void testSyncRepos() throws Exception {
-        try {
-            Repo repo = new Repo("testSyncStatus");
-            repoManager.createRepo(overlord, repo);
-            Integer[] ids = { repo.getId() };
-            int syncCount = repoManager.synchronizeRepos(overlord, ids);
+        Repo repo = new Repo("testSyncStatus");
+        repoManager.createRepo(overlord, repo);
+        Integer[] ids = { repo.getId() };
+        int syncCount = repoManager.synchronizeRepos(overlord, ids);
 
-            assert syncCount == 0;
+        assert syncCount == 0;
 
-            ContentSourceType cst = new ContentSourceType("testSyncStatus");
-            ContentSource cs = new ContentSource("testSyncStatus", cst);
-            repo.addContentSource(cs);
-            syncCount = repoManager.synchronizeRepos(overlord, ids);
+        ContentSourceType cst = new ContentSourceType("testSyncStatus");
+        ContentSource cs = new ContentSource("testSyncStatus", cst);
+        repo.addContentSource(cs);
+        syncCount = repoManager.synchronizeRepos(overlord, ids);
 
-            assert syncCount == 1;
-        } catch (Throwable t) {
-            System.out.println("ERROR: " + t);
-            t.printStackTrace();
-        }
-
+        assert syncCount == 1;
     }
 
     @Test(enabled = ENABLED)
@@ -127,23 +123,41 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         Repo repo = new Repo("testSyncStatus");
         repoManager.createRepo(overlord, repo).getId();
 
+        Calendar cal = Calendar.getInstance();
+
         ContentSourceType cst = new ContentSourceType("testSyncStatus");
         ContentSource cs = new ContentSource("testSyncStatus", cst);
-        ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
-        repo.addContentSource(cs);
-
         EntityManager em = getEntityManager();
         em.persist(cst);
         em.persist(cs);
-        em.persist(results);
-        cs.addSyncResult(results);
+
+        for (int i = 0; i < 10; i++) {
+            cal.roll(Calendar.DATE, false);
+            ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
+            if (i % 2 == 0 && i != 0) {
+                System.out.println("Setting failed: i: [" + i + "]");
+                results.setStatus(ContentSourceSyncStatus.FAILURE);
+            } else {
+                results.setStatus(ContentSourceSyncStatus.SUCCESS);
+            }
+
+            results.setEndTime(cal.getTimeInMillis());
+            System.out.println("EndTime: " + new Date(results.getEndTime().longValue()));
+            em.persist(results);
+            cs.addSyncResult(results);
+        }
+        repo.addContentSource(cs);
+
         em.flush();
         em.close();
 
         // Check sync status
+        cs.getSyncResults();
+        for (ContentSourceSyncResults r : cs.getSyncResults()) {
+            System.out.println("R: " + new Date(r.getEndTime().longValue()) + " s: " + r.getStatus());
+        }
         String status = repoManager.calculateSyncStatus(overlord, repo.getId());
-        assert status.equals(ContentSourceSyncStatus.INPROGRESS.toString());
-
+        assert status.equals(ContentSourceSyncStatus.SUCCESS.toString());
     }
 
     @Test(enabled = ENABLED)

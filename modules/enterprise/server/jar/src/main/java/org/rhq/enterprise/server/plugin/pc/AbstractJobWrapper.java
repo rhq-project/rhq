@@ -29,8 +29,6 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
-import org.jboss.seam.async.Schedule;
-
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.AbstractScheduleType;
@@ -64,7 +62,7 @@ abstract class AbstractJobWrapper implements Job {
     /**
      *  Key to the job data map that indicates the ID of the job.
      *   This ID is passed to the plugin container when the job was scheduled, see:
-     *  {@link AbstractTypeServerPluginContainer#scheduleJob(Schedule, String, String, ScheduledJob, java.util.Properties)}
+     *  {@link AbstractTypeServerPluginContainer#scheduleJob(ScheduledJobDefinition, String)}
      */
     public static final String DATAMAP_JOB_ID = DATAMAP_LEADER + "jobId";
 

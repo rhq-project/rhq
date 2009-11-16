@@ -52,8 +52,10 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "RepoImportUIBean";
 
     private int selectedProvider = 0;
+    private List<OptionItem<Integer>> providers = null;
 
     public RepoImportUIBean() {
+        getProviderOptions();
     }
 
     /**
@@ -67,6 +69,7 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
      * @param selectedProvider the selectedProvider to set
      */
     public void setSelectedProvider(String selectedProvider) {
+        dataModel = null;
         this.selectedProvider = Integer.valueOf(selectedProvider);
     }
 
@@ -87,16 +90,21 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
      * @return An array of options.
      */
     public SelectItem[] getProviderOptions() {
-        List<OptionItem<Integer>> list = new ArrayList<OptionItem<Integer>>();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
-        PageControl pc = new PageControl();
-        PageList<ContentSource> results = manager.getAllContentSources(subject, pc);
-        for (ContentSource p : results) {
-            OptionItem<Integer> item = new OptionItem<Integer>(p.getId(), p.getName());
-            list.add(item);
+        if (providers == null) {
+            providers = new ArrayList<OptionItem<Integer>>();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+            PageControl pc = new PageControl();
+            PageList<ContentSource> results = manager.getAllContentSources(subject, pc);
+            for (ContentSource p : results) {
+                OptionItem<Integer> item = new OptionItem<Integer>(p.getId(), p.getName());
+                providers.add(item);
+                if (selectedProvider == 0) {
+                    selectedProvider = p.getId();
+                }
+            }
         }
-        return SelectItemUtils.convertFromListOptionItem(list, false);
+        return SelectItemUtils.convertFromListOptionItem(providers, false);
     }
 
     /**

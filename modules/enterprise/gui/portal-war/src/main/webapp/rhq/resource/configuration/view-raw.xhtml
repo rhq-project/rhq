@@ -47,16 +47,15 @@
 						<h:panelGroup id="changedFiles" layout="vertical">
 							<h:form>
 							<input type="hidden" name="id" value="#{ResourceUIBean.id}" />							
-							<ui:repeat value="#{rawConfigCollection.paths}" var="path">
+							<ui:repeat value="#{RawConfigViewer.paths}" var="path">
 								<div>
-									<h:outputText value="*" rendered="#{rawConfigCollection.isModified(path) }" /> 
 									<h:commandLink
-									    action="#{rawConfigCollection.select(path)}"  
+									    action="#{RawConfigViewer.select(path)}"  
 										value="#{path}"
-										rendered="#{path != rawConfigCollection.current.path}">
+										rendered="#{path != RawConfigViewer.current.path}">
 											<f:param name="currentPath" value="#{path}" />
 									</h:commandLink> 
-									<h:outputText value="#{path}" rendered="#{path == rawConfigCollection.current.path}" />
+									<h:outputText value="#{path}" rendered="#{path == RawConfigViewer.current.path}" />
 								</div>
 							</ui:repeat>
 							</h:form>
@@ -66,7 +65,7 @@
 			</td>
 			<td>
 				<div>
-					Current File: <h:outputText value="#{rawConfigCollection.current.path}"
+					Current File: <h:outputText value="#{RawConfigViewer.current.path}"
 						styleClass="outhello" />
 				</div>			
 						<h:outputLink value="view-raw-full.xhtml"  action="navigateToUpload" >
@@ -79,7 +78,7 @@
 							<f:param name="id" value="#{ResourceUIBean.id}" />
 		            	</s:link>	
 						<div>
-						<pre><h:outputText value="#{rawConfigCollection.currentContents}" /></pre>
+						<pre><h:outputText value="#{RawConfigViewer.currentContents}" /></pre>
 						</div>
 			</td>
 		</tr>	

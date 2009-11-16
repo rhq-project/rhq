@@ -27,15 +27,18 @@ THIS TEXT WILL BE REMOVED.
 
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+         
+		 <h:panelGroup rendered="#{rawConfigCollection.rawSupported}" >
            You are viewing this in structured mode. Switch to 
-           <h:commandLink action="#{rawConfigCollection.switchToraw}">
+           <h:commandLink action="#{rawConfigCollection.switchToraw}"  rendered="#{rawConfigCollection.rawSupported}">
              <f:param name="conversationId" value="#{conversation.id}"/>
              <f:param name="id" value="#{ResourceUIBean.id}"/>
              <h:outputText value=" files mode"/>
            </h:commandLink>
-  
+		</h:panelGroup>
+		  
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+                     configuration="#{rawConfigCollection.configuration}"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
                      nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>

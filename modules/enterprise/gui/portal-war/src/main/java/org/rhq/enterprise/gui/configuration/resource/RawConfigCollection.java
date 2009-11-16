@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
@@ -20,14 +19,13 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Name("rawConfigCollection")
@@ -45,14 +43,6 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     TODO It should be set to false prior to check in*/
     private static final boolean useMock = false;
 
-    /**
-     * These values are transient due to the need to save and restore the view.  
-     * We can always fetch them again.
-     */
-    transient private ConfigurationManagerLocal configurationManager;
-
-    transient private Configuration configuration = null;
-
     private final Log log = LogFactory.getLog(RawConfigCollection.class);
     private Integer resourceId = null;
 
@@ -65,7 +55,8 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     public String commit() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        getConfigurationManager().updateResourceConfiguration(subject, getResourceId(), getMergedConfiguration());
+        LookupUtil.getConfigurationManager().updateResourceConfiguration(subject, getResourceId(),
+            getMergedConfiguration());
 
         nullify();
 
@@ -114,21 +105,14 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     }
 
     public Configuration getConfiguration() {
-        if (null == configuration) {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            AbstractResourceConfigurationUpdate configurationUpdate = this.getConfigurationManager()
-                .getLatestResourceConfigurationUpdate(subject, getRawConfigDelegate().resourceId);
-            configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-        }
-
-        return configuration;
+        return getRawConfigDelegate().getConfiguration();
     }
 
     //TODO Sync this up with the baseclass
     public ConfigurationDefinition getConfigurationDefinition() {
         if (null == getRawConfigDelegate().configurationDefinition) {
 
-            getRawConfigDelegate().configurationDefinition = getConfigurationManager()
+            getRawConfigDelegate().configurationDefinition = LookupUtil.getConfigurationManager()
                 .getResourceConfigurationDefinitionForResourceType(EnterpriseFacesContextUtility.getSubject(),
                     EnterpriseFacesContextUtility.getResource().getResourceType().getId());
         }
@@ -139,13 +123,6 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
         if (useMock)
             return ConfigurationFormat.STRUCTURED_AND_RAW;
         return getConfigurationDefinition().getConfigurationFormat();
-    }
-
-    ConfigurationManagerLocal getConfigurationManager() {
-        if (null == configurationManager) {
-            configurationManager = LookupUtil.getConfigurationManager();
-        }
-        return configurationManager;
     }
 
     public RawConfiguration getCurrent() {
@@ -201,15 +178,7 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     }
 
     public TreeMap<String, RawConfiguration> getRaws() {
-        if (null == getRawConfigDelegate().raws) {
-            getRawConfigDelegate().raws = new TreeMap<String, RawConfiguration>();
-            if (useMock) {
-                MockSupport.populateRawsMock(this);
-            } else {
-                populateRaws(this);
-            }
-        }
-        return getRawConfigDelegate().raws;
+        return getRawConfigDelegate().getRaws();
     }
 
     /**
@@ -259,16 +228,6 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     void nullify() {
         getDelegates().remove(getResourceId());
         setRawConfigDelegate(null);
-    }
-
-    void populateRaws(RawConfigCollection rawConfigCollection) {
-        Collection<RawConfiguration> rawConfigurations = rawConfigCollection.getConfigurationManager()
-            .getLatestResourceConfigurationUpdate(EnterpriseFacesContextUtility.getSubject(), getResourceId())
-            .getConfiguration().getRawConfigurations();
-
-        for (RawConfiguration raw : rawConfigurations) {
-            rawConfigCollection.getRawConfigDelegate().raws.put(raw.getPath(), raw);
-        }
     }
 
     /**
@@ -336,11 +295,12 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
 
     public String switchToraw() {
         log.error("switch2raw called");
-        configuration = getConfigurationManager().translateResourceConfiguration(
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
 
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRawConfigDelegate().raws.put(raw.getPath(), raw);
+            getRawConfigDelegate().getRaws().put(raw.getPath(), raw);
+            getRawConfigDelegate().setConfiguration(configuration);
         }
         getRawConfigDelegate().current = null;
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
@@ -348,11 +308,16 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
 
     public String switchTostructured() {
         log.error("switch2structured called");
-        configuration = getConfigurationManager().translateResourceConfiguration(
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
 
+        for (Property property : configuration.getAllProperties().values()) {
+            property.setConfiguration(configuration);
+        }
+
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRawConfigDelegate().raws.put(raw.getPath(), raw);
+            getRawConfigDelegate().getRaws().put(raw.getPath(), raw);
+            getRawConfigDelegate().setConfiguration(configuration);
         }
         getRawConfigDelegate().current = null;
 

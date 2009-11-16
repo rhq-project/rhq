@@ -61,6 +61,9 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageBits;
@@ -72,14 +75,12 @@ import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoContentSource;
-import org.rhq.core.domain.content.RepoPackageVersion;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionFile;
-import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.RepoDistribution;
+import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -87,27 +88,26 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * A SLSB wrapper around our server-side content source plugin container. This bean provides access to the
@@ -321,9 +321,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.id");
 
-        Query query = PersistenceUtility
-            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);
@@ -337,9 +338,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     public PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc) {
         pc.initDefaultOrderingField("c.name");
 
-        Query query = PersistenceUtility
-            .createQueryWithOrderBy(entityManager, Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID, pc);
-        Query countQuery = PersistenceUtility.createCountQuery(entityManager, Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager,
+            Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID);
 
         query.setParameter("id", contentSourceId);
         countQuery.setParameter("id", contentSourceId);
@@ -421,7 +423,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         try {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.getAdapterManager().startAdapter(contentSource);
+            // Schedule a job for the future
             pc.scheduleSyncJob(contentSource);
+            // Also sync immediately so we have the metadata
+            pc.syncNow(contentSource);
 
         } catch (InitializationException ie) {
             log.warn("Failed to start adapter for [" + contentSource + "]", ie);
@@ -568,11 +573,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject,
-                                                                                        int contentSourceId,
-                                                                                        int repoId) {
+        int contentSourceId, int repoId) {
 
-        Query query =
-            entityManager.createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_REPO_ID);
+        Query query = entityManager
+            .createNamedQuery(PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_REPO_ID);
         query.setParameter("content_source_id", contentSourceId);
         query.setParameter("repo_id", repoId);
 
@@ -684,7 +688,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentProviderManager cpMgr = pc.getAdapterManager();
             ContentProvider provider = cpMgr.getIsolatedContentProvider(contentSource.getId());
             assert (provider instanceof DistributionSource);
-            DistributionSource distSource = (DistributionSource)provider;
+            DistributionSource distSource = (DistributionSource) provider;
 
             //
             // Following same sort of workaround done in ContentProviderManager for synchronizeContentSource
@@ -696,8 +700,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             Subject overlord = LookupUtil.getSubjectManager().getOverlord();
             List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
             log.debug("downloadDistributionBits found " + repos.size() + " repos associated with this contentSourceId "
-                    + contentSourceId);
-            for (Repo repo: repos) {
+                + contentSourceId);
+            for (Repo repo : repos) {
                 log.debug("downloadDistributionBits operating on repo: " + repo.getName() + " id = " + repo.getId());
                 // Look up Distributions associated with this ContentSource.
                 PageControl pageControl = PageControl.getUnlimitedInstance();
@@ -705,50 +709,46 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pageControl);
                 log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
 
-                for (Distribution dist: dists) {
+                for (Distribution dist : dists) {
                     log.debug("Looking up DistributionFiles for dist: " + dist);
                     List<DistributionFile> distFiles = distManager.getDistributionFilesByDistId(dist.getId());
                     log.debug("Found " + distFiles.size() + " DistributionFiles");
-                    for (DistributionFile dFile: distFiles) {
+                    for (DistributionFile dFile : distFiles) {
                         String relPath = dist.getBasePath() + "/" + dFile.getRelativeFilename();
-                        File outputFile =
-                                getDistLocalFileAndCreateParentDir(dist.getLabel(), relPath);
+                        File outputFile = getDistLocalFileAndCreateParentDir(dist.getLabel(), relPath);
                         log.debug("Checking if file exists at: " + outputFile.getAbsolutePath());
                         if (outputFile.exists()) {
                             log.debug("File " + outputFile.getAbsolutePath() + " exists, checking md5sum");
                             String expectedMD5 = (dFile.getMd5sum() != null) ? dFile.getMd5sum() : "<unspecified MD5>";
                             String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
                             if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
-                                log.error("Expected [" + expectedMD5 + "] versus actual [" +
-                                        actualMD5 + "] md5sums for file " + outputFile.getAbsolutePath() +
-                                        " do not match.");
-                                log.error("Need to re-fetch file.  Will download from DistributionSource" +
-                                        " and overwrite local file.");
+                                log.error("Expected [" + expectedMD5 + "] versus actual [" + actualMD5
+                                    + "] md5sums for file " + outputFile.getAbsolutePath() + " do not match.");
+                                log.error("Need to re-fetch file.  Will download from DistributionSource"
+                                    + " and overwrite local file.");
                             } else {
-                                log.info(outputFile + " exists and md5sum matches [" + actualMD5 +
-                                        "] no need to re-download");
+                                log.info(outputFile + " exists and md5sum matches [" + actualMD5
+                                    + "] no need to re-download");
                                 continue; // skip the download from bitsStream
                             }
                         }
-                        log.debug("Attempting download of " + dFile.getRelativeFilename() +
-                                " from contentSourceId " + contentSourceId);
+                        log.debug("Attempting download of " + dFile.getRelativeFilename() + " from contentSourceId "
+                            + contentSourceId);
                         String remoteFetchLoc = distSource.getDistFileRemoteLocation(repo.getName(), dist.getLabel(),
-                                dFile.getRelativeFilename());
+                            dFile.getRelativeFilename());
                         InputStream bitsStream = pc.getAdapterManager().loadDistributionFileBits(contentSourceId,
-                                remoteFetchLoc);
+                            remoteFetchLoc);
                         StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
                         bitsStream = null;
                         log.debug("DistributionFile has been downloaded to: " + outputFile.getAbsolutePath());
                     }
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error(e);
             e.printStackTrace();
         }
     }
-
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -928,8 +928,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults) {
+    public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -938,11 +938,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // REMOVE
-            syncResults = contentSourceManager._mergeContentSourceSyncReportREMOVE(contentSource, report, syncResults, progress);
+            syncResults = contentSourceManager._mergeContentSourceSyncReportREMOVE(contentSource, report, syncResults,
+                progress);
 
             //////////////////
             // ADD
-            syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, report, syncResults, progress);
+            syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, report, syncResults,
+                progress);
 
             // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
@@ -965,9 +967,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         return syncResults;
     }
-
-
-
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
@@ -1136,7 +1135,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         // remove all distributions that are no longer available on the remote repository
-        for (DistributionDetails doomedDetails: report.getDeletedDistributions()) {
+        for (DistributionDetails doomedDetails : report.getDeletedDistributions()) {
             Distribution doomedDist = distManager.getDistributionByLabel(doomedDetails.getLabel());
             distManager.deleteDistributionByDistId(overlord, doomedDist.getId());
             distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
@@ -1161,29 +1160,28 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         List<DistributionDetails> newDetails = report.getDistributions();
-        for (DistributionDetails detail: newDetails) {
+        for (DistributionDetails detail : newDetails) {
             try {
 
                 log.debug("Attempting to create new distribution based off of: " + detail);
                 DistributionType distType = distManager.getDistributionTypeByName(detail.getDistributionType());
-                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(),
-                    detail.getDistributionPath(), distType);
+                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(), detail
+                    .getDistributionPath(), distType);
                 log.debug("Created new distribution: " + newDist);
                 Repo repo = repoManager.getRepo(overlord, report.getRepoId());
                 RepoDistribution repoDist = new RepoDistribution(repo, newDist);
-                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() +
-                        ", distId = " + newDist.getId());
+                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() + ", distId = "
+                    + newDist.getId());
                 entityManager.persist(repoDist);
                 List<DistributionFileDetails> files = detail.getFiles();
-                for (DistributionFileDetails f: files) {
+                for (DistributionFileDetails f : files) {
                     log.debug("Creating DistributionFile for: " + f);
                     DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
                     df.setLastModified(f.getLastModified());
                     entityManager.persist(df);
                     entityManager.flush();
                 }
-            }
-            catch (DistributionException e) {
+            } catch (DistributionException e) {
                 progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
                 progress.append("Error is: " + e.getMessage());
                 syncResults.setResults(progress.toString());
@@ -1193,8 +1191,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
         return syncResults;
     }
-
-
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1411,7 +1407,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         return syncResults;
     }
-
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource,
@@ -1863,7 +1858,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         File packageBitsFile = new File(parentDir, bitsFileName.toString());
         return packageBitsFile;
     }
-
 
     private File getDistLocalFileAndCreateParentDir(String distLabel, String fileName) throws Exception {
 

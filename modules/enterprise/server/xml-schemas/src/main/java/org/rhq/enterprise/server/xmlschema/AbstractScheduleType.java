@@ -22,12 +22,34 @@ package org.rhq.enterprise.server.xmlschema;
 /**
  * Defines a type of schedule for a server plugin job.
  * 
+ * This also has a static factory that allows you to build concrete forms
+ * of schedule types.
+ *  
  * @author John Mazzitelli
  */
 
 public abstract class AbstractScheduleType {
     private final String typeName;
     private final boolean concurrent;
+
+    /**
+     * Factory method that creates a concrete schedule type object based on the given parameters.
+     * 
+     * @param concurrent if true, multiple jobs can run concurrently.
+     * @param scheduleType the name of the concrete schedule type
+     * @param scheduleTrigger the string form of the schedule's trigger
+     * 
+     * @return a new instance of the desired schedule type
+     */
+    public static final AbstractScheduleType create(boolean concurrent, String scheduleType, String scheduleTrigger) {
+        AbstractScheduleType scheduleTypeObj = null;
+        if (PeriodicScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleType)) {
+            scheduleTypeObj = new PeriodicScheduleType(concurrent, Long.parseLong(scheduleTrigger));
+        } else if (CronScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleType)) {
+            scheduleTypeObj = new CronScheduleType(concurrent, scheduleTrigger);
+        }
+        return scheduleTypeObj;
+    }
 
     /**
      * Builds the schedule type.
@@ -61,4 +83,11 @@ public abstract class AbstractScheduleType {
     public boolean isConcurrent() {
         return this.concurrent;
     }
+
+    /**
+     * Returns the string form of the trigger that causes the job to be invoked.
+     * 
+     * @return a string that describes the trigger of the schedule
+     */
+    public abstract String getScheduleTrigger();
 }

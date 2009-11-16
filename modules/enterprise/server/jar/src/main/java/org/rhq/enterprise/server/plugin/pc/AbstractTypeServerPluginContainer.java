@@ -273,6 +273,9 @@ public abstract class AbstractTypeServerPluginContainer {
         jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_NAME, pluginName);
         jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, getSupportedServerPluginType().stringify());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_ID, schedule.getJobId());
+        jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TYPE, schedule.getScheduleType().getTypeName());
+        jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TRIGGER, schedule.getScheduleType().getScheduleTrigger());
+        jobData.put(AbstractJobWrapper.DATAMAP_IS_CONCURRENT, schedule.getScheduleType().isConcurrent());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_METHOD_NAME, schedule.getMethodName());
         if (schedule.getClassName() != null) {
             jobData.put(AbstractJobWrapper.DATAMAP_JOB_CLASS, schedule.getClassName());

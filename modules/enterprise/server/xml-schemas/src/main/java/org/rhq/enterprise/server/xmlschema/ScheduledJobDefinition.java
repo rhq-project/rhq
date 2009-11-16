@@ -33,12 +33,12 @@ public class ScheduledJobDefinition {
     private final AbstractScheduleType scheduleType;
     private final Properties callbackData;
 
-    public ScheduledJobDefinition(String jobId, boolean enabled, String methodName, AbstractScheduleType scheduleType,
-        Properties callbackData) {
+    public ScheduledJobDefinition(String jobId, boolean enabled, String className, String methodName,
+        AbstractScheduleType scheduleType, Properties callbackData) {
 
         this.jobId = jobId;
         this.enabled = enabled;
-        this.className = null; // TODO: for future.. add class to schedule xml schema to support stateless job classes
+        this.className = className;
         this.methodName = methodName;
         this.scheduleType = scheduleType;
         this.callbackData = callbackData;

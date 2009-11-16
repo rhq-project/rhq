@@ -58,8 +58,13 @@
                         has special semantics that require special properties to be defined.
                         If you use this element, it must contain map properties where each map:
                            1) has a name that is a method name of the plugin component. This method
-                              name identifies what is called on the plugin component when the schedule triggers.
+                              name identifies what is called on the plugin component (or the target
+                              class, see below) when the schedule triggers.
                               You may override this by defining a simple property called "methodName".
+                              Whether the method name is defined by the map name itself or the optional
+                              "methodName" simple property, the method signature must be either
+                              a no-arg signature or one that has a single argument of type
+                              ScheduledJobInvocationContext. 
                            2) has simple properties called "scheduleType" and "scheduleTrigger" where
                               "scheduleType" is either "cron" or "periodic" and "scheduleTrigger" is either
                               the cron expression or a time period in milliseconds.
@@ -72,7 +77,15 @@
                               RHQ Server in the system, and this is false, you can be assured that only
                               a single server will handle the invocation at any one time (i.e. multiple servers
                               will not run invocations at the same time).
-                           4) has any other simple properties that will be used as custom callback data properties.
+                           4) has an optional simple property called "class" of type string that is the
+                              name of class to be instantiated as the target of the job invocation.
+                              If not defined, the target of the job invocation is the stateful plugin component
+                              itself. Whatever class is used as the target, it must have a method as defined
+                              in the method name simple property as explained above. 
+                              Typically, plugin developers don't use this class property because you normally
+                              want to target the stateful plugin component; however, this class property provides
+                              the plugin developer a way to declare stateless jobs if that is needed.
+                           5) has any other simple properties that will be used as custom callback data properties.
                         You may additionally define one list-of-maps property which can be used to allow a user
                         to define their own custom jobs. The list-of-maps must contain a map property definition
                         that follows the same rules as described above.

@@ -48,6 +48,7 @@ public class ServerPluginDescriptorMetadataParser {
 
     // pre-defined property names for schedule definitions
     private static final String SCHEDULED_JOB_PROP_NAME_ENABLED = "enabled";
+    private static final String SCHEDULED_JOB_PROP_NAME_CLASS = "class";
     private static final String SCHEDULED_JOB_PROP_NAME_METHOD_NAME = "methodName";
     private static final String SCHEDULED_JOB_PROP_NAME_CONCURRENT = "concurrent";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE = "scheduleType";
@@ -113,11 +114,13 @@ public class ServerPluginDescriptorMetadataParser {
             // prepare some defaults if the schedule didn't define some of these
             // we assume:
             //    the map name is the methodName that will be invoked
+            //    the class name is null, which means its the stateful plugin component to be invoked
             //    the schedule is always enabled
             //    the schedule is never concurrent
             //    the schedule is a periodic schedule that triggers every 10 minutes
             //    the schedule has no callback data
             String methodName = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_METHOD_NAME, mapDef.getName());
+            String className = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
             String scheduleTypeStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
@@ -129,11 +132,8 @@ public class ServerPluginDescriptorMetadataParser {
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
 
             AbstractScheduleType scheduleType;
-            if (PeriodicScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleTypeStr)) {
-                scheduleType = new PeriodicScheduleType(concurrent, Long.parseLong(scheduleTriggerStr));
-            } else if (CronScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleTypeStr)) {
-                scheduleType = new CronScheduleType(concurrent, scheduleTriggerStr);
-            } else {
+            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }
 
@@ -147,7 +147,7 @@ public class ServerPluginDescriptorMetadataParser {
                 }
             }
 
-            job = new ScheduledJobDefinition(jobId, enabled, methodName, scheduleType, callbackData);
+            job = new ScheduledJobDefinition(jobId, enabled, className, methodName, scheduleType, callbackData);
         }
 
         return job;
@@ -200,11 +200,13 @@ public class ServerPluginDescriptorMetadataParser {
             // prepare some defaults if the schedule didn't define some of these
             // we assume:
             //    the map name is the methodName that will be invoked
+            //    the class name is null, which means its the stateful plugin component to be invoked
             //    the schedule is always enabled
             //    the schedule is never concurrent
             //    the schedule is a periodic schedule that triggers every 10 minutes
             //    the schedule has no callback data
-            String methodName = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_METHOD_NAME, map.getName());
+            String methodName = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_METHOD_NAME, jobMap.getName());
+            String className = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
             String scheduleTypeStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
@@ -216,11 +218,8 @@ public class ServerPluginDescriptorMetadataParser {
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
 
             AbstractScheduleType scheduleType;
-            if (PeriodicScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleTypeStr)) {
-                scheduleType = new PeriodicScheduleType(concurrent, Long.parseLong(scheduleTriggerStr));
-            } else if (CronScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleTypeStr)) {
-                scheduleType = new CronScheduleType(concurrent, scheduleTriggerStr);
-            } else {
+            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }
 
@@ -234,7 +233,7 @@ public class ServerPluginDescriptorMetadataParser {
                 }
             }
 
-            job = new ScheduledJobDefinition(jobId, enabled, methodName, scheduleType, callbackData);
+            job = new ScheduledJobDefinition(jobId, enabled, className, methodName, scheduleType, callbackData);
         }
 
         return job;

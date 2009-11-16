@@ -30,18 +30,18 @@ import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
  */
 public class ScheduledJobInvocationContext {
     private final ScheduledJobDefinition jobDefinition;
-    private final ServerPluginContext pluginContext;
+    private final ServerPluginContext serverPluginContext;
 
     public ScheduledJobInvocationContext(ScheduledJobDefinition jobDefinition, ServerPluginContext pluginContext) {
         this.jobDefinition = jobDefinition;
-        this.pluginContext = pluginContext;
+        this.serverPluginContext = pluginContext;
     }
 
     public ScheduledJobDefinition getJobDefinition() {
-        return jobDefinition;
+        return this.jobDefinition;
     }
 
-    public ServerPluginContext getPluginContext() {
-        return pluginContext;
+    public ServerPluginContext getServerPluginContext() {
+        return this.serverPluginContext;
     }
 }

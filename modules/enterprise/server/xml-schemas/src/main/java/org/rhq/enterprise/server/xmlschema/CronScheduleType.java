@@ -37,4 +37,9 @@ public class CronScheduleType extends AbstractScheduleType {
     public String getCronExpression() {
         return this.cronExpression;
     }
+
+    @Override
+    public String getScheduleTrigger() {
+        return getCronExpression();
+    }
 }

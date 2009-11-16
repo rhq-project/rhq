@@ -37,4 +37,9 @@ public class PeriodicScheduleType extends AbstractScheduleType {
     public long getPeriod() {
         return this.period;
     }
+
+    @Override
+    public String getScheduleTrigger() {
+        return String.valueOf(getPeriod());
+    }
 }

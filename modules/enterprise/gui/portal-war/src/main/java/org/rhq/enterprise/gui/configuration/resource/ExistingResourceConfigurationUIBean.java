@@ -22,7 +22,11 @@ import javax.faces.application.FacesMessage;
 
 import org.jetbrains.annotations.Nullable;
 
-import org.rhq.core.domain.auth.Subject;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -36,6 +40,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Ian Springer
  */
+@Name(value = "ExistingResourceConfigurationUIBean")
+@Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
@@ -123,6 +129,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     @Nullable
     protected Configuration lookupConfiguration() {
+
+        /*
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
         AbstractResourceConfigurationUpdate configurationUpdate = this.configurationManager
@@ -133,5 +141,21 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         }
 
         return configuration;
+        */
+
+        return getRawConfigCollection().getConfiguration();
+
     }
+
+    @In(create = true, required = true, value = "rawConfigCollection")
+    RawConfigCollection rawConfigCollection;
+
+    public RawConfigCollection getRawConfigCollection() {
+        return rawConfigCollection;
+    }
+
+    public void setRawConfigCollection(RawConfigCollection rawConfigCollection) {
+        this.rawConfigCollection = rawConfigCollection;
+    }
+
 }

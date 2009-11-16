@@ -140,17 +140,17 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   }
 
   def getPropertyNames(rawConfig) {
-    if (rawConfig == rawConfig1) {
+    if (rawConfig.getPath() == rawConfig1.getPath()) {
       return ["x", "y", "z"]
     }
-    else if (rawConfig == rawConfig2) {
+    else if (rawConfig.getPath() == rawConfig2.getPath()) {
       return ["username", "password"]
     }
-    else if (rawConfig == rawConfig3) {
+    else if (rawConfig.getPath() == rawConfig3.getPath()) {
       return ["rhq.server.hostname", "rhq.server.port"]
     }
     else {
-      throw new RuntimeException("$rawConfig is not a recongnized raw config file")
+      throw new RuntimeException("$rawConfig.getPath() is not a recongnized raw config file")
     }
   }
 

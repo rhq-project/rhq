@@ -38,8 +38,8 @@ import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -50,7 +50,7 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
 
     public static final String MANAGED_BEAN_NAME = "RepoImportUIBean";
 
-    private int selectedProvider = 10001;
+    private int selectedProvider = 0;
 
     public RepoImportUIBean() {
     }
@@ -80,6 +80,11 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
+    /**
+     * Creates the list of content providers to be displayed in
+     * the radio buttons.
+     * @return An array of options.
+     */
     public SelectItem[] getProviderOptions() {
         List<OptionItem<Integer>> list = new ArrayList<OptionItem<Integer>>();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -93,28 +98,32 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
         return SelectItemUtils.convertFromListOptionItem(list, false);
     }
 
+    /**
+     * Get the list of the selected repos.
+     * @return An array of repo IDs.
+     */
     public String[] getSelectedRepos() {
         return FacesContextUtility.getRequest().getParameterValues("selectedRepos");
     }
 
+    /**
+     * Import the selected repos.
+     * To import a repo, is to change it from is_candidate=true to is_candidate=false.
+     * @return The next page defined in the navigation.
+     */
     public String importSelected() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
-
         List<Integer> repoIds = new ArrayList<Integer>(selected.length);
-
         for (String sRepoId : selected) {
             repoIds.add(Integer.valueOf(sRepoId));
         }
-        
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         try {
             repoManager.importCandidateRepo(subject, repoIds);
-        }
-        catch (RepoException e) {
+        } catch (RepoException e) {
             // TODO: Handle
         }
-
         return "success";
     }
 
@@ -128,7 +137,7 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
             PageList<Repo> results = manager.getCandidateRepos(subject, selectedProvider, pc);
-            
+
             return results;
         }
     }

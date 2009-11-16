@@ -46,7 +46,7 @@
                   value="#{RepoImportUIBean.selectedProvider}"
                   layout="pageDirection">
                      <f:selectItems value="#{RepoImportUIBean.providerOptions}"/>
-                     <a4j:support event="onchange" reRender="repoTable"/>
+                     <a4j:support ajaxSingle="true" event="onchange" reRender="repoTable"/>
                </h:selectOneRadio>
             </h:panelGrid>
          </rich:panel>

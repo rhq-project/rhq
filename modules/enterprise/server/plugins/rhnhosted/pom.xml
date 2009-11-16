@@ -126,6 +126,16 @@
 
 
   <build>
+
+    <testResources>
+        <testResource>
+            <directory>src/test/resources</directory>
+                <includes>
+                    <include>test-log4j.xml</include>
+                </includes>
+        </testResource>
+    </testResources>
+
     <plugins>
 
       <plugin>
@@ -144,6 +154,18 @@
                     -->
                     <name>RunRHNProviderTest</name>
                         <value>false</value>
+                </property>
+                <property>
+                    <!--
+                    set this to true if you want the temp xmlrpc data read to be saved.
+                    by default the files are stored in /tmp and will be deleted after use.
+                    -->
+                    <name>RhnJaxbSaveTempFiles</name>
+                    <value>false</value>
+                </property>
+                <property>
+                    <name>log4j.configuration</name>
+                    <value>test-log4j.xml</value>
                 </property>
             </systemProperties>
         </configuration>

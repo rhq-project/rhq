@@ -463,7 +463,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
      */
     private class TestContentProviderManager extends ContentProviderManager {
 
-        protected ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
+        public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
             return testProvider;
         }
     }

@@ -49,14 +49,11 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 public class RHNHelper {
 
     private final String baseurl;
-    private final String repolabel;
     private final RhnComm rhndata;
     private final RhnDownloader rhndownload;
     private final String systemid;
     private final String distributionType;
-    
-    //TODO: Need to determine what the ksTreeType should be for RHN Kickstarts
-    private final String ksTreeType = "CHANGE_ME";
+
 
     private final Log log = LogFactory.getLog(RHNHelper.class);
 
@@ -64,13 +61,11 @@ public class RHNHelper {
      * Constructor.
      *
      * @param baseurl The base url to connect to hosted
-     * @param repolabelIn channel label
      * @param systemIdIn systemId to use for auth
      */
-    public RHNHelper(String baseurl, String repolabelIn, String systemIdIn) {
+    public RHNHelper(String baseurl, String systemIdIn) {
 
         this.baseurl = baseurl;
-        this.repolabel = repolabelIn;
         this.rhndata = new RhnComm(baseurl);
         this.rhndownload = new RhnDownloader(baseurl);
         this.systemid = systemIdIn;
@@ -80,10 +75,13 @@ public class RHNHelper {
 
     public List<DistributionDetails> getDistributionMetaData(List<String> labels)
             throws IOException, XmlRpcException {
+        log.debug("getDistributionMetaData(" + labels + " invoked");
 
         List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
         List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, labels);
         for (RhnKickstartableTreeType ksTree: ksTreeTypes) {
+            log.debug("Forming DistributionDetails(" + ksTree.getLabel() + ", " + ksTree.getBasePath() +
+                    " , " + distributionType);
             DistributionDetails details =
                     new DistributionDetails(ksTree.getLabel(), ksTree.getBasePath(), distributionType);
             distros.add(details);
@@ -108,15 +106,18 @@ public class RHNHelper {
     /**
      * Extract the package metadata for all available packages to sync
      * @param packageIds Valid package ids for getPackageMatadata call to fetch from hosted
+     * @param channelName channel name of passed in package ids
      * @return A list of package detail objects
      * @throws Exception On all errors
      */
-    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds) throws Exception {
+    public List<ContentProviderPackageDetails> getPackageDetails(List packageIds, String channelName) throws Exception {
+        log.debug("getPackageDetails() for " + packageIds.size() + " packageIds on channel " + channelName);
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
+        log.debug(pkgs.size() + " packages were returned from getPackageMetadata().");
         for (RhnPackageType pkg : pkgs) {
             try {
-                pdlist.add(getDetails(pkg));
+                pdlist.add(getDetails(pkg, channelName));
             } catch (Exception e) {
                 // something went wrong while constructing the pkg object.
                 // Proceed to next and get as many packages as we can.
@@ -130,11 +131,12 @@ public class RHNHelper {
      * Extract the package details for each rpm metadata fetched
      * 
      * @param p an rpm package metadata object
+     * @param channelName channel name
      *
      * @return ContentProviderPackageDetails pkg object
      */
-    private ContentProviderPackageDetails getDetails(RhnPackageType p) {
-
+    private ContentProviderPackageDetails getDetails(RhnPackageType p, String channelName) {
+    
         String name = p.getName();
         String version = p.getVersion();
         String arch = p.getPackageArch();
@@ -152,41 +154,10 @@ public class RHNHelper {
         pkg.setFileCreatedDate(new Long(p.getLastModified()));
         pkg.setLicenseName("license");
         pkg.setMD5(p.getMd5Sum());
-        pkg.setLocation(constructPackageUrl(repolabel, rpmname));
+        pkg.setLocation(constructPackageUrl(channelName, rpmname));
         //pkg.setMetadata();
         return pkg;
 
-    }
-
-    /**
-     * Get List of kickstart labels for the channel associated to this instance.
-     * @return List of all kickstart labels associate to the channel
-     * @throws IOException on io errors on systemid reads
-     * @throws XmlRpcException on xmlrpc faults
-     */
-    public List<String> getChannelKickstartLabels() throws IOException, XmlRpcException {
-        return getChannelKickstartLabels(this.repolabel);
-    }
-
-    /**
-     * Get List of kickstart labels for the channel associated to this instance.
-     * @param channelName channel name
-     * @return List of all kickstart labels associate to the channel
-     * @throws IOException on io errors on systemid reads
-     * @throws XmlRpcException on xmlrpc faults
-     */
-    public List<String> getChannelKickstartLabels(String channelName) throws IOException, XmlRpcException {
-        return getSyncableKickstartLabels(Arrays.asList(channelName));
-    }
-
-    /**
-     * Get List of packagesIds for Given Channels
-     * @return List of all package ids associated to the channel
-     * @throws IOException  on io errors on systemid reads
-     * @throws XmlRpcException on xmlrpc faults
-     */
-    public List<String> getChannelPackages() throws IOException, XmlRpcException {
-        return getChannelPackages(this.repolabel);
     }
     
     /**
@@ -197,10 +168,8 @@ public class RHNHelper {
      * @throws XmlRpcException on xmlrpc faults
      */
     public List<String> getChannelPackages(String channelName) throws IOException, XmlRpcException {
+        log.debug("getChannelPackages(" + channelName + ")");
         ArrayList<String> allPackages = new ArrayList();
-
-        log.info("Systemid: " + this.systemid);
-        log.info("repolist: " + this.repolabel);
         List<RhnChannelType> channels = rhndata.getChannels(this.systemid, Arrays.asList(channelName));
 
         for (RhnChannelType channel : channels) {
@@ -221,6 +190,7 @@ public class RHNHelper {
      * @throws XmlRpcException on xmlrpc faults
      */
     public List<String> getSyncableChannels() throws IOException, XmlRpcException {
+        log.debug("getSyncableChannels()");
         ArrayList<String> allchannels = new ArrayList();
         List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
         for (RhnChannelFamilyType cf : cfts) {
@@ -234,13 +204,41 @@ public class RHNHelper {
         return allchannels;
     }
 
-
+    /**
+     *
+     * @return returns list of all possible kickstart labels from all possible channels
+     * @throws IOException
+     * @throws XmlRpcException
+     */
     public List<String> getSyncableKickstartLabels() throws IOException, XmlRpcException {
+        log.debug("getSyncableKickstartLabels() - no channels passed, will use all available channels");
         List<String> allChannels = getSyncableChannels();
         return getSyncableKickstartLabels(allChannels);
     }
 
+    /**
+     *
+     * @param channelName channel name
+     * @return kickstart labels part of the passed in channel name
+     * @throws IOException
+     * @throws XmlRpcException
+     */
+    public List<String> getSyncableKickstartLabels(String channelName) throws IOException, XmlRpcException {
+        log.debug("getSyncableKickstartLabels(" + channelName + ")");
+        List<String> names = new ArrayList<String>();
+        names.add(channelName);
+        return getSyncableKickstartLabels(names);
+    }
+
+    /**
+     *
+     * @param channelLabels list of channel names to restrict return data to
+     * @return kickstart labels from the passed in list of channel names
+     * @throws IOException
+     * @throws XmlRpcException
+     */
     public List<String> getSyncableKickstartLabels(List<String> channelLabels) throws IOException, XmlRpcException {
+        log.debug("getSyncableKickstartLabels(" + channelLabels + ")");
         List<String> ksLabels = new ArrayList<String>();
         List<RhnChannelType> rct = rhndata.getChannels(this.systemid, channelLabels);
         for (RhnChannelType ct: rct) {
@@ -265,8 +263,7 @@ public class RHNHelper {
      * @throws XmlRpcException On all errors.
      */
     public InputStream openStream(String location) throws IOException, XmlRpcException {
-
-        log.info("Package Fetched from: " + location);
+        log.info("File being fetched from: " + location);
         return rhndownload.getFileStream(this.systemid, location);
     }
 
@@ -276,7 +273,12 @@ public class RHNHelper {
      * @param rpmName rpm file name
      * @return a valid url location to fetch the rpm from.
      */
-    private String constructPackageUrl(String channelName, String rpmName) {
+    public String constructPackageUrl(String channelName, String rpmName) {
+
+        return constructPackageUrl(baseurl, channelName, rpmName);
+    }
+
+    static public String constructPackageUrl(String baseurl, String channelName, String rpmName) {
 
         String appendurl = "/SAT/$RHN/" + channelName + "/getPackage/" + rpmName;
         return baseurl + appendurl;
@@ -291,6 +293,11 @@ public class RHNHelper {
      */
     public String constructKickstartFileUrl(String channelName, String ksTreeLabel, String ksFilePath) {
 
+        return constructKickstartFileUrl(baseurl, channelName, ksTreeLabel, ksFilePath);
+    }
+
+    static public String constructKickstartFileUrl(String baseurl, String channelName, String ksTreeLabel,
+                                                   String ksFilePath) {
         String appendurl = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
         return baseurl + appendurl;
     }
@@ -304,7 +311,7 @@ public class RHNHelper {
      * @param arch    rpm package arch
      * @return an rpm package name string
      */
-    private String constructRpmName(String name, String version, String release, String epoch, String arch) {
+    static public String constructRpmName(String name, String version, String release, String epoch, String arch) {
 
         String releaseepoch = release + ":" + epoch;
         return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";

@@ -732,7 +732,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                         }
                         log.debug("Attempting download of " + dFile.getRelativeFilename() +
                                 " from contentSourceId " + contentSourceId);
-                        String remoteFetchLoc = distSource.getRemoteLocation(repo.getName(), dist.getLabel(),
+                        String remoteFetchLoc = distSource.getDistFileRemoteLocation(repo.getName(), dist.getLabel(),
                                 dFile.getRelativeFilename());
                         InputStream bitsStream = pc.getAdapterManager().loadDistributionFileBits(contentSourceId,
                                 remoteFetchLoc);

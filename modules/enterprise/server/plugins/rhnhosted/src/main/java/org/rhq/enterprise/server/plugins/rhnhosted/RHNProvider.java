@@ -64,13 +64,6 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNActivator rhnObject;
     private RHNHelper helper;
-    private boolean testMode = false;
-
-    public void initializeForTest(Configuration configuration) throws Exception {
-        log.info("**TEST MODE  RHNProvider is running in a test configuration**");
-        testMode = true;
-        initialize(configuration);
-    }
 
     /**
      * Initializes the adapter with the specified configuration.
@@ -133,12 +126,10 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             throw new InitializationException("Server Activation Failed.", e);
         }
 
-        String repos = configuration.getSimpleValue("SyncableChannels", null);
-        log.info("Syncable Channel list :" + repos);
-
         // RHQ Server is now active, initialize the handler for the bits.
-        helper = new RHNHelper(locationIn, repos, rhnObject.getSystemid());
-        log.info("RHNProvider initialized RHNHelper with repos: " + repos);
+        helper = new RHNHelper(locationIn, rhnObject.getSystemid());
+        log.info("RHNProvider initialized RHNHelper with ( location = " + locationIn + "\n " +
+                "systemid = " + rhnObject.getSystemid());
     }
 
     /**
@@ -162,6 +153,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     public void synchronizePackages(String repoName, PackageSyncReport report,
                                     Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
+        log.info("synchronizePackages(repoName = " + repoName + ", report = " + report +
+                ", existingPackages.size() = " + existingPackages.size());
         RHNSummary summary = new RHNSummary(helper);
         List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
@@ -171,7 +164,33 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             summary.markStarted();
             List<String> pkgIds = helper.getChannelPackages(repoName);
             log.info("RHNProvider::  helper.getChannelPackages returned  " + pkgIds.size() + " packages");
-            for (ContentProviderPackageDetails p : helper.getPackageDetails(pkgIds)) {
+            List<ContentProviderPackageDetails> pkgDetails = new ArrayList<ContentProviderPackageDetails>();
+
+            //
+            // We ran into problems when syncing large package lists, example 6000 packages.
+            // We are going to chunk the list to processing a smaller amount at a time.
+            //
+            long startTime = System.currentTimeMillis();
+            int sliceSize = 100;
+            for (int index = 0; index < pkgIds.size(); index += sliceSize) {
+                int end = index + sliceSize;
+                if (end >= pkgIds.size()) {
+                    end = pkgIds.size() - 1;
+                }
+                long startTimeSlice = System.currentTimeMillis();
+                log.debug("Getting package details for slice [" + index + " -> " + end + "]");
+                List<String> pkgSliceList = pkgIds.subList(index, end);
+                pkgDetails.addAll(helper.getPackageDetails(pkgSliceList, repoName));
+                long endTimeSlice = System.currentTimeMillis();
+                log.debug("Slice processed in " + (endTimeSlice - startTimeSlice) +
+                        "ms current size of pkgDetails is " + pkgDetails.size());
+            }
+            long endTime = System.currentTimeMillis();
+            log.info("It took " + (endTime - startTime) + "ms too get PackageDetails for " + pkgIds.size() + " packages");
+            
+
+
+            for (ContentProviderPackageDetails p : pkgDetails) {
                 log.debug("Processing package at (" + p.getLocation());
                 deletedPackages.remove(p);
                 if (!existingPackages.contains(p)) {
@@ -215,7 +234,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         List<String> deletedDistros = new ArrayList<String>();  //Existing distros we want to remove.
         deletedDistros.addAll(existingLabels);
 
-        List<String> availableLabels = helper.getChannelKickstartLabels(repoName);
+        List<String> availableLabels = helper.getSyncableKickstartLabels(repoName);
         log.debug("Found " + availableLabels.size() + " available kickstart trees");
         for (String label: availableLabels) {
             log.debug("Processing kickstart: " + label);
@@ -294,7 +313,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
-    public String getRemoteLocation(String repoName, String label, String relativeFilename) {
+    public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
     }
 }

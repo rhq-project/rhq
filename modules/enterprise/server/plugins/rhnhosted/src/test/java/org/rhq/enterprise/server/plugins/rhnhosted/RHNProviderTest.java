@@ -23,9 +23,12 @@ import java.util.List;
 import java.util.ArrayList;
 import java.io.InputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
@@ -72,7 +75,7 @@ public class RHNProviderTest
     {
     }
 
-    public Configuration getConfiguration(String channelName) {
+    public Configuration getConfiguration() {
         String certData = "";
         try {
             certData = FileUtils.readFileToString(new File(certLoc));
@@ -81,10 +84,10 @@ public class RHNProviderTest
             e.printStackTrace();
             assert false;
         }
-        return getConfiguration(channelName, rhnURL, certData);
+        return getConfiguration(rhnURL, certData);
     }
 
-    public Configuration getConfiguration(String channelName, String location, String certData) {
+    public Configuration getConfiguration(String location, String certData) {
         Configuration config = new Configuration();
         PropertySimple locProp = new PropertySimple();
         locProp.setName("location");
@@ -94,10 +97,6 @@ public class RHNProviderTest
         certProp.setName("certificate");
         certProp.setStringValue(certData);
         config.put(certProp);
-        PropertySimple channelsProp = new PropertySimple();
-        channelsProp.setName("SyncableChannels");
-        channelsProp.setStringValue(channelName);
-        config.put(channelsProp);
         return config;
     }
 
@@ -116,10 +115,11 @@ public class RHNProviderTest
         String cName = "rhel-x86_64-server-5";
         String rName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
         RHNProvider provider = new RHNProvider();
-        Configuration config = getConfiguration(cName);
+        Configuration config = getConfiguration();
         try {
-            provider.initializeForTest(config);
-            String loc = rhnURL + "/SAT/$RHN/" + cName + "/getPackage/" + rName;
+            provider.initialize(config);
+            String loc = RHNHelper.constructPackageUrl(rhnURL, cName, rName);
+            //String loc = rhnURL + "/SAT/$RHN/" + cName + "/getPackage/" + rName;
             InputStream in = provider.getInputStream(loc);
             assert (in != null);
         }
@@ -139,15 +139,16 @@ public class RHNProviderTest
             return;
         }
 
-        String channelName = "rhn-tools-rhel-i386-server-5";
-        Configuration config = getConfiguration(channelName);
+        //String channelName = "rhn-tools-rhel-i386-server-5";
+        String channelName = "rhel-i386-server-5";
+        Configuration config = getConfiguration();
         RHNProvider provider = new RHNProvider();
 
         System.out.println("testSynchronizePackages invoked");
         PackageSyncReport report = new PackageSyncReport();
         List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
         try {
-            provider.initializeForTest(config);
+            provider.initialize(config);
             provider.synchronizePackages(channelName, report, existingPackages);
         }
         catch (Exception e) {
@@ -160,18 +161,20 @@ public class RHNProviderTest
     @Test
     public void testSynchronizeDistribution()
     {
+
         if (!isTesting) {
             System.out.println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
             return;
         }
         System.out.println("testSynchronizeDistribution invoked");
         String channelName = "rhel-x86_64-server-5";
-        DistributionSyncReport report = new DistributionSyncReport();
+        int dummyValueContentSourceId = -1;
+        DistributionSyncReport report = new DistributionSyncReport(dummyValueContentSourceId);
         List<DistributionDetails> existingDistro = new ArrayList<DistributionDetails>();
         RHNProvider provider = new RHNProvider();
-        Configuration config = getConfiguration(channelName);
+        Configuration config = getConfiguration();
         try {
-            provider.initializeForTest(config);
+            provider.initialize(config);
             provider.synchronizeDistribution(channelName, report, existingDistro);
         }
         catch (Exception e) {
@@ -189,11 +192,13 @@ public class RHNProviderTest
                         f.getRelativeFilename() + " , " + f.getMd5sum() + ", lastModified = " + f.getLastModified() +
                         ", fileSize = " + f.getFileSize());
                 try {
-                    String url = rhnURL +
-                            RhnDownloader.getURLForKickstartFile(channelName, d.getLabel(), f.getRelativeFilename());
+                    String url = RHNHelper.constructKickstartFileUrl(rhnURL, channelName, d.getLabel(),
+                            f.getRelativeFilename());
                     InputStream in = provider.getInputStream(url);
-                    assert(in != null);
-                    //TODO: Consider mplementing read from inputStream, compare against fileSize & md5sum
+
+                    String actualMd5sum = MessageDigestGenerator.getDigestString(in);
+                    String expectedMd5sum = f.getMd5sum();
+                    assert(StringUtils.equalsIgnoreCase(actualMd5sum, expectedMd5sum));
                 }
                 catch (Exception e) {
                     e.printStackTrace();

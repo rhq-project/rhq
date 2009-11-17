@@ -301,6 +301,8 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                         if (file.lastModified() > realPluginFile.lastModified()) {
                             FileUtil.copyFile(file, realPluginFile);
                             realPluginFile.setLastModified(file.lastModified());
+                            log.info("Found plugin jar at [" + file.getAbsolutePath() + "] and placed it at ["
+                                + realPluginFile.getAbsolutePath() + "]");
                         }
                     }
                     boolean deleted = file.delete();

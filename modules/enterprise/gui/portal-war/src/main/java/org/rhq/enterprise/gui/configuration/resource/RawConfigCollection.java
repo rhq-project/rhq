@@ -202,14 +202,6 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
      */
     @Create
     public void init() {
-        /*
-                ResourceConfigurationUpdate resourceConfigurationUpdate = getConfigurationManager()
-                    .getLatestResourceConfigurationUpdate(EnterpriseFacesContextUtility.getSubject(),
-                        EnterpriseFacesContextUtility.getResource().getResourceType().getId());
-
-                resourceConfigurationUpdate.getConfiguration().getRawConfigurations();
-        getConfigurationManager().translateResourceConfiguration(subject, resourceId, configuration, fromStructured)
-                */
 
     }
 
@@ -298,11 +290,10 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
 
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRawConfigDelegate().getRaws().put(raw.getPath(), raw);
-            getRawConfigDelegate().setConfiguration(configuration);
-        }
+        getRawConfigDelegate().setConfiguration(configuration);
+        getRawConfigDelegate().setRaws(null);
         getRawConfigDelegate().current = null;
+
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
@@ -320,6 +311,7 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
             getRawConfigDelegate().setConfiguration(configuration);
         }
         getRawConfigDelegate().current = null;
+        getRawConfigDelegate().setConfiguration(configuration);
 
         return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
     }

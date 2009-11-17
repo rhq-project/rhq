@@ -55,7 +55,15 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
     private List<OptionItem<Integer>> providers = null;
 
     public RepoImportUIBean() {
-        getProviderOptions();
+    }
+
+    public String getProviderName() {
+        for (OptionItem<Integer> item : providers) {
+            if (item.getId() == selectedProvider) {
+                return item.getDisplayName();
+            }
+        }
+        return "";
     }
 
     /**
@@ -99,9 +107,6 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
             for (ContentSource p : results) {
                 OptionItem<Integer> item = new OptionItem<Integer>(p.getId(), p.getName());
                 providers.add(item);
-                if (selectedProvider == 0) {
-                    selectedProvider = p.getId();
-                }
             }
         }
         return SelectItemUtils.convertFromListOptionItem(providers, false);
@@ -132,11 +137,11 @@ public class RepoImportUIBean extends PagedDataTableUIBean {
             repoManager.importCandidateRepo(subject, repoIds);
         } catch (RepoException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "Failed to import one or more Repositories from Content Provider", e);
+                "Failed to import one or more Repositories from " + getProviderName(), e);
             return "failed";
         }
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, selected.length
-            + " Repositories imported from Content Provider");
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "[" + selected.length
+            + "] Repositories imported from " + getProviderName());
         return "success";
     }
 

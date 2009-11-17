@@ -20,7 +20,7 @@
       </h:outputLink>
       &gt;
       <h:outputLink value="importRepos.xhtml">
-         Import From Content Provider
+         Import
       </h:outputLink>
    </ui:define>
    <ui:define name="body">
@@ -46,76 +46,79 @@
                   value="#{RepoImportUIBean.selectedProvider}"
                   layout="pageDirection">
                      <f:selectItems value="#{RepoImportUIBean.providerOptions}"/>
-                     <a4j:support ajaxSingle="true" event="onchange" reRender="repoTable"/>
+                     <a4j:support ajaxSingle="true" event="onchange" reRender="repoPanel"/>
                </h:selectOneRadio>
             </h:panelGrid>
          </rich:panel>
          <!-- REPOS -->
-         <rich:panel>
-            <f:facet name="header">
-               <h:outputText value="Available Repositories"/>
-            </f:facet>
-            <h:panelGrid columns="1" width="100%">
-            <ui:param name="repoModel" value="#{RepoImportUIBean.dataModel}"/>
-            <rich:dataTable id="repoTable"
-                            rows="#{PageControl.ReposToImportList.pageSize}"
-                            value="#{repoModel}"
-                            var="item"
-                            width="100%"
-                            columnsWidth="1%, 99%"
-                            headerClass="tableRowHeader"
-                            footerClass="on-pager-footer"
-                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-               <a4j:keepAlive beanName="RepoImportUIBean" />
-               <f:facet name="PageControlView">
-                  <onc:paginationControl id="ReposToImportList" />
+         <rich:panel id="repoPanel">
+            <c:if test="#{RepoImportUIBean.selectedProvider != '0'}">
+               <f:facet name="header">
+                  <h:outputText value="Available repositories provided by #{RepoImportUIBean.providerName}"/>
                </f:facet>
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:allSelect target="selectedRepos" />
+               <h:panelGrid columns="1" width="100%">
+               <ui:param name="repoModel" value="#{RepoImportUIBean.dataModel}"/>
+               <rich:dataTable id="repoTable"
+                               rows="#{PageControl.ReposToImportList.pageSize}"
+                               value="#{repoModel}"
+                               var="item"
+                               width="100%"
+                               columnsWidth="1%, 99%"
+                               headerClass="tableRowHeader"
+                               footerClass="on-pager-footer"
+                               onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                               onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                  <a4j:keepAlive beanName="RepoImportUIBean" />
+                  <f:facet name="PageControlView">
+                     <onc:paginationControl id="ReposToImportList" />
                   </f:facet>
-                  <onc:select rendered="#{RepoImportUIBean.selectedRepos[item.id] eq null}"
-                              name="selectedRepos"
-                              value="#{item.id}" />
-               </rich:column>
-               <rich:column rendered="#{param.debug}">
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="c.id">
-                        <h:outputText styleClass="headerText" value="ID" />
-                     </onc:sortableColumnHeader>
+                  <rich:column>
+                     <f:facet name="header">
+                        <onc:allSelect target="selectedRepos" />
+                     </f:facet>
+                     <onc:select rendered="#{RepoImportUIBean.selectedRepos[item.id] eq null}"
+                                 name="selectedRepos"
+                                 value="#{item.id}" />
+                  </rich:column>
+                  <rich:column rendered="#{param.debug}">
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="c.id">
+                           <h:outputText styleClass="headerText" value="ID" />
+                        </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputText value="#{item.id}"/>
+                  </rich:column>
+                  <rich:column>
+                     <f:facet name="header">
+                        <onc:sortableColumnHeader sort="c.name">
+                           <h:outputText styleClass="headerText" value="Name" />
+                        </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputLink value="repo.xhtml">
+                        <f:param name="mode" value="view"/>
+                        <f:param name="id" value="#{item.id}"/>
+                        <h:outputText value="#{item.name}" />
+                     </h:outputLink>
+                  </rich:column>
+                  <f:facet name="footer">
+                     <rich:columnGroup>
+                        <!-- colspan 6:5 for the debug 'id' column -->
+                        <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+                           <onc:selectCommandButton
+                              action="#{RepoImportUIBean.importSelected}"
+                              value="IMPORT SELECTED"
+                              target="selectedRepos"
+                              styleClass="on-pager-button buttonsmall"/>
+                           <ui:param name="paginationDataTableName" value="repoTable"/>
+                           <ui:param name="paginationDataModel" value="#{repoModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ReposToImportList}"/>
+                           <ui:include src="../resource/include/pagination.xhtml"/>
+                        </rich:column>
+                     </rich:columnGroup>
                   </f:facet>
-                  <h:outputText value="#{item.id}"/>
-               </rich:column>
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="c.name">
-                        <h:outputText styleClass="headerText" value="Name" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-                  <h:outputLink value="repo.xhtml">
-                     <f:param name="mode" value="view"/>
-                     <f:param name="id" value="#{item.id}"/>
-                     <h:outputText value="#{item.name}" />
-                  </h:outputLink>
-               </rich:column>
-               <f:facet name="footer">
-                  <rich:columnGroup>
-                     <!-- colspan 6:5 for the debug 'id' column -->
-                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
-                        <onc:selectCommandButton action="#{RepoImportUIBean.importSelected}"
-                                         value="IMPORT SELECTED"
-                                         target="selectedRepos"
-                                         styleClass="on-pager-button buttonsmall"/>
-                        <ui:param name="paginationDataTableName" value="repoTable"/>
-                        <ui:param name="paginationDataModel" value="#{repoModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ReposToImportList}"/>
-                        <ui:include src="../resource/include/pagination.xhtml"/>
-                     </rich:column>
-                  </rich:columnGroup>
-               </f:facet>
-            </rich:dataTable>
-            </h:panelGrid>
+               </rich:dataTable>
+               </h:panelGrid>
+            </c:if>
          </rich:panel>
       </h:form>
    </ui:define>

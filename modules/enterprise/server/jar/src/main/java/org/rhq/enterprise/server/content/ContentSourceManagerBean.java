@@ -219,6 +219,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             entityManager.remove(cs);
             log.debug("User [" + subject + "] deleted content source [" + cs + "]");
 
+            repoManager.deleteCandidatesWithOnlyContentSource(subject, contentSourceId);
+
             // make sure we stop its adapter and unschedule any sync job associated with it
             try {
                 ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();

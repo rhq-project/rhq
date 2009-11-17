@@ -332,6 +332,20 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return repo;
     }
 
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteCandidatesWithOnlyContentSource(Subject subject, int contentSourceId) {
+        Query query = entityManager.createNamedQuery(Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE);
+
+        query.setParameter("contentSourceId", contentSourceId);
+
+        List<Repo> repoList = query.getResultList();
+
+        for (Repo deleteMe : repoList) {
+            deleteRepo(subject, deleteMe.getId());
+        }
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId,
         StringBuilder result) {

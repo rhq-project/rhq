@@ -157,6 +157,14 @@ public interface RepoManagerLocal {
     Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException;
 
     /**
+     * Removes candidate repos whose only content source is the indicated content source.
+     *
+     * @param subject         user performing the delete
+     * @param contentSourceId identifies the content source
+     */
+    void deleteCandidatesWithOnlyContentSource(Subject subject, int contentSourceId);
+
+    /**
      * Handles a repo report from a content provider, adding and removing candidate repos as necessary into the
      * database.
      *

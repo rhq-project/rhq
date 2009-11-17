@@ -442,4 +442,49 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         }
 
     }
+
+    @Test(enabled = ENABLED)
+    public void deleteCandidatesForContentSource() throws Exception {
+        // Setup
+        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+        types.add(contentSourceType);
+        contentSourceMetadataManager.registerTypes(types);
+
+        ContentSource source1 = new ContentSource("testSource1", contentSourceType);
+        source1 = contentSourceManager.simpleCreateContentSource(overlord, source1);
+
+        ContentSource source2 = new ContentSource("testSource2", contentSourceType);
+        source2 = contentSourceManager.simpleCreateContentSource(overlord, source2);
+
+        // -> Only has source to delete, should be deleted
+        Repo repo1 = new Repo("repo1");
+        repo1.addContentSource(source1);
+
+        // -> Has different source, should not be deleted
+        Repo repo2 = new Repo("repo2");
+        repo2.addContentSource(source2);
+
+        // -> Has source to delete and another source, should not be deleted
+        Repo repo3 = new Repo("repo3");
+        repo3.addContentSource(source1);
+        repo3.addContentSource(source2);
+
+        // -> No sources, should not be deleted
+        Repo repo4 = new Repo("repo4");
+
+        repo1 = repoManager.createCandidateRepo(overlord, repo1);
+        repo2 = repoManager.createCandidateRepo(overlord, repo2);
+        repo3 = repoManager.createCandidateRepo(overlord, repo3);
+        repo4 = repoManager.createCandidateRepo(overlord, repo4);
+
+        // Test
+        repoManager.deleteCandidatesWithOnlyContentSource(overlord, source1.getId());
+
+        // Verify
+        assert repoManager.getRepo(overlord, repo1.getId()) == null;
+        assert repoManager.getRepo(overlord, repo2.getId()) != null;
+        assert repoManager.getRepo(overlord, repo3.getId()) != null;
+        assert repoManager.getRepo(overlord, repo4.getId()) != null;
+    }
 }

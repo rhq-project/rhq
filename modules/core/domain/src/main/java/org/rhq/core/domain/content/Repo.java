@@ -86,7 +86,15 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate = false ") })
+        + "AND c.candidate = false "),
+    @NamedQuery(name = Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE, query = "SELECT r FROM Repo r " //
+        + "WHERE r.candidate = true " //
+        + "AND (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs " //
+        + "     WHERE rcs.repo.id = r.id " //
+        + "     AND rcs.contentSource.id = :contentSourceId) = 1 " //
+        + "AND (SELECT COUNT(rcs) FROM RepoContentSource rcs" //
+        + "     WHERE rcs.repo.id = r.id) = 1 ")
+    })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable, Taggable {
@@ -105,6 +113,7 @@ public class Repo implements Serializable, Taggable {
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE = "Repo.findCandidatesWithOnlyContentSource";
 
     private static final long serialVersionUID = 1L;
 

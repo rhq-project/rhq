@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.util.file;
 
 import java.io.BufferedInputStream;
@@ -33,7 +33,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import org.rhq.core.util.collection.IntHashMap;
+import org.rhq.core.util.stream.StreamUtil;
 
 public class FileUtil {
     private static IntHashMap invalidChars = null;
@@ -44,23 +46,21 @@ public class FileUtil {
     public static void copyFile(File inFile, File outFile) throws FileNotFoundException, IOException {
         BufferedInputStream is = new BufferedInputStream(new FileInputStream(inFile));
         BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outFile));
-        copyStream(is, os);
-        is.close();
-        os.close();
+        StreamUtil.copy(is, os);
     }
 
     /**
-     * Default buffer size for copyStream method
-     */
-    public static final int BUFSIZ = 2048;
-
-    /**
-     * Copy a stream, using a buffer
+     * Copy a stream, using a buffer.
+     * @deprecated use {@link StreamUtil} for more methods like this - those are unit tested and used more
      */
     public static void copyStream(InputStream is, OutputStream os) throws IOException {
-        copyStream(is, os, new byte[BUFSIZ]);
+        StreamUtil.copy(is, os, false);
     }
 
+    /**
+     * Copy a stream, using a buffer.
+     * @deprecated use {@link StreamUtil} for more methods like this - those are unit tested and used more
+     */
     public static void copyStream(InputStream is, OutputStream os, byte[] buf) throws IOException {
         int bytesRead = 0;
         while (true) {

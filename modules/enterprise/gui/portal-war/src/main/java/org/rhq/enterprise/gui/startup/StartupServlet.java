@@ -51,7 +51,7 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -212,12 +212,12 @@ public class StartupServlet extends HttpServlet {
         log("Starting the agent-plugin deployer");
 
         try {
-            AgentPluginDeploymentScannerMBean deployer_mbean;
+            PluginDeploymentScannerMBean deployer_mbean;
             MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = AgentPluginDeploymentScannerMBean.OBJECT_NAME;
-            Class<?> iface = AgentPluginDeploymentScannerMBean.class;
-            deployer_mbean = (AgentPluginDeploymentScannerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs,
-                name, iface, false);
+            ObjectName name = PluginDeploymentScannerMBean.OBJECT_NAME;
+            Class<?> iface = PluginDeploymentScannerMBean.class;
+            deployer_mbean = (PluginDeploymentScannerMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+                iface, false);
             deployer_mbean.startDeployment();
         } catch (Exception e) {
             throw new ServletException("Cannot start the agent-plugin deployer", e);

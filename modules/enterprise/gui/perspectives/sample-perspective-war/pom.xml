@@ -67,7 +67,7 @@
          <id>dev</id>
 
          <properties>
-            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>

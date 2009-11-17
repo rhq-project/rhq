@@ -19,21 +19,22 @@
 
 package org.custom;
 
-import java.util.Properties;
-
-import org.rhq.enterprise.server.plugin.pc.ScheduledJob;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
+import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
 
 /**
- * Example of a scheduled job.
+ * Example of a stateless class that can process scheduled job invocations.
  * 
  * @author John Mazzitelli
  */
-public class MyScheduledJob implements ScheduledJob {
-    @Override
-    public void execute(String jobId, ServerPluginLifecycleListener lifecycleListener, Properties callbackData)
-        throws Exception {
-        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] jobId=" + jobId
-            + ", lifecycle-listener=" + lifecycleListener);
+public class MyScheduledJob {
+    public void executeWithContext(ScheduledJobInvocationContext jobContext) throws Exception {
+        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] jobId="
+            + jobContext.getJobDefinition().getJobId() + ", methodName="
+            + jobContext.getJobDefinition().getMethodName() + ", callbackData="
+            + jobContext.getJobDefinition().getCallbackData());
+    }
+
+    public void executeNoArg() throws Exception {
+        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] NO CONTEXT!");
     }
 }

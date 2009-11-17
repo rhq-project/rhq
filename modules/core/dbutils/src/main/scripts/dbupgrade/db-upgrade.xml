@@ -17,13 +17,13 @@
     </echo>
 
     <dbupgrade jdbcUrl="${jdbc.url}"
-    	       jdbcUser="${jdbc.user}"
-    	       jdbcPassword="${jdbc.password}"
-    	       valueColumn="PROPERTY_VALUE"
-    	       table="RHQ_SYSTEM_CONFIG"
-    	       keyColumn="PROPERTY_KEY"
-    	       keyMatch="DB_SCHEMA_VERSION"
-    	       targetSchemaVersion="${target.schema.version}">
+               jdbcUser="${jdbc.user}"
+               jdbcPassword="${jdbc.password}"
+               valueColumn="PROPERTY_VALUE"
+               table="RHQ_SYSTEM_CONFIG"
+               keyColumn="PROPERTY_KEY"
+               keyMatch="DB_SCHEMA_VERSION"
+               targetSchemaVersion="${target.schema.version}">
 
       <schemaSpec version="2.0">
         <!-- Empty initial schema to avoid install failure on default latest schema version -->
@@ -870,15 +870,15 @@
         <schema-directSQL>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing trigger">
             DELETE FROM rhq_qrtz_triggers
-          	WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing simple trigger">
             DELETE FROM rhq_qrtz_simple_triggers
-          	WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing job details">
             DELETE FROM rhq_qrtz_job_details
-          	WHERE job_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE job_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
         </schema-directSQL>
       </schemaSpec>
@@ -1089,7 +1089,7 @@
         <schema-directSQL>
           <statement desc="Populating values for new column RHQ_MEASUREMENT_DEF.RAW_NUMERIC_TYPE">
             UPDATE RHQ_MEASUREMENT_DEF md
-          	SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
+            SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
                                      WHERE NAME = md.NAME AND RESOURCE_TYPE_ID = md.RESOURCE_TYPE_ID AND (NUMERIC_TYPE = 1 OR NUMERIC_TYPE = 2))
             WHERE NUMERIC_TYPE = 0
           </statement>
@@ -1468,7 +1468,7 @@
         <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
         <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
       </schemaSpec>
-    	
+
       <schemaSpec version="2.59">
         <schema-directSQL>
           <statement desc="Creating table RHQ_RAW_CONFIG">

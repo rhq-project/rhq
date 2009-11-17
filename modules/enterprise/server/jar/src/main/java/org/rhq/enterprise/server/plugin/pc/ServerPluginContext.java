@@ -20,8 +20,10 @@
 package org.rhq.enterprise.server.plugin.pc;
 
 import java.io.File;
+import java.util.List;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
  * A global context containing information about a server-side plugin.
@@ -35,7 +37,7 @@ public class ServerPluginContext {
     private final File temporaryDirectory;
     private final File dataDirectory;
     private final Configuration pluginConfiguration;
-    private final Schedule schedule;
+    private final List<ScheduledJobDefinition> schedules;
 
     /**
      * Creates a new {@link ServerPluginContext} object. The plugin container is responsible for instantiating these
@@ -45,14 +47,19 @@ public class ServerPluginContext {
      * @param dataDirectory a directory where plugins can store persisted data that survives server restarts
      * @param tmpDirectory a temporary directory for plugin use
      * @param pluginConfiguration the configuration for the plugin itself
-     * @param schedule if not <code>null</code>, the plugin will be invoked periodically via the schedule facet
+     * @param schedules if not <code>null</code>, the plugin will be invoked periodically via these schedules
      */
     public ServerPluginContext(ServerPluginEnvironment env, File dataDirectory, File tmpDirectory,
-        Configuration pluginConfiguration, Schedule schedule) {
+        Configuration pluginConfiguration, List<ScheduledJobDefinition> schedules) {
         this.pluginEnvironment = env;
         this.dataDirectory = dataDirectory;
         this.pluginConfiguration = pluginConfiguration;
-        this.schedule = schedule;
+
+        if (schedules != null && schedules.size() == 0) {
+            schedules = null; // null means no schedules
+        }
+        this.schedules = schedules;
+
         if (tmpDirectory == null) {
             this.temporaryDirectory = new File(System.getProperty("java.io.tmpdir"), "SERVERPLUGIN_TMP");
             this.temporaryDirectory.mkdirs();
@@ -105,13 +112,13 @@ public class ServerPluginContext {
     }
 
     /**
-     * The schedule in which the plugin should be periodically invoked via the schedule job facet.
-     * When this is non-null, the plugin's lifecycle listener must be prepared to be periodically
+     * The schedules in which the plugin component should be periodically invoked.
+     * When this is non-null, the plugin's component must be prepared to be periodically
      * invoked by the plugin container's scheduler.
      * 
      * @return the schedule, or <code>null</code> if the plugin should not be scheduled
      */
-    public Schedule getSchedule() {
-        return this.schedule;
+    public List<ScheduledJobDefinition> getSchedules() {
+        return this.schedules;
     }
 }

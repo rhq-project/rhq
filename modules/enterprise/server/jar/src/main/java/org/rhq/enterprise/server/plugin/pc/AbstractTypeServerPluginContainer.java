@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.plugin.pc;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,7 +29,10 @@ import org.quartz.JobDataMap;
 
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduledJobType;
+import org.rhq.enterprise.server.xmlschema.CronScheduleType;
+import org.rhq.enterprise.server.xmlschema.PeriodicScheduleType;
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 
 /**
  * The abstract superclass for all plugin containers of the different {@link ServerPluginType plugin types}.
@@ -178,8 +180,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * If a plugin has scheduled jobs, this method will schedule them now.
      * This particular method implementation schedules the global jobs as defined in the
-     * plugin descriptors. If a plugin has a global scheduled job on its lifecycle
-     * listener, that lifecycle listener will be the job handler class.
+     * plugin descriptors.
      * 
      * Subclasses are free to extend this method to schedule additional plugin jobs, but must
      * ensure they call this method so the global scheduled jobs get added to the scheduler.
@@ -193,45 +194,24 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void schedulePluginJobs() throws Exception {
         if (this.pluginManager != null) {
             // process all known plugins and schedule their jobs
+            List<ScheduledJobDefinition> jobs;
             for (ServerPluginEnvironment pluginEnv : this.pluginManager.getPluginEnvironments()) {
                 String pluginName = pluginEnv.getPluginName();
 
-                // First see if the listener has a schedule itself and schedule it if it does.
-                // Note that we know if there is no lifecycle listener, then there can't be a listener schedule
-                if (this.pluginManager.getServerPluginLifecycleListener(pluginName) != null) {
-                    Schedule schedule = this.pluginManager.getServerPluginContext(pluginEnv).getSchedule();
-                    if (schedule != null) {
-                        try {
-                            scheduleJob(schedule, pluginName, "__lifecycleListenerJob", null, null);
-                        } catch (Throwable t) {
-                            log.warn("Failed to schedule the global plugin job for plugin [" + pluginName + "]", t);
-                        }
-                    }
-                }
-
-                // now schedule all the other jobs defined in the plugin descriptor
-                List<ScheduledJobType> jobs = pluginEnv.getPluginDescriptor().getScheduledJob();
-                if (jobs != null) {
-                    for (ScheduledJobType job : jobs) {
-                        Schedule schedule;
-                        if (job.getPeriod() != null) {
-                            schedule = new PeriodicSchedule(job.isConcurrent(), job.getPeriod().longValue());
-                        } else {
-                            schedule = new CronSchedule(job.isConcurrent(), job.getCron());
-                        }
-
-                        String scheduledJobClass = job.getClazz();
-                        String jobId = job.getJobId();
-                        if (scheduledJobClass != null) {
+                try {
+                    // TODO: we need to read the config from the DB, and use thoses job defs instead of the ones from the descriptor
+                    jobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(pluginEnv.getPluginDescriptor());
+                    if (jobs != null) {
+                        for (ScheduledJobDefinition job : jobs) {
                             try {
-                                scheduleJob(schedule, pluginName, jobId, scheduledJobClass, null);
+                                scheduleJob(job, pluginName);
                             } catch (Throwable t) {
-                                log.warn("Failed to schedule job [" + jobId + "] for plugin [" + pluginName + "]", t);
+                                log.warn("Failed to schedule job [" + job + "] for plugin [" + pluginName + "]", t);
                             }
-                        } else {
-                            log.warn("Scheduled job [" + jobId + "] in plugin [" + pluginName + "] is missing class");
                         }
                     }
+                } catch (Throwable t) {
+                    log.warn("Failed to get scheduled jobs for plugin [" + pluginName + "]", t);
                 }
             }
         } else {
@@ -262,26 +242,19 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
-     * Schedules a job for periodic execution.
+     * Schedules a job for periodic execution. Note that if the <code>schedule</code> indicates the
+     * job is not enabled, this method returns immediately as a no-op.
      * 
      * @param schedule instructs how the job should be scheduled
      * @param pluginName the name of the plugin scheduling the job
-     * @param jobId a unique ID that identifies the job within the plugin (jobIds across plugins need not be unique)
-     * @param scheduledJobClass the plugin component class name that implements {@link ScheduledJob} that will perform
-     *                          the work for the job. If <code>null</code>, the lifecycle listener instance will be
-     *                          used (note: if <code>null</code>, it means whatever listener instance was used to initialize
-     *                          the plugin is the same instance that will handle the job; a new instance of the listener
-     *                          class is not created. This allows a plugin to have a stateful object be periodically
-     *                          invoked for each job invocation, as opposed to having a new object instantiated for
-     *                          each job invocation).
-     * @param callbackData if not <code>null</code>, this is a map of properties that will be passed to the scheduled
-     *                     job - it is Properties to force both the keys and values to be strings, since that is how
-     *                     we tell quartz to store the data
      *
      * @throws Exception if failed to schedule the job
      */
-    protected void scheduleJob(Schedule schedule, String pluginName, String jobId, String scheduledJobClass,
-        Properties callbackData) throws Exception {
+    protected void scheduleJob(ScheduledJobDefinition schedule, String pluginName) throws Exception {
+
+        if (!schedule.isEnabled()) {
+            return;
+        }
 
         String groupName = pluginName;
         boolean rescheduleIfExists = true; // just in case the parameters change, we'll always want to reschedule it if it exists
@@ -289,7 +262,7 @@ public abstract class AbstractTypeServerPluginContainer {
 
         // determine which quartz job class we should be using, based on the concurrency needs of the schedule
         Class<? extends Job> jobClass;
-        if (schedule.isConcurrent()) {
+        if (schedule.getScheduleType().isConcurrent()) {
             jobClass = ConcurrentJobWrapper.class;
         } else {
             jobClass = StatefulJobWrapper.class;
@@ -299,29 +272,33 @@ public abstract class AbstractTypeServerPluginContainer {
         JobDataMap jobData = new JobDataMap();
         jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_NAME, pluginName);
         jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, getSupportedServerPluginType().stringify());
-        jobData.put(AbstractJobWrapper.DATAMAP_JOB_ID, jobId);
-        if (scheduledJobClass != null) {
-            jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULED_JOB_CLASS, scheduledJobClass);
+        jobData.put(AbstractJobWrapper.DATAMAP_JOB_ID, schedule.getJobId());
+        jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TYPE, schedule.getScheduleType().getTypeName());
+        jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TRIGGER, schedule.getScheduleType().getScheduleTrigger());
+        jobData.putAsString(AbstractJobWrapper.DATAMAP_IS_CONCURRENT, schedule.getScheduleType().isConcurrent());
+        jobData.put(AbstractJobWrapper.DATAMAP_JOB_METHOD_NAME, schedule.getMethodName());
+        if (schedule.getClassName() != null) {
+            jobData.put(AbstractJobWrapper.DATAMAP_JOB_CLASS, schedule.getClassName());
         }
-        if (callbackData != null) {
-            jobData.putAll(callbackData);
+        if (schedule.getCallbackData() != null) {
+            jobData.putAll(schedule.getCallbackData());
         }
 
         // schedule the job now
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        if (schedule instanceof CronSchedule) {
-            String cronExpression = ((CronSchedule) schedule).getCronExpression();
-            log.info("Scheduling server plugin cron job: jobName=" + jobId + ", groupName=" + groupName + ", jobClass="
-                + jobClass + ", cron=" + cronExpression);
-            scheduler.scheduleCronJob(jobId, groupName, jobData, jobClass, rescheduleIfExists, isVolatile,
-                cronExpression);
+        if (schedule.getScheduleType() instanceof CronScheduleType) {
+            String cronExpression = ((CronScheduleType) schedule.getScheduleType()).getCronExpression();
+            log.info("Scheduling server plugin cron job: jobName=" + schedule.getJobId() + ", groupName=" + groupName
+                + ", jobClass=" + jobClass + ", cron=" + cronExpression);
+            scheduler.scheduleCronJob(schedule.getJobId(), groupName, jobData, jobClass, rescheduleIfExists,
+                isVolatile, cronExpression);
         } else {
             long initialDelay = 10000L; // arbitrary - wait a small bit of time before triggering the job
-            long interval = ((PeriodicSchedule) schedule).getPeriod();
-            log.info("Scheduling server plugin periodic job: jobName=" + jobId + ", groupName=" + groupName
-                + ", jobClass=" + jobClass + ", interval=" + interval);
-            scheduler.scheduleRepeatingJob(jobId, groupName, jobData, jobClass, rescheduleIfExists, isVolatile,
-                initialDelay, interval);
+            long interval = ((PeriodicScheduleType) schedule.getScheduleType()).getPeriod();
+            log.info("Scheduling server plugin periodic job: jobName=" + schedule.getJobId() + ", groupName="
+                + groupName + ", jobClass=" + jobClass + ", interval=" + interval);
+            scheduler.scheduleRepeatingJob(schedule.getJobId(), groupName, jobData, jobClass, rescheduleIfExists,
+                isVolatile, initialDelay, interval);
         }
 
         return;

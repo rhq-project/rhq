@@ -19,17 +19,14 @@
 
 package org.custom;
 
-import java.util.Properties;
-
-import org.rhq.enterprise.server.plugin.pc.ScheduledJob;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * A sample lifecycle listener for the sample generic plugin. This listener will be
- * the main interface the server uses to start and stop the plugin.
+ * the main plugin component the server uses to start and stop the plugin.
  */
-public class MyLifecycleListener implements ServerPluginLifecycleListener, ScheduledJob {
+public class MyLifecycleListener implements ServerPluginComponent {
 
     private ServerPluginContext context;
 
@@ -50,10 +47,12 @@ public class MyLifecycleListener implements ServerPluginLifecycleListener, Sched
         System.out.println("The sample plugin has been shut down!!! : " + this);
     }
 
-    @Override
-    public void execute(String jobId, ServerPluginLifecycleListener lifecycleListener, Properties callbackData)
-        throws Exception {
-        System.out.println("The sample plugin scheduled job [" + jobId + "] has triggered!!! : " + this);
+    public void myScheduledJobMethod1() throws Exception {
+        System.out.println("The sample plugin scheduled job [myScheduledJobMethod1] has triggered!!! : " + this);
+    }
+
+    public void myScheduledJobMethod2() throws Exception {
+        System.out.println("The sample plugin scheduled job [myScheduledJobMethod2] has triggered!!! : " + this);
     }
 
     @Override
@@ -64,9 +63,7 @@ public class MyLifecycleListener implements ServerPluginLifecycleListener, Sched
 
         StringBuilder str = new StringBuilder();
         str.append("plugin-name=").append(this.context.getPluginEnvironment().getPluginName()).append(",");
-        str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(",");
-        str.append("data-dir=").append(this.context.getDataDirectory()).append(",");
-        str.append("tmp-dir=").append(this.context.getTemporaryDirectory()); // do not append ,
+        str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()); // do not append ,
         return str.toString();
     }
 }

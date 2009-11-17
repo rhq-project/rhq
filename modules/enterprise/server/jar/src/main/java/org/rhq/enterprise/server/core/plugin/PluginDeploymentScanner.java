@@ -55,34 +55,33 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.plugin.ProductPluginDeployer.DeploymentInfo;
 import org.rhq.enterprise.server.util.LoggingThreadFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 
 /**
- * This looks at both the file system and the database for new agent plugins.
+ * This looks at both the file system and the database for new agent and server plugins.
  *
  * If an agent plugin is different in the database than on the filesystem,
  * this scanner will stream the plugin's content to the filesystem. This
  * allows for the normal file system scanning to occur (the normal file
  * system scanning processor will see the new plugin from the database
  * now in the file system and will process it normally, as if someone
- * hand-copied that plugin to the file system).
- *
- * So the job of this scanner is merely to look at the database and
- * reconcile the file system so the file system has the most up-to-date
- * plugins. Any old plugins will be deleted from the file system.
- * 
- * This will delegate to {@link ProductPluginDeployer} to do the actual
- * deployment of agent plugins.
+ * hand-copied that plugin to the file system). So the job of this scanner
+ * is merely to look at the database and reconcile the file system so
+ * the file system has the most up-to-date plugins. Any old plugins
+ * will be deleted from the file system. This will delegate to
+ * {@link ProductPluginDeployer} to do the actual deployment of agent plugins.
  *
  * @author John Mazzitelli
  */
-public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScannerMBean {
+public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
-    private Log log = LogFactory.getLog(AgentPluginDeploymentScanner.class);
+    private Log log = LogFactory.getLog(PluginDeploymentScanner.class);
 
     private DatabaseType dbType = null;
 
@@ -91,6 +90,12 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
 
     /** time, in millis, between each scans */
     private long scanPeriod = 300000L;
+
+    /** where the server-side plugins live */
+    private File serverPluginDir = null;
+
+    /** where the user can copy agent or server plugins */
+    private File userPluginDir = null;
 
     /** the object that we delegate to in order to do the heavy lifting of agent plugin deployment */
     private ProductPluginDeployer pluginDeployer = new ProductPluginDeployer();
@@ -113,12 +118,28 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
         }
     }
 
-    public File getPluginDir() {
+    public File getUserPluginDir() {
+        return this.userPluginDir;
+    }
+
+    public void setUserPluginDir(File dir) {
+        this.userPluginDir = dir;
+    }
+
+    public File getServerPluginDir() {
+        return this.serverPluginDir;
+    }
+
+    public void setServerPluginDir(File dir) {
+        this.serverPluginDir = dir;
+    }
+
+    public File getAgentPluginDir() {
         return this.pluginDeployer.getPluginDir();
     }
 
-    public void setPluginDir(File pluginDirectory) {
-        this.pluginDeployer.setPluginDir(pluginDirectory);
+    public void setAgentPluginDir(File dir) {
+        this.pluginDeployer.setPluginDir(dir);
     }
 
     public File getLicenseFile() {
@@ -130,6 +151,12 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
     }
 
     public synchronized void scan() throws Exception {
+        // The user directory is a simple location for the user to put all plugins in.
+        // It makes it easy for the user to know where to put the plugins without
+        // having to know the internal location for the real plugins under the ear.
+        // Now we move the user's plugins to their real location in the ear.
+        scanUserDirectory();
+
         // this method just scans the filesystem and database for changes but makes
         // no attempt to register them or do anything with the plugin deployer.
         // this is for two reasons: a) allow a caller just to make sure the filesystem
@@ -228,6 +255,61 @@ public class AgentPluginDeploymentScanner implements AgentPluginDeploymentScanne
 
         // schedule it to run periodically from here on out
         this.poller.scheduleWithFixedDelay(runnable, this.scanPeriod, this.scanPeriod, TimeUnit.MILLISECONDS);
+        return;
+    }
+
+    /**
+     * Take the plugins placed in the user directory, and copy them to their apprpriate places
+     * in the server.
+     */
+    private void scanUserDirectory() {
+        File userDir = getUserPluginDir();
+        if (userDir == null || !userDir.isDirectory()) {
+            return; // not configured for a user directory, just return immediately and do nothing
+        }
+
+        for (File file : userDir.listFiles()) {
+            File destinationDirectory;
+            if (file.getName().endsWith(".jar")) {
+                try {
+                    AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                    destinationDirectory = getAgentPluginDir();
+                } catch (Exception e) {
+                    try {
+                        ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                        destinationDirectory = getServerPluginDir();
+                    } catch (Exception e1) {
+                        // skip it, doesn't look like a valid plugin jar
+                        log.warn("Does not look like [" + file.getAbsolutePath() + "] is a plugin jar - ignoring");
+                        continue;
+                    }
+                }
+
+                try {
+                    String fileMd5 = MessageDigestGenerator.getDigestString(file);
+                    File realPluginFile = new File(destinationDirectory, file.getName());
+                    String realPluginFileMd5 = null;
+                    if (realPluginFile.exists()) {
+                        realPluginFileMd5 = MessageDigestGenerator.getDigestString(realPluginFile);
+                    }
+                    if (!fileMd5.equals(realPluginFileMd5)) {
+                        if (file.lastModified() > realPluginFile.lastModified()) {
+                            FileUtil.copyFile(file, realPluginFile);
+                            realPluginFile.setLastModified(file.lastModified());
+                        }
+                    }
+                    boolean deleted = file.delete();
+                    if (!deleted) {
+                        log.info("The plugin jar found at[" + file.getAbsolutePath()
+                            + "] has been processed and can be deleted. It failed to get deleted, "
+                            + "so it may get processed again. You should delete it manually now.");
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to process plugin [" + file.getAbsolutePath() + "], ignoring it", e);
+                }
+            }
+        }
+
         return;
     }
 

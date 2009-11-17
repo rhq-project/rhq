@@ -23,17 +23,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
-import org.rhq.core.clientapi.agent.metadata.InvalidPluginDescriptorException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.LifecycleListenerType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduleType;
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -61,10 +61,10 @@ public class ServerPluginManager {
 
     /**
      * Cached instances of objects used to initialize and shutdown individual plugins.
-     * Only plugins that declare their own lifecycle listener will have objects in this cache.
+     * Only plugins that declare their own plugin component will have objects in this cache.
      * This is keyed on plugin name.
      */
-    private final Map<String, ServerPluginLifecycleListener> pluginLifecycleListenerCache;
+    private final Map<String, ServerPluginComponent> pluginComponentCache;
 
     /**
      * Creates a plugin manager for the given plugin container.
@@ -75,7 +75,7 @@ public class ServerPluginManager {
         this.parentPluginContainer = pc;
         this.loadedPlugins = new HashMap<String, ServerPluginEnvironment>();
         this.pluginContextCache = new HashMap<String, ServerPluginContext>();
-        this.pluginLifecycleListenerCache = new HashMap<String, ServerPluginLifecycleListener>();
+        this.pluginComponentCache = new HashMap<String, ServerPluginComponent>();
     }
 
     /**
@@ -102,7 +102,7 @@ public class ServerPluginManager {
 
         this.loadedPlugins.clear();
         this.pluginContextCache.clear();
-        this.pluginLifecycleListenerCache.clear();
+        this.pluginComponentCache.clear();
 
         return;
     }
@@ -120,23 +120,23 @@ public class ServerPluginManager {
         log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
         // tell the plugin we are loading it
-        ServerPluginLifecycleListener listener = createServerPluginLifecycleListener(env);
-        if (listener != null) {
+        ServerPluginComponent component = createServerPluginComponent(env);
+        if (component != null) {
             ServerPluginContext context = getServerPluginContext(env);
-            log.debug("Initializing lifecycle listener for server plugin [" + pluginName + "]");
+            log.debug("Initializing plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
-                listener.initialize(context);
+                component.initialize(context);
             } catch (Throwable t) {
-                throw new Exception("Lifecycle listener failed to initialize plugin", t);
+                throw new Exception("Plugin component failed to initialize plugin", t);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
-            this.pluginLifecycleListenerCache.put(pluginName, listener);
+            this.pluginComponentCache.put(pluginName, component);
         }
 
-        // note that we only cache it if the lifecycle listener was successful
+        // note that we only cache it if the plugin component was successful
         this.loadedPlugins.put(pluginName, env);
 
         return;
@@ -145,18 +145,18 @@ public class ServerPluginManager {
     public void startPlugins() {
         log.debug("Starting plugins");
 
-        // tell all lifecycle listeners to start
-        for (Map.Entry<String, ServerPluginLifecycleListener> entry : this.pluginLifecycleListenerCache.entrySet()) {
+        // tell all plugin components to start
+        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
             String pluginName = entry.getKey();
-            ServerPluginLifecycleListener listener = entry.getValue();
+            ServerPluginComponent component = entry.getValue();
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
-            log.debug("Starting lifecycle listener for server plugin [" + pluginName + "]");
+            log.debug("Starting plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
-                listener.start();
+                component.start();
             } catch (Throwable t) {
-                log.warn("Lifecycle listener failed to start plugin [" + pluginName + "]", t);
+                log.warn("Plugin component failed to start plugin [" + pluginName + "]", t);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
@@ -168,18 +168,18 @@ public class ServerPluginManager {
     public void stopPlugins() {
         log.debug("Stopping plugins");
 
-        // tell all lifecycle listeners to stop
-        for (Map.Entry<String, ServerPluginLifecycleListener> entry : this.pluginLifecycleListenerCache.entrySet()) {
+        // tell all plugin components to stop
+        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
             String pluginName = entry.getKey();
-            ServerPluginLifecycleListener listener = entry.getValue();
+            ServerPluginComponent component = entry.getValue();
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
-            log.debug("Stopping lifecycle listener for server plugin [" + pluginName + "]");
+            log.debug("Stopping plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
-                listener.stop();
+                component.stop();
             } catch (Throwable t) {
-                log.warn("Lifecycle listener failed to stop plugin [" + pluginName + "]", t);
+                log.warn("Plugin component failed to stop plugin [" + pluginName + "]", t);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
@@ -202,18 +202,18 @@ public class ServerPluginManager {
 
         try {
             // tell the plugin we are unloading it
-            ServerPluginLifecycleListener listener = this.pluginLifecycleListenerCache.get(pluginName);
-            if (listener != null) {
-                log.debug("Shutting down lifecycle listener for server plugin [" + pluginName + "]");
+            ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
+            if (component != null) {
+                log.debug("Shutting down plugin componentfor server plugin [" + pluginName + "]");
                 ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
                 try {
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
-                    listener.shutdown();
+                    component.shutdown();
                 } catch (Throwable t) {
-                    throw new Exception("Plugin Lifecycle Listener failed to initialize plugin", t);
+                    throw new Exception("Plugin plugin componentfailed to initialize plugin", t);
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
-                    this.pluginLifecycleListenerCache.remove(pluginName);
+                    this.pluginComponentCache.remove(pluginName);
                 }
             }
         } finally {
@@ -247,17 +247,17 @@ public class ServerPluginManager {
     }
 
     /**
-     * Returns the lifecycle listener instance that is responsible for initializing and managing
-     * the plugin. This will return <code>null</code> if a plugin has not defined a lifecycle listener.
+     * Returns the main plugin component instance that is responsible for initializing and managing
+     * the plugin. This will return <code>null</code> if a plugin has not defined a plugin component.
      * 
-     * @param pluginName the name of the plugin whose lifecycle listener is to be returned
+     * @param pluginName the name of the plugin whose plugin component is to be returned
      * 
-     * @return the lifecycle listener instance that initialized and is managing a plugin. Will
-     *         return <code>null</code> if the plugin has not defined a lifecycle listener. 
+     * @return the plugin component instance that initialized and is managing a plugin. Will
+     *         return <code>null</code> if the plugin has not defined a plugin component. 
      *         <code>null</code> is also returned if the plugin is not initialized yet. 
      */
-    public ServerPluginLifecycleListener getServerPluginLifecycleListener(String pluginName) {
-        return this.pluginLifecycleListenerCache.get(pluginName);
+    public ServerPluginComponent getServerPluginComponent(String pluginName) {
+        return this.pluginComponentCache.get(pluginName);
     }
 
     public AbstractTypeServerPluginContainer getParentPluginContainer() {
@@ -285,63 +285,55 @@ public class ServerPluginManager {
         File dataDir = new File(masterConfig.getDataDirectory(), pluginName);
         File tmpDir = masterConfig.getTemporaryDirectory();
 
-        // TODO: today we have no way in the UI to customize the plugin config values
-        //       for now, just use the defaults as defined in the descriptor
-        Configuration config = null;
+        Configuration plugnConfig;
+        List<ScheduledJobDefinition> schedules;
+
         try {
-            ConfigurationDefinition configDef = ConfigurationMetadataParser.parse(pluginName, pluginDescriptor
-                .getPluginConfiguration());
-            config = configDef.getDefaultTemplate().createConfiguration();
-        } catch (InvalidPluginDescriptorException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            // TODO: today we have no way in the UI to customize the plugin config values
+            //       for now, just use the defaults as defined in the descriptor
+            ConfigurationDefinition configDef = ServerPluginDescriptorMetadataParser
+                .getPluginConfigurationDefinition(pluginDescriptor);
+            plugnConfig = configDef.getDefaultTemplate().createConfiguration();
+
+            // TODO: today we have no way in the UI to customize the schedules
+            //       for now, just use the defaults as defined in the descriptor
+            schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(pluginDescriptor);
+        } catch (Exception e) {
+            // TODO need proper exception handling
+            throw new RuntimeException(e);
         }
 
-        Schedule schedule = null;
-        if (pluginDescriptor.getLifecycleListener() != null) {
-            ScheduleType scheduleType = pluginDescriptor.getLifecycleListener().getSchedule();
-            if (scheduleType != null) {
-                boolean concurrent = scheduleType.isConcurrent();
-                if (scheduleType.getPeriod() != null) {
-                    schedule = new PeriodicSchedule(concurrent, scheduleType.getPeriod().longValue());
-                } else {
-                    schedule = new CronSchedule(concurrent, scheduleType.getCron());
-                }
-            }
-        }
-
-        context = new ServerPluginContext(env, dataDir, tmpDir, config, schedule);
+        context = new ServerPluginContext(env, dataDir, tmpDir, plugnConfig, schedules);
         this.pluginContextCache.put(pluginName, context);
         return context;
     }
 
     /**
-     * This will create a new {@link ServerPluginLifecycleListener} instance for that is used to
-     * initialize and shutdown a particular server plugin. If there is no plugin lifecycle listener
+     * This will create a new {@link ServerPluginComponent} instance for that is used to
+     * initialize and shutdown a particular server plugin. If there is no plugin component
      * configured for the given plugin, <code>null</code> is returned.
      *
      * The new object will be loaded in the plugin's specific classloader.
      *
-     * @param pluginName the name of the plugin whose listener is to be retrieved
+     * @param pluginName the name of the plugin whose main component is to be retrieved
      * @param environment the environment in which the plugin will execute
      *
      * @return a new object loaded in the proper plugin classloader that can initialize/shutdown the plugin,
-     *         or <code>null</code> if there is no plugin lifecycle listener to be associated with the given plugin
+     *         or <code>null</code> if there is no plugin component to be associated with the given plugin
      *
      * @throws Exception if failed to create the instance
      */
-    protected ServerPluginLifecycleListener createServerPluginLifecycleListener(ServerPluginEnvironment environment)
-        throws Exception {
+    protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment) throws Exception {
 
         String pluginName = environment.getPluginName();
-        ServerPluginLifecycleListener instance = null;
+        ServerPluginComponent instance = null;
 
-        LifecycleListenerType lifecycleListener = environment.getPluginDescriptor().getLifecycleListener();
-        if (lifecycleListener != null) {
-            String className = lifecycleListener.getClazz();
-            log.debug("Creating plugin lifecycle listener [" + className + "] for plugin [" + pluginName + "]");
-            instance = (ServerPluginLifecycleListener) instantiatePluginClass(environment, className);
-            log.debug("Lifecycle listener created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
+        ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();
+        if (componentXml != null) {
+            String className = componentXml.getClazz();
+            log.debug("Creating plugin component [" + className + "] for plugin [" + pluginName + "]");
+            instance = (ServerPluginComponent) instantiatePluginClass(environment, className);
+            log.debug("Plugin component created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
         }
 
         return instance;

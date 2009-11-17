@@ -268,7 +268,12 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
             return; // not configured for a user directory, just return immediately and do nothing
         }
 
-        for (File file : userDir.listFiles()) {
+        File[] listFiles = userDir.listFiles();
+        if (listFiles == null || listFiles.length == 0) {
+            return; // nothing to do
+        }
+
+        for (File file : listFiles) {
             File destinationDirectory;
             if (file.getName().endsWith(".jar")) {
                 try {

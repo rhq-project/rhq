@@ -29,18 +29,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
-
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnComm;
+import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
 
 /**
  * @author pkilambi
@@ -53,7 +52,6 @@ public class RHNHelper {
     private final RhnDownloader rhndownload;
     private final String systemid;
     private final String distributionType;
-
 
     private final Log log = LogFactory.getLog(RHNHelper.class);
 
@@ -73,28 +71,28 @@ public class RHNHelper {
 
     }
 
-    public List<DistributionDetails> getDistributionMetaData(List<String> labels)
-            throws IOException, XmlRpcException {
+    public List<DistributionDetails> getDistributionMetaData(List<String> labels) throws IOException, XmlRpcException {
         log.debug("getDistributionMetaData(" + labels + " invoked");
 
         List<DistributionDetails> distros = new ArrayList<DistributionDetails>();
         List<RhnKickstartableTreeType> ksTreeTypes = rhndata.getKickstartTreeMetadata(this.systemid, labels);
-        for (RhnKickstartableTreeType ksTree: ksTreeTypes) {
-            log.debug("Forming DistributionDetails(" + ksTree.getLabel() + ", " + ksTree.getBasePath() +
-                    " , " + distributionType);
-            DistributionDetails details =
-                    new DistributionDetails(ksTree.getLabel(), ksTree.getBasePath(), distributionType);
+        for (RhnKickstartableTreeType ksTree : ksTreeTypes) {
+            log.debug("Forming DistributionDetails(" + ksTree.getLabel() + ", " + ksTree.getBasePath() + " , "
+                + distributionType);
+            DistributionDetails details = new DistributionDetails(ksTree.getLabel(), ksTree.getBasePath(),
+                distributionType);
             distros.add(details);
 
             List<RhnKickstartFileType> ksFiles = ksTree.getRhnKickstartFiles().getRhnKickstartFile();
-            for (RhnKickstartFileType ksFile: ksFiles) {
+            for (RhnKickstartFileType ksFile : ksFiles) {
                 if (log.isDebugEnabled()) {
-                    log.debug("RHNHelper::getDistributionMetaData<ksLabel=" + ksTree.getLabel() +
-                        "> current file = " + ksFile.getRelativePath() + ", md5sum = " + ksFile.getMd5Sum() +
-                        ", lastModified = " + ksFile.getLastModified() + ", fileSize = " + ksFile.getFileSize());
+                    log.debug("RHNHelper::getDistributionMetaData<ksLabel=" + ksTree.getLabel() + "> current file = "
+                        + ksFile.getRelativePath() + ", md5sum = " + ksFile.getMd5Sum() + ", lastModified = "
+                        + ksFile.getLastModified() + ", fileSize = " + ksFile.getFileSize());
                 }
                 Long lastMod = Long.parseLong(ksFile.getLastModified());
-                DistributionFileDetails dFile = new DistributionFileDetails(ksFile.getRelativePath(), lastMod, ksFile.getMd5Sum());
+                DistributionFileDetails dFile = new DistributionFileDetails(ksFile.getRelativePath(), lastMod, ksFile
+                    .getMd5Sum());
                 Long fileSize = Long.parseLong(ksFile.getFileSize());
                 dFile.setFileSize(fileSize);
                 details.addFile(dFile);
@@ -136,7 +134,7 @@ public class RHNHelper {
      * @return ContentProviderPackageDetails pkg object
      */
     private ContentProviderPackageDetails getDetails(RhnPackageType p, String channelName) {
-    
+
         String name = p.getName();
         String version = p.getVersion();
         String arch = p.getPackageArch();
@@ -159,7 +157,7 @@ public class RHNHelper {
         return pkg;
 
     }
-    
+
     /**
      * Get List of packagesIds for Given Channels
      * @param channelName channel name
@@ -191,9 +189,17 @@ public class RHNHelper {
      */
     public List<String> getSyncableChannels() throws IOException, XmlRpcException {
         log.debug("getSyncableChannels()");
-        ArrayList<String> allchannels = new ArrayList();
+        ArrayList<String> allchannels = new ArrayList<String>();
+        String[] ignoredChannelFamiliesArray = { "education", "k12ltsp", "rh-public", "rhel-devsuite", "rhel-gfs" };
+        List<String> ignoredChannelFamilies = Arrays.asList(ignoredChannelFamiliesArray);
+        log.debug("Ignoring expired channel families :");
+        log.debug(ignoredChannelFamilies.toString());
+
         List<RhnChannelFamilyType> cfts = rhndata.getChannelFamilies(this.systemid);
         for (RhnChannelFamilyType cf : cfts) {
+            if (ignoredChannelFamilies.contains(cf.getLabel())) {
+                continue;
+            }
             String channeldata = cf.getChannelLabels();
             String[] clabels = channeldata.split(" ");
             if (clabels.length > 1) {
@@ -241,14 +247,13 @@ public class RHNHelper {
         log.debug("getSyncableKickstartLabels(" + channelLabels + ")");
         List<String> ksLabels = new ArrayList<String>();
         List<RhnChannelType> rct = rhndata.getChannels(this.systemid, channelLabels);
-        for (RhnChannelType ct: rct) {
+        for (RhnChannelType ct : rct) {
             String ksTrees = ct.getKickstartableTrees();
             String[] trees = ksTrees.split(" ");
             ksLabels.addAll(Arrays.asList(trees));
         }
         return ksLabels;
     }
-
 
     /**
      * Open an input stream to specifed relative url. Prepends the baseurl to the <i>url</i> and opens and opens and
@@ -284,20 +289,20 @@ public class RHNHelper {
         return baseurl + appendurl;
     }
 
-     /**
-     * Constructs a downloadable url for package downloads.
-     * @param channelName channel label to be synced.
-     * @param ksTreeLabel kickstart tree label name
-     * @param ksFilePath path to kickstart file
-     * @return a valid url location to fetch the rpm from.
-     */
+    /**
+    * Constructs a downloadable url for package downloads.
+    * @param channelName channel label to be synced.
+    * @param ksTreeLabel kickstart tree label name
+    * @param ksFilePath path to kickstart file
+    * @return a valid url location to fetch the rpm from.
+    */
     public String constructKickstartFileUrl(String channelName, String ksTreeLabel, String ksFilePath) {
 
         return constructKickstartFileUrl(baseurl, channelName, ksTreeLabel, ksFilePath);
     }
 
     static public String constructKickstartFileUrl(String baseurl, String channelName, String ksTreeLabel,
-                                                   String ksFilePath) {
+        String ksFilePath) {
         String appendurl = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
         return baseurl + appendurl;
     }

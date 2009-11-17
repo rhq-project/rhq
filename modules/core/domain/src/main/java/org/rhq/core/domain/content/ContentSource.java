@@ -301,10 +301,22 @@ public class ContentSource implements Serializable {
 
         Comparator dc = new Comparator() {
             public int compare(Object arg0, Object arg1) {
+                long currTime = System.currentTimeMillis();
                 ContentSourceSyncResults c1 = (ContentSourceSyncResults) arg0;
                 ContentSourceSyncResults c2 = (ContentSourceSyncResults) arg1;
-                Date d1 = new Date(c1.getEndTime());
-                Date d2 = new Date(c2.getEndTime());
+                Date d1 = null;
+                Date d2 = null;
+
+                if (c1.getEndTime() == null) {
+                    d1 = new Date(currTime);
+                } else {
+                    d1 = new Date(c1.getEndTime());
+                }
+                if (c2.getEndTime() == null) {
+                    d2 = new Date(currTime);
+                } else {
+                    d2 = new Date(c2.getEndTime());
+                }
                 return d1.compareTo(d2);
             }
         };

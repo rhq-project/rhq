@@ -146,6 +146,13 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
             em.persist(results);
             cs.addSyncResult(results);
         }
+
+        // Add one with no end time.  This is to test NPE during sorting
+        ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
+        results.setStartTime(cal.getTimeInMillis());
+        em.persist(results);
+        cs.addSyncResult(results);
+
         repo.addContentSource(cs);
 
         em.flush();
@@ -153,9 +160,6 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         // Check sync status
         cs.getSyncResults();
-        for (ContentSourceSyncResults r : cs.getSyncResults()) {
-            System.out.println("R: " + new Date(r.getEndTime().longValue()) + " s: " + r.getStatus());
-        }
         String status = repoManager.calculateSyncStatus(overlord, repo.getId());
         assert status.equals(ContentSourceSyncStatus.SUCCESS.toString());
     }

@@ -23,6 +23,9 @@
 package org.rhq.core.pc.configuration;
 
 import java.util.List;
+import java.util.Set;
+import java.util.Queue;
+import java.util.LinkedList;
 import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
@@ -170,9 +173,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
 
         if (fromStructured) {
-            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-                facet.mergeRawConfiguration(configuration, rawConfig);
-            }
+            mergedStructuredIntoRaws(configuration, facet);
         }
         else {
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
@@ -183,19 +184,56 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return configuration;
     }
 
+    private void mergedStructuredIntoRaws(Configuration configuration, ResourceConfigurationFacet facet) {
+        Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();
+
+        if (rawConfigs == null) {
+            return;
+        }
+
+        Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
+
+        while (!queue.isEmpty()) {
+            RawConfiguration originalRaw = queue.poll();
+            RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
+
+            if (mergedRaw != null) {
+                updateRawConfig(configuration, originalRaw, mergedRaw);
+            }
+        }
+    }
+
+    private void updateRawConfig(Configuration configuration, RawConfiguration originalRaw,
+        RawConfiguration mergedRaw) {
+
+        configuration.removeRawConfiguration(originalRaw);
+        configuration.addRawConfiguration(mergedRaw);
+    }
+
     public Configuration loadResourceConfiguration(int resourceId)
         throws PluginContainerException {
 
         LoadResourceConfiguration loadConfig = loadConfigFactory.getStrategy(resourceId);
-        Configuration configuration = loadConfig.execute(resourceId);
+        Configuration configuration = null;
+
+        try {
+            configuration = loadConfig.execute(resourceId);
+        } catch (Throwable t) {
+            throw new PluginContainerException(createErrorMsg(resourceId, "An exception was thrown."), t);            
+        }
 
         if (configuration == null) {
-            ResourceType resourceType = componentService.getResourceType(resourceId);
-            throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-                    + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+            throw new PluginContainerException(createErrorMsg(resourceId, "returned a null Configuration."));
         }
 
         return configuration;
+    }
+
+    private String createErrorMsg(int resourceId, String msg) throws PluginContainerException {
+        ResourceType resourceType = componentService.getResourceType(resourceId);
+
+        return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" +
+            resourceId + "]: " + msg;
     }
 
 //    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {

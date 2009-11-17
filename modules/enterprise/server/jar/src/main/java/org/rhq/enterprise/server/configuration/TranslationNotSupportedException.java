@@ -21,29 +21,25 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pluginapi.configuration;
+package org.rhq.enterprise.server.configuration;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
+public class TranslationNotSupportedException extends Exception {
 
-import java.util.Set;
+    private static final long serialVersionUID = 1L;
 
-public interface ResourceConfigurationFacet {
+    public TranslationNotSupportedException() {
+        super();
+    }
 
-    Configuration loadStructuredConfiguration();
+    public TranslationNotSupportedException(String message) {
+        super(message);
+    }
 
-    Set<RawConfiguration> loadRawConfigurations();
+    public TranslationNotSupportedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to);
-
-    void mergeStructuredConfiguration(RawConfiguration from, Configuration to);
-
-    void persistStructuredConfiguration(Configuration configuration);
-
-    void persistRawConfiguration(RawConfiguration rawConfiguration);
-
-    void validateStructuredConfiguration(Configuration configuration);
-
-    void validateRawConfiguration(RawConfiguration rawConfiguration);
-
+    public TranslationNotSupportedException(Throwable cause) {
+        super(cause);
+    }
 }

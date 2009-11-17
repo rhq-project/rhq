@@ -176,12 +176,20 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             mergedStructuredIntoRaws(configuration, facet);
         }
         else {
-            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-                facet.mergeStructuredConfiguration(rawConfig, configuration);
-            }
+            mergeRawsIntoStructured(configuration, facet);
         }
 
         return configuration;
+    }
+
+    private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
+        Configuration structuredConfig = facet.loadStructuredConfiguration();
+
+        if (structuredConfig != null) {
+            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                facet.mergeStructuredConfiguration(rawConfig, structuredConfig);
+            }
+        }
     }
 
     private void mergedStructuredIntoRaws(Configuration configuration, ResourceConfigurationFacet facet) {

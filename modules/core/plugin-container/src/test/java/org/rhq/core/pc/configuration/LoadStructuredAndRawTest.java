@@ -37,13 +37,10 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.jmock.Expectations;
-import org.jmock.Sequence;
 
-import java.util.Random;
 import java.util.Set;
-import java.util.HashSet;
 
-public class LoadStructuredAndRawTest extends LoadConfigTest {
+public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
     ComponentService componentService;
 

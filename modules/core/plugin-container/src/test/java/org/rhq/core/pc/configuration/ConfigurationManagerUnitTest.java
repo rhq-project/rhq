@@ -24,26 +24,23 @@
 package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
-import static java.util.Collections.EMPTY_SET;
 
 import org.jmock.Expectations;
-import org.jmock.Sequence;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Random;
 import java.util.Set;
-import java.util.HashSet;
 
-public class ConfigurationManagerUnitTest extends LoadConfigTest {
+public class ConfigurationManagerUnitTest extends ConfigManagementTest {
 
     static final String LEGACY_AMPS_VERSION = "2.0";
 
@@ -156,9 +153,12 @@ public class ConfigurationManagerUnitTest extends LoadConfigTest {
 
         Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
 
-        Set<RawConfiguration> mergedRaws = toSet(mergedRaw1, mergedRaw2, mergedRaw3);
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(mergedRaw1);
+        expectedConfig.addRawConfiguration(mergedRaw2);
+        expectedConfig.addRawConfiguration(mergedRaw3);
 
-        assertEquals(mergedConfig.getRawConfigurations(), mergedRaws, "Failed to merge structured into raws.");
+        assertStructuredMergedIntoRaws(mergedConfig, expectedConfig, "Failed to update existing raw configs");
     }
 
     @Test
@@ -188,17 +188,18 @@ public class ConfigurationManagerUnitTest extends LoadConfigTest {
 
         Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
 
-        assertEquals(
-            mergedConfig.getRawConfigurations(),
-            config.getRawConfigurations(),
-            "Expected the raw configs to be unmodified when merge operation returns null."
-        );
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(originalRaw);
+
+        assertStructuredMergedIntoRaws(mergedConfig, expectedConfig, "cannot merge into a null raw.");        
     }
 
     @Test
     public void mergingStructuredIntoRawShouldDoNothingIfRawsAreNull() throws Exception {
+        RawConfiguration raw = createRawConfiguration("/tmp/foo.txt");
+
         final Configuration config = new Configuration();
-        config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
+        config.addRawConfiguration(raw);
 
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
@@ -218,66 +219,50 @@ public class ConfigurationManagerUnitTest extends LoadConfigTest {
 
         Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
 
-        assertEquals(
-            mergedConfig.getRawConfigurations(),
-            config.getRawConfigurations(),
-            "Expected the raw configs to be unmodifed when the facet does not return any raw configs."
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(raw);
+
+        assertStructuredMergedIntoRaws(
+            mergedConfig,
+            expectedConfig,
+            "Expected raw configs should not be modified when the facet does not return any raw configs."
         );
     }
 
-//    @Test
-//    public void theFacetShouldMergeTheStructuredIntoEachRawWhenFromStructured() throws Exception {
-//        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/raw1.txt");
-//        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/raw2.txt");
-//        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/raw3.txt");
-//
-//        final Set<RawConfiguration> rawConfigs = new HashSet<RawConfiguration>();
-//        rawConfigs.add(rawConfig1);
-//        rawConfigs.add(rawConfig2);
-//        rawConfigs.add(rawConfig3);
-//
-//        final Configuration configuration = new Configuration();
-//        configuration.addRawConfiguration(rawConfig1);
-//        configuration.addRawConfiguration(rawConfig2);
-//        configuration.addRawConfiguration(rawConfig3);
-//
-//        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
-//
-//        final Sequence merge = context.sequence("merge");
-//
-//        context.checking(new Expectations(){{
-//            atLeast(1).of(componentService).getComponent(resourceId,
-//                                                         ResourceConfigurationFacet.class,
-//                                                         FacetLockType.READ,
-//                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
-//                                                         daemonThread,
-//                                                         onlyIfStarted);
-//            will(returnValue(facet));
-//
-//            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(rawConfigs));
-//
-//            oneOf(facet).mergeRawConfiguration(configuration, rawConfig1);
-//            oneOf(facet).mergeRawConfiguration(configuration, rawConfig2);
-//            oneOf(facet).mergeRawConfiguration(configuration, rawConfig3);
-//        }});
-//
-//        Configuration actualConfig = configurationMgr.merge(configuration, resourceId, FROM_STRUCTURED);
-//    }
+    void assertStructuredMergedIntoRaws(Configuration actual, Configuration expected, String msg) {
+        Set<RawConfiguration> actualRaws = actual.getRawConfigurations();
+        Set<RawConfiguration> expectedRaws = expected.getRawConfigurations();
+
+        assertEquals(
+            actualRaws.size(),
+            expectedRaws.size(),
+            "Merging structured into raws failed, got back the wrong number of raws. -- " + msg
+        );
+        for (RawConfiguration expectedRaw : expectedRaws) {
+            assertTrue(
+                actualRaws.contains(expectedRaw),
+                "Merging structured into raws failed, failed to find to find raw config [" + expectedRaw + "] -- " + msg
+            );
+        }
+    }
 
     @Test
-    public void theFacetShouldMergeEachRawIntoTheStructuredWhenFromRaw() throws Exception {
-        final RawConfiguration rawConfig1 = createRawConfiguration("/tmp/raw1.txt");
-        final RawConfiguration rawConfig2 = createRawConfiguration("/tmp/raw2.txt");
-        final RawConfiguration rawConfig3 = createRawConfiguration("/tmp/raw3.txt");
+    public void mergingRawsIntoStructuredShouldUpdateConfigWithModifedStructured() throws Exception {
+        Configuration config = new Configuration();
 
-        final Configuration configuration = new Configuration();
-        configuration.addRawConfiguration(rawConfig1);
-        configuration.addRawConfiguration(rawConfig2);
-        configuration.addRawConfiguration(rawConfig3);
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/foo.txt");
+        config.addRawConfiguration(raw1);
+
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/bar.txt");
+        config.addRawConfiguration(raw2);
+
+        final Configuration structured = new Configuration();
 
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
-        context.checking(new Expectations(){{
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
@@ -286,25 +271,49 @@ public class ConfigurationManagerUnitTest extends LoadConfigTest {
                                                          onlyIfStarted);
             will(returnValue(facet));
 
-            oneOf(facet).mergeStructuredConfiguration(rawConfig1, configuration);
-            oneOf(facet).mergeStructuredConfiguration(rawConfig2, configuration);
-            oneOf(facet).mergeStructuredConfiguration(rawConfig3, configuration);
+            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(structured));
+
+            oneOf(facet).mergeStructuredConfiguration(raw1, structured);
+            oneOf(facet).mergeStructuredConfiguration(raw2, structured);                        
         }});
 
-        Configuration actualConfig = configurationMgr.merge(configuration, resourceId, FROM_RAW);
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_RAW);
 
-        assertNotNull(actualConfig, "Expected a non-null " + Configuration.class.getSimpleName() + " to be returned.");
+        assertEquals(
+            mergedConfig.getAllProperties(),
+            structured.getAllProperties(),
+            "Failed to merged raw into structured."
+        );
     }
 
-//    @Test
-//    public void theUpdateLegacyConfigCmdShouldBeCalledToUpdateLegacyConfig() throws Exception {
-//        UpdateLegacyConfig updateLegacyConfig = context.mock(UpdateLegacyConfig.class);
-//
-//        context.checking(new Expectations() {{
-//            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
-//
-//            //oneOf()
-//        }});
-//    }
+    @Test
+    public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
+        Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(null));
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_RAW);
+
+        assertEquals(
+            mergedConfig,
+            config,
+            "Structured config should not be modified when the facet does not return a structured config."
+        );
+    }
 
 }

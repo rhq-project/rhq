@@ -62,7 +62,8 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
     null
   }
 
-  void mergeRawConfiguration(Configuration from, RawConfiguration to) {
+  RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
+    null
   }
 
   void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {

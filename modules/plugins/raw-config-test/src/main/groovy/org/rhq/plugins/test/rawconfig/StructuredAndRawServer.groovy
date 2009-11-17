@@ -98,7 +98,7 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     return rawConfigs
   }
 
-  void mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
+  RawConfiguration mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 
@@ -107,17 +107,11 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
       rawPropertiesConfig.setProperty(propertyName, property.stringValue)
     }
 
-//    def x = configuration.get("x")
-//    def y = configuration.get("y")
-//    def z = configuration.get("z")
-//
-//    rawPropertiesConfig.setProperty("x", x.stringValue)
-//    rawPropertiesConfig.setProperty("y", y.stringValue)
-//    rawPropertiesConfig.setProperty("z", z.stringValue)
-
     def stream = new ByteArrayOutputStream()
     rawPropertiesConfig.save(stream)
-    rawConfiguration.contents = stream.toByteArray()    
+    rawConfiguration.contents = stream.toByteArray()
+
+    return rawConfiguration
   }
 
   def loadRawPropertiesConfiguration(rawConfig) {
@@ -133,10 +127,6 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     def propertyNames = getPropertyNames(rawConfiguration)
 
     propertyNames.each { name -> configuration.put(new PropertySimple(name, rawPropertiesConfig.getString(name))) }
-
-//    configuration.put(new PropertySimple("x", rawPropertiesConfig.getString("x")))
-//    configuration.put(new PropertySimple("y", rawPropertiesConfig.getString("y")))
-//    configuration.put(new PropertySimple("z", rawPropertiesConfig.getString("z")))
   }
 
   def getPropertyNames(rawConfig) {

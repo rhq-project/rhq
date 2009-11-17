@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 import static java.util.Collections.EMPTY_SET;
 import java.util.Set;
 
-public class LoadRawTest extends LoadConfigTest {
+public class LoadRawTest extends ConfigManagementTest {
 
     ComponentService componentService;
 

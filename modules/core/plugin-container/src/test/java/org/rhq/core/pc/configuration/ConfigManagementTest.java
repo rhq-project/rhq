@@ -34,7 +34,7 @@ import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
 
-public class LoadConfigTest extends JMockTest {
+public class ConfigManagementTest extends JMockTest {
 
     Random random = new Random();
 

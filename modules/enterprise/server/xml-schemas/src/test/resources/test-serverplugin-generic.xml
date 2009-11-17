@@ -11,23 +11,54 @@
                         xmlns:c="urn:xmlns:rhq-configuration"
                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-    <serverplugin:lifecycle-listener class="generic.plugin.lifecycle.listener">
-        <serverplugin:schedule>
-            <!-- Fire at 10:15am every weekday -->
-            <serverplugin:cron>0 15 10 ? * MON-FRI</serverplugin:cron>
-        </serverplugin:schedule>
-    </serverplugin:lifecycle-listener>
+    <serverplugin:plugin-component class="generic.plugin.component" />
 
-    <serverplugin:scheduled-job jobId="generic-job-1" class="generic.scheduled.job1" concurrent="false">
-        <serverplugin:period>123</serverplugin:period>
-    </serverplugin:scheduled-job>
+    <serverplugin:scheduled-jobs>
+        <c:map-property name="myFirstJob" >
+            <c:simple-property name="methodName" type="string" required="true" default="methodNameFoo" summary="true" description="The method to invoke"/>
+            <c:simple-property name="enabled" type="boolean" required="true" default="false" summary="true" description="Whether or not the job should be scheduled"/>
+            <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates when the schedule triggers">
+                <c:property-options>
+                    <c:option value="periodic"/>
+                    <c:option value="cron" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 15 10 ? * MON-FRI" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
+            <c:simple-property name="concurrent" type="boolean" required="false" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+            <c:simple-property name="custom1" type="boolean" required="true" default="true" summary="true" description="A custom boolean for callback data"/>
+            <c:simple-property name="anothercustom2" type="long" required="true" default="12345" summary="true" description="A custom long for callback data"/>
+        </c:map-property>
+        
+        <!-- notice we only want this job to be periodic - do not allow for cron -->
+        <!-- notice we always want this to be concurrent  -->
+        <!-- it is always enabled, no need to specify a enabled prop - we assume true -->
+        <c:map-property name="anotherMethod" >
+            <c:simple-property name="scheduleType" type="string" required="true" readOnly="true" default="periodic" summary="true" description="Indicates when the schedule triggers" />
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="59999" summary="true" description="Period, in milliseconds, that the job triggers"/>
+            <c:simple-property name="concurrent" type="boolean" required="true" readOnly="true" default="true" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+        </c:map-property>
+        
+        <c:map-property name="allDefaultsJob"></c:map-property>
 
-    <serverplugin:scheduled-job jobId="generic-job-2" class="generic.scheduled.job2" concurrent="true">
-        <!-- Fire at 11:30am every wed-thru-fri -->
-        <serverplugin:cron>0 30 11 ? * WED-FRI</serverplugin:cron>
-    </serverplugin:scheduled-job>
-
-    <serverplugin:plugin-configuration>
-       <c:simple-property name="prop1" />
+        <c:list-property name="myUserDefinedJobs" description="A list of user-defined scheduled jobs">
+            <c:map-property name="myUserDefinedJob" description="A user-defined scheduled job">
+                <c:simple-property name="methodName" type="string" required="true" default="" summary="true" description="The method to call on the plugin component when the schedule triggers" />
+                <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Whether or not the job should be scheduled"/>
+                <c:simple-property name="scheduleType" type="string" required="true" default="periodic" summary="true" description="Indicates when the schedule triggers">
+                    <c:property-options>
+                        <c:option value="periodic" default="true"/>
+                        <c:option value="cron" />
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="scheduleTrigger" type="string" required="true" default="12345" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
+                <c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+            </c:map-property>
+        </c:list-property>
+        
+    </serverplugin:scheduled-jobs>
+    
+    <serverplugin:plugin-configuration>        
+        <!-- custom global config - unrelated to schedules  -->
+        <c:simple-property name="prop1" type="string" required="true" default="prop1value" />
     </serverplugin:plugin-configuration>
 </generic-plugin>

@@ -24,11 +24,11 @@ import javax.management.ObjectName;
 
 import org.rhq.core.util.ObjectNameFactory;
 
-public interface AgentPluginDeploymentScannerMBean {
+public interface PluginDeploymentScannerMBean {
     /**
      * The name this service will be registered as.
      */
-    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=AgentPluginDeploymentScanner");
+    ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=PluginDeploymentScanner");
 
     void start() throws Exception;
 
@@ -72,18 +72,49 @@ public interface AgentPluginDeploymentScannerMBean {
     Long getScanPeriod();
 
     /**
-     * Sets the directory where the plugin jars are located.
+     * Sets the directory where the user can place agent or server plugin jars.
+     * The scanner will move plugins found here to their appropriate internal
+     * locations based on the kind of plugins it finds.
      *
-     * @param name the name of the plugins dir
+     * @param name the name of the plugins dir where the user can copy plugins
      */
-    void setPluginDir(File name);
+    void setUserPluginDir(File name);
 
     /**
-     * Gets the directory name where the plugin jars are located.
+     * Gets the directory name where the user can place agent or server plugin jars.
+     * If <code>null</code>, do not look for any user plugins.
      *
-     * @return plugin directory name
+     * @return plugin directory name where the user puts plugins
      */
-    File getPluginDir();
+    File getUserPluginDir();
+
+    /**
+     * Sets the directory where the server plugin jars are located.
+     *
+     * @param name the name of the server plugins dir
+     */
+    void setServerPluginDir(File name);
+
+    /**
+     * Gets the directory name where the server plugin jars are located.
+     *
+     * @return server plugin directory name
+     */
+    File getServerPluginDir();
+
+    /**
+     * Sets the directory where the agent plugin jars are located.
+     *
+     * @param name the name of the agent plugins dir
+     */
+    void setAgentPluginDir(File name);
+
+    /**
+     * Gets the directory name where the agent plugin jars are located.
+     *
+     * @return agent plugin directory name
+     */
+    File getAgentPluginDir();
 
     void setLicenseFile(File name);
 

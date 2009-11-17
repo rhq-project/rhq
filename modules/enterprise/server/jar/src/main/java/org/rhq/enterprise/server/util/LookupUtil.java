@@ -90,7 +90,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -535,10 +535,10 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    public static AgentPluginDeploymentScannerMBean getAgentPluginDeploymentScanner() {
+    public static PluginDeploymentScanner getPluginDeploymentScanner() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        AgentPluginDeploymentScannerMBean scanner = (AgentPluginDeploymentScannerMBean) MBeanProxyExt.create(
-            AgentPluginDeploymentScannerMBean.class, AgentPluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
+        PluginDeploymentScanner scanner = (PluginDeploymentScanner) MBeanProxyExt.create(PluginDeploymentScanner.class,
+            PluginDeploymentScanner.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 

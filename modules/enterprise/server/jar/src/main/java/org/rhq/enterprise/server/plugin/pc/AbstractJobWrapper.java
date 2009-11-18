@@ -150,8 +150,16 @@ abstract class AbstractJobWrapper implements Job {
             throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap had invalid plugin type string", t);
         }
 
+        // do not execute the job if the master plugin container has been stopped
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        if (!serverPluginService.isMasterPluginContainerStarted()) {
+            String msg = "The master plugin container is shutdown, will not execute job here, will resubmit";
+            log.error(logMsg(pluginName, pluginType, jobId, msg, null));
+            return;
+        }
+
         // determine which plugin component class will be invoked to perform the work of the job
-        MasterServerPluginContainer mpc = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        MasterServerPluginContainer mpc = serverPluginService.getMasterPluginContainer();
         AbstractTypeServerPluginContainer pc = mpc.getPluginContainerByPluginType(pluginType);
 
         Object pluginJobObject = null;

@@ -80,7 +80,7 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "  WHERE p.name=:name"), //
 
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_ALL, query = "" //
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_AGENT, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
         + "        p.id, " //
         + "        p.name, " //
@@ -99,7 +99,31 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.mtime) " //
         + "   FROM Plugin AS p " //
         + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration "), //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "   WHERE p.deployment = 'AGENT'"), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_SERVER, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "   WHERE p.deployment = 'SERVER'"), //
 
     // this query does not update the content blob or ctime
     @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
@@ -154,7 +178,8 @@ public class Plugin implements Serializable {
     public static final String TABLE_NAME = "RHQ_PLUGIN";
 
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
-    public static final String QUERY_FIND_ALL = "Plugin.findAll";
+    public static final String QUERY_FIND_ALL_AGENT = "Plugin.findAllAgent";
+    public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
 

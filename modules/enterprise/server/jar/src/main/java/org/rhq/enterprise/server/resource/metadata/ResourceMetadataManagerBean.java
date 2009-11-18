@@ -120,11 +120,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Returns the information on all plugins as found in the database.
+     * Returns the information on all agent plugins as found in the database.
      */
     @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
         return q.getResultList();
     }
 

@@ -288,7 +288,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
-            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_SERVER);
             List<Plugin> all = query.getResultList();
             boolean got_it = false;
             for (Plugin p : all) {

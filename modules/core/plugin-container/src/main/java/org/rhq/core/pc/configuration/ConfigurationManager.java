@@ -167,6 +167,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
         throws PluginContainerException {
 
+        // TODO Throw an exception if the resource does not support structured and raw
+
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
 

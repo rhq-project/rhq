@@ -21,9 +21,11 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -133,7 +135,7 @@ public class RHNHelper {
      *
      * @return ContentProviderPackageDetails pkg object
      */
-    private ContentProviderPackageDetails getDetails(RhnPackageType p, String channelName) {
+    private ContentProviderPackageDetails getDetails(RhnPackageType p, String channelName) throws IOException {
 
         String name = p.getName();
         String version = p.getVersion();
@@ -144,6 +146,7 @@ public class RHNHelper {
             "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
 
+
         pkg.setDisplayName(name);
         pkg.setShortDescription(p.getRhnPackageSummary());
         pkg.setLongDescription(p.getRhnPackageDescription());
@@ -153,7 +156,11 @@ public class RHNHelper {
         pkg.setLicenseName("license");
         pkg.setMD5(p.getMd5Sum());
         pkg.setLocation(constructPackageUrl(channelName, rpmname));
-        //pkg.setMetadata();
+
+        String metadata = PrimaryXML.createPackageXML(p);
+        byte[] gzippedMetadata = gzip(metadata.getBytes());
+        pkg.setMetadata(gzippedMetadata);
+
         return pkg;
 
     }
@@ -320,6 +327,16 @@ public class RHNHelper {
 
         String releaseepoch = release + ":" + epoch;
         return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";
+    }
+
+    private byte[] gzip(byte[] input ) throws IOException {
+
+        ByteArrayOutputStream zipped = new ByteArrayOutputStream();
+        GZIPOutputStream gzip = new GZIPOutputStream(zipped);
+        gzip.write(input);
+        gzip.flush();
+        gzip.close();
+        return zipped.toByteArray();
     }
 
     /*

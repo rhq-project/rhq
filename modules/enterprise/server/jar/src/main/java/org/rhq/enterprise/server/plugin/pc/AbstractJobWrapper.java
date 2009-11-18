@@ -179,9 +179,11 @@ abstract class AbstractJobWrapper implements Job {
                 + "]", null);
         }
 
+        ServerPluginComponent pluginComponent = pluginManager.getServerPluginComponent(pluginName);
+
         if (jobClass == null) {
             // null classname means use the stateful plugin component as the target object
-            pluginJobObject = pluginManager.getServerPluginComponent(pluginName);
+            pluginJobObject = pluginComponent;
             if (pluginJobObject == null) {
                 throwJobExecutionException(pluginName, pluginType, jobId, "no plugin component to process job", null);
             }
@@ -214,7 +216,7 @@ abstract class AbstractJobWrapper implements Job {
             ScheduledJobDefinition jobDefinition = new ScheduledJobDefinition(jobId, true, jobClass, jobMethodName,
                 scheduleType, callbackData);
             ServerPluginContext pluginContext = pluginManager.getServerPluginContext(pluginEnv);
-            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext);
+            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext, pluginComponent);
         } catch (NoSuchMethodException e) {
             try {
                 // see if there is a no-arg method of the given name

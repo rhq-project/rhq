@@ -75,6 +75,8 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name"), //
 
     // this query does not load the content blob, but loads everything else
@@ -95,7 +97,9 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p "), //
+        + "   FROM Plugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration "), //
 
     // this query does not update the content blob or ctime
     @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
@@ -134,6 +138,8 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //
+        + "         LEFT JOIN p.pluginConfiguration " // 
+        + "         LEFT JOIN p.scheduledJobsConfiguration " // 
         + "   WHERE p.name IN ( SELECT rt.plugin " //
         + "                       FROM Resource res " //
         + "                       JOIN res.resourceType rt " //

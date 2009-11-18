@@ -18,68 +18,66 @@
  */
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-import java.util.List;
 import java.io.Serializable;
+import java.util.List;
 
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesEntryType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresEntryType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageObsoletesType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageObsoletesEntryType;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.Log;
+
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageObsoletesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesEntryType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresEntryType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 
 /**
  * @author John Matthews
  */
-public class PrimaryXML
-{
-  /** Example package element from primary.xml used by yum
-   *
+public class PrimaryXML {
+    /** Example package element from primary.xml used by yum
+     *
 
- <package type="rpm">
-    <name>gnome-user-docs</name>
-    <arch>noarch</arch>
-    <version ver="2.16.0" rel="2.fc6" epoch="0"/>
-    <checksum type="md5" pkgid="YES">4e7d379301407b4c79f211596b802a13</checksum>
-    <summary>GNOME User Documentation</summary>
-    <description>This package contains end user documentation for the GNOME desktop environment.</description>
-    <packager/>
-    <url/>
-    <time file="1157750823" build="1157750823"/>
-    <size package="6549456" archive="11858600" installed=""/>
-    <location href="getPackage/gnome-user-docs-2.16.0-2.fc6.noarch.rpm"/>
-    <format>
-        <rpm:license>FDL</rpm:license>
-        <rpm:vendor>Red Hat, Inc.</rpm:vendor>
-        <rpm:group>Documentation</rpm:group>
-        <rpm:buildhost>altix2.build.redhat.com</rpm:buildhost>
-        <rpm:sourcerpm>gnome-user-docs-2.16.0-2.fc6.src.rpm</rpm:sourcerpm>
-        <rpm:header-range start="440" end="97656"/>
-        <rpm:provides>
-            <rpm:entry name="gnome-user-docs" flags="EQ" epoch="0" ver="2.16.0" rel="2.fc6"/>
-        </rpm:provides>
-        <rpm:requires>
-            <rpm:entry name="/bin/sh"/>
-            <rpm:entry name="/bin/sh"/>
-            <rpm:entry name="rpmlib(CompressedFileNames)" flags="LE" epoch="0" ver="3.0.4" rel="1"/>
-            <rpm:entry name="rpmlib(PayloadFilesHavePrefix)" flags="LE" epoch="0" ver="4.0" rel="1"/>
-            <rpm:entry name="rpmlib(VersionedDependencies)" flags="LE" epoch="0" ver="3.0.3" rel="1"/>
-            <rpm:entry name="scrollkeeper" flags="GE" epoch="0" ver="0.3.11"/>
-        </rpm:requires>
-        <rpm:conflicts/>
-        <rpm:obsoletes>
-            <rpm:entry name="gnome-users-guide"/>
-        </rpm:obsoletes>
-    </format>
-</package>
- 
-     **/
-
+    <package type="rpm">
+      <name>gnome-user-docs</name>
+      <arch>noarch</arch>
+      <version ver="2.16.0" rel="2.fc6" epoch="0"/>
+      <checksum type="md5" pkgid="YES">4e7d379301407b4c79f211596b802a13</checksum>
+      <summary>GNOME User Documentation</summary>
+      <description>This package contains end user documentation for the GNOME desktop environment.</description>
+      <packager/>
+      <url/>
+      <time file="1157750823" build="1157750823"/>
+      <size package="6549456" archive="11858600" installed=""/>
+      <location href="getPackage/gnome-user-docs-2.16.0-2.fc6.noarch.rpm"/>
+      <format>
+          <rpm:license>FDL</rpm:license>
+          <rpm:vendor>Red Hat, Inc.</rpm:vendor>
+          <rpm:group>Documentation</rpm:group>
+          <rpm:buildhost>altix2.build.redhat.com</rpm:buildhost>
+          <rpm:sourcerpm>gnome-user-docs-2.16.0-2.fc6.src.rpm</rpm:sourcerpm>
+          <rpm:header-range start="440" end="97656"/>
+          <rpm:provides>
+              <rpm:entry name="gnome-user-docs" flags="EQ" epoch="0" ver="2.16.0" rel="2.fc6"/>
+          </rpm:provides>
+          <rpm:requires>
+              <rpm:entry name="/bin/sh"/>
+              <rpm:entry name="/bin/sh"/>
+              <rpm:entry name="rpmlib(CompressedFileNames)" flags="LE" epoch="0" ver="3.0.4" rel="1"/>
+              <rpm:entry name="rpmlib(PayloadFilesHavePrefix)" flags="LE" epoch="0" ver="4.0" rel="1"/>
+              <rpm:entry name="rpmlib(VersionedDependencies)" flags="LE" epoch="0" ver="3.0.3" rel="1"/>
+              <rpm:entry name="scrollkeeper" flags="GE" epoch="0" ver="0.3.11"/>
+          </rpm:requires>
+          <rpm:conflicts/>
+          <rpm:obsoletes>
+              <rpm:entry name="gnome-users-guide"/>
+          </rpm:obsoletes>
+      </format>
+    </package>
+    
+       **/
 
     /** RPM uses bit flags to determine if a package relationships is "Greater, LessThan, Equals";
      * These values can be found from running the python console and executing
@@ -96,14 +94,11 @@ public class PrimaryXML
         int flags = tmp & (RPM_SENSE_LESS | RPM_SENSE_GREATER | RPM_SENSE_EQUAL);
         if (flags == (RPM_SENSE_LESS | RPM_SENSE_EQUAL)) {
             return "LE";
-        }
-        else if (flags == RPM_SENSE_LESS) {
+        } else if (flags == RPM_SENSE_LESS) {
             return "LT";
-        }
-        else if (flags == (RPM_SENSE_GREATER | RPM_SENSE_EQUAL)) {
+        } else if (flags == (RPM_SENSE_GREATER | RPM_SENSE_EQUAL)) {
             return "GE";
-        }
-        else if (flags == (RPM_SENSE_GREATER)) {
+        } else if (flags == (RPM_SENSE_GREATER)) {
             return "GT";
         } else if (flags == (RPM_SENSE_EQUAL)) {
             return "EQ";
@@ -141,7 +136,7 @@ public class PrimaryXML
         }
         return tmp.substring(start, end);
     }
-                                   
+
     static public String getRelease(String version) {
         int start = version.indexOf("-");
         if (start < 0) {
@@ -214,8 +209,10 @@ public class PrimaryXML
         top.addContent(size);
 
         Element location = new Element("location");
-        //TODO: Unsure about href
-        location.setAttribute("href", "");
+        //This value can not be empty and can not contain a "?".
+        //It's value is ignored by the RHQ processing for yum.  
+        //RHQ will append a series of request parameters to download the file.  
+        location.setAttribute("href", "getPackage");
         top.addContent(location);
 
         Element format = new Element("format");
@@ -246,10 +243,10 @@ public class PrimaryXML
         format.addContent(rpmHeaderRange);
 
         Element rpmProvides = new Element("provides", "rpm");
-        RhnPackageProvidesType provides_type =  pkg.getRhnPackageProvides();
+        RhnPackageProvidesType provides_type = pkg.getRhnPackageProvides();
         if (provides_type != null) {
             List<RhnPackageProvidesEntryType> provides = provides_type.getRhnPackageProvidesEntry();
-            for (RhnPackageProvidesEntryType provEntry: provides) {
+            for (RhnPackageProvidesEntryType provEntry : provides) {
                 Element entry = new Element("entry", "rpm");
                 entry.setAttribute("name", provEntry.getName());
                 entry.setAttribute("flags", getFlags(provEntry.getSense()));
@@ -265,7 +262,7 @@ public class PrimaryXML
         RhnPackageRequiresType requires_type = pkg.getRhnPackageRequires();
         if (requires_type != null) {
             List<RhnPackageRequiresEntryType> requires = requires_type.getRhnPackageRequiresEntry();
-            for (RhnPackageRequiresEntryType reqEntry: requires) {
+            for (RhnPackageRequiresEntryType reqEntry : requires) {
                 Element entry = new Element("entry", "rpm");
                 entry.setAttribute("name", reqEntry.getName());
                 entry.setAttribute("flags", getFlags(reqEntry.getSense()));
@@ -285,7 +282,7 @@ public class PrimaryXML
         RhnPackageObsoletesType obs_type = pkg.getRhnPackageObsoletes();
         if (obs_type != null) {
             List<Serializable> obsoletes = obs_type.getContent();
-            for (Serializable obsEntry: obsoletes) {
+            for (Serializable obsEntry : obsoletes) {
                 Element entry = new Element("entry", "rpm");
                 entry.setAttribute("name", obsEntry.toString());
                 rpmObsoletes.addContent(entry);
@@ -293,8 +290,8 @@ public class PrimaryXML
         }
         format.addContent(rpmObsoletes);
 
-      top.addContent(format);
-      XMLOutputter xmlOut = new XMLOutputter();
-      return xmlOut.outputString(top);
-  }
+        top.addContent(format);
+        XMLOutputter xmlOut = new XMLOutputter();
+        return xmlOut.outputString(top);
+    }
 }

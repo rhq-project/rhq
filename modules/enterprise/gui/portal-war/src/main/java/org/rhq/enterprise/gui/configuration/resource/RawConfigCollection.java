@@ -66,6 +66,9 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
     private Configuration getMergedConfiguration() {
         for (RawConfiguration raw : getRawConfigDelegate().modified.values()) {
             getRaws().put(raw.getPath(), raw);
+            log.error("Just merged in raw path =[" + raw.getPath() + "]");
+            log.error("                   file =[" + new String(raw.getContents()) + "]");
+
         }
         getConfiguration().getRawConfigurations().clear();
         getConfiguration().getRawConfigurations().addAll(getRaws().values());
@@ -287,20 +290,38 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
 
     public String switchToraw() {
         log.error("switch2raw called");
+        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+        log.error("switch2raw post merge");
+        dumpProperties(getConfiguration(), log);
 
         getRawConfigDelegate().setConfiguration(configuration);
-        getRawConfigDelegate().setRaws(null);
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRawConfigDelegate().getRaws().put(raw.getPath(), raw);
+        }
         getRawConfigDelegate().current = null;
+        getRawConfigDelegate().setConfiguration(configuration);
+        getRawConfigDelegateMap().put(getResourceId(), getRawConfigDelegate());
 
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
+    void dumpProperties(Configuration conf, Log log) {
+        for (String key : conf.getAllProperties().keySet()) {
+            log.error("property=" + conf.getAllProperties().get(key));
+        }
+    }
+
     public String switchTostructured() {
         log.error("switch2structured called");
+
+        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+        log.error("switch2structured post merge");
+
+        dumpProperties(configuration, log);
 
         for (Property property : configuration.getAllProperties().values()) {
             property.setConfiguration(configuration);

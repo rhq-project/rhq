@@ -37,6 +37,7 @@ import javax.sql.DataSource;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
@@ -71,6 +72,8 @@ public class PluginTest extends AbstractEJB3Test {
             em.persist(plugin);
             id = plugin.getId();
             assert id > 0;
+            assert plugin.getPluginConfiguration().getId() > 0 : "did not persist config";
+            assert plugin.getScheduledJobsConfiguration().getId() > 0 : "did not persist jobs config";
 
             plugin = em.find(Plugin.class, id);
             assert plugin != null;
@@ -99,8 +102,10 @@ public class PluginTest extends AbstractEJB3Test {
             String description = "description-UPDATED";
             String help = "help-UPDATED";
             PluginDeploymentType deployment = PluginDeploymentType.SERVER;
-            Configuration pluginConfig = null;
-            Configuration scheduledJobsConfig = null;
+            Configuration pluginConfig = new Configuration();
+            Configuration jobsConfig = new Configuration();
+            pluginConfig.put(new PropertySimple("first", "last"));
+            jobsConfig.put(new PropertySimple("aaa", "bbb"));
 
             em.close();
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
@@ -118,7 +123,7 @@ public class PluginTest extends AbstractEJB3Test {
             q.setParameter("ampsVersion", ampsVersion);
             q.setParameter("deployment", deployment);
             q.setParameter("pluginConfiguration", pluginConfig);
-            q.setParameter("scheduledJobsConfiguration", scheduledJobsConfig);
+            q.setParameter("scheduledJobsConfiguration", jobsConfig);
             q.setParameter("description", description);
             q.setParameter("help", help);
             q.setParameter("mtime", System.currentTimeMillis());
@@ -138,10 +143,11 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.isEnabled() == enabled;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
+            q.setParameter("ampsVersion", ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == PluginDeploymentType.SERVER;
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
+            assert plugin.getPluginConfiguration().equals(pluginConfig);
+            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             // and what we really want to test - ensure the content remained intact after the update
             assert new String(plugin.getContent()).equals(new String(content));
@@ -222,16 +228,25 @@ public class PluginTest extends AbstractEJB3Test {
             byte[] content = "this is the test content".getBytes();
             String md5 = MessageDigestGenerator.getDigestString(new String(content));
             PluginDeploymentType deployment = PluginDeploymentType.SERVER;
+            String ampsVersion = "1.2";
+
+            Configuration pluginConfig = new Configuration();
+            Configuration jobsConfig = new Configuration();
+            pluginConfig.put(new PropertySimple("first", "last"));
+            jobsConfig.put(new PropertySimple("aaa", "bbb"));
 
             Plugin plugin = new Plugin(name, path);
             plugin.setDisplayName(displayName);
             plugin.setEnabled(enabled);
             plugin.setMD5(md5);
             plugin.setVersion(version);
+            plugin.setAmpsVersion(ampsVersion);
             plugin.setDescription(description);
             plugin.setHelp(help);
             plugin.setContent(content);
             plugin.setDeployment(deployment);
+            plugin.setPluginConfiguration(pluginConfig);
+            plugin.setScheduledJobsConfiguration(jobsConfig);
 
             em.persist(plugin);
             assert plugin.getId() > 0;
@@ -245,10 +260,11 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.isEnabled() == enabled;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
+            assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
+            assert plugin.getPluginConfiguration().equals(pluginConfig);
+            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -264,10 +280,11 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.isEnabled() == enabled;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
+            assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
+            assert plugin.getPluginConfiguration().equals(pluginConfig);
+            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
@@ -284,10 +301,11 @@ public class PluginTest extends AbstractEJB3Test {
                     assert p.isEnabled() == enabled;
                     assert p.getMD5().equals(md5);
                     assert p.getVersion().equals(version);
+                    assert plugin.getAmpsVersion().equals(ampsVersion);
                     assert p.getDescription().equals(description);
                     assert plugin.getDeployment() == deployment;
-                    assert plugin.getPluginConfiguration() == null;
-                    assert plugin.getScheduledJobsConfiguration() == null;
+                    assert plugin.getPluginConfiguration().equals(pluginConfig);
+                    assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
                     assert p.getHelp().equals(help);
                     assert p.getContent() == null;
                     break;

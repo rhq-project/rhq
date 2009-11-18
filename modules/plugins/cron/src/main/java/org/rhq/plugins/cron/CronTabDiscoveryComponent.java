@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -56,19 +57,22 @@ public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<Cro
         List<String> excludes = AugeasConfigurationDiscoveryComponent.getGlobList(
                 cronConfiguration.getSimple(AugeasConfigurationComponent.EXCLUDE_GLOBS_PROP));
         
-        List<File> files = Glob.matchAll(new File(AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH), includes);
+        String rootPath = cronConfiguration.getSimpleValue(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
+        List<File> files = Glob.matchAll(new File(rootPath), includes);
         Glob.excludeAll(files, excludes);
 
         HashSet<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
 
         ResourceType resourceType = context.getResourceType();
 
+        int pathUnderRootStartIdx = rootPath.endsWith(File.pathSeparator) ? rootPath.length() - 1 : rootPath.length();
+        
         for (File f : files) {
-            String resourceKey = f.getAbsolutePath();
+            String resourceKey = f.getAbsolutePath().substring(pathUnderRootStartIdx);
             Configuration defaultConfiguration = context.getDefaultPluginConfiguration();
             defaultConfiguration.put(AugeasConfigurationDiscoveryComponent.getGlobList(
                 AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, Collections.singletonList(resourceKey)));
-
+            defaultConfiguration.put(new PropertySimple(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, rootPath));
             DiscoveredResourceDetails result = new DiscoveredResourceDetails(resourceType, resourceKey, resourceKey,
                 null, null, defaultConfiguration, null);
             results.add(result);

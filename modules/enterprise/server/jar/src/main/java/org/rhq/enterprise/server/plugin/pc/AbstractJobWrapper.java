@@ -155,6 +155,14 @@ abstract class AbstractJobWrapper implements Job {
         if (!serverPluginService.isMasterPluginContainerStarted()) {
             String msg = "The master plugin container is shutdown, will not execute job here, will resubmit";
             log.error(logMsg(pluginName, pluginType, jobId, msg, null));
+            JobExecutionException exception = new JobExecutionException();
+
+            // we only refire immediately if we are in an HA environment- which means another server might
+            // be able to take over - and that other server might have its master PC running for us to execute in.
+            boolean isHA = LookupUtil.getCloudManager().getNormalServerCount() > 1;
+            exception.setRefireImmediately(isHA);
+
+            // abort this invocation now - we can't run without the plugin containers
             return;
         }
 

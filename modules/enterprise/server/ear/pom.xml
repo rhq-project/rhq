@@ -229,6 +229,12 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
+                  <artifactId>rhq-aliases-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-apache-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
@@ -321,6 +327,12 @@
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-platform-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-postfix-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
 

@@ -39,6 +39,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.HelpType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
@@ -69,6 +70,13 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDisplayName().equals("generic display");
         assert descriptor.getDescription().equals("generic description");
         assert descriptor.getPackage().equals("generic.package");
+
+        HelpType help = descriptor.getHelp();
+        assert help != null;
+        List<Object> content = help.getContent();
+        assert content != null;
+        String helpStr = content.get(0).toString();
+        assert helpStr.equals("help text with <em>XML</em>");
 
         ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
         assert pluginComponent.getClazz().equals("generic.plugin.component");

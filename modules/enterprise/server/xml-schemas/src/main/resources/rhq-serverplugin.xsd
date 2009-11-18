@@ -39,6 +39,15 @@
 
     <xs:complexType name="ServerPluginDescriptorType">
         <xs:sequence minOccurs="0" maxOccurs="1">
+            <xs:element name="help" minOccurs="0" maxOccurs="1" type="serverplugin:HelpType">
+                <xs:annotation>
+                    <xs:documentation>
+                        Help documentation that can provide useful information to a user.
+                        This information typically assists users on how to integrate the
+                        plugin with third party servers and systems. 
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="plugin-component" minOccurs="0" maxOccurs="1" type="serverplugin:ServerPluginComponentType">
                 <xs:annotation>
                     <xs:documentation>
@@ -174,4 +183,11 @@
             <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*" />
         </xs:restriction>
     </xs:simpleType>
+    
+    <xs:complexType name="HelpType" mixed="true">
+        <xs:sequence>
+            <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
 </xs:schema>

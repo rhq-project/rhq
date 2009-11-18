@@ -121,6 +121,8 @@ import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginsBean;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
@@ -504,6 +506,31 @@ public final class LookupUtil {
         return lookupLocal(StatusManagerBean.class);
     }
 
+    public static ServerPluginsLocal getServerPlugins() {
+        return lookupLocal(ServerPluginsBean.class);
+    }
+
+    public static CoreServerMBean getCoreServer() {
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
+            CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
+        return jonServer;
+    }
+
+    public static PluginDeploymentScannerMBean getPluginDeploymentScanner() {
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        PluginDeploymentScannerMBean scanner = (PluginDeploymentScannerMBean) MBeanProxyExt.create(
+            PluginDeploymentScannerMBean.class, PluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
+        return scanner;
+    }
+
+    public static ServerPluginServiceManagement getServerPluginService() {
+        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
+        ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
+            ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
+        return service;
+    }
+
     //--------------------------------------------
     // The TEST services
     //--------------------------------------------
@@ -528,26 +555,7 @@ public final class LookupUtil {
         return lookupLocal(ResourceGroupTestBean.class);
     }
 
-    public static CoreServerMBean getCoreServer() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        CoreServerMBean jonServer = (CoreServerMBean) MBeanProxyExt.create(CoreServerMBean.class,
-            CoreServerMBean.OBJECT_NAME, jBossMBeanServer);
-        return jonServer;
-    }
-
-    public static PluginDeploymentScannerMBean getPluginDeploymentScanner() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        PluginDeploymentScannerMBean scanner = (PluginDeploymentScannerMBean) MBeanProxyExt.create(
-            PluginDeploymentScannerMBean.class, PluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
-        return scanner;
-    }
-
-    public static ServerPluginServiceManagement getServerPluginService() {
-        MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        ServerPluginServiceManagement service = (ServerPluginServiceManagement) MBeanProxyExt.create(
-            ServerPluginServiceManagement.class, ServerPluginServiceManagement.OBJECT_NAME, jBossMBeanServer);
-        return service;
-    }
+    // Private Methods
 
     private static <T> String getLocalJNDIName(@NotNull Class<? super T> beanClass) {
         return (embeddedDeployment ? "" : (RHQConstants.EAR_NAME + "/")) + beanClass.getSimpleName() + "/local";

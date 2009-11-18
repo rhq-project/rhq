@@ -18,14 +18,23 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.Properties;
 
+import javax.management.MBeanServer;
+import javax.management.MBeanServerInvocationHandler;
+import javax.management.ObjectName;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.mx.util.MBeanServerLocator;
 import org.jboss.system.ServiceMBeanSupport;
+import org.jboss.system.server.ServerConfig;
+
+import org.rhq.core.util.ObjectNameFactory;
 
 public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
     private final Log log = LogFactory.getLog(CoreServer.class);
@@ -81,6 +90,27 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
 
     public Date getBootTime() {
         return bootTime;
+    }
+
+    public File getInstallDir() {
+        MBeanServer mbs = getMBeanServer();
+        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+
+        File homeDir = ((ServerConfig) mbean).getHomeDir();
+        return homeDir.getParentFile(); // jboss homedir is "rhq-install-dir/jbossas", so the install dir is .. from jbossas
+    }
+
+    public File getJBossServerHomeDir() {
+        MBeanServer mbs = getMBeanServer();
+        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        return serverHomeDir;
+    }
+
+    private MBeanServer getMBeanServer() {
+        return MBeanServerLocator.locateJBoss();
     }
 
     private Properties loadBuildProperties() {

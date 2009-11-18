@@ -2024,6 +2024,40 @@
         <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
 
+      <!-- Add support for server-side plugins -->
+      <schemaSpec version="2.66">
+        <!-- add the new column that indicates if this is deployed on the SERVER or AGENT -->
+        <schema-addColumn table="RHQ_PLUGIN" column="DEPLOYMENT" columnType="VARCHAR2" precision="8"/>
+        <schema-directSQL>
+          <statement desc="Updating existing plugins with default deployment of AGENT">
+            UPDATE RHQ_PLUGIN SET DEPLOYMENT = 'AGENT'
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PLUGIN" column="DEPLOYMENT" nullable="FALSE"/>
+
+        <!-- add the new column that provides configuration to a plugin -->
+        <schema-addColumn table="RHQ_PLUGIN" column="PLUGIN_CONFIG_ID" columnType="INTEGER" />
+        <schema-directSQL>
+          <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for plugin config">
+            ALTER TABLE RHQ_PLUGIN
+            ADD CONSTRAINT RHQ_PLUGIN_P_CFG_ID_FKEY
+            FOREIGN KEY (PLUGIN_CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
+          </statement>
+        </schema-directSQL>
+
+        <!-- add the new column that provides configuration to a plugin -->
+        <schema-addColumn table="RHQ_PLUGIN" column="JOBS_CONFIG_ID" columnType="INTEGER" />
+        <schema-directSQL>
+          <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for scheduled jobs">
+            ALTER TABLE RHQ_PLUGIN
+            ADD CONSTRAINT RHQ_PLUGIN_JOBS_CFG_ID_FKEY
+            FOREIGN KEY (JOBS_CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
     </dbupgrade>
   </target>
 </project>

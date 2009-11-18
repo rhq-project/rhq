@@ -28,7 +28,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.List;
-import java.lang.reflect.Constructor;
 
 import javax.naming.InitialContext;
 import javax.persistence.EntityManager;
@@ -37,15 +36,12 @@ import javax.sql.DataSource;
 
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
-import org.hibernate.Session;
-import org.hibernate.transform.ResultTransformer;
-import org.hibernate.type.Type;
-import org.hibernate.criterion.Example;
-import org.hibernate.criterion.Projections;
 
 @Test
 public class PluginTest extends AbstractEJB3Test {
@@ -86,6 +82,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
+            assert plugin.getDeployment() == PluginDeploymentType.AGENT; // default is agent
+            assert plugin.getPluginConfiguration() == null;
+            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp() == null;
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -99,6 +98,9 @@ public class PluginTest extends AbstractEJB3Test {
             String ampsVersion = "2.1";
             String description = "description-UPDATED";
             String help = "help-UPDATED";
+            PluginDeploymentType deployment = PluginDeploymentType.SERVER;
+            Configuration pluginConfig = null;
+            Configuration scheduledJobsConfig = null;
 
             em.close();
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
@@ -114,6 +116,9 @@ public class PluginTest extends AbstractEJB3Test {
             q.setParameter("md5", md5);
             q.setParameter("version", version);
             q.setParameter("ampsVersion", ampsVersion);
+            q.setParameter("deployment", deployment);
+            q.setParameter("pluginConfiguration", pluginConfig);
+            q.setParameter("scheduledJobsConfiguration", scheduledJobsConfig);
             q.setParameter("description", description);
             q.setParameter("help", help);
             q.setParameter("mtime", System.currentTimeMillis());
@@ -134,6 +139,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
             assert plugin.getDescription().equals(description);
+            assert plugin.getDeployment() == PluginDeploymentType.SERVER;
+            assert plugin.getPluginConfiguration() == null;
+            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp().equals(help);
             // and what we really want to test - ensure the content remained intact after the update
             assert new String(plugin.getContent()).equals(new String(content));
@@ -190,6 +198,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
+            assert plugin.getDeployment() == PluginDeploymentType.AGENT; // default is agent
+            assert plugin.getPluginConfiguration() == null;
+            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp() == null;
             assert plugin.getContent() == null;
         } finally {
@@ -210,6 +221,7 @@ public class PluginTest extends AbstractEJB3Test {
             String help = "the test help string is here";
             byte[] content = "this is the test content".getBytes();
             String md5 = MessageDigestGenerator.getDigestString(new String(content));
+            PluginDeploymentType deployment = PluginDeploymentType.SERVER;
 
             Plugin plugin = new Plugin(name, path);
             plugin.setDisplayName(displayName);
@@ -219,6 +231,7 @@ public class PluginTest extends AbstractEJB3Test {
             plugin.setDescription(description);
             plugin.setHelp(help);
             plugin.setContent(content);
+            plugin.setDeployment(deployment);
 
             em.persist(plugin);
             assert plugin.getId() > 0;
@@ -233,6 +246,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
             assert plugin.getDescription().equals(description);
+            assert plugin.getDeployment() == deployment;
+            assert plugin.getPluginConfiguration() == null;
+            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp().equals(help);
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -249,6 +265,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
             assert plugin.getDescription().equals(description);
+            assert plugin.getDeployment() == deployment;
+            assert plugin.getPluginConfiguration() == null;
+            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
@@ -266,6 +285,9 @@ public class PluginTest extends AbstractEJB3Test {
                     assert p.getMD5().equals(md5);
                     assert p.getVersion().equals(version);
                     assert p.getDescription().equals(description);
+                    assert plugin.getDeployment() == deployment;
+                    assert plugin.getPluginConfiguration() == null;
+                    assert plugin.getScheduledJobsConfiguration() == null;
                     assert p.getHelp().equals(help);
                     assert p.getContent() == null;
                     break;

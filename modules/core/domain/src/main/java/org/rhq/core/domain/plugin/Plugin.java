@@ -25,19 +25,26 @@ package org.rhq.core.domain.plugin;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.MessageDigestGenerator;
 
 /**
@@ -62,6 +69,9 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
@@ -80,6 +90,9 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p "), //
@@ -94,6 +107,9 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "       p.help = :help, " //
         + "       p.version = :version, " //
         + "       p.ampsVersion = :ampsVersion," //
+        + "       p.deployment = :deployment, " //
+        + "       p.pluginConfiguration = :pluginConfiguration, " //
+        + "       p.scheduledJobsConfiguration = :scheduledJobsConfiguration, " //
         + "       p.path = :path, " //
         + "       p.md5 = :md5, " //
         + "       p.mtime = :mtime " //
@@ -112,6 +128,9 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.md5, " //
         + "         p.version, " //
         + "         p.ampsVersion, " //
+        + "         p.deployment, " //
+        + "         p.pluginConfiguration, " //
+        + "         p.scheduledJobsConfiguration, " //
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //
@@ -137,6 +156,18 @@ public class Plugin implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
+
+    @Column(name = "DEPLOYMENT", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PluginDeploymentType deployment = PluginDeploymentType.AGENT; // assume agent
+
+    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration scheduledJobsConfiguration;
+
+    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration pluginConfiguration;
 
     @Column(name = "NAME", nullable = false)
     private String name;
@@ -239,11 +270,16 @@ public class Plugin implements Serializable {
      * @param help
      * @param md5
      * @param version
+     * @param ampsVersion
+     * @param deployment
+     * @param pluginConfig 
+     * @param scheduledJobsConfig 
      * @param ctime
      * @param mtime
      */
     public Plugin(int id, String name, String path, String displayName, boolean enabled, String description,
-        String help, String md5, String version, String ampsVersion, long ctime, long mtime) {
+        String help, String md5, String version, String ampsVersion, PluginDeploymentType deployment,
+        Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime, long mtime) {
         this.id = id;
         this.name = name;
         this.path = path;
@@ -254,6 +290,9 @@ public class Plugin implements Serializable {
         this.md5 = md5;
         this.version = version;
         this.ampsVersion = ampsVersion;
+        this.deployment = deployment;
+        this.pluginConfiguration = pluginConfig;
+        this.scheduledJobsConfiguration = scheduledJobsConfig;
         this.ctime = ctime;
         this.mtime = mtime;
     }
@@ -406,6 +445,45 @@ public class Plugin implements Serializable {
      */
     public void setPath(String path) {
         this.path = path;
+    }
+
+    /**
+     * Indicates how the plugin gets deployed (e.g. running in the agent or in the server).
+     * 
+     * @return plugin deployment type
+     */
+    public PluginDeploymentType getDeployment() {
+        return deployment;
+    }
+
+    public void setDeployment(PluginDeploymentType deployment) {
+        this.deployment = deployment;
+    }
+
+    /**
+     * If the plugin has jobs associated with it, this is the configuration for those jobs.
+     * 
+     * @return scheduled job configuration for jobs that the plugin defined.
+     */
+    public Configuration getScheduledJobsConfiguration() {
+        return scheduledJobsConfiguration;
+    }
+
+    public void setScheduledJobsConfiguration(Configuration scheduledJobsConfiguration) {
+        this.scheduledJobsConfiguration = scheduledJobsConfiguration;
+    }
+
+    /**
+     * If the plugin, itself, has configuration associated with it, this is that configuration.
+     * 
+     * @return the configuration associated with the plugin itself
+     */
+    public Configuration getPluginConfiguration() {
+        return pluginConfiguration;
+    }
+
+    public void setPluginConfiguration(Configuration pluginConfiguration) {
+        this.pluginConfiguration = pluginConfiguration;
     }
 
     /**

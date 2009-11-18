@@ -916,6 +916,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return null;
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int synchronizeRepos(Subject subject, Integer[] repoIds) {
         int syncCount = 0;
 

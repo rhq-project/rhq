@@ -52,6 +52,8 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -72,11 +74,17 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
 
+        TestContentServerPluginService pluginService = new TestContentServerPluginService();
+        prepareCustomServerPluginService(pluginService);
+        pluginService.startMasterPluginContainer();
+
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
+        unprepareServerPluginService();
+
         TransactionManager tx = getTransactionManager();
         if (tx != null) {
             tx.rollback();
@@ -112,6 +120,11 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         ContentSourceType cst = new ContentSourceType("testSyncStatus");
         ContentSource cs = new ContentSource("testSyncStatus", cst);
+
+        EntityManager em = getEntityManager();
+        em.persist(cst);
+        em.persist(cs);
+
         repo.addContentSource(cs);
         syncCount = repoManager.synchronizeRepos(overlord, ids);
 

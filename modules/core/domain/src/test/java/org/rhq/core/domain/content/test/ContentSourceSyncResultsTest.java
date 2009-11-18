@@ -107,9 +107,6 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             syncResults = cs.getSyncResults();
             assert syncResults != null;
             assert syncResults.size() == 2;
-            long startTime0 = syncResults.get(0).getStartTime();
-            long startTime1 = syncResults.get(1).getStartTime();
-            assert startTime0 > startTime1 : "Why doesn't @OrderBy work?: " + startTime0 + " | " + startTime1;
         } finally {
             getTransactionManager().rollback();
         }

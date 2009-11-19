@@ -1,11 +1,14 @@
 package org.rhq.enterprise.server.plugin;
 
+import java.io.File;
 import java.util.List;
 
 import javax.ejb.Local;
 import javax.persistence.NoResultException;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Interface to the methods that interact with the serve-side plugin infrastructure.
@@ -59,4 +62,27 @@ public interface ServerPluginsLocal {
      * @param enabled the value of the enabled flag for the plugins
      */
     void setPluginEnabledFlag(List<Integer> pluginIds, boolean enabled);
+
+    /**
+     * Registers the given plugin to the database.
+     * 
+     * @param subject the user that needs to have permissions to add a plugin to the system
+     * @param plugin the plugin definition
+     * @param descriptor the plugin descriptor that was found in the plugin file
+     * @param pluginFile the actual plugin file itself
+     * @throws Exception if failed to fully register the plugin 
+     */
+    void registerPlugin(Subject subject, Plugin plugin, ServerPluginDescriptorType descriptor, File pluginFile)
+        throws Exception;
+
+    /**
+     * Given a plugin that already exists, this will update that plugin's data in the database,
+     * except for the content, which is left as-is. If the plugin did not yet exist, an exception is thrown.
+     * You can use this to update the plugin's scheduled jobs configuration and plugin configuration.
+     *
+     * @param plugin existing plugin with updated data
+     * @return the updated plugin
+     * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
+     */
+    public Plugin updatePluginExceptContent(Plugin plugin) throws Exception;
 }

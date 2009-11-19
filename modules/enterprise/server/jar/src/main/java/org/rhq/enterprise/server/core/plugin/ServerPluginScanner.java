@@ -34,12 +34,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.sql.DataSource;
 import javax.transaction.TransactionManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -52,6 +54,8 @@ import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -67,10 +71,10 @@ public class ServerPluginScanner {
     private DatabaseType dbType = null;
 
     /** a list of server plugins found on previous scans that have not yet been processed */
-    private List<URL> scanned = new ArrayList<URL>();
+    private List<File> scanned = new ArrayList<File>();
 
     /** Maintains a cache of what we had on the filesystem during the last scan */
-    private Map<File, Plugin> serverPluginsOnFilesystem = new HashMap<File, Plugin>();
+    private Map<File, PluginWithDescriptor> serverPluginsOnFilesystem = new HashMap<File, PluginWithDescriptor>();
 
     private File serverPluginDir;
 
@@ -92,15 +96,11 @@ public class ServerPluginScanner {
      * @throws Exception
      */
     void registerServerPlugins() throws Exception {
-        for (URL url : this.scanned) {
-            log.debug("Hot deploying server plugin [" + url + "]...");
-            //this.agentPluginDeployer.pluginDetected(di);
+        for (File file : this.scanned) {
+            log.debug("Deploying server plugin [" + file + "]...");
+            registerServerPlugin(file);
         }
         this.scanned.clear();
-
-        // Register all the new plugins.
-        //this.agentPluginDeployer.registerPlugins();
-
         return;
     }
 
@@ -128,9 +128,52 @@ public class ServerPluginScanner {
         allUpdatedFiles.addAll(updatedFiles2);
 
         for (File updatedFile : allUpdatedFiles) {
-            URL url = updatedFile.toURI().toURL();
-            log.debug("Scan detected server plugin [" + url + "]...");
-            this.scanned.add(url);
+            log.debug("Scan detected server plugin [" + updatedFile + "]...");
+            this.scanned.add(updatedFile);
+        }
+        return;
+    }
+
+    /**
+     * This is called when a server plugin jar has been found on the filesystem that hasn't been seen yet
+     * during this particular lifetime of the scanner. This does not necessarily mean its a new plugin jar,
+     * it only means this is the first time we've seen it since this object has been instantiated.
+     * This method will check to see if the database record matches the new plugin file and if so, does nothing.
+     * 
+     * @param file the new server plugin file
+     */
+    private void registerServerPlugin(File pluginFile) {
+        try {
+            ServerPluginDescriptorType descriptor;
+            descriptor = this.serverPluginsOnFilesystem.get(pluginFile).descriptor;
+
+            String pluginName = descriptor.getName();
+            String displayName = descriptor.getDisplayName();
+
+            ComparableVersion version; // this must be non-null, the next line ensures this
+            version = ServerPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
+
+            log.info("Registering RHQ server plugin [" + pluginName + "], version " + version);
+
+            Plugin plugin = new Plugin(pluginName, pluginFile.getName());
+            plugin.setDeployment(PluginDeploymentType.SERVER);
+            plugin.setDisplayName((displayName != null) ? displayName : pluginName);
+            plugin.setEnabled(false); // initially disabled, user must configure it first before enabling
+            plugin.setDescription(descriptor.getDescription());
+            plugin.setMtime(pluginFile.lastModified());
+            plugin.setVersion(version.toString());
+            plugin.setAmpsVersion(descriptor.getApiVersion());
+            plugin.setMD5(MessageDigestGenerator.getDigestString(pluginFile));
+
+            if (descriptor.getHelp() != null && !descriptor.getHelp().getContent().isEmpty()) {
+                plugin.setHelp(String.valueOf(descriptor.getHelp().getContent().get(0)));
+            }
+
+            ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+            SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+            serverPluginsManager.registerPlugin(subjectManager.getOverlord(), plugin, descriptor, pluginFile);
+        } catch (Exception e) {
+            log.error("Failed to register RHQ plugin file [" + pluginFile + "]", e);
         }
         return;
     }
@@ -141,7 +184,7 @@ public class ServerPluginScanner {
      * 
      * @return a list of files that appear to be new or updated and should be deployed
      */
-    List<File> serverPluginScanFilesystem() {
+    private List<File> serverPluginScanFilesystem() {
         List<File> updated = new ArrayList<File>();
 
         // get the current list of plugins deployed on the filesystem
@@ -174,7 +217,12 @@ public class ServerPluginScanner {
         for (File pluginJar : pluginJars) {
             String md5 = null;
 
-            Plugin plugin = this.serverPluginsOnFilesystem.get(pluginJar);
+            PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(pluginJar);
+            Plugin plugin = null;
+            if (pluginWithDescriptor != null) {
+                plugin = pluginWithDescriptor.plugin;
+            }
+
             try {
                 if (plugin != null) {
                     if (pluginJar.lastModified() == 0L) {
@@ -203,8 +251,8 @@ public class ServerPluginScanner {
         // This is needed if plugin-A-1.0.jar exists and someone deployed plugin-A-1.1.jar but fails to delete plugin-A-1.0.jar.
         doomedPluginFiles.clear();
         HashMap<String, Plugin> pluginsByName = new HashMap<String, Plugin>();
-        for (Map.Entry<File, Plugin> currentPluginFileEntry : this.serverPluginsOnFilesystem.entrySet()) {
-            Plugin currentPlugin = currentPluginFileEntry.getValue();
+        for (Entry<File, PluginWithDescriptor> currentPluginFileEntry : this.serverPluginsOnFilesystem.entrySet()) {
+            Plugin currentPlugin = currentPluginFileEntry.getValue().plugin;
             Plugin existingPlugin = pluginsByName.get(currentPlugin.getName());
             if (existingPlugin == null) {
                 // this is the usual case - this is the only plugin with the given name we've seen
@@ -255,7 +303,7 @@ public class ServerPluginScanner {
         plugin.setVersion(version);
         plugin.setMtime(pluginJar.lastModified());
         plugin.setDeployment(PluginDeploymentType.SERVER);
-        this.serverPluginsOnFilesystem.put(pluginJar, plugin);
+        this.serverPluginsOnFilesystem.put(pluginJar, new PluginWithDescriptor(plugin, descriptor));
         return plugin;
     }
 
@@ -265,7 +313,7 @@ public class ServerPluginScanner {
      *
      * @return a list of files that appear to be new or updated and should be deployed
      */
-    List<File> serverPluginScanDatabase() throws Exception {
+    private List<File> serverPluginScanDatabase() throws Exception {
         Connection conn = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -282,8 +330,7 @@ public class ServerPluginScanner {
 
             // get all the plugins
             ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION FROM " + Plugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER' AND ENABLED=?");
-            setEnabledFlag(conn, ps, 1, true);
+                + " WHERE DEPLOYMENT = 'SERVER'");
             rs = ps.executeQuery();
             while (rs.next()) {
                 String name = rs.getString(1);
@@ -295,7 +342,11 @@ public class ServerPluginScanner {
                 // let's see if we have this logical plugin on the filesystem (it may or may not be under the same filename)
                 File expectedFile = new File(this.getServerPluginDir(), path);
                 File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
-                Plugin cachedPluginOnFilesystem = this.serverPluginsOnFilesystem.get(expectedFile);
+                PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(expectedFile);
+                Plugin cachedPluginOnFilesystem = null;
+                if (pluginWithDescriptor != null) {
+                    cachedPluginOnFilesystem = pluginWithDescriptor.plugin;
+                }
 
                 if (cachedPluginOnFilesystem != null) {
                     currentFile = expectedFile; // we have it where we are expected to have it
@@ -310,10 +361,10 @@ public class ServerPluginScanner {
                     }
                 } else {
                     // the plugin might still be on the file system but under a different filename, see if we can find it
-                    for (Map.Entry<File, Plugin> cachePluginEntry : this.serverPluginsOnFilesystem.entrySet()) {
-                        if (cachePluginEntry.getValue().getName().equals(name)) {
-                            currentFile = cachePluginEntry.getKey();
-                            cachedPluginOnFilesystem = cachePluginEntry.getValue();
+                    for (Map.Entry<File, PluginWithDescriptor> cacheEntry : this.serverPluginsOnFilesystem.entrySet()) {
+                        if (cacheEntry.getValue().plugin.getName().equals(name)) {
+                            currentFile = cacheEntry.getKey();
+                            cachedPluginOnFilesystem = cacheEntry.getValue().plugin;
                             log.info("Filesystem has a server plugin [" + name + "] at the file [" + currentFile
                                 + "] which is different than where the DB thinks it should be [" + expectedFile + "]");
                             break; // we found it, no need to continue the loop
@@ -381,12 +432,11 @@ public class ServerPluginScanner {
 
             // write all our updated plugins to the file system
             ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER' AND NAME = ? AND ENABLED = ?");
+                + " WHERE DEPLOYMENT = 'SERVER' AND NAME = ?");
             for (Plugin plugin : updatedPlugins) {
                 File file = new File(this.getServerPluginDir(), plugin.getPath());
 
                 ps.setString(1, plugin.getName());
-                setEnabledFlag(conn, ps, 2, true);
                 rs = ps.executeQuery();
                 rs.next();
                 InputStream content = rs.getBinaryStream(1);
@@ -487,5 +537,15 @@ public class ServerPluginScanner {
             }
         }
         return;
+    }
+
+    private class PluginWithDescriptor {
+        public PluginWithDescriptor(Plugin plugin, ServerPluginDescriptorType descriptor) {
+            this.plugin = plugin;
+            this.descriptor = descriptor;
+        }
+
+        public Plugin plugin;
+        public ServerPluginDescriptorType descriptor;
     }
 }

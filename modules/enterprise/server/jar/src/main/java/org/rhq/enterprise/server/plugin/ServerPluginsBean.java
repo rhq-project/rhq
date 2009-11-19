@@ -58,6 +58,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * @author John Mazzitelli
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ServerPluginsBean implements ServerPluginsLocal {
     private final Log log = LogFactory.getLog(ServerPluginsBean.class);
 

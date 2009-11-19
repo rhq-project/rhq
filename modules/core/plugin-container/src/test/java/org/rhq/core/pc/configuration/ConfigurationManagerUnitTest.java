@@ -30,7 +30,6 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
@@ -115,21 +114,19 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
     }
 
     @Test
-    public void mergingStucturedIntoRawShouldUpdateConfigWithModifiedRaws() throws Exception {
+    public void mergingStucturedIntoRawShouldUpdateLatestRawConfigs() throws Exception {
         final Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("/tmp/raw0.txt"));
 
-        final RawConfiguration originalRaw1 = createRawConfiguration("/tmp/raw1.txt");
-        config.addRawConfiguration(originalRaw1);
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        config.addRawConfiguration(raw1);
 
-        final RawConfiguration originalRaw2 = createRawConfiguration("/tmp/raw2.txt");
-        config.addRawConfiguration(originalRaw2);
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
 
-        final RawConfiguration originalRaw3 = createRawConfiguration("/tmp/raw3.txt");
-        config.addRawConfiguration(originalRaw3);
+        final Set<RawConfiguration> latestRaws = toSet(raw1, raw2);
 
         final RawConfiguration mergedRaw1 = createRawConfiguration("/tmp/raw1.txt");
         final RawConfiguration mergedRaw2 = createRawConfiguration("/tmp/raw2.txt");
-        final RawConfiguration mergedRaw3 = createRawConfiguration("/tmp/raw3.txt");
 
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
@@ -144,11 +141,10 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
                                                          onlyIfStarted);
             will(returnValue(facet));
 
-            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(config.getRawConfigurations()));
+            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(latestRaws));
 
-            oneOf(facet).mergeRawConfiguration(config, originalRaw1); will(returnValue(mergedRaw1));
-            oneOf(facet).mergeRawConfiguration(config, originalRaw2); will(returnValue(mergedRaw2));
-            oneOf(facet).mergeRawConfiguration(config, originalRaw3); will(returnValue(mergedRaw3));
+            oneOf(facet).mergeRawConfiguration(config, raw1); will(returnValue(mergedRaw1));
+            oneOf(facet).mergeRawConfiguration(config, raw2); will(returnValue(mergedRaw2));
         }});
 
         Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
@@ -156,7 +152,6 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
         Configuration expectedConfig = new Configuration();
         expectedConfig.addRawConfiguration(mergedRaw1);
         expectedConfig.addRawConfiguration(mergedRaw2);
-        expectedConfig.addRawConfiguration(mergedRaw3);
 
         assertStructuredMergedIntoRaws(mergedConfig, expectedConfig, "Failed to update existing raw configs");
     }
@@ -168,6 +163,8 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
         final RawConfiguration originalRaw = createRawConfiguration("/tmp/raw.txt");
         config.addRawConfiguration(originalRaw);
 
+        final Set<RawConfiguration> latestRaws = toSet(originalRaw);
+
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
         context.checking(new Expectations() {{
@@ -181,7 +178,7 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
                                                          onlyIfStarted);
             will(returnValue(facet));
 
-            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(config.getRawConfigurations()));
+            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(latestRaws));
 
             oneOf(facet).mergeRawConfiguration(config, originalRaw); will(returnValue(null));
         }});
@@ -247,8 +244,10 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
     }
 
     @Test
-    public void mergingRawsIntoStructuredShouldUpdateConfigWithModifedStructured() throws Exception {
-        Configuration config = new Configuration();
+    public void mergingRawsIntoStructuredShouldUpdateLatestStructuredConfig() throws Exception {
+        final Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "0"));
+        config.put(new PropertySimple("z", "3"));
 
         final RawConfiguration raw1 = createRawConfiguration("/tmp/foo.txt");
         config.addRawConfiguration(raw1);
@@ -256,7 +255,9 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
         final RawConfiguration raw2 = createRawConfiguration("/tmp/bar.txt");
         config.addRawConfiguration(raw2);
 
-        final Configuration structured = new Configuration();
+        final Configuration latestStructured = new Configuration();
+        latestStructured.put(new PropertySimple("x", "1"));
+        latestStructured.put(new PropertySimple("y", "1"));
 
         final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
 
@@ -271,17 +272,17 @@ public class ConfigurationManagerUnitTest extends ConfigManagementTest {
                                                          onlyIfStarted);
             will(returnValue(facet));
 
-            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(structured));
+            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(latestStructured));
 
-            oneOf(facet).mergeStructuredConfiguration(raw1, structured);
-            oneOf(facet).mergeStructuredConfiguration(raw2, structured);                        
+            oneOf(facet).mergeStructuredConfiguration(raw1, config);
+            oneOf(facet).mergeStructuredConfiguration(raw2, config);                         
         }});
 
         Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_RAW);
 
         assertEquals(
             mergedConfig.getAllProperties(),
-            structured.getAllProperties(),
+            latestStructured.getAllProperties(),
             "Failed to merged raw into structured."
         );
     }

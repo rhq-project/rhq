@@ -343,17 +343,13 @@ public class ServerPluginScanner {
                 File expectedFile = new File(this.getServerPluginDir(), path);
                 File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
                 PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(expectedFile);
-                Plugin cachedPluginOnFilesystem = null;
-                if (pluginWithDescriptor != null) {
-                    cachedPluginOnFilesystem = pluginWithDescriptor.plugin;
-                }
 
-                if (cachedPluginOnFilesystem != null) {
+                if (pluginWithDescriptor != null) {
                     currentFile = expectedFile; // we have it where we are expected to have it
-                    if (!cachedPluginOnFilesystem.getName().equals(name)) {
+                    if (!pluginWithDescriptor.plugin.getName().equals(name)) {
                         // I have no idea when or if this would ever happen, but at least log it so we'll see it if it does happen
                         log.warn("For some reason, the server plugin file [" + expectedFile + "] is plugin ["
-                            + cachedPluginOnFilesystem.getName() + "] but the database says it should be [" + name
+                            + pluginWithDescriptor.plugin.getName() + "] but the database says it should be [" + name
                             + "]");
                     } else {
                         log.debug("File system and database agree on a server plugin location for [" + expectedFile
@@ -364,7 +360,7 @@ public class ServerPluginScanner {
                     for (Map.Entry<File, PluginWithDescriptor> cacheEntry : this.serverPluginsOnFilesystem.entrySet()) {
                         if (cacheEntry.getValue().plugin.getName().equals(name)) {
                             currentFile = cacheEntry.getKey();
-                            cachedPluginOnFilesystem = cacheEntry.getValue().plugin;
+                            pluginWithDescriptor = cacheEntry.getValue();
                             log.info("Filesystem has a server plugin [" + name + "] at the file [" + currentFile
                                 + "] which is different than where the DB thinks it should be [" + expectedFile + "]");
                             break; // we found it, no need to continue the loop
@@ -372,7 +368,7 @@ public class ServerPluginScanner {
                     }
                 }
 
-                if (cachedPluginOnFilesystem != null && currentFile != null && currentFile.exists()) {
+                if (pluginWithDescriptor != null && currentFile != null && currentFile.exists()) {
                     Plugin dbPlugin = new Plugin(name, path);
                     dbPlugin.setMd5(md5);
                     dbPlugin.setVersion(version);
@@ -380,20 +376,20 @@ public class ServerPluginScanner {
                     dbPlugin.setDeployment(PluginDeploymentType.SERVER);
 
                     Plugin obsoletePlugin = ServerPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
-                        cachedPluginOnFilesystem);
+                        pluginWithDescriptor.plugin);
 
-                    if (obsoletePlugin == cachedPluginOnFilesystem) { // yes use == for reference equality!
+                    if (obsoletePlugin == pluginWithDescriptor.plugin) { // yes use == for reference equality!
                         StringBuilder logMsg = new StringBuilder();
                         logMsg.append("Found server plugin [").append(name);
                         logMsg.append("] in the DB that is newer than the one on the filesystem: ");
                         logMsg.append("DB path=[").append(path);
                         logMsg.append("]; file path=[").append(currentFile.getName());
                         logMsg.append("]; DB MD5=[").append(md5);
-                        logMsg.append("]; file MD5=[").append(cachedPluginOnFilesystem.getMd5());
+                        logMsg.append("]; file MD5=[").append(pluginWithDescriptor.plugin.getMd5());
                         logMsg.append("]; DB version=[").append(version);
-                        logMsg.append("]; file version=[").append(cachedPluginOnFilesystem.getVersion());
+                        logMsg.append("]; file version=[").append(pluginWithDescriptor.plugin.getVersion());
                         logMsg.append("]; DB timestamp=[").append(new Date(mtime));
-                        logMsg.append("]; file timestamp=[").append(new Date(cachedPluginOnFilesystem.getMtime()));
+                        logMsg.append("]; file timestamp=[").append(new Date(pluginWithDescriptor.plugin.getMtime()));
                         logMsg.append("]");
                         log.info(logMsg.toString());
 
@@ -411,9 +407,9 @@ public class ServerPluginScanner {
                     } else if (obsoletePlugin == null) {
                         // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
                         currentFile.setLastModified(mtime);
-                        cachedPluginOnFilesystem.setMtime(mtime);
-                        cachedPluginOnFilesystem.setVersion(version);
-                        cachedPluginOnFilesystem.setMd5(md5);
+                        pluginWithDescriptor.plugin.setMtime(mtime);
+                        pluginWithDescriptor.plugin.setVersion(version);
+                        pluginWithDescriptor.plugin.setMd5(md5);
                     } else {
                         log.info("It appears that the server plugin [" + dbPlugin
                             + "] in the database may be obsolete. If so, it will be updated later.");
@@ -444,6 +440,9 @@ public class ServerPluginScanner {
                 rs.close();
                 file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
                 updatedFiles.add(file);
+
+                // we are writing a new file to the filesystem, cache it since we know about it now
+                cacheFilesystemServerPluginJar(file, null);
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);

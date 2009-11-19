@@ -48,14 +48,14 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     /** handles the scheduled scanning */
     private ScheduledExecutorService poller;
 
-    /** where the server-side plugins live */
-    private File serverPluginDir = null;
-
     /** where the user can copy agent or server plugins */
     private File userPluginDir = null;
 
     /** what looks for new or changed agent plugins */
     private AgentPluginScanner agentPluginScanner = new AgentPluginScanner();
+
+    /** what looks for new or changed agent plugins */
+    private ServerPluginScanner serverPluginScanner = new ServerPluginScanner();
 
     public Long getScanPeriod() {
         return Long.valueOf(this.scanPeriod);
@@ -78,11 +78,11 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     }
 
     public File getServerPluginDir() {
-        return this.serverPluginDir;
+        return this.serverPluginScanner.getServerPluginDir();
     }
 
     public void setServerPluginDir(File dir) {
-        this.serverPluginDir = dir;
+        this.serverPluginScanner.setServerPluginDir(dir);
     }
 
     public File getAgentPluginDir() {
@@ -167,6 +167,8 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         // scan for agent plugins
         this.agentPluginScanner.agentPluginScan();
 
+        // scan for server plugins
+        this.serverPluginScanner.serverPluginScan();
         return;
     }
 
@@ -176,6 +178,9 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
         // now tell the agent plugin scanner to register plugins that it determined needs to be registered
         this.agentPluginScanner.registerAgentPlugins();
+
+        // tell the server plugin scanner the same
+        this.serverPluginScanner.registerServerPlugins();
     }
 
     /**

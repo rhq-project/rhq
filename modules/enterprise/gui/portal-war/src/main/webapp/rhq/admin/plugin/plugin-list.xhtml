@@ -77,6 +77,7 @@
 
                <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
                   <f:param name="plugin" value="#{agentPlugin.name}"/>
+                  <f:param name="pluginType" value="AGENT"/>
                   <h:outputText value="#{agentPlugin.displayName}"/>
                </h:outputLink>
 
@@ -161,6 +162,7 @@
 
                <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
                   <f:param name="plugin" value="#{serverPlugin.name}"/>
+                  <f:param name="pluginType" value="SERVER"/>
                   <h:outputText value="#{serverPlugin.displayName}"/>
                </h:outputLink>
 
@@ -200,6 +202,15 @@
                      <h:commandButton action="#{InstalledPluginsUIBean.scan}"
                                       value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
                      </h:commandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableServerPlugins}"
+                                              value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.disableServerPlugins}"
+                                              value="DISABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.undeployServerPlugins}"
+                                              value="UNDEPLOY" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
                   </rich:column>
                </rich:columnGroup>
             </f:facet>

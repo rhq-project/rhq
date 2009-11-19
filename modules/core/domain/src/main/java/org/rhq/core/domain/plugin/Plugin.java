@@ -57,6 +57,29 @@ import org.rhq.core.util.MessageDigestGenerator;
 @NamedQueries( {
 //
     // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_BY_IDS_AND_TYPE, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "  WHERE p.id IN (:ids) AND p.deployment = :type"), //
+
+    // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
         + "        p.id, " //
@@ -181,6 +204,7 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_ALL_AGENT = "Plugin.findAllAgent";
     public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
+    public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
 
     @Column(name = "ID", nullable = false)

@@ -28,4 +28,35 @@ public interface ServerPluginsLocal {
      * @throws NoResultException when no plugin with that name exists
      */
     Plugin getServerPlugin(String name);
+
+    List<Plugin> getServerPluginsById(List<Integer> pluginIds);
+
+    /**
+     * Enables the plugins and restarts the server plugin container.
+     *
+     * @param pluginIds the plugins to be enabled
+     */
+    void enableServerPlugins(List<Integer> pluginIds);
+
+    /**
+     * Disables the plugins and restarts the server plugin container.
+     *
+     * @param pluginIds the plugins to be disabled
+     */
+    void disableServerPlugins(List<Integer> pluginIds);
+
+    /**
+     * Removes the plugin from the system and restarts the server plugin container.
+     *
+     * @param pluginIds
+     */
+    void undeployServerPlugins(List<Integer> pluginIds);
+
+    /**
+     * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
+     *
+     * @param pluginIds the plugins to be enabled
+     * @param enabled the value of the enabled flag for the plugins
+     */
+    void setPluginEnabledFlag(List<Integer> pluginIds, boolean enabled);
 }

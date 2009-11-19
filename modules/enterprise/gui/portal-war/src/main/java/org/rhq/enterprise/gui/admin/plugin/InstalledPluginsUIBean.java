@@ -22,7 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import javax.faces.application.FacesMessage;
 
@@ -34,6 +37,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -120,6 +124,63 @@ public class InstalledPluginsUIBean {
         }
 
         return;
+    }
+
+    public void enableServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.enableServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    public void disableServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.disableServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    public void undeployServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.undeployServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    private List<Integer> getIds(List<Plugin> plugins) {
+        ArrayList<Integer> ids = new ArrayList<Integer>(plugins.size());
+        for (Plugin plugin : plugins) {
+            ids.add(plugin.getId());
+        }
+        return ids;
+    }
+
+    private List<Plugin> getSelectedServerPlugins() {
+        Integer[] integerItems = getSelectedPluginIds();
+        List<Integer> ids = Arrays.asList(integerItems);
+        List<Plugin> plugins = serverPluginsBean.getServerPluginsById(ids);
+        return plugins;
+    }
+
+    private Integer[] getSelectedPluginIds() {
+        String[] stringItems = FacesContextUtility.getRequest().getParameterValues("selectedPlugin");
+        if (stringItems == null || stringItems.length == 0) {
+            return new Integer[0];
+        }
+        Integer[] integerItems = StringUtility.getIntegerArray(stringItems);
+        return integerItems;
     }
 
     /**

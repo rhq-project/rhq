@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.naming.InitialContext;
@@ -271,6 +272,26 @@ public class PluginTest extends AbstractEJB3Test {
             // test our queries that purposefully do not load in the content blob
             Query query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
+            plugin = (Plugin) query.getSingleResult();
+            assert plugin != null;
+            assert plugin.getId() > 0;
+            assert plugin.getName().equals(name);
+            assert plugin.getPath().equals(path);
+            assert plugin.getDisplayName().equals(displayName);
+            assert plugin.isEnabled() == enabled;
+            assert plugin.getMD5().equals(md5);
+            assert plugin.getVersion().equals(version);
+            assert plugin.getAmpsVersion().equals(ampsVersion);
+            assert plugin.getDescription().equals(description);
+            assert plugin.getDeployment() == deployment;
+            assert plugin.getPluginConfiguration().equals(pluginConfig);
+            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
+            assert plugin.getHelp().equals(help);
+            assert plugin.getContent() == null;
+
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+            query.setParameter("ids", Arrays.asList(Integer.valueOf(plugin.getId())));
+            query.setParameter("type", plugin.getDeployment());
             plugin = (Plugin) query.getSingleResult();
             assert plugin != null;
             assert plugin.getId() > 0;

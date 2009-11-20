@@ -32,13 +32,15 @@
             noDuplicate="true"
             immediateUpload="true"
             autoclear="false"
-            allowFlash="false"            >
+            allowFlash="false"
+            maxRequestSize="100000"
+             >
             <a4j:support event="onuploadcomplete" action="#{rawConfigCollection.upload}" />
         </rich:fileUpload>
         </h:form>
     </h:panelGrid>
 	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
-		<h:outputText value=" Upload Complete" />
+		<h:outputText value="#{messages.uploadcomplete}" />
 		<f:param name="id" value="#{rawConfigCollection.resourceId}" />		
 	</h:outputLink>
 </rich:panel>

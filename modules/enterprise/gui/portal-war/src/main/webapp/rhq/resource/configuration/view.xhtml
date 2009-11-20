@@ -11,6 +11,7 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component">
 
+
 THIS TEXT WILL BE REMOVED.
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
@@ -27,21 +28,20 @@ THIS TEXT WILL BE REMOVED.
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
-
-    	<h:outputText value="#{messages.youareviewingstructured}" />
-        <h:outputLink value="view-raw.xhtml">
-			<f:param name="id" value="#{ResourceUIBean.id}" />
-			<h:outputText value=" #{messages.raw}" />
-		</h:outputLink>
-
+    	<h:outputText value="#{messages.youareviewingstructured}" />	  
+		 <h:panelGroup rendered="#{rawConfigCollection.rawSupported}" >
+		   <h:outputText value=" #{messages.switch2}" />
+           <h:outputLink value="view-raw.xhtml">
+	  			<f:param name="id" value="#{ResourceUIBean.id}" />
+				<h:outputText value=" #{messages.raw}" />
+			</h:outputLink>
+		</h:panelGroup>
 
       <h:outputText value=" #{messages.nopermissionedit}" rendered="#{!ResourceUIBean.permissions.configure}"/>
 
       <h:form id="viewResourceConfigurationForm">
          <!--  TODO remove the id version -->
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">		          

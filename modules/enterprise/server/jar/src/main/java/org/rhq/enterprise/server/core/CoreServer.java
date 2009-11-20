@@ -109,6 +109,22 @@ public class CoreServer extends ServiceMBeanSupport implements CoreServerMBean {
         return serverHomeDir;
     }
 
+    public File getJBossServerDataDir() {
+        MBeanServer mbs = getMBeanServer();
+        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+        File serverDataDir = ((ServerConfig) mbean).getServerDataDir();
+        return serverDataDir;
+    }
+
+    public File getJBossServerTempDir() {
+        MBeanServer mbs = getMBeanServer();
+        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+        File serverTempDir = ((ServerConfig) mbean).getServerTempDir();
+        return serverTempDir;
+    }
+
     private MBeanServer getMBeanServer() {
         return MBeanServerLocator.locateJBoss();
     }

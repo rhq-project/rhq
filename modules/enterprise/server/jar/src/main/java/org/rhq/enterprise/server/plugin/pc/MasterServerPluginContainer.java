@@ -33,6 +33,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -300,6 +301,9 @@ public class MasterServerPluginContainer {
             File[] pluginFiles = pluginDirectory.listFiles();
 
             if (pluginFiles != null) {
+
+                List<String> enabledPlugins = LookupUtil.getServerPlugins().getPluginNamesByEnabled(true);
+
                 for (File pluginFile : pluginFiles) {
                     if (pluginFile.getName().endsWith(".jar")) {
                         URL pluginUrl = pluginFile.toURI().toURL();
@@ -308,8 +312,13 @@ public class MasterServerPluginContainer {
                             ServerPluginDescriptorType descriptor;
                             descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
                             if (descriptor != null) {
-                                log.debug("pre-loaded server plugin from URL: " + pluginUrl);
-                                plugins.put(pluginUrl, descriptor);
+                                if (enabledPlugins.contains(descriptor.getName())) {
+                                    log.debug("pre-loaded server plugin from URL: " + pluginUrl);
+                                    plugins.put(pluginUrl, descriptor);
+                                } else {
+                                    log.info("Server plugin [" + descriptor.getName()
+                                        + "] is disabled and will not be initialized");
+                                }
                             }
                         } catch (Throwable t) {
                             // for some reason, the plugin failed to load - it will be ignored

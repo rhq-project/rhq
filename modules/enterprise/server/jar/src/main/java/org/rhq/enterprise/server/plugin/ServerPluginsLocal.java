@@ -35,6 +35,25 @@ public interface ServerPluginsLocal {
     List<Plugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**
+     * Given a plugin name, returns the descriptor for that plugin.
+     * 
+     * @param pluginName
+     * @return descriptor parsed from the file in the plugin jar
+     * @throws Exception if the descriptor could not be retrieved or parsed for the given plugin
+     */
+    ServerPluginDescriptorType getServerPluginDescriptor(String pluginName) throws Exception;
+
+    /**
+     * Returns a list of plugin names for only those server plugins whose
+     * enabled flag is equal to the given parameter.
+     * 
+     * @param enabled if <code>true</code>, return only the names of plugins that are enabled;
+     *                if <code>false</code>, return only the names of plugins that are disabled.
+     * @return list of plugin names that match the enabled criteria
+     */
+    List<String> getPluginNamesByEnabled(boolean enabled);
+
+    /**
      * Enables the plugins and restarts the server plugin container.
      *
      * @param pluginIds the plugins to be enabled

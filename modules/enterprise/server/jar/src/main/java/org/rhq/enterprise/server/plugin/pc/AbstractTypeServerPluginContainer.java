@@ -32,7 +32,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.CronScheduleType;
 import org.rhq.enterprise.server.xmlschema.PeriodicScheduleType;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
-import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 
 /**
  * The abstract superclass for all plugin containers of the different {@link ServerPluginType plugin types}.
@@ -199,8 +198,7 @@ public abstract class AbstractTypeServerPluginContainer {
                 String pluginName = pluginEnv.getPluginName();
 
                 try {
-                    // TODO: we need to read the config from the DB, and use thoses job defs instead of the ones from the descriptor
-                    jobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(pluginEnv.getPluginDescriptor());
+                    jobs = this.pluginManager.getServerPluginContext(pluginEnv).getSchedules();
                     if (jobs != null) {
                         for (ScheduledJobDefinition job : jobs) {
                             try {

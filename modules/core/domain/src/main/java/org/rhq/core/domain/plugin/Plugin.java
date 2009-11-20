@@ -56,6 +56,11 @@ import org.rhq.core.util.MessageDigestGenerator;
 @Entity
 @NamedQueries( {
 //
+    @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE, query = "" //
+        + " SELECT p.name " //
+        + "   FROM Plugin AS p " //
+        + "  WHERE p.enabled = :enabled AND p.deployment = :type"), //
+
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_IDS_AND_TYPE, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
@@ -205,6 +210,7 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
+    public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
 
     @Column(name = "ID", nullable = false)

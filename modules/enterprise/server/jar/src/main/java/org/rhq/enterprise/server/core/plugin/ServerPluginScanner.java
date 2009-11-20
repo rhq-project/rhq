@@ -49,6 +49,8 @@ import org.rhq.core.db.H2DatabaseType;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -57,6 +59,7 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -164,6 +167,8 @@ public class ServerPluginScanner {
             plugin.setVersion(version.toString());
             plugin.setAmpsVersion(descriptor.getApiVersion());
             plugin.setMD5(MessageDigestGenerator.getDigestString(pluginFile));
+            plugin.setPluginConfiguration(getDefaultPluginConfiguration(descriptor));
+            plugin.setScheduledJobsConfiguration(getDefaultScheduledJobsConfiguration(descriptor));
 
             if (descriptor.getHelp() != null && !descriptor.getHelp().getContent().isEmpty()) {
                 plugin.setHelp(String.valueOf(descriptor.getHelp().getContent().get(0)));
@@ -176,6 +181,24 @@ public class ServerPluginScanner {
             log.error("Failed to register RHQ plugin file [" + pluginFile + "]", e);
         }
         return;
+    }
+
+    private Configuration getDefaultPluginConfiguration(ServerPluginDescriptorType descriptor) throws Exception {
+        Configuration defaults = null;
+        ConfigurationDefinition def = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
+        if (def != null) {
+            defaults = def.getDefaultTemplate().createConfiguration();
+        }
+        return defaults;
+    }
+
+    private Configuration getDefaultScheduledJobsConfiguration(ServerPluginDescriptorType descriptor) throws Exception {
+        Configuration defaults = null;
+        ConfigurationDefinition def = ServerPluginDescriptorMetadataParser.getScheduledJobsDefinition(descriptor);
+        if (def != null) {
+            defaults = def.getDefaultTemplate().createConfiguration();
+        }
+        return defaults;
     }
 
     /**

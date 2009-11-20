@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugin;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -92,6 +93,22 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
         query.setParameter("ids", pluginIds);
+        query.setParameter("type", PluginDeploymentType.SERVER);
+        return query.getResultList();
+    }
+
+    public ServerPluginDescriptorType getServerPluginDescriptor(String pluginName) throws Exception {
+        Plugin plugin = getServerPlugin(pluginName);
+        File pluginsDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();
+        File pluginJar = new File(pluginsDir, plugin.getPath());
+        URL url = pluginJar.toURI().toURL();
+        ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+        return descriptor;
+    }
+
+    public List<String> getPluginNamesByEnabled(boolean enabled) {
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE);
+        query.setParameter("enabled", Boolean.valueOf(enabled));
         query.setParameter("type", PluginDeploymentType.SERVER);
         return query.getResultList();
     }

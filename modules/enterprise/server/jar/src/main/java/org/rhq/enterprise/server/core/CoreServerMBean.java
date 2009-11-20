@@ -66,8 +66,22 @@ public interface CoreServerMBean extends ServiceMBean {
 
     /**
      * Where the JBoss Server Home directory is. Typically, this is something like:
-     * {@link #getInstallDir() isntall-dir}/jbossas/server/default
+     * {@link #getInstallDir() install-dir}/jbossas/server/default
      * @return jboss server home directory
      */
     File getJBossServerHomeDir();
+
+    /**
+     * Where the JBoss Server Data directory is. Typically, this is something like:
+     * {@link #getInstallDir() install-dir}/jbossas/server/default/data
+     * @return jboss server home directory
+     */
+    File getJBossServerDataDir();
+
+    /**
+     * Where the JBoss Server Temp directory is. Typically, this is something like:
+     * {@link #getInstallDir() install-dir}/jbossas/server/default/tmp
+     * @return jboss server home directory
+     */
+    File getJBossServerTempDir();
 }

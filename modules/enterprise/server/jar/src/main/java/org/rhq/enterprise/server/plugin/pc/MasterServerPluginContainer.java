@@ -255,6 +255,23 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * Given the name of a deployed plugin, this returns the plugin container that is hosting
+     * that plugin. If there is no plugin with the given name or that plugin is not
+     * loaded in any plugin container (e.g. when it is disabled), then <code>null</code> is returned.
+     * 
+     * @param pluginName
+     * @return the plugin container that is managing the named plugin of <code>null</code>
+     */
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(String pluginName) {
+        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+            if (null != pc.getPluginManager().getPluginEnvironment(pluginName)) {
+                return (T) pc;
+            }
+        }
+        return null;
+    }
+
+    /**
      * Given a plugin's descriptor, this will return the plugin container that can manage the plugin.
      * 
      * @param descriptor descriptor to identify a plugin whose container is to be returned

@@ -49,6 +49,9 @@ import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -129,25 +132,83 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return;
     }
 
-    public void disableServerPlugins(List<Integer> pluginIds) {
+    public List<Plugin> disableServerPlugins(List<Integer> pluginIds) {
         serverPluginsBean.setPluginEnabledFlag(pluginIds, false);
-        LookupUtil.getServerPluginService().restartMasterPluginContainer();
-        return;
+
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+
+        List<Plugin> doomedPlugins = new ArrayList<Plugin>();
+
+        for (Integer pluginId : pluginIds) {
+            Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
+            if (doomedPlugin != null) {
+                doomedPlugins.add(doomedPlugin);
+                AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                if (pc != null) {
+                    try {
+                        pc.unschedulePluginJobs(doomedPlugin.getName());
+                    } catch (Exception e) {
+                        log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                    }
+                }
+            }
+        }
+
+        serverPluginService.restartMasterPluginContainer();
+        return doomedPlugins;
     }
 
-    public void undeployServerPlugins(List<Integer> pluginIds) {
+    public List<Plugin> undeployServerPlugins(List<Integer> pluginIds) {
         serverPluginsBean.setPluginEnabledFlag(pluginIds, false);
-        // TODO: actually mark the plugins as deleted, remove their files
-        LookupUtil.getServerPluginService().restartMasterPluginContainer();
-        return;
+
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+
+        List<Plugin> doomedPlugins = new ArrayList<Plugin>();
+
+        for (Integer pluginId : pluginIds) {
+            Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
+            if (doomedPlugin != null) {
+                doomedPlugins.add(doomedPlugin);
+                AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                if (pc != null) {
+                    try {
+                        pc.unschedulePluginJobs(doomedPlugin.getName());
+                    } catch (Exception e) {
+                        log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                    }
+                }
+
+                // if this plugin ever gets re-installed, let's support the use-case where the new plugin
+                // will have different config metadata. Here we null out the old config so the new
+                // config can be set to the new cofig definition's default values.
+                doomedPlugin.setPluginConfiguration(null);
+                doomedPlugin.setScheduledJobsConfiguration(null);
+
+                // TODO: this really won't do anything, our server plugin scanner will see it missing
+                //       and stream it back on the file system. Need to add a DELETED column to RHQ_PLUGIN
+                //       and call doomedPlugin.setDeleted(true). When deleted is true, our scanner can
+                //       skip writing the file to disk. All plugin queries should avoid returning
+                //       plugin rows that have deleted=true. Only then will removing it from the
+                //       file system as we do below actually help.
+                File pluginDir = serverPluginService.getServerPluginsDirectory();
+                File currentFile = new File(pluginDir, doomedPlugin.getPath());
+                currentFile.delete();
+            }
+        }
+
+        serverPluginService.restartMasterPluginContainer();
+        return doomedPlugins;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setPluginEnabledFlag(List<Integer> pluginIds, boolean enabled) {
-        List<Plugin> plugins = getServerPluginsById(pluginIds);
-        for (Plugin plugin : plugins) {
-            plugin.setEnabled(enabled);
-        }
+        Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS);
+        q.setParameter("ids", pluginIds);
+        q.setParameter("enabled", Boolean.valueOf(enabled));
+        q.executeUpdate();
+        return;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

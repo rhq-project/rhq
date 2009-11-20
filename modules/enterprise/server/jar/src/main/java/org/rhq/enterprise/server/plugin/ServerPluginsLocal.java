@@ -84,15 +84,19 @@ public interface ServerPluginsLocal {
      * Disables the plugins and restarts the server plugin container.
      *
      * @param pluginIds the plugins to be disabled
+     * 
+     * @return the list of plugins that were disabled
      */
-    void disableServerPlugins(List<Integer> pluginIds);
+    List<Plugin> disableServerPlugins(List<Integer> pluginIds);
 
     /**
      * Removes the plugin from the system and restarts the server plugin container.
      *
      * @param pluginIds
+     * 
+     * @return the list of plugins that were undeployed
      */
-    void undeployServerPlugins(List<Integer> pluginIds);
+    List<Plugin> undeployServerPlugins(List<Integer> pluginIds);
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.

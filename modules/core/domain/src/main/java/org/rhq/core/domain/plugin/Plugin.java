@@ -171,6 +171,12 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "       p.mtime = :mtime " //
         + " WHERE p.id = :id"),
 
+    // this query is how you enable and disable plugins
+    @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
+        + "UPDATE Plugin p " //
+        + "   SET p.enabled = :enabled " //
+        + " WHERE p.id IN (:ids)"),
+
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY, query = "" //
         + "  SELECT new org.rhq.core.domain.plugin.Plugin( " //
@@ -212,6 +218,7 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
+    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")

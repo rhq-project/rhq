@@ -18,22 +18,27 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
+import javax.faces.application.FacesMessage;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class InstalledPluginUIBean {
     private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
@@ -41,27 +46,47 @@ public class InstalledPluginUIBean {
     public static final String MANAGED_BEAN_NAME = InstalledPluginUIBean.class.getSimpleName();
 
     private Plugin plugin;
-
-    private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
-    private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+    private ConfigurationDefinition pluginConfigurationDefinition;
+    private ConfigurationDefinition scheduledJobsDefinition;
 
     public InstalledPluginUIBean() {
-        this.plugin = lookupPlugin();
+        lookupPlugin();
     }
 
     public Plugin getPlugin() {
         return this.plugin;
     }
 
-    private Plugin lookupPlugin() {
+    public ConfigurationDefinition getPluginConfigurationDefinition() {
+        return this.pluginConfigurationDefinition;
+    }
+
+    public ConfigurationDefinition getScheduledJobsDefinition() {
+        return this.scheduledJobsDefinition;
+    }
+
+    private void lookupPlugin() {
         hasPermission();
         String pluginName = FacesContextUtility.getRequiredRequestParameter("plugin", String.class);
         String pluginType = FacesContextUtility.getRequiredRequestParameter("pluginType", String.class);
         PluginDeploymentType deploymentType = PluginDeploymentType.valueOf(pluginType);
         if (deploymentType == PluginDeploymentType.AGENT) {
-            return resourceMetadataManagerBean.getPlugin(pluginName);
+            this.plugin = LookupUtil.getResourceMetadataManager().getPlugin(pluginName);
         } else {
-            return serverPluginsBean.getServerPlugin(pluginName);
+            ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+            this.plugin = serverPluginsBean.getServerPlugin(pluginName);
+            try {
+                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
+                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor
+                    .getPluginConfiguration());
+                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor
+                    .getScheduledJobs());
+            } catch (Exception e) {
+                String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
+                log.error(err + " - Cause: " + e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+                return;
+            }
         }
     }
 

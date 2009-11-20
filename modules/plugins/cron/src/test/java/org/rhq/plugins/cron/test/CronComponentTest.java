@@ -1,11 +1,3 @@
-package org.rhq.plugins.cron.test;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
-
 /*
  * RHQ Management Platform
  * Copyright (C) 2005-2009 Red Hat, Inc.
@@ -29,6 +21,18 @@ import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+package org.rhq.plugins.cron.test;
+
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
+
 /**
  * Tests for cron component.
  * 
@@ -36,13 +40,16 @@ import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
  */
 public class CronComponentTest extends AbstractAugeasConfigurationComponentTest {
 
+    public static final String INCLUDE_GLOBS = "/etc/crontab|/etc/cron.d/another-crontab";
+    public static final String CRON_COMPONENT_START_TEST_GROUP = "cron-component-start";
+    
     @Override
     protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig) {
         super.tweakDefaultPluginConfig(defaultPluginConfig);
         //the base cannot support the /etc/cron.d/* glob pattern because it reads stuff from the classloader resource stream
         //that doesn't support searching (or does it?)
         //so we have to update the include globs to include only concrete file paths
-        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, "/etc/crontab|/etc/cron.d/another-crontab"));
+        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, INCLUDE_GLOBS));
     }
 
     @Override

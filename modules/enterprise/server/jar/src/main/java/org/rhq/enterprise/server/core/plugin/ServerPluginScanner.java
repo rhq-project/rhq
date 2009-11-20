@@ -161,7 +161,7 @@ public class ServerPluginScanner {
             Plugin plugin = new Plugin(pluginName, pluginFile.getName());
             plugin.setDeployment(PluginDeploymentType.SERVER);
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
-            plugin.setEnabled(false); // initially disabled, user must configure it first before enabling
+            plugin.setEnabled(!descriptor.isDisabledOnDiscovery());
             plugin.setDescription(descriptor.getDescription());
             plugin.setMtime(pluginFile.lastModified());
             plugin.setVersion(version.toString());

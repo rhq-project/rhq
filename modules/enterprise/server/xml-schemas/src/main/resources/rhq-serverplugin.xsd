@@ -147,17 +147,35 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="version" type="xs:string">
+        <xs:attribute name="version" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>
                     The version of this plugin in an OSGI compatible format. (e.g. 2.0.4 or 3.1.beta2)
+                    This attribute is optional - you can put the plugin version in the jar's manifest
+                    in the Implementation-Version manifest entry. You must, however, provide a version
+                    somewhere - either via the manifest or this attribute.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="apiVersion" type="xs:string">
+        <xs:attribute name="apiVersion" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>
                     The version of the server-side API this plugin requires in OSGI compatible format. (e.g. 2.0)
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="disabledOnDiscovery" type="xs:boolean" use="optional" default="false">
+            <xs:annotation>
+                <xs:documentation>
+                    Indicates if the plugin should be disabled immediately when it is first detected by
+                    the server. By default, all plugins will be enabled as soon as they are first detected
+                    by the server. However, if you want to require the user to configure the plugin
+                    first, before the plugin is ever deployed and run, then set this to true. Use this
+                    when the default configuration for the plugin is not complete and user intervention
+                    is required in order to fully complete the configuration before the plugin can run.
+                    The user will be forced to edit the configuration (or, optionally, agree to the
+                    default configuration as-is) of the plugin and then manually enable the plugin
+                    before the plugin can finally run.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>

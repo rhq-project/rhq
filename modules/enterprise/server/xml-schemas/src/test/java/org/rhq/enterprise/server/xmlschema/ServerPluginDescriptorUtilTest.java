@@ -70,6 +70,7 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDisplayName().equals("generic display");
         assert descriptor.getDescription().equals("generic description");
         assert descriptor.getPackage().equals("generic.package");
+        assert descriptor.isDisabledOnDiscovery() == false; // the default
 
         HelpType help = descriptor.getHelp();
         assert help != null;
@@ -135,6 +136,7 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDisplayName().equals("alert plugin display name");
         assert descriptor.getDescription().equals("alert plugin wotgorilla?");
         assert descriptor.getPackage().equals("org.alert.package.name.here");
+        assert descriptor.isDisabledOnDiscovery() == true;
 
         ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
         assert pluginComponent.getClazz().equals("alertPluginComponent");

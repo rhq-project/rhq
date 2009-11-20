@@ -5,7 +5,8 @@
                 description="A custom generic plugin."
                 package="org.custom"
                 version="1.0"
-                apiVersion="2.0" 
+                apiVersion="2.0"
+                disabledOnDiscovery="true"
                 xmlns="urn:xmlns:rhq-serverplugin.generic"
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">

@@ -22,7 +22,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import javax.faces.application.FacesMessage;
 
@@ -34,12 +37,12 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
-import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -48,17 +51,24 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class InstalledPluginsUIBean {
     private final Log log = LogFactory.getLog(InstalledPluginsUIBean.class);
 
-    public static final String MANAGED_BEAN_NAME = "InstalledPluginsUIBean";
+    public static final String MANAGED_BEAN_NAME = InstalledPluginsUIBean.class.getSimpleName();
 
     private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
+    private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
     public InstalledPluginsUIBean() {
     }
 
-    public Collection<Plugin> getInstalledPlugins() {
-        hasPermission();
+    public Collection<Plugin> getInstalledAgentPlugins() {
 
+        hasPermission();
         return resourceMetadataManagerBean.getPlugins();
+    }
+
+    public Collection<Plugin> getInstalledServerPlugins() {
+
+        hasPermission();
+        return serverPluginsBean.getServerPlugins();
     }
 
     public void scan() {
@@ -67,9 +77,9 @@ public class InstalledPluginsUIBean {
         try {
             PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
             scanner.scanAndRegister();
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated plugins.");
         } catch (Exception e) {
-            String err = "Failed to scan for updated agent plugins";
+            String err = "Failed to scan for updated plugins";
             log.error(err + " - Cause: " + e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
         }
@@ -97,23 +107,80 @@ public class InstalledPluginsUIBean {
                 throw new FileNotFoundException("The uploaded plugin file [" + uploadedPlugin + "] does not exist!");
             }
 
-            // put the new plugin file in our agent plugin location
-            ServerCommunicationsServiceMBean sc = ServerCommunicationsServiceUtil.getService();
-            File dir = new File(sc.getConfiguration().getAgentFilesDirectory(), "rhq-plugins");
-            File agentPlugin = new File(dir, newPluginFilename);
-            FileOutputStream fos = new FileOutputStream(agentPlugin);
+            // put the new plugin file in our plugin dropbox location
+            File installDir = LookupUtil.getCoreServer().getInstallDir();
+            File dir = new File(installDir, "plugins");
+            File pluginFile = new File(dir, newPluginFilename);
+            FileOutputStream fos = new FileOutputStream(pluginFile);
             FileInputStream fis = new FileInputStream(uploadedPlugin);
             StreamUtil.copy(fis, fos);
-            log.info("A new plugin has been deployed [" + agentPlugin
+            log.info("A new plugin has been deployed [" + pluginFile
                 + "]. A scan is required now in order to register it.");
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New agent plugin uploaded: " + agentPlugin);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New plugin uploaded: " + newPluginFilename);
         } catch (Exception e) {
-            String err = "Failed to process uploaded agent plugin";
+            String err = "Failed to process uploaded plugin";
             log.error(err + " - Cause: " + e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
         }
 
         return;
+    }
+
+    public void enableServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.enableServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    public void disableServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.disableServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    public void undeployServerPlugins() {
+        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        for (Plugin selectedPlugin : selectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getName());
+        }
+        serverPluginsBean.undeployServerPlugins(getIds(selectedPlugins));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: " + selectedPluginNames);
+        return;
+    }
+
+    private List<Integer> getIds(List<Plugin> plugins) {
+        ArrayList<Integer> ids = new ArrayList<Integer>(plugins.size());
+        for (Plugin plugin : plugins) {
+            ids.add(plugin.getId());
+        }
+        return ids;
+    }
+
+    private List<Plugin> getSelectedServerPlugins() {
+        Integer[] integerItems = getSelectedPluginIds();
+        List<Integer> ids = Arrays.asList(integerItems);
+        List<Plugin> plugins = serverPluginsBean.getServerPluginsById(ids);
+        return plugins;
+    }
+
+    private Integer[] getSelectedPluginIds() {
+        String[] stringItems = FacesContextUtility.getRequest().getParameterValues("selectedPlugin");
+        if (stringItems == null || stringItems.length == 0) {
+            return new Integer[0];
+        }
+        Integer[] integerItems = StringUtility.getIntegerArray(stringItems);
+        return integerItems;
     }
 
     /**

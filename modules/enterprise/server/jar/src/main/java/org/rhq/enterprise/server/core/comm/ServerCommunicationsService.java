@@ -43,7 +43,6 @@ import javax.management.ObjectName;
 import mazz.i18n.Logger;
 
 import org.jboss.remoting.InvokerLocator;
-import org.jboss.system.server.ServerConfig;
 import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.clientapi.server.content.ContentServerService;
@@ -51,7 +50,6 @@ import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.measurement.MeasurementServerService;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalConcurrencyLimitCommandListener;
@@ -953,11 +951,8 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
 
     private File getServerPropertiesFile() {
         if (m_serverPropertiesFile == null) {
-            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-            Object mbean = MBeanServerInvocationHandler.newProxyInstance(m_mbs, name, ServerConfig.class, false);
-
-            File homeDir = ((ServerConfig) mbean).getHomeDir();
-            File binDir = new File(homeDir.getParentFile(), "bin");
+            File installDir = LookupUtil.getCoreServer().getInstallDir();
+            File binDir = new File(installDir, "bin");
             m_serverPropertiesFile = new File(binDir, "rhq-server.properties");
         }
 

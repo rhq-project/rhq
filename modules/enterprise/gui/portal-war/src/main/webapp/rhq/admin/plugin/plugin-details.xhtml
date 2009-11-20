@@ -52,14 +52,17 @@
                  <h:outputLabel styleClass="BlockLabel" value="Enabled:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.enabled}"/>
 
+                 <h:outputLabel styleClass="BlockLabel" value="Type:"/>
+                 <h:outputText value="#{InstalledPluginUIBean.plugin.deployment}"/>
+
                  <h:outputLabel styleClass="BlockLabel" value="MD5:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.md5}"/>
 
-                 <h:outputLabel styleClass="BlockLabel" value="Path:"/>
-                 <h:outputText value="#{InstalledPluginUIBean.plugin.path}"/>
-
                  <h:outputLabel styleClass="BlockLabel" value="Description:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.description}"/>
+
+                 <h:outputLabel styleClass="BlockLabel" value="Path:"/>
+                 <h:outputText value="#{InstalledPluginUIBean.plugin.path}"/>
 
               </h:panelGrid>
 
@@ -71,6 +74,26 @@
 
                  <h:outputText escape="false"  value="&lt;pre&gt; #{InstalledPluginUIBean.plugin.help} &lt;/pre&gt;"/>
 
+              </rich:panel>
+
+              <rich:panel>
+                 <f:facet name="header">
+                    <h:outputText value="Plugin Configuration"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
+                    readOnly="true" />
+              </rich:panel>
+
+              <rich:panel>
+                 <f:facet name="header">
+                    <h:outputText value="Scheduled Jobs"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
+                    readOnly="true" />
               </rich:panel>
            </rich:panel>
 

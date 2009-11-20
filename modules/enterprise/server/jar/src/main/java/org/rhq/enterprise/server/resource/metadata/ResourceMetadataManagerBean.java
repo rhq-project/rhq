@@ -120,11 +120,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Returns the information on all plugins as found in the database.
+     * Returns the information on all agent plugins as found in the database.
      */
     @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
         return q.getResultList();
     }
 
@@ -205,6 +205,9 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             q.setParameter("md5", plugin.getMD5());
             q.setParameter("version", plugin.getVersion());
             q.setParameter("ampsVersion", plugin.getAmpsVersion());
+            q.setParameter("deployment", plugin.getDeployment());
+            q.setParameter("pluginConfiguration", plugin.getPluginConfiguration());
+            q.setParameter("scheduledJobsConfiguration", plugin.getScheduledJobsConfiguration());
             q.setParameter("description", plugin.getDescription());
             q.setParameter("help", plugin.getHelp());
             q.setParameter("mtime", plugin.getMtime());

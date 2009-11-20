@@ -32,7 +32,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.CronScheduleType;
 import org.rhq.enterprise.server.xmlschema.PeriodicScheduleType;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
-import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 
 /**
  * The abstract superclass for all plugin containers of the different {@link ServerPluginType plugin types}.
@@ -199,8 +198,7 @@ public abstract class AbstractTypeServerPluginContainer {
                 String pluginName = pluginEnv.getPluginName();
 
                 try {
-                    // TODO: we need to read the config from the DB, and use thoses job defs instead of the ones from the descriptor
-                    jobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(pluginEnv.getPluginDescriptor());
+                    jobs = this.pluginManager.getServerPluginContext(pluginEnv).getSchedules();
                     if (jobs != null) {
                         for (ScheduledJobDefinition job : jobs) {
                             try {
@@ -218,6 +216,26 @@ public abstract class AbstractTypeServerPluginContainer {
             throw new Exception("Cannot schedule plugins jobs; plugin container is not initialized yet");
         }
 
+        return;
+    }
+
+    /**
+     * Unschedules any plugin jobs that are currently scheduled for the named plugin.
+     * 
+     * Subclasses are free to extend this method to unschedule those additional plugin jobs
+     * they created, but must ensure they call this method so the global scheduled jobs get
+     * removed from the scheduler.
+     * 
+     * Note that this is separate from the {@link #stop()} method because we never want
+     * to unschedule jobs since other plugin containers on other servers may be running
+     * and able to process the jobs. This method should only be called when a plugin
+     * is being disabled or removed.
+     * 
+     * @throws Exception if failed to unschedule jobs
+     */
+    public void unschedulePluginJobs(String pluginName) throws Exception {
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        scheduler.resumeJobGroup(pluginName);
         return;
     }
 

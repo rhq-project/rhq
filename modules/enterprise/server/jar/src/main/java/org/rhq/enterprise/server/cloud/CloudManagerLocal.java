@@ -61,7 +61,26 @@ public interface CloudManagerLocal {
 
     PageList<ServerWithAgentCountComposite> getServerComposites(Subject subject, PageControl pc);
 
+    /**
+     * Returns the number of servers that are part of the "server cloud", which excludes
+     * servers that have been installed but not associated with the cloud.
+     * The returned count will include those servers that are down or in maintenance mode,
+     * in addition to those servers that are currently running in a normal state.
+     * 
+     * @return count of servers in the cloud
+     */
     int getServerCount();
+
+    /**
+     * Returns the number of servers that are part of the "server cloud" that are currently
+     * running in "normal" mode.
+     * 
+     * This excludes all other servers such as those servers that have been installed but
+     * not associated with the cloud, servers that are down or in maintenance mode.
+     * 
+     * @return count of servers in the cloud that are in a normal running state
+     */
+    int getNormalServerCount();
 
     void updateServerMode(Integer[] serverIds, Server.OperationMode mode);
 

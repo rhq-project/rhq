@@ -30,11 +30,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Provides functionality to manage plugins for a plugin container. Plugin containers
@@ -278,8 +279,6 @@ public class ServerPluginManager {
             return context;
         }
 
-        ServerPluginDescriptorType pluginDescriptor = env.getPluginDescriptor();
-
         MasterServerPluginContainer masterPC = this.parentPluginContainer.getMasterServerPluginContainer();
         MasterServerPluginContainerConfiguration masterConfig = masterPC.getConfiguration();
         File dataDir = new File(masterConfig.getDataDirectory(), pluginName);
@@ -289,23 +288,31 @@ public class ServerPluginManager {
         List<ScheduledJobDefinition> schedules;
 
         try {
-            // TODO: today we have no way in the UI to customize the plugin config values
-            //       for now, just use the defaults as defined in the descriptor
-            ConfigurationDefinition configDef = ServerPluginDescriptorMetadataParser
-                .getPluginConfigurationDefinition(pluginDescriptor);
-            plugnConfig = configDef.getDefaultTemplate().createConfiguration();
-
-            // TODO: today we have no way in the UI to customize the schedules
-            //       for now, just use the defaults as defined in the descriptor
-            schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(pluginDescriptor);
+            Plugin plugin = getPlugin(env);
+            plugnConfig = plugin.getPluginConfiguration();
+            Configuration scheduledJobsConfig = plugin.getScheduledJobsConfiguration();
+            schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(scheduledJobsConfig);
         } catch (Exception e) {
-            // TODO need proper exception handling
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to get plugin config/schedules from the database", e);
         }
 
         context = new ServerPluginContext(env, dataDir, tmpDir, plugnConfig, schedules);
         this.pluginContextCache.put(pluginName, context);
         return context;
+    }
+
+    /**
+     * Given a plugin environment, return its Plugin representation, which should also include
+     * the plugin configuration and scheduled jobs configuration.
+     * 
+     * @param pluginEnv
+     * @return the Plugin object for the given plugin
+     */
+    protected Plugin getPlugin(ServerPluginEnvironment pluginEnv) {
+        // get the plugin data from the database
+        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        Plugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginName());
+        return plugin;
     }
 
     /**

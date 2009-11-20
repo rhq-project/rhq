@@ -25,19 +25,26 @@ package org.rhq.core.domain.plugin;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.MessageDigestGenerator;
 
 /**
@@ -49,6 +56,34 @@ import org.rhq.core.util.MessageDigestGenerator;
 @Entity
 @NamedQueries( {
 //
+    @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE, query = "" //
+        + " SELECT p.name " //
+        + "   FROM Plugin AS p " //
+        + "  WHERE p.enabled = :enabled AND p.deployment = :type"), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_BY_IDS_AND_TYPE, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "  WHERE p.id IN (:ids) AND p.deployment = :type"), //
+
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
@@ -62,13 +97,18 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name"), //
 
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_ALL, query = "" //
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_AGENT, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
         + "        p.id, " //
         + "        p.name, " //
@@ -80,9 +120,38 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p "), //
+        + "   FROM Plugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "   WHERE p.deployment = 'AGENT'"), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_SERVER, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
+        + "   WHERE p.deployment = 'SERVER'"), //
 
     // this query does not update the content blob or ctime
     @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
@@ -94,10 +163,19 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "       p.help = :help, " //
         + "       p.version = :version, " //
         + "       p.ampsVersion = :ampsVersion," //
+        + "       p.deployment = :deployment, " //
+        + "       p.pluginConfiguration = :pluginConfiguration, " //
+        + "       p.scheduledJobsConfiguration = :scheduledJobsConfiguration, " //
         + "       p.path = :path, " //
         + "       p.md5 = :md5, " //
         + "       p.mtime = :mtime " //
         + " WHERE p.id = :id"),
+
+    // this query is how you enable and disable plugins
+    @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
+        + "UPDATE Plugin p " //
+        + "   SET p.enabled = :enabled " //
+        + " WHERE p.id IN (:ids)"),
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY, query = "" //
@@ -112,9 +190,14 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "         p.md5, " //
         + "         p.version, " //
         + "         p.ampsVersion, " //
+        + "         p.deployment, " //
+        + "         p.pluginConfiguration, " //
+        + "         p.scheduledJobsConfiguration, " //
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //
+        + "         LEFT JOIN p.pluginConfiguration " // 
+        + "         LEFT JOIN p.scheduledJobsConfiguration " // 
         + "   WHERE p.name IN ( SELECT rt.plugin " //
         + "                       FROM Resource res " //
         + "                       JOIN res.resourceType rt " //
@@ -129,14 +212,30 @@ public class Plugin implements Serializable {
     public static final String TABLE_NAME = "RHQ_PLUGIN";
 
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
-    public static final String QUERY_FIND_ALL = "Plugin.findAll";
+    public static final String QUERY_FIND_ALL_AGENT = "Plugin.findAllAgent";
+    public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
+    public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
+    public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
+    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
     private int id;
+
+    @Column(name = "DEPLOYMENT", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private PluginDeploymentType deployment = PluginDeploymentType.AGENT; // assume agent
+
+    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration scheduledJobsConfiguration;
+
+    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration pluginConfiguration;
 
     @Column(name = "NAME", nullable = false)
     private String name;
@@ -239,11 +338,16 @@ public class Plugin implements Serializable {
      * @param help
      * @param md5
      * @param version
+     * @param ampsVersion
+     * @param deployment
+     * @param pluginConfig 
+     * @param scheduledJobsConfig 
      * @param ctime
      * @param mtime
      */
     public Plugin(int id, String name, String path, String displayName, boolean enabled, String description,
-        String help, String md5, String version, String ampsVersion, long ctime, long mtime) {
+        String help, String md5, String version, String ampsVersion, PluginDeploymentType deployment,
+        Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime, long mtime) {
         this.id = id;
         this.name = name;
         this.path = path;
@@ -254,6 +358,9 @@ public class Plugin implements Serializable {
         this.md5 = md5;
         this.version = version;
         this.ampsVersion = ampsVersion;
+        this.deployment = deployment;
+        this.pluginConfiguration = pluginConfig;
+        this.scheduledJobsConfiguration = scheduledJobsConfig;
         this.ctime = ctime;
         this.mtime = mtime;
     }
@@ -406,6 +513,45 @@ public class Plugin implements Serializable {
      */
     public void setPath(String path) {
         this.path = path;
+    }
+
+    /**
+     * Indicates how the plugin gets deployed (e.g. running in the agent or in the server).
+     * 
+     * @return plugin deployment type
+     */
+    public PluginDeploymentType getDeployment() {
+        return deployment;
+    }
+
+    public void setDeployment(PluginDeploymentType deployment) {
+        this.deployment = deployment;
+    }
+
+    /**
+     * If the plugin has jobs associated with it, this is the configuration for those jobs.
+     * 
+     * @return scheduled job configuration for jobs that the plugin defined.
+     */
+    public Configuration getScheduledJobsConfiguration() {
+        return scheduledJobsConfiguration;
+    }
+
+    public void setScheduledJobsConfiguration(Configuration scheduledJobsConfiguration) {
+        this.scheduledJobsConfiguration = scheduledJobsConfiguration;
+    }
+
+    /**
+     * If the plugin, itself, has configuration associated with it, this is that configuration.
+     * 
+     * @return the configuration associated with the plugin itself
+     */
+    public Configuration getPluginConfiguration() {
+        return pluginConfiguration;
+    }
+
+    public void setPluginConfiguration(Configuration pluginConfiguration) {
+        this.pluginConfiguration = pluginConfiguration;
     }
 
     /**

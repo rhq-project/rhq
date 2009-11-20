@@ -41,7 +41,7 @@ import javax.ejb.Timer;
 import javax.ejb.TimerService;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
-import javax.management.MBeanServer;
+import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 import javax.persistence.EntityManager;
@@ -53,7 +53,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.deployment.MainDeployerMBean;
 import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -462,11 +461,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
      */
     public void undeployInstaller() {
         try {
-            MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
 
-            File deployDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "deploy");
+            File deployDirectory = new File(serverHomeDir, "deploy");
 
             if (deployDirectory.exists()) {
                 File deployedInstallWar = new File(deployDirectory.getAbsolutePath(), "rhq-installer.war");
@@ -474,8 +471,10 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
 
                 if (deployedInstallWar.exists()) {
                     // we need to undeploy it first - on windows the files are locked and can't be renamed until undeployed
-                    name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
-                    mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, MainDeployerMBean.class, false);
+                    ObjectName name = ObjectNameFactory.create("jboss.system:service=MainDeployer");
+                    MBeanServerConnection mbs = MBeanServerLocator.locateJBoss();
+                    MainDeployerMBean mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name,
+                        MainDeployerMBean.class, false);
                     URL url = deployedInstallWar.toURI().toURL();
                     String urlString = url.toString().replace("%20", " "); // bug in undeployer doesn't like %20 - it wants a real space
                     ((MainDeployerMBean) mbean).undeploy(urlString);
@@ -580,11 +579,9 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void updateLicense(Subject subject, byte[] licenseData) {
         try {
-            MBeanServer mbs = MBeanServerLocator.locateJBoss();
-            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+            File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
 
-            File deployDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "deploy");
+            File deployDirectory = new File(serverHomeDir, "deploy");
 
             String licenseFileName = LicenseManager.getLicenseFileName();
 

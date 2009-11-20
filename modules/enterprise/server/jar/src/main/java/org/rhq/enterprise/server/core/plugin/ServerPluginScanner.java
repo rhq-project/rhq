@@ -176,7 +176,7 @@ public class ServerPluginScanner {
 
             ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
             SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-            serverPluginsManager.registerPlugin(subjectManager.getOverlord(), plugin, descriptor, pluginFile);
+            serverPluginsManager.registerPlugin(subjectManager.getOverlord(), plugin, pluginFile);
         } catch (Exception e) {
             log.error("Failed to register RHQ plugin file [" + pluginFile + "]", e);
         }

@@ -41,6 +41,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
@@ -58,12 +59,14 @@ public class PluginTest extends AbstractEJB3Test {
             String path = "/test/Update";
             String displayName = "Plugin Test - testUpdate";
             boolean enabled = true;
+            PluginStatusType status = PluginStatusType.INSTALLED;
             String md5 = "abcdef";
             byte[] content = "the content is here".getBytes();
 
             Plugin plugin = new Plugin(name, path);
             plugin.setDisplayName(displayName);
             plugin.setEnabled(enabled);
+            plugin.setStatus(status);
             plugin.setMD5(md5);
             plugin.setVersion(null);
             plugin.setDescription(null);
@@ -83,6 +86,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getPath().equals(path);
             assert plugin.getDisplayName().equals(displayName);
             assert plugin.isEnabled() == enabled;
+            assert plugin.getStatus() == PluginStatusType.INSTALLED;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
@@ -119,6 +123,7 @@ public class PluginTest extends AbstractEJB3Test {
             q.setParameter("path", path);
             q.setParameter("displayName", displayName);
             q.setParameter("enabled", enabled);
+            q.setParameter("status", status);
             q.setParameter("md5", md5);
             q.setParameter("version", version);
             q.setParameter("ampsVersion", ampsVersion);
@@ -179,11 +184,13 @@ public class PluginTest extends AbstractEJB3Test {
             String path = "/test/Persist";
             String displayName = "Plugin Test - testPersist";
             boolean enabled = true;
+            PluginStatusType status = PluginStatusType.INSTALLED;
             String md5 = "abcdef";
 
             Plugin plugin = new Plugin(name, path);
             plugin.setDisplayName(displayName);
             plugin.setEnabled(enabled);
+            plugin.setStatus(status);
             plugin.setMD5(md5);
 
             // the following are the only nullable fields
@@ -202,6 +209,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getPath().equals(path);
             assert plugin.getDisplayName().equals(displayName);
             assert plugin.isEnabled() == enabled;
+            assert plugin.getStatus() == PluginStatusType.INSTALLED;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
@@ -210,6 +218,17 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp() == null;
             assert plugin.getContent() == null;
+
+            // side check - see that "deleting" a plugin also sets enabled to false
+            assert plugin.isEnabled() == true;
+            assert plugin.getStatus() == PluginStatusType.INSTALLED;
+            plugin.setStatus(PluginStatusType.DELETED);
+            assert plugin.getStatus() == PluginStatusType.DELETED;
+            assert plugin.isEnabled() == false;
+            plugin = em.merge(plugin);
+            assert plugin.getStatus() == PluginStatusType.DELETED;
+            assert plugin.isEnabled() == false;
+
         } finally {
             getTransactionManager().rollback();
         }
@@ -333,6 +352,25 @@ public class PluginTest extends AbstractEJB3Test {
                 }
             }
             assert got_it : "findAll query failed to get our plugin";
+
+            // mark a plugin deleted - all of our queries should then never see it
+            plugin.setStatus(PluginStatusType.DELETED);
+            em.merge(plugin);
+
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            query.setParameter("name", name);
+            List<?> results = query.getResultList();
+            assert results.size() == 0;
+
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+            query.setParameter("ids", Arrays.asList(Integer.valueOf(plugin.getId())));
+            query.setParameter("type", plugin.getDeployment());
+            results = query.getResultList();
+            assert results.size() == 0;
+
+            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_SERVER);
+            results = query.getResultList();
+            assert results.size() == 0;
 
         } finally {
             getTransactionManager().rollback();

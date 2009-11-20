@@ -8,6 +8,7 @@ import javax.persistence.NoResultException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -40,7 +41,6 @@ public interface ServerPluginsLocal {
      * Call this method to fill in that data that wasn't originally loaded.
      * 
      * @param plugin
-     *
      * @return the same plugin, with the relationship data loaded
      */
     Plugin getServerPluginRelationships(Plugin plugin);
@@ -49,7 +49,6 @@ public interface ServerPluginsLocal {
      * Get a list of plugins from their IDs.
      * 
      * @param pluginIds the IDs of the plugins to load.
-     * 
      * @return plugins matching the given IDs
      */
     List<Plugin> getServerPluginsById(List<Integer> pluginIds);
@@ -76,56 +75,76 @@ public interface ServerPluginsLocal {
     /**
      * Enables the plugins and restarts the server plugin container.
      *
+     * @param subject user making the request
      * @param pluginIds the plugins to be enabled
+     * @throws Exception if failed to disable a plugin
      */
-    void enableServerPlugins(List<Integer> pluginIds);
+    void enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Disables the plugins and restarts the server plugin container.
      *
+     * @param subject user making the request
      * @param pluginIds the plugins to be disabled
-     * 
      * @return the list of plugins that were disabled
+     * @throws Exception if failed to disable a plugin
      */
-    List<Plugin> disableServerPlugins(List<Integer> pluginIds);
+    List<Plugin> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Removes the plugin from the system and restarts the server plugin container.
      *
+     * @param subject user making the request
      * @param pluginIds
-     * 
      * @return the list of plugins that were undeployed
+     * @throws Exception if failed to undeploy a plugin
      */
-    List<Plugin> undeployServerPlugins(List<Integer> pluginIds);
+    List<Plugin> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
-     *
+     * This has "requires new" semantics, so the results are committed immediately upon return.
+     * 
+     * @param subject user making the request
      * @param pluginIds the plugins to be enabled
      * @param enabled the value of the enabled flag for the plugins
+     * @throws if failed to update a plugin
      */
-    void setPluginEnabledFlag(List<Integer> pluginIds, boolean enabled);
+    void setPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception;
+
+    /**
+     * Sets the status flag in the database but does NOT restart the server plugin container.
+     * If the status is {@link PluginStatusType#DELETED}, the enabled flag is also flipped to <code>false</code>.
+     *
+     * This has "requires new" semantics, so the results are committed immediately upon return.
+     * 
+     * @param subject user making the request
+     * @param pluginIds the plugins to be enabled
+     * @param enabled the value of the enabled flag for the plugins
+     * @throws if failed to update one of the plugins
+     */
+    void setPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
 
     /**
      * Registers the given plugin to the database.
      * 
      * @param subject the user that needs to have permissions to add a plugin to the system
      * @param plugin the plugin definition
-     * @param descriptor the plugin descriptor that was found in the plugin file
      * @param pluginFile the actual plugin file itself
+     * @return the plugin after being persisted
      * @throws Exception if failed to fully register the plugin 
      */
-    void registerPlugin(Subject subject, Plugin plugin, ServerPluginDescriptorType descriptor, File pluginFile)
-        throws Exception;
+    Plugin registerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception;
 
     /**
      * Given a plugin that already exists, this will update that plugin's data in the database,
      * except for the content, which is left as-is. If the plugin did not yet exist, an exception is thrown.
      * You can use this to update the plugin's scheduled jobs configuration and plugin configuration.
      *
+     * @param subject user making the request
      * @param plugin existing plugin with updated data
      * @return the updated plugin
      * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
      */
-    public Plugin updatePluginExceptContent(Plugin plugin) throws Exception;
+    public Plugin updatePluginExceptContent(Subject subject, Plugin plugin) throws Exception;
 }

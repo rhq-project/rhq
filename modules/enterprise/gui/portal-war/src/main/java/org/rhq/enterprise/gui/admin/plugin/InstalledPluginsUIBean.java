@@ -38,6 +38,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -79,9 +80,7 @@ public class InstalledPluginsUIBean {
             scanner.scanAndRegister();
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated plugins.");
         } catch (Exception e) {
-            String err = "Failed to scan for updated plugins";
-            log.error(err + " - Cause: " + e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+            processException("Failed to scan for updated plugins", e);
         }
     }
 
@@ -118,9 +117,7 @@ public class InstalledPluginsUIBean {
                 + "]. A scan is required now in order to register it.");
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "New plugin uploaded: " + newPluginFilename);
         } catch (Exception e) {
-            String err = "Failed to process uploaded plugin";
-            log.error(err + " - Cause: " + e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+            processException("Failed to process uploaded plugin", e);
         }
 
         return;
@@ -132,8 +129,15 @@ public class InstalledPluginsUIBean {
         for (Plugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
-        serverPluginsBean.enableServerPlugins(getIds(selectedPlugins));
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.enableServerPlugins(subject, getIds(selectedPlugins));
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to enable server plugins", e);
+        }
         return;
     }
 
@@ -143,8 +147,15 @@ public class InstalledPluginsUIBean {
         for (Plugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
-        serverPluginsBean.disableServerPlugins(getIds(selectedPlugins));
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled server plugins: " + selectedPluginNames);
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.disableServerPlugins(subject, getIds(selectedPlugins));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled server plugins: "
+                + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to disable server plugins", e);
+        }
         return;
     }
 
@@ -154,8 +165,15 @@ public class InstalledPluginsUIBean {
         for (Plugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
-        serverPluginsBean.undeployServerPlugins(getIds(selectedPlugins));
-        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: " + selectedPluginNames);
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.undeployServerPlugins(subject, getIds(selectedPlugins));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: "
+                + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to undeploy server plugins", e);
+        }
         return;
     }
 
@@ -192,5 +210,10 @@ public class InstalledPluginsUIBean {
             throw new PermissionException("User [" + subject.getName()
                 + "] does not have the proper permissions to view or manage plugins");
         }
+    }
+
+    private void processException(String errMsg, Exception e) {
+        log.error(errMsg + ". Cause: " + ThrowableUtil.getAllMessages(e));
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, errMsg, e);
     }
 }

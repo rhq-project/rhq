@@ -46,6 +46,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -102,7 +104,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     public List<Plugin> getServerPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<Plugin>();
+            return new ArrayList<Plugin>(); // nothing to do
         }
         Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
         query.setParameter("ids", pluginIds);
@@ -126,14 +128,29 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return query.getResultList();
     }
 
-    public void enableServerPlugins(List<Integer> pluginIds) {
-        serverPluginsBean.setPluginEnabledFlag(pluginIds, true);
-        LookupUtil.getServerPluginService().restartMasterPluginContainer();
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return; // nothing to do
+        }
+
+        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, true);
+
+        // only restart the master if it was started to begin with
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        if (serverPluginService.isMasterPluginContainerStarted()) {
+            serverPluginService.restartMasterPluginContainer();
+        }
         return;
     }
 
-    public List<Plugin> disableServerPlugins(List<Integer> pluginIds) {
-        serverPluginsBean.setPluginEnabledFlag(pluginIds, false);
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public List<Plugin> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<Plugin>(); // nothing to do
+        }
+
+        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, false);
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
@@ -144,23 +161,34 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
             if (doomedPlugin != null) {
                 doomedPlugins.add(doomedPlugin);
-                AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
-                if (pc != null) {
-                    try {
-                        pc.unschedulePluginJobs(doomedPlugin.getName());
-                    } catch (Exception e) {
-                        log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                if (master != null) {
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                    if (pc != null) {
+                        try {
+                            pc.unschedulePluginJobs(doomedPlugin.getName());
+                        } catch (Exception e) {
+                            log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                        }
                     }
                 }
             }
         }
 
-        serverPluginService.restartMasterPluginContainer();
+        // only restart if the master was started to begin with; otherwise, leave it down
+        if (master != null) {
+            serverPluginService.restartMasterPluginContainer();
+        }
+
         return doomedPlugins;
     }
 
-    public List<Plugin> undeployServerPlugins(List<Integer> pluginIds) {
-        serverPluginsBean.setPluginEnabledFlag(pluginIds, false);
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public List<Plugin> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<Plugin>(); // nothing to do
+        }
+
+        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, false);
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
@@ -171,12 +199,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
             if (doomedPlugin != null) {
                 doomedPlugins.add(doomedPlugin);
-                AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
-                if (pc != null) {
-                    try {
-                        pc.unschedulePluginJobs(doomedPlugin.getName());
-                    } catch (Exception e) {
-                        log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                if (master != null) {
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                    if (pc != null) {
+                        try {
+                            pc.unschedulePluginJobs(doomedPlugin.getName());
+                        } catch (Exception e) {
+                            log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                        }
                     }
                 }
 
@@ -185,35 +215,65 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 // config can be set to the new cofig definition's default values.
                 doomedPlugin.setPluginConfiguration(null);
                 doomedPlugin.setScheduledJobsConfiguration(null);
+                doomedPlugin.setStatus(PluginStatusType.DELETED);
 
-                // TODO: this really won't do anything, our server plugin scanner will see it missing
-                //       and stream it back on the file system. Need to add a DELETED column to RHQ_PLUGIN
-                //       and call doomedPlugin.setDeleted(true). When deleted is true, our scanner can
-                //       skip writing the file to disk. All plugin queries should avoid returning
-                //       plugin rows that have deleted=true. Only then will removing it from the
-                //       file system as we do below actually help.
-                File pluginDir = serverPluginService.getServerPluginsDirectory();
-                File currentFile = new File(pluginDir, doomedPlugin.getPath());
-                currentFile.delete();
+                try {
+                    File pluginDir = serverPluginService.getServerPluginsDirectory();
+                    File currentFile = new File(pluginDir, doomedPlugin.getPath());
+                    currentFile.delete();
+                } catch (Exception e) {
+                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: "
+                        + ThrowableUtil.getAllMessages(e));
+                }
             }
         }
 
-        serverPluginService.restartMasterPluginContainer();
+        // only restart if the master was started to begin with; otherwise, leave it down
+        if (master != null) {
+            serverPluginService.restartMasterPluginContainer();
+        }
+
         return doomedPlugins;
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setPluginEnabledFlag(List<Integer> pluginIds, boolean enabled) {
+    public void setPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return; // nothing to do
+        }
         Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS);
         q.setParameter("ids", pluginIds);
         q.setParameter("enabled", Boolean.valueOf(enabled));
-        q.executeUpdate();
+        int count = q.executeUpdate();
+        if (count != pluginIds.size()) {
+            throw new Exception("Failed to update [" + pluginIds.size() + "] plugins. Count was [" + count + "]");
+        }
+
         return;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void registerPlugin(Subject subject, Plugin plugin, ServerPluginDescriptorType descriptor, File pluginFile)
-        throws Exception {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return; // nothing to do
+        }
+        List<Plugin> plugins = getServerPluginsById(pluginIds);
+        for (Plugin plugin : plugins) {
+            plugin.setStatus(status);
+            updatePluginExceptContent(subject, plugin);
+        }
+        return;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public Plugin registerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
+
+        if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
+            throw new IllegalArgumentException("Plugin [" + plugin.getName()
+                + "] must be a server plugin to be registered");
+        }
 
         Plugin existingPlugin = null;
         boolean newOrUpdated = false;
@@ -240,7 +300,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             if (plugin.getId() == 0) {
                 entityManager.persist(plugin);
             } else {
-                plugin = updatePluginExceptContent(plugin);
+                plugin = updatePluginExceptContent(subject, plugin);
             }
 
             if (pluginFile != null) {
@@ -250,10 +310,11 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             log.debug("Updated plugin entity [" + plugin + "]");
         }
 
-        return;
+        return plugin;
     }
 
-    public Plugin updatePluginExceptContent(Plugin plugin) throws Exception {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public Plugin updatePluginExceptContent(Subject subject, Plugin plugin) throws Exception {
         // this method is here because we need a way to update the plugin's information
         // without blowing away the content data. Because we do not want to load the
         // content blob in memory, the plugin's content field will be null - if we were
@@ -267,6 +328,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             q.setParameter("path", plugin.getPath());
             q.setParameter("displayName", plugin.getDisplayName());
             q.setParameter("enabled", plugin.isEnabled());
+            q.setParameter("status", plugin.getStatus());
             q.setParameter("md5", plugin.getMD5());
             q.setParameter("version", plugin.getVersion());
             q.setParameter("ampsVersion", plugin.getAmpsVersion());

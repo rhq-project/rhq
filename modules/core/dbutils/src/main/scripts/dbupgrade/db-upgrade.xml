@@ -2172,6 +2172,17 @@
         </schema-directSQL>
       </schemaSpec>
 
+      <schemaSpec version="2.69.1">
+        <!-- add the new column that indicates if this is plugin has been deleted -->
+        <schema-addColumn table="RHQ_PLUGIN" column="STATUS" columnType="VARCHAR2" precision="16"/>
+        <schema-directSQL>
+          <statement desc="Updating existing plugins with status of INSTALLED">
+            UPDATE RHQ_PLUGIN SET STATUS = 'INSTALLED'
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PLUGIN" column="STATUS" nullable="FALSE"/>
+      </schemaSpec>
+
     </dbupgrade>
   </target>
 </project>

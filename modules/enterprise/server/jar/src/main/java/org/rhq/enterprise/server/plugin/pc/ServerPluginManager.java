@@ -288,13 +288,8 @@ public class ServerPluginManager {
         List<ScheduledJobDefinition> schedules;
 
         try {
-            // get the plugin data from the database
-            ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
-            Plugin plugin = serverPluginsManager.getServerPlugin(pluginName);
-
-            // get the plugin configuration and scheduled jobs from the DB data
+            Plugin plugin = getPlugin(env);
             plugnConfig = plugin.getPluginConfiguration();
-
             Configuration scheduledJobsConfig = plugin.getScheduledJobsConfiguration();
             schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(scheduledJobsConfig);
         } catch (Exception e) {
@@ -304,6 +299,20 @@ public class ServerPluginManager {
         context = new ServerPluginContext(env, dataDir, tmpDir, plugnConfig, schedules);
         this.pluginContextCache.put(pluginName, context);
         return context;
+    }
+
+    /**
+     * Given a plugin environment, return its Plugin representation, which should also include
+     * the plugin configuration and scheduled jobs configuration.
+     * 
+     * @param pluginEnv
+     * @return the Plugin object for the given plugin
+     */
+    protected Plugin getPlugin(ServerPluginEnvironment pluginEnv) {
+        // get the plugin data from the database
+        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        Plugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginName());
+        return plugin;
     }
 
     /**

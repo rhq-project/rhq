@@ -302,7 +302,7 @@ public class MasterServerPluginContainer {
 
             if (pluginFiles != null) {
 
-                List<String> enabledPlugins = LookupUtil.getServerPlugins().getPluginNamesByEnabled(true);
+                List<String> disabledPlugins = getDisabledPluginNames();
 
                 for (File pluginFile : pluginFiles) {
                     if (pluginFile.getName().endsWith(".jar")) {
@@ -312,7 +312,7 @@ public class MasterServerPluginContainer {
                             ServerPluginDescriptorType descriptor;
                             descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
                             if (descriptor != null) {
-                                if (enabledPlugins.contains(descriptor.getName())) {
+                                if (!disabledPlugins.contains(descriptor.getName())) {
                                     log.debug("pre-loaded server plugin from URL: " + pluginUrl);
                                     plugins.put(pluginUrl, descriptor);
                                 } else {
@@ -330,6 +330,18 @@ public class MasterServerPluginContainer {
         }
 
         return plugins;
+    }
+
+    /**
+     * This will return a list of plugin names that represent all the plugins that are to be
+     * disabled. If a plugin jar is found on the filesystem, its plugin name should be checked with
+     * this "blacklist" if it its name is found, that plugin should not be loaded.
+     * 
+     * @return names of "blacklisted" plugins that should not be loaded
+     */
+    protected List<String> getDisabledPluginNames() {
+        List<String> disabledPlugins = LookupUtil.getServerPlugins().getPluginNamesByEnabled(false);
+        return disabledPlugins;
     }
 
     /**

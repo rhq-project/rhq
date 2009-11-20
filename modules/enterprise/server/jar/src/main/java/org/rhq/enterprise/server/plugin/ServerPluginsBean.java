@@ -87,6 +87,16 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return plugin;
     }
 
+    public Plugin getServerPluginRelationships(Plugin plugin) {
+        plugin = entityManager.find(Plugin.class, plugin.getId());
+
+        // force eager load
+        plugin.getPluginConfiguration().getProperties().size();
+        plugin.getScheduledJobsConfiguration().getProperties().size();
+
+        return plugin;
+    }
+
     public List<Plugin> getServerPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<Plugin>();

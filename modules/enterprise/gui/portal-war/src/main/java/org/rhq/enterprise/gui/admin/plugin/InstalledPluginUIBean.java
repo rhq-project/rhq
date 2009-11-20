@@ -75,6 +75,7 @@ public class InstalledPluginUIBean {
         } else {
             ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
             this.plugin = serverPluginsBean.getServerPlugin(pluginName);
+            this.plugin = serverPluginsBean.getServerPluginRelationships(this.plugin);
             try {
                 ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
                 this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor

@@ -32,6 +32,26 @@ public interface ServerPluginsLocal {
      */
     Plugin getServerPlugin(String name);
 
+    /**
+     * Methods in this object that return plugins normally do not include
+     * the data from relationships with the plugin (for example, the
+     * plugin configuration and scheduled jobs related to the plugin).
+     * 
+     * Call this method to fill in that data that wasn't originally loaded.
+     * 
+     * @param plugin
+     *
+     * @return the same plugin, with the relationship data loaded
+     */
+    Plugin getServerPluginRelationships(Plugin plugin);
+
+    /**
+     * Get a list of plugins from their IDs.
+     * 
+     * @param pluginIds the IDs of the plugins to load.
+     * 
+     * @return plugins matching the given IDs
+     */
     List<Plugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**

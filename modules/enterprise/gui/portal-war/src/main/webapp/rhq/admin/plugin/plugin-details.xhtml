@@ -75,6 +75,26 @@
                  <h:outputText escape="false"  value="&lt;pre&gt; #{InstalledPluginUIBean.plugin.help} &lt;/pre&gt;"/>
 
               </rich:panel>
+
+              <rich:panel>
+                 <f:facet name="header">
+                    <h:outputText value="Plugin Configuration"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
+                    readOnly="true" />
+              </rich:panel>
+
+              <rich:panel>
+                 <f:facet name="header">
+                    <h:outputText value="Scheduled Jobs"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
+                    readOnly="true" />
+              </rich:panel>
            </rich:panel>
 
         </h:form>

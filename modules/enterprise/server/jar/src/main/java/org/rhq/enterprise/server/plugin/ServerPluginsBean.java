@@ -284,6 +284,10 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         if (existingPlugin != null) {
+            if (existingPlugin.getStatus() == PluginStatusType.DELETED) {
+                throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
+                    + "], it has been marked as deleted");
+            }
             Plugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes use == for reference equality
                 newOrUpdated = true;

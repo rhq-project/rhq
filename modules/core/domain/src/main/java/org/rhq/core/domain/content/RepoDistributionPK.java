@@ -67,17 +67,17 @@ public class RepoDistributionPK implements Serializable {
         this.repo = repo;
     }
 
-    public Distribution getKickstartTree() {
+    public Distribution getDistribution() {
         return dist;
     }
 
-    public void setContentSource(Distribution kstree) {
+    public void setDistribution(Distribution kstree) {
         this.dist = kstree;
     }
 
     @Override
     public String toString() {
-        return "RepoContentSourcePK: repo=[" + repo + "]; contentSource=[" + dist + "]";
+        return "RepoDistributionPK: repo=[" + repo + "]; distribution=[" + dist + "]";
     }
 
     @Override
@@ -94,7 +94,7 @@ public class RepoDistributionPK implements Serializable {
             return true;
         }
 
-        if ((obj == null) || (!(obj instanceof RepoContentSourcePK))) {
+        if ((obj == null) || (!(obj instanceof RepoDistributionPK))) {
             return false;
         }
 

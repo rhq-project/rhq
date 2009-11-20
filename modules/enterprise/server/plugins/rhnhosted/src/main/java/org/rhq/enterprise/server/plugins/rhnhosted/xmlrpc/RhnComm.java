@@ -6,6 +6,8 @@ import java.util.List;
 import javax.xml.bind.JAXBElement;
 
 import org.apache.xmlrpc.XmlRpcException;
+import org.apache.commons.logging.LogFactory;
+import org.apache.commons.logging.Log;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
@@ -16,7 +18,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnProductNameType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 
 public class RhnComm {
-
+    private final Log log = LogFactory.getLog(RhnComm.class);
     protected XmlRpcExecutor dumpHandler;
     protected String serverUrl;
     protected String SATDUMP_HANDLER = "/SAT-DUMP";
@@ -28,6 +30,8 @@ public class RhnComm {
 
     public List<RhnProductNameType> getProductNames(String systemId) throws IOException, XmlRpcException {
         Object[] params = new Object[] { systemId };
+
+        log.debug("getProductNames()");
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.product_names", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnProductNameType> names = sat.getRhnProductNames().getRhnProductName();
@@ -36,6 +40,8 @@ public class RhnComm {
 
     public List<RhnChannelFamilyType> getChannelFamilies(String systemId) throws IOException, XmlRpcException {
         Object[] params = new Object[] { systemId };
+
+        log.debug("getChannelFamilies()");
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.channel_families", params);
         RhnSatelliteType sat = result.getValue();
         List<RhnChannelFamilyType> families = sat.getRhnChannelFamilies().getRhnChannelFamily();
@@ -45,6 +51,7 @@ public class RhnComm {
     public List<RhnChannelType> getChannels(String systemId, List<String> channelLabels) throws IOException,
         XmlRpcException {
 
+        log.debug("getChannels(" + channelLabels + ")");
         Object[] params = new Object[] { systemId, channelLabels };
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.channels", params);
         RhnSatelliteType sat = result.getValue();
@@ -55,6 +62,7 @@ public class RhnComm {
     public List<RhnPackageShortType> getPackageShortInfo(String systemId, List<String> pkgIds) throws IOException,
         XmlRpcException {
 
+        log.debug("getPackageShortInfo() passed in package id list has " + pkgIds.size() + " entries");
         Object[] params = new Object[] { systemId, pkgIds };
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.packages_short", params);
         RhnSatelliteType sat = result.getValue();
@@ -65,6 +73,7 @@ public class RhnComm {
     public List<RhnPackageType> getPackageMetadata(String systemId, List<String> pkgIds) throws IOException,
         XmlRpcException {
 
+        log.debug("getPackageMetadata() passed in package id list has " + pkgIds.size() + " entries");
         Object[] params = new Object[] { systemId, pkgIds };
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.packages", params);
         RhnSatelliteType sat = result.getValue();
@@ -75,6 +84,7 @@ public class RhnComm {
     public List<RhnKickstartableTreeType> getKickstartTreeMetadata(String systemId, List<String> ksLabels)
         throws IOException, XmlRpcException {
 
+        log.debug("getKickstartTreeMetadata(" + ksLabels + ")");
         Object[] params = new Object[] { systemId, ksLabels };
         JAXBElement<RhnSatelliteType> result = (JAXBElement) dumpHandler.execute("dump.kickstartable_trees", params);
         RhnSatelliteType sat = result.getValue();

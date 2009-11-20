@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -130,15 +131,26 @@ public interface ContentSourceManagerLocal {
     ContentSource getContentSourceByNameAndType(Subject subject, String name, String typeName);
 
     /**
-     * Gets the list of repos that are associated with a given content source.
+     * Gets the list of imported repos that are associated with a given content source.
      *
-     * @param  subject user asking to perform this
-     * @param  contentSourceId The id of a content source.
-     * @param  pc pagination controls
+     * @param  subject         user asking to perform this
+     * @param  contentSourceId the id of a content source.
+     * @param  pc              pagination controls
      *
      * @return list of associated repos
      */
     PageList<Repo> getAssociatedRepos(Subject subject, int contentSourceId, PageControl pc);
+
+    /**
+     * Gets the list of candidate repos that are associated with a given content source.
+     *
+     * @param  subject         user asking to perform this
+     * @param  contentSourceId the id of a content source.
+     * @param  pc              pagination controls
+     *
+     * @return list of candidate repos
+     */
+    PageList<Repo> getCandidateRepos(Subject subject, int contentSourceId, PageControl pc);
 
     /**
      * Allows the caller to page through a list of historical sync results for a content source.
@@ -221,6 +233,21 @@ public interface ContentSourceManagerLocal {
         PageControl pc);
 
     /**
+     * Returns all packages from the given repo. This call takes into account the content source to provide any
+     * extra data on the package versions that exist for the particular mapping of content source and package,
+     * such as the location attribute.
+     *
+     * @param subject         user retrieving the data
+     * @param contentSourceId content source from which the packages are retrieved
+     * @param repoId          repo from which the packages are retrieved
+     *
+     * @return all package versions that the content source will be providing content for. The object returned also
+     *         contains the location where those package versions are located in the content source
+     */
+    List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject, int contentSourceId,
+                                                                                 int repoId);
+
+    /**
      * Returns count of PackageVersions associated with the given content source.
      *
      * @param  subject         caller requesting count
@@ -257,6 +284,8 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject, int[] contentSourceIds,
         PageControl pc);
 
+    
+
     /**
      * Returns all the package versions that are served by the content source identified by the given ID but whose
      * {@link PackageVersion#getPackageBits() package bits} have not been loaded yet.
@@ -270,6 +299,16 @@ public interface ContentSourceManagerLocal {
      */
     PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
         int contentSourceId, PageControl pc);
+
+
+    /**
+     * This will download all the distribution bits associated with a specific content source.
+     *
+     * @param subject
+     * @param contentSource
+     */
+    void downloadDistributionBits(Subject subject, ContentSource contentSource);
+
 
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package
@@ -365,6 +404,19 @@ public interface ContentSourceManagerLocal {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults);
 
+    /**
+     * After a sync has happened, this is responsible for persisting the results.
+     *
+     * @param  contentSource content source that was just sync'ed
+     * @param  report        information on what the current inventory should look like
+     * @param  syncResults   sync results object that should be updated to track this method's progress
+     *
+     * @return the updated syncResults that includes more summary information in the results string that indicates what
+     *         was done
+     */
+    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults);
+
     void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 
     ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
@@ -380,6 +432,12 @@ public interface ContentSourceManagerLocal {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
+    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults, StringBuilder progress);
+
+    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
+    
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
      * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that

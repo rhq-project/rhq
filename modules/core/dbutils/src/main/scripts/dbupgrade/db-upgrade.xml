@@ -17,13 +17,13 @@
     </echo>
 
     <dbupgrade jdbcUrl="${jdbc.url}"
-    	       jdbcUser="${jdbc.user}"
-    	       jdbcPassword="${jdbc.password}"
-    	       valueColumn="PROPERTY_VALUE"
-    	       table="RHQ_SYSTEM_CONFIG"
-    	       keyColumn="PROPERTY_KEY"
-    	       keyMatch="DB_SCHEMA_VERSION"
-    	       targetSchemaVersion="${target.schema.version}">
+               jdbcUser="${jdbc.user}"
+               jdbcPassword="${jdbc.password}"
+               valueColumn="PROPERTY_VALUE"
+               table="RHQ_SYSTEM_CONFIG"
+               keyColumn="PROPERTY_KEY"
+               keyMatch="DB_SCHEMA_VERSION"
+               targetSchemaVersion="${target.schema.version}">
 
       <schemaSpec version="2.0">
         <!-- Empty initial schema to avoid install failure on default latest schema version -->
@@ -870,15 +870,15 @@
         <schema-directSQL>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing trigger">
             DELETE FROM rhq_qrtz_triggers
-          	WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing simple trigger">
             DELETE FROM rhq_qrtz_simple_triggers
-          	WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE trigger_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
           <statement desc="Unscheduling auto-baseline job from Quartz - removing job details">
             DELETE FROM rhq_qrtz_job_details
-          	WHERE job_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
+            WHERE job_name='org.rhq.enterprise.server.scheduler.jobs.AutoBaselineCalculationJob'
           </statement>
         </schema-directSQL>
       </schemaSpec>
@@ -1089,7 +1089,7 @@
         <schema-directSQL>
           <statement desc="Populating values for new column RHQ_MEASUREMENT_DEF.RAW_NUMERIC_TYPE">
             UPDATE RHQ_MEASUREMENT_DEF md
-          	SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
+            SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
                                      WHERE NAME = md.NAME AND RESOURCE_TYPE_ID = md.RESOURCE_TYPE_ID AND (NUMERIC_TYPE = 1 OR NUMERIC_TYPE = 2))
             WHERE NUMERIC_TYPE = 0
           </statement>
@@ -1468,7 +1468,7 @@
         <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
         <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
       </schemaSpec>
-    	
+
       <schemaSpec version="2.59">
         <schema-directSQL>
           <statement desc="Creating table RHQ_RAW_CONFIG">
@@ -2019,10 +2019,127 @@
           precision="255" />
       </schemaSpec>
 
-      <schemaSpec version="2.62.1">
-        <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
-        <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
+
+      <schemaSpec version="2.63">
+          <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
+          <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
+    	
+    	<!-- Generic tagging support -->
+      <schemaSpec version="2.64">
+    	<schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
+    	  <schema-directSQL>
+    	    <statement>
+    	      CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
+    	    </statement>
+    	  </schema-directSQL>
+    	 <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
+    	 <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
+    	 <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
+    	 <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+      </schemaSpec>
+    	
+   	  <!-- Distribution Files -->
+      <schemaSpec version="2.65">
+      	 <schema-directSQL>
+      	    <statement>
+      	        CREATE TABLE RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID INTEGER )
+      	    </statement>
+      	 </schema-directSQL>
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false" />
+      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG" />
+      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false" />
+      	<schema-directSQL>
+      	  <statement targetDBVendor="postgresql">
+      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+      	  </statement>
+      	  <statement targetDBVendor="oracle">
+      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+      	  </statement>
+      	</schema-directSQL>
+      	<schema-directSQL>
+      	 <statement targetDBVendor="oracle">
+      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
+      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+      	  FOREIGN KEY ( DISTRIBUTION_ID)
+      	  REFERENCES RHQ_DISTRIBUTION ( ID )
+      	 </statement>
+      	 <statement targetDBVendor="postgresql">
+      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
+      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+      	  FOREIGN KEY ( DISTRIBUTION_ID)
+      	  REFERENCES RHQ_DISTRIBUTION ( ID )
+      	 </statement>
+        </schema-directSQL>
+      	
+      </schemaSpec>
+
+
+      <!-- RHQ_REPO_TAG_MAP -->
+      <schemaSpec version="2.66">
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_REPO_TAG_MAP ( REPO_ID INTEGER )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="REPO_ID" nullable="false" />
+        <schema-addColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" nullable="false" />
+        <schema-directSQL>
+          <statement>
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_KEY
+            PRIMARY KEY ( REPO_ID, TAG_ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_REPO_ID_FKEY
+            FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD FOREIGN KEY ( REPO_ID )
+            REFERENCES RHQ_REPO ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD CONSTRAINT RHQ_REPO_TAG_MAP_TAG_ID_FKEY
+            FOREIGN KEY ( TAG_ID )
+            REFERENCES RHQ_TAG ( ID )
+          </statement>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_REPO_TAG_MAP
+            ADD FOREIGN KEY ( TAG_ID )
+            REFERENCES RHQ_TAG ( ID )
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
+      <schemaSpec version="2.68">
+      	<schema-createSequence name="RHQ_DISTRIBUTION_FILE_SEQ" initial="10001" />
+        <schema-directSQL>
+            <statement>
+                ALTER TABLE RHQ_DISTRIBUTION_FILE DROP CONSTRAINT RHQ_DISTRIBUTION_FILE_PKEY
+            </statement>
+        </schema-directSQL>
+        	
+        <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />
+      	
+      	<schema-directSQL>	
+        	<statement>
+        		ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
+            </statement>
+        </schema-directSQL>
+       </schemaSpec>
+              
 
     </dbupgrade>
   </target>

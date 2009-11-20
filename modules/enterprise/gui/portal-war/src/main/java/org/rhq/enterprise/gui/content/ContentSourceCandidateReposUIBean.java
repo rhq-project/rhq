@@ -19,8 +19,9 @@
 package org.rhq.enterprise.gui.content;
 
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -31,36 +32,37 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-public class ContentSourcePackageVersionsUIBean extends PagedDataTableUIBean {
-    public static final String MANAGED_BEAN_NAME = "ContentSourcePackageVersionsUIBean";
+public class ContentSourceCandidateReposUIBean extends PagedDataTableUIBean {
 
-    public ContentSourcePackageVersionsUIBean() {
+    public static final String MANAGED_BEAN_NAME = ContentSourceCandidateReposUIBean.class.getSimpleName();
+
+    public ContentSourceCandidateReposUIBean() {
     }
 
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new ContentSourcePackageVersionsDataModel(PageControlView.ContentSourcePackageVersionsList,
+            dataModel = new ContentSourceCandidateReposDataModel(PageControlView.ContentSourceCandidateReposList,
                 MANAGED_BEAN_NAME);
         }
 
         return dataModel;
     }
 
-    private class ContentSourcePackageVersionsDataModel extends PagedListDataModel<PackageVersionContentSource> {
-        public ContentSourcePackageVersionsDataModel(PageControlView view, String beanName) {
+    private class ContentSourceCandidateReposDataModel extends PagedListDataModel<Repo> {
+        public ContentSourceCandidateReposDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
         @Override
         @SuppressWarnings("unchecked")
-        public PageList<PackageVersionContentSource> fetchPage(PageControl pc) {
+        public PageList<Repo> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
+
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
-            PageList<PackageVersionContentSource> results;
-            results = manager.getPackageVersionsFromContentSource(subject, id, pc);
+            PageList<Repo> results = manager.getCandidateRepos(subject, id, pc);
             return results;
         }
     }

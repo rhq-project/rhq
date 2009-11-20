@@ -17,22 +17,24 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.custom;
+
+import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
 
 /**
- * A schedule that triggers based on a cron expression.
+ * Example of a stateless class that can process scheduled job invocations.
  * 
  * @author John Mazzitelli
  */
-public class CronSchedule extends Schedule {
-    private final String cronExpression;
-
-    public CronSchedule(boolean concurrent, String cronExpression) {
-        super(concurrent);
-        this.cronExpression = cronExpression;
+public class MyScheduledJob {
+    public void executeWithContext(ScheduledJobInvocationContext jobContext) throws Exception {
+        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] jobId="
+            + jobContext.getJobDefinition().getJobId() + ", methodName="
+            + jobContext.getJobDefinition().getMethodName() + ", callbackData="
+            + jobContext.getJobDefinition().getCallbackData());
     }
 
-    public String getCronExpression() {
-        return this.cronExpression;
+    public void executeNoArg() throws Exception {
+        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] NO CONTEXT!");
     }
 }

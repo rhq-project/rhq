@@ -19,13 +19,13 @@
 package org.rhq.enterprise.server.plugin.pc.generic;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * A sample lifecycle listener for the sample generic plugin. This listener will be
  * the main interface the server uses to start and stop the plugin.
  */
-public class TestLifecycleListener implements ServerPluginLifecycleListener {
+public class TestLifecycleListener implements ServerPluginComponent {
 
     public enum LifecycleState {
         UNINITIALIZED, INITIALIZED, STARTED, STOPPED

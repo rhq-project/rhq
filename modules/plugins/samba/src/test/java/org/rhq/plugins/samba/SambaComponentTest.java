@@ -37,6 +37,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
 
         return config;
     }
+
     @Override
     protected String getPluginName() {
         return "Samba";
@@ -46,6 +47,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
     protected String getResourceTypeName() {
         return "Samba Server";
     }
+
 
     @Override
     protected Configuration getUpdatedResourceConfig() {

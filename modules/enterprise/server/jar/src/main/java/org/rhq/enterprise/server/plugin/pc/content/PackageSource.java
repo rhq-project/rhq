@@ -37,6 +37,8 @@ public interface PackageSource {
     /**
      * Requests that this package source perform a synchronization with its external package source.
      *
+     * @param repoName         indicates the repo from which packages should be retrieved; may be ignored
+     *                         if the package source does not support the concept of repos 
      * @param report           used to populate the packages diff information necessary to
      *                         bring the server up to date
      *                         with the current state of the external package source.
@@ -45,7 +47,8 @@ public interface PackageSource {
      * @throws Exception if the package source is unable to perform the synchronization, for instance if the external
      *                   source cannot be connected to.
      */
-    void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
+    void synchronizePackages(String repoName, PackageSyncReport report,
+                             Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception;
 
     /**

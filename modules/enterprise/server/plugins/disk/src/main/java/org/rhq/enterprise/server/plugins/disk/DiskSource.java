@@ -95,7 +95,8 @@ public class DiskSource implements ContentProvider, PackageSource {
         this.supportedPackageTypes = null;
     }
 
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
+    public void synchronizePackages(String repoName, PackageSyncReport report,
+                                    Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove

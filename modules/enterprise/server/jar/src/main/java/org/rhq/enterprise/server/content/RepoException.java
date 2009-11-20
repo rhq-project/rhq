@@ -18,9 +18,17 @@
  */
 package org.rhq.enterprise.server.content;
 
+/**
+ * General exception used to convey issues in CRUD operations on a repo or repo group.
+ *
+ * @see org.rhq.core.domain.content.Repo
+ * @see org.rhq.core.domain.content.RepoGroup
+ */
 public class RepoException extends ContentException {
 
     private static final long serialVersionUID = 1L;
+
+    private RepoExceptionType type = RepoExceptionType.GENERAL;
 
     public RepoException() {
     }
@@ -37,4 +45,21 @@ public class RepoException extends ContentException {
         super(message, cause);
     }
 
+    /**
+     * Programmatic hook to determine if a repo operation failure was related to the repo name
+     * already existing.
+     *
+     * @return
+     */
+    public RepoExceptionType getType() {
+        return type;
+    }
+
+    public void setType(RepoExceptionType type) {
+        this.type = type;
+    }
+
+    public enum RepoExceptionType {
+        GENERAL, NAME_ALREADY_EXISTS
+    }
 }

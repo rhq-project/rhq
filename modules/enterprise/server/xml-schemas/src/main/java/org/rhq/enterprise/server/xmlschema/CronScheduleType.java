@@ -17,22 +17,29 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.enterprise.server.plugin.pc;
+package org.rhq.enterprise.server.xmlschema;
 
 /**
- * A schedule that triggers periodically every certain number of milliseconds.
+ * A schedule that triggers based on a cron expression.
  * 
  * @author John Mazzitelli
  */
-public class PeriodicSchedule extends Schedule {
-    private final long period;
+public class CronScheduleType extends AbstractScheduleType {
+    public static final String TYPE_NAME = "cron";
 
-    public PeriodicSchedule(boolean concurrent, long period) {
-        super(concurrent);
-        this.period = period;
+    private final String cronExpression;
+
+    public CronScheduleType(boolean concurrent, String cronExpression) {
+        super(concurrent, TYPE_NAME);
+        this.cronExpression = cronExpression;
     }
 
-    public long getPeriod() {
-        return this.period;
+    public String getCronExpression() {
+        return this.cronExpression;
+    }
+
+    @Override
+    public String getScheduleTrigger() {
+        return getCronExpression();
     }
 }

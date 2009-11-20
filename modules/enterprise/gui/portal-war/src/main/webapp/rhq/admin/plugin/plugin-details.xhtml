@@ -76,24 +76,32 @@
 
               </rich:panel>
 
-              <rich:panel>
+
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null}">
                  <f:facet name="header">
                     <h:outputText value="Plugin Configuration"/>
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
-                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
-                    readOnly="true" />
+                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}" />
               </rich:panel>
 
-              <rich:panel>
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
                  <f:facet name="header">
                     <h:outputText value="Scheduled Jobs"/>
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
-                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
-                    readOnly="true" />
+                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}" />
+              </rich:panel>
+
+              <input type="hidden" name="plugin" value="#{param.plugin}"/>
+              <input type="hidden" name="pluginType" value="#{param.pluginType}"/>
+
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null ||
+                                        InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
+                 <h:commandButton value="OK" type="submit" action="#{InstalledPluginUIBean.updatePlugin}"
+                                alt="Click to Save Plugin" styleClass="buttonmed" />
               </rich:panel>
            </rich:panel>
 

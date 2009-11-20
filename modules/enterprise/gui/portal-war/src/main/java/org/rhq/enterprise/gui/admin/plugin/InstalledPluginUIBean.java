@@ -65,6 +65,21 @@ public class InstalledPluginUIBean {
         return this.scheduledJobsDefinition;
     }
 
+    public void updatePlugin() {
+        ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+
+        try {
+            serverPlugins.updatePluginExceptContent(EnterpriseFacesContextUtility.getSubject(), plugin);
+
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                                           "Configuration settings saved.");
+        } catch (Exception e) {
+            log.error("Error updating the plugin configurations.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                                           "There was an error changing the configuration settings.", e);
+        }
+    }
+
     private void lookupPlugin() {
         hasPermission();
         String pluginName = FacesContextUtility.getRequiredRequestParameter("plugin", String.class);

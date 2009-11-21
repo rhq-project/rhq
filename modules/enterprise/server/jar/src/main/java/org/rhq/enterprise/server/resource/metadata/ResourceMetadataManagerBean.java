@@ -50,6 +50,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -196,6 +197,33 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (plugin.getId() == 0) {
             entityManager.persist(plugin);
         } else {
+            // agent plugins don't support these configs, but if/when they do in the future, this will support it
+            boolean needFlush = false;
+            Configuration config = plugin.getPluginConfiguration();
+            if (config != null) {
+                if (config.getId() > 0) {
+                    config = entityManager.getReference(Configuration.class, config.getId());
+                    plugin.setPluginConfiguration(config);
+                } else {
+                    entityManager.persist(config);
+                    needFlush = true;
+                }
+            }
+            config = plugin.getScheduledJobsConfiguration();
+            if (config != null) {
+                if (config.getId() > 0) {
+                    config = entityManager.getReference(Configuration.class, config.getId());
+                    plugin.setScheduledJobsConfiguration(config);
+                } else {
+                    entityManager.persist(config);
+                    needFlush = true;
+                }
+            }
+            if (needFlush) {
+                entityManager.flush(); // must be flushed to the DB so the JPQL update below works
+            }
+
+            // update all the fields except content
             Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
             q.setParameter("id", plugin.getId());
             q.setParameter("name", plugin.getName());

@@ -44,6 +44,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginStatusType;
@@ -213,8 +214,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 // if this plugin ever gets re-installed, let's support the use-case where the new plugin
                 // will have different config metadata. Here we null out the old config so the new
                 // config can be set to the new cofig definition's default values.
-                doomedPlugin.setPluginConfiguration(null);
-                doomedPlugin.setScheduledJobsConfiguration(null);
+                if (doomedPlugin.getPluginConfiguration() != null) {
+                    entityManager.remove(doomedPlugin.getPluginConfiguration());
+                    doomedPlugin.setPluginConfiguration(null);
+                }
+                if (doomedPlugin.getScheduledJobsConfiguration() != null) {
+                    entityManager.remove(doomedPlugin.getScheduledJobsConfiguration());
+                    doomedPlugin.setScheduledJobsConfiguration(null);
+                }
                 doomedPlugin.setStatus(PluginStatusType.DELETED);
 
                 try {
@@ -324,6 +331,22 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void purgeServerPlugin(Subject subject, String pluginName) {
+        Query q = this.entityManager.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+        q.setParameter("name", pluginName);
+        q.setParameter("type", PluginDeploymentType.SERVER);
+        Plugin doomed = (Plugin) q.getSingleResult();
+
+        // get the reference to attach to em and use the em.remove. this cascade deletes too.
+        doomed = this.entityManager.getReference(Plugin.class, doomed.getId());
+        this.entityManager.remove(doomed);
+
+        log.debug("Server plugin [" + pluginName + "] has been purged from the db");
+        return;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception {
 
         // this method is here because we need a way to update the plugin's information
@@ -339,6 +362,35 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         if (plugin.getId() == 0) {
             throw new IllegalArgumentException("Plugin must already exist to update it");
         } else {
+            // make sure the configs are in the DB properly and we have their refs
+            // this is because we are using JPQL update, so we need to do some of this "manually"
+            boolean needFlush = false;
+            Configuration config = plugin.getPluginConfiguration();
+            if (config != null) {
+                if (config.getId() > 0) {
+                    config = entityManager.getReference(Configuration.class, config.getId());
+                    plugin.setPluginConfiguration(config);
+                } else {
+                    entityManager.persist(config);
+                    needFlush = true;
+                }
+            }
+            config = plugin.getScheduledJobsConfiguration();
+            if (config != null) {
+                if (config.getId() > 0) {
+                    config = entityManager.getReference(Configuration.class, config.getId());
+                    plugin.setScheduledJobsConfiguration(config);
+                } else {
+                    entityManager.persist(config);
+                    needFlush = true;
+                }
+            }
+            if (needFlush) {
+                entityManager.flush(); // must be flushed to the DB so the JPQL update below works
+            }
+
+            // now we can JPQL update the row - all but content is updated here.
+            // we assured our configs are persisted/attached above
             Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
             q.setParameter("id", plugin.getId());
             q.setParameter("name", plugin.getName());
@@ -350,14 +402,16 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             q.setParameter("version", plugin.getVersion());
             q.setParameter("ampsVersion", plugin.getAmpsVersion());
             q.setParameter("deployment", plugin.getDeployment());
-            q.setParameter("pluginConfiguration", plugin.getPluginConfiguration());
-            q.setParameter("scheduledJobsConfiguration", plugin.getScheduledJobsConfiguration());
+            q.setParameter("pluginConfiguration", config);
+            q.setParameter("scheduledJobsConfiguration", config);
             q.setParameter("description", plugin.getDescription());
             q.setParameter("help", plugin.getHelp());
             q.setParameter("mtime", plugin.getMtime());
             if (q.executeUpdate() != 1) {
                 throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
             }
+
+            entityManager.flush(); // make sure we push this out to the DB now
         }
         return plugin;
     }

@@ -126,7 +126,8 @@ public interface ServerPluginsLocal {
     void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
 
     /**
-     * Registers the given plugin to the database.
+     * Registers the given plugin to the database. This does nothing with the master plugin container,
+     * all it does is ensure the database is up-to-date with this new plugin.
      * 
      * @param subject the user that needs to have permissions to add a plugin to the system
      * @param plugin the plugin definition
@@ -147,6 +148,20 @@ public interface ServerPluginsLocal {
      * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
      */
     Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception;
+
+    /**
+     * Purges the server plugin from the database. This ensures that, after this method returns,
+     * the given plugin will be unknown. The plugin can be installed again later.
+     * 
+     * This has "requires new" semantics, so the results are committed immediately upon return.
+     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, Plugin, File)} - you'll
+     * probably want to use that instead. Do not blindly purge server plugins using this method unless you
+     * know what you are doing.
+     * 
+     * @param subject user making the request
+     * @param pluginName the name of the server plugin to delete
+     */
+    void purgeServerPlugin(Subject subject, String pluginName);
 
     /**
      * Given the name of a server plugin, this will return the status of that plugin.

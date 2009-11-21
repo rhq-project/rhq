@@ -114,6 +114,31 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name AND p.status = 'INSTALLED' "), //
 
+    // gets the plugin, even if it is deleted
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.deployment, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " // 
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "  WHERE p.name=:name AND p.deployment = :type "), //
+
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_ALL_AGENT, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
@@ -227,6 +252,7 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_ALL_AGENT = "Plugin.findAllAgent";
     public static final String QUERY_FIND_ALL_SERVER = "Plugin.findAllServer";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
+    public static final String QUERY_FIND_ANY_BY_NAME_AND_TYPE = "Plugin.findAnyByNameAndType";
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
     public static final String QUERY_GET_STATUS_BY_NAME_AND_TYPE = "Plugin.getStatusByNameAndType";

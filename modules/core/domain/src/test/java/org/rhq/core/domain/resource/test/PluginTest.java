@@ -48,7 +48,7 @@ import org.rhq.core.util.stream.StreamUtil;
 
 @Test
 public class PluginTest extends AbstractEJB3Test {
-    public void testUpdate() throws Exception {
+    public void testUpdate() throws Throwable {
         boolean done = false;
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -81,8 +81,8 @@ public class PluginTest extends AbstractEJB3Test {
             em.persist(plugin);
             id = plugin.getId();
             assert id > 0;
-            assert plugin.getPluginConfiguration().getId() > 0 : "did not persist config";
-            assert plugin.getScheduledJobsConfiguration().getId() > 0 : "did not persist jobs config";
+            assert plugin.getPluginConfiguration() == null : "there was no config that should have been here";
+            assert plugin.getScheduledJobsConfiguration() == null : "there was no config that should have been here";
 
             q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
             q.setParameter("name", plugin.getName());
@@ -126,6 +126,10 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
             getTransactionManager().begin();
             em = getEntityManager();
+
+            em.persist(pluginConfig);
+            em.persist(jobsConfig);
+            em.flush(); // gotta get those two persists to flush to the DB
 
             q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
             q.setParameter("id", id); // same as the one we just persisted
@@ -173,12 +177,19 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            em.createNativeQuery("DELETE FROM " + Plugin.TABLE_NAME + " WHERE ID = " + id).executeUpdate();
+            q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            q.setParameter("name", plugin.getName());
+            q.setParameter("type", plugin.getDeployment());
+            Plugin doomed = (Plugin) q.getSingleResult();
+            doomed = em.getReference(Plugin.class, doomed.getId());
+            em.remove(doomed);
+            assert q.getResultList().size() == 0 : "didn't remove the plugin";
             em.close();
             getTransactionManager().commit();
             done = true;
         } catch (Throwable t) {
             t.printStackTrace();
+            throw t;
         } finally {
             if (!done) {
                 getTransactionManager().rollback();
@@ -486,7 +497,13 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            em.createNativeQuery("DELETE FROM " + Plugin.TABLE_NAME + " WHERE ID = " + plugin.getId()).executeUpdate();
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            q.setParameter("name", plugin.getName());
+            q.setParameter("type", plugin.getDeployment());
+            Plugin doomed = (Plugin) q.getSingleResult();
+            doomed = em.getReference(Plugin.class, doomed.getId());
+            em.remove(doomed);
+            assert q.getResultList().size() == 0 : "didn't remove the plugin";
             em.close();
             getTransactionManager().commit();
             done = true;
@@ -595,8 +612,13 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            em.createNativeQuery("DELETE FROM " + Plugin.TABLE_NAME + " WHERE ID = " + plugin.getId()).executeUpdate();
-            em.close();
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            q.setParameter("name", plugin.getName());
+            q.setParameter("type", plugin.getDeployment());
+            Plugin doomed = (Plugin) q.getSingleResult();
+            doomed = em.getReference(Plugin.class, doomed.getId());
+            em.remove(doomed);
+            assert q.getResultList().size() == 0 : "didn't remove the plugin";
             getTransactionManager().commit();
             done = true;
 

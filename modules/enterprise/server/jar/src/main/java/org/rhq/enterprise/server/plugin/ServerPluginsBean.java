@@ -235,6 +235,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
 
+        log.info("Server plugins " + doomedPlugins + " have been undeployed");
+
         // only restart if the master was started to begin with; otherwise, leave it down
         if (master != null) {
             serverPluginService.restartMasterPluginContainer();
@@ -257,6 +259,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             throw new Exception("Failed to update [" + pluginIds.size() + "] plugins. Count was [" + count + "]");
         }
 
+        log.info((enabled ? "Enabling" : "Disabling") + " server plugins with plugin IDs of " + pluginIds);
         return;
     }
 
@@ -324,7 +327,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 entityManager.flush();
                 streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
             }
-            log.debug("Updated plugin entity [" + plugin + "]");
+            log.info("Server plugin [" + plugin.getName() + "] has been registered in the database");
         }
 
         return plugin;

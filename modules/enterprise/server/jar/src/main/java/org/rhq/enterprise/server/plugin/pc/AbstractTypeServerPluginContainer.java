@@ -235,7 +235,21 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public void unschedulePluginJobs(String pluginName) throws Exception {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.resumeJobGroup(pluginName);
+
+        // note: all jobs for a plugin are placed in the same group, where the group name is the plugin name
+        String groupName = pluginName;
+
+        scheduler.pauseJobGroup(groupName);
+        String[] jobNames = scheduler.getJobNames(groupName);
+        if (jobNames != null) {
+            for (String jobName : jobNames) {
+                boolean deleted = scheduler.deleteJob(jobName, groupName);
+                if (!deleted) {
+                    log.warn("Plugin [" + pluginName + "] failed to get its job [" + jobName + "] unscheduled!");
+                }
+            }
+        }
+
         return;
     }
 

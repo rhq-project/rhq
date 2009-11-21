@@ -1,48 +1,731 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
-           xmlns:config="urn:xmlns:rhq-configuration"
-           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
-           xmlns:perspective="urn:xmlns:rhq-serverplugin.perspective"           
-           targetNamespace="urn:xmlns:rhq-serverplugin.perspective"
-           elementFormDefault="qualified"
-           jaxb:version="2.0"
-           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb" blockDefault="">
+<xs:schema
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns:config="urn:xmlns:rhq-configuration"
+   xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:perspective="urn:xmlns:rhq-serverplugin.perspective"
+   targetNamespace="urn:xmlns:rhq-serverplugin.perspective"
+   elementFormDefault="qualified"
+   jaxb:version="2.0"
+   xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+   blockDefault="">
 
-    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+   <xs:include
+      schemaLocation=""></xs:include>
+   <xs:import
+      namespace="urn:xmlns:rhq-serverplugin"
+      schemaLocation="rhq-serverplugin.xsd" />
 
-    <xs:annotation>
-        <xs:documentation>
-            Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.  
-        </xs:documentation>
-        <xs:appinfo>
-            <jaxb:schemaBindings>
-                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective" />
-            </jaxb:schemaBindings>
-        </xs:appinfo>
-    </xs:annotation>
+   <xs:annotation>
+      <xs:documentation>
+         Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.
+      </xs:documentation>
+      <xs:appinfo>
+         <jaxb:schemaBindings>
+            <jaxb:package
+               name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective" />
+         </jaxb:schemaBindings>
+      </xs:appinfo>
+   </xs:annotation>
 
-    <xs:element name="perspective-plugin" type="perspective:PerspectivePluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
-        <xs:annotation>
+   <xs:element
+      name="perspectivePlugin"
+      type="perspective:PerspectivePluginDescriptorType"
+      substitutionGroup="serverplugin:server-plugin">
+      <xs:annotation>
+         <xs:documentation>
+            Defines a Perspective plugin. A Perspective is deployed as a Server Plugin.
+            The Server Plugin
+            Container (SPC) handles simple lifecycle management for
+            the deployed plugins (e.g. start, stop). The plugin
+            is otherwise standalone
+            and can do everything it needs to do without additional help from the SPC.
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectivePluginElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="PerspectivePluginDescriptorType">
+      <xs:complexContent>
+         <xs:extension
+            base="serverplugin:ServerPluginDescriptorType">
+            <xs:sequence>
+               <xs:element
+                  ref="perspective:globalTask"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
+                  ref="perspective:resourceTask"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
+                  ref="perspective:menuItem"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
+                  ref="perspective:resourceTab"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
+                  ref="perspective:resourceSubTab"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element
+      name="globalTask"
+      type="perspective:TaskType">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveGlobalTaskElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:element
+      name="resourceTask"
+      type="perspective:TaskType">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveResourceTaskElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="TaskType">
+      <xs:sequence>
+         <xs:element
+            name="NewElement"
+            type="xs:string">
+         </xs:element>
+         <xs:element
+            ref="perspective:extensionPoint"
+            minOccurs="1"
+            maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>A task pane extension point for which this task is presented.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element
+            ref="perspective:helpText"
+            minOccurs="0"
+            maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>Optional additional help text for the task.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="name"
+         type="perspective:NameType"
+         use="required">
+         <xs:annotation>
             <xs:documentation>
-                Defines a Perspective plugin. A Perspective is deployed as a Server Plugin.
-                The Server Plugin Container (SPC) handles simple lifecycle management for
-                the deployed plugins (e.g. start, stop).  The plugin is otherwise standalone
-                and can do everything it needs to do without additional help from the SPC.
+               The task name. Unique within names defined by the perspective. Used for
+               display if
+               displayName not provided.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="displayName"
+         type="perspective:DisplayNameType"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               The name used for display, if provided.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="description"
+         type="perspective:DescriptionType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The task description displayed for the task.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="url"
+         type="xs:anyURI"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               The request URL for the task. Typically kicks off a wizard or similar workflow.
             </xs:documentation>
-            <xs:appinfo>
-                <jaxb:class name="PerspectivePluginElement" />
-            </xs:appinfo>
-        </xs:annotation>
-    </xs:element>
-    <xs:complexType name="PerspectivePluginDescriptorType">
-        <xs:complexContent>
-            <xs:extension base="serverplugin:ServerPluginDescriptorType">
-               <xs:sequence>
-                  <!--...put specific perspective schema definitions here...-->
-               </xs:sequence>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="category"
+         type="xs:string"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               Optional task category. Tasks for the same category will be grouped together.
+               Categories
+               are not predefined.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:element
+      name="extensionPoint"
+      type="perspective:ExtensionPointNameType">
+   </xs:element>
+
+   <xs:element
+      name="helpText"
+      type="perspective:HelpTextType">
+   </xs:element>
+
+   <xs:element
+      name="menuItem">
+      <xs:annotation>
+         <xs:documentation>
+            Add or Remove a menu item in an existing menu extension point. Additions can specify
+            positioning as
+            well as a recursive structure, defineing a tree of MenuItems.
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveMenuItemElement" />
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element
+               ref="perspective:position"
+               minOccurs="0"
+               maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     Required for root menuItem additions. Position of children is implicit given the
+                     XML
+                     structure. 
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute
+            name="action"
+            type="perspective:ActionType"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Add or remove the menu entry. For removal all but the name attribute are ignored.
+                  Default is add.   
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="name"
+            type="perspective:NameType"
+            use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  ExtensionPoint name used for reference by other defined extension points.
+                  Unique within
+                  perspective.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="displayName"
+            type="perspective:DisplayNameType"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The displayed menu item name. Required for add actions. If empty an icon must be
+                  defined.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="feature"
+            type="perspective:MenuItemFeatureType"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Certain menu items utilize special built-in rendering features.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="url"
+            type="xs:anyURI"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The request URL for the menu entry. If not provided the entry is just a placeholder for
+                  MenuItems.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="iconUrl"
+            type="xs:anyURI"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The request URL for the icon image for this menu item. If not provided then no image is
+                  used.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="iconWidth"
+            type="xs:int"
+            use="optional">
+         </xs:attribute>
+         <xs:attribute
+            name="iconHeight"
+            type="xs:int"
+            use="optional">
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element
+      name="resourceTab">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveResourceTabElement" />
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element
+               ref="perspective:position"
+               minOccurs="0"
+               maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     Required for root menuItem additions. Position of children is implicit given the
+                     XML
+                     structure. 
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute
+            name="name"
+            type="perspective:NameType"
+            use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  The menu entry name. Unique within menu items defined for the perspective. Displayed
+                  on
+                  screen.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="action"
+            type="perspective:ActionType"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Add or remove the menu entry. Add is the default.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="url"
+            type="xs:anyURI"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The request URL for the menu entry. If not provided the entry is just a placeholder for
+                  MenuItems.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element
+      name="resourceSubTab">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveResourceSubTabElement" />
+         </xs:appinfo>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element
+               ref="perspective:position"
+               minOccurs="0"
+               maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     Required for root menuItem additions. Position of children is implicit given the
+                     XML
+                     structure. 
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute
+            name="name"
+            type="perspective:NameType"
+            use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  The menu entry name. Unique within menu items defined for the perspective. Displayed
+                  on
+                  screen.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="action"
+            type="perspective:ActionType"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  Add or remove the menu entry. Add is the default.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="url"
+            type="xs:anyURI"
+            use="optional">
+            <xs:annotation>
+               <xs:documentation>
+                  The request URL for the menu entry. If not provided the entry is just a placeholder for
+                  MenuItems.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element
+      name="inventoryActivator">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="InventoryActivatorElement" />
+         </xs:appinfo>
+         <xs:documentation>
+            Activators must be satisfied for the extension point to be active. 
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexType>
+         <xs:sequence>
+            <xs:element
+               ref="perspective:permissionActivator"
+               minOccurs="0"
+               maxOccurs="unbounded">
+            </xs:element>
+            <xs:element
+               ref="perspective:traitActivator"
+               minOccurs="0"
+               maxOccurs="unbounded">
+            </xs:element>
+         </xs:sequence>
+         <xs:attribute
+            name="plugin"
+            type="xs:string"
+            use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  Plugin for the specified resource type.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+         <xs:attribute
+            name="resourceType"
+            type="xs:string"
+            use="required">
+            <xs:annotation>
+               <xs:documentation>
+                  Resource Type that must be in inventory to activate the extension point.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:attribute>
+      </xs:complexType>
+   </xs:element>
+
+   <xs:element
+      name="permissionActivator"
+      type="perspective:PermissionType">
+      <xs:annotation>
+         <xs:documentation>
+            Activators must be satisfied for the extension point to be active.
+            The specified permission
+            must be available to the current user session.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:element
+      name="traitActivator"
+      type="perspective:TraitActivatorType">
+      <xs:annotation>
+         <xs:documentation>
+            Activators must be satisfied for the extension point to be active.
+            The specified permission
+            must be available to the current user session.
+         </xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="TraitActivatorType">
+      <xs:attribute
+         name="trait"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The trait being tested for activation.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="value"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The value of the trait. By default this is a 'contains' test. For equality, set strict to
+               true.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="isEquals"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>
+               If true perform equality test. If false (default) perform a contains test.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="isCaseSensitive"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>
+               If true perform a case sensitive test. If false (default) test is sase insensitive.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:element
+      name="position"
+      type="perspective:PositionType">
+      <xs:annotation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectivePositionElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="PositionType">
+      <xs:attribute
+         name="extensionPoint"
+         type="perspective:ExtensionPointNameType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>
+               The extension point (a menu, resource tab bar, etc) where the insertion is occuring.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="name"
+         type="perspective:NameType"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               Position relatively against this name. Required for before/after positioning.
+               The name is
+               context specific, it could be a
+               menu entry name, a menu item name, tab name, subTab name, etc.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="placement"
+         type="perspective:PlacementType"
+         use="required">
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:simpleType
+      name="ActionType">
+      <xs:annotation>
+         <xs:documentation>
+            Add : Add new or Replaces existing
+            Remove : Removes existing
+         </xs:documentation>
+      </xs:annotation>
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="add"></xs:enumeration>
+         <xs:enumeration
+            value="remove"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="DescriptionType">
+      <xs:restriction
+         base="xs:string">
+         <xs:minLength
+            value="1" />
+         <xs:maxLength
+            value="512" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="DisplayNameType">
+      <xs:restriction
+         base="xs:string">
+         <xs:minLength
+            value="1" />
+         <xs:maxLength
+            value="128" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="ExtensionPointNameType">
+      <xs:restriction
+         base="xs:string">
+         <xs:minLength
+            value="1" />
+         <xs:maxLength
+            value="128" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="HelpTextType">
+      <xs:restriction
+         base="xs:string">
+         <xs:minLength
+            value="1" />
+         <xs:maxLength
+            value="1024" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="MenuItemFeatureType">
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="aboutBox"></xs:enumeration>
+         <xs:enumeration
+            value="groupFavorites"></xs:enumeration>
+         <xs:enumeration
+            value="groupRecentlyViewed"></xs:enumeration>
+         <xs:enumeration
+            value="groupSearch"></xs:enumeration>
+         <xs:enumeration
+            value="resourceFavorites"></xs:enumeration>
+         <xs:enumeration
+            value="resourceRecentlyViewed"></xs:enumeration>
+         <xs:enumeration
+            value="resourceSearch"></xs:enumeration>
+         <xs:enumeration
+            value="newWindow"></xs:enumeration>
+         <xs:enumeration
+            value="resourceSearch"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="NameType">
+      <xs:restriction
+         base="xs:string">
+         <xs:minLength
+            value="1" />
+         <xs:maxLength
+            value="64" />
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="PermissionType">
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="MANAGE_INVENTORY"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_SECURITY"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_SETTINGS"></xs:enumeration>
+
+         <xs:enumeration
+            value="CONFIGURE"></xs:enumeration>
+         <xs:enumeration
+            value="CONTROL"></xs:enumeration>
+         <xs:enumeration
+            value="CREATE_CHILD_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="DELETE_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_ALERTS"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_CONTENT"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_MEASUREMENTS"></xs:enumeration>
+         <xs:enumeration
+            value="MODIFY_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="VIEW_RESOURCE"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
+      name="PlacementType">
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="before"></xs:enumeration>
+         <xs:enumeration
+            value="after"></xs:enumeration>
+         <xs:enumeration
+            value="start"></xs:enumeration>
+         <xs:enumeration
+            value="end"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+
 
 </xs:schema>

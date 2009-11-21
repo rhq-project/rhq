@@ -46,6 +46,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class ServerPluginsBeanTest extends AbstractEJB3Test {
+
+    private static final String TEST_PLUGIN_NAME_PREFIX = "serverplugintest";
+
     private ServerPluginsLocal serverPluginsBean;
 
     @BeforeMethod
@@ -96,10 +99,10 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     public void testGetPlugins() throws Exception {
         Plugin p1 = registerPlugin(1);
         Plugin p2 = registerPlugin(2);
-        List<String> pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(true);
+        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
         assert pluginNames.contains(p1.getName()) : pluginNames;
         assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(false);
+        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
         assert !pluginNames.contains(p1.getName()) : pluginNames;
         assert !pluginNames.contains(p2.getName()) : pluginNames;
 
@@ -144,19 +147,19 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert disabled.contains(p2) : disabled;
         assert disabled.get(0).getStatus() == PluginStatusType.INSTALLED; // still installed
         assert disabled.get(1).getStatus() == PluginStatusType.INSTALLED; // still installed
-        List<String> pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(false);
+        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
         assert pluginNames.contains(p1.getName()) : pluginNames;
         assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(true);
+        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
         assert !pluginNames.contains(p1.getName()) : pluginNames;
         assert !pluginNames.contains(p2.getName()) : pluginNames;
 
         // re-enable them
         this.serverPluginsBean.enableServerPlugins(getOverlord(), ids);
-        pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(true);
+        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
         assert pluginNames.contains(p1.getName()) : pluginNames;
         assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(false);
+        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
         assert !pluginNames.contains(p1.getName()) : pluginNames;
         assert !pluginNames.contains(p2.getName()) : pluginNames;
 
@@ -173,8 +176,20 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     public void testUndeployPlugins() throws Exception {
 
+        PluginStatusType status;
+
+        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "1");
+        assert status == null;
+        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "2");
+        assert status == null;
+
         Plugin p1 = registerPlugin(1);
         Plugin p2 = registerPlugin(2);
+
+        status = this.serverPluginsBean.getServerPluginStatus(p1.getName());
+        assert status == PluginStatusType.INSTALLED;
+        status = this.serverPluginsBean.getServerPluginStatus(p2.getName());
+        assert status == PluginStatusType.INSTALLED;
 
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
@@ -186,10 +201,10 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert undeployed.get(0).getStatus() == PluginStatusType.DELETED;
         assert undeployed.get(1).getStatus() == PluginStatusType.DELETED;
 
-        List<String> pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(false);
+        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
         assert !pluginNames.contains(p1.getName()) : "deleted plugins should not be returned even here" + pluginNames;
         assert !pluginNames.contains(p2.getName()) : "deleted plugins should not be returned even here" + pluginNames;
-        pluginNames = this.serverPluginsBean.getPluginNamesByEnabled(true);
+        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
         assert !pluginNames.contains(p1.getName()) : pluginNames;
         assert !pluginNames.contains(p2.getName()) : pluginNames;
 
@@ -206,12 +221,12 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     }
 
     private Plugin registerPlugin(int index) throws Exception {
-        Plugin plugin = new Plugin(0, "serverplugintest" + index, "path", "displayName", true,
+        Plugin plugin = new Plugin(0, TEST_PLUGIN_NAME_PREFIX + index, "path", "displayName", true,
             PluginStatusType.INSTALLED, "description", "help", "md5", "version", "ampsVersion",
             PluginDeploymentType.SERVER, createPluginConfiguration(), createScheduledJobsConfiguration(), System
                 .currentTimeMillis(), System.currentTimeMillis());
 
-        plugin = this.serverPluginsBean.registerPlugin(getOverlord(), plugin, null);
+        plugin = this.serverPluginsBean.registerServerPlugin(getOverlord(), plugin, null);
         assert plugin.getId() > 0;
         assert plugin.isEnabled() == true;
         assert plugin.getDeployment() == PluginDeploymentType.SERVER;

@@ -70,7 +70,7 @@ public interface ServerPluginsLocal {
      *                if <code>false</code>, return only the names of plugins that are disabled.
      * @return list of plugin names that match the enabled criteria
      */
-    List<String> getPluginNamesByEnabled(boolean enabled);
+    List<String> getServerPluginNamesByEnabled(boolean enabled);
 
     /**
      * Enables the plugins and restarts the server plugin container.
@@ -110,7 +110,7 @@ public interface ServerPluginsLocal {
      * @param enabled the value of the enabled flag for the plugins
      * @throws if failed to update a plugin
      */
-    void setPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception;
+    void setServerPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception;
 
     /**
      * Sets the status flag in the database but does NOT restart the server plugin container.
@@ -123,7 +123,7 @@ public interface ServerPluginsLocal {
      * @param enabled the value of the enabled flag for the plugins
      * @throws if failed to update one of the plugins
      */
-    void setPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
+    void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
 
     /**
      * Registers the given plugin to the database.
@@ -134,7 +134,7 @@ public interface ServerPluginsLocal {
      * @return the plugin after being persisted
      * @throws Exception if failed to fully register the plugin 
      */
-    Plugin registerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception;
+    Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception;
 
     /**
      * Given a plugin that already exists, this will update that plugin's data in the database,
@@ -146,5 +146,15 @@ public interface ServerPluginsLocal {
      * @return the updated plugin
      * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
      */
-    public Plugin updatePluginExceptContent(Subject subject, Plugin plugin) throws Exception;
+    Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception;
+
+    /**
+     * Given the name of a server plugin, this will return the status of that plugin.
+     * Use this to determine if a plugin has been deleted or not.
+     * 
+     * @param pluginName the name of the plugin whose status is to be returned.
+     * @return the status of the plugin, to indicate if the plugin has been deleted or is installed.
+     *         <code>null</code> indicates an unknown plugin.
+     */
+    PluginStatusType getServerPluginStatus(String pluginName);
 }

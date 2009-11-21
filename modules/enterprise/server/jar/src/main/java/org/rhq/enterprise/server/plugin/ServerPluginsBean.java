@@ -121,7 +121,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return descriptor;
     }
 
-    public List<String> getPluginNamesByEnabled(boolean enabled) {
+    public List<String> getServerPluginNamesByEnabled(boolean enabled) {
         Query query = entityManager.createNamedQuery(Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE);
         query.setParameter("enabled", Boolean.valueOf(enabled));
         query.setParameter("type", PluginDeploymentType.SERVER);
@@ -134,7 +134,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return; // nothing to do
         }
 
-        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, true);
+        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
 
         // only restart the master if it was started to begin with
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
@@ -150,7 +150,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<Plugin>(); // nothing to do
         }
 
-        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, false);
+        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
@@ -188,7 +188,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<Plugin>(); // nothing to do
         }
 
-        serverPluginsBean.setPluginEnabledFlag(subject, pluginIds, false);
+        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
 
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
@@ -238,7 +238,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception {
+    public void setServerPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
@@ -255,20 +255,21 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception {
+    public void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status)
+        throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
         List<Plugin> plugins = getServerPluginsById(pluginIds);
         for (Plugin plugin : plugins) {
             plugin.setStatus(status);
-            updatePluginExceptContent(subject, plugin);
+            updateServerPluginExceptContent(subject, plugin);
         }
         return;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public Plugin registerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
+    public Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
             throw new IllegalArgumentException("Plugin [" + plugin.getName()
@@ -302,9 +303,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
 
             if (plugin.getId() == 0) {
+                PluginStatusType status = getServerPluginStatus(plugin.getName());
+                if (PluginStatusType.DELETED == status) {
+                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
+                        + "], it has been previously marked as deleted.");
+                }
                 entityManager.persist(plugin);
             } else {
-                plugin = updatePluginExceptContent(subject, plugin);
+                plugin = updateServerPluginExceptContent(subject, plugin);
             }
 
             if (pluginFile != null) {
@@ -318,11 +324,18 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public Plugin updatePluginExceptContent(Subject subject, Plugin plugin) throws Exception {
+    public Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception {
+
         // this method is here because we need a way to update the plugin's information
         // without blowing away the content data. Because we do not want to load the
         // content blob in memory, the plugin's content field will be null - if we were
         // to entityManager.merge that plugin POJO, it would null out that blob column.
+
+        if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
+            throw new IllegalArgumentException("Plugin [" + plugin.getName()
+                + "] must be a server plugin to be updated");
+        }
+
         if (plugin.getId() == 0) {
             throw new IllegalArgumentException("Plugin must already exist to update it");
         } else {
@@ -347,6 +360,19 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return plugin;
+    }
+
+    public PluginStatusType getServerPluginStatus(String pluginName) {
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+        q.setParameter("name", pluginName);
+        q.setParameter("type", PluginDeploymentType.SERVER);
+        PluginStatusType status;
+        try {
+            status = (PluginStatusType) q.getSingleResult();
+        } catch (NoResultException nre) {
+            status = null; // doesn't exist in the DB, tell the caller this by returning null
+        }
+        return status;
     }
 
     /**

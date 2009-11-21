@@ -73,11 +73,21 @@ public class PluginTest extends AbstractEJB3Test {
             plugin.setHelp(null);
             plugin.setContent(content);
 
+            Query q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+            q.setParameter("name", plugin.getName());
+            q.setParameter("type", plugin.getDeployment());
+            assert q.getResultList().size() == 0; // not in the db yet
+
             em.persist(plugin);
             id = plugin.getId();
             assert id > 0;
             assert plugin.getPluginConfiguration().getId() > 0 : "did not persist config";
             assert plugin.getScheduledJobsConfiguration().getId() > 0 : "did not persist jobs config";
+
+            q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+            q.setParameter("name", plugin.getName());
+            q.setParameter("type", plugin.getDeployment());
+            assert ((PluginStatusType) q.getSingleResult()) == PluginStatusType.INSTALLED;
 
             plugin = em.find(Plugin.class, id);
             assert plugin != null;
@@ -117,7 +127,7 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().begin();
             em = getEntityManager();
 
-            Query q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
+            q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
             q.setParameter("id", id); // same as the one we just persisted
             q.setParameter("name", name);
             q.setParameter("path", path);

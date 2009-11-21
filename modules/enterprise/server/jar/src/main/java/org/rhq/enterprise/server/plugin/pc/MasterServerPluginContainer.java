@@ -357,7 +357,7 @@ public class MasterServerPluginContainer {
      * @return names of "blacklisted" plugins that should not be loaded
      */
     protected List<String> getDisabledPluginNames() {
-        List<String> disabledPlugins = LookupUtil.getServerPlugins().getPluginNamesByEnabled(false);
+        List<String> disabledPlugins = LookupUtil.getServerPlugins().getServerPluginNamesByEnabled(false);
         return disabledPlugins;
     }
 

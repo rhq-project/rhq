@@ -56,6 +56,11 @@ import org.rhq.core.util.MessageDigestGenerator;
 @Entity
 @NamedQueries( {
 //
+    @NamedQuery(name = Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE, query = "" //
+        + " SELECT p.status " //
+        + "   FROM Plugin AS p " //
+        + "  WHERE p.name = :name AND p.deployment = :type "), //
+
     @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE, query = "" //
         + " SELECT p.name " //
         + "   FROM Plugin AS p " //
@@ -224,6 +229,7 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
+    public static final String QUERY_GET_STATUS_BY_NAME_AND_TYPE = "Plugin.getStatusByNameAndType";
     public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
 

@@ -228,7 +228,8 @@
          <xs:attribute
             name="action"
             type="perspective:ActionType"
-            use="optional">
+            use="optional"
+            default="add">
             <xs:annotation>
                <xs:documentation>
                   Add or remove the menu entry. For removal all but the name attribute are ignored.
@@ -342,7 +343,8 @@
          <xs:attribute
             name="action"
             type="perspective:ActionType"
-            use="optional">
+            use="optional"
+            default="add">
             <xs:annotation>
                <xs:documentation>
                   Add or remove the menu entry. Add is the default.
@@ -401,7 +403,8 @@
          <xs:attribute
             name="action"
             type="perspective:ActionType"
-            use="optional">
+            use="optional"
+            default="add">
             <xs:annotation>
                <xs:documentation>
                   Add or remove the menu entry. Add is the default.
@@ -581,6 +584,12 @@
          type="perspective:PlacementType"
          use="required">
       </xs:attribute>
+      <xs:attribute
+         name="break"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+      </xs:attribute>
    </xs:complexType>
 
    <xs:simpleType
@@ -616,7 +625,7 @@
       <xs:restriction
          base="xs:string">
          <xs:minLength
-            value="1" />
+            value="0" />
          <xs:maxLength
             value="128" />
       </xs:restriction>

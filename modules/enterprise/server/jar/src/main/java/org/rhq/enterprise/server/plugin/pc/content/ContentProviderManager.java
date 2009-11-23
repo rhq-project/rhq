@@ -40,20 +40,19 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
@@ -67,7 +66,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
-    
+
     private ContentServerPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
@@ -76,14 +75,12 @@ public class ContentProviderManager {
     private final Object synchronizeContentSourceLock = new Object();
 
     /**
-     * Asks that the adapter responsible for the given content source return a stream to the package bits for the
-     * package at the given location.
+     * Asks that the adapter responsible for the given content source return a stream to the package
+     * bits for the package at the given location.
      *
-     * @param  contentSourceId the adapter for this content source will be used to stream the bits
-     * @param  location        where the adapter can find the package bits on the content source
-     *
+     * @param contentSourceId the adapter for this content source will be used to stream the bits
+     * @param location        where the adapter can find the package bits on the content source
      * @return the stream to the package bits
-     *
      * @throws Exception if the adapter failed to load the bits
      */
     public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
@@ -102,17 +99,16 @@ public class ContentProviderManager {
 
 
     /**
-     * Asks that the adapter responsible for the given content source return a stream to the DistributionFile 
-     * bits for the DistributionFile at the given location.
+     * Asks that the adapter responsible for the given content source return a stream to the
+     * DistributionFile bits for the DistributionFile at the given location.
      *
-     * @param  contentSourceId the adapter for this content source will be used to stream the bits
-     * @param  location        where the adapter can find the DistributionFile bits on the content source
-     *
+     * @param contentSourceId the adapter for this content source will be used to stream the bits
+     * @param location        where the adapter can find the DistributionFile bits on the source
      * @return the stream to the DistributionFile bits
-     *
      * @throws Exception if the adapter failed to load the bits
      */
-    public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
+    public InputStream loadDistributionFileBits(int contentSourceId, String location)
+        throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
 
         DistributionSource distSource = (DistributionSource) adapter;
@@ -120,24 +116,24 @@ public class ContentProviderManager {
 
         if (inputStream == null) {
             throw new Exception("Adapter for content source [" + contentSourceId
-                + "] failed to give us a stream to the distribution file at location [" + location + "]");
+                + "] failed to give us a stream to the distribution file at location [" + location +
+                "]");
         }
 
         return inputStream;
     }
 
     /**
-     * Asks the provider responsible for the given content source to synchronize with its remote repository. This will
-     * not attempt to load any package bits - it only synchronizes the repos and package version information. Note
-     * that if a synchronization is already currently underway, this method will not do anything and will return
-     * <code>false</code> (in effect, will let the currently running synchronization continue; we try not to step on
-     * it). If this method does actually do a sync, <code>true</code> will be returned.
+     * Asks the provider responsible for the given content source to synchronize with its remote
+     * repository. This will not attempt to load any package bits - it only synchronizes the repos
+     * and package version information. Note that if a synchronization is already currently underway,
+     * this method will not do anything and will return <code>false</code> (in effect, will let the
+     * currently running synchronization continue; we try not to step on it). If this method does
+     * actually do a sync, <code>true</code> will be returned.
      *
-     * @param  contentSourceId identifies the database entry of the provider
-     *
-     * @return <code>true</code> if the synchronization completed; <code>false</code> if there was already a
-     *         synchronization happening and this method aborted
-     *
+     * @param contentSourceId identifies the database entry of the provider
+     * @return <code>true</code> if the synchronization completed; <code>false</code> if there was
+     *         already a synchronization happening and this method aborted
      * @throws Exception
      */
     public boolean synchronizeContentSource(int contentSourceId) throws Exception {
@@ -149,23 +145,28 @@ public class ContentProviderManager {
         ContentSourceSyncResults results = null;
         SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
         Subject overlord = subjMgr.getOverlord();
-        StringBuilder progress = new StringBuilder(); // append to this as we go along, building a status report
+
+        // append to this as we go along, building a status report
+        StringBuilder progress = new StringBuilder();
         long start = System.currentTimeMillis();
 
         try {
-            ContentSource contentSource = contentSourceManager.getContentSource(overlord, contentSourceId);
+            ContentSource contentSource = contentSourceManager
+                .getContentSource(overlord, contentSourceId);
             if (contentSource == null) {
-                throw new Exception("Cannot sync a non-existing content source [" + contentSourceId + "]");
+                throw new Exception(
+                    "Cannot sync a non-existing content source [" + contentSourceId + "]");
             }
 
             // This should not take very long so it should be OK to block other callers.
-            // We are avoiding the problem that would occur if we try to synchronize the same content source
-            // at the same time. We could do it more cleverly by synchronizing on
-            // a per content source basis, but I don't see a need right now to make this more complicated.
+            // We are avoiding the problem that would occur if we try to synchronize the same source
+            // at the same time. We could do it more cleverly by synchronizing on a per content source
+            // basis, but I don't see a need right now to make this more complicated.
             // We can come back and revisit if we need more fine-grained locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
+                progress.append("Start synchronization of content provider [")
+                    .append(contentSource.getName()).append(
                     "]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
@@ -176,10 +177,11 @@ public class ContentProviderManager {
             }
 
             if (results == null) {
-                // note that it technically is still possible to have concurrent syncs - if two threads running
-                // in two different servers (i.e. different VMs) both try to sync the same content source and
-                // both enter the persistContentSourceSyncResults method at the same time, you'll get two
-                // inprogress rows - this is so rare as to not care.  Even if it does happen, it may still work, or
+                // note that it technically is still possible to have concurrent syncs - if two
+                // threads running in two different servers (i.e. different VMs) both try to sync the
+                // same content source and both enter the persistContentSourceSyncResults method at
+                // the same time, you'll get two inprogress rows - this is so rare as to not care.
+                // Even if it does happen, it may still work, or
                 // one sync will get an error and rollback its tx and no harm will be done.
                 log.info("Content provider [" + contentSource.getName()
                     + "] is already currently being synchronized, this sync request will be ignored");
@@ -205,11 +207,12 @@ public class ContentProviderManager {
             }
 
             // ------------------
-            // NOTE: Ultimately, this will be moved out as repos get their own schedules. For now, simply
-            //       synchronize *all* repos for this provider.
+            // NOTE: Ultimately, this will be moved out as repos get their own schedules. For now,
+            //       simply synchronize *all* repos for this provider.
             // ------------------
 
-            // If the provider is capable of handling packages, perform the package synchronization portion of the sync
+            // If the provider is capable of handling packages, perform the package synchronization
+            // portion of the sync
             if (provider instanceof PackageSource) {
                 PackageSource packageSource = (PackageSource) provider;
 
@@ -223,22 +226,25 @@ public class ContentProviderManager {
                 for (Repo repo : repos) {
                     // Convert the existing package list for this repo into DTOs for the API
                     // --------------------------------------------
-                    List<PackageVersionContentSource> existingPVCS; // what we already know about this content source
-                    Set<ContentProviderPackageDetails> allDetails; // what we tell the plugin about what we know
+                    List<PackageVersionContentSource> existingPVCS; // already know about this source
+                    Set<ContentProviderPackageDetails> allDetails; // send to plugin
                     Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
 
                     start = System.currentTimeMillis();
 
-                    existingPVCS = contentSourceManager.getPackageVersionsFromContentSourceForRepo(subjMgr.getOverlord(),
-                        contentSource.getId(), repo.getId());
+                    existingPVCS = contentSourceManager
+                        .getPackageVersionsFromContentSourceForRepo(subjMgr.getOverlord(),
+                            contentSource.getId(), repo.getId());
 
                     int existingCount = existingPVCS.size();
-                    keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
+                    keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey,
+                        PackageVersionContentSource>(existingCount);
                     allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
 
                     translateDomainToDto(existingPVCS, allDetails, keyPVCSMap);
 
-                    log.info("synchronizePackages: [" + contentSource.getName() + "]: loaded existing list of size=["
+                    log.info("synchronizePackages: [" + contentSource.getName() +
+                        "]: loaded existing list of size=["
                         + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                     progress.append(existingCount).append('\n');
@@ -253,12 +259,14 @@ public class ContentProviderManager {
 
                     packageSource.synchronizePackages(repo.getName(), report, allDetails);
 
-                    log.info("synchronizePackages: [" + contentSource.getName() + "]: got sync report from adapter=["
+                    log.info("synchronizePackages: [" + contentSource.getName() +
+                        "]: got sync report from adapter=["
                         + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                     progress.append("new=").append(report.getNewPackages().size());
                     progress.append(", updated=").append(report.getUpdatedPackages().size());
-                    progress.append(", deleted=").append(report.getDeletedPackages().size()).append('\n');
+                    progress.append(", deleted=").append(report.getDeletedPackages().size())
+                        .append('\n');
                     progress.append(new Date()).append(": ");
                     progress.append("FULL SUMMARY FOLLOWS:").append('\n');
                     progress.append(report.getSummary()).append('\n');
@@ -268,26 +276,29 @@ public class ContentProviderManager {
                     results = contentSourceManager.mergeContentSourceSyncResults(results);
                     start = System.currentTimeMillis();
 
-                    results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
+                    results = contentSourceManager
+                        .mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
 
                 }
 
-                // let's reset our progress string to the full results including the text added by the merge
+                // Reset our progress string to the full results including the text added by the merge
                 progress.setLength(0);
                 progress.append(results.getResults());
 
-                log.info("synchronizePackages: [" + contentSource.getName() + "]: report has been merged ("
-                    + (System.currentTimeMillis() - start) + ")ms");
+                log.info(
+                    "synchronizePackages: [" + contentSource.getName() + "]: report has been merged ("
+                        + (System.currentTimeMillis() - start) + ")ms");
 
                 progress.append(new Date()).append(": ").append("DONE.");
                 results.setResults(progress.toString());
                 results.setStatus(ContentSourceSyncStatus.SUCCESS);
                 results = contentSourceManager.mergeContentSourceSyncResults(results);
             }
-            
+
             log.info("Checking if provider: " + provider + " is a DistributionSource");
             if (provider instanceof DistributionSource) {
-                log.info("synchronizeContentSource(" + contentSourceId + "):  this source is a DistributionSource");
+                log.info("synchronizeContentSource(" + contentSourceId +
+                    "):  this source is a DistributionSource");
                 log.info("We will skip the sync for now until PackageSource is working.");
 
                 DistributionSource distSource = (DistributionSource) provider;
@@ -298,14 +309,16 @@ public class ContentProviderManager {
 
                 // Temporary functionality: loop for all repos that use this content source
                 for (Repo repo : repos) {
-                    log.info("ContentProviderManager::synchronizeContentSource  DistributionSource would be syncing repo: " + repo.getName());
-
+                    log.info(
+                        "ContentProviderManager::synchronizeContentSource DistributionSource would " +
+                            "be syncing repo: " + repo.getName());
 
                     start = System.currentTimeMillis();
 
                     PageControl pc = PageControl.getUnlimitedInstance();
                     log.debug("Looking up existing distributions for repoId: " + repo.getId());
-                    List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pc);
+                    List<Distribution> dists = repoManager
+                        .findAssociatedDistributions(overlord, repo.getId(), pc);
                     log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
 
                     progress.append(dists.size()).append('\n');
@@ -313,12 +326,14 @@ public class ContentProviderManager {
                     progress.append("Asking content source to update the list of packages...");
 
                     DistributionSyncReport distReport = new DistributionSyncReport(repo.getId());
-                    List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(dists.size());
+                    List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(
+                        dists.size());
                     translateDomainToDto(dists, distDetails);
-                
+
                     distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
 
-                    log.info("synchronizeDistributions: [" + contentSource.getName() + "]: loaded existing list of size=["
+                    log.info("synchronizeDistributions: [" + contentSource.getName() +
+                        "]: loaded existing list of size=["
                         + dists.size() + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                     results.setResults(progress.toString());
@@ -327,22 +342,26 @@ public class ContentProviderManager {
 
 
                     distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
-                    log.info("synchronizeDistributions: [" + contentSource.getName() + "]: got sync report from adapter=["
+                    log.info("synchronizeDistributions: [" + contentSource.getName() +
+                        "]: got sync report from adapter=["
                         + distReport + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
                     progress.append("new=").append(distReport.getDistributions().size());
 
-                    progress.append(", deleted=").append(distReport.getDeletedDistributions().size()).append('\n');
+                    progress.append(", deleted=").append(distReport.getDeletedDistributions().size())
+                        .append('\n');
                     results.setResults(progress.toString());
                     results = contentSourceManager.mergeContentSourceSyncResults(results);
                     start = System.currentTimeMillis();
-                    results = contentSourceManager.mergeContentSourceSyncReport(contentSource, distReport, results);
+                    results = contentSourceManager
+                        .mergeContentSourceSyncReport(contentSource, distReport, results);
                 }
-                // let's reset our progress string to the full results including the text added by the merge
+                // Reset our progress string to the full results including the text added by the merge
                 progress.setLength(0);
                 progress.append(results.getResults());
 
-                log.info("synchronizeDistributions: [" + contentSource.getName() + "]: report has been merged ("
+                log.info("synchronizeDistributions: [" + contentSource.getName() +
+                    "]: report has been merged ("
                     + (System.currentTimeMillis() - start) + ")ms");
 
                 progress.append(new Date()).append(": ").append("DONE.");
@@ -351,10 +370,13 @@ public class ContentProviderManager {
                 results = contentSourceManager.mergeContentSourceSyncResults(results);
 
             }
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             if (results != null) {
-                // try to reload the results in case it was updated by the SLSB before the exception happened
-                ContentSourceSyncResults reloadedResults = contentSourceManager.getContentSourceSyncResults(results.getId());
+                // try to reload the results in case it was updated by the SLSB before the
+                // exception happened
+                ContentSourceSyncResults reloadedResults = contentSourceManager
+                    .getContentSourceSyncResults(results.getId());
                 if (reloadedResults != null) {
                     results = reloadedResults;
                     if (results.getResults() != null) {
@@ -386,11 +408,9 @@ public class ContentProviderManager {
     /**
      * Tests the connection to the content source that has the given ID.
      *
-     * @param  contentSourceId
-     *
-     * @return <code>true</code> if there is an adapter that can successfully connect to the given content source <code>
-     *         false</code> if there is an adapter but it cannot successfully connect
-     *
+     * @param contentSourceId
+     * @return <code>true</code> if there is an adapter that can successfully connect to the given
+     *         content source <code>false</code> if there is an adapter but it cannot connect
      * @throws Exception if failed to get an adapter to attempt the connection
      */
     public boolean testConnection(int contentSourceId) throws Exception {
@@ -398,7 +418,8 @@ public class ContentProviderManager {
 
         try {
             adapter.testConnection();
-        } catch (Throwable t) {
+        }
+        catch (Throwable t) {
             return false;
         }
 
@@ -417,10 +438,12 @@ public class ContentProviderManager {
     }
 
     /**
-     * Call this method when a new content source is added to the system during runtime. This can also be used to
-     * restart an adapter that was previously {@link #shutdownAdapter(ContentSource) shutdown}.
+     * Call this method when a new content source is added to the system during runtime. This can
+     * also be used to restart an adapter that was previously {@link #shutdownAdapter(ContentSource)
+     * shutdown}.
      *
-     * <p>If there is already an adapter currently started for the given content source, this returns silently.</p>
+     * <p>If there is already an adapter currently started for the given content source, this
+     * returns silently.</p>
      *
      * @param contentSource the new content source that was added
      * @throws InitializationException if the provider throws an error on its startup
@@ -440,8 +463,11 @@ public class ContentProviderManager {
 
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.initialize(contentSource.getConfiguration());
-        } catch (Exception e) {
-            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", e);
+        }
+        catch (Exception e) {
+            log.warn(
+                "Failed to initialize adapter for content source [" + contentSource.getName() + "]",
+                e);
             throw new InitializationException(e);
         }
 
@@ -449,10 +475,12 @@ public class ContentProviderManager {
     }
 
     /**
-     * Call this method when a content source is removed from the system during runtime or if you just want to shutdown
-     * the adapter for whatever reason. You can restart the adapter by calling {@link #startAdapter(ContentSource)}.
+     * Call this method when a content source is removed from the system during runtime or if you
+     * just want to shutdown the adapter for whatever reason. You can restart the adapter by calling
+     * {@link #startAdapter(ContentSource)}.
      *
-     * <p>If there are no adapters currently started for the given content source, this returns silently.</p>
+     * <p>If there are no adapters currently started for the given content source, this returns
+     * silently.</p>
      *
      * @param contentSource the content source being deleted
      */
@@ -469,17 +497,19 @@ public class ContentProviderManager {
 
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.shutdown();
-        } catch (Throwable t) {
-            log.warn("Failed to shutdown adapter for content source [" + contentSource.getName() + "]", t);
+        }
+        catch (Throwable t) {
+            log.warn(
+                "Failed to shutdown adapter for content source [" + contentSource.getName() + "]", t);
         } finally {
             this.adapters.remove(contentSource);
         }
     }
 
     /**
-     * Convienence method that simply {@link #shutdownAdapter(ContentSource) shuts down the adapter} and then
-     * {@link #startAdapter(ContentSource) restarts it}. Call this when, for example, a content source's
-     * {@link ContentSource#getConfiguration() configuration} has changed.
+     * Convienence method that simply {@link #shutdownAdapter(ContentSource) shuts down the adapter}
+     * and then {@link #startAdapter(ContentSource) restarts it}. Call this when, for example, a
+     * content source's {@link ContentSource#getConfiguration() configuration} has changed.
      *
      * @param contentSource the content source whose adapter is to be restarted
      * @throws Exception if there is an error asking the provider to shutdown or start
@@ -494,18 +524,21 @@ public class ContentProviderManager {
      *
      * <p>This is protected so only the plugin container and subclasses can use it.</p>
      *
-     * @param pluginManager the plugin manager this object can use to obtain information from (like classloaders)
+     * @param pluginManager the plugin manager this object can use to obtain information from (like
+     *                      classloaders)
      * @throws InitializationException if any of the providers throw an error on startup
      */
     protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
 
-        ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();
+        ContentSourceMetadataManagerLocal metadataManager = LookupUtil
+            .getContentSourceMetadataManager();
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
         // Our plugin manager should have parsed all descriptors and have our types for us.
         // Let's register the types to make sure they are merged with the old existing types.
-        ContentSourcePluginMetadataManager pluginMetadataManager = this.pluginManager.getMetadataManager();
+        ContentSourcePluginMetadataManager pluginMetadataManager = this.pluginManager
+            .getMetadataManager();
         Set<ContentSourceType> allTypes = pluginMetadataManager.getAllContentSourceTypes();
         metadataManager.registerTypes(allTypes);
 
@@ -521,7 +554,8 @@ public class ContentProviderManager {
             for (ContentSource contentSource : contentSources) {
                 try {
                     startAdapter(contentSource);
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     log.warn("Failed to start adapator for content source [" + contentSource + "]");
                 }
             }
@@ -560,13 +594,12 @@ public class ContentProviderManager {
     }
 
     /**
-     * Given a ID to a content source, this returns the adapter that is responsible for communicating with that content
-     * source where that adapter object will ensure invocations on it are isolated to its plugin classloader.
+     * Given a ID to a content source, this returns the adapter that is responsible for communicating
+     * with that content source where that adapter object will ensure invocations on it are isolated
+     * to its plugin classloader.
      *
-     * @param  contentProviderId an ID to a {@link ContentSource}
-     *
+     * @param contentProviderId an ID to a {@link ContentSource}
      * @return the adapter that is communicating with the content source, isolated to its classloader
-     *
      * @throws RuntimeException if there is no content source with the given ID
      */
     public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
@@ -578,20 +611,20 @@ public class ContentProviderManager {
             }
         }
 
-        throw new RuntimeException("Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
+        throw new RuntimeException(
+            "Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
     }
 
     /**
-     * This returns the adapter that is responsible for communicating with the given content source where that adaptor
-     * object will ensure invocations on it are isolated to its plugin classloader.
+     * This returns the adapter that is responsible for communicating with the given content source
+     * where that adaptor object will ensure invocations on it are isolated to its plugin classloader.
      *
-     * @param  contentSource the returned adapter communicates with this content source
-     *
+     * @param contentSource the returned adapter communicates with this content source
      * @return the adapter that is communicating with the content source, isolated to its classloader
-     *
      * @throws RuntimeException if there is no content source adapter available
      */
-    protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
+    protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource)
+        throws RuntimeException {
         ContentProvider adapter;
 
         synchronized (this.adapters) {
@@ -602,9 +635,11 @@ public class ContentProviderManager {
             throw new RuntimeException("There is no adapter for content source [" + adapter + "]");
         }
 
-        ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(contentSource.getContentSourceType());
+        ServerPluginEnvironment env = this.pluginManager
+            .getPluginEnvironment(contentSource.getContentSourceType());
         if (env == null) {
-            throw new RuntimeException("There is no plugin env. for content source [" + contentSource + "]");
+            throw new RuntimeException(
+                "There is no plugin env. for content source [" + contentSource + "]");
         }
 
         ClassLoader classLoader = env.getPluginClassLoader();
@@ -631,8 +666,7 @@ public class ContentProviderManager {
     /**
      * Creates a provider instance that will service the give {@link ContentSource}.
      *
-     * @param  contentSource the source that the adapter will connect to
-     *
+     * @param contentSource the source that the adapter will connect to
      * @return an adapter instance; will be <code>null</code> if failed to create adapter
      */
     private ContentProvider instantiateAdapter(ContentSource contentSource) {
@@ -643,7 +677,8 @@ public class ContentProviderManager {
         try {
             ContentSourceType type = contentSource.getContentSourceType();
             apiClassName = type.getContentSourceApiClass();
-            pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
+            pluginName = this.pluginManager.getMetadataManager()
+                .getPluginNameFromContentSourceType(type);
 
             ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
             ClassLoader pluginClassloader = pluginEnv.getPluginClassLoader();
@@ -663,8 +698,11 @@ public class ContentProviderManager {
             } finally {
                 Thread.currentThread().setContextClassLoader(startingClassLoader);
             }
-        } catch (Throwable t) {
-            log.warn("Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName + "]", t);
+        }
+        catch (Throwable t) {
+            log.warn(
+                "Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName +
+                    "]", t);
         }
 
         if (adapter != null) {
@@ -677,13 +715,14 @@ public class ContentProviderManager {
     }
 
     /**
-     * Translates the domain representation of a list of packages into DTOs used in the plugin APIs. During the
-     * translation the two collections (allDetails and keyPVCSMap) will be populated with different
-     * views into the data.
+     * Translates the domain representation of a list of packages into DTOs used in the plugin APIs.
+     * During the translation the two collections (allDetails and keyPVCSMap) will be populated with
+     * different views into the data.
      *
-     * @param existingPVCS list of packages in the form of the wrapper object linking them to the content source
+     * @param existingPVCS list of packages in the form of the wrapper object linking them to
+     *                     the content source
      * @param allDetails   set of all translated package DTOs
-     * @param keyPVCSMap   mapping of package version key to package domain object 
+     * @param keyPVCSMap   mapping of package version key to package domain object
      */
     private void translateDomainToDto(List<PackageVersionContentSource> existingPVCS,
                                       Set<ContentProviderPackageDetails> allDetails,
@@ -695,8 +734,9 @@ public class ContentProviderManager {
             ResourceType rt = p.getPackageType().getResourceType();
 
             ContentProviderPackageDetailsKey key;
-            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType()
-                .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
+            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(),
+                p.getPackageType()
+                    .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
 
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setClassification(pv.getGeneralPackage().getClassification());
@@ -720,18 +760,21 @@ public class ContentProviderManager {
         }
     }
 
-    private void translateDomainToDto(List<Distribution>dists, List<DistributionDetails> distDetails) {
+    private void translateDomainToDto(List<Distribution> dists,
+                                      List<DistributionDetails> distDetails) {
         DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
 
-        for (Distribution d: dists) {
-            DistributionDetails detail = new DistributionDetails(d.getLabel(), d.getDistributionType().getName());
+        for (Distribution d : dists) {
+            DistributionDetails detail = new DistributionDetails(d.getLabel(),
+                d.getDistributionType().getName());
             detail.setLabel(d.getLabel());
             detail.setDistributionPath(d.getBasePath());
             detail.setDescription(d.getDistributionType().getDescription());
             List<DistributionFile> files = distManager.getDistributionFilesByDistId(d.getId());
-            for (DistributionFile f: files) {
+            for (DistributionFile f : files) {
                 DistributionFileDetails dfd =
-                        new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(), f.getMd5sum());
+                    new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(),
+                        f.getMd5sum());
                 detail.addFile(dfd);
             }
             distDetails.add(detail);
@@ -739,8 +782,8 @@ public class ContentProviderManager {
     }
 
     /**
-     * This will handle invocations to an object ensuring that the call is isolated to within the appropriate
-     * classloader.
+     * This will handle invocations to an object ensuring that the call is isolated to within the
+     * appropriate classloader.
      */
     private class IsolatedInvocationHandler implements InvocationHandler {
         private final Object instance;

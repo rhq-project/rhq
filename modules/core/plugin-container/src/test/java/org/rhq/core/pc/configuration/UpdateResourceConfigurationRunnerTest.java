@@ -23,9 +23,9 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.rhq.core.pc.configuration.ConfigurationUpdateResponseMatcher.*;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
-import static org.testng.Assert.*;
+import static org.rhq.test.AssertUtils.*;
+import org.rhq.test.jmock.PropertyMatcher;
 
 import org.testng.annotations.Test;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
@@ -39,6 +39,7 @@ import org.jmock.Expectations;
 import org.jmock.api.Action;
 import org.jmock.api.Invocation;
 import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 
 public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest {
 
@@ -239,35 +240,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
     void assertConfigurationUpdateResponseMatches(ConfigurationUpdateResponse expected,
         ConfigurationUpdateResponse actual, String msg) {
-        boolean matches = true;
-        StringBuilder errors = new StringBuilder(msg + " -- " + ConfigurationUpdateResponse.class.getSimpleName() +
-            " objects do not match:\n");
-
-        if (!propertyEquals(expected.getConfigurationUpdateId(), actual.getConfigurationUpdateId())) {
-            matches = false;
-            errors.append("expected.configurationUpdateId = " + expected.getConfigurationUpdateId() + "\n");
-            errors.append("actual.configurationUpdateId = " + actual.getConfigurationUpdateId() + "\n\n");
-        }
-
-        if (!propertyEquals(expected.getConfiguration(), actual.getConfiguration())) {
-            matches = false;
-            errors.append("expected.configuration = " + expected.getConfiguration() + "\n");
-            errors.append("actual.configuration = " + actual.getConfiguration() + "\n\n");
-        }
-
-        if (!propertyEquals(expected.getErrorMessage(), actual.getErrorMessage())) {
-            matches = false;
-            errors.append("expected.errorMessage = " + expected.getErrorMessage() + "\n");
-            errors.append("actual.errorMessage = " + actual.getErrorMessage() + "\n\n");
-        }
-
-        if (!propertyEquals(expected.getStatus(), actual.getStatus())) {
-            matches = false;
-            errors.append("expected.status = " + expected.getStatus() + "\n");
-            errors.append("actual.status = " + actual.getStatus() + "\n\n");
-        }
-
-        assertTrue(matches, errors.toString());
+        assertPropertiesMatch(expected, actual, msg);
     }
 
     boolean propertyEquals(Object expected, Object actual) {
@@ -279,6 +252,10 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             return false;
         }
         return expected.equals(actual);
+    }
+
+    public static Matcher<ConfigurationUpdateResponse> matchingResponse(ConfigurationUpdateResponse expected) {
+        return new PropertyMatcher<ConfigurationUpdateResponse>(expected);
     }
 
     public static Action updateReportTo(ConfigurationUpdateStatus status) {

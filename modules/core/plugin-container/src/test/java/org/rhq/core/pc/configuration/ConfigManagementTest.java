@@ -28,6 +28,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.test.JMockTest;
 import static org.testng.Assert.assertEquals;
 
 import java.util.HashSet;

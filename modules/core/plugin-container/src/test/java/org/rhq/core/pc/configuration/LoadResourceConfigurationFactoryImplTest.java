@@ -31,6 +31,7 @@ import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.test.JMockTest;
 import org.jmock.Expectations;
 
 public class LoadResourceConfigurationFactoryImplTest extends JMockTest {

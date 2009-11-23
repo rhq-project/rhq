@@ -21,31 +21,31 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pc.configuration;
+package org.rhq.test.jmock;
 
-import org.jmock.Mockery;
-import org.testng.IHookCallBack;
-import org.testng.IHookable;
-import org.testng.ITestResult;
-import org.testng.annotations.BeforeMethod;
+import org.hamcrest.TypeSafeMatcher;
+import org.hamcrest.Description;
+import org.rhq.test.MatchResult;
 
-public class JMockTest implements IHookable {
+public class PropertyMatcher<T> extends TypeSafeMatcher<T> {
 
-    protected Mockery context;
+    private T expected;
 
-    @BeforeMethod
-    void initContext() {
-        context = new Mockery();
+    public PropertyMatcher(T expected) {
+        this.expected = expected;
     }
 
-    public void run(IHookCallBack iHookCallBack, ITestResult iTestResult) {
-        iHookCallBack.runTestMethod(iTestResult);
-        try {
-            context.assertIsSatisfied();
-        }
-        catch (Throwable t) {
-            iTestResult.setStatus(ITestResult.FAILURE);
-            iTestResult.setThrowable(t);
-        }
+    public boolean matchesSafely(T actual) {
+        org.rhq.test.PropertyMatcher<T> matcher = new org.rhq.test.PropertyMatcher<T>();
+        matcher.setExpected(expected);
+        matcher.setActual(actual);
+
+        MatchResult result = matcher.execute();
+
+        return result.isMatch();
+    }
+
+    public void describeTo(Description description) {
+        description.appendText(expected.toString());
     }
 }

@@ -55,5 +55,25 @@
       <data id="1" name="kickstart" description="Linux kickstart distribution"/>
       <data id="2" name="jumpstart" description="solaris jumpstart distribution"/>
    </table>
-
+   
+   <table name="RHQ_ADVISORY_TYPE">
+      <data id="101" name="Bug Fix Advisory" description="Bug fix(RHBA) Advisory"/>
+      <data id="102" name="Product Enhancement Advisory" description="Product Enhancement(RHEA) Advisory"/>
+      <data id="103" name="Security Advisory" description="Security Advisory(RHSA) Advisory"/>
+   </table>
+   
+   <table name="RHQ_ADVISORY_FILE_TYPE">
+      <data id="101" label="RPM" />
+      <data id="102" label="SRPM"/>
+      <data id="103" label="IMG"/>
+      <data id="104" label="OVAL"/>
+   </table>
+   
+   <table name="RHQ_ADVISORY_SEVERITY">
+      <data id="101" rank="0" label="errata.sev.label.critical" />
+      <data id="102" rank="1" label="errata.sev.label.important"/>
+      <data id="103" rank="2" label="errata.sev.label.moderate"/>
+      <data id="104" rank="3" label="errata.sev.label.low"/>
+   </table>
+   
 </dbsetup>

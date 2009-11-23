@@ -33,32 +33,34 @@
 	}
 </script>
 	
-		<h:outputText value="#{messages.youareviewingraw}" />
-    	<h:outputText value=" #{messages.switch2}" />
-           <h:outputLink value="view.xhtml">
-			<s:conversationId />
+	<h:outputText value="#{messages.youareviewingraw}" />
+	<h:panelGroup rendered="#{rawConfigCollection.structuredSupported}">		
+	   	<h:outputText value=" #{messages.switch2}" />
+       	<h:outputLink value="view.xhtml">
+		<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" #{messages.structured}" />
-		</h:outputLink>
+	   	</h:outputLink>
+	</h:panelGroup>
+ 	
+	<h:form id="viewResourceConfigurationForm">
+        <!--  TODO remove the id version -->
+    	<input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 	
 	
-	 <h:form id="viewResourceConfigurationForm">
-         <!--  TODO remove the id version -->
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-	
-	
-	    <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+		<h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                       rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">		          
-            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                      
+        	<h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
 			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
                              rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
-        </h:panelGrid>
+         </h:panelGrid>
 	
 	
-	</h:form>
+	    </h:form>
 	
 		<table class="summary-props-table" style="">
 				<tr>

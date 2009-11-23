@@ -399,6 +399,12 @@
                   <version>${project.version}</version>
                 </artifactItem>
 
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-core-perspective</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
                 <!--  Temporary Sample Perspective -->
                 <artifactItem>
                   <groupId>org.rhq</groupId>

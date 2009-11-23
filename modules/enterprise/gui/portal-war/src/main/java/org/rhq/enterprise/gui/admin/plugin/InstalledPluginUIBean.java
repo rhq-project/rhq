@@ -69,7 +69,7 @@ public class InstalledPluginUIBean {
         ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
 
         try {
-            serverPlugins.updatePluginExceptContent(EnterpriseFacesContextUtility.getSubject(), plugin);
+            serverPlugins.updateServerPluginExceptContent(EnterpriseFacesContextUtility.getSubject(), plugin);
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                                            "Configuration settings saved.");
@@ -78,6 +78,8 @@ public class InstalledPluginUIBean {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                                            "There was an error changing the configuration settings.", e);
         }
+
+        lookupPlugin();
     }
 
     private void lookupPlugin() {

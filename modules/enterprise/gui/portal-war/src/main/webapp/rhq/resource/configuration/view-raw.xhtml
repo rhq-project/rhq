@@ -41,6 +41,25 @@
 			<h:outputText value=" #{messages.structured}" />
 		</h:outputLink>
 	
+	
+	 <h:form id="viewResourceConfigurationForm">
+         <!--  TODO remove the id version -->
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+	
+	
+	    <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+                      rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">		          
+            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                             title="Edit this Configuration" styleClass="buttonmed" 
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
+			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
+                             title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
+                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
+        </h:panelGrid>
+	
+	
+	</h:form>
+	
 		<table class="summary-props-table" style="">
 				<tr>
 					<td bgcolor="#a4b2b9" width="25%" valign="top">Files 

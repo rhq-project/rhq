@@ -28,9 +28,11 @@ THIS TEXT WILL BE REMOVED.
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
          
+         <h:outputText value="#{messages.youareviewingstructured}" />
+	  
 		 <h:panelGroup rendered="#{rawConfigCollection.rawSupported}" >
-           You are viewing this in structured mode. Switch to 
-           <h:commandLink action="#{rawConfigCollection.switchToraw}"  rendered="#{rawConfigCollection.rawSupported}">
+		   <h:outputText value=" #{messages.switch2}" />
+           <h:commandLink action="#{rawConfigCollection.switchToraw}"  >
              <f:param name="conversationId" value="#{conversation.id}"/>
              <f:param name="id" value="#{ResourceUIBean.id}"/>
              <h:outputText value=" files mode"/>

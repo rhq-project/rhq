@@ -35,13 +35,14 @@
 	<a4j:form id="editResourceConfigurationForm">
 			
 	<h:outputText value="#{messages.youareviewingraw}" />
-	<h:outputText value=" #{messages.switch2}" />
-           <h:commandLink  action="#{rawConfigCollection.switchTostructured}">
+	<h:panelGroup rendered="#{rawConfigCollection.structuredSupported}">		
+		<h:outputText value=" #{messages.switch2}" />
+    	<h:commandLink  action="#{rawConfigCollection.switchTostructured}">
 			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" #{messages.structured}" />
 		</h:commandLink>
-
+	</h:panelGroup>
  		<table class="summary-props-table" style="">
 				<input type="hidden" name="id"
 					value="#{ResourceUIBean.id}" />
@@ -64,10 +65,14 @@
 					</h:panelGroup>
 					<div>______________________________________</div>
 					<div>* <h:outputText value="#{messages.uncommitted}" /></div>
-					<a4j:commandButton action="#{rawConfigCollection.commit}"
-						value="commit changes" reRender="changedFiles" /> <a4j:commandButton
-						action="#{rawConfigCollection.discard}" value="#{messages.discard}"
-						reRender="changedFiles" /></td>
+					<h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">							
+						<a4j:commandButton action="#{rawConfigCollection.commit}"
+							value="#{messages.commit}" reRender="changedFiles" styleClass="buttonmed"/> 						
+						<a4j:commandButton
+							action="#{rawConfigCollection.discard}" value="#{messages.discard}"
+							reRender="changedFiles" styleClass="buttonmed"/>
+					</h:panelGrid>
+				 	</td>
 					<td>
 					<div>
 					<h:outputText value="#{messages.currentfile}" />

@@ -6,7 +6,6 @@
 
    <navigation-rule>
 
-      <from-view-id>/rhq/resource/configuration/view.xhtml</from-view-id>
 
       <navigation-case>
          <from-action>#{ExistingResourceConfigurationUIBean.editConfiguration}</from-action>

@@ -20,8 +20,10 @@ package org.rhq.enterprise.gui.content;
 
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.util.PageControl;
@@ -35,7 +37,7 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This is the list of content sources that are currently associated with a repo.
+ * This is the list of content providers that are currently associated with a repo.
  */
 public class RepoAssociationsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "RepoAssociationsUIBean";
@@ -75,10 +77,10 @@ public class RepoAssociationsUIBean extends PagedDataTableUIBean {
                 manager.removeContentSourcesFromRepo(subject, repoId, contentSourceIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disassociated [" + contentSourceIds.length
-                    + "] content sources from repo");
+                    + "] content providers from repo");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to disassociate one or more content sources from repo", e);
+                    "Failed to disassociate one or more content providers from repo", e);
             }
         }
 
@@ -100,7 +102,6 @@ public class RepoAssociationsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<ContentSource> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));

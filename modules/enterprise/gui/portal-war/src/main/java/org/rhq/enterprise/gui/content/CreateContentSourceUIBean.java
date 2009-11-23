@@ -84,11 +84,11 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     }
 
     public String getNullConfigurationDefinitionMessage() {
-        return "The selected content source type does not require a configuration.";
+        return "The selected content provider type does not require a configuration.";
     }
 
     public String getNullConfigurationMessage() {
-        return "Content source has an empty configuration."; // is this ever really used?
+        return "Content provider has an empty configuration."; // is this ever really used?
     }
 
     public String save() {
@@ -138,7 +138,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
                 }
             }
 
-            // reset the content source's sync schedule and other settings  to the new type's defaults
+            // reset the content provider's sync schedule and other settings  to the new type's defaults
             newContentSource.setSyncSchedule(cst.getDefaultSyncSchedule());
             newContentSource.setLazyLoad(cst.isDefaultLazyLoad());
             newContentSource.setDownloadMode(cst.getDefaultDownloadMode());

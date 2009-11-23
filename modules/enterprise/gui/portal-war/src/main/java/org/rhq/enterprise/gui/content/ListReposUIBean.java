@@ -66,7 +66,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
             int syncCount = repoManager.synchronizeRepos(subject, repoIds);
             if (syncCount > 0) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
-                    + "] content sources.");
+                    + "] content providers.");
             } else {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                     "Selected Repositories have no content to sync.");
@@ -112,7 +112,6 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<Repo> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();

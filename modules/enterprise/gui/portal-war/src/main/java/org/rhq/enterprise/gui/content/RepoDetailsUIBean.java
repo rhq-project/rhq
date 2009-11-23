@@ -53,7 +53,7 @@ public class RepoDetailsUIBean {
         if (syncCount > 0) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository is syncing.");
         } else {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Nothing to sync for this Repository.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Nothing to sync for this repository.");
         }
         return "success";
     }
@@ -64,7 +64,7 @@ public class RepoDetailsUIBean {
 
         try {
             manager.updateRepo(subject, repo);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repo has been updated.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository has been updated.");
         } catch (ContentException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode on failure

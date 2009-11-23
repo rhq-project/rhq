@@ -94,11 +94,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     public Plugin getServerPluginRelationships(Plugin plugin) {
-        plugin = entityManager.find(Plugin.class, plugin.getId());
+        plugin = getServerPlugin(plugin.getName()); // refresh all but the content field
 
-        // force eager load
-        plugin.getPluginConfiguration().getProperties().size();
-        plugin.getScheduledJobsConfiguration().getProperties().size();
+        int pluginConfigId = plugin.getPluginConfiguration().getId();
+        int scheduledJobsId = plugin.getScheduledJobsConfiguration().getId();
+        Configuration pluginConfig = entityManager.find(Configuration.class, pluginConfigId);
+        Configuration scheduledJobs = entityManager.find(Configuration.class, scheduledJobsId);
+        plugin.setPluginConfiguration(pluginConfig.deepCopyWithoutProxies());
+        plugin.setScheduledJobsConfiguration(scheduledJobs.deepCopyWithoutProxies());
 
         return plugin;
     }
@@ -146,9 +149,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<Plugin> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<String> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<Plugin>(); // nothing to do
+            return new ArrayList<String>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
@@ -156,19 +159,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
 
-        List<Plugin> doomedPlugins = new ArrayList<Plugin>();
+        List<String> doomedPlugins = new ArrayList<String>();
 
         for (Integer pluginId : pluginIds) {
-            Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
+            Plugin doomedPlugin = null;
+            try {
+                doomedPlugin = entityManager.getReference(Plugin.class, pluginId);
+            } catch (Exception ignore) {
+            }
             if (doomedPlugin != null) {
-                doomedPlugins.add(doomedPlugin);
+                String pluginName = doomedPlugin.getName();
+                doomedPlugins.add(pluginName);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(pluginName);
                     if (pc != null) {
                         try {
-                            pc.unschedulePluginJobs(doomedPlugin.getName());
+                            pc.unschedulePluginJobs(pluginName);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                            log.warn("Failed to unschedule jobs for plugin [" + pluginName + "]", e);
                         }
                     }
                 }
@@ -184,9 +192,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<Plugin> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<String> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<Plugin>(); // nothing to do
+            return new ArrayList<String>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
@@ -194,19 +202,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
 
-        List<Plugin> doomedPlugins = new ArrayList<Plugin>();
+        List<String> doomedPlugins = new ArrayList<String>();
 
         for (Integer pluginId : pluginIds) {
-            Plugin doomedPlugin = entityManager.find(Plugin.class, pluginId);
+            Plugin doomedPlugin = null;
+            try {
+                doomedPlugin = entityManager.getReference(Plugin.class, pluginId);
+            } catch (Exception ignore) {
+            }
             if (doomedPlugin != null) {
-                doomedPlugins.add(doomedPlugin);
+                String pluginName = doomedPlugin.getName();
+                doomedPlugins.add(pluginName);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(doomedPlugin.getName());
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(pluginName);
                     if (pc != null) {
                         try {
-                            pc.unschedulePluginJobs(doomedPlugin.getName());
+                            pc.unschedulePluginJobs(pluginName);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + doomedPlugin.getName() + "]", e);
+                            log.warn("Failed to unschedule jobs for plugin [" + pluginName + "]", e);
                         }
                     }
                 }

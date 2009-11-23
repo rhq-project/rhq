@@ -1,25 +1,25 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.configuration;
 
 import java.util.List;
@@ -67,12 +67,18 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
      */
     private ConfigurationServerService configurationServerService;
 
+    private ConfigurationUtilityService configUtilService = new ConfigurationUtilityServiceImpl();
+
     public UpdateResourceConfigurationRunner(ConfigurationServerService configurationServerService, ResourceType type,
         ConfigurationFacet facet, ConfigurationUpdateRequest request) {
         this.configurationServerService = configurationServerService; // may be null
         this.resourceType = type;
         this.configurationFacet = facet;
         this.request = request;
+    }
+
+    void setConfigUtilService(ConfigurationUtilityService service) {
+        configUtilService = service;
     }
 
     public void run() {
@@ -100,8 +106,8 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
             ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 
             // Normalize and validate the config.
-            ConfigurationUtility.normalizeConfiguration(response.getConfiguration(), configurationDefinition);
-            List<String> errorMessages = ConfigurationUtility.validateConfiguration(response.getConfiguration(),
+            configUtilService.normalizeConfiguration(response.getConfiguration(), configurationDefinition);
+            List<String> errorMessages = configUtilService.validateConfiguration(response.getConfiguration(),
                 configurationDefinition);
             for (String errorMessage : errorMessages) {
                 log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "

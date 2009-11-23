@@ -27,6 +27,11 @@ import org.hamcrest.TypeSafeMatcher;
 import org.hamcrest.Description;
 import org.rhq.test.MatchResult;
 
+/**
+ * A JMock custom matcher that matches based on the public, accessible properties of an object.
+ *
+ * @param <T> The type of the object to match.
+ */
 public class PropertyMatcher<T> extends TypeSafeMatcher<T> {
 
     private T expected;

@@ -27,6 +27,16 @@ import static org.testng.Assert.*;
 
 public class AssertUtils {
 
+    /**
+     * Verifies that all public, accessible properties of the two objects are equal. This method might be used when you
+     * want to compare two objects without using their <code>equals()</code> methods or when do not implement <code>
+     * equals()</code>.
+     *
+     * @param expected The expected object to compare against
+     * @param actual The actual object to be compared
+     * @param msg An error message
+     * @param <T> The type of the objects to be compared
+     */
     public static <T> void assertPropertiesMatch(T expected, T actual, String msg) {
         PropertyMatcher<T> matcher = new PropertyMatcher<T>();
         matcher.setExpected(expected);

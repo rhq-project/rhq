@@ -23,11 +23,11 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.testng.IHookable;
+import org.jmock.Mockery;
 import org.testng.IHookCallBack;
+import org.testng.IHookable;
 import org.testng.ITestResult;
 import org.testng.annotations.BeforeMethod;
-import org.jmock.Mockery;
 
 public class JMockTest implements IHookable {
 

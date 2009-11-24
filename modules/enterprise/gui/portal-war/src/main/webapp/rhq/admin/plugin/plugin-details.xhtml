@@ -35,8 +35,6 @@
                  layout="table"
                  width="100%"/>
 
-
-
      <h:form id="pluginsForm">
 
            <rich:panel>
@@ -66,7 +64,6 @@
 
               </h:panelGrid>
 
-
               <rich:panel>
                  <f:facet name="header">
                     <h:outputText value="Plugin Help"/>
@@ -76,6 +73,7 @@
 
               </rich:panel>
 
+              <ui:insert name="pre-config" />
 
               <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null}">
                  <f:facet name="header">
@@ -83,7 +81,8 @@
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
-                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}" />
+                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
+                    readOnly="#{not editMode}" />
               </rich:panel>
 
               <rich:panel rendered="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
@@ -92,17 +91,11 @@
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
-                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}" />
+                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
+                    readOnly="#{not editMode}" />
               </rich:panel>
 
-              <input type="hidden" name="plugin" value="#{param.plugin}"/>
-              <input type="hidden" name="pluginType" value="#{param.pluginType}"/>
-
-              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null ||
-                                        InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
-                 <h:commandButton value="OK" type="submit" action="#{InstalledPluginUIBean.updatePlugin}"
-                                alt="Click to Save Plugin" styleClass="buttonmed" />
-              </rich:panel>
+              <ui:insert name="post-config" />
            </rich:panel>
 
         </h:form>

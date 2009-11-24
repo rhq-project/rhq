@@ -16,7 +16,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
 package org.rhq.enterprise.server.plugin;
 
 import java.io.BufferedInputStream;
@@ -67,14 +66,12 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 @Stateless
 @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class ServerPluginsBean implements ServerPluginsLocal {
-    private final Log log = LogFactory.getLog(ServerPluginsBean.class);
 
+    private final Log log = LogFactory.getLog(ServerPluginsBean.class);
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource dataSource;
-
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
@@ -242,8 +239,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                     File currentFile = new File(pluginDir, doomedPlugin.getPath());
                     currentFile.delete();
                 } catch (Exception e) {
-                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: "
-                        + ThrowableUtil.getAllMessages(e));
+                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: " + ThrowableUtil.getAllMessages(e));
                 }
             }
         }
@@ -279,7 +275,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status)
-        throws Exception {
+            throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
@@ -295,8 +291,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin [" + plugin.getName()
-                + "] must be a server plugin to be registered");
+            throw new IllegalArgumentException("Plugin [" + plugin.getName() + "] must be a server plugin to be registered");
         }
 
         Plugin existingPlugin = null;
@@ -309,8 +304,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
         if (existingPlugin != null) {
             if (existingPlugin.getStatus() == PluginStatusType.DELETED) {
-                throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
-                    + "], it has been marked as deleted");
+                throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName() + "], it has been marked as deleted");
             }
             Plugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes use == for reference equality
@@ -328,8 +322,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             if (plugin.getId() == 0) {
                 PluginStatusType status = getServerPluginStatus(plugin.getName());
                 if (PluginStatusType.DELETED == status) {
-                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
-                        + "], it has been previously marked as deleted.");
+                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName() + "], it has been previously marked as deleted.");
                 }
                 entityManager.persist(plugin);
             } else {
@@ -371,8 +364,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         // to entityManager.merge that plugin POJO, it would null out that blob column.
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin [" + plugin.getName()
-                + "] must be a server plugin to be updated");
+            throw new IllegalArgumentException("Plugin [" + plugin.getName() + "] must be a server plugin to be updated");
         }
 
         if (plugin.getId() == 0) {

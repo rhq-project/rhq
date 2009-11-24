@@ -49,7 +49,14 @@ public class RepoDetailsUIBean {
     public String sync() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
-        int syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);
+        int syncCount = 0;
+        try {
+            syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);
+        }
+        catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
+            return "edit";
+        }
         if (syncCount > 0) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository is syncing.");
         } else {

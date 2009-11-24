@@ -286,8 +286,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    @Override
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
 

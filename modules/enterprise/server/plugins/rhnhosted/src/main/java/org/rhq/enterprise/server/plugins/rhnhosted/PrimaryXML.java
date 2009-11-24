@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 import java.io.Serializable;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdom.Element;
@@ -104,7 +105,7 @@ public class PrimaryXML {
             return "EQ";
         }
 
-        log.error("Unknown rpm sense value of " + sense + " which parsed to an integer of " + tmp);
+        log.debug("Unknown rpm sense value of " + sense + " which parsed to an integer of " + tmp);
         return "";
     }
 
@@ -140,7 +141,7 @@ public class PrimaryXML {
     static public String getRelease(String version) {
         int start = version.indexOf("-");
         if (start < 0) {
-            return ""; //unsure how to parse, return ""
+            return "";
         }
         start = start + 1; // go past the "-" character
         return version.substring(start);
@@ -168,7 +169,12 @@ public class PrimaryXML {
         version.setText(pkg.getVersion());
         version.setAttribute("ver", pkg.getVersion());
         version.setAttribute("rel", pkg.getRelease());
-        version.setAttribute("epoch", pkg.getEpoch());
+        String epoch = pkg.getEpoch();
+        // Note, if epoch is empty we need to change it to a zero as that is what yum expects.
+        if (StringUtils.isBlank(epoch)) {
+            epoch = "0";
+        }
+        version.setAttribute("epoch", epoch);
         top.addContent(version);
 
         Element checksum = new Element("checksum");
@@ -211,8 +217,10 @@ public class PrimaryXML {
         Element location = new Element("location");
         //This value can not be empty and can not contain a "?".
         //It's value is ignored by the RHQ processing for yum.  
-        //RHQ will append a series of request parameters to download the file.  
-        location.setAttribute("href", "getPackage");
+        //RHQ will append a series of request parameters to download the file.
+        String rpmName = RHNHelper.constructRpmName(pkg.getName(), pkg.getVersion(), pkg.getRelease(), pkg.getEpoch(),
+            pkg.getPackageArch());
+        location.setAttribute("href", rpmName);
         top.addContent(location);
 
         Element format = new Element("format");

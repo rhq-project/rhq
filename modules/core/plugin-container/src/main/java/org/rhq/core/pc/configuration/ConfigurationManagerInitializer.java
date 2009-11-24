@@ -31,11 +31,11 @@ public class ConfigurationManagerInitializer {
     public void initialize(ConfigurationManager manager) {
         ComponentService componentService = new ComponentServiceImpl();
 
-        LoadResourceConfigurationFactoryImpl factory = new LoadResourceConfigurationFactoryImpl();
+        ConfigManagementFactoryImpl factory = new ConfigManagementFactoryImpl();
         factory.setComponentService(componentService);
 
         manager.setComponentService(componentService);
-        manager.setLoadConfigFactory(factory);
+        manager.setConfigManagementFactory(factory);
     }
 
 }

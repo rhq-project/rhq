@@ -25,7 +25,7 @@ package org.rhq.core.pc.configuration;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 
-public interface LoadResourceConfigurationFactory {
+public interface ConfigManagementFactory {
 
     ConfigManagement getStrategy(int resourceId) throws PluginContainerException;
 

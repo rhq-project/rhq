@@ -72,7 +72,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private ComponentService componentService;
 
-    private LoadResourceConfigurationFactory loadConfigFactory;
+    private ConfigManagementFactory configMgmtFactory;
 
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
@@ -108,8 +108,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         this.componentService = componentService;
     }
 
-    public void setLoadConfigFactory(LoadResourceConfigurationFactory factory) {
-        loadConfigFactory = factory;
+    public void setConfigManagementFactory(ConfigManagementFactory factory) {
+        configMgmtFactory = factory;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
@@ -243,7 +243,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public Configuration loadResourceConfiguration(int resourceId)
         throws PluginContainerException {
 
-        ConfigManagement loadConfig = loadConfigFactory.getStrategy(resourceId);
+        ConfigManagement loadConfig = configMgmtFactory.getStrategy(resourceId);
         Configuration configuration = null;
 
         try {

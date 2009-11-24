@@ -49,7 +49,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
 
     boolean FROM_RAW = false;
 
-    LoadResourceConfigurationFactory loadConfigFactory;
+    ConfigManagementFactory configMgmtFactory;
 
     ComponentService componentService;
 
@@ -57,12 +57,12 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
 
     @BeforeMethod
     public void setup() {
-        loadConfigFactory = context.mock(LoadResourceConfigurationFactory.class);
+        configMgmtFactory = context.mock(ConfigManagementFactory.class);
 
         componentService = context.mock(ComponentService.class);
 
         configurationMgr = new ConfigurationManager();
-        configurationMgr.setLoadConfigFactory(loadConfigFactory);
+        configurationMgr.setConfigManagementFactory(configMgmtFactory);
         configurationMgr.setComponentService(componentService);
     }
 
@@ -73,7 +73,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         final ConfigManagement loadConfig = context.mock(ConfigManagement.class);
 
         context.checking(new Expectations() {{
-            atLeast(1).of(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
             atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(expectedConfig));
         }});
@@ -88,7 +88,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         final ConfigManagement loadConfig = context.mock(ConfigManagement.class);
 
         context.checking(new Expectations() {{
-            atLeast(1).of(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
             atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(null));
 
@@ -105,7 +105,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         context.checking(new Expectations() {{
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
 
-            atLeast(1).of(loadConfigFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
             atLeast(1).of(loadConfig).execute(resourceId); will(throwException(new RuntimeException()));
         }});

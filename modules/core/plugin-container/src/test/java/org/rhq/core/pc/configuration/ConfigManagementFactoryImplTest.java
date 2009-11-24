@@ -34,7 +34,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.test.JMockTest;
 import org.jmock.Expectations;
 
-public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
+public class ConfigManagementFactoryImplTest extends JMockTest {
 
     static final String LEGACY_AMPS_VERSION = "2.0";
 
@@ -44,13 +44,13 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
 
     int resourceId = -1;
 
-    LoadResourceConfigurationFactoryImpl factory;
+    ConfigManagementFactoryImpl factory;
 
     @BeforeMethod
     public void setup() {
         componentService = context.mock(ComponentService.class);
 
-        factory = new LoadResourceConfigurationFactoryImpl();
+        factory = new ConfigManagementFactoryImpl();
         factory.setComponentService(componentService);
     }
 

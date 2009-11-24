@@ -30,7 +30,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-public class LoadResourceConfigurationFactoryImpl implements LoadResourceConfigurationFactory {
+public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
 
     private static final ComparableVersion NON_LEGACY_AMPS_VERSION = new ComparableVersion("2.1");
 

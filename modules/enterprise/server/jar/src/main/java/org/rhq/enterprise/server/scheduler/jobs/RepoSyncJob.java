@@ -43,7 +43,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * <ul>
  * <li>Package Metadata</li>
  * <li>Package Bits</li>
- * <li>Distribution Trees</li>
+ * <li>Distribution Tree Metadata</li>
+ * <li>Distribution Tree Bits</li>
  * </ul>
  * <p/>
  * Many of the calls out to the plugin are ultimately made from the

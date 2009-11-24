@@ -38,6 +38,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -131,6 +132,18 @@ public class PackageSourceSynchronizer {
     public void synchronizePackageBits() throws Exception {
 
         if (!(provider instanceof PackageSource)) {
+            return;
+        }
+
+        if (source.getDownloadMode() == DownloadMode.NEVER) {
+            log.info("Download mode of NEVER for source [" + source.getName() + "], skipping " +
+                "package bits sync for repo [" + repo.getName() + "]");
+            return;
+        }
+
+        if (source.isLazyLoad()) {
+            log.info("Lazy load enabled for source [" + source.getName() + "], skipping " +
+                "package bits sync for repo [" + repo.getName() + "]");
             return;
         }
 

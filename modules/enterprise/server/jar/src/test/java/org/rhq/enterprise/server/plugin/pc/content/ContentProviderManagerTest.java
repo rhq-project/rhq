@@ -23,7 +23,6 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.Set;
 import java.util.HashSet;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
@@ -68,9 +66,6 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     private static final String PACKAGE_TYPE_NAME = "testPackageType";
     private static final String RESOURCE_TYPE_NAME = "testResourceType";
     private static final String PLUGIN_NAME = "testPlugin";
-    private static final String PACKAGE_NAME = "package1";
-    private static final String PACKAGE_VERSION = "1.0";
-    private static final String PACKAGE_ARCH = "noarch";
 
     private static final String CUSTOM_IMPORTED_REPO_NAME = "customImportedRepo";
     private static final String EXISTING_IMPORTED_REPO_NAME = "testRepoImportedExisting";
@@ -350,39 +345,12 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         retrievedRepos = repoManager.getRepoByName("testRepoFoo");
         assert retrievedRepos.size() == 0;
 
-        // Verify Packages
-        // --------------------------------------------
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
-        EntityManager entityManager = getEntityManager();
-
-        try {
-            Query packageQuery = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_PACKAGE_DETAILS_KEY);
-            packageQuery.setParameter("packageName", PACKAGE_NAME);
-            packageQuery.setParameter("packageTypeName", PACKAGE_TYPE_NAME);
-            packageQuery.setParameter("resourceTypeId", testResourceType.getId());
-            packageQuery.setParameter("architectureName", PACKAGE_ARCH);
-            packageQuery.setParameter("version", PACKAGE_VERSION);
-
-            List<PackageVersion> packageList = packageQuery.getResultList();
-            assert packageList.size() == 1;
-            packagesToDelete.add(packageList.get(0).getId());
-        } finally {
-            tx.rollback();
-        }
-
-        // -> Verify the correct repos were requested in the package sync
-        List<String> reposRequestedInSync = testProvider.getReposRequestedInSync();
-        assert reposRequestedInSync.size() == reposThatShouldBeSyncced.size();
-        assert reposRequestedInSync.containsAll(reposThatShouldBeSyncced);
     }
 
     /**
      * Mock implementation of a content provider that will return known data.
      */
     private class TestContentProvider implements ContentProvider, PackageSource, RepoSource {
-
-        private List<String> reposRequestedInSync = new ArrayList<String>();
 
         public RepoImportReport importRepos() throws Exception {
             RepoImportReport report = new RepoImportReport();
@@ -423,14 +391,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         public void synchronizePackages(String repoName, PackageSyncReport report,
                                         Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
-            reposRequestedInSync.add(repoName);
-
-            ContentProviderPackageDetailsKey key1 = new ContentProviderPackageDetailsKey(PACKAGE_NAME, PACKAGE_VERSION,
-                PACKAGE_TYPE_NAME, PACKAGE_ARCH, RESOURCE_TYPE_NAME, PLUGIN_NAME);
-            ContentProviderPackageDetails pkg1 = new ContentProviderPackageDetails(key1);
-            pkg1.setLocation("repo/foo");
-
-            report.addNewPackage(pkg1);
+            // No-op
         }
 
         public void initialize(Configuration configuration) throws Exception {
@@ -446,14 +407,8 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         }
 
         public InputStream getInputStream(String location) throws Exception {
-            String fakeBits = "Totally fake bits";
-            ByteArrayInputStream bis = new ByteArrayInputStream(fakeBits.getBytes());
-
-            return bis;
-        }
-
-        public List<String> getReposRequestedInSync() {
-            return reposRequestedInSync;
+            // No-op
+            return null;
         }
     }
 

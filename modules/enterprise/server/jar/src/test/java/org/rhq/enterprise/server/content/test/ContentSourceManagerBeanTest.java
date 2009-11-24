@@ -279,7 +279,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             results = contentSourceManager.persistContentSourceSyncResults(results);
             assert results != null;
 
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             // Verify the product version was created
@@ -452,7 +452,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             // see the package version has been assigned to the content source
@@ -483,7 +483,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addUpdatedPackage(details);
 
             // UPDATE: merge the report!
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             // see the package version is still assigned to the content source
@@ -504,7 +504,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addDeletePackage(details);
 
             // REMOVE: merge the report!
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             // see the package version is gone
@@ -576,7 +576,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             List<PackageVersionContentSource> unloaded;
@@ -597,7 +597,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addDeletePackage(details);
 
             // REMOVE: merge the report!
-            results = contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
             assert results != null;
 
             // check the count - note the repo's PV remains intact!!
@@ -876,7 +876,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             results = contentSourceManager.persistContentSourceSyncResults(results);
             assert results != null;
 
-            contentSourceManager.mergeContentSourceSyncReport(contentSource, report, previous, results);
+            contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
 
             List<PackageVersion> inRepo;
             inRepo = repoManager.findPackageVersionsInRepo(overlord, repo.getId(), PageControl.getUnlimitedInstance());

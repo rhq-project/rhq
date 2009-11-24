@@ -400,7 +400,8 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
+    ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource,
+        PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults);
 
@@ -414,8 +415,9 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults);
+    ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource,
+                                                         DistributionSyncReport report,
+                                                         ContentSourceSyncResults syncResults);
 
     void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
 

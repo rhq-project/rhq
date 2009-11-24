@@ -40,22 +40,17 @@ import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.DistributionFile;
-import org.rhq.core.domain.content.Package;
-import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.criteria.RepoCriteria;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
+import org.rhq.enterprise.server.plugin.pc.content.sync.DistributionSourceSynchronizer;
+import org.rhq.enterprise.server.plugin.pc.content.sync.PackageSourceSynchronizer;
+import org.rhq.enterprise.server.plugin.pc.content.sync.RepoSourceSynchronizer;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -63,12 +58,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * come from the content plugins themselves.
  *
  * @author John Mazzitelli
+ * @author Jason Dobies
  */
 public class ContentProviderManager {
     private static final Log log = LogFactory.getLog(ContentProviderManager.class);
 
     private ContentServerPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
+
+    private RepoSourceSynchronizer repoSourceSynchronizer = new RepoSourceSynchronizer();
+    private PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer();
+    private DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer();
 
     // This is used as a monitor lock to the synchronizeContentSource method;
     // it helps us avoid two content sources getting synchronized at the same time.
@@ -148,7 +148,6 @@ public class ContentProviderManager {
 
         // append to this as we go along, building a status report
         StringBuilder progress = new StringBuilder();
-        long start = System.currentTimeMillis();
 
         try {
             ContentSource contentSource = contentSourceManager
@@ -188,188 +187,8 @@ public class ContentProviderManager {
                 return false;
             }
 
-            // If the provider is capable of syncing repos, do that call first
-            if (provider instanceof RepoSource) {
-                progress.append(new Date()).append(": ");
-                progress.append("Asking content provider for repositories to import...");
-
-                RepoSource repoSource = (RepoSource) provider;
-
-                start = System.currentTimeMillis();
-
-                // Call to the plugin
-                RepoImportReport report = repoSource.importRepos();
-
-                repoManager.processRepoImportReport(overlord, report, contentSourceId, progress);
-
-                log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
-                    + (System.currentTimeMillis() - start) + ")ms");
-            }
-
-            // ------------------
-            // NOTE: Ultimately, this will be moved out as repos get their own schedules. For now,
-            //       simply synchronize *all* repos for this provider.
-            // ------------------
-
-            // If the provider is capable of handling packages, perform the package synchronization
-            // portion of the sync
-            if (provider instanceof PackageSource) {
-                PackageSource packageSource = (PackageSource) provider;
-
-                RepoCriteria reposForContentSource = new RepoCriteria();
-                reposForContentSource.addFilterContentSourceIds(contentSourceId);
-                reposForContentSource.addFilterCandidate(false); // Don't sync packages for candidates
-
-                List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
-
-                // Temporary functionality: loop for all repos that use this content source
-                for (Repo repo : repos) {
-                    // Convert the existing package list for this repo into DTOs for the API
-                    // --------------------------------------------
-                    List<PackageVersionContentSource> existingPVCS; // already know about this source
-                    Set<ContentProviderPackageDetails> allDetails; // send to plugin
-                    Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
-
-                    start = System.currentTimeMillis();
-
-                    existingPVCS = contentSourceManager
-                        .getPackageVersionsFromContentSourceForRepo(subjMgr.getOverlord(),
-                            contentSource.getId(), repo.getId());
-
-                    int existingCount = existingPVCS.size();
-                    keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey,
-                        PackageVersionContentSource>(existingCount);
-                    allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
-
-                    translateDomainToDto(existingPVCS, allDetails, keyPVCSMap);
-
-                    log.info("synchronizePackages: [" + contentSource.getName() +
-                        "]: loaded existing list of size=["
-                        + existingCount + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                    progress.append(existingCount).append('\n');
-                    progress.append(new Date()).append(": ");
-                    progress.append("Asking content source to update the list of packages...");
-                    results.setResults(progress.toString());
-                    results = contentSourceManager.mergeContentSourceSyncResults(results);
-                    start = System.currentTimeMillis();
-
-                    PackageSyncReport report; // the plugin will fill this in for us
-                    report = new PackageSyncReport();
-
-                    packageSource.synchronizePackages(repo.getName(), report, allDetails);
-
-                    log.info("synchronizePackages: [" + contentSource.getName() +
-                        "]: got sync report from adapter=["
-                        + report + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                    progress.append("new=").append(report.getNewPackages().size());
-                    progress.append(", updated=").append(report.getUpdatedPackages().size());
-                    progress.append(", deleted=").append(report.getDeletedPackages().size())
-                        .append('\n');
-                    progress.append(new Date()).append(": ");
-                    progress.append("FULL SUMMARY FOLLOWS:").append('\n');
-                    progress.append(report.getSummary()).append('\n');
-                    progress.append(new Date()).append(": ");
-                    progress.append("Merging the updated list of packages to database").append('\n');
-                    results.setResults(progress.toString());
-                    results = contentSourceManager.mergeContentSourceSyncResults(results);
-                    start = System.currentTimeMillis();
-
-                    results = contentSourceManager
-                        .mergeContentSourceSyncReport(contentSource, report, keyPVCSMap, results);
-
-                }
-
-                // Reset our progress string to the full results including the text added by the merge
-                progress.setLength(0);
-                progress.append(results.getResults());
-
-                log.info(
-                    "synchronizePackages: [" + contentSource.getName() + "]: report has been merged ("
-                        + (System.currentTimeMillis() - start) + ")ms");
-
-                progress.append(new Date()).append(": ").append("DONE.");
-                results.setResults(progress.toString());
-                results.setStatus(ContentSourceSyncStatus.SUCCESS);
-                results = contentSourceManager.mergeContentSourceSyncResults(results);
-            }
-
-            log.info("Checking if provider: " + provider + " is a DistributionSource");
-            if (provider instanceof DistributionSource) {
-                log.info("synchronizeContentSource(" + contentSourceId +
-                    "):  this source is a DistributionSource");
-                log.info("We will skip the sync for now until PackageSource is working.");
-
-                DistributionSource distSource = (DistributionSource) provider;
-                RepoCriteria reposForContentSource = new RepoCriteria();
-                reposForContentSource.addFilterContentSourceIds(contentSourceId);
-                reposForContentSource.addFilterCandidate(false); // Don't sync packages for candidates
-                List<Repo> repos = repoManager.findReposByCriteria(overlord, reposForContentSource);
-
-                // Temporary functionality: loop for all repos that use this content source
-                for (Repo repo : repos) {
-                    log.info(
-                        "ContentProviderManager::synchronizeContentSource DistributionSource would " +
-                            "be syncing repo: " + repo.getName());
-
-                    start = System.currentTimeMillis();
-
-                    PageControl pc = PageControl.getUnlimitedInstance();
-                    log.debug("Looking up existing distributions for repoId: " + repo.getId());
-                    List<Distribution> dists = repoManager
-                        .findAssociatedDistributions(overlord, repo.getId(), pc);
-                    log.debug("Found " + dists.size() + " Distributions for repoId " + repo.getId());
-
-                    progress.append(dists.size()).append('\n');
-                    progress.append(new Date()).append(": ");
-                    progress.append("Asking content source to update the list of packages...");
-
-                    DistributionSyncReport distReport = new DistributionSyncReport(repo.getId());
-                    List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(
-                        dists.size());
-                    translateDomainToDto(dists, distDetails);
-
-                    distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
-
-                    log.info("synchronizeDistributions: [" + contentSource.getName() +
-                        "]: loaded existing list of size=["
-                        + dists.size() + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                    results.setResults(progress.toString());
-                    results = contentSourceManager.mergeContentSourceSyncResults(results);
-                    start = System.currentTimeMillis();
-
-
-                    distSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
-                    log.info("synchronizeDistributions: [" + contentSource.getName() +
-                        "]: got sync report from adapter=["
-                        + distReport + "] (" + (System.currentTimeMillis() - start) + ")ms");
-
-                    progress.append("new=").append(distReport.getDistributions().size());
-
-                    progress.append(", deleted=").append(distReport.getDeletedDistributions().size())
-                        .append('\n');
-                    results.setResults(progress.toString());
-                    results = contentSourceManager.mergeContentSourceSyncResults(results);
-                    start = System.currentTimeMillis();
-                    results = contentSourceManager
-                        .mergeContentSourceSyncReport(contentSource, distReport, results);
-                }
-                // Reset our progress string to the full results including the text added by the merge
-                progress.setLength(0);
-                progress.append(results.getResults());
-
-                log.info("synchronizeDistributions: [" + contentSource.getName() +
-                    "]: report has been merged ("
-                    + (System.currentTimeMillis() - start) + ")ms");
-
-                progress.append(new Date()).append(": ").append("DONE.");
-                results.setResults(progress.toString());
-                results.setStatus(ContentSourceSyncStatus.SUCCESS);
-                results = contentSourceManager.mergeContentSourceSyncResults(results);
-
-            }
+            repoSourceSynchronizer.synchronizeCandidateRepos(contentSourceId,
+                repoManager, provider, overlord, progress, contentSource);
         }
         catch (Throwable t) {
             if (results != null) {
@@ -400,6 +219,35 @@ public class ContentProviderManager {
                 results.setEndTime(System.currentTimeMillis());
                 contentSourceManager.mergeContentSourceSyncResults(results);
             }
+        }
+
+        return true;
+    }
+
+
+    public boolean synchronizeRepo(int repoId) throws Exception {
+
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        Subject overlord = subjectManager.getOverlord();
+
+        // Load the repo to sync
+        Repo repo = repoManager.getRepo(overlord, repoId);
+        if (repo == null) {
+            throw new Exception("Invalid repo ID specified for sync: " + repoId);
+        }
+
+        // Synchronize every content provider associated with the repo
+        for (ContentSource source : repo.getContentSources()) {
+            ContentProvider provider = getIsolatedContentProvider(source.getId());
+
+            packageSourceSynchronizer.synchronizePackageMetadata(repo, source, provider);
+            packageSourceSynchronizer.synchronizePackageBits(repo, source, provider);
+
+            distributionSourceSynchronizer.synchronizeDistributionMetadata(repo, source, provider);
+            distributionSourceSynchronizer.synchronizeDistributionBits(repo, source, provider);
         }
 
         return true;
@@ -470,8 +318,6 @@ public class ContentProviderManager {
                 e);
             throw new InitializationException(e);
         }
-
-        return;
     }
 
     /**
@@ -517,6 +363,28 @@ public class ContentProviderManager {
     public void restartAdapter(ContentSource contentSource) throws Exception {
         shutdownAdapter(contentSource);
         startAdapter(contentSource);
+    }
+
+    /**
+     * Given a ID to a content source, this returns the adapter that is responsible for communicating
+     * with that content source where that adapter object will ensure invocations on it are isolated
+     * to its plugin classloader.
+     *
+     * @param contentProviderId an ID to a {@link ContentSource}
+     * @return the adapter that is communicating with the content source, isolated to its classloader
+     * @throws RuntimeException if there is no content source with the given ID
+     */
+    public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
+        synchronized (this.adapters) {
+            for (ContentSource contentSource : this.adapters.keySet()) {
+                if (contentSource.getId() == contentProviderId) {
+                    return getIsolatedContentSourceAdapter(contentSource);
+                }
+            }
+        }
+
+        throw new RuntimeException(
+            "Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
     }
 
     /**
@@ -591,28 +459,6 @@ public class ContentProviderManager {
      */
     protected void createInitialAdaptersMap() {
         this.adapters = new HashMap<ContentSource, ContentProvider>();
-    }
-
-    /**
-     * Given a ID to a content source, this returns the adapter that is responsible for communicating
-     * with that content source where that adapter object will ensure invocations on it are isolated
-     * to its plugin classloader.
-     *
-     * @param contentProviderId an ID to a {@link ContentSource}
-     * @return the adapter that is communicating with the content source, isolated to its classloader
-     * @throws RuntimeException if there is no content source with the given ID
-     */
-    public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
-        synchronized (this.adapters) {
-            for (ContentSource contentSource : this.adapters.keySet()) {
-                if (contentSource.getId() == contentProviderId) {
-                    return getIsolatedContentSourceAdapter(contentSource);
-                }
-            }
-        }
-
-        throw new RuntimeException(
-            "Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
     }
 
     /**
@@ -712,73 +558,6 @@ public class ContentProviderManager {
         }
 
         return adapter;
-    }
-
-    /**
-     * Translates the domain representation of a list of packages into DTOs used in the plugin APIs.
-     * During the translation the two collections (allDetails and keyPVCSMap) will be populated with
-     * different views into the data.
-     *
-     * @param existingPVCS list of packages in the form of the wrapper object linking them to
-     *                     the content source
-     * @param allDetails   set of all translated package DTOs
-     * @param keyPVCSMap   mapping of package version key to package domain object
-     */
-    private void translateDomainToDto(List<PackageVersionContentSource> existingPVCS,
-                                      Set<ContentProviderPackageDetails> allDetails,
-                                      Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap) {
-
-        for (PackageVersionContentSource pvcs : existingPVCS) {
-            PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
-            Package p = pv.getGeneralPackage();
-            ResourceType rt = p.getPackageType().getResourceType();
-
-            ContentProviderPackageDetailsKey key;
-            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(),
-                p.getPackageType()
-                    .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
-
-            ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
-            details.setClassification(pv.getGeneralPackage().getClassification());
-            details.setDisplayName(pv.getDisplayName());
-            details.setDisplayVersion(pv.getDisplayVersion());
-            details.setExtraProperties(pv.getExtraProperties());
-            details.setFileCreatedDate(pv.getFileCreatedDate());
-            details.setFileName(pv.getFileName());
-            details.setFileSize(pv.getFileSize());
-            details.setLicenseName(pv.getLicenseName());
-            details.setLicenseVersion(pv.getLicenseVersion());
-            details.setLocation(pvcs.getLocation());
-            details.setLongDescription(pv.getLongDescription());
-            details.setMD5(pv.getMD5());
-            details.setMetadata(pv.getMetadata());
-            details.setSHA256(pv.getSHA256());
-            details.setShortDescription(pv.getShortDescription());
-
-            allDetails.add(details);
-            keyPVCSMap.put(key, pvcs);
-        }
-    }
-
-    private void translateDomainToDto(List<Distribution> dists,
-                                      List<DistributionDetails> distDetails) {
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-
-        for (Distribution d : dists) {
-            DistributionDetails detail = new DistributionDetails(d.getLabel(),
-                d.getDistributionType().getName());
-            detail.setLabel(d.getLabel());
-            detail.setDistributionPath(d.getBasePath());
-            detail.setDescription(d.getDistributionType().getDescription());
-            List<DistributionFile> files = distManager.getDistributionFilesByDistId(d.getId());
-            for (DistributionFile f : files) {
-                DistributionFileDetails dfd =
-                    new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(),
-                        f.getMd5sum());
-                detail.addFile(dfd);
-            }
-            distDetails.add(detail);
-        }
     }
 
     /**

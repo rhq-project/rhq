@@ -930,7 +930,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource,
+    public ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource,
         DistributionSyncReport report, ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
@@ -972,7 +972,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
+    public ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults) {
         try {

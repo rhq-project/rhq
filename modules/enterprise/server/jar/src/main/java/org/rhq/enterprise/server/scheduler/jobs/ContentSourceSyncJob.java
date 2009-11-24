@@ -142,84 +142,10 @@ public class ContentSourceSyncJob implements StatefulJob {
         // so we should abort and let that already running sync take care of everything.
         boolean completed = contentManager.internalSynchronizeContentSource(contentSourceId);
 
-        // That might have taken a long time and a user might have updated
-        // the content source in the meantime (like, switching to download mode of NEVER)
-        // so let's get an updated content source.
-        overlord = subjectManager.getOverlord();
-        contentSource = contentManager
-            .getContentSourceByNameAndType(overlord, contentSourceName, contentSourceTypeName);
-
-        if (contentSource == null) {
-            throw new Exception("Content source was deleted, aborting sync job: " + contentSourceName + "|"
-                + contentSourceTypeName);
-        }
-
         if (!completed) {
             log.info("Content source [" + contentSourceName + "] is currently being synchronized already. "
                 + "Please wait for the current sync job to finish.");
-        } else if (contentSource.getDownloadMode() == DownloadMode.NEVER) {
-            log.info("Content source [" + contentSourceName + "] is fully synchronized now. "
-                + "It is marked to never download bits - bits will not be downloaded now.");
-        } else if (contentSource.isLazyLoad()) {
-            log.info("Content source [" + contentSourceName + "] is fully synchronized now. "
-                + "It is marked for lazy loading - bits will not be downloaded now.");
-        } else {
-            log.info("Content source [" + contentSourceName + "] is fully synchronized now. "
-                + "It is not marked for lazy loading - downloading all bits now.");
-
-            long start = System.currentTimeMillis();
-
-            List<PackageVersionContentSource> packageVersionContentSources;
-
-            // make sure we only get back those that have not yet been loaded
-            // TODO: consider paging here - do we have to load them all in at once or can we do them in chunks?
-            PageControl pc = PageControl.getUnlimitedInstance();
-            overlord = subjectManager.getOverlord();
-            packageVersionContentSources = contentManager.getUnloadedPackageVersionsFromContentSource(overlord,
-                contentSourceId, pc);
-
-            // For each unloaded package version, let's download them now.
-            // This can potentially take a very long time.
-            // We abort the entire download if we fail getting just one package.
-            for (PackageVersionContentSource item : packageVersionContentSources) {
-                PackageVersionContentSourcePK pk = item.getPackageVersionContentSourcePK();
-
-                try {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Downloading package version [" + pk.getPackageVersion() + "] located at ["
-                            + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
-                    }
-
-                    overlord = subjectManager.getOverlord();
-                    contentManager.downloadPackageBits(overlord, item);
-                } catch (Exception e) {
-                    String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
-                        + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation()
-                        + "]." + "No more packages will be downloaded for this content source.";
-
-                    throw new Exception(errorMsg, e);
-                }
-            }
-
-            log.info("All package bits for content source [" + contentSourceName + "] have been downloaded."
-                + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
         }
-
-        // Get DistributionSource bits.
-        // Note:  We are ignoring LazyLoad for Distributions, we will always perform an eager fetch for the "bits".
-        if (!completed) {
-            log.info("Content source [" + contentSourceName + "] is currently being synchronized already. "
-                + "Please wait for the current sync job to finish. [DistributionSync]");
-        } else {
-            log.info("Content source [" + contentSourceName + "] is fully synchronized now. "
-                + "Downloading all Distribution bits now.");
-            long start = System.currentTimeMillis();
-            contentManager.downloadDistributionBits(overlord, contentSource);
-            log.info("All distribution bits for content source [" + contentSourceName + "] have been downloaded."
-                + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
-        }
-
-        return;
     }
 
     /**

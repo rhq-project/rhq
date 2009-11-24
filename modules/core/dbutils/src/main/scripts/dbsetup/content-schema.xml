@@ -389,8 +389,8 @@
         <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
 
     </table>
-    
-    <table name="RHQ_ADVISORY_SEVERITY">
+
+    <table name="RHQ_ADVISORY_SEVERITY" >
         <column name="ID" default="sequence-only" initial="101" primarykey="true" required="true" type="INTEGER"/>
         <column name="RANK" type="INTEGER" required="true"/>
         <column name="LABEL" size="40" type="VARCHAR2" required="true"/>
@@ -406,7 +406,7 @@
         <column name="SYNOPSIS" size="4000" type="VARCHAR2" required="true"/>
         <column name="TOPIC" size="4000" type="VARCHAR2" required="false"/>
         <column name="SOLUTION" size="4000" type="VARCHAR2" required="true"/> 
-        <column name="SEVERITY_ID" type="INTEGER"  required="true" references="RHQ_ADVISORY_SEVERITY"/>       
+        <column name="SEVERITY_ID" type="INTEGER"  required="false" references="RHQ_ADVISORY_SEVERITY"/>       
         <column name="ISSUE_DATE" type="LONG" required="true"/>
         <column name="UPDATE_DATE" type="LONG" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
@@ -430,31 +430,6 @@
         
     </table>
     
-    <table name="RHQ_ADVISORY_FILE_TYPE">
-        <column name="ID" default="sequence-only" initial="101" primarykey="true" required="true" type="INTEGER"/>
-        <column name="LABEL" size="40" type="VARCHAR2" required="true"/>
-        
-        <index name="RHQ_ADVISORY_FILE_TYPE_UQ" unique="true">
-            <field ref="LABEL"/>
-        </index>
-
-    </table>
-    
-    <table name="RHQ_ADVISORY_FILE">
-        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
-        <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
-        <column name="FILE_TYPE_ID" type="INTEGER" required="true" references="RHQ_ADVISORY_FILE_TYPE"/>
-        <column name="RELATIVE_FILENAME" size="256" type="VARCHAR2" required="true"/>
-        <column name="MD5SUM" size="64" type="VARCHAR2" required="true"/>
-        <column name="LAST_MODIFIED" type="LONG" required="true"/>
-        <column name="CTIME" type="LONG" required="true"/>
-        
-        <index name="RHQ_ADVISORY_ID_FILE_UQ" unique="true">
-            <field ref="ADVISORY_ID"/>
-            <field ref="RELATIVE_FILENAME"/>
-        </index>
-    </table>
-    
     <table name="RHQ_ADVISORY_PACKAGE_MAP">
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
         <column name="PACKAGE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE"/>
@@ -464,20 +439,6 @@
         <constraint name="RHQ_ADV_PKG_MAP_KEY" unique="true">
             <primaryKey>
                 <field ref="ADVISORY_ID"/>
-                <field ref="PACKAGE_ID"/>
-            </primaryKey>
-        </constraint>
-    </table>
-    
-    <table name="RHQ_ADVISORY_FILE_PKG_MAP">
-        <column name="ADVISORY_FILE_ID" type="INTEGER" required="true" references="RHQ_ADVISORY_FILE"/>
-        <column name="PACKAGE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE"/>
-        <column name="LAST_MODIFIED" type="LONG" required="true"/>
-        <column name="CTIME" type="LONG" required="true"/>
-        
-        <constraint name="RHQ_ADV_FILE_PKG_MAP_KEY" unique="true">
-            <primaryKey>
-                <field ref="ADVISORY_FILE_ID"/>
                 <field ref="PACKAGE_ID"/>
             </primaryKey>
         </constraint>
@@ -505,7 +466,7 @@
     
     <table name="RHQ_ADVISORY_BUGLIST">
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
-        <column name="BUG_ID" type="INTEGER" required="true"/>
+        <column name="BUG_ID" size="64" type="VARCHAR2" required="true"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         

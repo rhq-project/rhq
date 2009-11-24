@@ -62,13 +62,6 @@
       <data id="103" name="Security Advisory" description="Security Advisory(RHSA) Advisory"/>
    </table>
    
-   <table name="RHQ_ADVISORY_FILE_TYPE">
-      <data id="101" label="RPM" />
-      <data id="102" label="SRPM"/>
-      <data id="103" label="IMG"/>
-      <data id="104" label="OVAL"/>
-   </table>
-   
    <table name="RHQ_ADVISORY_SEVERITY">
       <data id="101" rank="0" label="errata.sev.label.critical" />
       <data id="102" rank="1" label="errata.sev.label.important"/>

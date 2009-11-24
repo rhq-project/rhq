@@ -2637,7 +2637,9 @@
               REFERENCES RHQ_REPO ( ID )
             </statement>            	
         </schema-directSQL>
-       </schemaSpec>      	       	
+     	
+       </schemaSpec> 
+    	
    </dbupgrade>
   </target>
 </project>

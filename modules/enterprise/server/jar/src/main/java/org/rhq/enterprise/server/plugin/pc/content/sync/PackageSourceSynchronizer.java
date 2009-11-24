@@ -62,13 +62,21 @@ public class PackageSourceSynchronizer {
     private ContentSourceManagerLocal contentSourceManager;
     private SubjectManagerLocal subjectManager;
 
-    public PackageSourceSynchronizer() {
+    private Repo repo;
+    private ContentSource source;
+    private ContentProvider provider;
+
+    public PackageSourceSynchronizer(Repo repo, ContentSource source,
+                                     ContentProvider provider) {
+        this.repo = repo;
+        this.source = source;
+        this.provider = provider;
+
         contentSourceManager = LookupUtil.getContentSourceManager();
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public void synchronizePackageMetadata(Repo repo, ContentSource source,
-                                           ContentProvider provider) throws Exception {
+    public void synchronizePackageMetadata() throws Exception {
         if (!(provider instanceof PackageSource)) {
             return;
         }
@@ -120,8 +128,7 @@ public class PackageSourceSynchronizer {
             (System.currentTimeMillis() - start) + ")ms");
     }
 
-    public void synchronizePackageBits(Repo repo, ContentSource contentSource,
-                                       ContentProvider provider) throws Exception {
+    public void synchronizePackageBits() throws Exception {
 
         if (!(provider instanceof PackageSource)) {
             return;
@@ -137,7 +144,7 @@ public class PackageSourceSynchronizer {
         Subject overlord = subjectManager.getOverlord();
         packageVersionContentSources = contentSourceManager
             .getUnloadedPackageVersionsFromContentSource(overlord,
-                contentSource.getId(), pc);
+                source.getId(), pc);
 
         // For each unloaded package version, let's download them now.
         // This can potentially take a very long time.
@@ -166,7 +173,7 @@ public class PackageSourceSynchronizer {
             }
         }
 
-        log.info("All package bits for content source [" + contentSource.getName() +
+        log.info("All package bits for content source [" + source.getName() +
             "] have been downloaded."
             + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
 

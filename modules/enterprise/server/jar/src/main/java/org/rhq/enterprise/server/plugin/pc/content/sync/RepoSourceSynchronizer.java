@@ -29,22 +29,38 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Holds the methods necessary to interact with a plugin and execute its repo related
+ * synchronization tasks.
+ *
  * @author Jason Dobies
  */
 public class RepoSourceSynchronizer {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void synchronizeCandidateRepos(int contentSourceId, RepoManagerLocal repoManager,
-                                          ContentProvider provider, Subject overlord,
-                                          StringBuilder progress, ContentSource contentSource)
-        throws Exception {
+    private RepoManagerLocal repoManager;
+    private SubjectManagerLocal subjectManager;
+
+    private ContentSource source;
+    private ContentProvider provider;
+
+    public RepoSourceSynchronizer(ContentSource source, ContentProvider provider) {
+        this.source = source;
+        this.provider = provider;
+
+        repoManager = LookupUtil.getRepoManagerLocal();
+        subjectManager = LookupUtil.getSubjectManager();
+    }
+
+    public void synchronizeCandidateRepos(StringBuilder progress) throws Exception {
 
         if (!(provider instanceof RepoSource)) {
             return;
@@ -60,9 +76,10 @@ public class RepoSourceSynchronizer {
         // Call to the plugin
         RepoImportReport report = repoSource.importRepos();
 
-        repoManager.processRepoImportReport(overlord, report, contentSourceId, progress);
+        Subject overlord = subjectManager.getOverlord();
+        repoManager.processRepoImportReport(overlord, report, source.getId(), progress);
 
-        log.info("importRepos: [" + contentSource.getName() + "]: report has been merged ("
+        log.info("importRepos: [" + source.getName() + "]: report has been merged ("
             + (System.currentTimeMillis() - start) + ")ms");
     }
 

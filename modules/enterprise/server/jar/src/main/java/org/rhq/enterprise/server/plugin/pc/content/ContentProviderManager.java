@@ -66,10 +66,6 @@ public class ContentProviderManager {
     private ContentServerPluginManager pluginManager;
     private Map<ContentSource, ContentProvider> adapters;
 
-    private RepoSourceSynchronizer repoSourceSynchronizer = new RepoSourceSynchronizer();
-    private PackageSourceSynchronizer packageSourceSynchronizer;
-    private DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer();
-
     // This is used as a monitor lock to the synchronizeContentProvider method;
     // it helps us avoid two content sources getting synchronized at the same time.
     private final Object synchronizeContentSourceLock = new Object();
@@ -139,7 +135,6 @@ public class ContentProviderManager {
     public boolean synchronizeContentProvider(int contentSourceId) throws Exception {
 
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
 
         ContentProvider provider = getIsolatedContentProvider(contentSourceId);
         ContentSourceSyncResults results = null;
@@ -187,8 +182,9 @@ public class ContentProviderManager {
                 return false;
             }
 
-            repoSourceSynchronizer.synchronizeCandidateRepos(contentSourceId,
-                repoManager, provider, overlord, progress, contentSource);
+            RepoSourceSynchronizer repoSourceSynchronizer =
+                new RepoSourceSynchronizer(contentSource, provider);
+            repoSourceSynchronizer.synchronizeCandidateRepos(progress);
         }
         catch (Throwable t) {
             if (results != null) {
@@ -228,7 +224,6 @@ public class ContentProviderManager {
     public boolean synchronizeRepo(int repoId) throws Exception {
 
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
         Subject overlord = subjectManager.getOverlord();
@@ -243,11 +238,15 @@ public class ContentProviderManager {
         for (ContentSource source : repo.getContentSources()) {
             ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-            packageSourceSynchronizer.synchronizePackageMetadata(repo, source, provider);
-            packageSourceSynchronizer.synchronizePackageBits(repo, source, provider);
+            PackageSourceSynchronizer packageSourceSynchronizer =
+                new PackageSourceSynchronizer(repo, source, provider);
+            packageSourceSynchronizer.synchronizePackageMetadata();
+            packageSourceSynchronizer.synchronizePackageBits();
 
-            distributionSourceSynchronizer.synchronizeDistributionMetadata(repo, source, provider);
-            distributionSourceSynchronizer.synchronizeDistributionBits(repo, source, provider);
+            DistributionSourceSynchronizer distributionSourceSynchronizer =
+                new DistributionSourceSynchronizer(repo, source, provider);
+            distributionSourceSynchronizer.synchronizeDistributionMetadata();
+            distributionSourceSynchronizer.synchronizeDistributionBits();
         }
 
         return true;

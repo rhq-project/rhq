@@ -46,6 +46,9 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Holds the methods necessary to interact with a plugin and execute its distribution related
+ * synchronization tasks.
+ *
  * @author Jason Dobies
  */
 public class DistributionSourceSynchronizer {
@@ -56,14 +59,22 @@ public class DistributionSourceSynchronizer {
     private ContentSourceManagerLocal contentSourceManager;
     private SubjectManagerLocal subjectManager;
 
-    public DistributionSourceSynchronizer() {
+    private Repo repo;
+    private ContentSource source;
+    private ContentProvider provider;
+
+    public DistributionSourceSynchronizer(Repo repo, ContentSource source,
+                                          ContentProvider provider) {
+        this.repo = repo;
+        this.source = source;
+        this.provider = provider;
+
         repoManager = LookupUtil.getRepoManagerLocal();
         contentSourceManager = LookupUtil.getContentSourceManager();
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public void synchronizeDistributionMetadata(Repo repo, ContentSource source,
-                                                ContentProvider provider) throws Exception {
+    public void synchronizeDistributionMetadata() throws Exception {
         if (!(provider instanceof DistributionSource)) {
             return;
         }
@@ -105,8 +116,7 @@ public class DistributionSourceSynchronizer {
         contentSourceManager.mergeDistributionSyncReport(source, distReport, null);
     }
 
-    public void synchronizeDistributionBits(Repo repo, ContentSource source,
-                                            ContentProvider provider) throws Exception {
+    public void synchronizeDistributionBits() throws Exception {
         Subject overlord = subjectManager.getOverlord();
         contentSourceManager.downloadDistributionBits(overlord, source);
     }

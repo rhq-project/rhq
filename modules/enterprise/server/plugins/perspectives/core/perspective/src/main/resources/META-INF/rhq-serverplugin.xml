@@ -119,7 +119,7 @@
       url="/ResourceHub.do?resourceCategory=SERVICE">
       <position
          extensionPoint="coreMenu"
-         name="resources.platforms"
+         name="resources.servers"
          placement="after" />
    </menuItem>
    <menuItem

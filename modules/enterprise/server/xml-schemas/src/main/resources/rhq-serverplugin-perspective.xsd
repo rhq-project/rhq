@@ -111,15 +111,39 @@
       name="TaskType">
       <xs:sequence>
          <xs:element
-            name="NewElement"
-            type="xs:string">
-         </xs:element>
-         <xs:element
             ref="perspective:extensionPoint"
-            minOccurs="1"
+            minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>A task pane extension point for which this task is presented.</xs:documentation>
+               <xs:documentation>
+                  Limit task to the designated task pane extension points. Otherwise, all.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+
+         <xs:element
+            ref="perspective:resourceActivator"
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>
+                  Activate task only if the user has resources of the specified type in inventory.
+                  Activated
+                  only if the user has the required permissions. At least one resource
+                  activator required for
+                  resource tasks. Activated for resources only if specified trait
+                  conditions are also met.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+         <xs:element
+            ref="perspective:permissionActivator"
+            minOccurs="0"
+            maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>
+                  Activate task only if the user has the required global permissions. 
+               </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -198,7 +222,8 @@
    </xs:element>
 
    <xs:element
-      name="menuItem">
+      name="menuItem"
+      type="perspective:MenuItemType">
       <xs:annotation>
          <xs:documentation>
             Add or Remove a menu item in an existing menu extension point. Additions can specify
@@ -210,100 +235,103 @@
                name="PerspectiveMenuItemElement" />
          </xs:appinfo>
       </xs:annotation>
-      <xs:complexType>
-         <xs:sequence>
-            <xs:element
-               ref="perspective:position"
-               minOccurs="0"
-               maxOccurs="1">
-               <xs:annotation>
-                  <xs:documentation>
-                     Required for root menuItem additions. Position of children is implicit given the
-                     XML
-                     structure. 
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:element>
-         </xs:sequence>
-         <xs:attribute
-            name="action"
-            type="perspective:ActionType"
-            use="optional"
-            default="add">
-            <xs:annotation>
-               <xs:documentation>
-                  Add or remove the menu entry. For removal all but the name attribute are ignored.
-                  Default is add.   
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="name"
-            type="perspective:NameType"
-            use="required">
-            <xs:annotation>
-               <xs:documentation>
-                  ExtensionPoint name used for reference by other defined extension points.
-                  Unique within
-                  perspective.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="displayName"
-            type="perspective:DisplayNameType"
-            use="optional">
-            <xs:annotation>
-               <xs:documentation>
-                  The displayed menu item name. Required for add actions. If empty an icon must be
-                  defined.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="feature"
-            type="perspective:MenuItemFeatureType"
-            use="optional">
-            <xs:annotation>
-               <xs:documentation>
-                  Certain menu items utilize special built-in rendering features.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="url"
-            type="xs:anyURI"
-            use="optional">
-            <xs:annotation>
-               <xs:documentation>
-                  The request URL for the menu entry. If not provided the entry is just a placeholder for
-                  MenuItems.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="iconUrl"
-            type="xs:anyURI"
-            use="optional">
-            <xs:annotation>
-               <xs:documentation>
-                  The request URL for the icon image for this menu item. If not provided then no image is
-                  used.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="iconWidth"
-            type="xs:int"
-            use="optional">
-         </xs:attribute>
-         <xs:attribute
-            name="iconHeight"
-            type="xs:int"
-            use="optional">
-         </xs:attribute>
-      </xs:complexType>
    </xs:element>
+
+   <xs:complexType
+      name="MenuItemType">
+      <xs:sequence>
+         <xs:element
+            ref="perspective:position"
+            minOccurs="0"
+            maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Required for root menuItem additions. Position of children is implicit given the
+                  XML
+                  structure. 
+                  </xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="action"
+         type="perspective:ActionType"
+         use="optional"
+         default="add">
+         <xs:annotation>
+            <xs:documentation>
+               Add or remove the menu entry. For removal all but the name attribute are ignored.
+               Default
+               is add.   
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="name"
+         type="perspective:NameType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>
+               ExtensionPoint name used for reference by other defined extension points.
+               Unique within
+               perspective.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="displayName"
+         type="perspective:DisplayNameType"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               The displayed menu item name. Required for add actions. If empty an icon must be
+               defined.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="feature"
+         type="perspective:MenuItemFeatureType"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               Certain menu items utilize special built-in rendering features.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="url"
+         type="xs:anyURI"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               The request URL for the menu entry. If not provided the entry is just a placeholder for
+               MenuItems.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="iconUrl"
+         type="xs:anyURI"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>
+               The request URL for the icon image for this menu item. If not provided then no image is
+               used.
+               </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="iconWidth"
+         type="xs:int"
+         use="optional">
+      </xs:attribute>
+      <xs:attribute
+         name="iconHeight"
+         type="xs:int"
+         use="optional">
+      </xs:attribute>
+   </xs:complexType>
 
    <xs:element
       name="resourceTab">
@@ -436,6 +464,7 @@
             Activators must be satisfied for the extension point to be active. 
          </xs:documentation>
       </xs:annotation>
+
       <xs:complexType>
          <xs:sequence>
             <xs:element

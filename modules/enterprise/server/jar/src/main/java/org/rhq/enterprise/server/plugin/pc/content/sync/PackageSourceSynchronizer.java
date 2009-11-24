@@ -131,6 +131,7 @@ public class PackageSourceSynchronizer {
 
     public void synchronizePackageBits() throws Exception {
 
+        // Determine if the sync even needs to take place
         if (!(provider instanceof PackageSource)) {
             return;
         }
@@ -147,21 +148,27 @@ public class PackageSourceSynchronizer {
             return;
         }
 
-        long start = System.currentTimeMillis();
 
-        List<PackageVersionContentSource> packageVersionContentSources;
+        long start;
 
-        // make sure we only get back those that have not yet been loaded
-        // TODO: consider paging here - do we have to load them all in at once or can we do them in chunks?
+        // Determine which packages need bit synccing
+        /* If there become performance issues here, consider paging. So we have to load them all
+           in at once or can we do them in chunks?
+         */
+        start = System.currentTimeMillis();
         PageControl pc = PageControl.getUnlimitedInstance();
         Subject overlord = subjectManager.getOverlord();
-        packageVersionContentSources = contentSourceManager
-            .getUnloadedPackageVersionsFromContentSource(overlord,
-                source.getId(), pc);
 
-        // For each unloaded package version, let's download them now.
-        // This can potentially take a very long time.
-        // We abort the entire download if we fail getting just one package.
+        // TODO: jdob - Need to change this call to only load packages for this repo
+        List<PackageVersionContentSource> packageVersionContentSources = contentSourceManager
+            .getUnloadedPackageVersionsFromContentSource(overlord, source.getId(), pc);
+        log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName() +
+            "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms");
+
+        // Download the bits for each unloaded package version. Abort the entire download if we
+        // fail getting just one package.
+
+        // Note: This can potentially take a very long time.
         for (PackageVersionContentSource item : packageVersionContentSources) {
             PackageVersionContentSourcePK pk = item.getPackageVersionContentSourcePK();
 

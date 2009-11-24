@@ -173,11 +173,11 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Create the specified content source.
-     * 
+     *
      * @param subject The user making the request.
-     * 
+     *
      * @param contentSource A content source to be created.
-     * 
+     *
      * @return The created content source.
      */
     ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
@@ -264,7 +264,7 @@ public interface ContentSourceManagerLocal {
      * @param  resourceId
      * @param  packageDetailsKey
      *
-     * @return teh length of the package version
+     * @return the length of the package version
      */
     long getPackageBitsLength(int resourceId, PackageDetailsKey packageDetailsKey);
 
@@ -284,7 +284,7 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject, int[] contentSourceIds,
         PageControl pc);
 
-    
+
 
     /**
      * Returns all the package versions that are served by the content source identified by the given ID but whose
@@ -299,6 +299,7 @@ public interface ContentSourceManagerLocal {
      */
     PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
         int contentSourceId, PageControl pc);
+
 
 
     /**
@@ -439,7 +440,7 @@ public interface ContentSourceManagerLocal {
 
     ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
         DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
-    
+
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
      * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that

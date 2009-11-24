@@ -120,9 +120,8 @@
                </xs:documentation>
             </xs:annotation>
          </xs:element>
-
          <xs:element
-            ref="perspective:resourceActivator"
+            ref="perspective:inventoryActivator"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>

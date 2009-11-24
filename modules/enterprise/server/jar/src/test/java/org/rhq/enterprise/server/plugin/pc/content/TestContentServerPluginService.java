@@ -151,7 +151,7 @@ public class TestContentServerPluginService extends ServerPluginService implemen
         }
 
         @Override
-        public boolean synchronizeContentSource(int contentSourceId) throws Exception {
+        public boolean synchronizeContentProvider(int contentSourceId) throws Exception {
             if (testAdapters != null) {
                 for (ContentSource cs : testAdapters.keySet()) {
                     if (cs.getId() == contentSourceId) {

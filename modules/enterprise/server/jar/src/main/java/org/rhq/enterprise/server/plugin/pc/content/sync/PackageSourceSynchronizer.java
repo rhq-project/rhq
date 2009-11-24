@@ -50,6 +50,9 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
+ * Holds the methods necessary to interact with a plugin and execute its package related
+ * synchronization tasks.
+ *
  * @author Jason Dobies
  */
 public class PackageSourceSynchronizer {

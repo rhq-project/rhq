@@ -67,10 +67,10 @@ public class ContentProviderManager {
     private Map<ContentSource, ContentProvider> adapters;
 
     private RepoSourceSynchronizer repoSourceSynchronizer = new RepoSourceSynchronizer();
-    private PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer();
+    private PackageSourceSynchronizer packageSourceSynchronizer;
     private DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer();
 
-    // This is used as a monitor lock to the synchronizeContentSource method;
+    // This is used as a monitor lock to the synchronizeContentProvider method;
     // it helps us avoid two content sources getting synchronized at the same time.
     private final Object synchronizeContentSourceLock = new Object();
 
@@ -136,7 +136,7 @@ public class ContentProviderManager {
      *         already a synchronization happening and this method aborted
      * @throws Exception
      */
-    public boolean synchronizeContentSource(int contentSourceId) throws Exception {
+    public boolean synchronizeContentProvider(int contentSourceId) throws Exception {
 
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();

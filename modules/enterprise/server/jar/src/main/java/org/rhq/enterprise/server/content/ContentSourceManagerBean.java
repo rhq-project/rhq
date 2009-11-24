@@ -693,7 +693,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             DistributionSource distSource = (DistributionSource) provider;
 
             //
-            // Following same sort of workaround done in ContentProviderManager for synchronizeContentSource
+            // Following same sort of workaround done in ContentProviderManager for synchronizeContentProvider
             // Assume this will need to be updated when we place syncing in repo layer
             //
             RepoCriteria reposForContentSource = new RepoCriteria();
@@ -873,7 +873,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean internalSynchronizeContentSource(int contentSourceId) throws Exception {
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-        return pc.getAdapterManager().synchronizeContentSource(contentSourceId);
+        return pc.getAdapterManager().synchronizeContentProvider(contentSourceId);
     }
 
     @SuppressWarnings("unchecked")

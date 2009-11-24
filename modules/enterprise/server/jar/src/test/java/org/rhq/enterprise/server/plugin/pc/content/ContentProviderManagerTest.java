@@ -258,7 +258,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         // Test
         // --------------------------------------------
-        boolean completed = providerManager.synchronizeContentSource(syncSource.getId());
+        boolean completed = providerManager.synchronizeContentProvider(syncSource.getId());
         assert completed;
 
         // Verify RepoGroups

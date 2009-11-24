@@ -42,23 +42,23 @@ public class LoadResourceConfigurationFactoryImpl implements LoadResourceConfigu
         this.componentService = componentService;
     }
 
-    public LoadResourceConfiguration getStrategy(int resourceId) throws PluginContainerException {
-        LoadResourceConfiguration loadConfig = createStrategy(resourceId);
+    public ConfigManagement getStrategy(int resourceId) throws PluginContainerException {
+        ConfigManagement loadConfig = createStrategy(resourceId);
         initStrategyDependencies(loadConfig);
 
         return loadConfig;
     }
 
-    private void initStrategyDependencies(LoadResourceConfiguration loadConfig) {
+    private void initStrategyDependencies(ConfigManagement loadConfig) {
         loadConfig.setComponentService(componentService);
         loadConfig.setConfigurationUtilityService(configUtilityService);
     }
 
-    private LoadResourceConfiguration createStrategy(int resourceId) throws PluginContainerException {
+    private ConfigManagement createStrategy(int resourceId) throws PluginContainerException {
         String ampsVersion = componentService.getAmpsVersion(resourceId);
 
         if (isLegacyVersion(ampsVersion)) {
-            return new LegacyLoadConfig();
+            return new LegacyConfigManagement();
         }
 
         ResourceType resourceType = componentService.getResourceType(resourceId);
@@ -68,7 +68,7 @@ public class LoadResourceConfigurationFactoryImpl implements LoadResourceConfigu
         }
 
         if (isRaw(resourceType)) {
-            return new LoadRaw();
+            return new RawConfigManagement();
         }
 
         // else format is both structured and raw

@@ -21,24 +21,24 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pc.configuration;
+package org.rhq.test;
 
-import org.rhq.core.pc.util.ComponentService;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.agent.PluginContainerException;
+public class EqualsResult {
 
-public interface LoadResourceConfiguration {
+    private boolean isEqual;
 
-    static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+    private String details;
 
-    ComponentService getComponentService();
+    public EqualsResult(boolean equals, String details) {
+        isEqual = equals;
+        this.details = details;
+    }
 
-    void setComponentService(ComponentService componentService);
+    public boolean isEqual() {
+        return isEqual;
+    }
 
-    ConfigurationUtilityService getConfigurationUtilityService();
-
-    void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
-
-    Configuration execute(int resourceId) throws PluginContainerException;
-
+    public String getDetails() {
+        return details;
+    }
 }

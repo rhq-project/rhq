@@ -36,7 +36,7 @@ import org.testng.annotations.Test;
 import static java.util.Collections.EMPTY_SET;
 import java.util.Set;
 
-public class LoadRawTest extends ConfigManagementTest {
+public class RawConfigManagementTest extends ConfigManagementTest {
 
     ComponentService componentService;
 
@@ -44,7 +44,7 @@ public class LoadRawTest extends ConfigManagementTest {
 
     ResourceConfigurationFacet configFacet;
 
-    LoadRaw loadRaw;
+    RawConfigManagement rawConfigMgmt;
 
     @BeforeMethod
     public void setup() {
@@ -53,9 +53,9 @@ public class LoadRawTest extends ConfigManagementTest {
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        loadRaw = new LoadRaw();
-        loadRaw.setComponentService(componentService);
-        loadRaw.setConfigurationUtilityService(configUtilityService);
+        rawConfigMgmt = new RawConfigManagement();
+        rawConfigMgmt.setComponentService(componentService);
+        rawConfigMgmt.setConfigurationUtilityService(configUtilityService);
     }
 
     @Test
@@ -67,7 +67,7 @@ public class LoadRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -79,7 +79,7 @@ public class LoadRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(EMPTY_SET);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -90,7 +90,7 @@ public class LoadRawTest extends ConfigManagementTest {
         
         addDefaultExpectations(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for raw.");
     }
@@ -102,7 +102,7 @@ public class LoadRawTest extends ConfigManagementTest {
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
-                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));

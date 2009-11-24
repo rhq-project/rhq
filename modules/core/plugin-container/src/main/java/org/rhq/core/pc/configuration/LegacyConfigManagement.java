@@ -23,24 +23,27 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.rhq.core.pc.util.FacetLockType.*;
+import org.rhq.core.pc.util.FacetLockType;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
-public class LegacyLoadConfig extends BaseLoadConfig {
+public class LegacyConfigManagement extends ConfigManagementSupport {
 
-    private static final Log log = LogFactory.getLog(LegacyLoadConfig.class);
+    private static final Log log = LogFactory.getLog(LegacyConfigManagement.class);
 
     public Configuration execute(int resourceId) throws PluginContainerException {
-        Configuration configuration = loadConfigFromFacet(resourceId);
+        Configuration configuration = loadConfigFromFacet(resourceId, READ);
         ResourceType resourceType = componentService.getResourceType(resourceId);
 
         // If the plugin didn't already set the notes field, set it to something useful.
@@ -62,20 +65,24 @@ public class LegacyLoadConfig extends BaseLoadConfig {
         return configuration;
     }
 
-    private Configuration loadConfigFromFacet(int resourceId) throws PluginContainerException {
-        FacetLockType lockType = FacetLockType.READ;
-        boolean daemonThread = (lockType != FacetLockType.WRITE);
-        boolean onlyIfStarted = true;
+    private Configuration loadConfigFromFacet(int resourceId, FacetLockType lockType) throws PluginContainerException {
+        ConfigurationFacet configFacet = loadConfigurationFacet(resourceId, lockType);
 
-        ConfigurationFacet configFacet = componentService.getComponent(resourceId, ConfigurationFacet.class,
-            lockType, FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
-
-        Configuration configuration = null;
         try {
             return configFacet.loadResourceConfiguration();
         } catch (Exception e) {
             throw new PluginContainerException(e);
         }
+    }
+
+    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
+        throws PluginContainerException {
+        ConfigurationFacet facet = loadConfigurationFacet(resourceId, WRITE);
+        ConfigurationUpdateReport report = new ConfigurationUpdateReport(configuration);
+
+        facet.updateResourceConfiguration(report);
+
+        return report;
     }
 
 }

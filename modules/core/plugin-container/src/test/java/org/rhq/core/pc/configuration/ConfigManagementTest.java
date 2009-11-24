@@ -29,6 +29,8 @@ import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.test.JMockTest;
+
+import static org.rhq.test.AssertUtils.*;
 import static org.testng.Assert.assertEquals;
 
 import java.util.HashSet;
@@ -83,19 +85,30 @@ public class ConfigManagementTest extends JMockTest {
     }
 
     void assertRawsLoaded(Set<RawConfiguration> expectedRaws, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getRawConfigurations(),
+        assertCollectionEqualsNoOrder(
             expectedRaws,
+            actualConfig.getRawConfigurations(),
             "The raw configs were not loaded correctly."
         );
+//        assertEquals(
+//            actualConfig.getRawConfigurations(),
+//            expectedRaws,
+//            "The raw configs were not loaded correctly."
+//        );
     }
 
     void assertStructuredLoaded(Configuration expectedConfig, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getAllProperties(),
-            expectedConfig.getAllProperties(),
+        assertCollectionEqualsNoOrder(
+            expectedConfig.getProperties(),
+            actualConfig.getProperties(),
             "The structured configuration was not loaded correctly."
         );
+
+//        assertEquals(
+//            actualConfig.getAllProperties(),
+//            expectedConfig.getAllProperties(),
+//            "The structured configuration was not loaded correctly."
+//        );
     }
 
     void assertNotesSetToDefault(Configuration loadedConfig) {

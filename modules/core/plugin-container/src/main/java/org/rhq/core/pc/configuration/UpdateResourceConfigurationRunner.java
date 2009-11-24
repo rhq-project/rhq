@@ -29,7 +29,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -51,6 +50,8 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
      */
     private ConfigurationUpdateRequest request;
 
+    private ConfigManagement configMgmt;
+
     /**
      * The resource component's facet that will perform the actual re-configuration of the resource.
      */
@@ -70,10 +71,10 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
     private ConfigurationUtilityService configUtilService = new ConfigurationUtilityServiceImpl();
 
     public UpdateResourceConfigurationRunner(ConfigurationServerService configurationServerService, ResourceType type,
-        ConfigurationFacet facet, ConfigurationUpdateRequest request) {
+        ConfigManagement configMgmt, ConfigurationUpdateRequest request) {
         this.configurationServerService = configurationServerService; // may be null
         this.resourceType = type;
-        this.configurationFacet = facet;
+        this.configMgmt = configMgmt;
         this.request = request;
     }
 
@@ -92,10 +93,12 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
     public ConfigurationUpdateResponse call() throws Exception {
         ConfigurationUpdateResponse response;
         int requestId = request.getConfigurationUpdateId();
-        ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
+//        ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
+        ConfigurationUpdateReport report = null;
         try {
-            configurationFacet.updateResourceConfiguration(report);
-
+//            configurationFacet.updateResourceConfiguration(report);
+            report = configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
+            
             response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), report.getStatus(), report
                 .getErrorMessage());
 
@@ -123,7 +126,7 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
         } catch (Throwable t) {
             log.error("Plugin Error: Exception thrown while updating Resource configuration for "
                     + resourceType.getName() + " Resource with id [" + request.getResourceId() + "].", t);
-            response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), t);            
+            response = new ConfigurationUpdateResponse(requestId, request.getConfiguration(), t);            
         }
 
         if (this.configurationServerService != null) {

@@ -30,13 +30,14 @@ import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 import java.util.Set;
 
-public class LoadStructuredAndRaw extends BaseLoadConfig {
+public class LoadStructuredAndRaw extends ConfigManagementSupport {
 
     private final Log log = LogFactory.getLog(LoadStructuredAndRaw.class);
 
@@ -82,5 +83,10 @@ public class LoadStructuredAndRaw extends BaseLoadConfig {
             log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
                 + resourceType.getPlugin() + " plugin - " + errorMessage);
             }
+    }
+
+    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
+        throws PluginContainerException {
+        return null;
     }
 }

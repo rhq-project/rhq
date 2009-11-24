@@ -25,6 +25,8 @@ package org.rhq.test;
 
 import static org.testng.Assert.*;
 
+import java.util.Collection;
+
 public class AssertUtils {
 
     /**
@@ -45,6 +47,25 @@ public class AssertUtils {
         MatchResult result = matcher.execute();
 
         assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
+    }
+
+    /**
+     * Verifies that two collections are equal, according to the definition of <code>equals()</code> of the contained
+     * elements. Order is ignored as well as the runtime type of the collections.
+     *
+     * @param expected The expected collection to compare against
+     * @param actual The actual collection to compare against
+     * @param msg An error message
+     * @param <T> The type of the elements in the collections
+     */
+    public static <T> void assertCollectionEqualsNoOrder(Collection<T> expected, Collection<T> actual, String msg) {
+        CollectionEqualsChecker<T> checker = new CollectionEqualsChecker<T>();
+        checker.setExpected(expected);
+        checker.setActual(actual);
+
+        EqualsResult result = checker.execute();
+
+        assertTrue(result.isEqual(), msg + " -- " + result.getDetails());
     }
 
 }

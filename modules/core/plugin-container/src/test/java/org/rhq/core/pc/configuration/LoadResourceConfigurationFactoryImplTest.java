@@ -60,11 +60,11 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            loadConfig instanceof LegacyLoadConfig,
-            "Expected to get an instance of " + LegacyLoadConfig.class.getSimpleName() + " when the " +
+            loadConfig instanceof LegacyConfigManagement,
+            "Expected to get an instance of " + LegacyConfigManagement.class.getSimpleName() + " when the " +
             "resource is from a plugin having an ampsVersion less than " + NON_LEGACY_AMPS_VERSION
         );
     }
@@ -75,7 +75,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertComponentServiceInitialized(loadConfig);
     }
@@ -86,7 +86,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertConfigurationUtilityServiceInitialized(loadConfig);
     }
@@ -100,7 +100,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
             loadConfig instanceof LoadStructured,
@@ -119,7 +119,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertComponentServiceInitialized(loadConfig);
     }
@@ -133,7 +133,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertConfigurationUtilityServiceInitialized(loadConfig);
     }
@@ -147,11 +147,11 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsRaw()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            loadConfig instanceof LoadRaw,
-            "Expected to get an instance of " + LoadRaw.class.getSimpleName() + " when " +
+            loadConfig instanceof RawConfigManagement,
+            "Expected to get an instance of " + RawConfigManagement.class.getSimpleName() + " when " +
             "resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
             "configuration format is raw."
         );
@@ -166,7 +166,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertComponentServiceInitialized(loadConfig);
     }
@@ -180,7 +180,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertConfigurationUtilityServiceInitialized(loadConfig);
     }
@@ -194,7 +194,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructuredAndRaw()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
             loadConfig instanceof LoadStructuredAndRaw,
@@ -213,7 +213,7 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertComponentServiceInitialized(loadConfig);
     }
@@ -227,17 +227,17 @@ public class LoadResourceConfigurationFactoryImplTest extends JMockTest {
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        LoadResourceConfiguration loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
-    void assertComponentServiceInitialized(LoadResourceConfiguration loadConfig) {
+    void assertComponentServiceInitialized(ConfigManagement loadConfig) {
         assertNotNull(loadConfig.getComponentService(), "The factory must initialize the componentService " +
                 "property of the loadConfig object.");
     }
 
-    void assertConfigurationUtilityServiceInitialized(LoadResourceConfiguration loadConfig) {
+    void assertConfigurationUtilityServiceInitialized(ConfigManagement loadConfig) {
         assertNotNull(loadConfig.getConfigurationUtilityService(), "The factory must initialize the " +
                 "configurationUtilityService property of the loadConfig object.");
     }

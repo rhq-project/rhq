@@ -40,8 +40,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
@@ -54,6 +53,7 @@ import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -892,27 +892,22 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     public String calculateSyncStatus(Subject subject, int repoId) {
         Repo found = this.getRepo(subject, repoId);
-        Set<ContentSourceSyncStatus> stati = new HashSet<ContentSourceSyncStatus>();
-        Set<ContentSource> contentSources = found.getContentSources();
-        Iterator<ContentSource> i = contentSources.iterator();
-        while (i.hasNext()) {
-            ContentSource cs = i.next();
-            List<ContentSourceSyncResults> syncResults = cs.getSyncResults();
-            // Add the most recent sync results status 
-            if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
-                stati.add(syncResults.get(0).getStatus());
-            } else {
-                stati.add(ContentSourceSyncStatus.NONE);
-            }
+        Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
+        List<RepoSyncResults> syncResults = found.getSyncResults();
+        // Add the most recent sync results status 
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
+            stati.add(syncResults.get(0).getStatus());
+        } else {
+            stati.add(ContentSyncStatus.NONE);
         }
-        if (stati.contains(ContentSourceSyncStatus.FAILURE)) {
-            return ContentSourceSyncStatus.FAILURE.toString();
+        if (stati.contains(ContentSyncStatus.FAILURE)) {
+            return ContentSyncStatus.FAILURE.toString();
         }
-        if (stati.contains(ContentSourceSyncStatus.INPROGRESS)) {
-            return ContentSourceSyncStatus.INPROGRESS.toString();
+        if (stati.contains(ContentSyncStatus.INPROGRESS)) {
+            return ContentSyncStatus.INPROGRESS.toString();
         }
-        if (stati.contains(ContentSourceSyncStatus.SUCCESS)) {
-            return ContentSourceSyncStatus.SUCCESS.toString();
+        if (stati.contains(ContentSyncStatus.SUCCESS)) {
+            return ContentSyncStatus.SUCCESS.toString();
         }
         return null;
     }

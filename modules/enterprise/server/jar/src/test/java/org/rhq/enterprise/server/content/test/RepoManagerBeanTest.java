@@ -35,14 +35,14 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -50,10 +50,9 @@ import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
-import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -134,47 +133,34 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = ENABLED)
     public void testSyncStatus() throws Exception {
         Repo repo = new Repo("testSyncStatus");
-        repoManager.createRepo(overlord, repo).getId();
+        repo = repoManager.createRepo(overlord, repo);
 
         Calendar cal = Calendar.getInstance();
 
-        ContentSourceType cst = new ContentSourceType("testSyncStatus");
-        ContentSource cs = new ContentSource("testSyncStatus", cst);
-        EntityManager em = getEntityManager();
-        em.persist(cst);
-        em.persist(cs);
-
         for (int i = 0; i < 10; i++) {
             cal.roll(Calendar.DATE, false);
-            ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
+            RepoSyncResults results = new RepoSyncResults(repo);
             if (i % 2 == 0 && i != 0) {
                 System.out.println("Setting failed: i: [" + i + "]");
-                results.setStatus(ContentSourceSyncStatus.FAILURE);
+                results.setStatus(ContentSyncStatus.FAILURE);
             } else {
-                results.setStatus(ContentSourceSyncStatus.SUCCESS);
+                results.setStatus(ContentSyncStatus.SUCCESS);
             }
 
             results.setEndTime(cal.getTimeInMillis());
             System.out.println("EndTime: " + new Date(results.getEndTime().longValue()));
-            em.persist(results);
-            cs.addSyncResult(results);
+            repo.addSyncResult(results);
         }
 
         // Add one with no end time.  This is to test NPE during sorting
-        ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
+        RepoSyncResults results = new RepoSyncResults(repo);
         results.setStartTime(cal.getTimeInMillis());
-        em.persist(results);
-        cs.addSyncResult(results);
-
-        repo.addContentSource(cs);
-
-        em.flush();
-        em.close();
+        repo.addSyncResult(results);
 
         // Check sync status
-        cs.getSyncResults();
+        repo.getSyncResults();
         String status = repoManager.calculateSyncStatus(overlord, repo.getId());
-        assert status.equals(ContentSourceSyncStatus.SUCCESS.toString());
+        assert status.equals(ContentSyncStatus.SUCCESS.toString());
     }
 
     @Test(enabled = ENABLED)

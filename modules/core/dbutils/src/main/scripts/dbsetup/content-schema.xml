@@ -208,9 +208,19 @@
         <column name="START_TIME" type="LONG" required="true"/>
         <column name="END_TIME" type="LONG" required="false"/>
         <column name="RESULTS" type="LONGVARCHAR" required="false"/>
-
         <column name="CONTENT_SRC_ID" type="INTEGER" required="true" references="RHQ_CONTENT_SOURCE"/>
     </table>
+    
+   <table name="RHQ_REPO_SYNC">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="STATUS" type="VARCHAR2" size="16" required="true"/>
+        <column name="START_TIME" type="LONG" required="true"/>
+        <column name="END_TIME" type="LONG" required="false"/>
+        <column name="RESULTS" type="LONGVARCHAR" required="false"/>
+        <column name="PERCENT_COMPLETE" type="LONGVARCHAR" required="false"/>
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+    </table>
+    
 
     <table name="RHQ_PACKAGE_INST_STEP">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>

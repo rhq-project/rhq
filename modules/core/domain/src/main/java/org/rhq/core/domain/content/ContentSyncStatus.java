@@ -22,6 +22,6 @@
  */
 package org.rhq.core.domain.content;
 
-public enum ContentSourceSyncStatus {
+public enum ContentSyncStatus {
     INPROGRESS, SUCCESS, FAILURE, NONE
 }

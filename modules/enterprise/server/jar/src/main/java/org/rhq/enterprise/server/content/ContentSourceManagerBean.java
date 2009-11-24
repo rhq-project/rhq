@@ -59,7 +59,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
@@ -893,7 +893,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // happened that left them in a bad state which will most likely never change unless we do it here.
             // If a content source sync takes longer than 24 hours, then we've made a bad assumption here and
             // this code needs to change - though I doubt any content source will take 24 hours to sync.
-            if (results.getStatus() == ContentSourceSyncStatus.INPROGRESS) {
+            if (results.getStatus() == ContentSyncStatus.INPROGRESS) {
                 if ((System.currentTimeMillis() - inprogressList.get(0).getStartTime()) < (1000 * 60 * 60 * 24)) {
                     alreadyInProgress = true;
                     inprogressList.remove(0); // we need to leave this one as-is, so get rid of it from list
@@ -902,7 +902,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // take this time to mark all old inprogress results as failed
             for (ContentSourceSyncResults inprogress : inprogressList) {
-                inprogress.setStatus(ContentSourceSyncStatus.FAILURE);
+                inprogress.setStatus(ContentSyncStatus.FAILURE);
                 inprogress.setEndTime(System.currentTimeMillis());
                 inprogress.setResults("This synchronization seems to have stalled or ended abnormally.");
             }

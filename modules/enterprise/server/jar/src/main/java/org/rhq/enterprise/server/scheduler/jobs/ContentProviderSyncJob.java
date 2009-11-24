@@ -52,6 +52,11 @@ public class ContentProviderSyncJob implements StatefulJob {
     private static final Log log = LogFactory.getLog(ContentProviderSyncJob.class);
     private static final String SEPARATOR = "--";
 
+    public int getPercentComplete() {
+        int retval = (int) (Math.random() * 100);
+        return retval;
+    }
+
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
             JobDetail jobDetail = context.getJobDetail();

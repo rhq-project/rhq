@@ -38,8 +38,8 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -93,7 +93,6 @@ public class ContentProviderManager {
         return inputStream;
     }
 
-
     /**
      * Asks that the adapter responsible for the given content source return a stream to the
      * DistributionFile bits for the DistributionFile at the given location.
@@ -103,8 +102,7 @@ public class ContentProviderManager {
      * @return the stream to the DistributionFile bits
      * @throws Exception if the adapter failed to load the bits
      */
-    public InputStream loadDistributionFileBits(int contentSourceId, String location)
-        throws Exception {
+    public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
 
         DistributionSource distSource = (DistributionSource) adapter;
@@ -112,8 +110,7 @@ public class ContentProviderManager {
 
         if (inputStream == null) {
             throw new Exception("Adapter for content source [" + contentSourceId
-                + "] failed to give us a stream to the distribution file at location [" + location +
-                "]");
+                + "] failed to give us a stream to the distribution file at location [" + location + "]");
         }
 
         return inputStream;
@@ -145,11 +142,9 @@ public class ContentProviderManager {
         StringBuilder progress = new StringBuilder();
 
         try {
-            ContentSource contentSource = contentSourceManager
-                .getContentSource(overlord, contentSourceId);
+            ContentSource contentSource = contentSourceManager.getContentSource(overlord, contentSourceId);
             if (contentSource == null) {
-                throw new Exception(
-                    "Cannot sync a non-existing content source [" + contentSourceId + "]");
+                throw new Exception("Cannot sync a non-existing content source [" + contentSourceId + "]");
             }
 
             // This should not take very long so it should be OK to block other callers.
@@ -159,8 +154,7 @@ public class ContentProviderManager {
             // We can come back and revisit if we need more fine-grained locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
-                progress.append("Start synchronization of content provider [")
-                    .append(contentSource.getName()).append(
+                progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
                     "]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
@@ -182,16 +176,14 @@ public class ContentProviderManager {
                 return false;
             }
 
-            RepoSourceSynchronizer repoSourceSynchronizer =
-                new RepoSourceSynchronizer(contentSource, provider);
+            RepoSourceSynchronizer repoSourceSynchronizer = new RepoSourceSynchronizer(contentSource, provider);
             repoSourceSynchronizer.synchronizeCandidateRepos(progress);
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             if (results != null) {
                 // try to reload the results in case it was updated by the SLSB before the
                 // exception happened
-                ContentSourceSyncResults reloadedResults = contentSourceManager
-                    .getContentSourceSyncResults(results.getId());
+                ContentSourceSyncResults reloadedResults = contentSourceManager.getContentSourceSyncResults(results
+                    .getId());
                 if (reloadedResults != null) {
                     results = reloadedResults;
                     if (results.getResults() != null) {
@@ -205,7 +197,7 @@ public class ContentProviderManager {
                 progress.append("SYNCHRONIZATION ERROR - STACK TRACE FOLLOWS:\n");
                 progress.append(baos.toString());
                 results.setResults(progress.toString());
-                results.setStatus(ContentSourceSyncStatus.FAILURE);
+                results.setStatus(ContentSyncStatus.FAILURE);
                 // finally clause will merge this
             }
 
@@ -254,13 +246,12 @@ public class ContentProviderManager {
         for (ContentSource source : repo.getContentSources()) {
             ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-            PackageSourceSynchronizer packageSourceSynchronizer =
-                new PackageSourceSynchronizer(repo, source, provider);
+            PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source, provider);
             packageSourceSynchronizer.synchronizePackageMetadata();
             packageSourceSynchronizer.synchronizePackageBits();
 
-            DistributionSourceSynchronizer distributionSourceSynchronizer =
-                new DistributionSourceSynchronizer(repo, source, provider);
+            DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(repo,
+                source, provider);
             distributionSourceSynchronizer.synchronizeDistributionMetadata();
             distributionSourceSynchronizer.synchronizeDistributionBits();
         }
@@ -281,8 +272,7 @@ public class ContentProviderManager {
 
         try {
             adapter.testConnection();
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             return false;
         }
 
@@ -326,11 +316,8 @@ public class ContentProviderManager {
 
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.initialize(contentSource.getConfiguration());
-        }
-        catch (Exception e) {
-            log.warn(
-                "Failed to initialize adapter for content source [" + contentSource.getName() + "]",
-                e);
+        } catch (Exception e) {
+            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", e);
             throw new InitializationException(e);
         }
     }
@@ -358,10 +345,8 @@ public class ContentProviderManager {
 
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.shutdown();
-        }
-        catch (Throwable t) {
-            log.warn(
-                "Failed to shutdown adapter for content source [" + contentSource.getName() + "]", t);
+        } catch (Throwable t) {
+            log.warn("Failed to shutdown adapter for content source [" + contentSource.getName() + "]", t);
         } finally {
             this.adapters.remove(contentSource);
         }
@@ -398,8 +383,7 @@ public class ContentProviderManager {
             }
         }
 
-        throw new RuntimeException(
-            "Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
+        throw new RuntimeException("Content source ID [" + contentProviderId + "] doesn't exist; can't get adapter");
     }
 
     /**
@@ -414,14 +398,12 @@ public class ContentProviderManager {
     protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
 
-        ContentSourceMetadataManagerLocal metadataManager = LookupUtil
-            .getContentSourceMetadataManager();
+        ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
         // Our plugin manager should have parsed all descriptors and have our types for us.
         // Let's register the types to make sure they are merged with the old existing types.
-        ContentSourcePluginMetadataManager pluginMetadataManager = this.pluginManager
-            .getMetadataManager();
+        ContentSourcePluginMetadataManager pluginMetadataManager = this.pluginManager.getMetadataManager();
         Set<ContentSourceType> allTypes = pluginMetadataManager.getAllContentSourceTypes();
         metadataManager.registerTypes(allTypes);
 
@@ -437,8 +419,7 @@ public class ContentProviderManager {
             for (ContentSource contentSource : contentSources) {
                 try {
                     startAdapter(contentSource);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     log.warn("Failed to start adapator for content source [" + contentSource + "]");
                 }
             }
@@ -484,8 +465,7 @@ public class ContentProviderManager {
      * @return the adapter that is communicating with the content source, isolated to its classloader
      * @throws RuntimeException if there is no content source adapter available
      */
-    protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource)
-        throws RuntimeException {
+    protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
         ContentProvider adapter;
 
         synchronized (this.adapters) {
@@ -496,11 +476,9 @@ public class ContentProviderManager {
             throw new RuntimeException("There is no adapter for content source [" + adapter + "]");
         }
 
-        ServerPluginEnvironment env = this.pluginManager
-            .getPluginEnvironment(contentSource.getContentSourceType());
+        ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(contentSource.getContentSourceType());
         if (env == null) {
-            throw new RuntimeException(
-                "There is no plugin env. for content source [" + contentSource + "]");
+            throw new RuntimeException("There is no plugin env. for content source [" + contentSource + "]");
         }
 
         ClassLoader classLoader = env.getPluginClassLoader();
@@ -538,8 +516,7 @@ public class ContentProviderManager {
         try {
             ContentSourceType type = contentSource.getContentSourceType();
             apiClassName = type.getContentSourceApiClass();
-            pluginName = this.pluginManager.getMetadataManager()
-                .getPluginNameFromContentSourceType(type);
+            pluginName = this.pluginManager.getMetadataManager().getPluginNameFromContentSourceType(type);
 
             ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
             ClassLoader pluginClassloader = pluginEnv.getPluginClassLoader();
@@ -559,11 +536,8 @@ public class ContentProviderManager {
             } finally {
                 Thread.currentThread().setContextClassLoader(startingClassLoader);
             }
-        }
-        catch (Throwable t) {
-            log.warn(
-                "Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName +
-                    "]", t);
+        } catch (Throwable t) {
+            log.warn("Failed to create the API class [" + apiClassName + "] for plugin [" + pluginName + "]", t);
         }
 
         if (adapter != null) {

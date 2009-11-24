@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -208,7 +208,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // try to create another but this one is a FAILURE, this is allowed
             another = new ContentSourceSyncResults(contentSource);
-            another.setStatus(ContentSourceSyncStatus.FAILURE);
+            another.setStatus(ContentSyncStatus.FAILURE);
             another.setEndTime(System.currentTimeMillis());
             another = contentSourceManager.persistContentSourceSyncResults(another);
             assert another != null : "Allowed to have two results persisted if only one is INPROGRESS";

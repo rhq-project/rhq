@@ -41,23 +41,22 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * Represents the results of a content source sync request. When a {@link ContentSource} synchronizes with its remote
+ * Represents the results of a repo sync request. When a {@link Repo} synchronizes with its remote
  * backend, the results of that are stored in this object.
  *
- * @author John Mazzitelli
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = ContentSourceSyncResults.QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID, query = "SELECT cssr "
-        + "  FROM ContentSourceSyncResults cssr " + " WHERE cssr.contentSource.id = :contentSourceId "
-        + "   AND status = 'INPROGRESS' " + " ORDER BY cssr.startTime DESC "),
-    @NamedQuery(name = ContentSourceSyncResults.QUERY_GET_ALL_BY_CONTENT_SOURCE_ID, query = "SELECT cssr "
-        + "  FROM ContentSourceSyncResults cssr " + " WHERE cssr.contentSource.id = :contentSourceId ") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
-@Table(name = "RHQ_CONTENT_SRC_SYNC")
-public class ContentSourceSyncResults implements Serializable {
-    public static final String QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getInProgressByCSId";
-    public static final String QUERY_GET_ALL_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getAllByCSId";
+    @NamedQuery(name = RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID, query = "SELECT rssr "
+        + "  FROM RepoSyncResults rssr " + " WHERE rssr.repo.id = :repoId " + "   AND status = 'INPROGRESS' "
+        + " ORDER BY rssr.startTime DESC "),
+    @NamedQuery(name = RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID, query = "SELECT rssr "
+        + "  FROM RepoSyncResults rssr " + " WHERE rssr.repo.id = :repoId ") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_SYNC_ID_SEQ")
+@Table(name = "RHQ_REPO_SYNC")
+public class RepoSyncResults implements Serializable {
+    public static final String QUERY_GET_INPROGRESS_BY_REPO_ID = "RepoSyncResults.getInProgressByRepoId";
+    public static final String QUERY_GET_ALL_BY_REPO_ID = "RepoSyncResults.getAllByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -66,9 +65,9 @@ public class ContentSourceSyncResults implements Serializable {
     @Id
     private int id;
 
-    @JoinColumn(name = "CONTENT_SRC_ID", referencedColumnName = "ID", nullable = false)
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
-    private ContentSource contentSource;
+    private Repo repo;
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -83,14 +82,14 @@ public class ContentSourceSyncResults implements Serializable {
     @Column(name = "RESULTS", nullable = true)
     private String results;
 
-    protected ContentSourceSyncResults() {
+    protected RepoSyncResults() {
         this.startTime = System.currentTimeMillis();
         this.status = ContentSyncStatus.INPROGRESS;
     }
 
-    public ContentSourceSyncResults(ContentSource contentSource) {
+    public RepoSyncResults(Repo repoIn) {
         this();
-        this.contentSource = contentSource;
+        this.repo = repoIn;
     }
 
     public int getId() {
@@ -102,14 +101,14 @@ public class ContentSourceSyncResults implements Serializable {
     }
 
     /**
-     * The content source that performed the sync.
+     * The Repo that performed the sync.
      */
-    public ContentSource getContentSource() {
-        return contentSource;
+    public Repo getRepo() {
+        return repo;
     }
 
-    public void setContentSource(ContentSource contentSource) {
-        this.contentSource = contentSource;
+    public void setRepo(Repo repoIn) {
+        this.repo = repoIn;
     }
 
     /**
@@ -158,11 +157,11 @@ public class ContentSourceSyncResults implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder("ContentSourceSyncResults: ");
+        StringBuilder str = new StringBuilder(this.getClass().getSimpleName() + ": ");
         str.append("start-time=[" + new Date(startTime));
         str.append("], end-time=[" + ((endTime != null) ? new Date(endTime) : "---"));
         str.append("], status=[" + status);
-        str.append("], content-source=[" + contentSource);
+        str.append("], repo=[" + repo);
         str.append("]");
         return str.toString();
     }

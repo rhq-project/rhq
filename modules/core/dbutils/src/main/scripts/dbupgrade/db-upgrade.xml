@@ -2172,6 +2172,14 @@
             REFERENCES RHQ_CONFIG (ID)
           </statement>
         </schema-directSQL>
+
+        <!-- Fix bug:538157 -->
+        <schema-directSQL>
+           <statement>
+             CREATE INDEX RHQ_REPO_PKG_VER_MAP_IDX
+               ON RHQ_REPO_PKG_VERSION_MAP ( PACKAGE_VERSION_ID )
+           </statement>
+        </schema-directSQL>
       </schemaSpec>
     	
       <!-- RHQ Advisory Representation -->

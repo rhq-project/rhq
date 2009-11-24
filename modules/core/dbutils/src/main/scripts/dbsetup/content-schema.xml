@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>f
         
 <dbsetup name="content-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xmlns="urn:xmlns:rhq-dbsetup-schema">
@@ -297,6 +297,9 @@
                 <field ref="PACKAGE_VERSION_ID"/>
             </primaryKey>
         </constraint>
+        <index name="RHQ_REPO_PKG_VER_MAP_IDX" unique="false">
+            <field ref="PACKAGE_VERSION_ID"/>
+        </index>
     </table>
 
     <table name="RHQ_PKG_VER_CONTENT_SRC_MAP">

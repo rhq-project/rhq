@@ -476,7 +476,7 @@
     
     <table name="RHQ_ADVISORY_BUGLIST">
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
-        <column name="BUG_ID" size="64" type="VARCHAR2" required="true"/>
+        <column name="BUG_ID" size="256" type="VARCHAR2" required="true"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         

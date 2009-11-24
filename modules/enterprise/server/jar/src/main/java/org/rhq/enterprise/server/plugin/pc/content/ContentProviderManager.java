@@ -220,7 +220,21 @@ public class ContentProviderManager {
         return true;
     }
 
-
+    /**
+     * Asks each content provider associated with the given repo to synchronize the following
+     * information for the given repo:
+     * <ul>
+     * <li>Package Metadata</li>
+     * <li>Package Bits</li>
+     * <li>Distribution Tree Metadata</li>
+     * <li>Distribution Tree Bits</li>
+     * </ul>
+     *
+     * @param repoId must indicate a valid repo in the database
+     * @return <code>true</code> if the synchronize took place; <code>false</code> if it did not
+     *         (for instance, if there is already a sync taking place for this repo)
+     * @throws Exception if the data required to perform the sync is missing or invalid
+     */
     public boolean synchronizeRepo(int repoId) throws Exception {
 
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
@@ -233,6 +247,8 @@ public class ContentProviderManager {
         if (repo == null) {
             throw new Exception("Invalid repo ID specified for sync: " + repoId);
         }
+
+        // TODO: Add check to sync results tracking to make sure it's not already synccing
 
         // Synchronize every content provider associated with the repo
         for (ContentSource source : repo.getContentSources()) {

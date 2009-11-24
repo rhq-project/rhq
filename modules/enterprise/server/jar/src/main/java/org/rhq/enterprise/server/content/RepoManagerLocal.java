@@ -284,10 +284,12 @@ public interface RepoManagerLocal {
     PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
 
     /**
-     * Syncronize the content associated with the repoIds passed in.
-     * @param repoIds to syncronize
+     * Synchronize the content associated with the repoIds passed in.
+     *
+     * @param repoIds to synchronize; may not be <code>null</code>
      * @return count of the number of repositories synced.
+     * @throws Exception if there is an error connecting with the plugin container
      */
-    int synchronizeRepos(Subject subject, Integer[] repoIds);
+    int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
 
 }

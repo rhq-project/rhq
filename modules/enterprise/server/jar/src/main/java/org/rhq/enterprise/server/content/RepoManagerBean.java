@@ -71,6 +71,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -917,18 +918,17 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         int syncCount = 0;
 
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentProviderManager providerManager = pc.getAdapterManager();
+
         for (Integer id : repoIds) {
-            Repo r = this.getRepo(subject, id);
-            Set<ContentSource> sources = r.getContentSources();
-            Iterator<ContentSource> i = sources.iterator();
-            while (i.hasNext()) {
-                ContentSource source = i.next();
-                contentSourceManager.synchronizeAndLoadContentSource(subject, source.getId());
+            boolean syncExecuted = providerManager.synchronizeRepo(id);
+
+            if (syncExecuted) {
                 syncCount++;
-                log.debug("Initiating sync: " + source.getId());
             }
         }
 

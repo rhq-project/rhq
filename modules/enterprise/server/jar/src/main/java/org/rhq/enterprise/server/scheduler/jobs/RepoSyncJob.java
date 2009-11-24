@@ -54,7 +54,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * nor want this job triggered concurrently. That is, we don't need multiple instances of this job
  * running at the same time.
  * <p/>
- * Much of the functionality in this class was migrated from {@link ContentSourceSyncJob}.
+ * Much of the functionality in this class was migrated from {@link ContentProviderSyncJob}.
  *
  * @author Jason Dobies
  */

@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.server.scheduler.jobs;
 
-import java.util.Date;
-import java.util.List;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
@@ -33,11 +30,6 @@ import org.quartz.StatefulJob;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.DownloadMode;
-import org.rhq.core.domain.content.PackageVersionContentSource;
-import org.rhq.core.domain.content.PackageVersionContentSourcePK;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -51,12 +43,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * concurrently. That is, we don't need multiple instances of this job running at the same time.</p>
  *
  * @author John Mazzitelli
+ * @author Jason Dobies
  */
-public class ContentSourceSyncJob implements StatefulJob {
+public class ContentProviderSyncJob implements StatefulJob {
     private static final String DATAMAP_CONTENT_SOURCE_NAME = "contentSourceName";
     private static final String DATAMAP_CONTENT_SOURCE_TYPE_NAME = "contentSourceTypeName";
 
-    private static final Log log = LogFactory.getLog(ContentSourceSyncJob.class);
+    private static final Log log = LogFactory.getLog(ContentProviderSyncJob.class);
     private static final String SEPARATOR = "--";
 
     public void execute(JobExecutionContext context) throws JobExecutionException {

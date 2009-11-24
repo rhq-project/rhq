@@ -22,6 +22,8 @@
  */
 package org.rhq.core.pc.configuration;
 
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
+
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -97,14 +99,19 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
         ConfigurationUpdateReport report = null;
         try {
 //            configurationFacet.updateResourceConfiguration(report);
-            report = configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
-            
-            response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), report.getStatus(), report
-                .getErrorMessage());
+//            report = configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
+            response = new ConfigurationUpdateResponse(requestId, request.getConfiguration(), SUCCESS, null);
 
-            if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
+            try {
+                configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
+            } catch (UpdateInProgressException e) {
+                response.setStatus(INPROGRESS);
                 response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
             }
+
+//            if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
+//                response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
+//            }
 
             ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 

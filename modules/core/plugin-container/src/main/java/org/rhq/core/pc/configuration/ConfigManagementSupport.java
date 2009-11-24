@@ -59,6 +59,17 @@ public abstract class ConfigManagementSupport implements ConfigManagement {
                 FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
     }
 
+    protected ResourceConfigurationFacet loadResourceConfigFacetWithWriteLock(int resourceId)
+        throws PluginContainerException {
+
+        FacetLockType lockType = FacetLockType.WRITE;
+        boolean daemonThread = (lockType != FacetLockType.WRITE);
+        boolean onlyIfStarted = true;
+
+        return componentService.getComponent(resourceId, ResourceConfigurationFacet.class, lockType,
+                FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+    }
+
     protected ConfigurationFacet loadConfigurationFacet(int resourceId, FacetLockType lockType)
         throws PluginContainerException {
         

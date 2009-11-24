@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -60,8 +61,14 @@ public class RawConfigManagement extends ConfigManagementSupport {
         return config;
     }
 
-    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
+    public void executeUpdate(int resourceId, Configuration configuration)
         throws PluginContainerException {
-        return null;
+
+        ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+
+        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+            facet.persistRawConfiguration(rawConfig);
+        }
+
     }
 }

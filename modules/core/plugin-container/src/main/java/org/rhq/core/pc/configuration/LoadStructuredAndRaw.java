@@ -30,7 +30,6 @@ import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -85,8 +84,7 @@ public class LoadStructuredAndRaw extends ConfigManagementSupport {
             }
     }
 
-    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
-        throws PluginContainerException {
-        return null;
+    public void executeUpdate(int resourceId, Configuration configuration)
+        throws PluginContainerException {        
     }
 }

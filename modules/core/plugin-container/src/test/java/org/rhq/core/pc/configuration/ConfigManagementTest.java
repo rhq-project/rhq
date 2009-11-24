@@ -28,6 +28,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.test.JMockTest;
 
 import static org.rhq.test.AssertUtils.*;
@@ -115,5 +117,15 @@ public class ConfigManagementTest extends JMockTest {
         String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
 
         assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
+    }
+
+    void assertConfigurationUpdateResponseMatches(ConfigurationUpdateResponse expected,
+        ConfigurationUpdateResponse actual, String msg) {
+        assertPropertiesMatch(expected, actual, msg);
+    }
+
+    void assertConfigurationUpdateReportMatches(ConfigurationUpdateReport expected, ConfigurationUpdateReport actual,
+        String msg) {
+        assertPropertiesMatch(expected, actual, msg);
     }
 }

@@ -75,14 +75,10 @@ public class LegacyConfigManagement extends ConfigManagementSupport {
         }
     }
 
-    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
+    public void executeUpdate(int resourceId, Configuration configuration)
         throws PluginContainerException {
         ConfigurationFacet facet = loadConfigurationFacet(resourceId, WRITE);
         ConfigurationUpdateReport report = new ConfigurationUpdateReport(configuration);
-
-        facet.updateResourceConfiguration(report);
-
-        return report;
     }
 
 }

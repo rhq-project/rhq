@@ -23,26 +23,21 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.pc.util.ComponentService;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.clientapi.agent.PluginContainerException;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+public class UpdateInProgressException extends ConfigurationUpdateException {
 
-public interface ConfigManagement {
+    public UpdateInProgressException() {
+        super();
+    }
 
-    static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
+    public UpdateInProgressException(String message) {
+        super(message);
+    }
 
-    ComponentService getComponentService();
+    public UpdateInProgressException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    void setComponentService(ComponentService componentService);
-
-    ConfigurationUtilityService getConfigurationUtilityService();
-
-    void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
-
-    Configuration execute(int resourceId) throws PluginContainerException;
-
-    void executeUpdate(int resourceId, Configuration configuration)
-        throws PluginContainerException;
-
+    public UpdateInProgressException(Throwable cause) {
+        super(cause);
+    }
 }

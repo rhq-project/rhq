@@ -27,7 +27,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -68,8 +67,7 @@ public class LoadStructured extends ConfigManagementSupport {
             }
     }
 
-    public ConfigurationUpdateReport executeUpdate(int resourceId, Configuration configuration)
+    public void executeUpdate(int resourceId, Configuration configuration)
         throws PluginContainerException {
-        return null;
     }
 }

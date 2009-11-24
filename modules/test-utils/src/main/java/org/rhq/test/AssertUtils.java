@@ -21,31 +21,30 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pc.configuration;
+package org.rhq.test;
 
-import org.jmock.Mockery;
-import org.testng.IHookCallBack;
-import org.testng.IHookable;
-import org.testng.ITestResult;
-import org.testng.annotations.BeforeMethod;
+import static org.testng.Assert.*;
 
-public class JMockTest implements IHookable {
+public class AssertUtils {
 
-    protected Mockery context;
+    /**
+     * Verifies that all public, accessible properties of the two objects are equal. This method might be used when you
+     * want to compare two objects without using their <code>equals()</code> methods or when do not implement <code>
+     * equals()</code>.
+     *
+     * @param expected The expected object to compare against
+     * @param actual The actual object to be compared
+     * @param msg An error message
+     * @param <T> The type of the objects to be compared
+     */
+    public static <T> void assertPropertiesMatch(T expected, T actual, String msg) {
+        PropertyMatcher<T> matcher = new PropertyMatcher<T>();
+        matcher.setExpected(expected);
+        matcher.setActual(actual);
 
-    @BeforeMethod
-    void initContext() {
-        context = new Mockery();
+        MatchResult result = matcher.execute();
+
+        assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
     }
 
-    public void run(IHookCallBack iHookCallBack, ITestResult iTestResult) {
-        iHookCallBack.runTestMethod(iTestResult);
-        try {
-            context.assertIsSatisfied();
-        }
-        catch (Throwable t) {
-            iTestResult.setStatus(ITestResult.FAILURE);
-            iTestResult.setThrowable(t);
-        }
-    }
 }

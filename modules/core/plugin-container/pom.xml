@@ -96,9 +96,9 @@
       </dependency>
 
       <dependency>
-         <groupId>org.jmock</groupId>
-         <artifactId>jmock</artifactId>
-         <version>2.5.1</version>
+         <groupId>${groupId}</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${version}</version>
          <scope>test</scope>
       </dependency>
       

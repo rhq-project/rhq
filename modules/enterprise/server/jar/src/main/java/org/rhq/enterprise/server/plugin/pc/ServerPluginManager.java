@@ -284,14 +284,17 @@ public class ServerPluginManager {
         MasterServerPluginContainerConfiguration masterConfig = masterPC.getConfiguration();
         File dataDir = new File(masterConfig.getDataDirectory(), pluginName);
         File tmpDir = masterConfig.getTemporaryDirectory();
-        Configuration plugnConfig;
+        Configuration pluginConfig = null;
         List<ScheduledJobDefinition> schedules;
         try {
             // TODO: today we have no way in the UI to customize the plugin config values
             //       for now, just use the defaults as defined in the descriptor
             ConfigurationDefinition configDef = ServerPluginDescriptorMetadataParser
                 .getPluginConfigurationDefinition(pluginDescriptor);
-            plugnConfig = configDef.getDefaultTemplate().createConfiguration();
+            // It is not required that a server plugin define plugin configuration
+            if (null != configDef) {
+                pluginConfig = configDef.getDefaultTemplate().createConfiguration();
+            }
 
             // TODO: today we have no way in the UI to customize the schedules
             //       for now, just use the defaults as defined in the descriptor
@@ -301,7 +304,7 @@ public class ServerPluginManager {
             throw new RuntimeException(e);
         }
 
-        context = new ServerPluginContext(env, dataDir, tmpDir, plugnConfig, schedules);
+        context = new ServerPluginContext(env, dataDir, tmpDir, pluginConfig, schedules);
         this.pluginContextCache.put(pluginName, context);
         return context;
     }

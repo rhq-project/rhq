@@ -187,25 +187,6 @@ import org.rhq.core.util.MessageDigestGenerator;
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.deployment = 'SERVER' AND p.status = 'INSTALLED' "), //
 
-    // this query does not update the content blob or ctime
-    @NamedQuery(name = Plugin.UPDATE_ALL_BUT_CONTENT, query = "" //
-        + "UPDATE Plugin p " //
-        + "   SET p.name = :name, " //
-        + "       p.displayName = :displayName, " //
-        + "       p.description = :description, " //
-        + "       p.enabled = :enabled, " //
-        + "       p.status = :status, " //
-        + "       p.help = :help, " //
-        + "       p.version = :version, " //
-        + "       p.ampsVersion = :ampsVersion," //
-        + "       p.deployment = :deployment, " //
-        + "       p.pluginConfiguration = :pluginConfiguration, " //
-        + "       p.scheduledJobsConfiguration = :scheduledJobsConfiguration, " //
-        + "       p.path = :path, " //
-        + "       p.md5 = :md5, " //
-        + "       p.mtime = :mtime " //
-        + " WHERE p.id = :id"),
-
     // this query is how you enable and disable plugins
     @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
         + "UPDATE Plugin p " //
@@ -256,7 +237,6 @@ public class Plugin implements Serializable {
     public static final String QUERY_FIND_BY_IDS_AND_TYPE = "Plugin.findByIdsAndType";
     public static final String QUERY_GET_NAMES_BY_ENABLED_AND_TYPE = "Plugin.findByEnabledAndType";
     public static final String QUERY_GET_STATUS_BY_NAME_AND_TYPE = "Plugin.getStatusByNameAndType";
-    public static final String UPDATE_ALL_BUT_CONTENT = "Plugin.updateAllButContent";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
 
     @Column(name = "ID", nullable = false)

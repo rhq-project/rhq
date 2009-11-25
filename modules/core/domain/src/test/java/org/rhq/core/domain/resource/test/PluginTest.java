@@ -131,23 +131,39 @@ public class PluginTest extends AbstractEJB3Test {
             em.persist(jobsConfig);
             em.flush(); // gotta get those two persists to flush to the DB
 
-            q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", id); // same as the one we just persisted
-            q.setParameter("name", name);
-            q.setParameter("path", path);
-            q.setParameter("displayName", displayName);
-            q.setParameter("enabled", enabled);
-            q.setParameter("status", status);
-            q.setParameter("md5", md5);
-            q.setParameter("version", version);
-            q.setParameter("ampsVersion", ampsVersion);
-            q.setParameter("deployment", deployment);
-            q.setParameter("pluginConfiguration", pluginConfig);
-            q.setParameter("scheduledJobsConfiguration", jobsConfig);
-            q.setParameter("description", description);
-            q.setParameter("help", help);
-            q.setParameter("mtime", System.currentTimeMillis());
-            assert q.executeUpdate() == 1 : "Failed to update the plugin";
+            // do what ServerPluginsBean/ResourceMetadataManagerBean.updateServerPluginExceptContent does
+            Configuration config = plugin.getPluginConfiguration();
+            if (config != null) {
+                config = em.merge(config);
+                plugin.setPluginConfiguration(config);
+            }
+            config = plugin.getScheduledJobsConfiguration();
+            if (config != null) {
+                config = em.merge(config);
+                plugin.setScheduledJobsConfiguration(config);
+            }
+
+            Plugin pluginEntity = em.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(name);
+            pluginEntity.setPath(path);
+            pluginEntity.setDisplayName(displayName);
+            pluginEntity.setEnabled(enabled);
+            pluginEntity.setStatus(status);
+            pluginEntity.setMd5(md5);
+            pluginEntity.setVersion(version);
+            pluginEntity.setAmpsVersion(ampsVersion);
+            pluginEntity.setDeployment(deployment);
+            pluginEntity.setPluginConfiguration(pluginConfig);
+            pluginEntity.setScheduledJobsConfiguration(jobsConfig);
+            pluginEntity.setDescription(description);
+            pluginEntity.setHelp(help);
+            pluginEntity.setMtime(System.currentTimeMillis());
+
+            try {
+                em.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
+                throw new Exception("Failed to update a plugin that matches [" + plugin + "]", e);
+            }
 
             em.close();
             getTransactionManager().commit(); // must commit now
@@ -163,7 +179,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.isEnabled() == enabled;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
-            q.setParameter("ampsVersion", ampsVersion);
+            assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == PluginDeploymentType.SERVER;
             assert plugin.getPluginConfiguration().equals(pluginConfig);

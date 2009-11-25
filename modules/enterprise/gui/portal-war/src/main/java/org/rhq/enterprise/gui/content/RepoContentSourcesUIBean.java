@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.util.PageControl;
@@ -38,13 +39,13 @@ public class RepoContentSourcesUIBean extends PagedDataTableUIBean {
     public RepoContentSourcesUIBean() {
     }
 
-    public String associateWithContentSources() {
-        return "associateWithContentSources";
+    public String associateWithContentProviders() {
+        return "associateWithContentProviders";
     }
 
-    public String deleteSelectedRepoContentSources() {
+    public String disassociateWithContentProviders() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        String[] selected = getSelectedRepoContentSources();
+        String[] selected = getSelectedRepoContentProviders();
         int repoId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
         int[] contentSourceIds = getIntegerArray(selected);
 
@@ -90,8 +91,8 @@ public class RepoContentSourcesUIBean extends PagedDataTableUIBean {
         }
     }
 
-    private String[] getSelectedRepoContentSources() {
-        return FacesContextUtility.getRequest().getParameterValues("selectedRepoContentSources");
+    private String[] getSelectedRepoContentProviders() {
+        return FacesContextUtility.getRequest().getParameterValues("selectedRepoContentProviders");
     }
 
     private int[] getIntegerArray(String[] input) {

@@ -23,6 +23,7 @@
 
 package org.rhq.plugins.cron.test;
 
+import java.io.IOException;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,8 +44,26 @@ import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 public class CronTabComponentTest extends AbstractAugeasConfigurationComponentTest {
 
     @Override
+    public void start() {
+        //do nothing..
+        //this method is intentionally not annotated with @BeforeSuite as its parent, so 
+        //that it actually isn't run.. we need to run the @BeforeSuite only once and that
+        //is done in the CronComponentTest
+    }
+
+    @Override
+    public void stop() {
+        //do nothing.. the cron component test will take care of teardown
+        //as with start() method, this is intentionally not annotated...
+    }
+
+    public void resetConfigFiles() throws IOException {
+        //make this a non-test method so that only the one on the cron component gets executed.
+    }
+    
+    @Override
     protected Resource getResource() {
-        //let's pick the "another-crontab file
+        //let's pick the "another-crontab" file
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceType resourceType = getResourceType();
         Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);

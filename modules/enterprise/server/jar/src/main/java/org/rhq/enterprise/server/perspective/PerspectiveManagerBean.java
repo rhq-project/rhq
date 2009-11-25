@@ -18,9 +18,65 @@
  */
 package org.rhq.enterprise.server.perspective;
 
+import java.util.List;
+
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
 public class PerspectiveManagerBean implements PerspectiveManagerLocal, PerspectiveManagerRemote {
+
+    private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
+     */
+    @Override
+    public List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
+        List<MenuItem> coreMenu = null;
+
+        try {
+            coreMenu = PerspectiveManagerHelper.getPluginMetadataManager().getCoreMenu();
+        } catch (Exception e) {
+            throw new PerspectiveException("Failed to get Core Menu.", e);
+        }
+
+        // TODO: Apply Activators here
+
+        // TODO: Cache session:menu map here
+
+        // TODO: remove this debug code
+        // printMenu(coreMenu, "");
+
+        return coreMenu;
+    }
+
+    // TODO: remove this debug code
+    @SuppressWarnings("unused")
+    private void printMenu(List<MenuItem> menu, String indent) {
+        if (null == menu)
+            return;
+
+        for (MenuItem menuItem : menu) {
+            System.out.println(indent + menuItem.getItem().getName());
+            printMenu(menuItem.getChildren(), indent + "..");
+        }
+    }
+
 }

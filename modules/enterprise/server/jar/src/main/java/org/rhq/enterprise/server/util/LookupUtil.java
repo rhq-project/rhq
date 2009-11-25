@@ -83,6 +83,8 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerBean;
@@ -90,7 +92,7 @@ import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.CoreServerMBean;
 import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
-import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -412,6 +414,11 @@ public final class LookupUtil {
         return lookupLocal(RepoManagerBean.class);
     }
 
+    public static DistributionManagerLocal getDistributionManagerLocal() {
+        return lookupLocal(DistributionManagerBean.class);
+    }
+
+
     public static AffinityGroupManagerLocal getAffinityGroupManager() {
         return lookupLocal(AffinityGroupManagerBean.class);
     }
@@ -535,10 +542,10 @@ public final class LookupUtil {
         return jonServer;
     }
 
-    public static AgentPluginDeploymentScannerMBean getAgentPluginDeploymentScanner() {
+    public static PluginDeploymentScanner getPluginDeploymentScanner() {
         MBeanServer jBossMBeanServer = MBeanServerLocator.locateJBoss();
-        AgentPluginDeploymentScannerMBean scanner = (AgentPluginDeploymentScannerMBean) MBeanProxyExt.create(
-            AgentPluginDeploymentScannerMBean.class, AgentPluginDeploymentScannerMBean.OBJECT_NAME, jBossMBeanServer);
+        PluginDeploymentScanner scanner = (PluginDeploymentScanner) MBeanProxyExt.create(PluginDeploymentScanner.class,
+            PluginDeploymentScanner.OBJECT_NAME, jBossMBeanServer);
         return scanner;
     }
 

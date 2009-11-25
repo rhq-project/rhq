@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.lang.reflect.Method;
 import java.util.Properties;
 
 import org.apache.commons.logging.Log;
@@ -30,6 +31,8 @@ import org.quartz.JobExecutionException;
 
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.AbstractScheduleType;
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
  * The superclass to the concurrent and stateful job wrappers.
@@ -59,15 +62,41 @@ abstract class AbstractJobWrapper implements Job {
     /**
      *  Key to the job data map that indicates the ID of the job.
      *   This ID is passed to the plugin container when the job was scheduled, see:
-     *  {@link AbstractTypeServerPluginContainer#scheduleJob(Schedule, String, String, ScheduledJob, java.util.Properties)}
+     *  {@link AbstractTypeServerPluginContainer#scheduleJob(ScheduledJobDefinition, String)}
      */
     public static final String DATAMAP_JOB_ID = DATAMAP_LEADER + "jobId";
 
     /**
      * Key to the job data map that indicates which plugin component class should be instantiated
-     * in order to process the job. This must implement {@link ScheduledJob}.
+     * in order to process the job. If not specified, the main plugin component instance is used.
      */
-    public static final String DATAMAP_SCHEDULED_JOB_CLASS = DATAMAP_LEADER + "scheduledJobClass";
+    public static final String DATAMAP_JOB_CLASS = DATAMAP_LEADER + "jobClass";
+
+    /**
+     * Key to the job data map that indicates which method on the job class should be invoked
+     * to run the job.
+     */
+    public static final String DATAMAP_JOB_METHOD_NAME = DATAMAP_LEADER + "jobMethodName";
+
+    /**
+     * Key to the job data map that indicates what kind of schedule triggered the job
+     */
+    public static final String DATAMAP_SCHEDULE_TYPE = DATAMAP_LEADER + "scheduleType";
+
+    /**
+     * Key to the job data map that indicates how the schedule is triggered.
+     * The value of the trigger datamap entry depends on the {@link #DATAMAP_SCHEDULE_TYPE type of schedule}.
+     * For example, a cron schedule type has a schedule trigger that is a cron expression.
+     * A periodic schedule type has a schedule trigger that is a time period, in milliseconds.
+     */
+    public static final String DATAMAP_SCHEDULE_TRIGGER = DATAMAP_LEADER + "scheduleTrigger";
+
+    /**
+     * Key to the job data map that indicates if the job is concurrent or not. The
+     * value does not necessarily mean any currently executing job is concurrently running
+     * with another; this just indicates if the job is allowed to run concurrently with another.
+     */
+    public static final String DATAMAP_IS_CONCURRENT = DATAMAP_LEADER + "isConcurrent";
 
     /**
      * This is the method that quartz calls when the schedule has triggered. This method will
@@ -84,7 +113,25 @@ abstract class AbstractJobWrapper implements Job {
         String pluginName = dataMap.getString(DATAMAP_PLUGIN_NAME);
         String pluginTypeString = dataMap.getString(DATAMAP_PLUGIN_TYPE);
         String jobId = dataMap.getString(DATAMAP_JOB_ID);
-        String scheduledJobClass = dataMap.getString(DATAMAP_SCHEDULED_JOB_CLASS);
+        String jobClass = dataMap.getString(DATAMAP_JOB_CLASS);
+        String jobMethodName = dataMap.getString(DATAMAP_JOB_METHOD_NAME);
+        boolean isConcurrent = Boolean.parseBoolean(dataMap.getString(DATAMAP_IS_CONCURRENT));
+        String scheduleTypeStr = dataMap.getString(DATAMAP_SCHEDULE_TYPE);
+        String scheduleTrigger = dataMap.getString(DATAMAP_SCHEDULE_TRIGGER);
+
+        // verify the datamap has all the things we require
+        if (pluginName == null) {
+            throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap missing plugin name", null);
+        }
+        if (pluginTypeString == null) {
+            throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap missing plugin type", null);
+        }
+        if (jobId == null) {
+            throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap missing job ID", null);
+        }
+        if (jobMethodName == null) {
+            throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap missing method name", null);
+        }
 
         // obtain the plugin's own callback data from the datamap
         Properties callbackData = new Properties();
@@ -95,72 +142,106 @@ abstract class AbstractJobWrapper implements Job {
         }
 
         // determine what type of plugin is being triggered
-        ServerPluginType pluginType;
+        ServerPluginType pluginType = null;
         try {
             pluginType = new ServerPluginType(pluginTypeString);
         } catch (Throwable t) {
             // datamap has an invalid plugin type string - we need to unschedule this, do not refire
-            log.error(logMsg(pluginName, pluginTypeString, jobId, "Datamap had invalid plugin type string", t));
-            JobExecutionException jobException = new JobExecutionException(t, false);
-            jobException.setUnscheduleFiringTrigger(true);
-            throw jobException;
+            throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap had invalid plugin type string", t);
         }
 
         // determine which plugin component class will be invoked to perform the work of the job
         MasterServerPluginContainer mpc = LookupUtil.getServerPluginService().getMasterPluginContainer();
         AbstractTypeServerPluginContainer pc = mpc.getPluginContainerByPluginType(pluginType);
 
-        ScheduledJob pluginJob;
+        Object pluginJobObject = null;
         ServerPluginManager pluginManager = pc.getPluginManager();
         ServerPluginEnvironment pluginEnv = pluginManager.getPluginEnvironment(pluginName);
-        ServerPluginLifecycleListener lifecycleListener = pluginManager.getServerPluginLifecycleListener(pluginName);
 
-        if (scheduledJobClass == null) {
-            try {
-                pluginJob = (ScheduledJob) lifecycleListener;
-                if (pluginJob == null) {
-                    log.error(logMsg(pluginName, pluginType, jobId, "no lifecycle listener to process job", null));
-                    throw new UnsupportedOperationException("no lifecycle listener available to process the job");
-                }
-            } catch (Throwable t) {
-                // no valid lifecycle listener that implements job interface - we need to unschedule this, do not refire
-                log.error(logMsg(pluginName, pluginType, jobId, "invaild lifecycle listener", t));
-                JobExecutionException jobException = new JobExecutionException(t, false);
-                jobException.setUnscheduleFiringTrigger(true);
-                throw jobException;
+        if (pluginEnv == null) {
+            throwJobExecutionException(pluginName, pluginType, jobId, "missing environment for plugin [" + pluginName
+                + "]", null);
+        }
+
+        if (jobClass == null) {
+            // null classname means use the stateful plugin component as the target object
+            pluginJobObject = pluginManager.getServerPluginComponent(pluginName);
+            if (pluginJobObject == null) {
+                throwJobExecutionException(pluginName, pluginType, jobId, "no plugin component to process job", null);
             }
         } else {
             try {
-                pluginJob = (ScheduledJob) pluginManager.instantiatePluginClass(pluginEnv, scheduledJobClass);
+                pluginJobObject = pluginManager.instantiatePluginClass(pluginEnv, jobClass);
             } catch (Throwable t) {
                 // invalid class - we need to unschedule this, do not refire since it will never work
-                log.error(logMsg(pluginName, pluginType, jobId, "invalid schedule job class", t));
-                JobExecutionException jobException = new JobExecutionException(t, false);
-                jobException.setUnscheduleFiringTrigger(true);
-                throw jobException;
+                throwJobExecutionException(pluginName, pluginType, jobId, "bad job class [" + jobClass + "]", t);
+            }
+        }
+
+        // try to find the method to invoke - first, see if the method exists with a parameter
+        // that is the type of our job invocation context. Otherwise, rely on a no-arg method.
+        Method jobMethod = null;
+        Object[] params = null;
+
+        try {
+            jobMethod = pluginJobObject.getClass().getMethod(jobMethodName, ScheduledJobInvocationContext.class);
+            params = new Object[1];
+
+            AbstractScheduleType scheduleType = AbstractScheduleType.create(isConcurrent, scheduleTypeStr,
+                scheduleTrigger);
+            if (scheduleType == null) {
+                // how is this possible that we got bad schedule data in the datamap? this isn't fatal, just log it and leave it null
+                log.warn(logMsg(pluginName, pluginType, jobId, "ignoring bad schedule type found in data map ["
+                    + scheduleTypeStr + "]", null));
+            }
+
+            ScheduledJobDefinition jobDefinition = new ScheduledJobDefinition(jobId, true, jobClass, jobMethodName,
+                scheduleType, callbackData);
+            ServerPluginContext pluginContext = pluginManager.getServerPluginContext(pluginEnv);
+            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext);
+        } catch (NoSuchMethodException e) {
+            try {
+                // see if there is a no-arg method of the given name
+                jobMethod = pluginJobObject.getClass().getMethod(jobMethodName);
+                params = null;
+            } catch (Throwable t) {
+                // invalid method - we need to unschedule this, do not refire since it will never work
+                throwJobExecutionException(pluginName, pluginType, jobId, "bad schedule job method [" + jobMethodName
+                    + "]", t);
             }
         }
 
         // now actually tell the plugin its time to do the scheduled job
-
         try {
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
                 Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
-                pluginJob.execute(jobId, lifecycleListener, callbackData);
+                jobMethod.invoke(pluginJobObject, params);
             } finally {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
             log.info(logMsg(pluginName, pluginType, jobId, "scheduled job executed", null));
         } catch (Throwable t) {
             // any exception thrown out of the job will mean the job is to be unscheduled
-            log.error(logMsg(pluginName, pluginType, jobId, "job threw exception, unscheduling it", t));
-            JobExecutionException jobException = new JobExecutionException(t, false);
-            jobException.setUnscheduleFiringTrigger(true);
-            throw jobException;
+            throwJobExecutionException(pluginName, pluginType, jobId, "job threw exception, unscheduling it", t);
         }
 
         return;
+    }
+
+    protected void throwJobExecutionException(String pluginName, Object pluginType, String jobId, String errorMsg,
+        Throwable t) throws JobExecutionException {
+
+        log.error(logMsg(pluginName, pluginType, jobId, errorMsg, t));
+
+        JobExecutionException jobException;
+        if (t != null) {
+            jobException = new JobExecutionException(t, false);
+        } else {
+            jobException = new JobExecutionException(false);
+        }
+        jobException.setUnscheduleFiringTrigger(true);
+        throw jobException;
     }
 
     protected String logMsg(String pluginName, Object pluginType, String jobId, String msg, Throwable t) {

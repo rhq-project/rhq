@@ -43,6 +43,8 @@ public class RepoCriteria extends Criteria {
     private String filterName;
     private String filterDescription;
     private List<Integer> filterResourceIds; // needs overrides
+    private Boolean filterCandidate;
+    private List<Integer> filterContentSourceIds; // needs overrides
 
     private boolean fetchResourceRepos;
     private boolean fetchRepoContentSources;
@@ -56,6 +58,10 @@ public class RepoCriteria extends Criteria {
         super(Repo.class);
 
         filterOverrides.put("resourceIds", "resourceRepos.resource.id IN ( ? )");
+        filterOverrides.put("contentSourceIds",
+            "id IN (SELECT innerRepo FROM Repo innerRepo " +
+            "JOIN innerRepo.repoContentSources rcs " +
+            "WHERE rcs.contentSource.id IN ( ? ))");
     }
 
     public void addFilterId(Integer filterId) {
@@ -72,6 +78,14 @@ public class RepoCriteria extends Criteria {
 
     public void addFilterResourceIds(Integer... filterResourceIds) {
         this.filterResourceIds = Arrays.asList(filterResourceIds);
+    }
+
+    public void addFilterCandidate(Boolean filterCandidate) {
+        this.filterCandidate = filterCandidate;
+    }
+
+    public void addFilterContentSourceIds(Integer... filterContentSourceIds) {
+        this.filterContentSourceIds = Arrays.asList(filterContentSourceIds);
     }
 
     public void fetchResourceRepos(boolean fetchResourceRepos) {

@@ -307,7 +307,7 @@ public class PackageVersion implements Serializable {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Configuration extraProperties;
 
-    @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<RepoPackageVersion> repoPackageVersions;
 
     // this mapping is here mainly to support our JPA queries

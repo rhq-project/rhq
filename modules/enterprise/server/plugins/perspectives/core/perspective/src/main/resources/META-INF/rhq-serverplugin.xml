@@ -1,0 +1,506 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<perspectivePlugin
+   version="1.0"
+   apiVersion="2.0"
+   description="The Core Perspective defining Core UI Elements"
+   displayName="Core Perspective"
+   name="CorePerspective"
+   package="org.rhq.perspective.core"
+   xmlns="urn:xmlns:rhq-serverplugin.perspective"
+   xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+   <!--  Core Menu -->
+   <menuItem
+      name="logo"
+      displayName=""
+      url="/"
+      iconUrl="/images/JBossLogo_small.png">
+      <position
+         extensionPoint="coreMenu"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="overview"
+      displayName="Overview">
+      <position
+         extensionPoint="coreMenu"
+         name="logo"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="resources"
+      displayName="Resources">
+      <position
+         extensionPoint="coreMenu"
+         name="overview"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="groups"
+      displayName="Groups">
+      <position
+         extensionPoint="coreMenu"
+         name="resources"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration"
+      displayName="Administration">
+      <position
+         extensionPoint="coreMenu"
+         name="groups"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="help"
+      displayName="Help">
+      <position
+         extensionPoint="coreMenu"
+         name="administration"
+         placement="after" />
+   </menuItem>
+
+
+   <!--  Core Menu: Overview -->
+   <menuItem
+      name="overview.subsystemViews"
+      displayName="Subsystem Views">
+      <position
+         extensionPoint="coreMenu"
+         name="overview"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="overview.autoDiscoveryQueue"
+      displayName="Auto Discovery Queue"
+      url="/rhq/discovery/queue.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="overview.dashboard"
+      displayName="Dashboard"
+      url="/Dashboard.do">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.autoDiscoveryQueue"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: Resources -->
+   <menuItem
+      name="resources.platforms"
+      displayName="Platforms"
+      iconUrl="/images/icons/Platform_up_16.png"
+      url="/ResourceHub.do?resourceCategory=PLATFORM">
+      <position
+         extensionPoint="coreMenu"
+         name="resources"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="resources.servers"
+      displayName="Servers"
+      iconUrl="/images/icons/Server_up_16.png"
+      url="/ResourceHub.do?resourceCategory=SERVER">
+      <position
+         extensionPoint="coreMenu"
+         name="resources.platforms"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="resources.services"
+      displayName="Services"
+      iconUrl="/images/icons/Service_up_16.png"
+      url="/ResourceHub.do?resourceCategory=SERVICE">
+      <position
+         extensionPoint="coreMenu"
+         name="resources.servers"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="resources.favoriteResources"
+      displayName="Favorite Resources"
+      feature="resourceFavorites"
+      iconUrl="/images/icons/Favorite_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="resources.services"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="resources.recentlyViewedResources"
+      displayName="Recently Viewed Resources"
+      feature="resourceRecentlyViewed"
+      iconUrl="/images/icons/History_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="resources.favoriteResources"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="resources.search"
+      displayName="Search:"
+      feature="resourceSearch"
+      iconUrl="/images/icons/Search_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="resources.recentlyViewedResources"
+         placement="after"
+         break="true" />
+   </menuItem>
+
+   <!--  Core Menu: Groups -->
+   <menuItem
+      name="groups.compatibleGroups"
+      displayName="Compatible Groups"
+      iconUrl="images/icons/Cluster_up_16.png"
+      url="/GroupHub.do?groupCategory=COMPATIBLE">
+      <position
+         extensionPoint="coreMenu"
+         name="groups"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="groups.mixedGroups"
+      displayName="Mixed Groups"
+      iconUrl="/images/icons/Group_up_16.png"
+      url="/GroupHub.do?groupCategory=MIXED">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.compatibleGroups"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="groups.groupDefinitions"
+      displayName="Group Definitions"
+      iconUrl="/images/GroupDefinition_16.png"
+      url="/rhq/definition/group/list.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.mixedGroups"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="groups.newGroup"
+      displayName="New Group"
+      url="/resource/group/Inventory.do?mode=new">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.groupDefinitions"
+         placement="after"
+         break="true" />
+   </menuItem>
+   <menuItem
+      name="groups.newGroupDefinition"
+      displayName="New Group Definition"
+      url="/rhq/definition/group/new.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.newGroup"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="groups.favoriteGroups"
+      displayName="Favorite Groups"
+      feature="groupFavorites"
+      iconUrl="/images/icons/Favorite_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.newGroupDefinition"
+         placement="after"
+         break="true" />
+   </menuItem>
+   <menuItem
+      name="groups.recentlyViewedGroups"
+      displayName="Recently Viewed Groups"
+      feature="groupRecentlyViewed"
+      iconUrl="/images/icons/History_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.favoriteGroups"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="groups.search"
+      displayName="Search:"
+      feature="groupSearch"
+      iconUrl="/images/icons/Search_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.recentlyViewedGroups"
+         placement="after"
+         break="true" />
+   </menuItem>
+
+   <!--  Core Menu: Administration -->
+   <menuItem
+      name="administration.security"
+      displayName="Security">
+      <position
+         extensionPoint="coreMenu"
+         name="administration"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="administration.systemConfiguration"
+      displayName="systemConfiguration">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.security"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.content"
+      displayName="Content">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.systemConfiguration"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.highAvailability"
+      displayName="High Availability">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.content"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.reports"
+      displayName="Reports">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.highAvailability"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.download"
+      displayName="Download"
+      iconUrl="/images/icons/Save_16.png"
+      url="/rhq/admin/downloads.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.reports"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.license"
+      displayName="License"
+      url="/admin/license/LicenseAdmin.do?mode=view">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.download"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: Help -->
+   <menuItem
+      name="help.onlineDocumentation"
+      displayName="Online Documentation"
+      feature="newWindow"
+      url="http://www.redhat.com/docs/en-US/JBoss_ON/">
+      <position
+         extensionPoint="coreMenu"
+         name="help"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="help.openASupportCase"
+      displayName="Open a Support Case"
+      feature="newWindow"
+      url="https://support.redhat.com/jbossnetwork/restricted/addCase.html">
+      <position
+         extensionPoint="coreMenu"
+         name="help.onlineDocumentation"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="help.about"
+      displayName="About"
+      feature="aboutBox"
+      iconUrl="/images/icons/availability_grey_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="help.openASupportCase"
+         placement="after"
+         break="true" />
+   </menuItem>
+
+   <!--  Core Menu: Overview.Subsystem Views -->
+   <menuItem
+      name="overview.subsystemViews.configurationChanges"
+      displayName="Configuration Changes"
+      iconUrl="/images/icons/Configure_16.png"
+      url="/rhq/subsystem/configurationUpdate.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="overview.subsystemViews.suspectMetrics"
+      displayName="suspectMetrics"
+      iconUrl="/images/icons/Monitor_failed_16.png"
+      url="/rhq/subsystem/oobHistory.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews.configurationChanges"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="overview.subsystemViews.operations"
+      displayName="Operations"
+      iconUrl="/images/icons/Operation_16.png"
+      url="/rhq/subsystem/operationHistory.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews.suspectMetrics"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="overview.subsystemViews.alerts"
+      displayName="Alerts"
+      iconUrl="/images/icons/Flag_blue_16.png"
+      url="/rhq/subsystem/alertHistory.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews.operations"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="overview.subsystemViews.alertDefinitions"
+      displayName="Alert Definitions"
+      iconUrl="/images/icons/Flag_blue_16.png"
+      url="/rhq/subsystem/alertDefinitions.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="overview.subsystemViews.alerts"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: Administration.Security -->
+   <menuItem
+      name="administration.security.users"
+      displayName="Users"
+      url="/admin/user/UserAdmin.do?mode=list">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.security"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="administration.security.roles"
+      displayName="Roles"
+      url="/admin/role/RoleAdmin.do?mode=list">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.security.users"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: administration.systemConfiguration -->
+   <menuItem
+      name="administration.systemConfiguration.settings"
+      displayName="Settings"
+      url="/admin/config/Config.do?mode=edit">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.systemConfiguration"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="administration.systemConfiguration.plugins"
+      displayName="Plugins"
+      url="/rhq/admin/plugin/plugin-list.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.systemConfiguration.settings"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.systemConfiguration.templates"
+      displayName="Templates"
+      url="/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.systemConfiguration.plugins"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: administration.content -->
+   <menuItem
+      name="administration.content.contentProviders"
+      displayName="Content Providers"
+      url="/rhq/content/listContentProviders.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.content"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="administration.content.repositories"
+      displayName="Repositories"
+      url="/rhq/content/listRepos.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.content.contentProviders"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: administration.highAvailability -->
+   <menuItem
+      name="administration.highAvailability.servers"
+      displayName="Servers"
+      url="/rhq/ha/listServers.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.highAvailability"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="administration.highAvailability.agents"
+      displayName="Agents"
+      url="/rhq/ha/listAgents.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.highAvailability.servers"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.highAvailability.affinityGroups"
+      displayName="Affinity Groups"
+      url="/rhq/ha/listAffinityGroups.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.highAvailability.agents"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="administration.highAvailability.paritionEvents"
+      displayName="Partition Events"
+      url="/rhq/ha/listPartitionEvents.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.highAvailability.affinityGroups"
+         placement="after" />
+   </menuItem>
+
+   <!--  Core Menu: administration.reports -->
+   <menuItem
+      name="administration.reports.resourceVersionInventoryReport"
+      displayName="Servers"
+      url="/rhq/admin/report/resourceInstallReport.xhtml">
+      <position
+         extensionPoint="coreMenu"
+         name="administration.reports"
+         placement="start" />
+   </menuItem>
+
+
+
+</perspectivePlugin>

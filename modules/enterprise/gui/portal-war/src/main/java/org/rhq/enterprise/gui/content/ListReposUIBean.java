@@ -21,6 +21,9 @@ package org.rhq.enterprise.gui.content;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
@@ -30,19 +33,47 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ListReposUIBean extends PagedDataTableUIBean {
+
+    private final Log log = LogFactory.getLog(ListReposUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "ListReposUIBean";
 
     private RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+    private ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
     public ListReposUIBean() {
     }
 
     public String createNewRepo() {
         return "createNewRepo";
+    }
+
+    public String importRepos() {
+        return "importRepos";
+    }
+
+    public String syncSelectedContentSources() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String[] selected = getSelectedRepos();
+        Integer[] repoIds = getIntegerArray(selected);
+
+        if (repoIds.length > 0) {
+            int syncCount = repoManager.synchronizeRepos(subject, repoIds);
+            if (syncCount > 0) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
+                    + "] content sources.");
+            } else {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                    "Selected Repositories have no content to sync.");
+            }
+        }
+
+        return "success";
     }
 
     public String deleteSelectedRepos() {
@@ -56,7 +87,8 @@ public class ListReposUIBean extends PagedDataTableUIBean {
                     repoManager.deleteRepo(subject, id);
                 }
 
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repositories.");
+                FacesContextUtility
+                    .addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length + "] repositories.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
             }
@@ -86,6 +118,9 @@ public class ListReposUIBean extends PagedDataTableUIBean {
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
 
             PageList<Repo> results = manager.findRepos(subject, pc);
+            for (Repo repo : results) {
+                repo.setSyncStatus(manager.calculateSyncStatus(subject, repo.getId()));
+            }
             return results;
         }
     }

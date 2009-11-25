@@ -65,7 +65,7 @@ public class CronTabDiscoveryComponent implements ResourceDiscoveryComponent<Cro
 
         ResourceType resourceType = context.getResourceType();
 
-        int pathUnderRootStartIdx = rootPath.endsWith(File.pathSeparator) ? rootPath.length() - 1 : rootPath.length();
+        int pathUnderRootStartIdx = rootPath.endsWith(File.separator) ? rootPath.length() - 1 : rootPath.length();
         
         for (File f : files) {
             String resourceKey = f.getAbsolutePath().substring(pathUnderRootStartIdx);

@@ -323,7 +323,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             if (!file_to_stream.exists()) {
                 log.debug("Agent is asking for a plugin that isn't on file system [" + file_to_stream
                     + "] - performing plugin scan");
-                LookupUtil.getAgentPluginDeploymentScanner().scan();
+                LookupUtil.getPluginDeploymentScanner().scan();
             }
 
             FileInputStream fis = new FileInputStream(file_to_stream);

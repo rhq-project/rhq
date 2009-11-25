@@ -157,7 +157,7 @@ public class TestContentServerPluginService extends ServerPluginService implemen
                     if (cs.getId() == contentSourceId) {
                         testLastSyncReport = new PackageSyncReport();
                         PackageSource packageSource = (PackageSource) testAdapters.get(cs);
-                        packageSource.synchronizePackages(testLastSyncReport, testExistingPackages.get(cs));
+                        packageSource.synchronizePackages(null, testLastSyncReport, testExistingPackages.get(cs));
                         return true;
                     }
                 }

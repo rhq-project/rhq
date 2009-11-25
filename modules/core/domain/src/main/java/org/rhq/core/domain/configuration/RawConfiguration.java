@@ -240,9 +240,14 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
             .toString();
     }
 
-    public RawConfiguration deepCopy() {
+    public RawConfiguration deepCopy(boolean keepId) {
         RawConfiguration copy = new RawConfiguration();
+        if (keepId) {
+            copy.id = this.id;
+        }
+
         copy.path = this.path;
+        
         if (this.contents != null) {
             copy.setContents(this.getContents());
         }

@@ -25,6 +25,6 @@ package org.rhq.core.domain.configuration;
 
 public interface DeepCopyable<T> {
 
-    T deepCopy();
+    T deepCopy(boolean keepId);
     
 }

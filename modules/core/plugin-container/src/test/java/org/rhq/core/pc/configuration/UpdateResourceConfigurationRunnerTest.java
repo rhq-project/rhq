@@ -59,9 +59,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         componentService = context.mock(ComponentService.class);
         facet = context.mock(ConfigurationFacet.class);
 
-        configMgmt = new LegacyConfigManagement();
-        configMgmt.setComponentService(componentService);
-
+        configMgmt = context.mock(ConfigManagement.class);
+        
         setDefaultExpectations();
     }
 
@@ -79,8 +78,6 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     @Test
     public void successfulUpdateShouldSendSuccessResponseToServer() throws Exception {
         final Configuration config = createStructuredConfig();
-
-        configMgmt = context.mock(ConfigManagement.class);
 
         final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
 
@@ -113,8 +110,6 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     public void successfulUpdateShouldReturnSuccessResponseInEmbeddedMode() throws Exception {
         final Configuration config = createStructuredConfig();
 
-        configMgmt = context.mock(ConfigManagement.class);
-
         final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
 
         int configUpdateId = -1;
@@ -144,8 +139,6 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     @Test
     public void inProgressUpdateShouldSendFailureResponseToServer() throws Exception {
         final Configuration config = createStructuredConfig();
-
-        configMgmt = context.mock(ConfigManagement.class);
 
         final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
 
@@ -180,8 +173,6 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     public void failedUpdateShouldReturnFailureResponseInEmbeddedMode() throws Exception {
         final Configuration config = createStructuredConfig();
 
-        //final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
         final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
 
         int configUpdateId = -1;
@@ -192,14 +183,15 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             configMgmt, updateRequest);
         updateRunner.setConfigUtilService(configUtilService);
 
-        String errorMsg = "Configuration facet did not indicate success or failure - assuming failure.";
+        String errorMsg = "Configuration update failed.";
+
+        final ConfigurationUpdateException exception = new ConfigurationUpdateException(errorMsg);
 
         final ConfigurationUpdateResponse failureResponse = new ConfigurationUpdateResponse(configUpdateId, config,
             FAILURE, errorMsg);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(updateReportTo(INPROGRESS));
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
             oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
             oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
@@ -216,8 +208,6 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
 
-        //final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
@@ -231,8 +221,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             exception);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(throwExceptionFromFacet(exception));
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
         }});
@@ -257,7 +246,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             exception);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
+            oneOf(configMgmt).executeUpdate(resourceId, config);
             will(throwExceptionFromFacet(exception));
         }});
 

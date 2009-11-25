@@ -107,6 +107,9 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
             } catch (UpdateInProgressException e) {
                 response.setStatus(INPROGRESS);
                 response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
+            } catch (ConfigurationUpdateException e) {
+                response.setStatus(FAILURE);
+                response.setErrorMessage(e.getMessage());
             }
 
 //            if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {

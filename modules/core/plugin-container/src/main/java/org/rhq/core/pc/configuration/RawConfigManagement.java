@@ -28,14 +28,16 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
 import java.util.Set;
 
-public class LoadRaw extends BaseLoadConfig {
+public class RawConfigManagement extends ConfigManagementSupport {
 
-    private final Log log = LogFactory.getLog(LoadRaw.class);
+    private final Log log = LogFactory.getLog(RawConfigManagement.class);
 
     public Configuration execute(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
@@ -59,4 +61,14 @@ public class LoadRaw extends BaseLoadConfig {
         return config;
     }
 
+    public void executeUpdate(int resourceId, Configuration configuration)
+        throws PluginContainerException {
+
+        ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+
+        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+            facet.persistRawConfiguration(rawConfig);
+        }
+
+    }
 }

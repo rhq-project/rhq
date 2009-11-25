@@ -127,7 +127,10 @@ public class Property implements Externalizable, DeepCopyable<Property> {
     public Property() {
     }
 
-    protected Property(Property original) {
+    protected Property(Property original, boolean keepId) {
+        if (keepId) {
+            this.id = original.id;
+        }
         this.errorMessage = original.errorMessage;
         this.name = original.name;
     }
@@ -284,7 +287,7 @@ public class Property implements Externalizable, DeepCopyable<Property> {
         return ((this.name != null) ? this.name.hashCode() : 0);
     }
 
-    public Property deepCopy() {
+    public Property deepCopy(boolean keepId) {
         return null;
     }
 

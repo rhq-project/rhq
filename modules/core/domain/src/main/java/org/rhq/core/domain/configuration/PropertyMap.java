@@ -76,8 +76,8 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
     public PropertyMap() {
     }
 
-    protected PropertyMap(PropertyMap original) {
-        super(original);
+    protected PropertyMap(PropertyMap original, boolean keepId) {
+        super(original, keepId);
     }
 
     /**
@@ -263,11 +263,11 @@ public class PropertyMap extends Property implements AbstractPropertyMap {
         return result;
     }
 
-    public PropertyMap deepCopy() {
-        PropertyMap copy = new PropertyMap(this);
+    public PropertyMap deepCopy(boolean keepId) {
+        PropertyMap copy = new PropertyMap(this, keepId);
 
         for (Property property : map.values()) {
-            copy.put(property.deepCopy());
+            copy.put(property.deepCopy(keepId));
         }
 
         return copy;

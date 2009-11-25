@@ -23,10 +23,21 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.clientapi.agent.PluginContainerException;
+public class UpdateInProgressException extends ConfigurationUpdateException {
 
-public interface LoadResourceConfigurationFactory {
+    public UpdateInProgressException() {
+        super();
+    }
 
-    LoadResourceConfiguration getStrategy(int resourceId) throws PluginContainerException;
+    public UpdateInProgressException(String message) {
+        super(message);
+    }
 
+    public UpdateInProgressException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public UpdateInProgressException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -22,7 +22,6 @@
  */
 package org.rhq.core.pc.configuration;
 
-import java.util.List;
 import java.util.Set;
 import java.util.Queue;
 import java.util.LinkedList;
@@ -35,13 +34,11 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
@@ -53,7 +50,6 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -76,7 +72,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private ComponentService componentService;
 
-    private LoadResourceConfigurationFactory loadConfigFactory;
+    private ConfigManagementFactory configMgmtFactory;
 
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
@@ -112,19 +108,19 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         this.componentService = componentService;
     }
 
-    public void setLoadConfigFactory(LoadResourceConfigurationFactory factory) {
-        loadConfigFactory = factory;
+    public void setConfigManagementFactory(ConfigManagementFactory factory) {
+        configMgmtFactory = factory;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
         ConfigurationServerService configurationServerService = getConfigurationServerService();
 
         try {
-            ResourceType resourceType = getResourceType(request.getResourceId());
-            ConfigurationFacet configurationFacet = getConfigurationFacet(request.getResourceId(), FacetLockType.WRITE);
+            ConfigManagement configMgmt = configMgmtFactory.getStrategy(request.getResourceId());
+            ResourceType resourceType = componentService.getResourceType(request.getResourceId());
 
             Runnable runnable = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
-                configurationFacet, request);
+                configMgmt, request);
             getThreadPool().submit(runnable);
         } catch (PluginContainerException e) {
             log.error("Failed to submit config update task. Cause: " + e);
@@ -149,12 +145,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         try {
             ConfigurationServerService configurationServerService = getConfigurationServerService();
             ResourceType resourceType = getResourceType(request.getResourceId());
-            ConfigurationFacet configurationFacet = getConfigurationFacet(request.getResourceId(), FacetLockType.WRITE);
+
+            ConfigManagement configMgmt = new LegacyConfigManagement();
+            configMgmt.setComponentService(componentService);
 
             Callable<ConfigurationUpdateResponse> runner;
 
             runner = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
-                configurationFacet, request);
+                configMgmt, request);
 
             response = getThreadPool().submit(runner).get();
         } catch (Exception e) {
@@ -243,7 +241,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public Configuration loadResourceConfiguration(int resourceId)
         throws PluginContainerException {
 
-        LoadResourceConfiguration loadConfig = loadConfigFactory.getStrategy(resourceId);
+        ConfigManagement loadConfig = configMgmtFactory.getStrategy(resourceId);
         Configuration configuration = null;
 
         try {
@@ -308,6 +306,15 @@ public class ConfigurationManager extends AgentService implements ContainerServi
      */
     protected ExecutorService getThreadPool() {
         return threadPool;
+    }
+
+    /**
+     * This setter is here to provide a test hook
+     *
+     * @param threadPool A fake object such as a mock
+     */
+    void setThreadPool(ScheduledExecutorService threadPool) {
+        this.threadPool = threadPool;
     }
 
     /**

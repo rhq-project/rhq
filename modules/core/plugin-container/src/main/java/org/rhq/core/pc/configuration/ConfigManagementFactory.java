@@ -23,19 +23,10 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.rhq.core.pc.util.ComponentServiceImpl;
-import org.rhq.core.pc.util.ComponentService;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 
-public class ConfigurationManagerInitializer {
+public interface ConfigManagementFactory {
 
-    public void initialize(ConfigurationManager manager) {
-        ComponentService componentService = new ComponentServiceImpl();
-
-        ConfigManagementFactoryImpl factory = new ConfigManagementFactoryImpl();
-        factory.setComponentService(componentService);
-
-        manager.setComponentService(componentService);
-        manager.setConfigManagementFactory(factory);
-    }
+    ConfigManagement getStrategy(int resourceId) throws PluginContainerException;
 
 }

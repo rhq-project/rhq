@@ -1,143 +1,369 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.core.pc.configuration;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
+import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.util.ComponentService;
+import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
-import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.test.jmock.PropertyMatcher;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+import org.hamcrest.Matcher;
 
-/**
- * ConfigurationManager Tester.
- *
- * @author  mspritzler
- *
- * @since   1.0
- * @created June 14, 2007
- */
-public class ConfigurationManagerTest {
-    private ConfigurationManager manager;
+import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Callable;
+
+public class ConfigurationManagerTest extends ConfigManagementTest {
+
+    static final String LEGACY_AMPS_VERSION = "2.0";
+
+    static final String NON_LEGACY_AMPS_VERSION = "2.1";
+
+    boolean FROM_STRUCTURED = true;
+
+    boolean FROM_RAW = false;
+
+    ConfigManagementFactory configMgmtFactory;
+
+    ComponentService componentService;
+
+    ConfigurationManager configurationMgr;
 
     @BeforeMethod
-    public void setUp() {
-        // create a plugin container config that contains our mock server service so the manager uses it
+    public void setup() {
+        configMgmtFactory = context.mock(ConfigManagementFactory.class);
+
+        componentService = context.mock(ComponentService.class);
+
+        configurationMgr = new ConfigurationManager();
+        configurationMgr.setConfigManagementFactory(configMgmtFactory);
+        configurationMgr.setComponentService(componentService);
+    }
+
+    @Test
+    public void straegyShouldBeCalledToLoadConfig() throws Exception {
+        final Configuration expectedConfig = new Configuration();
+
+        final ConfigManagement loadConfig = context.mock(ConfigManagement.class);
+
+        context.checking(new Expectations() {{
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+
+            atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(expectedConfig));
+        }});
+
+        Configuration actualConfig = configurationMgr.loadResourceConfiguration(resourceId);
+
+        assertNotNull(actualConfig, "Expected a non-null " + Configuration.class.getSimpleName() + " to be returned.");
+    }
+
+    @Test(expectedExceptions = {PluginContainerException.class})
+    public void exceptionShouldBeThrownIfConfigIsNull() throws Exception {
+        final ConfigManagement loadConfig = context.mock(ConfigManagement.class);
+
+        context.checking(new Expectations() {{
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+
+            atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(null));
+
+            allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
+        }});
+
+        configurationMgr.loadResourceConfiguration(resourceId);
+    }
+
+    @Test(expectedExceptions = {PluginContainerException.class})
+    public void exceptionShouldBeThrownWhenStrategyThrowsAnException() throws Exception {
+        final ConfigManagement loadConfig = context.mock(ConfigManagement.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
+
+            atLeast(1).of(loadConfig).execute(resourceId); will(throwException(new RuntimeException()));
+        }});
+
+        configurationMgr.loadResourceConfiguration(resourceId);
+    }
+
+    @Test
+    public void mergingStucturedIntoRawShouldUpdateLatestRawConfigs() throws Exception {
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("/tmp/raw0.txt"));
+
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        config.addRawConfiguration(raw1);
+
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Set<RawConfiguration> latestRaws = toSet(raw1, raw2);
+
+        final RawConfiguration mergedRaw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration mergedRaw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(latestRaws));
+
+            oneOf(facet).mergeRawConfiguration(config, raw1); will(returnValue(mergedRaw1));
+            oneOf(facet).mergeRawConfiguration(config, raw2); will(returnValue(mergedRaw2));
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
+
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(mergedRaw1);
+        expectedConfig.addRawConfiguration(mergedRaw2);
+
+        assertStructuredMergedIntoRaws(mergedConfig, expectedConfig, "Failed to update existing raw configs");
+    }
+
+    @Test
+    public void mergingStructuredIntoRawShouldIgnoreNulls() throws Exception {
+        final Configuration config = new Configuration();
+
+        final RawConfiguration originalRaw = createRawConfiguration("/tmp/raw.txt");
+        config.addRawConfiguration(originalRaw);
+
+        final Set<RawConfiguration> latestRaws = toSet(originalRaw);
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(latestRaws));
+
+            oneOf(facet).mergeRawConfiguration(config, originalRaw); will(returnValue(null));
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
+
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(originalRaw);
+
+        assertStructuredMergedIntoRaws(mergedConfig, expectedConfig, "cannot merge into a null raw.");        
+    }
+
+    @Test
+    public void mergingStructuredIntoRawShouldDoNothingIfRawsAreNull() throws Exception {
+        RawConfiguration raw = createRawConfiguration("/tmp/foo.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadRawConfigurations(); will(returnValue(null));
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_STRUCTURED);
+
+        Configuration expectedConfig = new Configuration();
+        expectedConfig.addRawConfiguration(raw);
+
+        assertStructuredMergedIntoRaws(
+            mergedConfig,
+            expectedConfig,
+            "Expected raw configs should not be modified when the facet does not return any raw configs."
+        );
+    }
+
+    void assertStructuredMergedIntoRaws(Configuration actual, Configuration expected, String msg) {
+        Set<RawConfiguration> actualRaws = actual.getRawConfigurations();
+        Set<RawConfiguration> expectedRaws = expected.getRawConfigurations();
+
+        assertEquals(
+            actualRaws.size(),
+            expectedRaws.size(),
+            "Merging structured into raws failed, got back the wrong number of raws. -- " + msg
+        );
+        for (RawConfiguration expectedRaw : expectedRaws) {
+            assertTrue(
+                actualRaws.contains(expectedRaw),
+                "Merging structured into raws failed, failed to find to find raw config [" + expectedRaw + "] -- " + msg
+            );
+        }
+    }
+
+    @Test
+    public void mergingRawsIntoStructuredShouldUpdateLatestStructuredConfig() throws Exception {
+        final Configuration config = new Configuration();
+        config.put(new PropertySimple("x", "0"));
+        config.put(new PropertySimple("z", "3"));
+
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/foo.txt");
+        config.addRawConfiguration(raw1);
+
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/bar.txt");
+        config.addRawConfiguration(raw2);
+
+        final Configuration latestStructured = new Configuration();
+        latestStructured.put(new PropertySimple("x", "1"));
+        latestStructured.put(new PropertySimple("y", "1"));
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(latestStructured));
+
+            oneOf(facet).mergeStructuredConfiguration(raw1, config);
+            oneOf(facet).mergeStructuredConfiguration(raw2, config);                         
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_RAW);
+
+        assertEquals(
+            mergedConfig.getAllProperties(),
+            latestStructured.getAllProperties(),
+            "Failed to merged raw into structured."
+        );
+    }
+
+    @Test
+    public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
+        Configuration config = new Configuration();
+        config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
+
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.READ,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         daemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(facet));
+
+            atLeast(1).of(facet).loadStructuredConfiguration(); will(returnValue(null));
+        }});
+
+        Configuration mergedConfig = configurationMgr.merge(config, resourceId, FROM_RAW);
+
+        assertEquals(
+            mergedConfig,
+            config,
+            "Structured config should not be modified when the facet does not return a structured config."
+        );
+    }
+
+    @Test
+    public void updatingConfigShouldSubmitRunnerToThreadPool() throws Exception {
+        int configUpdateId = -1;
+
+        Configuration config = new Configuration();
+
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
+
+        final ScheduledExecutorService threadPool = context.mock(ScheduledExecutorService.class, "threadPool");
+        configurationMgr.setThreadPool(threadPool);
+
+        final ConfigManagement configMgmt = context.mock(ConfigManagement.class);
+
+        final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
+
+        PluginContainerConfiguration containerConfig = new PluginContainerConfiguration();
         ServerServices serverServices = new ServerServices();
-        serverServices.setConfigurationServerService(new MockConfigurationServerService());
-        PluginContainerConfiguration pcConfig = new PluginContainerConfiguration();
-        pcConfig.setServerServices(serverServices);
+        serverServices.setConfigurationServerService(configServerService);
 
-        // create our mock manager and initialize it
-        manager = new MockConfigurationManager();
-        manager.setConfiguration(pcConfig);
-        manager.initialize();
+        configurationMgr.setConfiguration(containerConfig);
+
+        final UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
+            resourceType, configMgmt, request);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(configMgmt));
+
+            oneOf(threadPool).submit((Runnable)with(matchingUpdateRunner(updateRunner)));
+        }});
+
+        configurationMgr.updateResourceConfiguration(request);
     }
 
-    @AfterMethod
-    public void tearDown() {
-        manager.shutdown();
+    public static Matcher<UpdateResourceConfigurationRunner> matchingUpdateRunner(
+        UpdateResourceConfigurationRunner expected) {
+        return new PropertyMatcher<UpdateResourceConfigurationRunner>(expected);
     }
 
-    @Test
-    public void testUpdateResourceConfiguration() {
-        //TODO: Test goes here...
-    }
-
-    @Test
-    public void testExecuteUpdateResourceConfigurationImmediatelySuccess() {
-        Configuration configuration = new Configuration();
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(1, configuration, 1);
-        try {
-            ConfigurationUpdateResponse response = manager.executeUpdateResourceConfigurationImmediately(request);
-            assert response.getStatus().equals(ConfigurationUpdateStatus.SUCCESS);
-        } catch (PluginContainerException e) {
-            e.printStackTrace();
-            assert false : "PluginContainerException has been caught: " + e;
-        }
-    }
-
-    @Test
-    public void testExecuteUpdateResourceConfigurationImmediatelyFailure() {
-        Configuration configuration = new Configuration();
-        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(2, configuration, 1);
-        try {
-            ConfigurationUpdateResponse response = manager.executeUpdateResourceConfigurationImmediately(request);
-            assert response.getStatus().equals(ConfigurationUpdateStatus.FAILURE);
-        } catch (PluginContainerException e) {
-            e.printStackTrace();
-            assert false : "PluginContainerException has been caught: " + e;
-        }
-    }
-
-    //@Test
-    public void testLoadResourceConfiguration() {
-        //TODO: Test goes here...
-    }
-
-    private class MockConfigurationManager extends ConfigurationManager {
-        @Override
-        protected ConfigurationFacet getConfigurationFacet(int resourceId, FacetLockType lockType) {
-            return new MockConfigurationFacet();
-        }
-
-        @Override
-        protected ResourceType getResourceType(int resourceId) {
-            return new ResourceType();
-        }
-    }
-
-    private class MockConfigurationServerService implements ConfigurationServerService {
-        public void completeConfigurationUpdate(ConfigurationUpdateResponse response) {
-            if (response.getConfigurationUpdateId() == 1) {
-                response.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            } else {
-                response.setStatus(ConfigurationUpdateStatus.FAILURE);
-            }
-        }
-
-        public void persistUpdatedResourceConfiguration(int resourceId, Configuration resourceConfiguration) {
-        }
-
-    }
-
-    private class MockConfigurationFacet implements ConfigurationFacet {
-        public Configuration loadResourceConfiguration() {
-            return null;
-        }
-
-        public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-            Configuration config = report.getConfiguration();
-        }
-    }
 }

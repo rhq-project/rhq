@@ -23,20 +23,23 @@
 
 package org.rhq.core.pc.configuration;
 
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
+import static java.util.Collections.EMPTY_SET;
+
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static java.util.Collections.EMPTY_SET;
 import java.util.Set;
 
-public class LoadRawTest extends ConfigManagementTest {
+public class RawConfigManagementTest extends ConfigManagementTest {
 
     ComponentService componentService;
 
@@ -44,7 +47,7 @@ public class LoadRawTest extends ConfigManagementTest {
 
     ResourceConfigurationFacet configFacet;
 
-    LoadRaw loadRaw;
+    RawConfigManagement rawConfigMgmt;
 
     @BeforeMethod
     public void setup() {
@@ -53,9 +56,9 @@ public class LoadRawTest extends ConfigManagementTest {
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        loadRaw = new LoadRaw();
-        loadRaw.setComponentService(componentService);
-        loadRaw.setConfigurationUtilityService(configUtilityService);
+        rawConfigMgmt = new RawConfigManagement();
+        rawConfigMgmt.setComponentService(componentService);
+        rawConfigMgmt.setConfigurationUtilityService(configUtilityService);
     }
 
     @Test
@@ -65,9 +68,9 @@ public class LoadRawTest extends ConfigManagementTest {
             createRawConfiguration("/tmp/bar.txt")
         );
 
-        addDefaultExpectations(rawConfigs);
+        addDefaultExpectationsForLoad(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -77,9 +80,9 @@ public class LoadRawTest extends ConfigManagementTest {
         final Configuration config = new Configuration();
         config.setNotes(null);
 
-        addDefaultExpectations(EMPTY_SET);
+        addDefaultExpectationsForLoad(EMPTY_SET);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -88,21 +91,21 @@ public class LoadRawTest extends ConfigManagementTest {
     public void nullShouldBeReturnedWhenRawIsNull() throws Exception {
         Set<RawConfiguration> rawConfigs = null;
         
-        addDefaultExpectations(rawConfigs);
+        addDefaultExpectationsForLoad(rawConfigs);
 
-        Configuration loadedConfig = loadRaw.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for raw.");
     }
 
-    private void addDefaultExpectations(final Set<RawConfiguration> rawConfigs)
+    private void addDefaultExpectationsForLoad(final Set<RawConfiguration> rawConfigs)
         throws Exception {
 
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
-                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));
@@ -110,6 +113,55 @@ public class LoadRawTest extends ConfigManagementTest {
             atLeast(1).of(configFacet).loadRawConfigurations(); will(returnValue(rawConfigs));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+        }});
+    }
+
+    @Test
+    public void facetShouldBeCalledToUpdateASingleRaw() throws Exception {
+        final RawConfiguration raw = createRawConfiguration("/tmp/raw.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).persistRawConfiguration(raw);
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test
+    public void facetShouldBeCalledToUpdateMultipleRaws() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).persistRawConfiguration(raw1);
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);        
+    }
+
+    private void addDefaultExpectationsForUpdate() throws Exception {
+        final boolean isDaemonThread = false;
+
+        context.checking(new Expectations() {{
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.WRITE,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         isDaemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(configFacet));
         }});
     }
 

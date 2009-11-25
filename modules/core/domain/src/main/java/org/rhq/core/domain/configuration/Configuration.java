@@ -453,64 +453,39 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return the new copy
      */
     public Configuration deepCopy(boolean keepIds) {
-        if (!keepIds) {
-            return deepCopyWithoutProxies();
+        Configuration copy = new Configuration();
+
+        if (keepIds) {
+            copy.id = this.id;
         }
 
-        Configuration copy;
-
-        try {
-            copy = clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("CloneNotSupported can't happen");
-        }
-
-        if (!keepIds) {
-            copy.id = 0;
-
-            for (Property property : copy.properties.values()) {
-                clearIds(property);
-            }
-        }
+        copy.notes = this.notes;
+        copy.version = this.version;
+        createDeepCopyOfProperties(copy, keepIds);
+        createDeepCopyOfRawConfigs(copy, keepIds);
 
         return copy;
-    }
-
-    private void clearIds(Property property) {
-        property.setId(0);
-
-        if (property instanceof PropertyList) {
-            for (Property childProperty : ((PropertyList) property).getList()) {
-                clearIds(childProperty);
-            }
-        } else if (property instanceof PropertyMap) {
-            for (Property childProperty : ((PropertyMap) property).getMap().values()) {
-                clearIds(childProperty);
-            }
-        }
-
-        return;
     }
 
     public Configuration deepCopyWithoutProxies() {
         Configuration copy = new Configuration();
         copy.notes = this.notes;
         copy.version = this.version;
-        createDeepCopyOfProperties(copy);
-        createDeepCopyOfRawConfigs(copy);
+        createDeepCopyOfProperties(copy, false);
+        createDeepCopyOfRawConfigs(copy, false);
 
         return copy;
     }
 
-    private void createDeepCopyOfRawConfigs(Configuration copy) {
+    private void createDeepCopyOfRawConfigs(Configuration copy, boolean keepId) {
         for (RawConfiguration rawConfig : rawConfigurations) {
-            copy.addRawConfiguration(rawConfig.deepCopy());
+            copy.addRawConfiguration(rawConfig.deepCopy(keepId));
         }
     }
 
-    private void createDeepCopyOfProperties(Configuration copy) {
+    private void createDeepCopyOfProperties(Configuration copy, boolean keepId) {
         for (Property property : this.properties.values()) {
-            copy.put(property.deepCopy());
+            copy.put(property.deepCopy(keepId));
         }
     }
 
@@ -661,7 +636,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     private Map<String, Property> createDeepCopyOfMap() {
         Map<String, Property> copy = new HashMap<String, Property>();
         for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
-            copy.put(entry.getKey(), entry.getValue().deepCopy());
+            copy.put(entry.getKey(), entry.getValue().deepCopy(true));
         }
         return copy;
     }
@@ -669,7 +644,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
         Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
         for (RawConfiguration rawConfig : this.rawConfigurations) {
-            copy.add(rawConfig.deepCopy());
+            copy.add(rawConfig.deepCopy(true));
         }
         return copy;
     }

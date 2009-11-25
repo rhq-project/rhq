@@ -88,7 +88,7 @@ public class LoadStructuredTest extends ConfigManagementTest {
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
-                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));
@@ -108,7 +108,7 @@ public class LoadStructuredTest extends ConfigManagementTest {
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
                                                          FacetLockType.READ,
-                                                         LoadResourceConfiguration.FACET_METHOD_TIMEOUT,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
                                                          daemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));

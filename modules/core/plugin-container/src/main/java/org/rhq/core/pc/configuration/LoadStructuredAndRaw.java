@@ -36,7 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import java.util.List;
 import java.util.Set;
 
-public class LoadStructuredAndRaw extends BaseLoadConfig {
+public class LoadStructuredAndRaw extends ConfigManagementSupport {
 
     private final Log log = LogFactory.getLog(LoadStructuredAndRaw.class);
 
@@ -82,5 +82,9 @@ public class LoadStructuredAndRaw extends BaseLoadConfig {
             log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
                 + resourceType.getPlugin() + " plugin - " + errorMessage);
             }
+    }
+
+    public void executeUpdate(int resourceId, Configuration configuration)
+        throws PluginContainerException {        
     }
 }

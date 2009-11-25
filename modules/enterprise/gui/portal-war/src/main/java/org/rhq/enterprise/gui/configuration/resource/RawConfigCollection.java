@@ -238,7 +238,7 @@ public class RawConfigCollection extends AbstractConfigurationUIBean implements 
 
         String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
-            getRawConfigDelegate().current = getRawConfigDelegate().current.deepCopy();
+            getRawConfigDelegate().current = getRawConfigDelegate().current.deepCopy(false);
             getRawConfigDelegate().current.setContents(updated.getBytes());
             //TODO update other values like MD5
             getModified().put(getRawConfigDelegate().current.getPath(), getRawConfigDelegate().current);

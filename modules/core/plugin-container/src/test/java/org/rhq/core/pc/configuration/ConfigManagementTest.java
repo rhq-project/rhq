@@ -28,7 +28,11 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.test.JMockTest;
+
+import static org.rhq.test.AssertUtils.*;
 import static org.testng.Assert.assertEquals;
 
 import java.util.HashSet;
@@ -83,24 +87,45 @@ public class ConfigManagementTest extends JMockTest {
     }
 
     void assertRawsLoaded(Set<RawConfiguration> expectedRaws, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getRawConfigurations(),
+        assertCollectionEqualsNoOrder(
             expectedRaws,
+            actualConfig.getRawConfigurations(),
             "The raw configs were not loaded correctly."
         );
+//        assertEquals(
+//            actualConfig.getRawConfigurations(),
+//            expectedRaws,
+//            "The raw configs were not loaded correctly."
+//        );
     }
 
     void assertStructuredLoaded(Configuration expectedConfig, Configuration actualConfig) {
-        assertEquals(
-            actualConfig.getAllProperties(),
-            expectedConfig.getAllProperties(),
+        assertCollectionEqualsNoOrder(
+            expectedConfig.getProperties(),
+            actualConfig.getProperties(),
             "The structured configuration was not loaded correctly."
         );
+
+//        assertEquals(
+//            actualConfig.getAllProperties(),
+//            expectedConfig.getAllProperties(),
+//            "The structured configuration was not loaded correctly."
+//        );
     }
 
     void assertNotesSetToDefault(Configuration loadedConfig) {
         String expectedNotes = "Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId;
 
         assertEquals(loadedConfig.getNotes(), expectedNotes, "The notes property should be set to a default when it is not already initialized.");
+    }
+
+    void assertConfigurationUpdateResponseMatches(ConfigurationUpdateResponse expected,
+        ConfigurationUpdateResponse actual, String msg) {
+        assertPropertiesMatch(expected, actual, msg);
+    }
+
+    void assertConfigurationUpdateReportMatches(ConfigurationUpdateReport expected, ConfigurationUpdateReport actual,
+        String msg) {
+        assertPropertiesMatch(expected, actual, msg);
     }
 }

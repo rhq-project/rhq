@@ -21,21 +21,24 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.core.pc.configuration;
+package org.rhq.test;
 
-import org.rhq.core.pc.util.ComponentServiceImpl;
-import org.rhq.core.pc.util.ComponentService;
+public class EqualsResult {
 
-public class ConfigurationManagerInitializer {
+    private boolean isEqual;
 
-    public void initialize(ConfigurationManager manager) {
-        ComponentService componentService = new ComponentServiceImpl();
+    private String details;
 
-        ConfigManagementFactoryImpl factory = new ConfigManagementFactoryImpl();
-        factory.setComponentService(componentService);
-
-        manager.setComponentService(componentService);
-        manager.setConfigManagementFactory(factory);
+    public EqualsResult(boolean equals, String details) {
+        isEqual = equals;
+        this.details = details;
     }
 
+    public boolean isEqual() {
+        return isEqual;
+    }
+
+    public String getDetails() {
+        return details;
+    }
 }

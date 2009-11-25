@@ -23,50 +23,61 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
-import static org.rhq.test.AssertUtils.*;
-import org.rhq.test.jmock.PropertyMatcher;
-
-import org.testng.annotations.Test;
-import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
-import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.jmock.api.Action;
 import org.jmock.api.Invocation;
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.INPROGRESS;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
+import org.rhq.core.pc.util.ComponentService;
+import static org.rhq.core.pc.configuration.ConfigManagement.FACET_METHOD_TIMEOUT;
+import static org.rhq.core.pc.util.FacetLockType.WRITE;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import org.rhq.test.jmock.PropertyMatcher;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest {
+
+    ConfigManagement configMgmt;
+
+    ConfigurationServerService configServerService;
+
+    ConfigurationUtilityService configUtilService;
+
+    @BeforeMethod
+    public void setup() throws Exception {
+        configMgmt = context.mock(ConfigManagement.class);
+        configServerService = context.mock(ConfigurationServerService.class);
+        configUtilService = context.mock(ConfigurationUtilityService.class);
+    }
 
     @Test
     public void successfulUpdateShouldSendSuccessResponseToServer() throws Exception {
         final Configuration config = createStructuredConfig();
-
-        final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
-
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
-        final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
 
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
-            resourceType, facet, updateRequest);
+            resourceType, configMgmt, updateRequest);
         updateRunner.setConfigUtilService(configUtilService);
 
         final ConfigurationUpdateResponse successResponse = new ConfigurationUpdateResponse(configUpdateId, null,
             SUCCESS, null);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(updateReportTo(SUCCESS));
+            oneOf(configMgmt).executeUpdate(resourceId, config);
 
             oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
             oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
@@ -74,31 +85,28 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(successResponse)));
         }});
 
-        updateRunner.call();
+        ConfigurationUpdateResponse actualResponse = updateRunner.call();
+
+        assertConfigurationUpdateResponseMatches(successResponse, actualResponse, "Expected a success response");
     }
 
     @Test
     public void successfulUpdateShouldReturnSuccessResponseInEmbeddedMode() throws Exception {
         final Configuration config = createStructuredConfig();
 
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
-        final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
-
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
-            facet, updateRequest);
+            configMgmt, updateRequest);
         updateRunner.setConfigUtilService(configUtilService);
 
         final ConfigurationUpdateResponse successResponse = new ConfigurationUpdateResponse(configUpdateId, null,
             SUCCESS, null);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(updateReportTo(SUCCESS));
+            oneOf(configMgmt).executeUpdate(resourceId, config);
 
             oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
             oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
@@ -114,18 +122,12 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     public void inProgressUpdateShouldSendFailureResponseToServer() throws Exception {
         final Configuration config = createStructuredConfig();
 
-        final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
-
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
-        final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
-
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
-            resourceType, facet, updateRequest);
+            resourceType, configMgmt, updateRequest);
         updateRunner.setConfigUtilService(configUtilService);
 
         String errorMsg = "Configuration facet did not indicate success or failure - assuming failure.";
@@ -134,8 +136,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             FAILURE, errorMsg);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(updateReportTo(INPROGRESS));
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwException(new UpdateInProgressException()));
 
             oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
             oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
@@ -143,33 +144,65 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
         }});
 
-        updateRunner.call();
+        ConfigurationUpdateResponse actualResponse = updateRunner.call();
+
+        assertConfigurationUpdateResponseMatches(failureResponse, actualResponse, "Expected a failure response");
+    }
+
+    @Test
+    public void failedUpdateShouldSendFailureResponseToServer() throws Exception {
+        final Configuration config = createStructuredConfig();
+
+        final int configUpdateId = -1;
+
+        ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
+
+        UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
+            resourceType, configMgmt, updateRequest);
+        updateRunner.setConfigUtilService(configUtilService);
+
+        String errorMsg = "Configuration update failed.";
+
+        final ConfigurationUpdateException exception = new ConfigurationUpdateException(errorMsg);
+
+        final ConfigurationUpdateResponse failureResponse = new ConfigurationUpdateResponse(configUpdateId, config,
+            FAILURE, errorMsg);
+
+        context.checking(new Expectations() {{
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
+
+            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+
+            oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
+        }});
+
+        ConfigurationUpdateResponse actualResponse = updateRunner.call();
+
+        assertConfigurationUpdateResponseMatches(failureResponse, actualResponse, "Expected a failure response");
     }
 
     @Test
     public void failedUpdateShouldReturnFailureResponseInEmbeddedMode() throws Exception {
         final Configuration config = createStructuredConfig();
 
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
-        final ConfigurationUtilityService configUtilService = context.mock(ConfigurationUtilityService.class);
-
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
-            facet, updateRequest);
+            configMgmt, updateRequest);
         updateRunner.setConfigUtilService(configUtilService);
 
-        String errorMsg = "Configuration facet did not indicate success or failure - assuming failure.";
+        String errorMsg = "Configuration update failed.";
+
+        final ConfigurationUpdateException exception = new ConfigurationUpdateException(errorMsg);
 
         final ConfigurationUpdateResponse failureResponse = new ConfigurationUpdateResponse(configUpdateId, config,
             FAILURE, errorMsg);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(updateReportTo(INPROGRESS));
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
             oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
             oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
@@ -181,19 +214,15 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
     }
 
     @Test
-    public void failureResponseShouldBeSentToServerWhenFacetThrowsAnException() throws Exception {
+    public void failureResponseShouldBeSentToServerWhenUnexpectedExceptionThrown() throws Exception {
         final Configuration config = createStructuredConfig();
-
-        final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
-
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
 
         int configUpdateId = -1;
 
         ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
-            resourceType, facet, updateRequest);
+            resourceType, configMgmt, updateRequest);
 
         final NullPointerException exception = new NullPointerException("Unexpected error during update");
 
@@ -201,36 +230,9 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
             exception);
 
         context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(throwExceptionFromFacet(exception));
+            oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
-        }});
-
-        updateRunner.call();                
-    }
-
-    @Test
-    public void failureResponseShouldBeReturnedWhenFacetThrowsAnExceptionInEmbeddedMode() throws Exception {
-        final Configuration config = createStructuredConfig();
-
-        final ConfigurationFacet facet = context.mock(ConfigurationFacet.class);
-
-        int configUpdateId = -1;
-
-        ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
-
-        UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
-            facet, updateRequest);
-
-        final NullPointerException exception = new NullPointerException("Unexpected error during update");
-
-        final ConfigurationUpdateResponse failureResponse = new ConfigurationUpdateResponse(configUpdateId, config,
-            exception);
-
-        context.checking(new Expectations() {{
-            oneOf(facet).updateResourceConfiguration(with(any(ConfigurationUpdateReport.class)));
-            will(throwExceptionFromFacet(exception));
         }});
 
         ConfigurationUpdateResponse actualResponse = updateRunner.call();
@@ -238,20 +240,30 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         assertConfigurationUpdateResponseMatches(failureResponse, actualResponse, "Expected a failure response");
     }
 
-    void assertConfigurationUpdateResponseMatches(ConfigurationUpdateResponse expected,
-        ConfigurationUpdateResponse actual, String msg) {
-        assertPropertiesMatch(expected, actual, msg);
-    }
+    @Test
+    public void failureResponseShouldBeReturnedWhenUnexpectedExceptionThrownInEmbeddedMode() throws Exception {
+        final Configuration config = createStructuredConfig();
 
-    boolean propertyEquals(Object expected, Object actual) {
-        if (expected == null && actual == null) {
-            return true;
-        }
+        int configUpdateId = -1;
 
-        if (expected == null && actual != null) {
-            return false;
-        }
-        return expected.equals(actual);
+        ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
+
+        UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
+            configMgmt, updateRequest);
+
+        final NullPointerException exception = new NullPointerException("Unexpected error during update");
+
+        final ConfigurationUpdateResponse failureResponse = new ConfigurationUpdateResponse(configUpdateId, config,
+            exception);
+
+        context.checking(new Expectations() {{
+            oneOf(configMgmt).executeUpdate(resourceId, config);
+            will(throwExceptionFromFacet(exception));
+        }});
+
+        ConfigurationUpdateResponse actualResponse = updateRunner.call();
+
+        assertConfigurationUpdateResponseMatches(failureResponse, actualResponse, "Expected a failure response");
     }
 
     public static Matcher<ConfigurationUpdateResponse> matchingResponse(ConfigurationUpdateResponse expected) {

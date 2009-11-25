@@ -26,9 +26,10 @@ package org.rhq.core.pc.configuration;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 
-public abstract class BaseLoadConfig implements LoadResourceConfiguration {
+public abstract class ConfigManagementSupport implements ConfigManagement {
 
     protected ComponentService componentService;
 
@@ -56,5 +57,26 @@ public abstract class BaseLoadConfig implements LoadResourceConfiguration {
 
         return componentService.getComponent(resourceId, ResourceConfigurationFacet.class, FacetLockType.READ,
                 FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+    }
+
+    protected ResourceConfigurationFacet loadResourceConfigFacetWithWriteLock(int resourceId)
+        throws PluginContainerException {
+
+        FacetLockType lockType = FacetLockType.WRITE;
+        boolean daemonThread = (lockType != FacetLockType.WRITE);
+        boolean onlyIfStarted = true;
+
+        return componentService.getComponent(resourceId, ResourceConfigurationFacet.class, lockType,
+                FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+    }
+
+    protected ConfigurationFacet loadConfigurationFacet(int resourceId, FacetLockType lockType)
+        throws PluginContainerException {
+        
+        boolean daemonThread = (lockType != FacetLockType.WRITE);
+        boolean onlyIfStarted = true;
+
+        return componentService.getComponent(resourceId, ConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT,
+            daemonThread, onlyIfStarted);
     }
 }

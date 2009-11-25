@@ -26,7 +26,9 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -54,6 +56,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -173,7 +176,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 String pluginName = doomedPlugin.getName();
                 doomedPlugins.add(pluginName);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(pluginName);
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginName);
                     if (pc != null) {
                         try {
                             pc.unschedulePluginJobs(pluginName);
@@ -216,7 +219,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 String pluginName = doomedPlugin.getName();
                 doomedPlugins.add(pluginName);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainer(pluginName);
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginName);
                     if (pc != null) {
                         try {
                             pc.unschedulePluginJobs(pluginName);
@@ -445,6 +448,27 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             status = null; // doesn't exist in the DB, tell the caller this by returning null
         }
         return status;
+    }
+
+    // we need this method to talk to the master plugin container because the plugin data model
+    // does not contain information as to what type a plugin is. It only has information about
+    // where the plugin is deployed (agent or server) but it doesn't indicate if a plugin
+    // if of type "alert plugin" or "generic plugin". That is only known when the plugin descriptor
+    // is parsed, which happens when the master plugin container is initialized. Therefore, this
+    // needs to get plugin info from the master plugin container while the master is running.
+    public Map<ServerPluginType, List<String>> getAllPluginsGroupedByType() {
+        Map<ServerPluginType, List<String>> allPlugins = new HashMap<ServerPluginType, List<String>>();
+
+        MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (master != null) {
+            List<ServerPluginType> types = master.getServerPluginTypes();
+            for (ServerPluginType type : types) {
+                List<String> plugins = master.getAllPluginsByPluginType(type);
+                allPlugins.put(type, plugins);
+            }
+        }
+
+        return allPlugins;
     }
 
     /**

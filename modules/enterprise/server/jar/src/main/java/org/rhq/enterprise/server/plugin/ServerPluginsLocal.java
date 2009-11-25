@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.plugin;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 import javax.persistence.NoResultException;
@@ -9,6 +10,7 @@ import javax.persistence.NoResultException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -173,4 +175,13 @@ public interface ServerPluginsLocal {
      *         <code>null</code> indicates an unknown plugin.
      */
     PluginStatusType getServerPluginStatus(String pluginName);
+
+    /**
+     * This will return a map containing all plugins currently known to the master plugin container.
+     * This will return installed plugins that are both enabled and disabled.
+     * Note that if the master plugin container is not running, an empty map is returned.
+     * 
+     * @return names of all enabled and disabled plugins, keyed on their types 
+     */
+    Map<ServerPluginType, List<String>> getAllPluginsGroupedByType();
 }

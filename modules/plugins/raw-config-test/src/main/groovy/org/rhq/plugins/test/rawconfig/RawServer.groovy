@@ -6,6 +6,7 @@ import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.measurement.AvailabilityType
 import org.rhq.core.pluginapi.inventory.ResourceContext
+import groovy.util.AntBuilder
 
 class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
@@ -13,7 +14,11 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File rawConfig1
 
+  def ant = new AntBuilder()
+
   void start(ResourceContext context) {
+    ant = new AntBuilder()
+
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
     rawConfig1 = new File(rawConfigDir, "raw-test-1.txt")
 
@@ -67,6 +72,12 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
+    ant.copy(file: rawConfiguration.path, tofile: "${rawConfiguration.path}.orig")
+    ant.delete(file: rawConfiguration.path)
+
+    def file = new File(rawConfiguration.path)
+    file.createNewFile()
+    file << rawConfiguration.contents
   }
 
   void validateStructuredConfiguration(Configuration configuration) {

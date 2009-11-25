@@ -18,37 +18,55 @@
  */
 package org.rhq.enterprise.gui.perspectives;
 
-/** Features for each menu item.
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+/** Features for each menu item.  A menu item can be as simple as a logo, 
+ *  menu separator bar or as complicated as a root menu item with an arbitrary 
+ *  amount of child menuitems.
  * 
  *  @author Simeon Pinder
  *
  */
 public class MenuItem {
 
-    //constants:begin Extension point map
-    public static String menu = "menu";
-    public static String menu_BEGIN = "menu.BEGIN";
-    public static String logo = "menu.logo";
-
-    public static String overview_BEFORE = "menu.overview_BEFORE";
-    public static String overview = "menu.overview";
-
-    public static String resources_BEFORE = "menu.resources_BEFORE";
-    public static String resources = "menu.resources";
-
-    //constants:end
-
+    //url to icon image
     private String iconUrl = "";
+    //width of icon
     private int iconWidth = 0;
+    //height of icon
     private int iconHeight = 0;
+    //url to direct user to onclick
     private String url = "";
+    //The label to be displayed for this menu item
     private String name = "";
+    //whether this menu item is to be enabled/visible
     private boolean rendered = true;
+    //whether this menuItem represent a menu separator
+    private boolean isMenuSeparator = false;
+    //includes N child MenuItem instances
+    private List<MenuItem> childMenuItems = new ArrayList<MenuItem>();
+    //Stores a unique reference to the ExtensionPoint key for this item.
+    private String extensionKey = "";
+    //whether this menuItem(relevant to top menu items only) is aligned from far left
+    private boolean alignLeft = true;
+
+    //default no args. To satisfy basic bean functionality.
+    MenuItem() {
+    }
 
     MenuItem(String iconUrl, String url, String name) {
         this.iconUrl = iconUrl;
         this.url = url;
         this.name = name;
+    }
+
+    MenuItem(String iconUrl, String url, String name, List<MenuItem> children, String key, HashMap<String, MenuItem> map) {
+        this(iconUrl, url, name);
+        children.add(this);
+        map.put(key, this);
+        this.extensionKey = key;
     }
 
     public String getIconUrl() {
@@ -97,5 +115,37 @@ public class MenuItem {
 
     public void setIconWidth(int iconWidth) {
         this.iconWidth = iconWidth;
+    }
+
+    public boolean isMenuSeparator() {
+        return isMenuSeparator;
+    }
+
+    public void setMenuSeparator(boolean isMenuSeparator) {
+        this.isMenuSeparator = isMenuSeparator;
+    }
+
+    public void setChildMenuItems(List<MenuItem> childMenuItems) {
+        this.childMenuItems = childMenuItems;
+    }
+
+    public List<MenuItem> getChildMenuItems() {
+        return childMenuItems;
+    }
+
+    public String getExtensionKey() {
+        return extensionKey;
+    }
+
+    public void setExtensionKey(String extensionKey) {
+        this.extensionKey = extensionKey;
+    }
+
+    public boolean isAlignLeft() {
+        return alignLeft;
+    }
+
+    public void setAlignLeft(boolean alignLeft) {
+        this.alignLeft = alignLeft;
     }
 }

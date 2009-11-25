@@ -10,5 +10,10 @@
       <managed-bean-class>org.rhq.enterprise.gui.perspectives.PerspectivesMenuUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-     
+   <managed-bean>
+      <managed-bean-name>ExtensionPoints</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.perspectives.ExtensionPoints</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+        
 </faces-config>

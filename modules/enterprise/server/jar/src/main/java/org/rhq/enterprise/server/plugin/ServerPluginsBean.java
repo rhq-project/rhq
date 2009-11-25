@@ -96,13 +96,13 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         Configuration config = plugin.getPluginConfiguration();
         if (config != null) {
             config = entityManager.find(Configuration.class, config.getId());
-            plugin.setPluginConfiguration(config.deepCopyWithoutProxies());
+            plugin.setPluginConfiguration(config.deepCopy());
         }
 
         config = plugin.getScheduledJobsConfiguration();
         if (config != null) {
             config = entityManager.find(Configuration.class, config.getId());
-            plugin.setScheduledJobsConfiguration(config.deepCopyWithoutProxies());
+            plugin.setScheduledJobsConfiguration(config.deepCopy());
         }
 
         return plugin;

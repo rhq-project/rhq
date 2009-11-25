@@ -1,4 +1,0 @@
-Manifest-Version: 1.0
-Class-Path: i18nlog-1.0.9.jar jaxb-api-2.1.jar stax-api-1.0-2.jar acti
- vation-1.1.jar rhq-core-util-1.4.0-SNAPSHOT.jar jdom-1.0.jar
-

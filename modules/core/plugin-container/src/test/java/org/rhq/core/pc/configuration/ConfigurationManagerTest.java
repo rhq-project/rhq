@@ -27,17 +27,26 @@ import static org.testng.Assert.*;
 
 import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
+import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.test.jmock.PropertyMatcher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.hamcrest.Matcher;
 
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Callable;
 
 public class ConfigurationManagerTest extends ConfigManagementTest {
 
@@ -315,6 +324,46 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
             config,
             "Structured config should not be modified when the facet does not return a structured config."
         );
+    }
+
+    @Test
+    public void updatingConfigShouldSubmitRunnerToThreadPool() throws Exception {
+        int configUpdateId = -1;
+
+        Configuration config = new Configuration();
+
+        ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(configUpdateId, config, resourceId);
+
+        final ScheduledExecutorService threadPool = context.mock(ScheduledExecutorService.class, "threadPool");
+        configurationMgr.setThreadPool(threadPool);
+
+        final ConfigManagement configMgmt = context.mock(ConfigManagement.class);
+
+        final ConfigurationServerService configServerService = context.mock(ConfigurationServerService.class);
+
+        PluginContainerConfiguration containerConfig = new PluginContainerConfiguration();
+        ServerServices serverServices = new ServerServices();
+        serverServices.setConfigurationServerService(configServerService);
+
+        configurationMgr.setConfiguration(containerConfig);
+
+        final UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
+            resourceType, configMgmt, request);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getResourceType(resourceId); will(returnValue(resourceType));
+
+            atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(configMgmt));
+
+            oneOf(threadPool).submit((Runnable)with(matchingUpdateRunner(updateRunner)));
+        }});
+
+        configurationMgr.updateResourceConfiguration(request);
+    }
+
+    public static Matcher<UpdateResourceConfigurationRunner> matchingUpdateRunner(
+        UpdateResourceConfigurationRunner expected) {
+        return new PropertyMatcher<UpdateResourceConfigurationRunner>(expected);
     }
 
 }

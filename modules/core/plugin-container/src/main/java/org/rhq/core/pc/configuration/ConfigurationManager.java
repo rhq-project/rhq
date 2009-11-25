@@ -115,11 +115,9 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
         ConfigurationServerService configurationServerService = getConfigurationServerService();
 
-        ConfigManagement configMgmt = new LegacyConfigManagement();
-        configMgmt.setComponentService(componentService);
-
         try {
-            ResourceType resourceType = getResourceType(request.getResourceId());
+            ConfigManagement configMgmt = configMgmtFactory.getStrategy(request.getResourceId());
+            ResourceType resourceType = componentService.getResourceType(request.getResourceId());
 
             Runnable runnable = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
                 configMgmt, request);
@@ -308,6 +306,15 @@ public class ConfigurationManager extends AgentService implements ContainerServi
      */
     protected ExecutorService getThreadPool() {
         return threadPool;
+    }
+
+    /**
+     * This setter is here to provide a test hook
+     *
+     * @param threadPool A fake object such as a mock
+     */
+    void setThreadPool(ScheduledExecutorService threadPool) {
+        this.threadPool = threadPool;
     }
 
     /**

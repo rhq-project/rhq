@@ -80,6 +80,26 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
         this.request = request;
     }
 
+    ConfigurationUpdateRequest getRequest() {
+        return request;
+    }
+
+    ConfigManagement getConfigMgmt() {
+        return configMgmt;
+    }
+
+    ResourceType getResourceType() {
+        return resourceType;
+    }
+
+    ConfigurationServerService getConfigurationServerService() {
+        return configurationServerService;
+    }
+
+    ConfigurationUtilityService getConfigUtilService() {
+        return configUtilService;
+    }
+
     void setConfigUtilService(ConfigurationUtilityService service) {
         configUtilService = service;
     }
@@ -95,13 +115,8 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
     public ConfigurationUpdateResponse call() throws Exception {
         ConfigurationUpdateResponse response;
         int requestId = request.getConfigurationUpdateId();
-//        ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
-        ConfigurationUpdateReport report = null;
         try {
-//            configurationFacet.updateResourceConfiguration(report);
-//            report = configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
             response = new ConfigurationUpdateResponse(requestId, request.getConfiguration(), SUCCESS, null);
-
             try {
                 configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
             } catch (UpdateInProgressException e) {
@@ -111,10 +126,6 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
                 response.setStatus(FAILURE);
                 response.setErrorMessage(e.getMessage());
             }
-
-//            if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
-//                response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
-//            }
 
             ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 

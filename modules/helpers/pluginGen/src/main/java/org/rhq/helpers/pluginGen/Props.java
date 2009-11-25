@@ -527,7 +527,7 @@ public class Props {
       private String displayName;
       private String description;
       private Set<SimpleProperty> params = new LinkedHashSet<SimpleProperty>();
-      private Set<SimpleProperty> results = new LinkedHashSet<SimpleProperty>();
+      private SimpleProperty result;
 
       public OperationProps(String name) {
          this.name = name;
@@ -557,8 +557,12 @@ public class Props {
          return params;
       }
 
-      public Set<SimpleProperty> getResults() {
-         return results;
+      public SimpleProperty getResult() {
+         return result;
+      }
+
+      public void setResult(SimpleProperty result) {
+         this.result = result;
       }
    }
 }

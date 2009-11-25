@@ -60,11 +60,9 @@ name="${props.name}" <#-- TODO separate out plugin name and service name -->
               </#list>
               </parameters>
               </#if>
-              <#if operation.results?has_content>
+              <#if operation.result??>
               <results>
-              <#list operation.results as results>
-                 <c:simple-property name="${results.name}" />
-              </#list>
+                 <c:simple-property name="${operation.result.name}" />
               </results>
               </#if>
            </operation>

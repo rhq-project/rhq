@@ -11,4 +11,43 @@
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+   <!-- Add Custom menuItem to Core Menu -->
+   <menuItem
+      name="custom"
+      displayName="Custom">
+      <position
+         extensionPoint="coreMenu"
+         name="help"
+         placement="after" />
+   </menuItem>
+
+   <menuItem
+      name="custom.child1"
+      displayName="Child1">
+      <position
+         extensionPoint="coreMenu"
+         name="custom"
+         placement="start" />
+   </menuItem>
+
+   <menuItem
+      name="custom.child2"
+      displayName="Child-2">
+      <position
+         extensionPoint="coreMenu"
+         name="custom.child1"
+         placement="after" />
+   </menuItem>
+
+   <menuItem
+      name="custom.grandchild1"
+      displayName="GrandChild 1"
+      feature="aboutBox"
+      iconUrl="http://127.0.0.1:7080/images/icons/availability_grey_16.png">
+      <position
+         extensionPoint="coreMenu"
+         name="custom.child1"
+         placement="start" />
+   </menuItem>
+
 </perspectivePlugin>

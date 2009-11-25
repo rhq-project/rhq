@@ -62,7 +62,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         // TODO: Cache session:menu map here
 
         // TODO: remove this debug code
-        // printMenu(coreMenu, "");
+        printMenu(coreMenu, "");
 
         return coreMenu;
     }

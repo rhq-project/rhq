@@ -18,9 +18,7 @@
       schemaLocation="rhq-serverplugin.xsd" />
 
    <xs:annotation>
-      <xs:documentation>
-         Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.
-      </xs:documentation>
+      <xs:documentation>Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.</xs:documentation>
       <xs:appinfo>
          <jaxb:schemaBindings>
             <jaxb:package
@@ -34,14 +32,9 @@
       type="perspective:PerspectivePluginDescriptorType"
       substitutionGroup="serverplugin:server-plugin">
       <xs:annotation>
-         <xs:documentation>
-            Defines a Perspective plugin. A Perspective is deployed as a Server Plugin.
-            The Server Plugin
-            Container (SPC) handles simple lifecycle management for
-            the deployed plugins (e.g. start, stop). The plugin
-            is otherwise standalone
-            and can do everything it needs to do without additional help from the SPC.
-         </xs:documentation>
+         <xs:documentation>Defines a Perspective plugin. A Perspective is deployed as a Server Plugin. The Server Plugin
+            Container (SPC) handles simple lifecycle management for the deployed plugins (e.g. start, stop). The plugin
+            is otherwise standalone and can do everything it needs to do without additional help from the SPC.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectivePluginElement" />
@@ -89,9 +82,7 @@
       name="globalTask"
       type="perspective:TaskType">
       <xs:annotation>
-         <xs:documentation>
-            Add a Global Task extension.
-         </xs:documentation>
+         <xs:documentation>Add a Global Task extension.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectiveGlobalTaskElement" />
@@ -103,9 +94,7 @@
       name="resourceTask"
       type="perspective:TaskType">
       <xs:annotation>
-         <xs:documentation>
-            Add a Resource Task extension.
-         </xs:documentation>
+         <xs:documentation>Add a Resource Task extension.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectiveResourceTaskElement" />
@@ -121,9 +110,7 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Limit task to the designated task pane extension points. Otherwise, all.
-               </xs:documentation>
+               <xs:documentation>Limit task to the designated task pane extension points. Otherwise, all.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -131,17 +118,10 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate the extension only if the user has resources of the specified type in
-                  inventory.
-                  Activated
-                  only if the user has the required permissions. At least one resource
-                  activator
-                  required for
-                  resource task extensions. Activated for resources only if specified trait
-                  conditions are
-                  also met.
-               </xs:documentation>
+               <xs:documentation>Activate the extension only if the user has resources of the specified type in
+                  inventory. Activated only if the user has the required permissions. At least one resource activator
+                  required for resource task extensions. Activated for resources only if specified trait conditions are
+                  also met.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -149,9 +129,7 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate the extension only if the user has the required global permissions.
-               </xs:documentation>
+               <xs:documentation>Activate the extension only if the user has the required global permissions.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -180,9 +158,7 @@
          type="perspective:DisplayNameType"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               The display name for the task extension.
-            </xs:documentation>
+            <xs:documentation>The display name for the task extension.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -190,9 +166,7 @@
          type="perspective:DescriptionType"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               The display description for the task extension.
-            </xs:documentation>
+            <xs:documentation>The display description for the task extension.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -200,9 +174,7 @@
          type="xs:anyURI"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               The request URL for the task extension. Typically kicks off a wizard or similar workflow.
-            </xs:documentation>
+            <xs:documentation>The request URL for the task extension. Typically kicks off a wizard or similar workflow.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -210,11 +182,8 @@
          type="xs:string"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               The display category for the task extension (optional). Tasks with the same category will
-               be grouped
-               together in the task pane.
-               </xs:documentation>
+            <xs:documentation>The display category for the task extension (optional). Tasks with the same category will
+               be grouped together in the task pane.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -233,9 +202,7 @@
       name="menuItem"
       type="perspective:MenuItemType">
       <xs:annotation>
-         <xs:documentation>
-            Add, Replace or Remove a menuItem extension for an existing menu extension point.
-         </xs:documentation>
+         <xs:documentation>Add, Replace or Remove a menuItem extension for an existing menu extension point.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectiveMenuItemElement" />
@@ -251,9 +218,7 @@
             minOccurs="1"
             maxOccurs="1">
             <xs:annotation>
-               <xs:documentation>
-                  Required positioning element for the menuItem extension.
-               </xs:documentation>
+               <xs:documentation>Required positioning element for the menuItem extension.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -261,14 +226,9 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate the extension only if the user has resources of the specified type in
-                  inventory.
-                  Activated only if the user has the required permissions. Activated for
-                  resources only if
-                  specified trait
-                  conditions are also met.
-               </xs:documentation>
+               <xs:documentation>Activate the extension only if the user has resources of the specified type in
+                  inventory. Activated only if the user has the required permissions. Activated for resources only if
+                  specified trait conditions are also met.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -276,9 +236,7 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate the extension only if the user has the required global permissions.
-               </xs:documentation>
+               <xs:documentation>Activate the extension only if the user has the required global permissions.</xs:documentation>
             </xs:annotation>
          </xs:element>
       </xs:sequence>
@@ -288,11 +246,8 @@
          use="optional"
          default="add">
          <xs:annotation>
-            <xs:documentation>
-               Add, Replace or Remove the menuItem extension. For removal all but the name attribute are
-               ignored.
-               Default is add.
-            </xs:documentation>
+            <xs:documentation>Add, Replace or Remove the menuItem extension. For removal all but the name attribute are
+               ignored. Default is add.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -300,10 +255,8 @@
          type="perspective:NameType"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               Internal name for the menuItem extension. Unique within extension names defined by the
-               perspective.
-            </xs:documentation>
+            <xs:documentation>Internal name for the menuItem extension. Unique within extension names defined by the
+               perspective.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -311,9 +264,7 @@
          type="perspective:DisplayNameType"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               The display name for the menuItem extension. If omitted an icon is required.
-            </xs:documentation>
+            <xs:documentation>The display name for the menuItem extension. If omitted an icon is required.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -321,9 +272,7 @@
          type="perspective:MenuItemFeatureType"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               Certain menuItem extensions utilize special built-in rendering features.
-            </xs:documentation>
+            <xs:documentation>Certain menuItem extensions utilize special built-in rendering features.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -331,12 +280,8 @@
          type="xs:anyURI"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               The request URL for the menuItem extension. If omitted it is assumed
-               the menuItem
-               exists as
-               a navigation element to child menuItems.
-            </xs:documentation>
+            <xs:documentation>The request URL for the menuItem extension. If omitted it is assumed the menuItem exists
+               as a navigation element to child menuItems.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -344,10 +289,8 @@
          type="xs:anyURI"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               The request URL for the icon displayed for this menuItem extension. If omitted no image is
-               displayed. Required if displayName if omitted.
-            </xs:documentation>
+            <xs:documentation>The request URL for the icon displayed for this menuItem extension. If omitted no image is
+               displayed. Required if displayName if omitted.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -398,9 +341,7 @@
             minOccurs="1"
             maxOccurs="1">
             <xs:annotation>
-               <xs:documentation>
-                  Required positioning element for the Tab or SubTab extension.
-               </xs:documentation>
+               <xs:documentation>Required positioning element for the Tab or SubTab extension.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -408,14 +349,9 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate the extension only if the user has resources of the specified type in
-                  inventory.
-                  Activated only if the user has the required permissions. Activated for
-                  resources only if
-                  specified trait
-                  conditions are also met.
-               </xs:documentation>
+               <xs:documentation>Activate the extension only if the user has resources of the specified type in
+                  inventory. Activated only if the user has the required permissions. Activated for resources only if
+                  specified trait conditions are also met.</xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -423,9 +359,7 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>
-                  Activate task only if the user has the required global permissions. 
-               </xs:documentation>
+               <xs:documentation>Activate task only if the user has the required global permissions.</xs:documentation>
             </xs:annotation>
          </xs:element>
       </xs:sequence>
@@ -435,8 +369,7 @@
          use="optional"
          default="add">
          <xs:annotation>
-            <xs:documentation>
-               Add, Replace or Remove the tab extension. For removal all but the name attribute are
+            <xs:documentation>Add, Replace or Remove the tab extension. For removal all but the name attribute are
                ignored. Default is add.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -445,8 +378,7 @@
          type="perspective:NameType"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               Internal name for the tab extension. Unique within extension names defined by the
+            <xs:documentation>Internal name for the tab extension. Unique within extension names defined by the
                perspective.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -455,9 +387,7 @@
          type="perspective:DisplayNameType"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               The display name for the tab extension.
-            </xs:documentation>
+            <xs:documentation>The display name for the tab extension.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -465,9 +395,7 @@
          type="xs:anyURI"
          use="required">
          <xs:annotation>
-            <xs:documentation>
-               The request URL for the tab extension.
-            </xs:documentation>
+            <xs:documentation>The request URL for the tab extension.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -475,10 +403,8 @@
          type="xs:anyURI"
          use="optional">
          <xs:annotation>
-            <xs:documentation>
-               The request URL for the icon displayed for this tab extension. If omitted no image is
-               displayed.
-            </xs:documentation>
+            <xs:documentation>The request URL for the icon displayed for this tab extension. If omitted no image is
+               displayed.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute

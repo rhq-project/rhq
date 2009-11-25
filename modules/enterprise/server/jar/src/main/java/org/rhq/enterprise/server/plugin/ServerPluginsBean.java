@@ -383,56 +383,39 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         if (plugin.getId() == 0) {
             throw new IllegalArgumentException("Plugin must already exist to update it");
         } else {
-            // make sure the configs are in the DB properly and we have their refs
-            // this is because we are using JPQL update, so we need to do some of this "manually"
-            boolean needFlush = false;
+            // make sure we create (if necessary) and attach the configs
             Configuration config = plugin.getPluginConfiguration();
             if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setPluginConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
+                config = entityManager.merge(config);
+                plugin.setPluginConfiguration(config);
             }
             config = plugin.getScheduledJobsConfiguration();
             if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setScheduledJobsConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
-            }
-            if (needFlush) {
-                entityManager.flush(); // must be flushed to the DB so the JPQL update below works
+                config = entityManager.merge(config);
+                plugin.setScheduledJobsConfiguration(config);
             }
 
-            // now we can JPQL update the row - all but content is updated here.
-            // we assured our configs are persisted/attached above
-            Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", plugin.getId());
-            q.setParameter("name", plugin.getName());
-            q.setParameter("path", plugin.getPath());
-            q.setParameter("displayName", plugin.getDisplayName());
-            q.setParameter("enabled", plugin.isEnabled());
-            q.setParameter("status", plugin.getStatus());
-            q.setParameter("md5", plugin.getMD5());
-            q.setParameter("version", plugin.getVersion());
-            q.setParameter("ampsVersion", plugin.getAmpsVersion());
-            q.setParameter("deployment", plugin.getDeployment());
-            q.setParameter("pluginConfiguration", plugin.getPluginConfiguration());
-            q.setParameter("scheduledJobsConfiguration", plugin.getScheduledJobsConfiguration());
-            q.setParameter("description", plugin.getDescription());
-            q.setParameter("help", plugin.getHelp());
-            q.setParameter("mtime", plugin.getMtime());
-            if (q.executeUpdate() != 1) {
-                throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
-            }
+            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(plugin.getName());
+            pluginEntity.setPath(plugin.getPath());
+            pluginEntity.setDisplayName(plugin.getDisplayName());
+            pluginEntity.setEnabled(plugin.isEnabled());
+            pluginEntity.setStatus(plugin.getStatus());
+            pluginEntity.setMd5(plugin.getMD5());
+            pluginEntity.setVersion(plugin.getVersion());
+            pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
+            pluginEntity.setDeployment(plugin.getDeployment());
+            pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
+            pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
+            pluginEntity.setDescription(plugin.getDescription());
+            pluginEntity.setHelp(plugin.getHelp());
+            pluginEntity.setMtime(plugin.getMtime());
 
-            entityManager.flush(); // make sure we push this out to the DB now
+            try {
+                entityManager.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
+                throw new Exception("Failed to update a plugin that matches [" + plugin + "]", e);
+            }
         }
         return plugin;
     }

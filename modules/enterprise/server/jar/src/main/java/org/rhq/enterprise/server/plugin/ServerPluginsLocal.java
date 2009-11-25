@@ -42,6 +42,7 @@ public interface ServerPluginsLocal {
      * 
      * @param plugin
      * @return the same plugin, with the relationship data loaded
+     * @throws NoResultException when no plugin with that name exists
      */
     Plugin getServerPluginRelationships(Plugin plugin);
 

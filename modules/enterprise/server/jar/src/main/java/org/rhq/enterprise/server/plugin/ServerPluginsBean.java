@@ -93,12 +93,17 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public Plugin getServerPluginRelationships(Plugin plugin) {
         plugin = getServerPlugin(plugin.getName()); // refresh all but the content field
 
-        int pluginConfigId = plugin.getPluginConfiguration().getId();
-        int scheduledJobsId = plugin.getScheduledJobsConfiguration().getId();
-        Configuration pluginConfig = entityManager.find(Configuration.class, pluginConfigId);
-        Configuration scheduledJobs = entityManager.find(Configuration.class, scheduledJobsId);
-        plugin.setPluginConfiguration(pluginConfig.deepCopyWithoutProxies());
-        plugin.setScheduledJobsConfiguration(scheduledJobs.deepCopyWithoutProxies());
+        Configuration config = plugin.getPluginConfiguration();
+        if (config != null) {
+            config = entityManager.find(Configuration.class, config.getId());
+            plugin.setPluginConfiguration(config.deepCopyWithoutProxies());
+        }
+
+        config = plugin.getScheduledJobsConfiguration();
+        if (config != null) {
+            config = entityManager.find(Configuration.class, config.getId());
+            plugin.setScheduledJobsConfiguration(config.deepCopyWithoutProxies());
+        }
 
         return plugin;
     }
@@ -239,7 +244,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                     File currentFile = new File(pluginDir, doomedPlugin.getPath());
                     currentFile.delete();
                 } catch (Exception e) {
-                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: " + ThrowableUtil.getAllMessages(e));
+                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: "
+                        + ThrowableUtil.getAllMessages(e));
                 }
             }
         }
@@ -275,7 +281,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status)
-            throws Exception {
+        throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
@@ -291,7 +297,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin [" + plugin.getName() + "] must be a server plugin to be registered");
+            throw new IllegalArgumentException("Plugin [" + plugin.getName()
+                + "] must be a server plugin to be registered");
         }
 
         Plugin existingPlugin = null;
@@ -304,7 +311,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
         if (existingPlugin != null) {
             if (existingPlugin.getStatus() == PluginStatusType.DELETED) {
-                throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName() + "], it has been marked as deleted");
+                throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
+                    + "], it has been marked as deleted");
             }
             Plugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes use == for reference equality
@@ -322,7 +330,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             if (plugin.getId() == 0) {
                 PluginStatusType status = getServerPluginStatus(plugin.getName());
                 if (PluginStatusType.DELETED == status) {
-                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName() + "], it has been previously marked as deleted.");
+                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
+                        + "], it has been previously marked as deleted.");
                 }
                 entityManager.persist(plugin);
             } else {
@@ -364,7 +373,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         // to entityManager.merge that plugin POJO, it would null out that blob column.
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin [" + plugin.getName() + "] must be a server plugin to be updated");
+            throw new IllegalArgumentException("Plugin [" + plugin.getName()
+                + "] must be a server plugin to be updated");
         }
 
         if (plugin.getId() == 0) {

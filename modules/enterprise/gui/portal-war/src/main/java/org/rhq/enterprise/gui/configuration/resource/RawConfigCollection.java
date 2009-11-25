@@ -165,7 +165,7 @@ public class RawConfigCollection implements Serializable {
         String u2 = updated.substring(2);
         String original = new String(getCurrent().getContents());
         if (!u2.equals(original)) {
-            current = current.deepCopy();
+            current = current.deepCopy(false);
             current.setContents(updated.getBytes());
             //TODO update other values like MD5
             modified.put(current.getPath(), current);

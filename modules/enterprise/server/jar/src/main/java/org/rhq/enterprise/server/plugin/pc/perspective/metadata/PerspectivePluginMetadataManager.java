@@ -186,4 +186,12 @@ public class PerspectivePluginMetadataManager {
         }
         return result;
     }
+
+    /**
+     * @return the coreMenu
+     */
+    public List<MenuItem> getCoreMenu() {
+        return coreMenu;
+    }
+
 }

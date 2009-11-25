@@ -18,24 +18,23 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import java.util.List;
+public class PerspectiveException extends Exception {
 
-import javax.ejb.Local;
+    private static final long serialVersionUID = 1L;
 
-import org.rhq.core.domain.auth.Subject;
+    public PerspectiveException() {
+    }
 
-@Local
-public interface PerspectiveManagerLocal {
+    public PerspectiveException(String message) {
+        super(message);
+    }
 
-    /**
-     * Return the core menu for the specified subject. Depending on their inventory and roles the
-     * core menu for one subject1 could differ from that of subject2.
-     * 
-     * Subsequent calls will return the same core menu for the same Subject. In other words, it does
-     * not change during a user session.
-     * 
-     * @param subject
-     * @return
-     */
-    List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException;
+    public PerspectiveException(Throwable cause) {
+        super(cause);
+    }
+
+    public PerspectiveException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

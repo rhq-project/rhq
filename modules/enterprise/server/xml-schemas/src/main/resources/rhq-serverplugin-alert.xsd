@@ -2,6 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:config="urn:xmlns:rhq-configuration"
            xmlns:c="urn:xmlns:rhq-configuration"
            xmlns:alert="urn:xmlns:rhq-serverplugin.alert"
            targetNamespace="urn:xmlns:rhq-serverplugin.alert"
@@ -15,7 +16,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for alert server-side plugins.
+            Schema for alert server-side plug-ins.
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -27,7 +28,7 @@
     <xs:element name="alert-plugin" type="alert:AlertPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
-                Defines an alert plugin. This type of plugin allows you to create your own
+                Defines an alert plug-in. This type of plug-in allows you to create your own
                 alert handlers, enabling you to send alerts to custom endpoints.
             </xs:documentation>
             <xs:appinfo>
@@ -39,10 +40,35 @@
         <xs:complexContent>
             <xs:extension base="serverplugin:ServerPluginDescriptorType">
                <xs:sequence>
+                   <xs:element name="shortName" minOccurs="1" maxOccurs="1">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The short name of this plugin as it will be shown in Headers and drop down boxes
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+                   <xs:element name="pluginClass" minOccurs="1" maxOccurs="1">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The name of the class implementing the plugin functionality. This class needs to
+                               implement the org.rhq.enterprise.server.plugin.pc.alert.AlertSender base class
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
                   <!-- alert specific schema goes here. note, serverplugin xsd gives you global <plugin-configuration> already -->
+                   <xs:element ref="alert:alert-configuration" minOccurs="0" maxOccurs="1"/>
                </xs:sequence>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
+
+    <xs:element name="alert-configuration" type="config:configuration">
+        <xs:annotation>
+            <xs:documentation>
+                This section defines the configuration items that are used for individual alert templates.
+            </xs:documentation>
+        </xs:annotation>
+
+    </xs:element>
 
 </xs:schema>

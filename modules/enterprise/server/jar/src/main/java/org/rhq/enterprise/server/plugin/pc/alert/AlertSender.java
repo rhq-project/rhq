@@ -37,8 +37,6 @@ import org.rhq.core.domain.configuration.Configuration;
  */
 public abstract class AlertSender {
 
-    private final Log log = LogFactory.getLog(AlertSender.class);
-
     /** Configuration from the global per plugin type preferences */
     protected Configuration preferences;
 

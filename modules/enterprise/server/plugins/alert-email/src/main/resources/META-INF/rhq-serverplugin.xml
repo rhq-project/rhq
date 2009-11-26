@@ -34,10 +34,10 @@
     </serverplugin:plugin-configuration>
 
     <!-- How does this sender show up in drop downs etc -->
-    <shortName>Email</shortName>
+    <short-name>Email</short-name>
 
     <!-- Class that does the actual sending -->
-    <pluginClass>EmailSender</pluginClass>
+    <plugin-class>EmailSender</plugin-class>
 
     <!-- What can a user configure when defining an alert -->
     <alert-configuration>

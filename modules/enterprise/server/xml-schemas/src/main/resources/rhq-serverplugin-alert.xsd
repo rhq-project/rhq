@@ -40,14 +40,14 @@
         <xs:complexContent>
             <xs:extension base="serverplugin:ServerPluginDescriptorType">
                <xs:sequence>
-                   <xs:element name="shortName" minOccurs="1" maxOccurs="1">
+                   <xs:element name="short-name" minOccurs="1" maxOccurs="1">
                        <xs:annotation>
                            <xs:documentation>
                                The short name of this plugin as it will be shown in Headers and drop down boxes
                            </xs:documentation>
                        </xs:annotation>
                    </xs:element>
-                   <xs:element name="pluginClass" minOccurs="1" maxOccurs="1">
+                   <xs:element name="plugin-class" minOccurs="1" maxOccurs="1">
                        <xs:annotation>
                            <xs:documentation>
                                The name of the class implementing the plugin functionality. This class needs to

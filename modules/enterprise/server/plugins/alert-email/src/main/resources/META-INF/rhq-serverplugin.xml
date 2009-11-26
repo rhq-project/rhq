@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-email"
+        displayName="Alert:Email"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertEmail"
+        description="Alert sender plugin that sends alert notifications via email"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send emails when alerts were triggered.
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+
+    <!-- Global preferences for all email alerts -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="mailserver" displayName="Mail server address" type="longString"
+                description="Address of the mail server to use (if not the default RHQ one )"/>
+        <c:simple-property name="senderEmail" displayName="Email of sender" type="string"
+                description="Email of the account from which alert emails should come from"/>
+        <c:simple-property name="needsLogin" displayName="Needs credentials?"
+                description="Mark this field if the server needs credentials to send email and give them below" type="boolean"/>
+        <c:simple-property name="user" type="string"/>
+        <c:simple-property name="password" type="password" />
+
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <shortName>Email</shortName>
+
+    <!-- Class that does the actual sending -->
+    <pluginClass>EmailSender</pluginClass>
+
+    <!-- What can a user configure when defining an alert -->
+    <alert-configuration>
+        <c:simple-property name="emailAddress" displayName="Receiver Email Address(es)" type="longString"
+                description="Email addresses (separated by comma) used for notifications."/>
+    </alert-configuration>
+
+</alert-plugin>

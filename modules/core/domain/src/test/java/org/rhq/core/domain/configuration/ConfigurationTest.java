@@ -38,59 +38,92 @@ import java.util.Set;
 public class ConfigurationTest {
 
     @Test
-    public void deepCopyWithoutProxiesShouldNotReturnReferenceToOriginalObject() {
+    public void deepCopyShouldNotReturnReferenceToOriginalObjectWhenKeepingIds() {
         Configuration original = createConfiguration();
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(true);
 
         assertNotSame(copy, original, "Expected a reference to a new Configuration object, not the original object being copied");
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldCopySimpleFields() {
+    public void deepCopyShouldNotReturnReferenceToOriginalObjectWhenNotKeepingIds() {
         Configuration original = createConfiguration();
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(false);
 
+        assertNotSame(copy, original, "Expected a reference to a new Configuration object, not the original object being copied");
+    }
+
+    @Test
+    public void deepCopyShouldCopyAllSimpleFieldsWhenKeepingIds() {
+        Configuration original = createConfiguration();
+        Configuration copy = original.deepCopy(true);
+
+        assertEquals(copy.getId(), original.getId(), "Failed to copy the id property");
         assertEquals(copy.getNotes(), original.getNotes(), "Failed to copy the notes property");
         assertEquals(copy.getVersion(), original.getVersion(), "Failed to copy version property");
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldNotCopyIdProperty() {
+    public void deepCopyShouldNotCopyIdWhenNotKeepingIds() {
         Configuration original = createConfiguration();
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(false);
 
         assertFalse(copy.getId() == original.getId(), "The original id property should not be copied");
+        assertEquals(copy.getNotes(), original.getNotes(), "Failed to copy the notes property");
+        assertEquals(copy.getVersion(), original.getVersion(), "Failed to copy version property");
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldCopyProperties() {
+    public void deepCopyShouldCopyPropertiesWhenKeepingIds() {
         Configuration original = createConfiguration();
         original.put(new PropertySimple("simpleProperty", "Simple Property"));
 
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(true);
 
         assertNotSame(copy.getProperties(), original.getProperties(), "The properties property should not refer to the properties in the original object");
         assertEquals(copy.getProperties(), original.getProperties(), "Failed to copy the contents of the properties collection");
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldNotReturnCopyReferenceOfOriginalProperty() {
+    public void deepCopyShouldCopyPropertiesWhenNotKeepingIds() {
+        Configuration original = createConfiguration();
+        original.put(new PropertySimple("simpleProperty", "Simple Property"));
+
+        Configuration copy = original.deepCopy(false);
+
+        assertNotSame(copy.getProperties(), original.getProperties(), "The properties property should not refer to the properties in the original object");
+        assertEquals(copy.getProperties(), original.getProperties(), "Failed to copy the contents of the properties collection");
+    }
+
+    @Test
+    public void deepCopyShouldNotReturnCopyReferenceOfOriginalPropertyWhenKeepingIds() {
         Configuration original = createConfiguration();
         String propertyName = "simpleProperty";
         original.put(new PropertySimple(propertyName, "Simple Property"));
 
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(true);
 
         assertNotSame(copy.get(propertyName), original.get(propertyName), "Expected a refernce to a new property, not the original property being copied");
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldSetParentReferenceOfCopiedProperties() {
+    public void deepCopyShouldNotReturnCopyReferenceOfOriginalPropertyWhenNotKeepingIds() {
         Configuration original = createConfiguration();
         String propertyName = "simpleProperty";
         original.put(new PropertySimple(propertyName, "Simple Property"));
 
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(false);
+
+        assertNotSame(copy.get(propertyName), original.get(propertyName), "Expected a refernce to a new property, not the original property being copied");
+    }
+
+    @Test
+    public void deepCopyShouldSetParentReferenceOfCopiedPropertiesWhenKeepingIds() {
+        Configuration original = createConfiguration();
+        String propertyName = "simpleProperty";
+        original.put(new PropertySimple(propertyName, "Simple Property"));
+
+        Configuration copy = original.deepCopy(true);
 
         assertSame(
             copy.get(propertyName).getConfiguration(),
@@ -100,11 +133,42 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldCopyRawConfigurations() {
+    public void deepCopyShouldSetParentReferenceOfCopiedPropertiesWhenNotKeepingIds() {
+        Configuration original = createConfiguration();
+        String propertyName = "simpleProperty";
+        original.put(new PropertySimple(propertyName, "Simple Property"));
+
+        Configuration copy = original.deepCopy(false);
+
+        assertSame(
+            copy.get(propertyName).getConfiguration(),
+            copy,
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration"
+        );
+    }
+
+    @Test
+    public void deepCopyShouldCopyRawConfigurationsWhenKeepingIds() {
         Configuration original = createConfiguration();
         original.addRawConfiguration(createRawConfiguration("/tmp/foo"));
 
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(true);
+
+        assertNotSame(
+            copy.getRawConfigurations(),
+            original.getRawConfigurations(),
+            "The rawConfigurations property should not refer to the original rawConfigurations of the copied object."
+        );
+
+        assertRawConfigurationsEquals(copy.getRawConfigurations(), original.getRawConfigurations(), "Failed to copy rawConfigurations property.");
+    }
+
+    @Test
+    public void deepCopyShouldCopyRawConfigurationsWhenNotKeepingIds() {
+        Configuration original = createConfiguration();
+        original.addRawConfiguration(createRawConfiguration("/tmp/foo"));
+
+        Configuration copy = original.deepCopy(false);
 
         assertNotSame(
             copy.getRawConfigurations(),
@@ -123,11 +187,26 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void deepCopyWithoutProxiesShouldSetParentReferenceOfCopiedRawConfigurations() {
+    public void deepCopyShouldSetParentReferenceOfCopiedRawConfigurationsWhenKeepingIds() {
         Configuration original = createConfiguration();
         original.addRawConfiguration(createRawConfiguration("/tmp/foo"));
 
-        Configuration copy = original.deepCopyWithoutProxies();
+        Configuration copy = original.deepCopy(true);
+        RawConfiguration copiedRawConfig = getCopiedRawConfiguration(copy);
+
+        assertSame(
+            copiedRawConfig.getConfiguration(),
+            copy,
+            "The reference to the parent configuration should point to the newly copied configuration, not the original configuration."
+        );
+    }
+
+    @Test
+    public void deepCopyShouldSetParentReferenceOfCopiedRawConfigurationsWhenNotKeepingIds() {
+        Configuration original = createConfiguration();
+        original.addRawConfiguration(createRawConfiguration("/tmp/foo"));
+
+        Configuration copy = original.deepCopy(false);
         RawConfiguration copiedRawConfig = getCopiedRawConfiguration(copy);
 
         assertSame(

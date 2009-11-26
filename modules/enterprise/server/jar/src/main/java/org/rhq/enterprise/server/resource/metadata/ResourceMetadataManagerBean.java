@@ -198,49 +198,38 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             entityManager.persist(plugin);
         } else {
             // agent plugins don't support these configs, but if/when they do in the future, this will support it
-            boolean needFlush = false;
+            // make sure we create (if necessary) and attach the configs
             Configuration config = plugin.getPluginConfiguration();
             if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setPluginConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
+                config = entityManager.merge(config);
+                plugin.setPluginConfiguration(config);
             }
             config = plugin.getScheduledJobsConfiguration();
             if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setScheduledJobsConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
-            }
-            if (needFlush) {
-                entityManager.flush(); // must be flushed to the DB so the JPQL update below works
+                config = entityManager.merge(config);
+                plugin.setScheduledJobsConfiguration(config);
             }
 
             // update all the fields except content
-            Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", plugin.getId());
-            q.setParameter("name", plugin.getName());
-            q.setParameter("path", plugin.getPath());
-            q.setParameter("displayName", plugin.getDisplayName());
-            q.setParameter("enabled", plugin.isEnabled());
-            q.setParameter("status", plugin.getStatus());
-            q.setParameter("md5", plugin.getMD5());
-            q.setParameter("version", plugin.getVersion());
-            q.setParameter("ampsVersion", plugin.getAmpsVersion());
-            q.setParameter("deployment", plugin.getDeployment());
-            q.setParameter("pluginConfiguration", plugin.getPluginConfiguration());
-            q.setParameter("scheduledJobsConfiguration", plugin.getScheduledJobsConfiguration());
-            q.setParameter("description", plugin.getDescription());
-            q.setParameter("help", plugin.getHelp());
-            q.setParameter("mtime", plugin.getMtime());
-            if (q.executeUpdate() != 1) {
+            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(plugin.getName());
+            pluginEntity.setPath(plugin.getPath());
+            pluginEntity.setDisplayName(plugin.getDisplayName());
+            pluginEntity.setEnabled(plugin.isEnabled());
+            pluginEntity.setStatus(plugin.getStatus());
+            pluginEntity.setMd5(plugin.getMD5());
+            pluginEntity.setVersion(plugin.getVersion());
+            pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
+            pluginEntity.setDeployment(plugin.getDeployment());
+            pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
+            pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
+            pluginEntity.setDescription(plugin.getDescription());
+            pluginEntity.setHelp(plugin.getHelp());
+            pluginEntity.setMtime(plugin.getMtime());
+
+            try {
+                entityManager.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
                 throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
             }
         }

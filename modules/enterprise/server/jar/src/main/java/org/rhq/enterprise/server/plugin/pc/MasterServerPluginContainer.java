@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.plugin.pc;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -46,9 +47,20 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 public class MasterServerPluginContainer {
     private static final Log log = LogFactory.getLog(MasterServerPluginContainer.class);
 
+    /** The configuration for the master plugin container itself. */
     private MasterServerPluginContainerConfiguration configuration;
+
+    /** the plugin containers for all the different types of plugins that are supported */
     private Map<ServerPluginType, AbstractTypeServerPluginContainer> pluginContainers = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+
+    /** the object that provides all the classloaders for all plugins */
     private ClassLoaderManager classLoaderManager;
+
+    /**
+     * Because the individual plugin containers are only managing enabled plugins (they are never told about plugins that disabled).
+     * this map contains the lists of plugins that are disabled so others can find out what plugins are registered but not running.
+     */
+    private Map<ServerPluginType, List<String>> disabledPlugins = new HashMap<ServerPluginType, List<String>>();
 
     /**
      * Starts the master plugin container, which will load all plugins and begin managing them.
@@ -188,6 +200,7 @@ public class MasterServerPluginContainer {
         }
 
         this.pluginContainers.clear();
+        this.disabledPlugins.clear();
         this.classLoaderManager = null;
         this.configuration = null;
 
@@ -238,6 +251,55 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * Given a plugin type, this will return the names of all known plugins of that type.
+     * This includes all types that are currently started as well as plugins
+     * that have been disabled.
+     * 
+     * If the master plugin container has not been started, this returns an empty list.
+     * 
+     * @param pluginType
+     *
+     * @return list of both enabled and disabled plugins of the given type
+     */
+    public List<String> getAllPluginsByPluginType(ServerPluginType pluginType) {
+        List<String> allPlugins = new ArrayList<String>();
+
+        AbstractTypeServerPluginContainer pc = getPluginContainerByPluginType(pluginType);
+        if (pc != null) {
+            // add the enabled plugins
+            ServerPluginManager pluginManager = pc.getPluginManager();
+            if (pluginManager != null) {
+                Collection<ServerPluginEnvironment> envs = pluginManager.getPluginEnvironments();
+                if (envs != null) {
+                    for (ServerPluginEnvironment env : envs) {
+                        allPlugins.add(env.getPluginName());
+                    }
+                }
+            }
+
+            // add the disabled plugins
+            List<String> disabled = this.disabledPlugins.get(pluginType);
+            if (disabled != null) {
+                allPlugins.addAll(disabled);
+            }
+        }
+
+        return allPlugins;
+    }
+
+    /**
+     * This will return all known server plugins types. These are the types of plugins
+     * that are supported by a server plugin container. You can obtain the server
+     * plugin container that manages a particular server plugin type via
+     * {@link #getPluginContainerByPluginType(ServerPluginType)}.
+     * 
+     * @return all known server plugin types
+     */
+    public synchronized List<ServerPluginType> getServerPluginTypes() {
+        return new ArrayList<ServerPluginType>(this.pluginContainers.keySet());
+    }
+
+    /**
      * Get the plugin container of the given class. This method provides a strongly typed return value,
      * based on the type of plugin container the caller wants returned.
      * 
@@ -245,7 +307,7 @@ public class MasterServerPluginContainer {
      * @return the plugin container of the given class (<code>null</code> if none found)
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(Class<T> clazz) {
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByClass(Class<T> clazz) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             if (clazz.isInstance(pc)) {
                 return (T) pc;
@@ -262,7 +324,7 @@ public class MasterServerPluginContainer {
      * @param pluginName
      * @return the plugin container that is managing the named plugin of <code>null</code>
      */
-    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(String pluginName) {
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByPlugin(String pluginName) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             if (null != pc.getPluginManager().getPluginEnvironment(pluginName)) {
                 return (T) pc;
@@ -319,7 +381,7 @@ public class MasterServerPluginContainer {
 
             if (pluginFiles != null) {
 
-                List<String> disabledPlugins = getDisabledPluginNames();
+                List<String> allDisabledPlugins = getDisabledPluginNames();
 
                 for (File pluginFile : pluginFiles) {
                     if (pluginFile.getName().endsWith(".jar")) {
@@ -329,12 +391,19 @@ public class MasterServerPluginContainer {
                             ServerPluginDescriptorType descriptor;
                             descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
                             if (descriptor != null) {
-                                if (!disabledPlugins.contains(descriptor.getName())) {
+                                if (!allDisabledPlugins.contains(descriptor.getName())) {
                                     log.debug("pre-loaded server plugin from URL: " + pluginUrl);
                                     plugins.put(pluginUrl, descriptor);
                                 } else {
                                     log.info("Server plugin [" + descriptor.getName()
                                         + "] is disabled and will not be initialized");
+                                    ServerPluginType pluginType = new ServerPluginType(descriptor);
+                                    List<String> disabledByType = this.disabledPlugins.get(pluginType);
+                                    if (disabledByType == null) {
+                                        disabledByType = new ArrayList<String>(1);
+                                        this.disabledPlugins.put(pluginType, disabledByType);
+                                    }
+                                    disabledByType.add(descriptor.getName());
                                 }
                             }
                         } catch (Throwable t) {

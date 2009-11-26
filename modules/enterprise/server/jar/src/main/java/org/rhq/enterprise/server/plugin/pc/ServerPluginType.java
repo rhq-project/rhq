@@ -29,6 +29,22 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 public class ServerPluginType {
     private final Class<? extends ServerPluginDescriptorType> descriptorType;
 
+    /**
+     * Given an actual plugin descriptor object, this will create a plugin type
+     * that represents that kind of plugin.
+     * 
+     * @param descriptor an actual descriptor parsed from a plugin
+     */
+    public ServerPluginType(ServerPluginDescriptorType descriptor) {
+        this((descriptor != null) ? descriptor.getClass() : null);
+    }
+
+    /**
+     * Given a type of plugin descriptor, this will create a plugin type
+     * that represents that kind of plugin.
+     * 
+     * @param descriptorType
+     */
     public ServerPluginType(Class<? extends ServerPluginDescriptorType> descriptorType) {
         if (descriptorType == null) {
             throw new NullPointerException("descriptorType must not be null");

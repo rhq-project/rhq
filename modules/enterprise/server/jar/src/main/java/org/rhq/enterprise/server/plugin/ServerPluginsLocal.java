@@ -2,6 +2,7 @@ package org.rhq.enterprise.server.plugin;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 import javax.persistence.NoResultException;
@@ -9,6 +10,7 @@ import javax.persistence.NoResultException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -42,6 +44,7 @@ public interface ServerPluginsLocal {
      * 
      * @param plugin
      * @return the same plugin, with the relationship data loaded
+     * @throws NoResultException when no plugin with that name exists
      */
     Plugin getServerPluginRelationships(Plugin plugin);
 
@@ -86,20 +89,20 @@ public interface ServerPluginsLocal {
      *
      * @param subject user making the request
      * @param pluginIds the plugins to be disabled
-     * @return the list of plugins that were disabled
+     * @return the list of names of the plugins that were disabled
      * @throws Exception if failed to disable a plugin
      */
-    List<Plugin> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<String> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Removes the plugin from the system and restarts the server plugin container.
      *
      * @param subject user making the request
      * @param pluginIds
-     * @return the list of plugins that were undeployed
+     * @return the list of names of plugins that were undeployed
      * @throws Exception if failed to undeploy a plugin
      */
-    List<Plugin> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<String> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
@@ -172,4 +175,13 @@ public interface ServerPluginsLocal {
      *         <code>null</code> indicates an unknown plugin.
      */
     PluginStatusType getServerPluginStatus(String pluginName);
+
+    /**
+     * This will return a map containing all plugins currently known to the master plugin container.
+     * This will return installed plugins that are both enabled and disabled.
+     * Note that if the master plugin container is not running, an empty map is returned.
+     * 
+     * @return names of all enabled and disabled plugins, keyed on their types 
+     */
+    Map<ServerPluginType, List<String>> getAllPluginsGroupedByType();
 }

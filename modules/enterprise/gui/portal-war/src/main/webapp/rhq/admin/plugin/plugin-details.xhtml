@@ -35,8 +35,6 @@
                  layout="table"
                  width="100%"/>
 
-
-
      <h:form id="pluginsForm">
 
            <rich:panel>
@@ -66,7 +64,6 @@
 
               </h:panelGrid>
 
-
               <rich:panel>
                  <f:facet name="header">
                     <h:outputText value="Plugin Help"/>
@@ -76,25 +73,29 @@
 
               </rich:panel>
 
-              <rich:panel>
+              <ui:insert name="pre-config" />
+
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null}">
                  <f:facet name="header">
                     <h:outputText value="Plugin Configuration"/>
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
                     configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
-                    readOnly="true" />
+                    readOnly="#{not editMode}" />
               </rich:panel>
 
-              <rich:panel>
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
                  <f:facet name="header">
                     <h:outputText value="Scheduled Jobs"/>
                  </f:facet>
                  <onc:config
                     configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
                     configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
-                    readOnly="true" />
+                    readOnly="#{not editMode}" />
               </rich:panel>
+
+              <ui:insert name="post-config" />
            </rich:panel>
 
         </h:form>

@@ -70,8 +70,8 @@ public class PropertySimple extends Property implements Externalizable {
         override = Boolean.FALSE;
     }
 
-    protected PropertySimple(PropertySimple original) {
-        super(original);
+    protected PropertySimple(PropertySimple original, boolean keepId) {
+        super(original, keepId);
         this.override = original.override;
         this.unmaskedStringValue = original.unmaskedStringValue;
         this.stringValue = original.stringValue;
@@ -85,9 +85,7 @@ public class PropertySimple extends Property implements Externalizable {
      * @param name
      * @param value
      */
-    public PropertySimple(@NotNull
-    String name, @Nullable
-    Object value) {
+    public PropertySimple(@NotNull String name, @Nullable Object value) {
         setName(name);
         setValue(value);
     }
@@ -98,8 +96,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setValue(@Nullable
-    Object value) {
+    public void setValue(@Nullable Object value) {
         if (value == null) {
             stringValue = null;
             return;
@@ -131,8 +128,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setStringValue(@Nullable
-    String value) {
+    public void setStringValue(@Nullable String value) {
         this.setValue(value);
     }
 
@@ -157,8 +153,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setBooleanValue(@Nullable
-    Boolean value) {
+    public void setBooleanValue(@Nullable Boolean value) {
         this.setValue(value);
     }
 
@@ -207,8 +202,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setIntegerValue(@Nullable
-    Integer value) {
+    public void setIntegerValue(@Nullable Integer value) {
         this.setValue(value);
     }
 
@@ -232,8 +226,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setFloatValue(@Nullable
-    Float value) {
+    public void setFloatValue(@Nullable Float value) {
         this.setValue(value);
     }
 
@@ -257,8 +250,7 @@ public class PropertySimple extends Property implements Externalizable {
      *
      * @param value
      */
-    public void setDoubleValue(@Nullable
-    Double value) {
+    public void setDoubleValue(@Nullable Double value) {
         this.setValue(value);
     }
 
@@ -336,8 +328,8 @@ public class PropertySimple extends Property implements Externalizable {
         return result;
     }
 
-    public PropertySimple deepCopy() {
-        return new PropertySimple(this);
+    public PropertySimple deepCopy(boolean keepId) {
+        return new PropertySimple(this, keepId);
     }
 
     @Override

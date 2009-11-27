@@ -20,13 +20,6 @@
       <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   <managed-bean>
-      <description>Visibility for the installed agent and server plugins</description>
-      <display-name>Installed Plugin</display-name>
-      <managed-bean-name>InstalledPluginUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
 
     <managed-bean>
         <description>Access to downloads information</description>

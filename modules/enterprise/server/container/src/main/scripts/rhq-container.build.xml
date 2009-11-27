@@ -146,15 +146,15 @@
          </not>
       </condition>
 
-      <!-- developers might want to deploy agent plugins frequently, so we'll scan every 30 seconds -->
-      <!-- in production, agent plugins change very infrequently, so only scan every 5 minutes -->
-      <condition property="rhq.server.agent-plugin-scan-period-ms" value="30000">
+      <!-- developers might want to deploy agent/server plugins frequently, so we'll scan every 30 seconds -->
+      <!-- in production, plugins change very infrequently, so only scan every 5 minutes -->
+      <condition property="rhq.server.plugin-scan-period-ms" value="30000">
          <or>
             <equals arg1="${dev.profile.active}" arg2="true" />
             <equals arg1="${developer}" arg2="true" />
          </or>
       </condition>
-      <condition property="rhq.server.agent-plugin-scan-period-ms" value="300000">
+      <condition property="rhq.server.plugin-scan-period-ms" value="300000">
          <not>
             <or>
                <equals arg1="${dev.profile.active}" arg2="true" />
@@ -371,13 +371,6 @@
       <!-- optionally package the connectors -->
       <antcall target="package-connectors" />
 
-      <!-- Let's deploy some developer-only stuff - we'll remove these later if this is a release build -->
-      <echo>Deploying the license file ...</echo>
-    <copy file="${basedir}/src/main/license/license.xml"
-          todir="${jboss.deploy.dir}/${rhq.earName}/license"
-          verbose="true"
-          failonerror="false"/>
-
       <echo>Enabling server to run on Java 6 ...</echo>
       <move todir="${jboss.home}/lib/endorsed" verbose="true">
          <fileset dir="${jboss.home}/client">
@@ -406,7 +399,12 @@
             <include name="jaxb-impl.jar" />
          </fileset>
       </move>
-
+      
+      <echo>Deploying perspective WARs ...</echo>
+      <mkdir dir="${jboss.deploy.dir}/rhq-sample-perspective.war" />
+      <unwar src="${settings.localRepository}/org/rhq/rhq-sample-perspective/${rhq.version}/rhq-sample-perspective-${rhq.version}.war"
+             dest="${jboss.deploy.dir}/rhq-sample-perspective.war" />
+      
    </target>
 
    <target name="package-connectors" if="package-connectors">
@@ -579,8 +577,8 @@ rhq.server.concurrency-limit.measurement-schedule-request=10
 # Content Local Filesystem Repository
 rhq.server.content.filesystem=${jboss.server.data.dir}/packagebits
 
-# The frequency (in millis) the server checks for updated agent plugins
-rhq.server.agent-plugin-scan-period-ms=${rhq.server.agent-plugin-scan-period-ms}
+# The frequency (in millis) the server checks for updated plugins
+rhq.server.plugin-scan-period-ms=${rhq.server.plugin-scan-period-ms}
 
 # Auto-Install Pre-Configuration Settings
 # If you wish to circumvent the installer webapp and auto-install the server

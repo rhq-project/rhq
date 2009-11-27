@@ -3,10 +3,12 @@
 <!DOCTYPE server>
 
 <server>
-  <mbean code="org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScanner"
-	      name="rhq:service=AgentPluginDeploymentScanner">
-    <attribute name="ScanPeriod">${rhq.server.agent-plugin-scan-period-ms:300000}</attribute>
-    <attribute name="PluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
+  <mbean code="org.rhq.enterprise.server.core.plugin.PluginDeploymentScanner"
+	      name="rhq:service=PluginDeploymentScanner">
+    <attribute name="ScanPeriod">${rhq.server.plugin-scan-period-ms:300000}</attribute>
+    <attribute name="AgentPluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</attribute>
+    <attribute name="ServerPluginDir">${jboss.server.home.dir}/deploy/${rhq.earName}/rhq-serverplugins</attribute>
+    <attribute name="UserPluginDir">${jboss.home.dir}/../plugins</attribute>
     <attribute name="LicenseFile">${jboss.server.home.dir}/deploy/${rhq.earName}/license/license.xml</attribute>
   </mbean>
 </server>

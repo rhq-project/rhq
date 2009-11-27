@@ -44,10 +44,24 @@ import javax.persistence.Table;
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH, query = "SELECT pvcs "
         + "  FROM PackageVersionContentSource pvcs " + " WHERE pvcs.contentSource.id = :id "),
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID, query = "SELECT pvcs "
-        + "  FROM PackageVersionContentSource pvcs " + "       LEFT JOIN FETCH pvcs.packageVersion pv "
-        + "       LEFT JOIN FETCH pv.generalPackage gp " + "       LEFT JOIN FETCH gp.packageType pt "
-        + "       LEFT JOIN FETCH pv.architecture arch " + "       LEFT JOIN FETCH pv.extraProperties extra "
+        + "  FROM PackageVersionContentSource pvcs " //
+        + "       LEFT JOIN FETCH pvcs.packageVersion pv " //
+        + "       LEFT JOIN FETCH pv.generalPackage gp " //
+        + "       LEFT JOIN FETCH gp.packageType pt " //
+        + "       LEFT JOIN FETCH pv.architecture arch " //
+        + "       LEFT JOIN FETCH pv.extraProperties extra " //
         + " WHERE pvcs.contentSource.id = :id "),
+    @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_REPO_ID, query = "SELECT pvcs "
+        + "  FROM PackageVersionContentSource pvcs " //
+        + "       LEFT JOIN FETCH pvcs.packageVersion pv " //
+        + "       LEFT JOIN FETCH pv.generalPackage gp " //
+        + "       LEFT JOIN FETCH gp.packageType pt " //
+        + "       LEFT JOIN FETCH pv.architecture arch " //
+        + "       LEFT JOIN FETCH pv.extraProperties extra " //
+        + " WHERE pvcs.contentSource.id = :content_source_id " //
+        + "   AND pvcs.packageVersion.id IN " //
+        + "       ( SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv " //
+        + "         WHERE rpv.repo.id = :repo_id )"),
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_COUNT, query = "SELECT COUNT(pvcs.contentSource.id) "
         + "  FROM PackageVersionContentSource pvcs " + " WHERE pvcs.contentSource.id = :id "),
 
@@ -84,6 +98,7 @@ import javax.persistence.Table;
 public class PackageVersionContentSource implements Serializable {
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_NO_FETCH = "PackageVersionContentSource.findByContentSourceIdNoFetch";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID = "PackageVersionContentSource.findByContentSourceId";
+    public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_REPO_ID = "PackageVersionContentSource.findByContentSourceIdAndRepoId";
     public static final String QUERY_FIND_BY_CONTENT_SOURCE_ID_COUNT = "PackageVersionContentSource.findByContentSourceIdCount";
     public static final String QUERY_FIND_BY_ALL_CONTENT_SOURCE_IDS = "PackageVersionContentSource.findByAllContentSourceIds";
     public static final String QUERY_FIND_BY_ALL_CONTENT_SOURCE_IDS_COUNT = "PackageVersionContentSource.findByAllContentSourceIdsCount";

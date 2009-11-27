@@ -23,17 +23,19 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.composite.RepoComposite;
-import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
+import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 
 @Local
 public interface RepoManagerLocal {
@@ -104,13 +106,28 @@ public interface RepoManagerLocal {
     PageList<PackageVersion> findPackageVersionsInRepo(Subject subject, int repoId, String filter, PageControl pc);
 
     /**
+     * Get the overall sync status of this Repository.  This is a summation of all the syncs.
+     * 
+     * There is a weight to the status since this returns the most 'relevant' status:
+     * 
+     * 1) ContentSourceSyncStatus.FAILURE
+     * 2) ContentSourceSyncStatus.INPROGRESS
+     * 3) ContentSourceSyncStatus.SUCCESS
+     * 
+
+     * @param subject caller
+     * @param repoId to calc status for
+     * @return String summary of the status of this Repository
+     */
+    String calculateSyncStatus(Subject subject, int repoId);
+
+    /**
      */
     void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
 
     /**
      */
-    void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds)
-        throws RepoException;
+    void removeContentSourcesFromRepo(Subject subject, int repoId, int[] contentSourceIds) throws RepoException;
 
     /**
      */
@@ -127,6 +144,47 @@ public interface RepoManagerLocal {
      * @param relationshipTypeName must identify an existing relationship in the database
      */
     void addRepoRelationship(Subject subject, int repoId, int relatedRepoId, String relationshipTypeName);
+
+    /**
+     * Functions similar to {@link RepoManagerRemote#createRepo(Subject, Repo)} except that it will ensure
+     * the candidate bit on the repo parameter is correctly set.
+     *
+     * @param subject user creating the repo
+     * @param repo    repo data to create
+     * @return persisted repo (ID will be populated)
+     * @throws RepoException if the repo contains invalid data
+     */
+    Repo createCandidateRepo(Subject subject, Repo repo) throws RepoException;
+
+    /**
+     * Removes candidate repos whose only content source is the indicated content source.
+     *
+     * @param subject         user performing the delete
+     * @param contentSourceId identifies the content source
+     */
+    void deleteCandidatesWithOnlyContentSource(Subject subject, int contentSourceId);
+
+    /**
+     * Handles a repo report from a content provider, adding and removing candidate repos as necessary into the
+     * database.
+     *
+     * @param subject         user triggering the report processing
+     * @param report          cannot be <code>null</code>
+     * @param contentSourceId identifies the content source that
+     * @param result          buffer used to store the results of dealing with the report
+     */
+    void processRepoImportReport(Subject subject, RepoImportReport report, int contentSourceId, StringBuilder result);
+
+    /**
+     * Changes the specified repos from being candidates in the system into full blown repositories,
+     * allowing their packages to be syncced and resources to subscribe to them.
+     *
+     * @param subject user performing the import
+     * @param repoIds the repos being imported; they must refer to repos in the database and must be flagged
+     *                as candidates (i.e. an error will occur if an already imported repo is specified)
+     * @throws RepoException if one or more of the repo IDs does not exist in the DB or is not a candidate
+     */
+    void importCandidateRepo(Subject subject, List<Integer> repoIds) throws RepoException;
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
@@ -219,5 +277,17 @@ public interface RepoManagerLocal {
      * @see RepoManagerRemote#updateRepo(Subject, Repo)
      */
     Repo updateRepo(Subject subject, Repo repo) throws RepoException;
+
+    /**
+     * @see RepoManagerRemote#findAssociatedDistributions(Subject, int, PageControl)
+     */
+    PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
+
+    /**
+     * Syncronize the content associated with the repoIds passed in.
+     * @param repoIds to syncronize
+     * @return count of the number of repositories synced.
+     */
+    int synchronizeRepos(Subject subject, Integer[] repoIds);
 
 }

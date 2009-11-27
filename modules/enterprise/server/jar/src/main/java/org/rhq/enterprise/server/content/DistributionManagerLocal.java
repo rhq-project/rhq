@@ -24,7 +24,9 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.DistributionFile;
 
+import java.util.List;
 
 /**
  * @author Pradeep Kilambi
@@ -41,7 +43,7 @@ public interface DistributionManagerLocal {
      * @return newly created distribution tree object
      */
     Distribution createDistribution(Subject subject, String kslabel, String basepath, DistributionType disttype)
-            throws DistributionException;
+        throws DistributionException;
 
     /**
      * Deletes a given instance of distribution object. If the object does not exist
@@ -53,9 +55,9 @@ public interface DistributionManagerLocal {
     /**
      * Deletes a given instance of distribution object. If the object does not exist
      * @param subject
-     * @param kstreeId
+     * @param distId
      */
-    void deleteDistributionByKSTreeId(Subject subject, int kstreeId);
+    void deleteDistributionByDistId(Subject subject, int distId);
 
     /**
      * get the kickstart tree bits either from database or filesystem based on kickstart label
@@ -79,7 +81,25 @@ public interface DistributionManagerLocal {
      */
     Distribution getDistributionByPath(String basepath);
 
+    /**
+     * get list of distribution files
+     * @param distid
+     * @return list of distro file by dist id
+     */
+    List<DistributionFile> getDistributionFilesByDistId(int distid);
 
+     /**
+     * delete list of distribution files
+      * @param subject
+     * @param distid
+     *
+     */
+    void deleteDistributionFilesByDistId(Subject subject, int distid);
 
-    
+    /**
+     * Returns a DistributionType for given name
+     * @param name name of distribution type
+     * @return distribution type from db
+     */
+    DistributionType getDistributionTypeByName(String name);
 }

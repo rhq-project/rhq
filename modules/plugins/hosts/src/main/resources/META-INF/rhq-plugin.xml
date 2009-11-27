@@ -29,15 +29,11 @@
 
       <plugin-configuration>
           <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Hosts" required="true" readOnly="true"
-                             description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+                             description="the name of the Augeas module/lens to use for loading and updating this Resource's configuration"/>
 
-          <c:simple-property name="configurationFile" displayName="Hosts File Path" type="file" required="true" readOnly="true"
-                             description="the absolute path of the hosts file (e.g. /etc/hosts on Unix systems or C:\windows\system32\drivers\etc\hosts)"/>
-<!--
-          <c:map-property name="listMemberMapKeyNames">
-              <c:simple-property name="." default="key" readOnly="true"/>
-          </c:map-property>
--->
+          <c:simple-property name="configurationFilesInclusionPatterns"
+                             default="/etc/hosts" required="true" readOnly="true"
+                             description="the absolute paths of the configuration files, delimited with pipe characters; wildcards are permitted in the last component of the path (e.g. /etc/cron.d/*)"/>
       </plugin-configuration>
 
       <resource-configuration>

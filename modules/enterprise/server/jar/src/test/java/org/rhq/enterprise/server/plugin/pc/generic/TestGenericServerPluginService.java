@@ -29,6 +29,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
@@ -96,9 +97,9 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         }
 
         @Override
-        protected List<String> getDisabledPluginNames() {
+        protected List<PluginKey> getDisabledPluginNames() {
             // in the real world, the db is checked for enable flag, here we say all plugins are enabled
-            return new ArrayList<String>();
+            return new ArrayList<PluginKey>();
         }
     }
 
@@ -195,11 +196,11 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
                 }
 
                 File pluginFile = new File(env.getPluginUrl().toURI());
-                Plugin plugin = new Plugin(0, env.getPluginName(), pluginFile.getName(), pluginDescriptor
-                    .getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor.getDescription(), "",
-                    MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor.getVersion(), pluginDescriptor
-                        .getVersion(), PluginDeploymentType.SERVER, pluginConfig, scheduledJobsConfig, System
-                        .currentTimeMillis(), System.currentTimeMillis());
+                Plugin plugin = new Plugin(0, env.getPluginKey().getPluginName(), pluginFile.getName(),
+                    pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor
+                        .getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor
+                        .getVersion(), pluginDescriptor.getVersion(), PluginDeploymentType.SERVER, pluginConfig,
+                    scheduledJobsConfig, System.currentTimeMillis(), System.currentTimeMillis());
                 return plugin;
             } catch (Exception e) {
                 throw new RuntimeException(e);
@@ -210,7 +211,7 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment)
             throws Exception {
             ServerPluginComponent component = super.createServerPluginComponent(environment);
-            components.put(environment.getPluginName(), component);
+            components.put(environment.getPluginKey().getPluginName(), component);
             return component;
         }
     }

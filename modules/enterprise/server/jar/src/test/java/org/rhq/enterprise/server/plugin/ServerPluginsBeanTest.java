@@ -348,9 +348,9 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         EntityManager em = getEntityManager();
         getTransactionManager().begin();
         try {
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_DEPLOYMENT);
             q.setParameter("name", pluginName);
-            q.setParameter("type", PluginDeploymentType.SERVER);
+            q.setParameter("deployment", PluginDeploymentType.SERVER);
             return (Plugin) q.getSingleResult();
         } finally {
             getTransactionManager().rollback();

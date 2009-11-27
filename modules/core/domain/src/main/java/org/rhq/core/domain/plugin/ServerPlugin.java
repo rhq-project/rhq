@@ -32,30 +32,30 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * An agent plugin.
+ * A server plugin.
  * 
  * This object contains information about the plugin jar itself (e.g. its name and MD5).
  * It may also contain the jar contents ({@link #getContent()}).
  */
-@DiscriminatorValue("AGENT")
+@DiscriminatorValue("SERVER")
 @NamedQueries( {
 //
     // helps you determine if a plugin is installed or was deleted
-    @NamedQuery(name = Plugin.QUERY_GET_STATUS_BY_NAME, query = "" //
+    @NamedQuery(name = ServerPlugin.QUERY_GET_STATUS_BY_NAME, query = "" //
         + " SELECT p.status " //
-        + "   FROM Plugin AS p " //
+        + "   FROM ServerPlugin AS p " //
         + "  WHERE p.name = :name)"), //
 
     // helps you determine which installed plugins are enabled or disabled
-    @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
+    @NamedQuery(name = ServerPlugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
         + " SELECT p.name " //
-        + "   FROM Plugin AS p " //
+        + "   FROM ServerPlugin AS p " //
         + "  WHERE p.enabled = :enabled " // 
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_BY_IDS, query = "" //
-        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_BY_IDS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
         + "        p.id, " //
         + "        p.name, " //
         + "        p.path, " //
@@ -72,15 +72,15 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM ServerPlugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
-        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_BY_NAME, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
         + "        p.id, " //
         + "        p.name, " //
         + "        p.path, " //
@@ -97,7 +97,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM ServerPlugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name " //
@@ -105,8 +105,8 @@ import org.rhq.core.domain.configuration.Configuration;
 
     // gets the plugin, even if it is deleted
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_ANY_BY_NAME, query = "" //
-        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ANY_BY_NAME, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
         + "        p.id, " //
         + "        p.name, " //
         + "        p.path, " //
@@ -123,15 +123,15 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM ServerPlugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name "), //
 
     // finds all installed - ignores those plugins marked as deleted
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_ALL_INSTALLED, query = "" //
-        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_INSTALLED, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
         + "        p.id, " //
         + "        p.name, " //
         + "        p.path, " //
@@ -148,81 +148,51 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " //
+        + "   FROM ServerPlugin AS p " //
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
-    @NamedQuery(name = Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
-        + "UPDATE Plugin p " //
+    @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
+        + "UPDATE ServerPlugin p " //
         + "   SET p.enabled = :enabled " //
-        + " WHERE p.id IN (:ids)"),
+        + " WHERE p.id IN (:ids)")
 
-    // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = Plugin.QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY, query = "" //
-        + "  SELECT new org.rhq.core.domain.plugin.Plugin( " //
-        + "         p.id, " //
-        + "         p.name, " //
-        + "         p.path, " //
-        + "         p.displayName, " //
-        + "         p.enabled, " //
-        + "         p.status, " //
-        + "         p.description, " //
-        + "         p.help, " //
-        + "         p.md5, " //
-        + "         p.version, " //
-        + "         p.ampsVersion, " //
-        + "         p.deployment, " //
-        + "         p.pluginConfiguration, " //
-        + "         p.scheduledJobsConfiguration, " //
-        + "         p.ctime, " //
-        + "         p.mtime) " //
-        + "    FROM Plugin p " //
-        + "         LEFT JOIN p.pluginConfiguration " // 
-        + "         LEFT JOIN p.scheduledJobsConfiguration " // 
-        + "   WHERE p.status = 'INSTALLED' AND " //
-        + "         p.name IN ( SELECT rt.plugin " //
-        + "                       FROM Resource res " //
-        + "                       JOIN res.resourceType rt " //
-        + "                      WHERE ( rt.category = :resourceCategory OR :resourceCategory IS NULL ) " //
-        + "                        AND ( rt.name = :resourceTypeName OR :resourceTypeName IS NULL ) ) " //
-        + " ORDER BY p.name") //
 })
 @Entity
-public class Plugin extends AbstractPlugin {
+public class ServerPlugin extends AbstractPlugin {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_GET_STATUS_BY_NAME = "Plugin.queryGetStatusByName";
-    public static final String QUERY_GET_NAMES_BY_ENABLED = "Plugin.queryGetNamesByEnabled";
-    public static final String QUERY_FIND_BY_IDS = "Plugin.findByIds";
-    public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
-    public static final String QUERY_FIND_ANY_BY_NAME = "Plugin.findAnyByName";
-    public static final String QUERY_FIND_ALL_INSTALLED = "Plugin.findAllInstalled";
-    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
-    public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
+    public static final String QUERY_GET_STATUS_BY_NAME = "ServerPlugin.queryGetStatusByName";
+    public static final String QUERY_GET_NAMES_BY_ENABLED = "ServerPlugin.queryGetNamesByEnabled";
+    public static final String QUERY_FIND_BY_IDS = "ServerPlugin.findByIds";
+    public static final String QUERY_FIND_BY_NAME = "ServerPlugin.findByName";
+    public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
+    public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
+    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
 
-    public Plugin() {
+    public ServerPlugin() {
         super();
-        setDeployment(PluginDeploymentType.AGENT);
+        setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public Plugin(@NotNull String name, String path) {
+    public ServerPlugin(@NotNull String name, String path) {
         super(name, path);
-        setDeployment(PluginDeploymentType.AGENT);
+        setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public Plugin(String name, String path, String md5) {
+    public ServerPlugin(String name, String path, String md5) {
         super(name, path, md5);
-        setDeployment(PluginDeploymentType.AGENT);
+        setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public Plugin(String name, String path, byte[] content) {
+    public ServerPlugin(String name, String path, byte[] content) {
         super(name, path, content);
-        setDeployment(PluginDeploymentType.AGENT);
+        setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public Plugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
+    public ServerPlugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
         String description, String help, String md5, String version, String ampsVersion,
         PluginDeploymentType deployment, Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime,
         long mtime) {
@@ -230,15 +200,17 @@ public class Plugin extends AbstractPlugin {
         super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion, deployment,
             pluginConfig, scheduledJobsConfig, ctime, mtime);
 
-        if (deployment != PluginDeploymentType.AGENT) {
-            throw new IllegalArgumentException("Plugin must only ever be of deployment type == AGENT: " + deployment);
+        if (deployment != PluginDeploymentType.SERVER) {
+            throw new IllegalArgumentException("ServerPlugin must only ever be of deployment type == SERVER: "
+                + deployment);
         }
     }
 
     @Override
     public void setDeployment(PluginDeploymentType deployment) {
-        if (deployment != PluginDeploymentType.AGENT) {
-            throw new IllegalArgumentException("Plugin can only ever have deployment type of AGENT: " + deployment);
+        if (deployment != PluginDeploymentType.SERVER) {
+            throw new IllegalArgumentException("ServerPlugin can only ever have deployment type of SERVER: "
+                + deployment);
         }
         super.setDeployment(deployment);
     }
@@ -249,7 +221,7 @@ public class Plugin extends AbstractPlugin {
             return true;
         }
 
-        if ((obj == null) || !(obj instanceof Plugin)) {
+        if ((obj == null) || !(obj instanceof ServerPlugin)) {
             return false;
         }
 
@@ -263,6 +235,6 @@ public class Plugin extends AbstractPlugin {
 
     @Override
     public String toString() {
-        return "AgentPlugin " + super.toString();
+        return "ServerPlugin " + super.toString();
     }
 }

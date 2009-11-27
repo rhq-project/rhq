@@ -115,9 +115,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<Plugin>(); // nothing to do
         }
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_DEPLOYMENT);
         query.setParameter("ids", pluginIds);
-        query.setParameter("type", PluginDeploymentType.SERVER);
+        query.setParameter("deployment", PluginDeploymentType.SERVER);
         return query.getResultList();
     }
 
@@ -131,9 +131,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     public List<String> getServerPluginNamesByEnabled(boolean enabled) {
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE);
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_DEPLOYMENT);
         query.setParameter("enabled", Boolean.valueOf(enabled));
-        query.setParameter("type", PluginDeploymentType.SERVER);
+        query.setParameter("deployment", PluginDeploymentType.SERVER);
         return query.getResultList();
     }
 
@@ -354,9 +354,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void purgeServerPlugin(Subject subject, String pluginName) {
-        Query q = this.entityManager.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+        Query q = this.entityManager.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_DEPLOYMENT);
         q.setParameter("name", pluginName);
-        q.setParameter("type", PluginDeploymentType.SERVER);
+        q.setParameter("deployment", PluginDeploymentType.SERVER);
         Plugin doomed = (Plugin) q.getSingleResult();
 
         // get the reference to attach to em and use the em.remove. this cascade deletes too.
@@ -421,9 +421,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     public PluginStatusType getServerPluginStatus(String pluginName) {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_DEPLOYMENT);
         q.setParameter("name", pluginName);
-        q.setParameter("type", PluginDeploymentType.SERVER);
+        q.setParameter("deployment", PluginDeploymentType.SERVER);
         PluginStatusType status;
         try {
             status = (PluginStatusType) q.getSingleResult();

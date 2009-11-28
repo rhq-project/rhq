@@ -145,7 +145,7 @@ public class PluginKey {
             return false;
 
         }
-        if (!deployment.equals(other.deployment)) {
+        if (deployment != other.deployment) {
             return false;
         }
         return true;

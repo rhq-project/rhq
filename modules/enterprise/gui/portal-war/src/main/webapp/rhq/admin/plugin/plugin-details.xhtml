@@ -75,7 +75,7 @@
 
               <ui:insert name="pre-config" />
 
-              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null}">
+              <rich:panel rendered="#{InstalledPluginUIBean.pluginConfigurationDefinition != null}">
                  <f:facet name="header">
                     <h:outputText value="Plugin Configuration"/>
                  </f:facet>
@@ -85,7 +85,7 @@
                     readOnly="#{not editMode}" />
               </rich:panel>
 
-              <rich:panel rendered="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
+              <rich:panel rendered="#{InstalledPluginUIBean.scheduledJobsDefinition != null}">
                  <f:facet name="header">
                     <h:outputText value="Scheduled Jobs"/>
                  </f:facet>

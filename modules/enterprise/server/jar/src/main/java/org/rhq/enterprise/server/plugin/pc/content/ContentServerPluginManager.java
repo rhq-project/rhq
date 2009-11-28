@@ -112,7 +112,7 @@ public class ContentServerPluginManager extends ServerPluginManager {
 
     @Override
     public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
-        metadataManager.unloadPlugin(env.getPluginName());
+        metadataManager.unloadPlugin(env.getPluginKey().getPluginName());
         super.unloadPlugin(env);
     };
 }

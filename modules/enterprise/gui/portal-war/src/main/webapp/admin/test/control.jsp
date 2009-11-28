@@ -24,7 +24,9 @@
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.support.SupportManagerLocal" %>
-<%@page import="org.rhq.enterprise.server.plugin.ServerPluginsLocal"%><html>
+<%@page import="org.rhq.enterprise.server.plugin.ServerPluginsLocal"%>
+<%@page import="org.rhq.core.domain.plugin.PluginKey"%>
+<%@page import="org.rhq.core.domain.plugin.PluginDeploymentType"%><html>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 
@@ -203,7 +205,8 @@
       else if ("purgeServerPlugin".equals(mode))
       {
          String serverPluginName = request.getParameter("serverPluginName");
-         serverPlugins.purgeServerPlugin(subjectManager.getOverlord(), serverPluginName);
+         PluginKey key = new PluginKey(PluginDeploymentType.SERVER, "not-needed", serverPluginName);
+         serverPlugins.purgeServerPlugin(subjectManager.getOverlord(), key);
          result = "OK - you can now try to re-register a plugin with the name [" + serverPluginName + "]";
       }
       else if ("typeManagerRemote".equals(mode))

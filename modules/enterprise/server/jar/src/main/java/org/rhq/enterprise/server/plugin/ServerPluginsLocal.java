@@ -178,11 +178,9 @@ public interface ServerPluginsLocal {
     PluginStatusType getServerPluginStatus(PluginKey pluginKey);
 
     /**
-     * This will return a map containing all plugins currently known to the master plugin container.
-     * This will return installed plugins that are both enabled and disabled.
-     * Note that if the master plugin container is not running, an empty map is returned.
+     * This will return a map containing all installed plugins that are both enabled and disabled.
      * 
      * @return keys of all enabled and disabled plugins, keyed on their types 
      */
-    Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType();
+    Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType();
 }

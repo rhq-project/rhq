@@ -130,7 +130,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     public List<PluginKey> getServerPluginKeysByEnabled(boolean enabled) {
-        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_NAMES_BY_ENABLED);
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_KEYS_BY_ENABLED);
         query.setParameter("enabled", Boolean.valueOf(enabled));
         return query.getResultList();
     }
@@ -425,24 +425,25 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return status;
     }
 
-    // we need this method to talk to the master plugin container because the plugin data model
-    // does not contain information as to what type a plugin is. It only has information about
-    // where the plugin is deployed (agent or server) but it doesn't indicate if a plugin
-    // if of type "alert plugin" or "generic plugin". That is only known when the plugin descriptor
-    // is parsed, which happens when the master plugin container is initialized. Therefore, this
-    // needs to get plugin info from the master plugin container while the master is running.
-    public Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType() {
+    public Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS);
+        List<PluginKey> keys = q.getResultList(); // all installed plugins, both enabled and disabled
+
         Map<ServerPluginType, List<PluginKey>> allPlugins = new HashMap<ServerPluginType, List<PluginKey>>();
 
-        MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
-        if (master != null) {
-            List<ServerPluginType> types = master.getServerPluginTypes();
-            for (ServerPluginType type : types) {
-                List<PluginKey> plugins = master.getAllPluginsByPluginType(type);
-                allPlugins.put(type, plugins);
+        for (PluginKey key : keys) {
+            try {
+                ServerPluginType type = new ServerPluginType(key.getPluginType());
+                List<PluginKey> knownPluginsForType = allPlugins.get(type);
+                if (knownPluginsForType == null) {
+                    knownPluginsForType = new ArrayList<PluginKey>();
+                    allPlugins.put(type, knownPluginsForType);
+                }
+                knownPluginsForType.add(key);
+            } catch (Exception e) {
+                log.warn("Invalid plugin key found [" + key + "]", e);
             }
         }
-
         return allPlugins;
     }
 

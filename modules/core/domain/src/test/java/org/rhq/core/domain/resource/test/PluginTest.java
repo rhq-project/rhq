@@ -80,8 +80,6 @@ public class PluginTest extends AbstractEJB3Test {
             em.persist(plugin);
             id = plugin.getId();
             assert id > 0;
-            assert plugin.getPluginConfiguration() == null : "there was no config that should have been here";
-            assert plugin.getScheduledJobsConfiguration() == null : "there was no config that should have been here";
 
             q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME);
             q.setParameter("name", plugin.getName());
@@ -99,8 +97,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
             assert plugin.getDeployment() == PluginDeploymentType.AGENT;
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp() == null;
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -115,31 +111,13 @@ public class PluginTest extends AbstractEJB3Test {
             String description = "description-UPDATED";
             String help = "help-UPDATED";
             PluginDeploymentType deployment = PluginDeploymentType.AGENT;
-            Configuration pluginConfig = new Configuration();
-            Configuration jobsConfig = new Configuration();
-            pluginConfig.put(new PropertySimple("first", "last"));
-            jobsConfig.put(new PropertySimple("aaa", "bbb"));
 
             em.close();
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
             getTransactionManager().begin();
             em = getEntityManager();
 
-            em.persist(pluginConfig);
-            em.persist(jobsConfig);
             em.flush(); // gotta get those two persists to flush to the DB
-
-            // do what ServerPluginsBean/ResourceMetadataManagerBean.updateServerPluginExceptContent does
-            Configuration config = plugin.getPluginConfiguration();
-            if (config != null) {
-                config = em.merge(config);
-                plugin.setPluginConfiguration(config);
-            }
-            config = plugin.getScheduledJobsConfiguration();
-            if (config != null) {
-                config = em.merge(config);
-                plugin.setScheduledJobsConfiguration(config);
-            }
 
             Plugin pluginEntity = em.getReference(Plugin.class, plugin.getId());
             pluginEntity.setName(name);
@@ -151,8 +129,6 @@ public class PluginTest extends AbstractEJB3Test {
             pluginEntity.setVersion(version);
             pluginEntity.setAmpsVersion(ampsVersion);
             pluginEntity.setDeployment(deployment);
-            pluginEntity.setPluginConfiguration(pluginConfig);
-            pluginEntity.setScheduledJobsConfiguration(jobsConfig);
             pluginEntity.setDescription(description);
             pluginEntity.setHelp(help);
             pluginEntity.setMtime(System.currentTimeMillis());
@@ -180,8 +156,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == PluginDeploymentType.AGENT;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             // and what we really want to test - ensure the content remained intact after the update
             assert new String(plugin.getContent()).equals(new String(content));
@@ -248,8 +222,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
             assert plugin.getDeployment() == PluginDeploymentType.AGENT;
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
             assert plugin.getHelp() == null;
             assert plugin.getContent() == null;
 
@@ -299,8 +271,6 @@ public class PluginTest extends AbstractEJB3Test {
             plugin.setHelp(help);
             plugin.setContent(content);
             plugin.setDeployment(deployment);
-            plugin.setPluginConfiguration(pluginConfig);
-            plugin.setScheduledJobsConfiguration(jobsConfig);
 
             em.persist(plugin);
             assert plugin.getId() > 0;
@@ -317,8 +287,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -337,8 +305,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
@@ -356,8 +322,6 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
@@ -377,8 +341,6 @@ public class PluginTest extends AbstractEJB3Test {
                     assert plugin.getAmpsVersion().equals(ampsVersion);
                     assert p.getDescription().equals(description);
                     assert plugin.getDeployment() == deployment;
-                    assert plugin.getPluginConfiguration().equals(pluginConfig);
-                    assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
                     assert p.getHelp().equals(help);
                     assert p.getContent() == null;
                     break;

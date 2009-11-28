@@ -8,8 +8,8 @@ import javax.ejb.Local;
 import javax.persistence.NoResultException;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -25,7 +25,7 @@ public interface ServerPluginsLocal {
      * 
      * @return all plugins found in the DB
      */
-    List<Plugin> getServerPlugins();
+    List<ServerPlugin> getServerPlugins();
 
     /**
      * Returns a plugin with the given name.
@@ -33,7 +33,7 @@ public interface ServerPluginsLocal {
      * @return the named plugin
      * @throws NoResultException when no plugin with that name exists
      */
-    Plugin getServerPlugin(String name);
+    ServerPlugin getServerPlugin(String name);
 
     /**
      * Methods in this object that return plugins normally do not include
@@ -46,7 +46,7 @@ public interface ServerPluginsLocal {
      * @return the same plugin, with the relationship data loaded
      * @throws NoResultException when no plugin with that name exists
      */
-    Plugin getServerPluginRelationships(Plugin plugin);
+    ServerPlugin getServerPluginRelationships(ServerPlugin plugin);
 
     /**
      * Get a list of plugins from their IDs.
@@ -54,7 +54,7 @@ public interface ServerPluginsLocal {
      * @param pluginIds the IDs of the plugins to load.
      * @return plugins matching the given IDs
      */
-    List<Plugin> getServerPluginsById(List<Integer> pluginIds);
+    List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**
      * Given a plugin name, returns the descriptor for that plugin.
@@ -138,7 +138,7 @@ public interface ServerPluginsLocal {
      * @return the plugin after being persisted
      * @throws Exception if failed to fully register the plugin 
      */
-    Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception;
+    ServerPlugin registerServerPlugin(Subject subject, ServerPlugin plugin, File pluginFile) throws Exception;
 
     /**
      * Given a plugin that already exists, this will update that plugin's data in the database,
@@ -150,14 +150,14 @@ public interface ServerPluginsLocal {
      * @return the updated plugin
      * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
      */
-    Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception;
+    ServerPlugin updateServerPluginExceptContent(Subject subject, ServerPlugin plugin) throws Exception;
 
     /**
      * Purges the server plugin from the database. This ensures that, after this method returns,
      * the given plugin will be unknown. The plugin can be installed again later.
      * 
      * This has "requires new" semantics, so the results are committed immediately upon return.
-     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, Plugin, File)} - you'll
+     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, ServerPlugin, File)} - you'll
      * probably want to use that instead. Do not blindly purge server plugins using this method unless you
      * know what you are doing.
      * 

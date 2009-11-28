@@ -22,10 +22,14 @@
  */
 package org.rhq.core.domain.plugin;
 
+import javax.persistence.CascadeType;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +71,6 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
@@ -92,7 +95,6 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
@@ -118,7 +120,6 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
@@ -143,7 +144,6 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
@@ -172,6 +172,14 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
 
+    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration scheduledJobsConfiguration;
+
+    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
+    private Configuration pluginConfiguration;
+
     public ServerPlugin() {
         super();
         setDeployment(PluginDeploymentType.SERVER);
@@ -193,17 +201,13 @@ public class ServerPlugin extends AbstractPlugin {
     }
 
     public ServerPlugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
-        String description, String help, String md5, String version, String ampsVersion,
-        PluginDeploymentType deployment, Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime,
-        long mtime) {
+        String description, String help, String md5, String version, String ampsVersion, Configuration pluginConfig,
+        Configuration scheduledJobsConfig, long ctime, long mtime) {
 
-        super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion, deployment,
-            pluginConfig, scheduledJobsConfig, ctime, mtime);
-
-        if (deployment != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("ServerPlugin must only ever be of deployment type == SERVER: "
-                + deployment);
-        }
+        super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion,
+            PluginDeploymentType.SERVER, ctime, mtime);
+        this.pluginConfiguration = pluginConfig;
+        this.scheduledJobsConfiguration = scheduledJobsConfig;
     }
 
     @Override
@@ -213,6 +217,32 @@ public class ServerPlugin extends AbstractPlugin {
                 + deployment);
         }
         super.setDeployment(deployment);
+    }
+
+    /**
+     * If the plugin, itself, has configuration associated with it, this is that configuration.
+     * 
+     * @return the configuration associated with the plugin itself
+     */
+    public Configuration getPluginConfiguration() {
+        return pluginConfiguration;
+    }
+
+    public void setPluginConfiguration(Configuration pluginConfiguration) {
+        this.pluginConfiguration = pluginConfiguration;
+    }
+
+    /**
+     * If the plugin has jobs associated with it, this is the configuration for those jobs.
+     * 
+     * @return scheduled job configuration for jobs that the plugin defined.
+     */
+    public Configuration getScheduledJobsConfiguration() {
+        return scheduledJobsConfiguration;
+    }
+
+    public void setScheduledJobsConfiguration(Configuration scheduledJobsConfiguration) {
+        this.scheduledJobsConfiguration = scheduledJobsConfiguration;
     }
 
     @Override

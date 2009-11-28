@@ -51,9 +51,9 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -159,7 +159,7 @@ public class ServerPluginScanner {
 
             log.info("Registering RHQ server plugin [" + pluginName + "], version " + version);
 
-            Plugin plugin = new Plugin(pluginName, pluginFile.getName());
+            ServerPlugin plugin = new ServerPlugin(pluginName, pluginFile.getName());
             plugin.setDeployment(PluginDeploymentType.SERVER);
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
             plugin.setEnabled(!descriptor.isDisabledOnDiscovery());
@@ -251,7 +251,7 @@ public class ServerPluginScanner {
             String md5 = null;
 
             PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(pluginJar);
-            Plugin plugin = null;
+            ServerPlugin plugin = null;
             if (pluginWithDescriptor != null) {
                 plugin = pluginWithDescriptor.plugin;
             }
@@ -283,15 +283,16 @@ public class ServerPluginScanner {
         // Let's check to see if there are any obsolete plugins that need to be deleted.
         // This is needed if plugin-A-1.0.jar exists and someone deployed plugin-A-1.1.jar but fails to delete plugin-A-1.0.jar.
         doomedPluginFiles.clear();
-        HashMap<String, Plugin> pluginsByName = new HashMap<String, Plugin>();
+        HashMap<String, ServerPlugin> pluginsByName = new HashMap<String, ServerPlugin>();
         for (Entry<File, PluginWithDescriptor> currentPluginFileEntry : this.serverPluginsOnFilesystem.entrySet()) {
-            Plugin currentPlugin = currentPluginFileEntry.getValue().plugin;
-            Plugin existingPlugin = pluginsByName.get(currentPlugin.getName());
+            ServerPlugin currentPlugin = currentPluginFileEntry.getValue().plugin;
+            ServerPlugin existingPlugin = pluginsByName.get(currentPlugin.getName());
             if (existingPlugin == null) {
                 // this is the usual case - this is the only plugin with the given name we've seen
                 pluginsByName.put(currentPlugin.getName(), currentPlugin);
             } else {
-                Plugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(currentPlugin, existingPlugin);
+                ServerPlugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(currentPlugin,
+                    existingPlugin);
                 if (obsolete == null) {
                     obsolete = currentPlugin; // both were identical, but we only want one file so pick one to get rid of
                 }
@@ -317,13 +318,13 @@ public class ServerPluginScanner {
     }
 
     /**
-     * Creates a {@link Plugin} object for the given plugin jar and caches it.
+     * Creates a {@link ServerPlugin} object for the given plugin jar and caches it.
      * @param pluginJar information about this plugin jar will be cached
      * @param md5 if known, this is the plugin jar's MD5, <code>null</code> if not known
      * @return the plugin jar files's information that has been cached
      * @throws Exception if failed to get information about the plugin
      */
-    private Plugin cacheFilesystemServerPluginJar(File pluginJar, String md5) throws Exception {
+    private ServerPlugin cacheFilesystemServerPluginJar(File pluginJar, String md5) throws Exception {
         if (md5 == null) { // don't calculate the MD5 is we've already done it before
             md5 = MessageDigestGenerator.getDigestString(pluginJar);
         }
@@ -331,11 +332,10 @@ public class ServerPluginScanner {
         ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
         String version = ServerPluginDescriptorUtil.getPluginVersion(pluginJar, descriptor).toString();
         String name = descriptor.getName();
-        Plugin plugin = new Plugin(name, pluginJar.getName());
+        ServerPlugin plugin = new ServerPlugin(name, pluginJar.getName());
         plugin.setMd5(md5);
         plugin.setVersion(version);
         plugin.setMtime(pluginJar.lastModified());
-        plugin.setDeployment(PluginDeploymentType.SERVER);
         this.serverPluginsOnFilesystem.put(pluginJar, new PluginWithDescriptor(plugin, descriptor));
         return plugin;
     }
@@ -352,7 +352,7 @@ public class ServerPluginScanner {
         ResultSet rs = null;
 
         // these are plugins (name/path/md5/mtime) that have changed in the DB but are missing from the file system
-        List<Plugin> updatedPlugins = new ArrayList<Plugin>();
+        List<ServerPlugin> updatedPlugins = new ArrayList<ServerPlugin>();
 
         // the same list as above, only they are the files that are written to the filesystem and no longer missing
         List<File> updatedFiles = new ArrayList<File>();
@@ -362,7 +362,7 @@ public class ServerPluginScanner {
             conn = ds.getConnection();
 
             // get all the plugins
-            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION FROM " + Plugin.TABLE_NAME
+            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION FROM " + ServerPlugin.TABLE_NAME
                 + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' ");
             rs = ps.executeQuery();
             while (rs.next()) {
@@ -402,13 +402,12 @@ public class ServerPluginScanner {
                 }
 
                 if (pluginWithDescriptor != null && currentFile != null && currentFile.exists()) {
-                    Plugin dbPlugin = new Plugin(name, path);
+                    ServerPlugin dbPlugin = new ServerPlugin(name, path);
                     dbPlugin.setMd5(md5);
                     dbPlugin.setVersion(version);
                     dbPlugin.setMtime(mtime);
-                    dbPlugin.setDeployment(PluginDeploymentType.SERVER);
 
-                    Plugin obsoletePlugin = ServerPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
+                    ServerPlugin obsoletePlugin = ServerPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
                         pluginWithDescriptor.plugin);
 
                     if (obsoletePlugin == pluginWithDescriptor.plugin) { // yes use == for reference equality!
@@ -449,7 +448,7 @@ public class ServerPluginScanner {
                     }
                 } else {
                     log.info("Found server plugin in the DB that we do not yet have: " + name);
-                    Plugin plugin = new Plugin(name, path, md5);
+                    ServerPlugin plugin = new ServerPlugin(name, path, md5);
                     plugin.setMtime(mtime);
                     plugin.setVersion(version);
                     plugin.setDeployment(PluginDeploymentType.SERVER);
@@ -460,9 +459,9 @@ public class ServerPluginScanner {
             JDBCUtil.safeClose(ps, rs);
 
             // write all our updated plugins to the file system
-            ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME
+            ps = conn.prepareStatement("SELECT CONTENT FROM " + ServerPlugin.TABLE_NAME
                 + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ?");
-            for (Plugin plugin : updatedPlugins) {
+            for (ServerPlugin plugin : updatedPlugins) {
                 File file = new File(this.getServerPluginDir(), plugin.getPath());
 
                 ps.setString(1, plugin.getName());
@@ -527,7 +526,7 @@ public class ServerPluginScanner {
         TransactionManager tm = null;
 
         String sql = "UPDATE "
-            + Plugin.TABLE_NAME
+            + ServerPlugin.TABLE_NAME
             + " SET CONTENT = ?, MD5 = ?, MTIME = ?, PATH = ? WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ?";
 
         // if 'different' is true, give bogus data so the plugin deployer will think the plugin on the file system is new
@@ -573,12 +572,12 @@ public class ServerPluginScanner {
     }
 
     private class PluginWithDescriptor {
-        public PluginWithDescriptor(Plugin plugin, ServerPluginDescriptorType descriptor) {
+        public PluginWithDescriptor(ServerPlugin plugin, ServerPluginDescriptorType descriptor) {
             this.plugin = plugin;
             this.descriptor = descriptor;
         }
 
-        public Plugin plugin;
+        public ServerPlugin plugin;
         public ServerPluginDescriptorType descriptor;
     }
 }

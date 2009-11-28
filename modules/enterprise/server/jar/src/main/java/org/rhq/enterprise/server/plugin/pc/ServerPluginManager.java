@@ -30,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
@@ -288,7 +288,7 @@ public class ServerPluginManager {
         List<ScheduledJobDefinition> schedules;
 
         try {
-            Plugin plugin = getPlugin(env);
+            ServerPlugin plugin = getPlugin(env);
             plugnConfig = plugin.getPluginConfiguration();
             Configuration scheduledJobsConfig = plugin.getScheduledJobsConfiguration();
             schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(scheduledJobsConfig);
@@ -306,12 +306,12 @@ public class ServerPluginManager {
      * the plugin configuration and scheduled jobs configuration.
      * 
      * @param pluginEnv
-     * @return the Plugin object for the given plugin
+     * @return the ServerPlugin object for the given plugin
      */
-    protected Plugin getPlugin(ServerPluginEnvironment pluginEnv) {
+    protected ServerPlugin getPlugin(ServerPluginEnvironment pluginEnv) {
         // get the plugin data from the database
         ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
-        Plugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginName());
+        ServerPlugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginName());
         return plugin;
     }
 

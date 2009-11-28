@@ -35,7 +35,9 @@ import org.richfaces.event.UploadEvent;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -66,7 +68,7 @@ public class InstalledPluginsUIBean {
         return resourceMetadataManagerBean.getPlugins();
     }
 
-    public Collection<Plugin> getInstalledServerPlugins() {
+    public Collection<ServerPlugin> getInstalledServerPlugins() {
 
         hasPermission();
         return serverPluginsBean.getServerPlugins();
@@ -124,9 +126,9 @@ public class InstalledPluginsUIBean {
     }
 
     public void enableServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<ServerPlugin> selectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
+        for (ServerPlugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
 
@@ -142,9 +144,9 @@ public class InstalledPluginsUIBean {
     }
 
     public void disableServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<ServerPlugin> selectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
+        for (ServerPlugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
 
@@ -160,9 +162,9 @@ public class InstalledPluginsUIBean {
     }
 
     public void undeployServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<? extends AbstractPlugin> selectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
+        for (AbstractPlugin selectedPlugin : selectedPlugins) {
             selectedPluginNames.add(selectedPlugin.getName());
         }
 
@@ -177,18 +179,18 @@ public class InstalledPluginsUIBean {
         return;
     }
 
-    private List<Integer> getIds(List<Plugin> plugins) {
+    private List<Integer> getIds(List<? extends AbstractPlugin> plugins) {
         ArrayList<Integer> ids = new ArrayList<Integer>(plugins.size());
-        for (Plugin plugin : plugins) {
+        for (AbstractPlugin plugin : plugins) {
             ids.add(plugin.getId());
         }
         return ids;
     }
 
-    private List<Plugin> getSelectedServerPlugins() {
+    private List<ServerPlugin> getSelectedServerPlugins() {
         Integer[] integerItems = getSelectedPluginIds();
         List<Integer> ids = Arrays.asList(integerItems);
-        List<Plugin> plugins = serverPluginsBean.getServerPluginsById(ids);
+        List<ServerPlugin> plugins = serverPluginsBean.getServerPluginsById(ids);
         return plugins;
     }
 

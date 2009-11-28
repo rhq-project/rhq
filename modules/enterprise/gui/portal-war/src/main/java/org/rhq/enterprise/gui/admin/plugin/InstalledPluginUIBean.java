@@ -21,19 +21,21 @@ package org.rhq.enterprise.gui.admin.plugin;
 import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
-
 import org.apache.commons.logging.LogFactory;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -53,15 +55,15 @@ public class InstalledPluginUIBean {
     public static final String MANAGED_BEAN_NAME = InstalledPluginUIBean.class.getSimpleName();
     private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
     @In
-    private Plugin plugin;
+    private AbstractPlugin plugin;
     private ConfigurationDefinition pluginConfigurationDefinition;
     private ConfigurationDefinition scheduledJobsDefinition;
 
-    public Plugin getPlugin() {
+    public AbstractPlugin getPlugin() {
         return plugin;
     }
 
-    public void setPlugin(Plugin plugin) {
+    public void setPlugin(AbstractPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -81,15 +83,15 @@ public class InstalledPluginUIBean {
         ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
 
         try {
-            serverPlugins.updateServerPluginExceptContent(EnterpriseFacesContextUtility.getSubject(), plugin);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
-                    "Configuration settings saved.");
+            serverPlugins.updateServerPluginExceptContent(EnterpriseFacesContextUtility.getSubject(),
+                (ServerPlugin) plugin);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
 
             return OUTCOME_SUCCESS;
         } catch (Exception e) {
             log.error("Error updating the plugin configurations.", e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "There was an error changing the configuration settings.", e);
+                "There was an error changing the configuration settings.", e);
 
             return null;
         }
@@ -104,8 +106,10 @@ public class InstalledPluginUIBean {
             try {
                 ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
                 ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
-                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
-                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor.getScheduledJobs());
+                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor
+                    .getPluginConfiguration());
+                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor
+                    .getScheduledJobs());
             } catch (Exception e) {
                 String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
                 log.error(err + " - Cause: " + e);
@@ -121,7 +125,8 @@ public class InstalledPluginUIBean {
     private void hasPermission() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User [" + subject.getName() + "] does not have the proper permissions to view or manage plugins");
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have the proper permissions to view or manage plugins");
         }
     }
 }

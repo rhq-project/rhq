@@ -22,27 +22,22 @@ package org.rhq.core.domain.plugin;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.MessageDigestGenerator;
 
 /**
@@ -68,14 +63,6 @@ public class AbstractPlugin implements Serializable {
     @Column(name = "DEPLOYMENT", nullable = false, insertable = false, updatable = false)
     @Enumerated(EnumType.STRING)
     private PluginDeploymentType deployment;
-
-    @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-    private Configuration scheduledJobsConfiguration;
-
-    @JoinColumn(name = "PLUGIN_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
-    private Configuration pluginConfiguration;
 
     @Column(name = "NAME", nullable = false)
     private String name;
@@ -172,28 +159,10 @@ public class AbstractPlugin implements Serializable {
      * Constructor that can build the full object except for the content byte array.
      * This is used mainly for the named queries that want to return a Plugin object
      * but does not eagerly load in the content array.
-     *  
-     * @param id
-     * @param name
-     * @param path
-     * @param displayName
-     * @param enabled
-     * @param status
-     * @param description
-     * @param help
-     * @param md5
-     * @param version
-     * @param ampsVersion
-     * @param deployment
-     * @param pluginConfig 
-     * @param scheduledJobsConfig 
-     * @param ctime
-     * @param mtime
      */
     public AbstractPlugin(int id, String name, String path, String displayName, boolean enabled,
         PluginStatusType status, String description, String help, String md5, String version, String ampsVersion,
-        PluginDeploymentType deployment, Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime,
-        long mtime) {
+        PluginDeploymentType deployment, long ctime, long mtime) {
         this.id = id;
         this.name = name;
         this.path = path;
@@ -206,8 +175,6 @@ public class AbstractPlugin implements Serializable {
         this.version = version;
         this.ampsVersion = ampsVersion;
         this.deployment = deployment;
-        this.pluginConfiguration = pluginConfig;
-        this.scheduledJobsConfiguration = scheduledJobsConfig;
         this.ctime = ctime;
         this.mtime = mtime;
     }
@@ -384,32 +351,6 @@ public class AbstractPlugin implements Serializable {
 
     public void setDeployment(PluginDeploymentType deployment) {
         this.deployment = deployment;
-    }
-
-    /**
-     * If the plugin has jobs associated with it, this is the configuration for those jobs.
-     * 
-     * @return scheduled job configuration for jobs that the plugin defined.
-     */
-    public Configuration getScheduledJobsConfiguration() {
-        return scheduledJobsConfiguration;
-    }
-
-    public void setScheduledJobsConfiguration(Configuration scheduledJobsConfiguration) {
-        this.scheduledJobsConfiguration = scheduledJobsConfiguration;
-    }
-
-    /**
-     * If the plugin, itself, has configuration associated with it, this is that configuration.
-     * 
-     * @return the configuration associated with the plugin itself
-     */
-    public Configuration getPluginConfiguration() {
-        return pluginConfiguration;
-    }
-
-    public void setPluginConfiguration(Configuration pluginConfiguration) {
-        this.pluginConfiguration = pluginConfiguration;
     }
 
     /**

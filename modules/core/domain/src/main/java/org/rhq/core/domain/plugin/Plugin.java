@@ -29,8 +29,6 @@ import javax.persistence.NamedQuery;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.configuration.Configuration;
-
 /**
  * An agent plugin.
  * 
@@ -67,14 +65,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -92,14 +85,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -118,14 +106,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name "), //
 
     // finds all installed - ignores those plugins marked as deleted
@@ -143,14 +126,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.md5, " //
         + "        p.version, " //
         + "        p.ampsVersion, " //
-        + "        p.deployment, " //
-        + "        p.pluginConfiguration, " //
-        + "        p.scheduledJobsConfiguration, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM Plugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
@@ -173,14 +151,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "         p.md5, " //
         + "         p.version, " //
         + "         p.ampsVersion, " //
-        + "         p.deployment, " //
-        + "         p.pluginConfiguration, " //
-        + "         p.scheduledJobsConfiguration, " //
         + "         p.ctime, " //
         + "         p.mtime) " //
         + "    FROM Plugin p " //
-        + "         LEFT JOIN p.pluginConfiguration " // 
-        + "         LEFT JOIN p.scheduledJobsConfiguration " // 
         + "   WHERE p.status = 'INSTALLED' AND " //
         + "         p.name IN ( SELECT rt.plugin " //
         + "                       FROM Resource res " //
@@ -223,16 +196,10 @@ public class Plugin extends AbstractPlugin {
     }
 
     public Plugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
-        String description, String help, String md5, String version, String ampsVersion,
-        PluginDeploymentType deployment, Configuration pluginConfig, Configuration scheduledJobsConfig, long ctime,
-        long mtime) {
+        String description, String help, String md5, String version, String ampsVersion, long ctime, long mtime) {
 
-        super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion, deployment,
-            pluginConfig, scheduledJobsConfig, ctime, mtime);
-
-        if (deployment != PluginDeploymentType.AGENT) {
-            throw new IllegalArgumentException("Plugin must only ever be of deployment type == AGENT: " + deployment);
-        }
+        super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion,
+            PluginDeploymentType.AGENT, ctime, mtime);
     }
 
     @Override

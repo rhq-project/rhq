@@ -50,7 +50,6 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -125,7 +124,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      */
     @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
     }
 
@@ -197,19 +196,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (plugin.getId() == 0) {
             entityManager.persist(plugin);
         } else {
-            // agent plugins don't support these configs, but if/when they do in the future, this will support it
-            // make sure we create (if necessary) and attach the configs
-            Configuration config = plugin.getPluginConfiguration();
-            if (config != null) {
-                config = entityManager.merge(config);
-                plugin.setPluginConfiguration(config);
-            }
-            config = plugin.getScheduledJobsConfiguration();
-            if (config != null) {
-                config = entityManager.merge(config);
-                plugin.setScheduledJobsConfiguration(config);
-            }
-
             // update all the fields except content
             Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
             pluginEntity.setName(plugin.getName());
@@ -221,8 +207,6 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
             pluginEntity.setVersion(plugin.getVersion());
             pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
             pluginEntity.setDeployment(plugin.getDeployment());
-            pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
-            pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
             pluginEntity.setDescription(plugin.getDescription());
             pluginEntity.setHelp(plugin.getHelp());
             pluginEntity.setMtime(plugin.getMtime());

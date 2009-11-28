@@ -19,12 +19,14 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.AutoCreate;
 import org.jboss.seam.annotations.Factory;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.web.RequestParameter;
+
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -58,13 +60,13 @@ public class InstalledPluginComponent {
         this.type = type;
     }
 
-    @Factory(value="plugin", autoCreate=true, scope=ScopeType.PAGE)
-    public Plugin lookupPlugin() {
+    @Factory(value = "plugin", autoCreate = true, scope = ScopeType.PAGE)
+    public AbstractPlugin lookupPlugin() {
         if (this.type == PluginDeploymentType.AGENT) {
             return LookupUtil.getResourceMetadataManager().getPlugin(this.name);
         } else if (this.type == PluginDeploymentType.SERVER) {
             ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-            Plugin plugin = serverPluginsBean.getServerPlugin(this.name);
+            ServerPlugin plugin = serverPluginsBean.getServerPlugin(this.name);
             return serverPluginsBean.getServerPluginRelationships(plugin);
         }
 

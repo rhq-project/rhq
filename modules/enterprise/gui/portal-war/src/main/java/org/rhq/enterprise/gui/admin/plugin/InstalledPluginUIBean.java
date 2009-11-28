@@ -35,6 +35,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -51,7 +52,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 @Name("InstalledPluginUIBean")
 public class InstalledPluginUIBean {
 
-    private static final String OUTCOME_SUCCESS = "success";
+    private static final String OUTCOME_SUCCESS_SERVER_PLUGIN = "successServerPlugin";
     public static final String MANAGED_BEAN_NAME = InstalledPluginUIBean.class.getSimpleName();
     private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
     @In
@@ -64,6 +65,14 @@ public class InstalledPluginUIBean {
     }
 
     public void setPlugin(AbstractPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public ServerPlugin getServerPlugin() {
+        return (ServerPlugin) this.plugin;
+    }
+
+    public void setServerPlugin(ServerPlugin plugin) {
         this.plugin = plugin;
     }
 
@@ -80,14 +89,14 @@ public class InstalledPluginUIBean {
     }
 
     public String updatePlugin() {
-        ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
-
+        // note we assume we are editing a server plugin - we don't support editing agent plugins yet
         try {
-            serverPlugins.updateServerPluginExceptContent(EnterpriseFacesContextUtility.getSubject(),
-                (ServerPlugin) plugin);
+            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPlugins.updateServerPluginExceptContent(subject, getServerPlugin());
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
 
-            return OUTCOME_SUCCESS;
+            return OUTCOME_SUCCESS_SERVER_PLUGIN;
         } catch (Exception e) {
             log.error("Error updating the plugin configurations.", e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
@@ -105,7 +114,8 @@ public class InstalledPluginUIBean {
         if (this.plugin.getDeployment() == PluginDeploymentType.SERVER) {
             try {
                 ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
+                PluginKey pluginKey = new PluginKey((ServerPlugin) plugin);
+                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
                 this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor
                     .getPluginConfiguration());
                 this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor

@@ -35,11 +35,14 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 /**
  * @author John Mazzitelli
@@ -100,14 +103,16 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     public void testGetPlugins() throws Exception {
         ServerPlugin p1 = registerPlugin(1);
         ServerPlugin p2 = registerPlugin(2);
-        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert pluginNames.contains(p1.getName()) : pluginNames;
-        assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        PluginKey p1key = new PluginKey(p1);
+        PluginKey p2key = new PluginKey(p2);
+        List<PluginKey> pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert pluginKeys.contains(p1key) : pluginKeys;
+        assert pluginKeys.contains(p2key) : pluginKeys;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert !pluginKeys.contains(p1key) : pluginKeys;
+        assert !pluginKeys.contains(p2key) : pluginKeys;
 
-        ServerPlugin plugin = this.serverPluginsBean.getServerPlugin(p1.getName());
+        ServerPlugin plugin = this.serverPluginsBean.getServerPlugin(p1key);
         assert plugin.getId() == p1.getId() : plugin;
         assert plugin.getName().equals(p1.getName()) : plugin;
         assetLazyInitializationException(plugin);
@@ -137,7 +142,9 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     public void testUpdatePlugins() throws Exception {
         ServerPlugin p1 = registerPlugin(1);
-        p1 = this.serverPluginsBean.getServerPlugin(p1.getName());
+        PluginKey p1key = new PluginKey(p1);
+
+        p1 = this.serverPluginsBean.getServerPlugin(p1key);
         p1 = this.serverPluginsBean.getServerPluginRelationships(p1);
 
         ServerPlugin p1update = this.serverPluginsBean.updateServerPluginExceptContent(getOverlord(), p1);
@@ -156,39 +163,41 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
     public void testDisableEnablePlugins() throws Exception {
         ServerPlugin p1 = registerPlugin(1);
         ServerPlugin p2 = registerPlugin(2);
+        PluginKey p1key = new PluginKey(p1);
+        PluginKey p2key = new PluginKey(p2);
 
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
-        List<String> disabled = this.serverPluginsBean.disableServerPlugins(getOverlord(), ids);
+        List<PluginKey> disabled = this.serverPluginsBean.disableServerPlugins(getOverlord(), ids);
         assert disabled.size() == 2 : disabled;
-        assert disabled.contains(p1.getName()) : disabled;
-        assert disabled.contains(p2.getName()) : disabled;
+        assert disabled.contains(p1key) : disabled;
+        assert disabled.contains(p2key) : disabled;
         ;
-        assert this.serverPluginsBean.getServerPlugin(p1.getName()).getStatus() == PluginStatusType.INSTALLED; // still installed
-        assert this.serverPluginsBean.getServerPlugin(p2.getName()).getStatus() == PluginStatusType.INSTALLED; // still installed
-        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert pluginNames.contains(p1.getName()) : pluginNames;
-        assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        assert this.serverPluginsBean.getServerPlugin(p1key).getStatus() == PluginStatusType.INSTALLED; // still installed
+        assert this.serverPluginsBean.getServerPlugin(p2key).getStatus() == PluginStatusType.INSTALLED; // still installed
+        List<PluginKey> pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert pluginKeys.contains(p1key) : pluginKeys;
+        assert pluginKeys.contains(p2key) : pluginKeys;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert !pluginKeys.contains(p1key) : pluginKeys;
+        assert !pluginKeys.contains(p2key) : pluginKeys;
 
         // re-enable them
         this.serverPluginsBean.enableServerPlugins(getOverlord(), ids);
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert pluginNames.contains(p1.getName()) : pluginNames;
-        assert pluginNames.contains(p2.getName()) : pluginNames;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert pluginKeys.contains(p1key) : pluginKeys;
+        assert pluginKeys.contains(p2key) : pluginKeys;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert !pluginKeys.contains(p1key) : pluginKeys;
+        assert !pluginKeys.contains(p2key) : pluginKeys;
 
         // make sure none of these enable/disable settings lost our config
-        ServerPlugin plugin = this.serverPluginsBean.getServerPlugin(p1.getName());
+        ServerPlugin plugin = this.serverPluginsBean.getServerPlugin(p1key);
         plugin = this.serverPluginsBean.getServerPluginRelationships(plugin);
         assert plugin.getPluginConfiguration() != null; // no LazyInitException should be thrown!
         assert plugin.getPluginConfiguration().equals(p1.getPluginConfiguration());
-        plugin = this.serverPluginsBean.getServerPlugin(p2.getName());
+        plugin = this.serverPluginsBean.getServerPlugin(p2key);
         plugin = this.serverPluginsBean.getServerPluginRelationships(plugin);
         assert plugin.getPluginConfiguration() != null; // no LazyInitException should be thrown!
         assert plugin.getPluginConfiguration().equals(p1.getPluginConfiguration());
@@ -198,63 +207,77 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
         PluginStatusType status;
 
-        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "1");
+        PluginKey missingKey;
+        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
+            .stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
+        status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
-        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "2");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
+            .stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
+        status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
 
         ServerPlugin p1 = registerPlugin(1);
         ServerPlugin p2 = registerPlugin(2);
+        PluginKey p1key = new PluginKey(p1);
+        PluginKey p2key = new PluginKey(p2);
 
-        status = this.serverPluginsBean.getServerPluginStatus(p1.getName());
+        status = this.serverPluginsBean.getServerPluginStatus(p1key);
         assert status == PluginStatusType.INSTALLED;
-        status = this.serverPluginsBean.getServerPluginStatus(p2.getName());
+        status = this.serverPluginsBean.getServerPluginStatus(p2key);
         assert status == PluginStatusType.INSTALLED;
 
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
-        List<String> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
+        List<PluginKey> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
         assert undeployed.size() == 2 : undeployed;
-        assert undeployed.contains(p1.getName()) : undeployed;
-        assert undeployed.contains(p2.getName()) : undeployed;
+        assert undeployed.contains(p1key) : undeployed;
+        assert undeployed.contains(p2key) : undeployed;
         ServerPlugin p1deleted = getDeletedPluginInTx(p1.getName());
         ServerPlugin p2deleted = getDeletedPluginInTx(p2.getName());
         assert p1deleted.getStatus() == PluginStatusType.DELETED;
         assert p2deleted.getStatus() == PluginStatusType.DELETED;
 
-        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert !pluginNames.contains(p1.getName()) : "deleted plugins should not be returned even here" + pluginNames;
-        assert !pluginNames.contains(p2.getName()) : "deleted plugins should not be returned even here" + pluginNames;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        List<PluginKey> pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert !pluginKeys.contains(p1key) : "deleted plugins should not be returned even here" + pluginKeys;
+        assert !pluginKeys.contains(p2key) : "deleted plugins should not be returned even here" + pluginKeys;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert !pluginKeys.contains(p1.getName()) : pluginKeys;
+        assert !pluginKeys.contains(p2.getName()) : pluginKeys;
     }
 
     public void testReRegisterPlugins() throws Exception {
 
         PluginStatusType status;
 
-        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "1");
+        PluginKey missingKey;
+        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
+            .stringify(), TEST_PLUGIN_NAME_PREFIX + "1");
+        status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
-        status = this.serverPluginsBean.getServerPluginStatus(TEST_PLUGIN_NAME_PREFIX + "2");
+        missingKey = new PluginKey(PluginDeploymentType.SERVER, new ServerPluginType(GenericPluginDescriptorType.class)
+            .stringify(), TEST_PLUGIN_NAME_PREFIX + "2");
+        status = this.serverPluginsBean.getServerPluginStatus(missingKey);
         assert status == null;
 
         ServerPlugin p1 = registerPlugin(1);
         ServerPlugin p2 = registerPlugin(2);
+        PluginKey p1key = new PluginKey(p1);
+        PluginKey p2key = new PluginKey(p2);
 
-        status = this.serverPluginsBean.getServerPluginStatus(p1.getName());
+        status = this.serverPluginsBean.getServerPluginStatus(p1key);
         assert status == PluginStatusType.INSTALLED;
-        status = this.serverPluginsBean.getServerPluginStatus(p2.getName());
+        status = this.serverPluginsBean.getServerPluginStatus(p2key);
         assert status == PluginStatusType.INSTALLED;
 
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
-        List<String> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
+        List<PluginKey> undeployed = this.serverPluginsBean.undeployServerPlugins(getOverlord(), ids);
         assert undeployed.size() == 2 : undeployed;
-        assert undeployed.contains(p1.getName()) : undeployed;
-        assert undeployed.contains(p2.getName()) : undeployed;
+        assert undeployed.contains(p1key) : undeployed;
+        assert undeployed.contains(p2key) : undeployed;
         ServerPlugin p1deleted = getDeletedPluginInTx(p1.getName());
         assert p1deleted.getStatus() == PluginStatusType.DELETED;
         assert p1deleted.getPluginConfiguration() == null; // undeploy should have removed this
@@ -264,16 +287,16 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert p2deleted.getPluginConfiguration() == null; // undeploy should have removed this
         assert p2deleted.getScheduledJobsConfiguration() == null; // undeploy should have removed this
 
-        List<String> pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert !pluginNames.contains(p1.getName()) : "deleted plugins should not be returned even here" + pluginNames;
-        assert !pluginNames.contains(p2.getName()) : "deleted plugins should not be returned even here" + pluginNames;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        List<PluginKey> pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert !pluginKeys.contains(p1key) : "deleted plugins should not be returned even here" + pluginKeys;
+        assert !pluginKeys.contains(p2key) : "deleted plugins should not be returned even here" + pluginKeys;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert !pluginKeys.contains(p1key) : pluginKeys;
+        assert !pluginKeys.contains(p2key) : pluginKeys;
 
         // purge them completely from the DB to prepare to re-register them
-        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p1.getName());
-        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p2.getName());
+        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p1key);
+        this.serverPluginsBean.purgeServerPlugin(getOverlord(), p2key);
 
         // we just purged the database, make sure our entity ID's are all zero, since the original IDs are gone
         p1.setId(0);
@@ -287,21 +310,21 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         ServerPlugin p1again = this.serverPluginsBean.registerServerPlugin(getOverlord(), p1, null);
         ServerPlugin p2again = this.serverPluginsBean.registerServerPlugin(getOverlord(), p2, null);
 
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(true);
-        assert pluginNames.contains(p1.getName()) : pluginNames;
-        assert pluginNames.contains(p2.getName()) : pluginNames;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
+        assert pluginKeys.contains(p1key) : pluginKeys;
+        assert pluginKeys.contains(p2key) : pluginKeys;
         assert p1again.getStatus() == PluginStatusType.INSTALLED;
         assert p2again.getStatus() == PluginStatusType.INSTALLED;
-        pluginNames = this.serverPluginsBean.getServerPluginNamesByEnabled(false);
-        assert !pluginNames.contains(p1.getName()) : pluginNames;
-        assert !pluginNames.contains(p2.getName()) : pluginNames;
+        pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(false);
+        assert !pluginKeys.contains(p1key) : pluginKeys;
+        assert !pluginKeys.contains(p2key) : pluginKeys;
     }
 
     private ServerPlugin registerPlugin(int index) throws Exception {
         ServerPlugin plugin = new ServerPlugin(0, TEST_PLUGIN_NAME_PREFIX + index, "path", "displayName", true,
             PluginStatusType.INSTALLED, "description", "help", "md5", "version", "ampsVersion",
-            createPluginConfiguration(), createScheduledJobsConfiguration(), System.currentTimeMillis(), System
-                .currentTimeMillis());
+            createPluginConfiguration(), createScheduledJobsConfiguration(), new ServerPluginType(
+                GenericPluginDescriptorType.class).stringify(), System.currentTimeMillis(), System.currentTimeMillis());
 
         plugin = this.serverPluginsBean.registerServerPlugin(getOverlord(), plugin, null);
         assert plugin.getId() > 0;
@@ -310,6 +333,7 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert plugin.getStatus() == PluginStatusType.INSTALLED;
         assert plugin.getPluginConfiguration() != null;
         assert plugin.getScheduledJobsConfiguration() != null;
+        assert plugin.getType().equals(new ServerPluginType(GenericPluginDescriptorType.class).stringify());
         return plugin;
     }
 

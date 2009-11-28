@@ -132,7 +132,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     public List<PluginKey> getServerPluginKeysByEnabled(boolean enabled) {
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_NAMES_BY_ENABLED);
         query.setParameter("enabled", Boolean.valueOf(enabled));
-        return xquery.getResultList(); // TODO this is a list of strings, not plugin keys!!!
+        return query.getResultList();
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -171,8 +171,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             } catch (Exception ignore) {
             }
             if (doomedPlugin != null) {
-                String pluginName = doomedPlugin.getName();
-                PluginKey pluginKey = ;
+                PluginKey pluginKey = new PluginKey(doomedPlugin);
                 doomedPlugins.add(pluginKey);
                 if (master != null) {
                     AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
@@ -215,8 +214,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             } catch (Exception ignore) {
             }
             if (doomedPlugin != null) {
-                String pluginName = doomedPlugin.getName();
-                PluginKey pluginKey = ;
+                PluginKey pluginKey = new PluginKey(doomedPlugin);
                 doomedPlugins.add(pluginKey);
                 if (master != null) {
                     AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
@@ -307,7 +305,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPlugin existingPlugin = null;
         boolean newOrUpdated = false;
         try {
-            existingPlugin = getServerPlugin(plugin.getName());
+            existingPlugin = getServerPlugin(new PluginKey(plugin));
         } catch (NoResultException nre) {
             newOrUpdated = true; // this is expected for new plugins
         }
@@ -331,7 +329,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
 
             if (plugin.getId() == 0) {
-                PluginStatusType status = getServerPluginStatus(plugin.getName());
+                PluginStatusType status = getServerPluginStatus(new PluginKey(plugin));
                 if (PluginStatusType.DELETED == status) {
                     throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
                         + "], it has been previously marked as deleted.");
@@ -401,6 +399,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             pluginEntity.setDeployment(plugin.getDeployment());
             pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
             pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
+            pluginEntity.setType(plugin.getType());
             pluginEntity.setDescription(plugin.getDescription());
             pluginEntity.setHelp(plugin.getHelp());
             pluginEntity.setMtime(plugin.getMtime());

@@ -311,7 +311,7 @@ public class ServerPluginManager {
     protected ServerPlugin getPlugin(ServerPluginEnvironment pluginEnv) {
         // get the plugin data from the database
         ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
-        ServerPlugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginKey().getPluginName());
+        ServerPlugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginKey());
         return plugin;
     }
 

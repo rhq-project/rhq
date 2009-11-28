@@ -33,13 +33,13 @@ public class PluginKey {
      * Creates a plugin key that identifies an agent plugin. There is only
      * one plugin container that runs in the agent, thus there is only
      * one "type" of an agent plugin. Therefore, {@link #getPluginType()} on the
-     * returned object will return an empty string to signify this.
+     * returned object will return <code>null</code> to signify this.
      * 
      * @param pluginName the name of the plugin
      * @return the plugin key for the agent plugin
      */
     public static PluginKey createAgentPluginKey(String pluginName) {
-        return new PluginKey(PluginDeploymentType.AGENT, "", pluginName);
+        return new PluginKey(PluginDeploymentType.AGENT, null, pluginName);
     }
 
     /**
@@ -58,12 +58,33 @@ public class PluginKey {
         return new PluginKey(PluginDeploymentType.SERVER, pluginType, pluginName);
     }
 
+    /**
+     * Create a plugin key that identifies the given agent plugin.
+     * 
+     * @param plugin agent plugin
+     */
+    public PluginKey(Plugin plugin) {
+        this(plugin.getDeployment(), null, plugin.getName());
+    }
+
+    /**
+     * Create a plugin key that identifies the given server plugin.
+     * 
+     * @param plugin server plugin
+     */
+    public PluginKey(ServerPlugin plugin) {
+        this(plugin.getDeployment(), plugin.getType(), plugin.getName());
+    }
+
     public PluginKey(PluginDeploymentType deployment, String pluginType, String pluginName) {
         if (deployment == null) {
             throw new IllegalArgumentException("deployment==null");
         }
-        if (pluginType == null) {
-            throw new IllegalArgumentException("pluginType==null");
+        if (pluginType == null && deployment != PluginDeploymentType.AGENT) {
+            throw new IllegalArgumentException("only agent plugins can have null type");
+        }
+        if (pluginType != null && deployment == PluginDeploymentType.AGENT) {
+            throw new IllegalArgumentException("agent plugins must have null type");
         }
         if (pluginName == null || pluginName.length() == 0) {
             throw new IllegalArgumentException("invalid pluginName: " + pluginName);
@@ -99,7 +120,7 @@ public class PluginKey {
         final int prime = 31;
         int result = 1;
         result = prime * result + deployment.hashCode();
-        result = prime * result + pluginType.hashCode();
+        result = prime * result + ((pluginType == null) ? 0 : pluginType.hashCode());
         result = prime * result + pluginName.hashCode();
         return result;
     }
@@ -116,8 +137,13 @@ public class PluginKey {
         if (!pluginName.equals(other.pluginName)) {
             return false;
         }
-        if (!pluginType.equals(other.pluginType)) {
+        if (pluginType == null) {
+            if (other.pluginType != null) {
+                return false;
+            }
+        } else if (!pluginType.equals(other.pluginType)) {
             return false;
+
         }
         if (!deployment.equals(other.deployment)) {
             return false;

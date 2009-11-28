@@ -38,6 +38,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -198,8 +199,9 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
                 ServerPlugin plugin = new ServerPlugin(0, env.getPluginKey().getPluginName(), pluginFile.getName(),
                     pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor
                         .getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor
-                        .getVersion(), pluginDescriptor.getVersion(), pluginConfig,
-                    scheduledJobsConfig, System.currentTimeMillis(), System.currentTimeMillis());
+                        .getVersion(), pluginDescriptor.getVersion(), pluginConfig, scheduledJobsConfig,
+                    new ServerPluginType(pluginDescriptor).stringify(), System.currentTimeMillis(), System
+                        .currentTimeMillis());
                 return plugin;
             } catch (Exception e) {
                 throw new RuntimeException(e);

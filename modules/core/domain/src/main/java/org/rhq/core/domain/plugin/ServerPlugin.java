@@ -23,6 +23,7 @@
 package org.rhq.core.domain.plugin;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -50,7 +51,10 @@ import org.rhq.core.domain.configuration.Configuration;
 
     // helps you determine which installed plugins are enabled or disabled
     @NamedQuery(name = ServerPlugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
-        + " SELECT p.name " //
+        + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
+        + "        p.deployment, " //
+        + "        p.type, " //
+        + "        p.name) " //
         + "   FROM ServerPlugin AS p " //
         + "  WHERE p.enabled = :enabled " // 
         + "        AND p.status = 'INSTALLED' "), //
@@ -71,6 +75,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ampsVersion, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " // 
@@ -95,6 +100,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ampsVersion, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " // 
@@ -120,6 +126,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ampsVersion, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " // 
@@ -144,6 +151,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ampsVersion, " //
         + "        p.pluginConfiguration, " //
         + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
@@ -178,6 +186,9 @@ public class ServerPlugin extends AbstractPlugin {
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration pluginConfiguration;
 
+    @Column(name = "PTYPE")
+    private String type;
+
     public ServerPlugin() {
         super();
         setDeployment(PluginDeploymentType.SERVER);
@@ -200,12 +211,13 @@ public class ServerPlugin extends AbstractPlugin {
 
     public ServerPlugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
         String description, String help, String md5, String version, String ampsVersion, Configuration pluginConfig,
-        Configuration scheduledJobsConfig, long ctime, long mtime) {
+        Configuration scheduledJobsConfig, String type, long ctime, long mtime) {
 
         super(id, name, path, displayName, enabled, status, description, help, md5, version, ampsVersion,
             PluginDeploymentType.SERVER, ctime, mtime);
         this.pluginConfiguration = pluginConfig;
         this.scheduledJobsConfiguration = scheduledJobsConfig;
+        this.type = type;
     }
 
     @Override
@@ -223,7 +235,7 @@ public class ServerPlugin extends AbstractPlugin {
      * @return the configuration associated with the plugin itself
      */
     public Configuration getPluginConfiguration() {
-        return pluginConfiguration;
+        return this.pluginConfiguration;
     }
 
     public void setPluginConfiguration(Configuration pluginConfiguration) {
@@ -236,11 +248,24 @@ public class ServerPlugin extends AbstractPlugin {
      * @return scheduled job configuration for jobs that the plugin defined.
      */
     public Configuration getScheduledJobsConfiguration() {
-        return scheduledJobsConfiguration;
+        return this.scheduledJobsConfiguration;
     }
 
     public void setScheduledJobsConfiguration(Configuration scheduledJobsConfiguration) {
         this.scheduledJobsConfiguration = scheduledJobsConfiguration;
+    }
+
+    /**
+     * Plugin type string.
+     * 
+     * @return plugin type 
+     */
+    public String getType() {
+        return this.type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     @Override

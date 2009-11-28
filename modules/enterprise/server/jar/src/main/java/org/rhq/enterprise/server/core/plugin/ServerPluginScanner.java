@@ -51,7 +51,7 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.MessageDigestGenerator;
@@ -59,6 +59,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
@@ -160,7 +161,6 @@ public class ServerPluginScanner {
             log.info("Registering RHQ server plugin [" + pluginName + "], version " + version);
 
             ServerPlugin plugin = new ServerPlugin(pluginName, pluginFile.getName());
-            plugin.setDeployment(PluginDeploymentType.SERVER);
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
             plugin.setEnabled(!descriptor.isDisabledOnDiscovery());
             plugin.setDescription(descriptor.getDescription());
@@ -170,6 +170,7 @@ public class ServerPluginScanner {
             plugin.setMD5(MessageDigestGenerator.getDigestString(pluginFile));
             plugin.setPluginConfiguration(getDefaultPluginConfiguration(descriptor));
             plugin.setScheduledJobsConfiguration(getDefaultScheduledJobsConfiguration(descriptor));
+            plugin.setType(new ServerPluginType(descriptor).stringify());
 
             if (descriptor.getHelp() != null && !descriptor.getHelp().getContent().isEmpty()) {
                 plugin.setHelp(String.valueOf(descriptor.getHelp().getContent().get(0)));
@@ -178,7 +179,7 @@ public class ServerPluginScanner {
             ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
 
             // see if this plugin has been deleted previously; if so, don't register and delete the file
-            PluginStatusType status = serverPluginsManager.getServerPluginStatus(pluginName);
+            PluginStatusType status = serverPluginsManager.getServerPluginStatus(new PluginKey(plugin));
             if (PluginStatusType.DELETED == status) {
                 log.warn("Plugin file [" + pluginFile + "] has been detected but that plugin with name [" + pluginName
                     + "] was previously undeployed. Will not re-register that plugin and the file will be deleted.");
@@ -451,7 +452,6 @@ public class ServerPluginScanner {
                     ServerPlugin plugin = new ServerPlugin(name, path, md5);
                     plugin.setMtime(mtime);
                     plugin.setVersion(version);
-                    plugin.setDeployment(PluginDeploymentType.SERVER);
                     updatedPlugins.add(plugin);
                     this.serverPluginsOnFilesystem.remove(expectedFile); // paranoia, make sure the cache doesn't have this
                 }

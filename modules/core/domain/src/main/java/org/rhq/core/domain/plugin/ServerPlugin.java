@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,8 +30,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
-
-import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.configuration.Configuration;
 
@@ -185,7 +183,7 @@ public class ServerPlugin extends AbstractPlugin {
         setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public ServerPlugin(@NotNull String name, String path) {
+    public ServerPlugin(String name, String path) {
         super(name, path);
         setDeployment(PluginDeploymentType.SERVER);
     }

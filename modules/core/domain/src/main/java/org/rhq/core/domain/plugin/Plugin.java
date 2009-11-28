@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,8 +26,6 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-
-import org.jetbrains.annotations.NotNull;
 
 /**
  * An agent plugin.
@@ -180,7 +178,7 @@ public class Plugin extends AbstractPlugin {
         setDeployment(PluginDeploymentType.AGENT);
     }
 
-    public Plugin(@NotNull String name, String path) {
+    public Plugin(String name, String path) {
         super(name, path);
         setDeployment(PluginDeploymentType.AGENT);
     }

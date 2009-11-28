@@ -50,7 +50,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "  WHERE p.name = :name)"), //
 
     // helps you determine which installed plugins are enabled or disabled
-    @NamedQuery(name = ServerPlugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
+    @NamedQuery(name = ServerPlugin.QUERY_GET_KEYS_BY_ENABLED, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
         + "        p.deployment, " //
         + "        p.type, " //
@@ -159,6 +159,16 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
+    // returns all installed plugins, both enabled and disabled
+    // this is faster than QUERY_FIND_ALL_INSTALLED because it doesn't join configs
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
+        + "        p.deployment, " //
+        + "        p.type, " //
+        + "        p.name) " //
+        + "   FROM ServerPlugin AS p " //
+        + "  WHERE p.status = 'INSTALLED' "), //
+
     // this query is how you enable and disable plugins
     @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
         + "UPDATE ServerPlugin p " //
@@ -171,11 +181,12 @@ public class ServerPlugin extends AbstractPlugin {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_GET_STATUS_BY_NAME = "ServerPlugin.queryGetStatusByName";
-    public static final String QUERY_GET_NAMES_BY_ENABLED = "ServerPlugin.queryGetNamesByEnabled";
+    public static final String QUERY_GET_KEYS_BY_ENABLED = "ServerPlugin.queryGetKeysByEnabled";
     public static final String QUERY_FIND_BY_IDS = "ServerPlugin.findByIds";
     public static final String QUERY_FIND_BY_NAME = "ServerPlugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
+    public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")

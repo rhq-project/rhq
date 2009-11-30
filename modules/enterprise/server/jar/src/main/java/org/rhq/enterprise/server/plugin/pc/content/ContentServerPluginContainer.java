@@ -169,18 +169,15 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * This will unschedule the sync job for the given content source. Once unscheduled, the content source's adapter
      * will not be asked to synchronize with the remote content source.
      *
-     * @param  contentSource
+     * @param  contentSource cannot be <code>null</code>
      *
      * @throws SchedulerException if failed to unschedule the job
      */
-    public void unscheduleSyncJob(ContentSource contentSource) throws SchedulerException {
+    public void unscheduleProviderSyncJob(ContentSource contentSource) throws SchedulerException {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
         scheduler.deleteJob(ContentProviderSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME);
-
-        return;
     }
 
-    @Override
     protected ServerPluginManager createPluginManager() {
         return new ContentServerPluginManager(this);
     }

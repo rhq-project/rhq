@@ -224,7 +224,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // make sure we stop its adapter and unschedule any sync job associated with it
             try {
                 ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-                pc.unscheduleSyncJob(cs);
+                pc.unscheduleProviderSyncJob(cs);
                 pc.getAdapterManager().shutdownAdapter(cs);
             } catch (Exception e) {
                 log.warn("Failed to shutdown adapter for [" + cs + "]", e);
@@ -477,7 +477,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 + "].  Will now unschedule the old sync job");
             try {
                 ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-                pc.unscheduleSyncJob(loaded);
+                pc.unscheduleProviderSyncJob(loaded);
             } catch (Exception e) {
                 log.warn("Failed to unschedule obsolete content source sync job for [" + loaded + "]", e);
             }
@@ -492,7 +492,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // synchronize it now, too
         try {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-            pc.unscheduleSyncJob(contentSource);
+            pc.unscheduleProviderSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
             pc.scheduleProviderSyncJob(contentSource);
             pc.syncProviderNow(contentSource);

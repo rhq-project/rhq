@@ -75,8 +75,8 @@ public class PluginConfigurationUIBean {
     }
 
     public boolean isEditable() {
-        return this.currentPlugin != null && (
-                this.currentPlugin.getPluginConfiguration() != null ||
+        return this.currentPlugin != null &&
+                (this.currentPlugin.getPluginConfiguration() != null ||
                 this.currentPlugin.getScheduledJobsConfiguration() != null);
     }
 
@@ -114,8 +114,11 @@ public class PluginConfigurationUIBean {
     }
 
     private TreeNode createPluginNode(PluginKey pluginKey) {
+        ServerPlugin plugin = serverPluginsBean.getServerPlugin(pluginKey);
+        plugin = serverPluginsBean.getServerPluginRelationships(plugin);
+
         TreeNode pluginNode = new TreeNodeImpl();
-        pluginNode.setData(serverPluginsBean.getServerPlugin(pluginKey));
+        pluginNode.setData(plugin);
 
         return pluginNode;
     }
@@ -123,7 +126,6 @@ public class PluginConfigurationUIBean {
     public void processSelection(NodeSelectedEvent event) {
         HtmlTree tree = (HtmlTree) event.getSource();
         this.currentPlugin = (ServerPlugin) tree.getRowData();
-        this.currentPlugin = serverPluginsBean.getServerPluginRelationships(currentPlugin);
 
         lookupConfigDefinitions();
     }

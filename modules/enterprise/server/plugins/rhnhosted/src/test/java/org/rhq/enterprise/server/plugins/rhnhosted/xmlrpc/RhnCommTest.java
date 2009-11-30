@@ -35,6 +35,7 @@ import org.apache.xmlrpc.XmlRpcException;
 import org.rhq.enterprise.server.plugins.rhnhosted.BaseRHNTest;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
@@ -362,6 +363,34 @@ public class RhnCommTest extends BaseRHNTest {
             e.printStackTrace();
         }
         assertTrue(success);
+    }
+
+    public void testGetErrata() throws Exception {
+        boolean success = false;
+        try {
+            RhnComm comm = getRhnComm();
+
+            List<String> errataIds = new ArrayList<String>();
+
+            errataIds.add("rhn-erratum-6183");
+            errataIds.add("rhn-erratum-6184");
+            errataIds.add("rhn-erratum-6182");
+            List<RhnErratumType> errata = comm.getErrataMetadata(SYSTEM_ID, errataIds);
+            assertTrue(errata.size() == errataIds.size());
+            for (RhnErratumType e : errata) {
+                assertFalse(StringUtils.isBlank(e.getAdvisory()));
+                assertFalse(StringUtils.isBlank(e.getChannels()));
+                assertFalse(StringUtils.isBlank(e.getPackages()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumAdvisoryName()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumAdvisoryType()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumDescription()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumSynopsis()));
+
+            }
+            success = true;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

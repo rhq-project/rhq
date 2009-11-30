@@ -24,6 +24,7 @@
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.support.SupportManagerLocal" %>
+<%@page import="org.rhq.enterprise.server.plugin.ServerPluginsLocal"%><html>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 
@@ -58,6 +59,7 @@
    SubjectManagerLocal subjectManager;
    SupportManagerLocal supportManager;
    ResourceTypeManagerRemote typeManager;
+   ServerPluginsLocal serverPlugins;
 
    coreTestBean = LookupUtil.getCoreTest();
    discoveryTestBean = LookupUtil.getDiscoveryTest();
@@ -73,6 +75,7 @@
    subjectManager = LookupUtil.getSubjectManager();
    supportManager = LookupUtil.getSupportManager();
    typeManager = LookupUtil.getResourceTypeManagerRemote();
+   serverPlugins = LookupUtil.getServerPlugins();
 
    String result = null;
    String mode = pageContext.getRequest().getParameter("mode");
@@ -196,6 +199,12 @@
          String description = request.getParameter("description");
          java.net.URL url = supportManager.getSnapshotReport(subjectManager.getOverlord(), resourceId, name, description);
          result = "Snapshot Report is located here: " + url.toString();
+      }
+      else if ("purgeServerPlugin".equals(mode))
+      {
+         String serverPluginName = request.getParameter("serverPluginName");
+         serverPlugins.purgeServerPlugin(subjectManager.getOverlord(), serverPluginName);
+         result = "OK - you can now try to re-register a plugin with the name [" + serverPluginName + "]";
       }
       else if ("typeManagerRemote".equals(mode))
       {
@@ -360,6 +369,16 @@ Generate Snapshot Report
    Name: <input type="text" name="name" size="30"/><br/>
    Description: <input type="text" name="description" size="100"/><br/>
    <input type="submit" value="Generate Snapshot" name="Generate Snapshot"/>
+</form>
+
+<h2>Server Plugins</h2>
+
+<c:url var="url" value="/admin/test/control.jsp?mode=purgeServerPlugin"/>
+Purge Server Plugin (allowing you to re-register it again later)
+<form action="<c:out value="${url}"/>" method="get">
+   <input type="hidden" name="mode" value="purgeServerPlugin"/>
+   ServerPluginName: <input type="text" name="serverPluginName" size="30"/><br/>
+   <input type="submit" value="Purge Server Plugin" name="Purge Server Plugin"/>
 </form>
 
 <h2>Resource Type Criteria</h2>

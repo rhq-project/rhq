@@ -45,6 +45,13 @@
       <version>${project.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-sample-perspective</artifactId>
+      <version>${project.version}</version>
+      <type>war</type>
+    </dependency>
+    
     <!-- 3rd Party Deps -->
 
     <dependency>
@@ -271,7 +278,7 @@
       <repository>
          <id>java.net-m1-releases</id>
          <name>Java.net Maven1 Repository</name>
-         <url>https://maven-repository.dev.java.net/repository/</url>
+         <url>http://download.java.net/maven/1/</url>
          <layout>legacy</layout>
       </repository>
 

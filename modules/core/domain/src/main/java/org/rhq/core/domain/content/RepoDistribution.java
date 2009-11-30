@@ -29,12 +29,12 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.Table;
-import javax.persistence.ManyToOne;
-import javax.persistence.JoinColumn;
 
 /**
  * This is the many-to-many entity that correlates a repo with a content source that will fill the repo with
@@ -45,12 +45,16 @@ import javax.persistence.JoinColumn;
 @Entity
 @IdClass(RepoDistributionPK.class)
 @NamedQueries( {
-    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :KsTreeId"),
-    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId") })
-@Table(name = "RHQ_REPO_DIST_MAP_KEY")
+    @NamedQuery(name = RepoDistribution.DELETE_BY_KICKSTART_TREE_ID, query = "DELETE RepoDistribution rkt WHERE rkt.dist.id = :distId"),
+    @NamedQuery(name = RepoDistribution.DELETE_BY_REPO_ID, query = "DELETE RepoDistribution rkt WHERE rkt.repo.id = :repoId"),
+    @NamedQuery(name = RepoDistribution.QUERY_FIND_BY_REPO_ID,
+            query =   "SELECT rkt FROM RepoDistribution rkt where rkt.repo.id = :repoId ") })
+
+@Table(name = "RHQ_REPO_DISTRIBUTION")
 public class RepoDistribution implements Serializable {
     public static final String DELETE_BY_KICKSTART_TREE_ID = "RepoDistribution.deleteByKickstartTreeId";
     public static final String DELETE_BY_REPO_ID = "RepoDistribution.deleteByRepoId";
+    public static final String QUERY_FIND_BY_REPO_ID = "RepoDistribution.queryFindByRepoId";
 
     private static final long serialVersionUID = 1L;
 
@@ -69,7 +73,6 @@ public class RepoDistribution implements Serializable {
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Distribution dist;
 
-
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long last_modified;
 
@@ -81,13 +84,13 @@ public class RepoDistribution implements Serializable {
         this.dist = dist;
     }
 
-    public RepoDistributionPK getRepoKickstartTreePK() {
+    public RepoDistributionPK getRepoDistributionPK() {
         return new RepoDistributionPK(repo, dist);
     }
 
-    public void setRepoKickstartTreePK(RepoDistributionPK pk) {
+    public void setRepoDistributionPK(RepoDistributionPK pk) {
         this.repo = pk.getRepo();
-        this.dist = pk.getKickstartTree();
+        this.dist = pk.getDistribution();
     }
 
     /**

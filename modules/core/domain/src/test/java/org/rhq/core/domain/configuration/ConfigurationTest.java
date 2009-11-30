@@ -465,7 +465,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         config.setId(id);
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(serializedConfig.getId(), id, "Failed to properly serialize the id property");
     }
@@ -495,7 +495,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         config.put(new PropertySimple("x", "1"));
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(serializedConfig.getMap(), config.getMap(), "Failed to property serialize the map property");
     }
@@ -526,7 +526,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         config.setNotes("notes");
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(serializedConfig.getNotes(), config.getNotes(), "Failed to properly serialize the notes property");
     }
@@ -556,7 +556,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         config.setVersion(1L);
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(
             serializedConfig.getVersion(),
@@ -590,7 +590,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         updateModifiedTime(config);
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
 
         assertEquals(
@@ -625,7 +625,7 @@ public class ConfigurationTest {
         Configuration config = new Configuration();
         updateCreatedTime(config);
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(
             serializedConfig.getCreatedTime(),
@@ -660,7 +660,7 @@ public class ConfigurationTest {
         config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));
         config.addRawConfiguration(createRawConfiguration("/tmp/bar.txt"));
 
-        Configuration serializedConfig = serializeAndDeserialize(config);
+        Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertRawConfigurationsEquals(
             serializedConfig.getRawConfigurations(),
@@ -675,18 +675,6 @@ public class ConfigurationTest {
 
     private void updateCreatedTime(Configuration config) {
         config.onPersist();
-    }
-
-    private Configuration serializeAndDeserialize(Configuration config) throws Exception {
-        ByteArrayOutputStream byteOutputStream = new ByteArrayOutputStream();
-        ObjectOutputStream ostream = new ObjectOutputStream(byteOutputStream);
-
-        ostream.writeObject(config);
-
-        ByteArrayInputStream byteInputStream = new ByteArrayInputStream(byteOutputStream.toByteArray());
-        ObjectInputStream istream = new ObjectInputStream(byteInputStream);
-
-        return (Configuration) istream.readObject();
     }
 
 }

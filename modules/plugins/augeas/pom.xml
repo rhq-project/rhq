@@ -23,10 +23,23 @@
 
       <dependency>
          <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${project.version}</version>         
+      </dependency>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-platform-plugin</artifactId>
          <version>${project.version}</version>
       </dependency>
-       
+
+      <dependency>
+         <groupId>org.testng</groupId>
+         <artifactId>testng</artifactId>
+         <version>5.9</version>         
+         <classifier>jdk15</classifier>
+      </dependency>
+    
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
@@ -48,7 +61,7 @@
             <version>2.0</version>
             <executions>
                <execution>
-                  <id>copy-jna-jar</id>
+                  <id>copy-plugin-libs</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
@@ -74,6 +87,7 @@
                </execution>
             </executions>
          </plugin>
+          
       </plugins>
    </build>
 

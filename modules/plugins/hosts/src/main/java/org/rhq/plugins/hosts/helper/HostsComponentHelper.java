@@ -23,6 +23,7 @@
 package org.rhq.plugins.hosts.helper;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.plugins.hosts.HostsComponent;
 
@@ -33,17 +34,17 @@ import java.io.File;
  */
 public class HostsComponentHelper {
     public static File getHostsFile(Configuration pluginConfig) {
-        String hostsFilePath = pluginConfig.getSimple(HostsComponent.CONFIGURATION_FILE_PROP).getStringValue();
+        String hostsFilePath = ((PropertySimple)pluginConfig.getList(HostsComponent.INCLUDE_GLOBS_PROP).getList().get(0)).getStringValue();
         return new File(hostsFilePath);
     }
 
     public static void validateHostFileExists(File hostsFile) throws InvalidPluginConfigurationException {
         if (!hostsFile.exists()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.CONFIGURATION_FILE_PROP
+            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.INCLUDE_GLOBS_PROP
                     + "' connection property does not exist.");
         }
         if (hostsFile.isDirectory()) {
-            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.CONFIGURATION_FILE_PROP
+            throw new InvalidPluginConfigurationException("Location specified by '" + HostsComponent.INCLUDE_GLOBS_PROP
                     + "' connection property is a directory, not a regular file.");
         }
     }

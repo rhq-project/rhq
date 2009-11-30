@@ -64,7 +64,7 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
         ResourceType resourceType = componentService.getResourceType(resourceId);
 
         if (isStructured(resourceType)) {
-            return new LoadStructured();
+            return new StructuredConfigManagement();
         }
 
         if (isRaw(resourceType)) {
@@ -72,7 +72,7 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
         }
 
         // else format is both structured and raw
-        return new LoadStructuredAndRaw();
+        return new StructuredAndRawConfigManagement();
     }
 
     private boolean isLegacyVersion(String ampsVersion) {

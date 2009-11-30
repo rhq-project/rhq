@@ -27,15 +27,15 @@ public class RHNHelperTest extends BaseRHNTest {
         System.setProperty(ApacheXmlRpcExecutor.class.getName(), MockRhnXmlRpcExecutor.class.getName());
         System.setProperty(RhnHttpURLConnectionFactory.RHN_MOCK_HTTP_URL_CONNECTION, MockRhnHttpURLConnection.class
             .getName());
-        helper = new RHNHelper(TEST_SERVER_URL, REPO_LABEL, SYSTEM_ID);
+        helper = new RHNHelper(TEST_SERVER_URL, SYSTEM_ID);
     }
 
     public void testGetPackageDetails() throws Exception {
         boolean success;
 
         try {
-            List pids = helper.getChannelPackages();
-            List<ContentProviderPackageDetails> pkgdetails = helper.getPackageDetails(pids);
+            List pids = helper.getChannelPackages(REPO_LABEL);
+            List<ContentProviderPackageDetails> pkgdetails = helper.getPackageDetails(pids, REPO_LABEL);
             for (ContentProviderPackageDetails pkg : pkgdetails) {
                 assertFalse(StringUtils.isBlank(pkg.getDisplayName()));
                 assertFalse(StringUtils.isBlank(pkg.getArchitectureName()));
@@ -58,13 +58,25 @@ public class RHNHelperTest extends BaseRHNTest {
     public void testGetChannelPackages() throws Exception {
         boolean success = true;
         try {
-            ArrayList pkgIds = helper.getChannelPackages();
+            List<String> pkgIds = helper.getChannelPackages(REPO_LABEL);
             assertTrue(pkgIds.size() > 0);
         } catch (Exception e) {
             e.printStackTrace();
             success = false;
         }
 
+        assertTrue(success);
+    }
+
+    public void testGetSyncableKickstartTrees() throws Exception {
+        boolean success = true;
+        try {
+            List<String> ksLabels = helper.getSyncableKickstartLabels(REPO_LABEL);
+            assertTrue(ksLabels.size() > 0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
         assertTrue(success);
     }
 

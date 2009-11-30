@@ -217,6 +217,7 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
         chantype.setRhnChannelName("channel name");
         chantype.setRhnChannelSummary("channel summary");
         chantype.setPackages("1 2 3 4");
+        chantype.setKickstartableTrees("ks-rhel-i386-server-5 ks-rhel-i386-server-5-u1 ks-rhel-i386-server-5-u2");
         rhnChannel.add(chantype);
 
         RhnChannelsType chantypes = new RhnChannelsType();

@@ -26,11 +26,12 @@ rhq.login('rhqadmin', 'rhqadmin');
 skippedTests.push('testUpdateResourceGroupConfiguration');
 
 executeAllTests();
+//executeTests(['testGetAndUpdateRawConfiguration']);
 
 rhq.logout();
 
 function testUpdateResourceConfiguration() {
-    var resource = findService('service-beta-1', 'server-omega-1');
+    var resource = findResourceByNameAndParentName('service-beta-1', 'server-omega-1');
     var config = ConfigurationManager.getResourceConfiguration(resource.id);
 
     var propertyName = 'beta-config0';
@@ -53,24 +54,90 @@ function testUpdateResourceConfiguration() {
     Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update resource configuration');
 }
 
-function testUpdatePluginConfiguration() {
-    var resource = findService('service-beta-0', 'server-omega-0');
-    var pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
+function testGetAndUpdateRawConfiguration() {
+    var resourceName = 'Raw Server'
+    var rawServer = findResourceByNameAndParentName(resourceName, 'localhost');
 
-    var propertyName = 'beta-property0';
-    var propertyValue = 'updated property value -- ' + java.util.Date();
+    Assert.assertNotNull(rawServer, "Failed to find '" + resourceName + "'");
 
-    var property = pluginConfig.getSimple(propertyName);
+    var latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
+    var rawConfig = getRawConfig(resourceName, latestUpdate.configuration, 0);
 
-    property.setStringValue(propertyValue);
+    var contents = java.lang.String(rawConfig.contents);
+    var modifiedContents = java.lang.StringBuilder(contents).append("\nModified at ").append(getDate()).toString();
 
-    var configUpdate = ConfigurationManager.updatePluginConfiguration(resource.id, pluginConfig);
+    rawConfig.contents = modifiedContents.getBytes();
 
-    pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
-    var updatedProperty = pluginConfig.getSimple(propertyName);
+    var configUdpate = ConfigurationManager.updateResourceConfiguration(rawServer.id, latestUpdate.configuration);
 
-    Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update plugin configuration');
+    waitForResourceConfigUpdateToComplete(rawServer.id);
+
+    latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
+    
+    rawConfigs = java.util.LinkedList(latestUpdate.configuration.rawConfigurations);
+    rawConfig = rawConfigs.get(0);
+    var updatedContents = rawConfig.contents;
+
+    Assert.assertEquals(
+        java.lang.String(updatedContents),
+        java.lang.String(modifiedContents),
+        "Failed to update raw config for '" + resourceName + "'"
+    );
 }
+
+function loadLatestResourceConfigurationUpdate(resourceName, resourceId) {
+    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
+
+    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
+    Assert.assertTrue(
+        latestUpdate.configuration.rawConfigurations.size() > 0,
+        "Expected to find at least one raw config file for '" + "'"
+    );
+
+    return latestUpdate;
+}
+
+function getRawConfig(resourceName, configuration, index) {
+    var rawConfigs = java.util.LinkedList(configuration.rawConfigurations);
+    var rawConfig = rawConfigs.get(index);
+
+    Assert.assertTrue(
+        rawConfig.contents.length > 0,
+        "Contents of raw config file for '" + resourceName + "' should not be empty."
+    );
+
+    return rawConfig;
+}
+
+function getDate() {
+    var format = java.text.DateFormat.getDateInstance();
+    return format.format(java.util.Date());
+}
+
+function waitForResourceConfigUpdateToComplete(resourceId) {
+    while (ConfigurationManager.isResourceConfigurationUpdateInProgress(resourceId)) {
+        java.lang.Thread.sleep(1000);
+    }
+}
+
+//function testUpdatePluginConfiguration() {
+//    var resource = findService('service-beta-0', 'server-omega-0');
+//    var pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
+//
+//    var propertyName = 'beta-property0';
+//    var propertyValue = 'updated property value -- ' + java.util.Date();
+//
+//    var property = pluginConfig.getSimple(propertyName);
+//
+//    property.setStringValue(propertyValue);
+//
+//    var configUpdate = ConfigurationManager.updatePluginConfiguration(resource.id, pluginConfig);
+//
+//    pluginConfig = ConfigurationManager.getPluginConfiguration(resource.id);
+//    var updatedProperty = pluginConfig.getSimple(propertyName);
+//
+//    Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update plugin configuration');
+//}
 
 // This test is failing I think due to the asynchronous nature of the operations involved. I have verified through the
 // web UI that the configuration updates are actually happening. I just need to figure out how to make the test wait
@@ -112,10 +179,11 @@ function testUpdateResourceGroupConfiguration() {
     }
 }
 
-function findService(name, parentName) {
+function findResourceByNameAndParentName(name, parentName) {
     var criteria = ResourceCriteria();
     criteria.addFilterName(name);
     criteria.addFilterParentResourceName(parentName);
+    criteria.strict = true;
 
     return ResourceManager.findResourcesByCriteria(criteria).get(0);
 }

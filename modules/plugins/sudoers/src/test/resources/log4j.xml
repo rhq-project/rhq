@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
+
 <!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
 
-<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/" debug="true">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
    <appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
       <param name="Target" value="System.out"/>
-      <param name="Threshold" value="DEBUG"/>
+      <param name="Threshold" value="ERROR"/>
 
       <layout class="org.apache.log4j.PatternLayout">
          <!-- The default pattern: Date Priority [Category] Messagen -->
@@ -24,7 +25,14 @@
       </layout>
    </appender>
 
+   <category name="org.rhq.plugins">
+      <priority value="DEBUG"/>
+   </category>
+
    <root>
+      <!-- default log priority -->
+      <priority value="INFO"/>
+
       <appender-ref ref="CONSOLE"/>
       <appender-ref ref="FILE"/>
    </root>

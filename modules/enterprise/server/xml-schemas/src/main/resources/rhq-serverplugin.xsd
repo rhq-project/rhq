@@ -14,10 +14,7 @@
     <xs:annotation>
         <xs:documentation>
             Schema for all server-side plugins. All server side plugin types
-            will define their own schema that get embedded in this schema.
-            Since there are only a strictly defined number of plugin types,
-            each plugin type's schema will be explicitly included in this
-            schema, under the plugin element's choice definition.
+            will define their own schema that extend this schema.
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -31,7 +28,7 @@
             <xs:documentation>
                 Root element of a server-side plugin descriptor. All server side plugins
                 will have this as their root element; however, child elements of this
-                root element will be plugin-type-specific. Note this is an abstract element,
+                root element can be plugin-type-specific. Note this is an abstract element,
                 it will actually be substituted with other elements of the concrete plugin types.
             </xs:documentation>
             <xs:appinfo>
@@ -42,7 +39,77 @@
 
     <xs:complexType name="ServerPluginDescriptorType">
         <xs:sequence minOccurs="0" maxOccurs="1">
-           <xs:element name="plugin-configuration" type="config:configuration" />
+            <xs:element name="help" minOccurs="0" maxOccurs="1" type="serverplugin:HelpType">
+                <xs:annotation>
+                    <xs:documentation>
+                        Help documentation that can provide useful information to a user.
+                        This information typically assists users on how to integrate the
+                        plugin with third party servers and systems. 
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="plugin-component" minOccurs="0" maxOccurs="1" type="serverplugin:ServerPluginComponentType">
+                <xs:annotation>
+                    <xs:documentation>
+                        A class that will be notified when the plugin is started and stopped. This provides a place
+                        for plugin developers to allocate global resources needed by the plugin and
+                        a place to clean up those resources. This component can also be scheduled to perform periodic work.
+                        The plugin component object is stateful - the instance lives for as long as the plugin
+                        is initialized.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="scheduled-jobs" minOccurs="0" maxOccurs="1" type="config:configuration">
+                <xs:annotation>
+                    <xs:documentation>
+                        Scheduled jobs are pre-defined here in this special configuration. The schema
+                        for this element is the same as the general configuration, however, this
+                        has special semantics that require special properties to be defined.
+                        If you use this element, it must contain map properties where each map:
+                           1) has a name that is a method name of the plugin component. This method
+                              name identifies what is called on the plugin component (or the target
+                              class, see below) when the schedule triggers.
+                              You may override this by defining a simple property called "methodName".
+                              Whether the method name is defined by the map name itself or the optional
+                              "methodName" simple property, the method signature must be either
+                              a no-arg signature or one that has a single argument of type
+                              ScheduledJobInvocationContext.
+                           2) has simple properties called "scheduleType" and "scheduleTrigger" where
+                              "scheduleType" is either "cron" or "periodic" and "scheduleTrigger" is either
+                              the cron expression or a time period in milliseconds.
+                           3) has a simple property called "concurrent" of type boolean to indicate if
+                              multiple invocations of the scheduled job are allowed to
+                              occur at the same time. If false, only one invocation will ever run at any
+                              one time. This means that if a schedule triggers again while the previous
+                              scheduled invocation is still running, the second invocation will be delayed
+                              until after the previous invocation completes. If there is more than one
+                              RHQ Server in the system, and this is false, you can be assured that only
+                              a single server will handle the invocation at any one time (i.e. multiple servers
+                              will not run invocations at the same time).
+                           4) has an optional simple property called "class" of type string that is the
+                              name of class to be instantiated as the target of the job invocation.
+                              If not defined, the target of the job invocation is the stateful plugin component
+                              itself. Whatever class is used as the target, it must have a method as defined
+                              in the method name simple property as explained above.
+                              Typically, plugin developers don't use this class property because you normally
+                              want to target the stateful plugin component; however, this class property provides
+                              the plugin developer a way to declare stateless jobs if that is needed.
+                           5) has any other simple properties that will be used as custom callback data properties.
+                        You may additionally define one list-of-maps property which can be used to allow a user
+                        to define their own custom jobs. The list-of-maps must contain a map property definition
+                        that follows the same rules as described above.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="plugin-configuration" minOccurs="0" maxOccurs="1" type="config:configuration">
+                <xs:annotation>
+                    <xs:documentation>
+                        Plugin-wide configuration that can be useful to define the behavior of the plugin as
+                        a whole. This is optional; only those plugins that require global configuration
+                        will need to define plugin configuration.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
         </xs:sequence>
         <xs:attribute name="name" use="required">
             <xs:annotation>
@@ -80,29 +147,49 @@
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="pluginLifecycleListener" type="serverplugin:classNameType" use="optional">
-            <xs:annotation>
-                <xs:documentation>
-                    A class that performs global initialization and shutdown of the plugin. If specified,
-                    this class will be notified when the plugin is loaded and unloaded. This provides a place
-                    for plugin developers to allocate global resources needed by all plugin components and
-                    a place to clean up those resources.
-                </xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
-        <xs:attribute name="version" type="xs:string">
+        <xs:attribute name="version" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>
                     The version of this plugin in an OSGI compatible format. (e.g. 2.0.4 or 3.1.beta2)
+                    This attribute is optional - you can put the plugin version in the jar's manifest
+                    in the Implementation-Version manifest entry. You must, however, provide a version
+                    somewhere - either via the manifest or this attribute.
                 </xs:documentation>
             </xs:annotation>
         </xs:attribute>
-        <xs:attribute name="apiVersion" type="xs:string">
+        <xs:attribute name="apiVersion" type="xs:string" use="optional">
             <xs:annotation>
                 <xs:documentation>
                     The version of the server-side API this plugin requires in OSGI compatible format. (e.g. 2.0)
                 </xs:documentation>
             </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="disabledOnDiscovery" type="xs:boolean" use="optional" default="false">
+            <xs:annotation>
+                <xs:documentation>
+                    Indicates if the plugin should be disabled immediately when it is first detected by
+                    the server. By default, all plugins will be enabled as soon as they are first detected
+                    by the server. However, if you want to require the user to configure the plugin
+                    first, before the plugin is ever deployed and run, then set this to true. Use this
+                    when the default configuration for the plugin is not complete and user intervention
+                    is required in order to fully complete the configuration before the plugin can run.
+                    The user will be forced to edit the configuration (or, optionally, agree to the
+                    default configuration as-is) of the plugin and then manually enable the plugin
+                    before the plugin can finally run.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType name="ServerPluginComponentType">
+        <xs:sequence></xs:sequence>
+        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+                <xs:annotation>
+                    <xs:documentation>
+                        The class that will be instantiated. This is a stateful object, once initialized, the same
+                        instance will be notified when the plugin is started, stopped or when schedules are triggered.
+                    </xs:documentation>
+                </xs:annotation>
         </xs:attribute>
     </xs:complexType>
 
@@ -114,4 +201,11 @@
             <xs:pattern value="[a-zA-Z_][a-zA-Z_0-9]*(.[a-zA-Z_][a-zA-Z_0-9]*)*" />
         </xs:restriction>
     </xs:simpleType>
+    
+    <xs:complexType name="HelpType" mixed="true">
+        <xs:sequence>
+            <xs:any minOccurs="0" maxOccurs="unbounded" processContents="lax"/>
+        </xs:sequence>
+    </xs:complexType>
+
 </xs:schema>

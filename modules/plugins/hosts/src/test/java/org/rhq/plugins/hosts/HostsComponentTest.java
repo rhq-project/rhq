@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,69 +18,135 @@
  */
 package org.rhq.plugins.hosts;
 
-import java.util.Collection;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.BeforeSuite;
-import org.testng.annotations.Test;
+import java.io.File;
+import java.io.IOException;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
+import org.testng.annotations.BeforeTest;
 
 /**
- * @author Jason Dobies
+ * An integration test for {@link HostsComponent}.
+ *
+ * @author Ian Springer
  */
-public class HostsComponentTest {
+public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest {
+    private static final String PLUGIN_NAME = "Hosts";
+    private static final String RESOURCE_TYPE_NAME = "Hosts File";
 
-    private HostsComponent component = new HostsComponent();
-
-    private Configuration pluginConfiguration = new Configuration();
-
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    @BeforeSuite
-    public void initPluginConfiguration() throws Exception {
-        pluginConfiguration.put(new PropertySimple("lenses-path", "/usr/local/share/augeas/lenses"));
-        pluginConfiguration.put(new PropertySimple("root-path", "/"));
-        pluginConfiguration.put(new PropertySimple("hosts-path", "/etc/hosts"));
-        pluginConfiguration.put(new PropertySimple("augeas-hosts-path", "/files/etc/hosts/*"));
+    @Override
+    protected String getPluginName() {
+        return PLUGIN_NAME;
     }
 
-    @Test(enabled = false)
-    public void loadResourceConfiguration() throws Exception {
-        Configuration configuration;
-        try {
-            configuration = component.loadResourceConfiguration();
-        } catch (UnsatisfiedLinkError ule) {
-            // Skip tests if augeas not available
-            return;
-        }
+    @Override
+    protected String getResourceTypeName() {
+        return RESOURCE_TYPE_NAME;
+    }
 
-        assert configuration != null : "Null configuration returned from load call";
+    @Override
+    protected boolean isResourceConfigSupported() {
+        // The hosts plugin will use Augeas if it's available but will fall back to direct file parsing if it's not.
+        return true;
+    }
 
-        Collection<Property> allProperties = configuration.getProperties();
+    @Override
+    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig)
+    {
+        super.tweakDefaultPluginConfig(defaultPluginConfig);
+        String hostsFilePath = new File("/etc/hosts").getAbsolutePath();
+        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, hostsFilePath));
+    }
 
-        assert allProperties.size() == 1 : "Incorrect number of properties found. Expected: 1, Found: "
-            + allProperties.size();
+    @BeforeTest
+    @Override
+    public void resetConfigFiles() throws IOException
+    {
+        super.resetConfigFiles();
+    }
 
-        PropertyList entryList = (PropertyList) allProperties.iterator().next();
+    @Override
+    protected Configuration getExpectedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
 
-        for (Property property : entryList.getList()) {
-            PropertyMap entry = (PropertyMap) property;
+        PropertyMap entry;
 
-            Property ipProperty = entry.get("ip");
-            Property canonicalProperty = entry.get("canonical");
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "127.0.0.1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost4\nlocalhost4.localdomain4"));
+        entries.getList().add(entry);
 
-            assert ipProperty != null : "IP was null in entry";
-            assert canonicalProperty != null : "Canonical was null in entry";
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "::1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost6\nlocalhost6.localdomain6"));
+        entries.getList().add(entry);
 
-            log.info("IP: " + ((PropertySimple) ipProperty).getStringValue());
-            log.info("Canonical: " + ((PropertySimple) canonicalProperty).getStringValue());
-        }
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "1.1.1.1"));
+        entry.put(new PropertySimple("canonical", "one-one-one-one.com"));
+        entry.put(new PropertySimple("alias", null));
+        entries.getList().add(entry);
 
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "2.2.2.2"));
+        entry.put(new PropertySimple("canonical", "two-two-two-two.com"));
+        entry.put(new PropertySimple("alias", "alias"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "3.3.3.3"));
+        entry.put(new PropertySimple("canonical", "three-three-three-three.com"));
+        entry.put(new PropertySimple("alias", "alias1\nalias2"));
+        entries.getList().add(entry);
+
+        return config;
+    }
+
+    @Override
+    protected Configuration getUpdatedResourceConfig() {
+        Configuration config = new Configuration();
+        PropertyList entries = new PropertyList(".");
+        config.put(entries);
+
+        PropertyMap entry;
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "127.0.0.1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "hehe\nlocalhost4\nlocalhost4.localdomain4"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "::1"));
+        entry.put(new PropertySimple("canonical", "localhost"));
+        entry.put(new PropertySimple("alias", "localhost.localdomain\nlocalhost6\nlocalhost6.localdomain6"));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "1.1.1.1"));
+        entry.put(new PropertySimple("canonical", "one-one-one-one.com"));
+        entry.put(new PropertySimple("alias", ""));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "2.2.2.2"));
+        entry.put(new PropertySimple("canonical", "two-two-two-two.com"));
+        entry.put(new PropertySimple("alias", ""));
+        entries.getList().add(entry);
+
+        entry = new PropertyMap("*[canonical]");
+        entry.put(new PropertySimple("ipaddr", "3.3.3.3"));
+        entry.put(new PropertySimple("canonical", "three-three-three-three.com"));
+        entry.put(new PropertySimple("alias", "aliast1.org\nalias2.org"));
+        entries.getList().add(entry);
+        return config;
     }
 }

@@ -92,7 +92,7 @@ public class RhnDownloader {
         return true;
     }
 
-    public InputStream getRPMStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
+    public InputStream getFileStream(String systemId, String locationUrl) throws IOException, XmlRpcException {
 
         HttpURLConnection conn = getNewConnection(locationUrl);
         Map props = login(systemId);
@@ -109,7 +109,7 @@ public class RhnDownloader {
     public InputStream getKickstartTreeFile(String systemId, String channelName, String ksTreeLabel, String ksFilePath)
         throws IOException, XmlRpcException {
 
-        String extra = "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
+        String extra = getURLForKickstartFile(channelName, ksTreeLabel, ksFilePath);
         HttpURLConnection conn = getNewConnection(serverUrl + extra);
         Map props = login(systemId);
         for (Object key : props.keySet()) {
@@ -120,4 +120,9 @@ public class RhnDownloader {
         InputStream in = conn.getInputStream();
         return in;
     }
+
+    public static String getURLForKickstartFile(String channelName, String ksTreeLabel, String ksFilePath) {
+        return "/SAT/$RHN/" + channelName + "/getKickstartFile/" + ksTreeLabel + "/" + ksFilePath;
+    }
+
 }

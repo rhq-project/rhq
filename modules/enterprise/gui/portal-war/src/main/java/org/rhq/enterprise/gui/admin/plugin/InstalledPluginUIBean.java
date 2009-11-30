@@ -18,49 +18,101 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import javax.faces.application.FacesMessage;
 
+import org.apache.commons.logging.Log;
+
+import org.apache.commons.logging.LogFactory;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
+@Scope(ScopeType.PAGE)
+@Name("InstalledPluginUIBean")
 public class InstalledPluginUIBean {
+
+    private static final String OUTCOME_SUCCESS = "success";
+    public static final String MANAGED_BEAN_NAME = InstalledPluginUIBean.class.getSimpleName();
     private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
-
-    public static final String MANAGED_BEAN_NAME = "InstalledPluginUIBean";
-
+    @In
     private Plugin plugin;
-
-    private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
-
-    public InstalledPluginUIBean() {
-        this.plugin = lookupPlugin();
-    }
+    private ConfigurationDefinition pluginConfigurationDefinition;
+    private ConfigurationDefinition scheduledJobsDefinition;
 
     public Plugin getPlugin() {
-        return this.plugin;
+        return plugin;
     }
 
-    private Plugin lookupPlugin() {
+    public void setPlugin(Plugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public ConfigurationDefinition getPluginConfigurationDefinition() {
+        return this.pluginConfigurationDefinition;
+    }
+
+    public ConfigurationDefinition getScheduledJobsDefinition() {
+        return this.scheduledJobsDefinition;
+    }
+
+    public boolean isEditable() {
+        return this.pluginConfigurationDefinition != null || this.scheduledJobsDefinition != null;
+    }
+
+    public String updatePlugin() {
+        ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+
+        try {
+            serverPlugins.updateServerPluginExceptContent(EnterpriseFacesContextUtility.getSubject(), plugin);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                    "Configuration settings saved.");
+
+            return OUTCOME_SUCCESS;
+        } catch (Exception e) {
+            log.error("Error updating the plugin configurations.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "There was an error changing the configuration settings.", e);
+
+            return null;
+        }
+    }
+
+    @Create
+    public void lookupConfigDefinitions() {
         hasPermission();
-        String pluginName = FacesContextUtility.getRequiredRequestParameter("plugin", String.class);
-        return resourceMetadataManagerBean.getPlugin(pluginName);
-    }
+        String pluginName = this.plugin.getName();
 
-    public void setEnabled(boolean enabled) {
-        // TODO is this supposed to be empty?
-    }
-
-    public void undeploy() {
+        if (this.plugin.getDeployment() == PluginDeploymentType.SERVER) {
+            try {
+                ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
+                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
+                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor.getScheduledJobs());
+            } catch (Exception e) {
+                String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
+                log.error(err + " - Cause: " + e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+                return;
+            }
+        }
     }
 
     /**
@@ -69,8 +121,7 @@ public class InstalledPluginUIBean {
     private void hasPermission() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have the proper permissions to view or manage plugins");
+            throw new PermissionException("User [" + subject.getName() + "] does not have the proper permissions to view or manage plugins");
         }
     }
 }

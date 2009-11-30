@@ -26,6 +26,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -118,11 +119,11 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     }
 
     /**
-     * Returns the information on all plugins as found in the database.
+     * Returns the information on all agent plugins as found in the database.
      */
     @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
         return q.getResultList();
     }
 
@@ -194,19 +195,39 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (plugin.getId() == 0) {
             entityManager.persist(plugin);
         } else {
-            Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", plugin.getId());
-            q.setParameter("name", plugin.getName());
-            q.setParameter("path", plugin.getPath());
-            q.setParameter("displayName", plugin.getDisplayName());
-            q.setParameter("enabled", plugin.isEnabled());
-            q.setParameter("md5", plugin.getMD5());
-            q.setParameter("version", plugin.getVersion());
-            q.setParameter("ampsVersion", plugin.getAmpsVersion());
-            q.setParameter("description", plugin.getDescription());
-            q.setParameter("help", plugin.getHelp());
-            q.setParameter("mtime", plugin.getMtime());
-            if (q.executeUpdate() != 1) {
+            // agent plugins don't support these configs, but if/when they do in the future, this will support it
+            // make sure we create (if necessary) and attach the configs
+            Configuration config = plugin.getPluginConfiguration();
+            if (config != null) {
+                config = entityManager.merge(config);
+                plugin.setPluginConfiguration(config);
+            }
+            config = plugin.getScheduledJobsConfiguration();
+            if (config != null) {
+                config = entityManager.merge(config);
+                plugin.setScheduledJobsConfiguration(config);
+            }
+
+            // update all the fields except content
+            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(plugin.getName());
+            pluginEntity.setPath(plugin.getPath());
+            pluginEntity.setDisplayName(plugin.getDisplayName());
+            pluginEntity.setEnabled(plugin.isEnabled());
+            pluginEntity.setStatus(plugin.getStatus());
+            pluginEntity.setMd5(plugin.getMD5());
+            pluginEntity.setVersion(plugin.getVersion());
+            pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
+            pluginEntity.setDeployment(plugin.getDeployment());
+            pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
+            pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
+            pluginEntity.setDescription(plugin.getDescription());
+            pluginEntity.setHelp(plugin.getHelp());
+            pluginEntity.setMtime(plugin.getMtime());
+
+            try {
+                entityManager.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
                 throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
             }
         }

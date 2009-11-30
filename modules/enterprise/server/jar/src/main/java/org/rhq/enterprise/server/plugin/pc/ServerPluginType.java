@@ -18,30 +18,87 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+
 /**
  * Defines the types of server-side plugins that are currently supported.
+ * Server side plugin types are identified uniquely by their plugin descriptor types.
  * 
  * @author John Mazzitelli
  */
-public enum ServerPluginType {
-    /**
-     * Generic plugins need only be started and stopped by the plugin container, but otherwise has no
-     * dependencies or needs that are provided to it by the plugin container.
-     */
-    GENERIC,
+public class ServerPluginType {
+    private final Class<? extends ServerPluginDescriptorType> descriptorType;
 
     /**
-     * Content plugins obtain repos and packages from remote locations.
+     * Given an actual plugin descriptor object, this will create a plugin type
+     * that represents that kind of plugin.
+     * 
+     * @param descriptor an actual descriptor parsed from a plugin
      */
-    CONTENT,
+    public ServerPluginType(ServerPluginDescriptorType descriptor) {
+        this((descriptor != null) ? descriptor.getClass() : null);
+    }
 
     /**
-     * Perspective plugins allow customization of the management interface.
+     * Given a type of plugin descriptor, this will create a plugin type
+     * that represents that kind of plugin.
+     * 
+     * @param descriptorType
      */
-    PERSPECTIVE,
+    public ServerPluginType(Class<? extends ServerPluginDescriptorType> descriptorType) {
+        if (descriptorType == null) {
+            throw new NullPointerException("descriptorType must not be null");
+        }
+        this.descriptorType = descriptorType;
+    }
 
     /**
-     * Alert plugins allow alerts to be sent to custom endpoints.
+     * Given a string that was returned by a call to {@link #stringify()}, this
+     * will create its server plugin type.
+     *  
+     * @param stringifiedType string representation of a server plugin type.
+     *
+     * @throws Exception if the string was invalid
      */
-    ALERT
+    @SuppressWarnings("unchecked")
+    public ServerPluginType(String stringifiedType) throws Exception {
+        this((Class<? extends ServerPluginDescriptorType>) Class.forName(stringifiedType));
+    }
+
+    public Class<? extends ServerPluginDescriptorType> getDescriptorType() {
+        return this.descriptorType;
+    }
+
+    /**
+     * Returns a "serialized" form of this instance by returning a string
+     * representation of the type. This is not the same as {@link #toString()}.
+     * The returned string can be used to reconstitute the type via
+     * the constructor {@link ServerPluginType#ServerPluginType(String)}.
+     * 
+     * @return string representation of this type
+     */
+    public String stringify() {
+        return this.descriptorType.getName();
+    }
+
+    @Override
+    public String toString() {
+        return this.descriptorType.getSimpleName().replace("DescriptorType", "");
+    }
+
+    @Override
+    public int hashCode() {
+        return this.descriptorType.getName().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!(obj instanceof ServerPluginType)) {
+            return false;
+        }
+        return this.descriptorType.getName().equals(((ServerPluginType) obj).descriptorType.getName());
+    }
 }

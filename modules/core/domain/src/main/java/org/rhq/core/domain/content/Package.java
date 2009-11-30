@@ -212,4 +212,5 @@ public class Package implements Serializable {
         result = (prime * result) + ((packageType == null) ? 0 : packageType.hashCode());
         return result;
     }
+
 }

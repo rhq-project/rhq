@@ -19,26 +19,29 @@
 
 package org.rhq.enterprise.server.content;
 
+import java.util.List;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.RepoDistribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.core.domain.content.Distribution;
-import org.rhq.core.domain.content.RepoDistribution;
-import org.rhq.core.domain.content.DistributionType;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-
-import javax.ejb.Stateless;
-import javax.ejb.EJB;
-import javax.persistence.PersistenceContext;
-import javax.persistence.EntityManager;
-import javax.persistence.Query;
-import javax.sql.DataSource;
-import java.util.List;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 /**
  * @author Pradeep Kilambi
@@ -69,23 +72,26 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     private ResourceTypeManagerLocal resourceTypeManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public Distribution createDistribution(Subject user, String  kslabel, String basepath, DistributionType disttype)
-            throws DistributionException {
-        Distribution kstree = new Distribution(kslabel, basepath, disttype);
-        validateDistTree(kstree);
+    public Distribution createDistribution(Subject user, String kslabel, String basepath, DistributionType disttype)
+        throws DistributionException {
 
+        Distribution kstree = new Distribution(kslabel, basepath, disttype);
+
+        validateDistTree(kstree);
         entityManager.persist(kstree);
 
         return kstree;
     }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteDistributionByRepo(Subject user, int repoId ) {
+    public void deleteDistributionByRepo(Subject user, int repoId) {
         log.debug("User [" + user + "] is deleting distribution tree from repo [" + repoId + "]");
 
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(RepoDistribution.DELETE_BY_REPO_ID).setParameter("repoId", repoId).executeUpdate();
+        entityManager.createNamedQuery(RepoDistribution.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
+            .executeUpdate();
 
         RepoDistribution kstree = entityManager.find(RepoDistribution.class, repoId);
         if (kstree != null) {
@@ -97,21 +103,21 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteDistributionByKSTreeId(Subject user, int kstreeId ) {
-        log.debug("User [" + user + "] is deleting distribution tree [" + kstreeId + "]");
+    public void deleteDistributionByDistId(Subject user, int distId) {
+        log.debug("User [" + user + "] is deleting distribution tree [" + distId + "]");
 
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(RepoDistribution.DELETE_BY_KICKSTART_TREE_ID).setParameter("repoId", kstreeId).executeUpdate();
+        entityManager.createNamedQuery(Distribution.QUERY_DELETE_BY_DIST_ID).setParameter("distid", distId)
+            .executeUpdate();
 
-        RepoDistribution kstree = entityManager.find(RepoDistribution.class, kstreeId);
+        Distribution kstree = entityManager.find(Distribution.class, distId);
         if (kstree != null) {
             entityManager.remove(kstree);
             log.debug("User [" + user + "] deleted kstree [" + kstree + "]");
         } else {
-            log.debug("Distribution tree ID [" + kstreeId + "] doesn't exist - nothing to delete");
+            log.debug("Distribution tree ID [" + distId + "] doesn't exist - nothing to delete");
         }
 
     }
@@ -121,9 +127,9 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         //TODO: Implement the ks tree bit downloads
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @SuppressWarnings("unchecked")
     public Distribution getDistributionByLabel(String kslabel) {
-        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_PATH_BY_DIST_LABEL);
+        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_LABEL);
 
         query.setParameter("label", kslabel);
         List<Distribution> results = query.getResultList();
@@ -141,8 +147,9 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
      * @param basepath location on filesystem
      * @return kickstarttree object from db
      */
+    @SuppressWarnings("unchecked")
     public Distribution getDistributionByPath(String basepath) {
-        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_PATH_BY_DIST_PATH);
+        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_PATH);
 
         query.setParameter("base_path", basepath);
         List<Distribution> results = query.getResultList();
@@ -156,11 +163,79 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     }
 
     /**
+     * Returns a DistributionType for given name
+     * @param name name of distribution type
+     * @return distribution type from db
+     */
+    @SuppressWarnings("unchecked")
+    public DistributionType getDistributionTypeByName(String name) {
+        Query query = entityManager.createNamedQuery(DistributionType.QUERY_FIND_BY_NAME);
+
+        query.setParameter("name", name);
+        List<DistributionType> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results.get(0);
+        } else {
+            return null;
+        }
+
+    }
+
+    
+
+    /**
+     * Returns a list of available distribution files for requested distribution
+     * @param distId
+     * @return A list of Distributionfile objects associated to a given distribution
+     */
+    @SuppressWarnings("unchecked")
+    public List<DistributionFile> getDistributionFilesByDistId(int distId) {
+        Query query = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+
+        query.setParameter("distId", distId);
+        List<DistributionFile> results = query.getResultList();
+
+        if (results.size() > 0) {
+            return results;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     * deletes list of available distribution files for requested distribution
+     * @param distId
+     */
+    @SuppressWarnings("unchecked")
+    public void deleteDistributionFilesByDistId(Subject user, int distId) {
+        log.debug("User [" + user + "] is deleting distribution file from distribution [" + distId + "]");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Query querydel = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+
+        querydel.setParameter("distId", distId);
+
+        querydel.executeUpdate();
+
+        DistributionFile distFile = entityManager.find(DistributionFile.class, distId);
+        if (distFile != null) {
+            entityManager.remove(distFile);
+            log.debug("User [" + user + "] deleted distribution file [" + distFile + "]");
+        } else {
+            log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
+        }
+    }
+
+    /**
      * validates a given kickstart tree object and throws a KickstartTreeException
      * @param kstree kickstart tree object
      * @throws DistributionException
      */
     public void validateDistTree(Distribution kstree) throws DistributionException {
+
         if (kstree.getLabel() == null || kstree.getLabel().trim().equals("")) {
             throw new DistributionException("A valid Distribution tree is required");
         }
@@ -169,6 +244,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         if (kstreeobj != null) {
             throw new DistributionException("There is already a kstree with the name of [" + kstree.getLabel() + "]");
         }
+
     }
 
 }

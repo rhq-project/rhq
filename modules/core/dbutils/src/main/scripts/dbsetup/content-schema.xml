@@ -348,7 +348,40 @@
             </primaryKey>
         </constraint>
     </table>
-           
+
+    <table name="RHQ_TAG">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
+    </table>
+
+    <table name="RHQ_DISTRIBUTION_FILE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="DISTRIBUTION_ID" type="INTEGER" required="true" references="RHQ_DISTRIBUTION"/>
+        <column name="RELATIVE_FILENAME" size="256" type="VARCHAR2" required="true"/>
+        <!--<column name="FILE_SIZE" type="NUMBER" required="true"/>-->
+        <column name="MD5SUM" size="64" type="VARCHAR2" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <!--<column name="CTIME" type="LONG" required="true"/>-->
+        
+        <index name="RHQ_DISTRIBUTION_FILE_IDX" unique="true">
+            <field ref="DISTRIBUTION_ID"/>
+            <field ref="RELATIVE_FILENAME"/>
+        </index>
+    </table>
+
+    
+    <table name="RHQ_REPO_TAG_MAP">
+        <column name="REPO_ID" type="INTEGER" required="true" references="RHQ_REPO"/>
+        <column name="TAG_ID" type="INTEGER" required="true" references="RHQ_TAG"/>
+        
+        <constraint name="RHQ_REPO_TAG_MAP_KEY">
+            <primaryKey>
+                <field ref="REPO_ID"/>
+                <field ref="TAG_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
 
 </dbsetup>
 

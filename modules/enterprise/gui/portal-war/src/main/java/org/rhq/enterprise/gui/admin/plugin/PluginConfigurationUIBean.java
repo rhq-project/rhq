@@ -21,9 +21,11 @@ package org.rhq.enterprise.gui.admin.plugin;
 import java.util.List;
 import java.util.Map;
 import javax.faces.application.FacesMessage;
+import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.log.Log;
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
@@ -44,24 +46,22 @@ import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeNode;
 import org.richfaces.model.TreeNodeImpl;
 
+@Scope(ScopeType.PAGE)
 @Name("pluginConfigUIBean")
 public class PluginConfigurationUIBean {
 
     @Logger
     private Log log;
-
     private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-
     private TreeNode root;
     private ServerPlugin currentPlugin;
     private ConfigurationDefinition pluginConfigurationDefinition;
     private ConfigurationDefinition scheduledJobsDefinition;
 
-
     public TreeNode getRoot() {
         return root;
     }
-    
+
     public ServerPlugin getCurrentPlugin() {
         return currentPlugin;
     }
@@ -72,6 +72,12 @@ public class PluginConfigurationUIBean {
 
     public ConfigurationDefinition getScheduledJobsDefinition() {
         return this.scheduledJobsDefinition;
+    }
+
+    public boolean isEditable() {
+        return this.currentPlugin != null && (
+                this.currentPlugin.getPluginConfiguration() != null ||
+                this.currentPlugin.getScheduledJobsConfiguration() != null);
     }
 
     @Create
@@ -109,16 +115,14 @@ public class PluginConfigurationUIBean {
 
     private TreeNode createPluginNode(PluginKey pluginKey) {
         TreeNode pluginNode = new TreeNodeImpl();
-        pluginNode.setData(pluginKey);
+        pluginNode.setData(serverPluginsBean.getServerPlugin(pluginKey));
 
         return pluginNode;
     }
 
     public void processSelection(NodeSelectedEvent event) {
         HtmlTree tree = (HtmlTree) event.getSource();
-        PluginKey pluginKey = (PluginKey) tree.getRowData();
-
-        this.currentPlugin = serverPluginsBean.getServerPlugin(pluginKey);
+        this.currentPlugin = (ServerPlugin) tree.getRowData();
         this.currentPlugin = serverPluginsBean.getServerPluginRelationships(currentPlugin);
 
         lookupConfigDefinitions();
@@ -127,7 +131,7 @@ public class PluginConfigurationUIBean {
     public void lookupConfigDefinitions() {
         if (this.currentPlugin.getDeployment() == PluginDeploymentType.SERVER) {
             PluginKey pluginKey = new PluginKey(this.currentPlugin);
-            
+
             try {
                 ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
                 this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginKey.getPluginName(), descriptor.getPluginConfiguration());
@@ -140,6 +144,19 @@ public class PluginConfigurationUIBean {
         }
     }
 
+    public void updatePlugin() {
+        try {
+            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPlugins.updateServerPluginExceptContent(subject, this.currentPlugin);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
+        } catch (Exception e) {
+            log.error("Error updating the plugin configurations.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "There was an error changing the configuration settings.", e);
+        }
+    }
+
     // TODO:  Find a more centralized way to do this - maybe via annotation
     //        on the class??
     /**
@@ -148,8 +165,7 @@ public class PluginConfigurationUIBean {
     private void hasPermission() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User [" + subject.getName()
-                + "] does not have the proper permissions to view or manage plugins");
+            throw new PermissionException("User [" + subject.getName() + "] does not have the proper permissions to view or manage plugins");
         }
     }
 }

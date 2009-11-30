@@ -61,7 +61,7 @@
                             <h:outputText value="#{item}s" />
                         </rich:treeNode>
                         <rich:treeNode type="plugin">
-                            <h:outputText value="#{item.pluginName}" />
+                            <h:outputText value="#{item.displayName}" />
                         </rich:treeNode>
                     </rich:tree>
                 </rich:panel>
@@ -72,8 +72,7 @@
                             <h:outputText value="Plugin Configuration"/>
                         </f:facet>
                         <onc:config configurationDefinition="#{pluginConfigUIBean.pluginConfigurationDefinition}"
-                                    configuration="#{pluginConfigUIBean.currentPlugin.pluginConfiguration}"
-                                    readOnly="true" />
+                                    configuration="#{pluginConfigUIBean.currentPlugin.pluginConfiguration}" />
                     </rich:panel>
 
                     <rich:panel rendered="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration != null}">
@@ -81,9 +80,15 @@
                             <h:outputText value="Scheduled Jobs"/>
                         </f:facet>
                         <onc:config configurationDefinition="#{pluginConfigUIBean.scheduledJobsDefinition}"
-                                    configuration="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration}"
-                                    readOnly="true" />
+                                    configuration="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration}" />
                     </rich:panel>
+
+                    <h:panelGroup id="pluginButtons" rendered="#{pluginConfigUIBean.editable}">
+                        <h:commandButton value="SAVE" type="submit" action="#{pluginConfigUIBean.updatePlugin}"
+                                 alt="Click to Save Changes" styleClass="buttonmed" />
+                        <h:commandButton value="RESET" type="reset" immediate="true"
+                                 title="Click to Reset Fields" styleClass="buttonmed"/>
+                    </h:panelGroup>
                 </h:panelGroup>
             </h:panelGrid>
         </h:form>

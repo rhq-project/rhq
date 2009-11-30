@@ -45,6 +45,7 @@
                         value="#{ListNotificationsUIBean.existingNotifications}"
                         var="notif"
                         width="100%"
+                        columnWidth="5% 10% 85%"
                         headerClass="tableRowHeader"
                         footerClass="on-pager-footer"
                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -65,6 +66,13 @@
                 <h:outputText value="#{notif.senderName}"/>
             </rich:column>
 
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText styleClass="headerText" value="Configuration"/>
+                </f:facet>
+
+                <h:outputText value="#{notif.configuration.toString(true)}"/>
+            </rich:column>
             <!-- TODO add configuration -->
         </rich:dataTable>
 

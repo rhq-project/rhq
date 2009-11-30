@@ -662,20 +662,21 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                     sendAlertSnmpTrap(alert, snmpNotification);
                 }
-            }
 
-            AlertNotification test = new AlertNotification(alert.getAlertDefinition());
-            test.setSenderName("Email");
-            test.setConfiguration(new Configuration());
-            Property prop = new PropertySimple("emailAddress","hwr@redhat.com");
-            test.getConfiguration().getProperties().add(prop);
-            AlertSender sender = getAlertSender(test);
-            if (sender!=null) {
-                try {
-                    SenderResult result = sender.send(alert);
-                }
-                catch (Throwable t) {
-                    log.error("Sender failed: " + t.getMessage());
+
+                // Send over the new AlertSenders
+                if (alertNotification.getSenderName()==null)
+                    continue;
+
+                AlertSender sender = getAlertSender(alertNotification);
+                if (sender!=null) {
+                    try {
+                        SenderResult result = sender.send(alert);
+                        // TODO log result
+                    }
+                    catch (Throwable t) {
+                        log.error("Sender failed: " + t.getMessage());
+                    }
                 }
             }
 

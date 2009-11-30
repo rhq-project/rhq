@@ -46,9 +46,10 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -63,7 +64,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * A server API into the server plugin infrastructure.
- * 
+ *
  * @author John Mazzitelli
  */
 @Stateless
@@ -78,23 +79,22 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
-    public List<Plugin> getServerPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_SERVER);
+    public List<ServerPlugin> getServerPlugins() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
     }
 
-    public Plugin getServerPlugin(String name) {
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
-        query.setParameter("name", name);
-        Plugin plugin = (Plugin) query.getSingleResult();
-        if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin named [" + name + "] is not a server plugin");
-        }
+    public ServerPlugin getServerPlugin(PluginKey key) {
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
+        query.setParameter("name", key.getPluginName());
+        ServerPlugin plugin = (ServerPlugin) query.getSingleResult();
         return plugin;
     }
 
-    public Plugin getServerPluginRelationships(Plugin plugin) {
-        plugin = getServerPlugin(plugin.getName()); // refresh all but the content field
+    public ServerPlugin getServerPluginRelationships(ServerPlugin plugin) {
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
+        query.setParameter("name", plugin.getName());
+        plugin = (ServerPlugin) query.getSingleResult();
 
         Configuration config = plugin.getPluginConfiguration();
         if (config != null) {
@@ -111,18 +111,17 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return plugin;
     }
 
-    public List<Plugin> getServerPluginsById(List<Integer> pluginIds) {
+    public List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<Plugin>(); // nothing to do
+            return new ArrayList<ServerPlugin>(); // nothing to do
         }
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_IDS);
         query.setParameter("ids", pluginIds);
-        query.setParameter("type", PluginDeploymentType.SERVER);
         return query.getResultList();
     }
 
-    public ServerPluginDescriptorType getServerPluginDescriptor(String pluginName) throws Exception {
-        Plugin plugin = getServerPlugin(pluginName);
+    public ServerPluginDescriptorType getServerPluginDescriptor(PluginKey pluginKey) throws Exception {
+        ServerPlugin plugin = getServerPlugin(pluginKey);
         File pluginsDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();
         File pluginJar = new File(pluginsDir, plugin.getPath());
         URL url = pluginJar.toURI().toURL();
@@ -130,10 +129,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return descriptor;
     }
 
-    public List<String> getServerPluginNamesByEnabled(boolean enabled) {
-        Query query = entityManager.createNamedQuery(Plugin.QUERY_GET_NAMES_BY_ENABLED_AND_TYPE);
+    public List<PluginKey> getServerPluginKeysByEnabled(boolean enabled) {
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_NAMES_BY_ENABLED);
         query.setParameter("enabled", Boolean.valueOf(enabled));
-        query.setParameter("type", PluginDeploymentType.SERVER);
         return query.getResultList();
     }
 
@@ -154,9 +152,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<String> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<PluginKey> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<String>(); // nothing to do
+            return new ArrayList<PluginKey>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
@@ -164,24 +162,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
 
-        List<String> doomedPlugins = new ArrayList<String>();
+        List<PluginKey> doomedPlugins = new ArrayList<PluginKey>();
 
         for (Integer pluginId : pluginIds) {
-            Plugin doomedPlugin = null;
+            ServerPlugin doomedPlugin = null;
             try {
-                doomedPlugin = entityManager.getReference(Plugin.class, pluginId);
+                doomedPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
             } catch (Exception ignore) {
             }
             if (doomedPlugin != null) {
-                String pluginName = doomedPlugin.getName();
-                doomedPlugins.add(pluginName);
+                PluginKey pluginKey = new PluginKey(doomedPlugin);
+                doomedPlugins.add(pluginKey);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginName);
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
                     if (pc != null) {
                         try {
-                            pc.unschedulePluginJobs(pluginName);
+                            pc.unschedulePluginJobs(pluginKey);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + pluginName + "]", e);
+                            log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
                         }
                     }
                 }
@@ -197,9 +195,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public List<String> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return new ArrayList<String>(); // nothing to do
+            return new ArrayList<PluginKey>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
@@ -207,24 +205,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
 
-        List<String> doomedPlugins = new ArrayList<String>();
+        List<PluginKey> doomedPlugins = new ArrayList<PluginKey>();
 
         for (Integer pluginId : pluginIds) {
-            Plugin doomedPlugin = null;
+            ServerPlugin doomedPlugin = null;
             try {
-                doomedPlugin = entityManager.getReference(Plugin.class, pluginId);
+                doomedPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
             } catch (Exception ignore) {
             }
             if (doomedPlugin != null) {
-                String pluginName = doomedPlugin.getName();
-                doomedPlugins.add(pluginName);
+                PluginKey pluginKey = new PluginKey(doomedPlugin);
+                doomedPlugins.add(pluginKey);
                 if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginName);
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
                     if (pc != null) {
                         try {
-                            pc.unschedulePluginJobs(pluginName);
+                            pc.unschedulePluginJobs(pluginKey);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + pluginName + "]", e);
+                            log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
                         }
                     }
                 }
@@ -269,7 +267,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
-        Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGINS_ENABLED_BY_IDS);
+        Query q = entityManager.createNamedQuery(ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS);
         q.setParameter("ids", pluginIds);
         q.setParameter("enabled", Boolean.valueOf(enabled));
         int count = q.executeUpdate();
@@ -288,8 +286,8 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         if (pluginIds == null || pluginIds.size() == 0) {
             return; // nothing to do
         }
-        List<Plugin> plugins = getServerPluginsById(pluginIds);
-        for (Plugin plugin : plugins) {
+        List<ServerPlugin> plugins = getServerPluginsById(pluginIds);
+        for (ServerPlugin plugin : plugins) {
             plugin.setStatus(status);
             updateServerPluginExceptContent(subject, plugin);
         }
@@ -297,17 +295,17 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception {
+    public ServerPlugin registerServerPlugin(Subject subject, ServerPlugin plugin, File pluginFile) throws Exception {
 
         if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
             throw new IllegalArgumentException("Plugin [" + plugin.getName()
                 + "] must be a server plugin to be registered");
         }
 
-        Plugin existingPlugin = null;
+        ServerPlugin existingPlugin = null;
         boolean newOrUpdated = false;
         try {
-            existingPlugin = getServerPlugin(plugin.getName());
+            existingPlugin = getServerPlugin(new PluginKey(plugin));
         } catch (NoResultException nre) {
             newOrUpdated = true; // this is expected for new plugins
         }
@@ -317,7 +315,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
                     + "], it has been marked as deleted");
             }
-            Plugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
+            ServerPlugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes use == for reference equality
                 newOrUpdated = true;
             }
@@ -331,7 +329,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
 
             if (plugin.getId() == 0) {
-                PluginStatusType status = getServerPluginStatus(plugin.getName());
+                PluginStatusType status = getServerPluginStatus(new PluginKey(plugin));
                 if (PluginStatusType.DELETED == status) {
                     throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
                         + "], it has been previously marked as deleted.");
@@ -353,32 +351,26 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void purgeServerPlugin(Subject subject, String pluginName) {
-        Query q = this.entityManager.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
-        q.setParameter("name", pluginName);
-        q.setParameter("type", PluginDeploymentType.SERVER);
-        Plugin doomed = (Plugin) q.getSingleResult();
+    public void purgeServerPlugin(Subject subject, PluginKey pluginKey) {
+        Query q = this.entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ANY_BY_NAME);
+        q.setParameter("name", pluginKey.getPluginName());
+        ServerPlugin doomed = (ServerPlugin) q.getSingleResult();
 
         // get the reference to attach to em and use the em.remove. this cascade deletes too.
-        doomed = this.entityManager.getReference(Plugin.class, doomed.getId());
+        doomed = this.entityManager.getReference(ServerPlugin.class, doomed.getId());
         this.entityManager.remove(doomed);
 
-        log.debug("Server plugin [" + pluginName + "] has been purged from the db");
+        log.debug("Server plugin [" + pluginKey + "] has been purged from the db");
         return;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception {
+    public ServerPlugin updateServerPluginExceptContent(Subject subject, ServerPlugin plugin) throws Exception {
 
         // this method is here because we need a way to update the plugin's information
         // without blowing away the content data. Because we do not want to load the
         // content blob in memory, the plugin's content field will be null - if we were
         // to entityManager.merge that plugin POJO, it would null out that blob column.
-
-        if (plugin.getDeployment() != PluginDeploymentType.SERVER) {
-            throw new IllegalArgumentException("Plugin [" + plugin.getName()
-                + "] must be a server plugin to be updated");
-        }
 
         if (plugin.getId() == 0) {
             throw new IllegalArgumentException("Plugin must already exist to update it");
@@ -395,7 +387,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 plugin.setScheduledJobsConfiguration(config);
             }
 
-            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
+            ServerPlugin pluginEntity = entityManager.getReference(ServerPlugin.class, plugin.getId());
             pluginEntity.setName(plugin.getName());
             pluginEntity.setPath(plugin.getPath());
             pluginEntity.setDisplayName(plugin.getDisplayName());
@@ -407,6 +399,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             pluginEntity.setDeployment(plugin.getDeployment());
             pluginEntity.setPluginConfiguration(plugin.getPluginConfiguration());
             pluginEntity.setScheduledJobsConfiguration(plugin.getScheduledJobsConfiguration());
+            pluginEntity.setType(plugin.getType());
             pluginEntity.setDescription(plugin.getDescription());
             pluginEntity.setHelp(plugin.getHelp());
             pluginEntity.setMtime(plugin.getMtime());
@@ -420,10 +413,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return plugin;
     }
 
-    public PluginStatusType getServerPluginStatus(String pluginName) {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
-        q.setParameter("name", pluginName);
-        q.setParameter("type", PluginDeploymentType.SERVER);
+    public PluginStatusType getServerPluginStatus(PluginKey pluginKey) {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_STATUS_BY_NAME);
+        q.setParameter("name", pluginKey.getPluginName());
         PluginStatusType status;
         try {
             status = (PluginStatusType) q.getSingleResult();
@@ -439,14 +431,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     // if of type "alert plugin" or "generic plugin". That is only known when the plugin descriptor
     // is parsed, which happens when the master plugin container is initialized. Therefore, this
     // needs to get plugin info from the master plugin container while the master is running.
-    public Map<ServerPluginType, List<String>> getAllPluginsGroupedByType() {
-        Map<ServerPluginType, List<String>> allPlugins = new HashMap<ServerPluginType, List<String>>();
+    public Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType() {
+        Map<ServerPluginType, List<PluginKey>> allPlugins = new HashMap<ServerPluginType, List<PluginKey>>();
 
         MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
         if (master != null) {
             List<ServerPluginType> types = master.getServerPluginTypes();
             for (ServerPluginType type : types) {
-                List<String> plugins = master.getAllPluginsByPluginType(type);
+                List<PluginKey> plugins = master.getAllPluginsByPluginType(type);
                 allPlugins.put(type, plugins);
             }
         }
@@ -474,7 +466,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         try {
 
             conn = this.dataSource.getConnection();
-            ps = conn.prepareStatement("UPDATE " + Plugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
+            ps = conn.prepareStatement("UPDATE " + ServerPlugin.TABLE_NAME + " SET CONTENT = ? WHERE ID = ?");
             ps.setBinaryStream(1, new BufferedInputStream(fis), (int) file.length());
             ps.setInt(2, id);
             int updateResults = ps.executeUpdate();

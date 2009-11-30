@@ -13,7 +13,7 @@
          <to-view-id>/rhq/admin/largeenv.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
    </navigation-rule>
 
    <navigation-rule>
@@ -26,20 +26,20 @@
          <to-view-id>/rhq/admin/plugin/plugin-list.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
    </navigation-rule>
 
    <navigation-rule>
       <from-view-id>/rhq/admin/plugin/plugin-details-edit.xhtml</from-view-id>
 
       <navigation-case>
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/admin/plugin/plugin-details-view.xhtml?plugin=#{plugin.name}&amp;pluginType=#{plugin.deployment}</to-view-id>
+         <from-outcome>successServerPlugin</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-details-view.xhtml?plugin=#{plugin.name}&amp;deployment=#{plugin.deployment}&amp;pluginType=#{serverPlugin.type}</to-view-id>
          <redirect/>
       </navigation-case>
 
    </navigation-rule>
-   
+
    <navigation-rule>
       <navigation-case>
          <from-outcome>sessionExpired</from-outcome>
@@ -47,5 +47,5 @@
          <redirect/>
       </navigation-case>
    </navigation-rule>
-   
+
 </faces-config>

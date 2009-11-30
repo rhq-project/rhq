@@ -32,6 +32,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
@@ -82,11 +83,11 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
         assert schedules == null;
 
         ServerPluginsLocal serverPluginsLocal = LookupUtil.getServerPlugins();
-        Map<ServerPluginType, List<String>> map = serverPluginsLocal.getAllPluginsGroupedByType();
+        Map<ServerPluginType, List<PluginKey>> map = serverPluginsLocal.getAllPluginsGroupedByType();
         assert map.size() == 1;
-        List<String> pluginNames = map.get(new ServerPluginType(GenericPluginDescriptorType.class));
+        List<PluginKey> pluginNames = map.get(new ServerPluginType(GenericPluginDescriptorType.class));
         assert pluginNames.size() == 1;
-        assert pluginNames.get(0).equals("TestSimpleGenericPlugin");
+        assert pluginNames.get(0).getPluginName().equals("TestSimpleGenericPlugin");
 
         // make sure everything is shutdown
         this.pluginService.stopMasterPluginContainer();

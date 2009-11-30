@@ -508,7 +508,7 @@ public class ContentProviderManager {
      * @param contentSource the source that the adapter will connect to
      * @return an adapter instance; will be <code>null</code> if failed to create adapter
      */
-    private ContentProvider instantiateAdapter(ContentSource contentSource) {
+    protected ContentProvider instantiateAdapter(ContentSource contentSource) {
         ContentProvider adapter = null;
         String apiClassName = "?";
         String pluginName = "?";

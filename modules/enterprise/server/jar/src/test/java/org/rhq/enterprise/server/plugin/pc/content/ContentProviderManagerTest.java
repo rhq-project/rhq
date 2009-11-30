@@ -22,12 +22,10 @@
 */
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 import javax.persistence.EntityManager;
 import javax.transaction.TransactionManager;
@@ -37,7 +35,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.PackageType;
@@ -68,12 +65,12 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
     private static final String PLUGIN_NAME = "testPlugin";
 
     private static final String CUSTOM_IMPORTED_REPO_NAME = "customImportedRepo";
-    private static final String EXISTING_IMPORTED_REPO_NAME = "testRepoImportedExisting";
-    private static final String EXISTING_CANDIDATE_REPO_NAME = "testRepoCandidateExisting";
+    public static final String EXISTING_IMPORTED_REPO_NAME = TestContentProvider.EXISTING_IMPORTED_REPO_NAME;
+    public static final String EXISTING_CANDIDATE_REPO_NAME = TestContentProvider.EXISTING_CANDIDATE_REPO_NAME;
 
     private static final String PREVIOUS_CANDIDATE_REPO_NAME = "testPreviousCandidate";
 
-    private TestContentProvider testProvider = new TestContentProvider();
+    TestContentServerPluginService pluginService;
 
     // The following variables need to be cleaned up at the end of the test
 
@@ -98,9 +95,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         // Plugin service setup
         prepareScheduler();
-        TestContentServerPluginService pluginService = new TestContentServerPluginService();
-        prepareCustomServerPluginService(pluginService);
-        pluginService.startMasterPluginContainer();
+        pluginService = new TestContentServerPluginService(this);
 
         // Because of the (current) transaction settings of some of the nested methods (i.e. REQUIRES_NEW),
         // this test must commit its data and clean up after itself, as compared to simply rolling back the
@@ -224,8 +219,6 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject overlord = subjectManager.getOverlord();
 
-        TestContentProviderManager providerManager = new TestContentProviderManager();
-
         Set<String> reposThatShouldBeSyncced = new HashSet();
 
         // -> Add an already imported repo to the system so it already exists when the report introduces it
@@ -258,7 +251,11 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
         // Test
         // --------------------------------------------
-        boolean completed = providerManager.synchronizeContentProvider(syncSource.getId());
+        // TestContentProviderManager providerManager = new TestContentProviderManager();
+        boolean tested = pluginService.getContentProviderManager().testConnection(syncSource.getId());
+        assert tested;
+
+        boolean completed = pluginService.getContentProviderManager().synchronizeContentProvider(syncSource.getId());
         assert completed;
 
         // Verify RepoGroups
@@ -346,81 +343,4 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         assert retrievedRepos.size() == 0;
 
     }
-
-    /**
-     * Mock implementation of a content provider that will return known data.
-     */
-    private class TestContentProvider implements ContentProvider, PackageSource, RepoSource {
-
-        public RepoImportReport importRepos() throws Exception {
-            RepoImportReport report = new RepoImportReport();
-
-            // Create a repo group in the system
-            RepoGroupDetails group1 = new RepoGroupDetails("testRepoGroup", "family");
-            report.addRepoGroup(group1);
-
-            // Simple repo
-            RepoDetails repo1 = new RepoDetails("testRepo1");
-            repo1.setDescription("First test repo");
-            report.addRepo(repo1);
-
-            // Repo belonging to a group that was created in the sync
-            RepoDetails repo2 = new RepoDetails("testRepo2");
-            repo2.setRepoGroup("testRepoGroup");
-            report.addRepo(repo2);
-
-            // Repo with a parent repo created in this sync
-            // Parent explicitly added to this list *after* this child to ensure that's not a problem
-            RepoDetails repo3 = new RepoDetails("testRepo3");
-            report.addRepo(repo3);
-
-            RepoDetails repo4 = new RepoDetails("testRepo4");
-            repo4.setParentRepoName("testRepo3");
-            report.addRepo(repo4);
-
-            // Repo that was already imported in the system
-            RepoDetails repo5 = new RepoDetails(EXISTING_IMPORTED_REPO_NAME);
-            report.addRepo(repo5);
-
-            // Repo that was already a candidate in the system
-            RepoDetails repo6 = new RepoDetails(EXISTING_CANDIDATE_REPO_NAME);
-            report.addRepo(repo6);
-
-            return report;
-        }
-
-        public void synchronizePackages(String repoName, PackageSyncReport report,
-                                        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
-            // No-op
-        }
-
-        public void initialize(Configuration configuration) throws Exception {
-            // No-op
-        }
-
-        public void shutdown() {
-            // No-op
-        }
-
-        public void testConnection() throws Exception {
-            // No-op
-        }
-
-        public InputStream getInputStream(String location) throws Exception {
-            // No-op
-            return null;
-        }
-    }
-
-    /**
-     * Stubs out the methods in {@link ContentProviderManager} that would go out and expect a fully packaged plugin.
-     * Instead, use the mock implementation provided above.
-     */
-    private class TestContentProviderManager extends ContentProviderManager {
-
-        public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
-            return testProvider;
-        }
-    }
-
 }

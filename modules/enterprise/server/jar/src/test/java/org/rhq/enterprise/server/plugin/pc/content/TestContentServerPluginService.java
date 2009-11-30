@@ -18,30 +18,20 @@
  */
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
-import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
-import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginManager;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -53,6 +43,24 @@ public class TestContentServerPluginService extends ServerPluginService implemen
     public PackageSyncReport testLastSyncReport;
     public Map<ContentSource, Collection<ContentProviderPackageDetails>> testExistingPackages;
     public TestMasterServerPluginContainer master;
+    public TestContentProviderManager contentProviderManager;
+    public TestContentProvider testContentProvider;
+
+    // AbstractEJB3Test
+    public TestContentServerPluginService(AbstractEJB3Test testContainer) {
+        super();
+        testContentProvider = new TestContentProvider();
+        testContainer.prepareCustomServerPluginService(this);
+        this.startMasterPluginContainer();
+    }
+
+    public TestContentServerPluginService() {
+        super();
+    }
+
+    public TestContentProviderManager getContentProviderManager() {
+        return contentProviderManager;
+    }
 
     @Override
     protected MasterServerPluginContainer createMasterPluginContainer() {
@@ -96,8 +104,8 @@ public class TestContentServerPluginService extends ServerPluginService implemen
 
         @Override
         protected ContentProviderManager createAdapterManager() {
-            TestContentProviderManager am = new TestContentProviderManager();
-            return am;
+            contentProviderManager = new TestContentProviderManager();
+            return contentProviderManager;
         }
 
         @Override
@@ -119,69 +127,18 @@ public class TestContentServerPluginService extends ServerPluginService implemen
     /**
      * The test adapter manager.
      */
-    class TestContentProviderManager extends ContentProviderManager {
-        @Override
-        public Set<ContentSource> getAllContentSources() {
-            return (testAdapters != null) ? testAdapters.keySet() : new HashSet<ContentSource>();
+    public class TestContentProviderManager extends ContentProviderManager {
+
+        public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
+            return testContentProvider;
         }
 
-        @Override
-        protected void initialize(ContentServerPluginManager pluginManager) {
-            createInitialAdaptersMap();
+        protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
+            return testContentProvider;
         }
 
-        @Override
-        public void shutdown() {
-        }
-
-        @Override
-        public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
-            if (testAdapters != null) {
-                for (ContentSource cs : testAdapters.keySet()) {
-                    if (cs.getId() == contentSourceId) {
-                        PackageSource packageSource = (PackageSource) testAdapters.get(cs);
-                        return packageSource.getInputStream(location);
-                    }
-                }
-            }
-
-            System.out.println("!!!!!!!!!!");
-            System.out.println("STREAM: TEST DID NOT SETUP ADAPTER - EMPTY STREAM FOR [" + contentSourceId + "]");
-            return new ByteArrayInputStream(new byte[0]);
-        }
-
-        @Override
-        public boolean synchronizeContentProvider(int contentSourceId) throws Exception {
-            if (testAdapters != null) {
-                for (ContentSource cs : testAdapters.keySet()) {
-                    if (cs.getId() == contentSourceId) {
-                        testLastSyncReport = new PackageSyncReport();
-                        PackageSource packageSource = (PackageSource) testAdapters.get(cs);
-                        packageSource.synchronizePackages(null, testLastSyncReport, testExistingPackages.get(cs));
-                        return true;
-                    }
-                }
-            }
-
-            System.out.println("!!!!!!!!!!");
-            System.out.println("SYNC: TEST DID NOT SETUP ADAPTER - NO-OP FOR [" + contentSourceId + "]");
-            return true;
-        }
-
-        @Override
-        public boolean testConnection(int contentSourceId) throws Exception {
-            if (testAdapters != null) {
-                for (ContentSource cs : testAdapters.keySet()) {
-                    if (cs.getId() == contentSourceId) {
-                        testAdapters.get(cs).testConnection();
-                        return true;
-                    }
-                }
-            }
-
-            System.out.println("!!!!!!!!!!");
-            System.out.println("CONN: TEST DID NOT SETUP ADAPTER - NO-OP FOR [" + contentSourceId + "]");
-            return true;
+        protected ContentProvider instantiateAdapter(ContentSource contentSource) {
+            return testContentProvider;
         }
     }
 }

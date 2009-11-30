@@ -66,6 +66,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
+
         TransactionManager tx = getTransactionManager();
         tx.begin();
 
@@ -73,10 +74,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
 
-        TestContentServerPluginService pluginService = new TestContentServerPluginService();
-        prepareCustomServerPluginService(pluginService);
-        pluginService.startMasterPluginContainer();
-
+        TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -100,7 +98,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         for (int i = 0; i < 10; i++) {
             Random r = new Random(System.currentTimeMillis());
             Repo repo = new Repo(r.nextLong() + "");
-            repoManager.createRepo(overlord, repo).getId();
+            repoManager.createRepo(overlord, repo);
         }
         repos = repoManager.findRepos(overlord, new PageControl());
 
@@ -108,26 +106,24 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = true)
     public void testSyncRepos() throws Exception {
         Repo repo = new Repo("testSyncStatus");
+
+        ContentSourceType type = new ContentSourceType("testGetSyncResultsListCST");
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>();
+        types.add(type);
+        contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
+        ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
+        contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
+        repo.addContentSource(contentSource);
+
         repoManager.createRepo(overlord, repo);
         Integer[] ids = { repo.getId() };
         int syncCount = repoManager.synchronizeRepos(overlord, ids);
 
-        assert syncCount == 0;
-
-        ContentSourceType cst = new ContentSourceType("testSyncStatus");
-        ContentSource cs = new ContentSource("testSyncStatus", cst);
-
-        EntityManager em = getEntityManager();
-        em.persist(cst);
-        em.persist(cs);
-
-        repo.addContentSource(cs);
-        syncCount = repoManager.synchronizeRepos(overlord, ids);
-
         assert syncCount == 1;
+
     }
 
     @Test(enabled = ENABLED)

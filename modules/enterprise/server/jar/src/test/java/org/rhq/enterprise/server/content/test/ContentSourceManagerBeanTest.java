@@ -40,8 +40,8 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
@@ -151,10 +151,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         setupTestEnvironment();
         overlord = LookupUtil.getSubjectManager().getOverlord();
         prepareScheduler();
-        TestContentServerPluginService pluginService = new TestContentServerPluginService();
-        prepareCustomServerPluginService(pluginService);
-        pluginService.startMasterPluginContainer();
-
+        TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
         cleanupPreviousTestRuns();
     }
 

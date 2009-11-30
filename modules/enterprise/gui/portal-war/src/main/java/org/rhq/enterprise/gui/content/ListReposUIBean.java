@@ -57,7 +57,7 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         return "importRepos";
     }
 
-    public String syncSelectedContentSources() {
+    public String syncSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
         Integer[] repoIds = getIntegerArray(selected);

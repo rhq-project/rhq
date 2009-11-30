@@ -820,8 +820,8 @@ public class Repo implements Serializable, Taggable {
         Comparator dc = new Comparator() {
             public int compare(Object arg0, Object arg1) {
                 long currTime = System.currentTimeMillis();
-                ContentSourceSyncResults c1 = (ContentSourceSyncResults) arg0;
-                ContentSourceSyncResults c2 = (ContentSourceSyncResults) arg1;
+                RepoSyncResults c1 = (RepoSyncResults) arg0;
+                RepoSyncResults c2 = (RepoSyncResults) arg1;
                 Date d1 = null;
                 Date d2 = null;
 

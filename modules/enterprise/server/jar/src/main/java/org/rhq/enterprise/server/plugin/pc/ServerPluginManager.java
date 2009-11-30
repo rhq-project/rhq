@@ -144,12 +144,17 @@ public class ServerPluginManager {
     }
 
     public void startPlugins() {
-        log.debug("Starting plugins");
+        log.debug("Starting server plugins");
+        for (String pluginName : this.pluginComponentCache.keySet()) {
+            startPlugin(pluginName);
+        }
+        log.debug("Server plugins started.");
+        return;
+    }
 
-        // tell all plugin components to start
-        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
-            String pluginName = entry.getKey();
-            ServerPluginComponent component = entry.getValue();
+    public void startPlugin(String pluginName) {
+        ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
+        if (component != null) {
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
             log.debug("Starting plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -162,17 +167,21 @@ public class ServerPluginManager {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
-
         return;
     }
 
     public void stopPlugins() {
-        log.debug("Stopping plugins");
+        log.debug("Stopping server plugins");
+        for (String pluginName : this.pluginComponentCache.keySet()) {
+            stopPlugin(pluginName);
+        }
+        log.debug("Server plugins stopped.");
+        return;
+    }
 
-        // tell all plugin components to stop
-        for (Map.Entry<String, ServerPluginComponent> entry : this.pluginComponentCache.entrySet()) {
-            String pluginName = entry.getKey();
-            ServerPluginComponent component = entry.getValue();
+    public void stopPlugin(String pluginName) {
+        ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
+        if (component != null) {
             ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
             log.debug("Stopping plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
@@ -185,7 +194,6 @@ public class ServerPluginManager {
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
         }
-
         return;
     }
 

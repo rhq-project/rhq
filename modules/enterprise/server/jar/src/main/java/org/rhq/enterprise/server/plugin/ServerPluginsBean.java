@@ -79,6 +79,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
+    @SuppressWarnings("unchecked")
     public List<ServerPlugin> getServerPlugins() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
@@ -142,12 +143,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
-
-        // only restart the master if it was started to begin with
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        if (serverPluginService.isMasterPluginContainerStarted()) {
-            serverPluginService.restartMasterPluginContainer();
-        }
+        restartPlugins(pluginIds);
         return;
     }
 
@@ -186,10 +182,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
 
-        // only restart if the master was started to begin with; otherwise, leave it down
-        if (master != null) {
-            serverPluginService.restartMasterPluginContainer();
-        }
+        restartPlugins(pluginIds);
 
         return doomedPlugins;
     }
@@ -253,10 +246,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
         log.info("Server plugins " + doomedPlugins + " have been undeployed");
 
-        // only restart if the master was started to begin with; otherwise, leave it down
-        if (master != null) {
-            serverPluginService.restartMasterPluginContainer();
-        }
+        restartPlugins(pluginIds);
 
         return doomedPlugins;
     }
@@ -483,5 +473,66 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return;
+    }
+
+    /**
+     * Given a list of plugin IDs, this will restart those plugins.
+     * this does nothing if the master plugin container is not started.
+     * 
+     * @param pluginIds the IDs of the plugins to restart
+     */
+    private void restartPlugins(List<Integer> pluginIds) {
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        if (master != null) {
+            Map<AbstractTypeServerPluginContainer, List<PluginKey>> pcs;
+            pcs = getPluginContainersForPluginIds(master, pluginIds);
+            for (Map.Entry<AbstractTypeServerPluginContainer, List<PluginKey>> entry : pcs.entrySet()) {
+                AbstractTypeServerPluginContainer pc = entry.getKey();
+                List<PluginKey> pluginKeys = entry.getValue();
+                pc.restartPlugins(pluginKeys);
+            }
+        }
+    }
+
+    /**
+     * Given a list IDs of server plugins, this will return all plugin containers that manage those plugins.
+     * 
+     * @param master the master plugin container
+     * @param pluginIds the IDs of plugins whose plugin containers are to be returned
+     * 
+     * @return the plugin containers that manage the plugins with the given IDs
+     */
+    private Map<AbstractTypeServerPluginContainer, List<PluginKey>> getPluginContainersForPluginIds(
+        MasterServerPluginContainer master, List<Integer> pluginIds) {
+
+        Map<AbstractTypeServerPluginContainer, List<PluginKey>> pcs;
+        pcs = new HashMap<AbstractTypeServerPluginContainer, List<PluginKey>>();
+
+        AbstractTypeServerPluginContainer pc;
+
+        List<PluginKey> keys = getPluginKeysFromIds(pluginIds);
+        for (PluginKey key : keys) {
+            try {
+                pc = master.getPluginContainerByPluginType(new ServerPluginType(key.getPluginType()));
+                List<PluginKey> list = pcs.get(pc);
+                if (list == null) {
+                    list = new ArrayList<PluginKey>();
+                    pcs.put(pc, list);
+                }
+                list.add(key);
+            } catch (Exception e) {
+                log.warn("Cannot determine what PC manages plugin [" + key + "]", e);
+            }
+        }
+
+        return pcs;
+    }
+
+    private List<PluginKey> getPluginKeysFromIds(List<Integer> pluginIds) {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_KEYS_BY_IDS);
+        q.setParameter("ids", pluginIds);
+        List<PluginKey> keys = q.getResultList();
+        return keys;
     }
 }

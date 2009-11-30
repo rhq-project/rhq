@@ -130,7 +130,7 @@ public abstract class AbstractTypeServerPluginContainer {
             Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
             for (ServerPluginEnvironment env : envs) {
                 try {
-                    unloadPlugin(env);
+                    unloadPlugin(env.getPluginKey());
                 } catch (Exception e) {
                     this.log.warn("Failed to unload plugin [" + env.getPluginKey().getPluginName() + "].", e);
                 }
@@ -147,15 +147,17 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
-     * Informs the plugin container that it has a plugin that it must being to start managing.
+     * Informs the plugin container that it has a plugin that it must begin to start managing.
      * 
      * @param env the plugin environment, including the plugin jar and its descriptor
+     * @param enabled <code>true</code> if the plugin should be initialized; <code>false</code> if
+     *                the plugin's existence should be noted but it should not be initialized or started
      *
      * @throws Exception if failed to load the plugin 
      */
-    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.loadPlugin(env);
+            this.pluginManager.loadPlugin(env, enabled);
         } else {
             throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
         }
@@ -165,15 +167,32 @@ public abstract class AbstractTypeServerPluginContainer {
      * Informs the plugin container that a plugin should be unloaded and any of its resources
      * should be released.
      * 
-     * @param env the plugin environment, including the plugin jar and its descriptor
+     * @param pluginKey identifies the plugin that should be shutdown
      *
      * @throws Exception if failed to unload the plugin 
      */
-    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.unloadPlugin(env);
+            this.pluginManager.unloadPlugin(pluginKey.getPluginName());
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
+        }
+    }
+
+    /**
+     * Informs the plugin container that a plugin should be reloaded and any of its resources
+     * should be started if being enabled.
+     * 
+     * @param pluginKey identifies the plugin that should be reloaded
+     * @param enabled indicates if the plugin should be enabled or disabled after being loaded
+     *
+     * @throws Exception if failed to unload the plugin 
+     */
+    public synchronized void reloadPlugin(PluginKey pluginKey, boolean enabled) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.reloadPlugin(pluginKey.getPluginName(), enabled);
+        } else {
+            throw new Exception("Cannot reload a plugin; plugin container has been shutdown");
         }
     }
 
@@ -252,43 +271,6 @@ public abstract class AbstractTypeServerPluginContainer {
             }
         }
 
-        return;
-    }
-
-    /**
-     * This will restart the given set of plugins. The currently running plugins will
-     * be stopped and unloaded and the new plugins will be loaded and started.
-     * 
-     * If a plugin is in the given list but is not already started, this method will
-     * skip that plugin (i.e. it will not start it).
-     *
-     *
-     * 
-     * @param pluginKeys identifies the plugins that need to be restarted
-     */
-    // TODO: This method does not do anything with the scheduled jobs.
-    // Perhaps we should unschedule them and reschedule them, in case the jobs were reconfigured?
-    // What happens to the jobs that may currently be running in the HA case?
-    public synchronized void restartPlugins(List<PluginKey> pluginKeys) {
-        if (this.pluginManager != null) {
-            for (PluginKey pluginKey : pluginKeys) {
-                String pluginName = pluginKey.getPluginName();
-                ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(pluginName);
-                if (env != null) {
-                    try {
-                        this.pluginManager.stopPlugin(pluginName);
-                        this.pluginManager.unloadPlugin(env);
-                        this.pluginManager.loadPlugin(env);
-                        this.pluginManager.startPlugin(pluginName);
-                    } catch (Exception e) {
-                        log.warn("Failed to restart server plugin [" + pluginName + "]", e);
-                    }
-                } else {
-                    log.info("Being asked to restart server plugin [" + pluginName
-                        + "] but it isn't started - skipping");
-                }
-            }
-        }
         return;
     }
 

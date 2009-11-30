@@ -715,5 +715,5 @@ var WindowResizeTracker = {
 	}
 };
 
-// initalize the resize tracker
+// initialize the resize tracker
 Event.observe(window, "load", WindowResizeTracker.init);

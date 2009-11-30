@@ -25,9 +25,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
-import org.jboss.system.server.ServerConfig;
 
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is the singleton management service responsible for managing the lifecycle of the
@@ -60,6 +60,7 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         if (this.masterPluginContainer == null) {
             log.debug("The server plugin service is now starting the master server plugin container");
             this.masterPluginContainer = createMasterPluginContainer();
+            this.masterPluginContainer.scheduleAllPluginJobs();
         }
 
         return;
@@ -90,6 +91,21 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         startMasterPluginContainer();
     }
 
+    public synchronized void startMasterPluginContainerWithoutSchedulingJobs() {
+        if (!this.started) {
+            throw new IllegalStateException(
+                "The server plugin service is not started - cannot start the master plugin container!");
+        }
+
+        // only initialize if not already started; if already started/initialized, just ignore
+        if (this.masterPluginContainer == null) {
+            log.debug("The server plugin service is now starting the master server plugin container!");
+            this.masterPluginContainer = createMasterPluginContainer();
+        }
+
+        return;
+    }
+
     public MasterServerPluginContainer getMasterPluginContainer() {
         return this.masterPluginContainer;
     }
@@ -100,6 +116,12 @@ public class ServerPluginService implements ServerPluginServiceManagement {
 
     public boolean isMasterPluginContainerStarted() {
         return this.masterPluginContainer != null;
+    }
+
+    public File getServerPluginsDirectory() {
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+        File pluginDir = new File(serverHomeDir, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
+        return pluginDir;
     }
 
     /**
@@ -113,21 +135,20 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     protected MasterServerPluginContainer createMasterPluginContainer() {
         MasterServerPluginContainer pc = new MasterServerPluginContainer();
 
-        MasterServerPluginContainerConfiguration config = new MasterServerPluginContainerConfiguration();
+        File pluginDir = getServerPluginsDirectory();
 
-        String pluginDirStr = System.getProperty(ServerConfig.SERVER_HOME_DIR);
-        File pluginDir = new File(pluginDirStr, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
-        config.setPluginDirectory(pluginDir);
+        File serverDataDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+        File dataDir = new File(serverDataDir, "server-plugins");
+        dataDir.mkdirs(); // make sure the data directory exists
 
-        String tmpDirStr = System.getProperty(ServerConfig.SERVER_TEMP_DIR);
-        config.setTemporaryDirectory(new File(tmpDirStr));
+        File tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();
 
         // TODO: determine what things to hide from our war classloader
         //StringBuilder defaultRegex = new StringBuilder();
         //defaultRegex.append("(package\\.with\\.classes\\.to\\.hide\\..*)|");
 
-        config.setRootPluginClassLoaderRegex(null);
-
+        MasterServerPluginContainerConfiguration config;
+        config = new MasterServerPluginContainerConfiguration(pluginDir, dataDir, tmpDir, null);
         pc.initialize(config);
 
         return pc;

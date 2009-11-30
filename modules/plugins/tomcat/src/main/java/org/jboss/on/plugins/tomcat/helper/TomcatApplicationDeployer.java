@@ -22,10 +22,6 @@
  */
 package org.jboss.on.plugins.tomcat.helper;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -59,7 +55,7 @@ public class TomcatApplicationDeployer {
     public void deploy(String contextPath) throws DeployerException {
         log.debug("Servicing " + contextPath + "...");
         try {
-            this.deployOperation.invoke(contextPath);
+            this.deployOperation.invoke(new Object[] {contextPath});
         } catch (RuntimeException e) {
             throw new DeployerException("Failed to service " + contextPath, e);
         }
@@ -68,7 +64,7 @@ public class TomcatApplicationDeployer {
     public void undeploy(String contextPath) throws DeployerException {
         log.debug("Undeploying " + contextPath + "...");
         try {
-            this.undeployOperation.invoke(contextPath);
+            this.undeployOperation.invoke(new Object[] {contextPath});
         } catch (RuntimeException e) {
             throw new DeployerException("Failed to undeploy " + contextPath, e);
         }

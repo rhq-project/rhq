@@ -83,6 +83,12 @@
                      </h:outputText>
                   </td>
                </tr>
+               <tr>
+                  <td align="right"><b>Syncronization Status:</b></td>
+                  <td align="left">
+                     <h:outputText value="#{RepoDetailsUIBean.repo.syncStatus}"/>
+                  </td>
+               </tr>
             </table>
          </rich:panel>
 
@@ -90,6 +96,9 @@
             <h:commandButton rendered="${mode ne 'edit'}"
                              value="EDIT" action="#{RepoDetailsUIBean.edit}"
                              alt="Edit" styleClass="buttonmed" id="editButton"/>
+            <h:commandButton rendered="${mode ne 'edit'}"
+                             value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
+                             alt="Synchronize" styleClass="buttonmed" id="syncButton"/>
             <h:commandButton rendered="${mode eq 'edit'}"
                              value="SAVE" action="#{RepoDetailsUIBean.save}"
                              alt="Save" styleClass="buttonmed" id="saveButton"/>
@@ -213,10 +222,13 @@
                   <rich:columnGroup>
                      <!-- colspan 8:7 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 8 : 7}" width="100%">
-                        <h:commandButton action="#{RepoContentSourcesUIBean.associateWithContentSources}"
-                                         value="ASSOCIATE..." styleClass="on-pager-button buttonsmall"/>
-                        <onc:selectCommandButton action="#{RepoContentSourcesUIBean.deleteSelectedRepoContentSources}"
-                                                 value="DISASSOCIATE SELECTED" target="selectedRepoContentSources" styleClass="on-pager-button buttonsmall"/>
+                        <h:commandButton action="#{RepoContentSourcesUIBean.associateWithContentProviders}"
+                                         value="ASSOCIATE..."
+                                         styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{RepoContentSourcesUIBean.disassociateWithContentProviders}"
+                                                 value="DISASSOCIATE SELECTED"
+                                                 target="selectedRepoContentProviders"
+                                                 styleClass="on-pager-button buttonsmall"/>
 
                         <ui:param name="paginationDataTableName" value="repoContentProvidersDataTable"/>
                         <ui:param name="paginationDataModel" value="#{repoContentProvidersDataModel}"/>
@@ -492,6 +504,91 @@
          </rich:panel>
       </a4j:region>
       </h:form>
+            
+      <h:form id="repoDistributionListForm">
+      <a4j:region id="distributionList">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Distribution Trees Associated To This Repository"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+
+            <ui:param name="repoDistributionDataModel" value="#{RepoDistributionUIBean.dataModel}"/>
+            <rich:dataTable id="repoDistributionDataTable"
+                            rows="#{PageControl.RepoDistributionList.pageSize}"
+                            value="#{repoDistributionDataModel}"
+                            var="dist"
+                            width="100%"
+                            columnsWidth="20%,30%,50%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="RepoDistributionList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Distribution Label" />
+                  </f:facet>
+                   <h:outputText value="#{dist.label}"/>
+
+               </rich:column>
+
+
+               <rich:column>
+                  <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Distribution Type" />
+                  </f:facet>
+                   <h:outputText value="#{dist.distributionType}"/>
+
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Base Path" />
+                  </f:facet>
+                   <h:outputText value="#{dist.basePath}"/>
+
+               </rich:column>
+
+                <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Last Modified" />
+                  </f:facet>
+                   <h:outputText value="#{dist.lastModifiedDate}"/>
+
+               </rich:column>
+
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 5:4 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="repoDistributionDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoDistributionDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoDistributionList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </a4j:region>
+      </h:form>   
 
    </ui:define>
 </ui:composition>

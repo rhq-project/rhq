@@ -424,26 +424,26 @@
          
       </h:form>
 
-      <!-- PACKAGE VERSION LIST -->
+      <!-- REPO LIST -->
 
-      <h:form id="contentSourcePackageVersionsListForm">
+      <h:form id="contentSourceRepoListForm">
          <input type="hidden" name="id" value="${param.id}"/>
          <input type="hidden" name="mode" value="${param.mode}"/>
       
          <rich:panel>
             <f:facet name="header">
-               <h:outputText value="Package Versions Originating From This Content Provider"/>
+               <h:outputText value="Repositories you can synchronize from this Content Provider"/>
             </f:facet>
 
-            <h:panelGrid columns="1" width="100%">
+            <h:panelGrid columns="2" width="100%">
 
-            <ui:param name="contentSourcePackageVersionsDataModel" value="#{ContentSourcePackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable id="contentSourcePackageVersionsDataTable"
-                            rows="#{PageControl.ContentSourcePackageVersionsList.pageSize}"
-                            value="#{contentSourcePackageVersionsDataModel}"
-                            var="pvitem"
+            <ui:param name="contentSourceReposDataModel" value="#{ContentSourceCandidateReposUIBean.dataModel}"/>
+            <rich:dataTable id="contentSourceReposDataTable"
+                            rows="#{PageControl.ContentSourceCandidateReposList.pageSize}"
+                            value="#{contentSourceReposDataModel}"
+                            var="repoitem"
                             width="100%"
-                            columnsWidth="20%, 10%, 10%, 40%, 20%"
+                            columnsWidth="100%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -451,81 +451,35 @@
 
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ContentSourcePackageVersionsList" />
+                  <onc:paginationControl id="ContentSourceCandidateReposList" />
                </f:facet>
-      
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.packageVersion.id">
+                     <onc:sortableColumnHeader sort="c.id">
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
-                  <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.id}"/>
+                  <h:outputText value="#{repoitem.id}"/>
                </rich:column>
-
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.packageVersion.displayName">
+                     <onc:sortableColumnHeader sort="c.name">
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <h:outputLink value="packageVersion.xhtml">
-                     <f:param name="id" value="#{pvitem.packageVersionContentSourcePK.packageVersion.id}"/>
-                     <f:param name="content_source_id" value="#{param.id}"/>
-                     <f:param name="content_source_name" value="#{ContentProviderDetailsUIBean.contentSource.name}"/>
-                     <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.displayName}" />
+                  <h:outputLink value="repo.xhtml">
+                     <f:param name="mode" value="view"/>
+                     <f:param name="id" value="#{repoitem.id}"/>
+                     <h:outputText value="#{repoitem.name}" />
                   </h:outputLink>
                </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.packageVersion.version">
-                        <h:outputText styleClass="headerText" value="Version" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.displayVersion}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.packageVersion.architecture.name">
-                        <h:outputText styleClass="headerText" value="Arch" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.architecture.name}"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.packageVersion.shortDescription">
-                        <h:outputText styleClass="headerText" value="Description" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{pvitem.packageVersionContentSourcePK.packageVersion.shortDescription}" escape="false"/>
-               </rich:column>
-
-               <rich:column>
-                  <f:facet name="header">
-                     <onc:sortableColumnHeader sort="pvcs.location">
-                        <h:outputText styleClass="headerText" value="Location" />
-                     </onc:sortableColumnHeader>
-                  </f:facet>
-               
-                  <h:outputText value="#{pvitem.location}"/>
-               </rich:column>
-
                <f:facet name="footer">
                   <rich:columnGroup>
                      <!-- colspan 6:5 for the debug 'id' column -->
                      <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
-                        <ui:param name="paginationDataTableName" value="contentSourcePackageVersionsDataTable"/>
-                        <ui:param name="paginationDataModel" value="#{contentSourcePackageVersionsDataModel}"/>
-                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourcePackageVersionsList}"/>
+                        <ui:param name="paginationDataTableName" value="contentSourceReposDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{contentSourceReposDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.ContentSourceCandidateReposList}"/>
                         <ui:include src="../resource/include/pagination.xhtml"/>
                      </rich:column>
                   </rich:columnGroup>

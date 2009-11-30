@@ -55,8 +55,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ProductPluginDeployer {
 
-    public static final String AMPS_VERSION = "2.0";
-
     private Log log = LogFactory.getLog(ProductPluginDeployer.class.getName());
     private File pluginDir = null;
     private File licenseFile = null;

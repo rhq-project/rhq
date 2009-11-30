@@ -10,7 +10,7 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
+GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
@@ -18,119 +18,67 @@
  */
 package org.rhq.plugins.samba;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Set;
-
 import net.augeas.Augeas;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.domain.resource.CreateResourceHistory;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.system.ProcessExecution;
-import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasNode;
+
+import java.util.List;
 
 /**
- * @author Greg Hinkle
+ * TODO
  */
-public class SambaShareComponent implements ResourceComponent<SambaServerComponent>, ConfigurationFacet,
-    MeasurementFacet {
+public class SambaShareComponent extends AugeasConfigurationComponent<SambaServerComponent> {
+    public static final String TARGET_NAME_PROP = "targetName";
 
-    private ResourceContext<SambaServerComponent> resourceContext;
+    public static final String NAME_RESOURCE_CONFIG_PROP = "name";
 
-    private static String[] PROPERTIES = { "path", "comment", "public", "browseable", "writable", "printable",
-        "write list", "guest ok", "share modes", "printable", "valid users" };
+    static final String RESOURCE_TYPE_NAME = "Samba Share";
 
-    public void start(ResourceContext<SambaServerComponent> sambaServerComponentResourceContext)
-        throws InvalidPluginConfigurationException, Exception {
-        this.resourceContext = sambaServerComponentResourceContext;
+    public void start(ResourceContext<SambaServerComponent> resourceContext) throws Exception {
+        super.start(resourceContext);
+    }
+
+    @Override
+    protected String getResourceConfigurationRootPath() {
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String targetName = pluginConfig.getSimple(TARGET_NAME_PROP).getStringValue();
+        String targetPath = "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
+        AugeasNode targetNode = new AugeasNode(targetPath);
+        Augeas augeas = getAugeas();
+        augeas.load();
+        List<String> matches = augeas.match(targetNode.getPath());
+        return matches.get(0);
     }
 
     public void stop() {
-
+        super.stop();
     }
 
     public AvailabilityType getAvailability() {
-        return null;
+       return super.getAvailability();
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        String path = getAugeasPath();
-        Augeas augeas = this.resourceContext.getParentResourceComponent().getAugeas();
-
-        List<String> matches = augeas.match(path);
-
-        // Parse out the properties
-        Configuration configuration = new Configuration();
-        configuration.setNotes("Loaded from Augeas at " + new Date());
-
-        for (String prop : PROPERTIES) {
-            String value = augeas.get(path + "/" + prop.replaceAll(" ", "\\\\ "));
-            configuration.put(new PropertySimple(prop, value));
-        }
-
-        return configuration;
+        Configuration resourceConfig = super.loadResourceConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        String targetName = pluginConfig.getSimple(TARGET_NAME_PROP).getStringValue();
+        resourceConfig.put(new PropertySimple(NAME_RESOURCE_CONFIG_PROP, targetName));
+        return resourceConfig;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        try {
-            String path = getAugeasPath();
-            Augeas augeas = this.resourceContext.getParentResourceComponent().getAugeas();
-
-            // Parse out the properties
-            Configuration configuration = report.getConfiguration();
-            for (String prop : PROPERTIES) {
-                augeas.set(path + "/" + prop.replaceAll(" ", "\\\\ "), configuration.getSimpleValue(prop, ""));
-            }
-        } catch (Exception e) {
-            report.setErrorMessageFromThrowable(e);
-        }
+        super.updateResourceConfiguration(report);
     }
 
-    private String getAugeasPath() throws Exception {
-        SambaServerComponent serverComponent = this.resourceContext.getParentResourceComponent();
-
-        Augeas augeas = serverComponent.getAugeas();
-
-        String path = null;
-        for (String p : augeas.match(serverComponent.getAugeasPath())) {
-            if (this.resourceContext.getResourceKey().equals(augeas.get(p))) {
-                path = p;
-            }
-        }
-
-        return path;
+    public void deleteResource() throws Exception {
+        super.deleteResource();
     }
 
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        ProcessExecution exec = new ProcessExecution("smbstatus");
-        exec.setArguments(new String[] { "-S" });
-        exec.setCaptureOutput(true);
-
-        ProcessExecutionResults results = this.resourceContext.getSystemInformation().executeProcess(exec);
-
-        String output = results.getCapturedOutput();
-
-        String[] lines = output.split("\\n");
-        boolean dataLines = false;
-        int count = 0;
-        for (String line : lines) {
-            if (!dataLines && line.startsWith("--------------")) {
-                dataLines = true;
-                continue;
-            }
-            //            String[] row = line.split("\\s", 4);
-
-            count++;
-        }
-
-    }
 }

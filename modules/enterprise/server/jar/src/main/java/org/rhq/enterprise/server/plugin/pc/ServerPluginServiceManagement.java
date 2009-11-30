@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.File;
+
 import javax.management.ObjectName;
 
 import org.rhq.core.util.ObjectNameFactory;
@@ -45,9 +47,12 @@ public interface ServerPluginServiceManagement {
     void stop();
 
     /**
-     * Starts the {@link #getMasterPluginContainer() master plugin container} which will load in all plugins and start them. You
-     * cannot start the plugin container unless this service has {@link #start() been started}. If the master plugin container
-     * {@link #isMasterPluginContainerStarted() is already started}, this does nothing and returns.
+     * Starts the {@link #getMasterPluginContainer() master plugin container} which will load in all plugins, start them and then
+     * schedule all jobs for all plugins. You cannot start the plugin container unless this service has
+     * {@link #start() been started}. If the master plugin container {@link #isMasterPluginContainerStarted() is already started},
+     * this does nothing and returns. You must ensure the job scheduler is started prior to calling this method.
+     * 
+     * @see #startMasterPluginContainerWithoutSchedulingJobs()
      */
     void startMasterPluginContainer();
 
@@ -61,6 +66,17 @@ public interface ServerPluginServiceManagement {
      * Convienence method that first does a {@link #stopMasterPluginContainer()} and then a {@link #startMasterPluginContainer()}.
      */
     void restartMasterPluginContainer();
+
+    /**
+     * Similar to {@link #startMasterPluginContainer()}, but this will not tell the master plugin container
+     * to {@link MasterServerPluginContainer#scheduleAllPluginJobs() schedule any jobs} yet. Usually this is only
+     * called when the server itself is starting up and it wants to start the master PC but it has not yet
+     * started the scheduler. In this case, after this method is called, the caller must ensure the scheduler is
+     * started and then tell the master PC to schedule all its plugin jobs.
+     * 
+     * @see #startMasterPluginContainer()
+     */
+    void startMasterPluginContainerWithoutSchedulingJobs();
 
     /**
      * Returns the master server plugin container that will be responsible for managing all plugins of all types and their classloaders.
@@ -85,4 +101,10 @@ public interface ServerPluginServiceManagement {
      * @return <code>true</code> if the master plugin container has been started
      */
     boolean isMasterPluginContainerStarted();
+
+    /**
+     * Returns the directory where the server plugins are found.
+     * @return server plugins directory
+     */
+    File getServerPluginsDirectory();
 }

@@ -96,4 +96,12 @@ public class BaseRHNTest extends TestCase {
         + "<value><string>REAL</string></value>\n" + "</member>\n" + "</struct></value>\n" + "</param>\n"
         + "</params>\n";
 
+    /**
+     * Adding this empty test method to make command line tests execute from maven.
+     * The lack of a test method in this class, was causing an exception to be thrown
+     * @throws Exception
+     */
+    public void testDoNothing() throws Exception {
+        assertTrue(true);
+    }
 }

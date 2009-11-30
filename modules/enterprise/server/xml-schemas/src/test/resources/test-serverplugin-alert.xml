@@ -6,11 +6,13 @@
               displayName="alert plugin display name"
               name="alert plugin name"
               package="org.alert.package.name.here"
-              pluginLifecycleListener="alertPluginLifecycleListener"
+              disabledOnDiscovery="true"
               xmlns="urn:xmlns:rhq-serverplugin.alert"
               xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
               xmlns:c="urn:xmlns:rhq-configuration"
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:plugin-component class="alertPluginComponent" />
 
     <serverplugin:plugin-configuration>
         <c:simple-property name="alertprop1" />

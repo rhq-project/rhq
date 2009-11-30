@@ -124,12 +124,13 @@ public class RepoProvider implements ContentProvider, PackageSource {
      * indicate packages that need to be added and deleted. The notion of updated packages does not make sense in the
      * rpm works since an update generates a new package version.
      *
-     * @param  report           A report to fill in.
+     * @param repoName
+     *@param  report           A report to fill in.
      * @param  existingPackages A collection of package specifications already in inventory.
-     *
-     * @throws Exception On all errors.
+ *   @throws Exception On all errors.
      */
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentProviderPackageDetails> existingPackages)
+    public void synchronizePackages(String repoName, PackageSyncReport report,
+                                    Collection<ContentProviderPackageDetails> existingPackages)
         throws Exception {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");

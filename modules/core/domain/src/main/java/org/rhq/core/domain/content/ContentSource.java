@@ -24,6 +24,9 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -291,10 +294,35 @@ public class ContentSource implements Serializable {
     }
 
     /**
-     * The list of sync results; should be ordered with the latest results first in the list, but this is not
+     * The list of sync results; ordered with the latest results first in the list guaranteed.
      * guaranteed.
      */
     public List<ContentSourceSyncResults> getSyncResults() {
+
+        Comparator dc = new Comparator() {
+            public int compare(Object arg0, Object arg1) {
+                long currTime = System.currentTimeMillis();
+                ContentSourceSyncResults c1 = (ContentSourceSyncResults) arg0;
+                ContentSourceSyncResults c2 = (ContentSourceSyncResults) arg1;
+                Date d1 = null;
+                Date d2 = null;
+
+                if (c1.getEndTime() == null) {
+                    d1 = new Date(currTime);
+                } else {
+                    d1 = new Date(c1.getEndTime());
+                }
+                if (c2.getEndTime() == null) {
+                    d2 = new Date(currTime);
+                } else {
+                    d2 = new Date(c2.getEndTime());
+                }
+                return d1.compareTo(d2);
+            }
+        };
+
+        Collections.sort(syncResults, dc);
+
         return syncResults;
     }
 
@@ -316,7 +344,7 @@ public class ContentSource implements Serializable {
      *
      * @return the mapping entities
      *
-     * @see    #getContentSources()
+     * @see    #getRepoContentSources()
      */
     public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
@@ -442,4 +470,5 @@ public class ContentSource implements Serializable {
 
         return true;
     }
+
 }

@@ -145,6 +145,18 @@ public class CloudManagerBean implements CloudManagerLocal {
         }
     }
 
+    public int getNormalServerCount() {
+        Query query = PersistenceUtility.createCountQuery(entityManager, Server.QUERY_FIND_ALL_NORMAL_CLOUD_MEMBERS);
+
+        try {
+            long serverCount = (Long) query.getSingleResult();
+            return (int) serverCount;
+        } catch (NoResultException nre) {
+            log.debug("Could not get count of normal cloud instances, returning 0...");
+            return 0;
+        }
+    }
+
     public void deleteServers(Integer[] serverIds) throws CloudManagerException {
         if (serverIds == null) {
             return;

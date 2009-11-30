@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.core;
 
+import java.io.File;
 import java.util.Date;
 
 import javax.management.ObjectName;
@@ -56,4 +57,31 @@ public interface CoreServerMBean extends ServiceMBean {
      * @return the boot time of the server
      */
     Date getBootTime();
+
+    /**
+     * Where the RHQ Server is installed.
+     * @return RHQ Server install directory
+     */
+    File getInstallDir();
+
+    /**
+     * Where the JBoss Server Home directory is. Typically, this is something like:
+     * {@link #getInstallDir() install-dir}/jbossas/server/default
+     * @return jboss server home directory
+     */
+    File getJBossServerHomeDir();
+
+    /**
+     * Where the JBoss Server Data directory is. Typically, this is something like:
+     * {@link #getInstallDir() install-dir}/jbossas/server/default/data
+     * @return jboss server home directory
+     */
+    File getJBossServerDataDir();
+
+    /**
+     * Where the JBoss Server Temp directory is. Typically, this is something like:
+     * {@link #getInstallDir() install-dir}/jbossas/server/default/tmp
+     * @return jboss server home directory
+     */
+    File getJBossServerTempDir();
 }

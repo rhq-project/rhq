@@ -35,8 +35,6 @@
                  layout="table"
                  width="100%"/>
 
-
-
      <h:form id="pluginsForm">
 
            <rich:panel>
@@ -55,17 +53,19 @@
                  <h:outputLabel styleClass="BlockLabel" value="Enabled:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.enabled}"/>
 
+                 <h:outputLabel styleClass="BlockLabel" value="Type:"/>
+                 <h:outputText value="#{InstalledPluginUIBean.plugin.deployment}"/>
+
                  <h:outputLabel styleClass="BlockLabel" value="MD5:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.md5}"/>
-
-                 <h:outputLabel styleClass="BlockLabel" value="Path:"/>
-                 <h:outputText value="#{InstalledPluginUIBean.plugin.path}"/>
 
                  <h:outputLabel styleClass="BlockLabel" value="Description:"/>
                  <h:outputText value="#{InstalledPluginUIBean.plugin.description}"/>
 
-              </h:panelGrid>
+                 <h:outputLabel styleClass="BlockLabel" value="Path:"/>
+                 <h:outputText value="#{InstalledPluginUIBean.plugin.path}"/>
 
+              </h:panelGrid>
 
               <rich:panel>
                  <f:facet name="header">
@@ -75,6 +75,30 @@
                  <h:outputText escape="false"  value="&lt;pre&gt; #{InstalledPluginUIBean.plugin.help} &lt;/pre&gt;"/>
 
               </rich:panel>
+
+              <ui:insert name="pre-config" />
+
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.pluginConfiguration != null}">
+                 <f:facet name="header">
+                    <h:outputText value="Plugin Configuration"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.pluginConfigurationDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.pluginConfiguration}"
+                    readOnly="#{not editMode}" />
+              </rich:panel>
+
+              <rich:panel rendered="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration != null}">
+                 <f:facet name="header">
+                    <h:outputText value="Scheduled Jobs"/>
+                 </f:facet>
+                 <onc:config
+                    configurationDefinition="#{InstalledPluginUIBean.scheduledJobsDefinition}"
+                    configuration="#{InstalledPluginUIBean.plugin.scheduledJobsConfiguration}"
+                    readOnly="#{not editMode}" />
+              </rich:panel>
+
+              <ui:insert name="post-config" />
            </rich:panel>
 
         </h:form>

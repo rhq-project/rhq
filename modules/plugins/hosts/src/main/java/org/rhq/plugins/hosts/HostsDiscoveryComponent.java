@@ -19,28 +19,33 @@
 package org.rhq.plugins.hosts;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * The ResourceDiscoveryComponent for the "Hosts File" ResourceType.
  *
  * @author Ian Springer
  */
-public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
+public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PlatformComponent> {
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
 
     private final Log log = LogFactory.getLog(this.getClass());
 
     @Override
-    public Set discoverResources(ResourceDiscoveryContext discoveryContext) throws InvalidPluginConfigurationException,
+    public Set discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws InvalidPluginConfigurationException,
             Exception
     {
         return super.discoverResources(discoveryContext);
@@ -54,19 +59,25 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
     }
 
     @Override
-    protected File getConfigurationFile(ResourceDiscoveryContext discoveryContext)
+    protected List<String> determineIncludeGlobs(ResourceDiscoveryContext<PlatformComponent> discoveryContext)
     {
-        File hostsFile;
-        if (IS_WINDOWS) {
-            File windowsDir = getWindowsDir();
-            hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
+        Configuration defaultPluginConfig = discoveryContext.getDefaultPluginConfiguration();
+        String includeGlobs = defaultPluginConfig.getSimpleValue(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, null);
+        if (includeGlobs != null) {
+            return super.determineIncludeGlobs(discoveryContext);
         } else {
-            hostsFile = new File("/etc/hosts");
-        }
-        return hostsFile;
+            File hostsFile;
+            if (IS_WINDOWS) {
+                File windowsDir = getWindowsDir(discoveryContext);
+                hostsFile = new File(windowsDir, "system32/drivers/etc/hosts");
+            } else {
+                hostsFile = new File("/etc/hosts");
+            }
+            return Collections.singletonList(hostsFile.getPath());
+        }        
     }
 
-    private File getWindowsDir() {
+    private File getWindowsDir(ResourceDiscoveryContext<PlatformComponent> discoveryContext) {
         File windowsDir = null;
         String windowsDirPath = System.getenv().get("SystemRoot");
         if (windowsDirPath != null) {
@@ -90,6 +101,7 @@ public class HostsDiscoveryComponent extends AugeasConfigurationDiscoveryCompone
         if (windowsDir == null) {
             throw new IllegalStateException("Failed to determine Windows directory.");
         }
+
         log.debug("Windows directory: " + windowsDir);
         return windowsDir;
     }

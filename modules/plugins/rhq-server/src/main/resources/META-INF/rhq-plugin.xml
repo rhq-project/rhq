@@ -313,15 +313,15 @@
          <c:simple-property name="descriptionTemplate" default="Details on the server-side plugin container subsystem"/>
       </plugin-configuration>
 
-      <operation name="startMasterPluginContainer" displayName="Start Master Plugin Container"
+      <operation name="startMasterPluginContainer"
                  description="Starts the master plugin container which will load and initialize all server-side plugins.">
       </operation>
 
-      <operation name="stopMasterPluginContainer" displayName="Stop Master Plugin Container"
+      <operation name="stopMasterPluginContainer"
                  description="Stops the master plugin container which will shutdown all server-side plugins.">
       </operation>
 
-      <operation name="restartMasterPluginContainer" displayName="Restart Plugin Container"
+      <operation name="restartMasterPluginContainer"
                  description="Convienence operation that first stops and then immediately restarts the master plugin container.">
       </operation>
 

@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
 <ui:composition template="/rhq/layout/main.xhtml">
@@ -105,16 +106,19 @@
                   </h:outputText>
                </rich:column>
 
-               <rich:column>
+               <rich:column id="statusid">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="c.lastModifiedDate">
-                        <h:outputText styleClass="headerText" value="Date Modified" />
+                        <h:outputText styleClass="headerText" value="Sync Status" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-
-                  <h:outputText value="#{item.lastModifiedDate}">
-                     <f:convertDateTime pattern="M/d/yy, h:mm:ss aa, zzz" timeZone="#{ServerInfoUIBean.timeZone}"/>
-                  </h:outputText>
+ 
+				  <a4j:region>
+				       <a4j:poll id="poll" interval="5000"
+				           reRender="statusid" />
+			           <h:outputText style="font-size:16px"
+			                value="#{item.syncStatus}" />           
+				  </a4j:region>
                </rich:column>
 
                <rich:column>
@@ -136,8 +140,15 @@
                            <f:param name="mode" value="new"/>
                         </h:commandButton>
 
+                        <h:commandButton action="#{ListReposUIBean.importRepos}"
+                                         value="IMPORT" styleClass="on-pager-button buttonsmall">
+                           <f:param name="mode" value="new"/>
+                        </h:commandButton>
+
                         <onc:selectCommandButton action="#{ListReposUIBean.deleteSelectedRepos}"
                                                  value="DELETE SELECTED" target="selectedRepos" styleClass="on-pager-button buttonsmall"/>
+                        <onc:selectCommandButton action="#{ListReposUIBean.syncSelectedContentSources}"
+                                                 value="SYNC SELECTED" target="selectedRepos" styleClass="on-pager-button buttonsmall"/>
 
                         <ui:param name="paginationDataTableName" value="reposDataTable"/>
                         <ui:param name="paginationDataModel" value="#{reposDataModel}"/>
@@ -152,8 +163,8 @@
             </h:panelGrid>
 
          </rich:panel>
+         
       </h:form>
-
       <p align="center">
          <h:outputLink value="listContentProviders.xhtml">
             <h:outputText value="Go To All Content Providers View" />

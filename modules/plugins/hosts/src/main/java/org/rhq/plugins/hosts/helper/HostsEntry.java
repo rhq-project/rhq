@@ -30,6 +30,7 @@ import java.util.Set;
  */
 public class HostsEntry {
     private String ipAddress;
+    private int ipVersion;
     private String canonicalName;
     private Set<String> aliases;
 
@@ -38,6 +39,7 @@ public class HostsEntry {
             throw new IllegalArgumentException("ipAddress parameter is null.");
         }
         this.ipAddress = ipAddress;
+        this.ipVersion = (this.ipAddress.indexOf(':') == -1) ? 4 : 6;
         if (canonicalName == null) {
             throw new IllegalArgumentException("canonicalName parameter is null.");
         }
@@ -49,11 +51,22 @@ public class HostsEntry {
         return ipAddress;
     }
 
+    public int getIpVersion()
+    {
+        return ipVersion;
+    }
+
     public String getCanonicalName() {
         return canonicalName;
     }
 
     public Set<String> getAliases() {
         return aliases;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.ipAddress + " " + this.getCanonicalName() + " " + this.aliases;
     }
 }

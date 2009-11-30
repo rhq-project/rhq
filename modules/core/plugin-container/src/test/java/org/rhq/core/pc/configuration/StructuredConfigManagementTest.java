@@ -33,7 +33,7 @@ import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class LoadStructuredTest extends ConfigManagementTest {
+public class StructuredConfigManagementTest extends ConfigManagementTest {
 
     ComponentService componentService;
 
@@ -41,7 +41,7 @@ public class LoadStructuredTest extends ConfigManagementTest {
 
     ResourceConfigurationFacet configFacet;
 
-    LoadStructured loadStructured;
+    StructuredConfigManagement structuredMgmt;
 
     @BeforeMethod
     public void setup() {
@@ -50,9 +50,9 @@ public class LoadStructuredTest extends ConfigManagementTest {
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        loadStructured = new LoadStructured();
-        loadStructured.setComponentService(componentService);
-        loadStructured.setConfigurationUtilityService(configUtilityService);
+        structuredMgmt = new StructuredConfigManagement();
+        structuredMgmt.setComponentService(componentService);
+        structuredMgmt.setConfigurationUtilityService(configUtilityService);
     }
 
     @Test
@@ -61,9 +61,9 @@ public class LoadStructuredTest extends ConfigManagementTest {
         config.put(new PropertySimple("x", "1"));
         config.put(new PropertySimple("y", "2"));
 
-        addDefaultExpectations(config);
+        addDefaultExpectationsForLoad(config);
 
-        Configuration loadedConfig = loadStructured.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.execute(resourceId);
 
         assertStructuredLoaded(config, loadedConfig);
     }
@@ -73,9 +73,9 @@ public class LoadStructuredTest extends ConfigManagementTest {
         final Configuration config = new Configuration();
         config.setNotes(null);
 
-        addDefaultExpectations(config);
+        addDefaultExpectationsForLoad(config);
 
-        Configuration loadedConfig = loadStructured.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -98,12 +98,12 @@ public class LoadStructuredTest extends ConfigManagementTest {
             atLeast(1).of(configFacet).loadStructuredConfiguration(); will(returnValue(null));    
         }});
 
-        Configuration loadedConfig = loadStructured.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for structured.");
     }
 
-    private void addDefaultExpectations(final Configuration config) throws Exception {
+    private void addDefaultExpectationsForLoad(final Configuration config) throws Exception {
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
@@ -121,6 +121,27 @@ public class LoadStructuredTest extends ConfigManagementTest {
 
             atLeast(1).of(configUtilityService).validateConfiguration(config, getResourceConfigDefinition());
         }});
+    }
+
+    @Test
+    public void facetShouldBeCalledToUpdateStructured() throws Exception {
+        final Configuration structuredConfig = new Configuration();
+
+        final boolean isDaemonThread = false;
+
+        context.checking(new Expectations() {{
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.WRITE,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         isDaemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(configFacet));
+
+            atLeast(1).of(configFacet).persistStructuredConfiguration(structuredConfig);
+        }});
+
+        structuredMgmt.executeUpdate(resourceId, structuredConfig);
     }
 
 }

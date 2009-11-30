@@ -36,9 +36,9 @@ import org.apache.commons.logging.LogFactory;
 import java.util.List;
 import java.util.Set;
 
-public class LoadStructuredAndRaw extends ConfigManagementSupport {
+public class StructuredAndRawConfigManagement extends ConfigManagementSupport {
 
-    private final Log log = LogFactory.getLog(LoadStructuredAndRaw.class);
+    private final Log log = LogFactory.getLog(StructuredAndRawConfigManagement.class);
 
     public Configuration execute(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);

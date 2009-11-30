@@ -40,7 +40,7 @@ import org.jmock.Expectations;
 
 import java.util.Set;
 
-public class LoadStructuredAndRawTest extends ConfigManagementTest {
+public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
     ComponentService componentService;
 
@@ -48,7 +48,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
     ResourceConfigurationFacet configFacet;
 
-    LoadStructuredAndRaw loadStructuredAndRaw;
+    StructuredAndRawConfigManagement structuredAndRawConfigManagement;
 
     @BeforeMethod
     public void setup() {
@@ -60,9 +60,9 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
-        loadStructuredAndRaw = new LoadStructuredAndRaw();
-        loadStructuredAndRaw.setComponentService(componentService);
-        loadStructuredAndRaw.setConfigurationUtilityService(configUtilityService);
+        structuredAndRawConfigManagement = new StructuredAndRawConfigManagement();
+        structuredAndRawConfigManagement.setComponentService(componentService);
+        structuredAndRawConfigManagement.setConfigurationUtilityService(configUtilityService);
     }
 
     @Test
@@ -77,7 +77,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -90,7 +90,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(config, EMPTY_SET);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         assertStructuredLoaded(config, loadedConfig);
     }
@@ -102,7 +102,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(config, EMPTY_SET);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -115,7 +115,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         Configuration emptyStructured = new Configuration();
 
@@ -133,7 +133,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
 
         addDefaultExpectations(config, rawConfigs);
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         assertRawsLoaded(EMPTY_SET, loadedConfig);
         assertStructuredLoaded(config, loadedConfig);
@@ -157,7 +157,7 @@ public class LoadStructuredAndRawTest extends ConfigManagementTest {
             oneOf(configFacet).loadRawConfigurations(); will(returnValue(null));
         }});
 
-        Configuration loadedConfig = loadStructuredAndRaw.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }

@@ -103,8 +103,8 @@ public class ConfigManagementFactoryImplTest extends JMockTest {
         ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            loadConfig instanceof LoadStructured,
-            "Expected to get an instance of " + LoadStructured.class.getSimpleName() +
+            loadConfig instanceof StructuredConfigManagement,
+            "Expected to get an instance of " + StructuredConfigManagement.class.getSimpleName() +
             "when resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
             "configuration format is structured."
         );
@@ -197,8 +197,8 @@ public class ConfigManagementFactoryImplTest extends JMockTest {
         ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
         assertTrue(
-            loadConfig instanceof LoadStructuredAndRaw,
-            "Expected to get an instance of" + LoadStructuredAndRaw.class.getSimpleName() +
+            loadConfig instanceof StructuredAndRawConfigManagement,
+            "Expected to get an instance of" + StructuredAndRawConfigManagement.class.getSimpleName() +
             " when resource is from a plugin having an ampsVersion >= " + NON_LEGACY_AMPS_VERSION + " and the " +
             "resource configuration format is both (structured and raw)."
         );

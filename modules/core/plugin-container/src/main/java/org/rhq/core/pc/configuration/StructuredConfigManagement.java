@@ -32,9 +32,9 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 
-public class LoadStructured extends ConfigManagementSupport {
+public class StructuredConfigManagement extends ConfigManagementSupport {
 
-    private final Log log = LogFactory.getLog(LoadStructured.class);
+    private final Log log = LogFactory.getLog(StructuredConfigManagement.class);
 
     public Configuration execute(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
@@ -67,7 +67,9 @@ public class LoadStructured extends ConfigManagementSupport {
             }
     }
 
-    public void executeUpdate(int resourceId, Configuration configuration)
-        throws PluginContainerException {
+    public void executeUpdate(int resourceId, Configuration configuration) throws PluginContainerException {
+        ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+
+        facet.persistStructuredConfiguration(configuration);
     }
 }

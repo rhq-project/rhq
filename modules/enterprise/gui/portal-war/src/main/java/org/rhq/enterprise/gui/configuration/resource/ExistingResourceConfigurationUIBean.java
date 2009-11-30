@@ -152,7 +152,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return configuration;
     }
 
-    private final Log log = LogFactory.getLog(RawConfigCollection.class);
+    private final Log log = LogFactory.getLog(AbstractConfigurationUIBean.class);
     private Integer resourceId = null;
 
     private static final long serialVersionUID = 4837157548556168146L;

@@ -61,6 +61,9 @@ import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -83,6 +86,11 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -182,7 +190,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
 
         /*
-         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the 
+         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the
          * corresponding Alerts
          */
         long totalTime = 0L;
@@ -533,6 +541,22 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
+    /**
+     * Mark the matching alert as acknowledged by the user
+     * @param alertId Id of the alert to acknowledge
+     * @param user user who acknowledged the alert
+     */
+    public void acknowledgeAlert(int alertId, Subject user) {
+        Alert alert = entityManager.find(Alert.class,alertId);
+        if (alert==null) {
+            log.warn("Alert [ " + alertId + " ] to acknowledge was not found ");
+            return;
+        }
+        alert.setAckBy(user);
+        alert.setAckTime(System.currentTimeMillis());
+    }
+
+
     public void fireAlert(int alertDefinitionId) {
         log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
 
@@ -640,10 +664,43 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 }
             }
 
+            AlertNotification test = new AlertNotification(alert.getAlertDefinition());
+            test.setSenderName("Email");
+            test.setConfiguration(new Configuration());
+            Property prop = new PropertySimple("emailAddress","hwr@redhat.com");
+            test.getConfiguration().getProperties().add(prop);
+            AlertSender sender = getAlertSender(test);
+            if (sender!=null) {
+                try {
+                    SenderResult result = sender.send(alert);
+                }
+                catch (Throwable t) {
+                    log.error("Sender failed: " + t.getMessage());
+                }
+            }
+
             sendAlertNotificationEmails(alert, emailAddresses);
         } catch (Exception e) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
         }
+    }
+
+    /**
+     * Return the plugin manager that is managing alert sender plugins
+     * @return The alert sender plugin manager
+     */
+    public AlertSenderPluginManager getAlertPluginManager() {
+        MasterServerPluginContainer container = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        AlertServerPluginContainer pc = container.getPluginContainerByClass(AlertServerPluginContainer.class);
+        AlertSenderPluginManager manager = (AlertSenderPluginManager) pc.getPluginManager();
+
+        return manager;
+    }
+
+    AlertSender getAlertSender(AlertNotification notification) {
+        AlertSenderPluginManager manager = getAlertPluginManager();
+        AlertSender sender = manager.getAlertSenderForNotification(notification);
+        return sender;
     }
 
     private void processEmailAddress(Alert alert, String emailAddress, Set<String> emailAddresses) {
@@ -872,10 +929,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             /*
-             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe
              * (because we know the AlertManager will only be executing on the same server instance that is processing
-             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
-             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         } else if (firedDefinition.getWillRecover()) {
             log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
@@ -888,10 +945,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             alertDefinitionManager.disableAlertDefinitions(overlord, new Integer[] { firedDefinition.getId() });
 
             /*
-             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe
              * (because we know the AlertManager will only be executing on the same server instance that is processing
-             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
-             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         }
     }

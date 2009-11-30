@@ -42,9 +42,15 @@ import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 public class EmailSender extends AlertSender {
 
     private final Log log = LogFactory.getLog(EmailSender.class);
+    private static final String SMTP_HOST = "rhq.server.email.smtp-host";
+    private static final String SMTP_PORT = "rhq.server.email.smtp-port";
+    private static final String EMAIL_FROM = "rhq.server.email.from-address";
 
     @Override
     public SenderResult send(Alert alert) {
+
+        if(preferences!=null)
+            preferences.getProperties().size();
 
         String emailAddress = alertParameters.getSimpleValue("emailAddress",null);
         if (emailAddress==null) {
@@ -52,8 +58,10 @@ public class EmailSender extends AlertSender {
             return new SenderResult(ResultState.FAILURE,"No email address given");
         }
 
-        String mailserver = preferences.getSimpleValue("mailserver","localhost"); // TODO get RHQ default one
-        String senderAddress = preferences.getSimpleValue("senderEmail","rhqadmin@localhost"); // TODO get RHQ default one
+        String tmp = System.getProperty(SMTP_HOST,"localhost");
+        String mailserver = preferences.getSimpleValue("mailserver",tmp);
+        tmp = System.getProperty(EMAIL_FROM, "rhqadmin@localhost");
+        String senderAddress = preferences.getSimpleValue("senderEmail",tmp);
 
         Properties props = new Properties();
         props.put("mail.smtp.host",mailserver);
@@ -61,7 +69,7 @@ public class EmailSender extends AlertSender {
         Message message = new SMTPMessage(session);
         try {
             message.setFrom(new InternetAddress(senderAddress));
-            message.setRecipient(Message.RecipientType.TO,new InternetAddress("hwr@redhat.com"));
+            message.setRecipient(Message.RecipientType.TO,new InternetAddress(emailAddress));
             message.setSubject("Alert on " + "Dummy - TODO");
             message.setText("Li la lu, nur der Mann im Mond schaut zu");
             Transport.send(message);

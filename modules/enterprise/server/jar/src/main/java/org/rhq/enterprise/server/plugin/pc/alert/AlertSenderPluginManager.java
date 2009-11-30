@@ -25,17 +25,26 @@ import java.util.Map;
 
 
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Element;
 
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
- * TODO
+ * Plugin manager that takes care of loading the plug-ins and instantiating
+ * of {@link AlertSender} etc.
  * @author Heiko W. Rupp
  */
 public class AlertSenderPluginManager extends ServerPluginManager {
@@ -44,14 +53,24 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     private Map<String,String> pluginNameToType = new HashMap<String, String>();
     private Map<String,String> pluginClassByName = new HashMap<String, String>();
     private Map<String,ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
+    private Map<String,AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
 
     public AlertSenderPluginManager(AbstractTypeServerPluginContainer pc) {
         super(pc);
     }
 
+    /**
+     * Postprocess the loading of the plugin - the actual load is done
+     * in the super class.
+     * Here we verify that the passed &lt;plugin-class&gt; is valid and build the
+     * list of plugins that can be queried by the UI etc.
+     * @param env the environment of the plugin to be loaded
+     *
+     * @throws Exception
+     */
     @Override
     public void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        super.loadPlugin(env);    // TODO: Customise this generated block
+        super.loadPlugin(env);
 
         AlertPluginDescriptorType type = (AlertPluginDescriptorType) env.getPluginDescriptor();
 
@@ -64,20 +83,37 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
         catch (Exception e) {
             log.warn("Can't find pluginClass " + className + ". Plugin will be ignored");
+            try {
+                unloadPlugin(env);
+            }
+            catch (Throwable t) {
+                log.warn("  +--> unload failed too " + t.getMessage());
+            }
             return;
         }
         String shortName = ((Element) type.getShortName()).getTextContent();
         pluginClassByName.put(shortName,className);
-        pluginNameToType.put(shortName,env.getPluginName());
+        senderInfoByName.put(shortName,new AlertSenderInfo(shortName,"-TODO-",env.getPluginKey()));
+
         pluginEnvByName.put(shortName,env);
 
+        ConfigurationDescriptor desc = type.getAlertConfiguration();
+
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+        mgr.handleAlertConfigurationDefinition(null); // TODO
     }
 
+    /**
+     * Instantiate an AlertSender for the passed shortName, which is the name you have provided
+     * in the plugin descriptor in the &lt;shortName&gt; element
+     * @param notification
+     * @return a new AlertSender with preferences set
+     * @see AlertSender
+     */
+    public AlertSender getAlertSenderForNotification(AlertNotification notification) {
 
-    public AlertSender getAlertSenderForType(String shortName) {
-
-        String className = pluginClassByName.get(shortName);
-        ServerPluginEnvironment env = pluginEnvByName.get(shortName);
+        String className = pluginClassByName.get(notification.getSenderName());
+        ServerPluginEnvironment env = pluginEnvByName.get(notification.getSenderName());
         Class clazz;
         try {
             clazz = Class.forName(className,true,env.getPluginClassLoader());
@@ -98,8 +134,27 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             return null;
         }
 
-        sender.alertParameters = new Configuration(); // TODO
-        sender.preferences = new Configuration();  // TODO
+        // TODO We have no entityManager lying around here, which means
+        // Configuration is an uninitialized Proxy and we'd get a LazyInit
+        // Exception later.
+        // So lets get a session and attach the stuff... TODO
+        ServerPluginContext ctx = getServerPluginContext(env);
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+
+
+        sender.alertParameters = mgr.getAlertPropertiesConfiguration(notification);
+        if (sender.alertParameters == null)
+            sender.alertParameters = new Configuration(); // Safety measure
+
+        ServerPluginsLocal pluginsMgr = LookupUtil.getServerPlugins();
+
+        PluginKey key = ctx.getPluginEnvironment().getPluginKey();
+        ServerPlugin plugin = pluginsMgr.getServerPlugin(key);
+        plugin = pluginsMgr.getServerPluginRelationships(plugin);
+
+        sender.preferences = plugin.getPluginConfiguration();
+        if (sender.preferences==null)
+            sender.preferences = new Configuration(); // Safety measure
 
         return sender;
     }
@@ -110,5 +165,14 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     public List<String> getPluginList() {
         return new ArrayList<String>(pluginClassByName.keySet());
+    }
+
+
+    public String getPluginNameForShortName(String shortName) {
+        return pluginNameToType.get(shortName);
+    }
+
+    public AlertSenderInfo getAlertSenderInfo(String shortName) {
+        return senderInfoByName.get(shortName);
     }
 }

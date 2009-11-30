@@ -24,10 +24,12 @@ package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -37,12 +39,14 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.configuration.Configuration;
 
 @DiscriminatorColumn(name = "NOTIFICATION_TYPE", discriminatorType = DiscriminatorType.STRING)
 @Entity
@@ -53,7 +57,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
     @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
-public abstract class AlertNotification implements Serializable {
+public class AlertNotification implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -70,16 +74,34 @@ public abstract class AlertNotification implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
+    @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
+    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    private Configuration configuration;
+
+    @Column(name = "ALERT_SENDER_NAME")
+    private String senderName;
+
     protected AlertNotification() {
     } // JPA spec
 
-    public AlertNotification(@NotNull AlertDefinition alertDefinition) {
+    public AlertNotification(AlertDefinition alertDefinition) {
         if (alertDefinition == null) {
             throw new IllegalArgumentException("alertDefinition must be non-null.");
         }
 
         this.alertDefinition = alertDefinition;
     }
+
+    public AlertNotification(AlertDefinition alertDefinition, Configuration config) {
+        if (alertDefinition == null) {
+            throw new IllegalArgumentException("alertDefinition must be non-null.");
+        }
+
+        this.alertDefinition = alertDefinition;
+        this.configuration = config.deepCopy();
+    }
+
+
 
     public int getId() {
         return id;
@@ -102,9 +124,27 @@ public abstract class AlertNotification implements Serializable {
         return results;
     }
 
-    protected abstract AlertNotification copy();
+    protected AlertNotification copy() {
+        return new AlertNotification(this.alertDefinition,this.configuration);
+    }
 
     public void prepareForOrphanDelete() {
         this.alertDefinition = null;
+    }
+
+    public String getSenderName() {
+        return senderName;
+    }
+
+    public void setSenderName(String senderName) {
+        this.senderName = senderName;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
     }
 }

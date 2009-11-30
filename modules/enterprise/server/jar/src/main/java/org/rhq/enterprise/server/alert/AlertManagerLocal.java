@@ -30,6 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 
 /**
  * @author Joseph Marques
@@ -86,4 +87,17 @@ public interface AlertManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
+
+    /**
+     * Mark the matching alert as acknowledged by the user
+     * @param alertId Id of the alert to acknowledge
+     * @param user user who acknowledged the alert
+     */
+    void acknowledgeAlert(int alertId, Subject user);
+
+    /**
+     * Return the plugin manager that is managing alert sender plugins
+     * @return The alert sender plugin manager
+     */
+    AlertSenderPluginManager getAlertPluginManager();
 }

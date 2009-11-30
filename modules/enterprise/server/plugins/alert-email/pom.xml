@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>org.rhq</groupId>
+    <groupId>org.rhq.server</groupId>
     <artifactId>alert-email</artifactId>
     <version>1.4.0-SNAPSHOT</version>
 
@@ -21,7 +21,7 @@
     </scm>
 
     <properties>
-      <scm.module.path>modules/enterprise/server/plugins/disk/</scm.module.path>
+      <scm.module.path>modules/enterprise/server/plugins/alert-email/</scm.module.path>
     </properties>
 
     <dependencies>
@@ -55,7 +55,7 @@
           <scope>provided</scope>
           <!-- needed for referenced domain entities that use Hibernate annotations -->
         </dependency>
-        
+
     </dependencies>
 
     <build>

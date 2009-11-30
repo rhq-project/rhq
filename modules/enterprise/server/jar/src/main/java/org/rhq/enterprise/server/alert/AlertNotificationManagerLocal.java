@@ -18,13 +18,19 @@
  */
 package org.rhq.enterprise.server.alert;
 
+import java.util.List;
+
 import javax.ejb.Local;
 
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
+import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -63,4 +69,18 @@ public interface AlertNotificationManagerLocal {
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
     int purgeOrphanedAlertNotifications();
+
+    void handleAlertConfigurationDefinition(ConfigurationDefinition desc);
+
+    public Configuration getAlertPropertiesConfiguration(AlertNotification notification);
+
+    /**
+     * Return a list of all available AlertSenders in the system by their shortname.
+     * @return list of senders.
+     */
+    List<String> listAllAlertSenders();
+
+    ConfigurationDefinition getConfigurationDefinitionForSender(String shortName);
+
+    Configuration getDefaultAlertConfiguration(ConfigurationDefinition def);
 }

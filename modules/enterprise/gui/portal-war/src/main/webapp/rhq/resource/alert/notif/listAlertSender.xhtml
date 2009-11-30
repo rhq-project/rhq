@@ -39,6 +39,35 @@
                     width="100%"/>
 
         <p/>
+        <h:outputText>Existing notifications:</h:outputText>
+        <br/>
+        <rich:dataTable id="alertNotificationDataTable"
+                        value="#{ListNotificationsUIBean.existingNotifications}"
+                        var="notif"
+                        width="100%"
+                        headerClass="tableRowHeader"
+                        footerClass="on-pager-footer"
+                        onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                        onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText styleClass="headerText" value="ID"/>
+                </f:facet>
+
+                <h:outputText value="#{notif.id}"/>
+            </rich:column>
+
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText styleClass="headerText" value="Sender"/>
+                </f:facet>
+
+                <h:outputText value="#{notif.senderName}"/>
+            </rich:column>
+
+            <!-- TODO add configuration -->
+        </rich:dataTable>
+
         <h:outputText>Hello World</h:outputText>
         <h:form id="listSenderForm">
             <input type="hidden" name="id" value="${param.id}"/>

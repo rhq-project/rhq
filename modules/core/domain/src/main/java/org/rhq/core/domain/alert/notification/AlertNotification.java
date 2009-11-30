@@ -75,7 +75,7 @@ public class AlertNotification implements Serializable {
     private AlertDefinition alertDefinition;
 
     @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
-    @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY)
+    @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration configuration;
 
     @Column(name = "ALERT_SENDER_NAME")

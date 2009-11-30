@@ -18,9 +18,13 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.faces.context.ExternalContext;
+import javax.faces.context.FacesContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,10 +32,13 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 
+import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -52,8 +59,9 @@ public class ListNotificationsUIBean {
 
     private ConfigurationDefinition alertConfigurationDefinition;
     private Configuration alertProperties;
-    int ad;
 
+    @RequestParameter("ad")
+    private int alertDefinitionId;
 
     public ListNotificationsUIBean() {
     }
@@ -109,16 +117,17 @@ public class ListNotificationsUIBean {
     }
 
     public String mySubmitForm() {
-        System.out.println("In submit Form ");
         log.info("In submit Form ");
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        mgr.addAlertNotification(subject, alertDefinitionId,selectedSender,alertProperties);
         return OUTCOME_SUCCESS;
     }
 
-    public int getAd() {
-        return ad;
-    }
-
-    public void setAd(int ad) {
-        this.ad = ad;
+    public Collection<AlertNotification> getExistingNotifications() {
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        List<AlertNotification> notifications = mgr.getNotificationsForAlertDefinition(subject,alertDefinitionId);
+        return notifications;
     }
 }

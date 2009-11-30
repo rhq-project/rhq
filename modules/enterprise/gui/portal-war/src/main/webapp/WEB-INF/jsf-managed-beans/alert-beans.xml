@@ -25,12 +25,4 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
-    <!-- /rhq/resource/alert/notif -->
-    <managed-bean>
-        <description>Handling of alert senders</description>
-        <managed-bean-name>ListNotificationsUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.alert.ListNotificationsUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
-
 </faces-config>

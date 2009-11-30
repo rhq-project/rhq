@@ -482,11 +482,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
     }
 
-    public Configuration getDefaultAlertConfiguration(ConfigurationDefinition def) {
-        Configuration config = configManager.getConfigurationFromDefaultTemplate(def);
-
-        return config;
-    }
 
     /**
      * Return a list of all available AlertSenders in the system by their shortname.
@@ -496,5 +491,57 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
         List<String> senders = pluginmanager.getPluginList();
         return senders;
+    }
+
+    /**
+     * Add a new AlertNotification to the passed definition
+     * @param user subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @param senderName shortName of the {@link AlertSender}
+     * @param configuration Properties for this alert sender.
+     */
+    public void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
+
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
+        if (definition==null) {
+            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            return;
+        }
+
+        entityManager.persist(configuration);
+        AlertNotification notif = new AlertNotification(definition);
+        notif.setSenderName(senderName);
+        notif.setConfiguration(configuration);
+        entityManager.persist(notif);
+        definition.getAlertNotifications().add(notif);
+        
+    }
+
+    /**
+     * Return notifications for a certain alertDefinitionId
+     *
+     * NOTE: this only returns notifications that have an AlertSender defined.
+     *
+     * @param user Subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @return list of defined notification of the passed alert definition
+     *
+     *
+     */
+    public List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId) {
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
+        if (definition==null) {
+            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            return new ArrayList<AlertNotification>();
+        }
+        Set<AlertNotification> notifs = definition.getAlertNotifications();
+        List<AlertNotification> result = new ArrayList<AlertNotification>();
+        for (AlertNotification notif : notifs) {
+            if (notif.getSenderName()!=null) {
+                notif.getConfiguration().getProperties().size(); // Eager load
+                result.add(notif);
+            }
+        }
+        return result;
     }
 }

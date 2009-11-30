@@ -82,5 +82,25 @@ public interface AlertNotificationManagerLocal {
 
     ConfigurationDefinition getConfigurationDefinitionForSender(String shortName);
 
-    Configuration getDefaultAlertConfiguration(ConfigurationDefinition def);
+    /**
+     * Add a new AlertNotification to the passed definition
+     * @param user subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @param senderName shortName of the {@link AlertSender}
+     * @param configuration Properties for this alert sender.
+     */
+    void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration);
+
+    /**
+     * Return notifications for a certain alertDefinitionId
+     *
+     * NOTE: this only returns notifications that have an AlertSender defined.
+     *
+     * @param user Subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @return list of defined notification of the passed alert definition
+     *
+     *
+     */
+    List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
 }

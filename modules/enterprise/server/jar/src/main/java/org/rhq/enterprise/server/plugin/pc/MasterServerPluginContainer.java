@@ -344,12 +344,14 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * Given a plugin's descriptor, this will return the plugin container that can manage the plugin.
+     * Given a server plugin type, this will return the plugin container that can manage that type of plugin.
+     * If the server plugin type is unknown to the master, or if the master plugin is not started, this will
+     * return <code>null</code>.
      * 
-     * @param descriptor descriptor to identify a plugin whose container is to be returned
-     * @return a plugin container that can handle the plugin with the given descriptor
+     * @param pluginType the type of server plugin whose PC is to be returned
+     * @return a plugin container that can handle the given type of server plugin
      */
-    protected synchronized AbstractTypeServerPluginContainer getPluginContainerByPluginType(ServerPluginType pluginType) {
+    public synchronized AbstractTypeServerPluginContainer getPluginContainerByPluginType(ServerPluginType pluginType) {
         AbstractTypeServerPluginContainer pc = this.pluginContainers.get(pluginType);
         return pc;
     }

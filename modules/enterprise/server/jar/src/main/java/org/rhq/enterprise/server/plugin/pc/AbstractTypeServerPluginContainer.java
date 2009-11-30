@@ -256,6 +256,43 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
+     * This will restart the given set of plugins. The currently running plugins will
+     * be stopped and unloaded and the new plugins will be loaded and started.
+     * 
+     * If a plugin is in the given list but is not already started, this method will
+     * skip that plugin (i.e. it will not start it).
+     *
+     *
+     * 
+     * @param pluginKeys identifies the plugins that need to be restarted
+     */
+    // TODO: This method does not do anything with the scheduled jobs.
+    // Perhaps we should unschedule them and reschedule them, in case the jobs were reconfigured?
+    // What happens to the jobs that may currently be running in the HA case?
+    public synchronized void restartPlugins(List<PluginKey> pluginKeys) {
+        if (this.pluginManager != null) {
+            for (PluginKey pluginKey : pluginKeys) {
+                String pluginName = pluginKey.getPluginName();
+                ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(pluginName);
+                if (env != null) {
+                    try {
+                        this.pluginManager.stopPlugin(pluginName);
+                        this.pluginManager.unloadPlugin(env);
+                        this.pluginManager.loadPlugin(env);
+                        this.pluginManager.startPlugin(pluginName);
+                    } catch (Exception e) {
+                        log.warn("Failed to restart server plugin [" + pluginName + "]", e);
+                    }
+                } else {
+                    log.info("Being asked to restart server plugin [" + pluginName
+                        + "] but it isn't started - skipping");
+                }
+            }
+        }
+        return;
+    }
+
+    /**
      * This will be called when its time for this plugin container to create its plugin manager.
      * Subclasses are free to override this if they need their own specialized plugin manager.
      * 

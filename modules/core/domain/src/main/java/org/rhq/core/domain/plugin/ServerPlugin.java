@@ -169,6 +169,17 @@ import org.rhq.core.domain.configuration.Configuration;
         + "   FROM ServerPlugin AS p " //
         + "  WHERE p.status = 'INSTALLED' "), //
 
+    // returns all installed plugins, both enabled and disabled
+    // this is faster than QUERY_FIND_BY_IDS because it doesn't join configs
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_KEYS_BY_IDS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
+        + "        p.deployment, " //
+        + "        p.type, " //
+        + "        p.name) " //
+        + "   FROM ServerPlugin AS p " //
+        + "  WHERE p.id IN (:ids) " //
+        + "        AND p.status = 'INSTALLED' "), //
+
     // this query is how you enable and disable plugins
     @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
         + "UPDATE ServerPlugin p " //
@@ -187,6 +198,7 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
+    public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")

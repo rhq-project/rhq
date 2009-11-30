@@ -75,7 +75,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     @Override
     public void schedulePluginJobs() throws Exception {
         super.schedulePluginJobs();
-        scheduleSyncJobs();
+        scheduleProviderSyncJobs();
         return;
     }
 
@@ -135,11 +135,11 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed so
      * no schedule will be created and this method simply returns.</p>
      *
-     * @param  contentSource
+     * @param  contentSource provider to sync
      *
      * @throws SchedulerException if failed to schedule the job
      */
-    public void scheduleSyncJob(ContentSource contentSource) throws SchedulerException {
+    public void scheduleProviderSyncJob(ContentSource contentSource) throws SchedulerException {
         String syncSchedule = contentSource.getSyncSchedule();
         if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
             getLog().debug(contentSource.toString() + " does not define a sync schedule - not scheduling");
@@ -150,26 +150,22 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         scheduler.scheduleCronJob(ContentProviderSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME,
             ContentProviderSyncJob.createJobDataMap(contentSource, null), ContentProviderSyncJob.class, true, false,
             syncSchedule);
-
-        return;
     }
 
     /**
      * It will schedule one job per adapter such that each adapter is scheduled to be synchronized as per its defined
      * sync schedule. This must only be called when all content source adapters have been initialized.
      */
-    public void scheduleSyncJobs() {
+    public void scheduleProviderSyncJobs() {
         if (this.adapterManager != null) {
             for (ContentSource contentSource : this.adapterManager.getAllContentSources()) {
                 try {
-                    scheduleSyncJob(contentSource);
+                    scheduleProviderSyncJob(contentSource);
                 } catch (Exception e) {
                     getLog().warn("Could not schedule sync job for content source [" + contentSource + "]", e);
                 }
             }
         }
-
-        return;
     }
 
     /**

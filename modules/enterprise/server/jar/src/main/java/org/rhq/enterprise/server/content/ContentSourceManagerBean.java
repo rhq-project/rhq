@@ -426,7 +426,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.getAdapterManager().startAdapter(contentSource);
             // Schedule a job for the future
-            pc.scheduleSyncJob(contentSource);
+            pc.scheduleProviderSyncJob(contentSource);
             // Also sync immediately so we have the metadata
             pc.syncNow(contentSource);
 
@@ -494,7 +494,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.unscheduleSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
-            pc.scheduleSyncJob(contentSource);
+            pc.scheduleProviderSyncJob(contentSource);
             pc.syncNow(contentSource);
         } catch (Exception e) {
             log.warn("Failed to restart adapter for [" + contentSource + "]", e);

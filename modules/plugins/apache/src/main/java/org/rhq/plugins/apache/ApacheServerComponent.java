@@ -40,6 +40,8 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
@@ -53,6 +55,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -64,7 +67,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  *
  * @author Ian Springer
  */
-public class ApacheServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+public class ApacheServerComponent implements ResourceComponent<PlatformComponent>, MeasurementFacet, OperationFacet, ConfigurationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -256,6 +259,16 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public OperationResult invokeOperation(@NotNull String name, @NotNull Configuration params) throws Exception {
         log.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
         return this.operationsDelegate.invokeOperation(name, params);
+    }
+
+    public Configuration loadResourceConfiguration() throws Exception {
+        //TODO this is nae right of course...
+        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().createConfiguration();
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // TODO Auto-generated method stub
+        
     }
 
     /**

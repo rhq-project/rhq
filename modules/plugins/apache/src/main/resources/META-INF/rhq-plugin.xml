@@ -43,6 +43,7 @@
                     The log entry format is documented fully in the Apache documentation http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats.
                 </c:description>
             </c:simple-property>
+            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -151,7 +152,74 @@
     </c:simple-property>
 '>
 
+<!ENTITY Options '
+    <c:list-property name="Options" required="false">
+        <c:description>
+            The Options directive controls which server features are available in a particular directory.
+        </c:description>
+        <c:map-property name="Options">
+            <c:simple-property name="Mode">
+                <c:property-options>
+                    <c:option value="Set"/>
+                    <c:option value="Add"/>
+                    <c:option value="Remove"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="Option">
+                <c:property-options>
+                    <c:option value="All" default="true"/>
+                    <c:option value="None"/>
+                    <c:option value="ExecCGI"/>
+                    <c:option value="FollowSymLinks"/>
+                    <c:option value="Includes"/>
+                    <c:option value="IncludesNOEXEC"/>
+                    <c:option value="Indexes"/>
+                    <c:option value="MultiViews"/>
+                    <c:option value="SymLinksIfOwnerMatch"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+        </c:map-property>
+    </c:list-property>
+'>
+
+<!ENTITY Order '
+    <c:simple-property name="Order" required="false">
+        <c:description>
+            The Order directive, along with the Allow and Deny directives, controls a three-pass access control system. The first pass processes either all Allow or all Deny directives, as specified by the Order directive. The second pass parses the rest of the directives (Deny or Allow). The third pass applies to all requests which do not match either of the first two.
+        </c:description>
+        <c:property-options>
+            <c:option value="Allow,Deny"/>
+            <c:option value="Deny,Allow"/>
+        </c:property-options>
+    </c:simple-property>
+'>
+
+<!ENTITY Allow '
+    <c:list-property name="Allow" required="false">
+        <c:description>
+            The Allow directive affects which hosts can access an area of the server. Access can be controlled by hostname, IP address, IP address range.
+            The environment variables settings are not supported in the user interface.
+        </c:description>
+        <c:map-property name="Allow">
+            <c:simple-property name="host"/>
+        </c:map-property>
+    </c:list-property>
+'>                
+
+<!ENTITY Deny '
+    <c:list-property name="Deny" required="false">
+        <c:description>
+            The arguments for the Deny directive are identical to the arguments for the Allow directive.
+        </c:description>
+        <c:map-property name="Deny">
+            <c:simple-property name="host"/>
+        </c:map-property>
+    </c:list-property>
+'>
+
 ]>
+
 <plugin name="Apache"
         displayName="Apache HTTP Server"
         description="Management of Apache web servers"
@@ -354,15 +422,17 @@
                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
             </c:description>
         </c:simple-property>
+        &Options;
         &UseCanonicalName;
-        &UseCanonicalPhysicalPort;
+        &UseCanonicalPhysicalPort;        
         <c:group name="Logging">
             &ErrorLog;
             &CustomLogs;
         </c:group>
+        
       </resource-configuration>
       
-      <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent">
+      <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
 
          <plugin-configuration>
             <c:simple-property name="url" displayName="URL"
@@ -559,9 +629,69 @@
             &ErrorDocuments;
             &ErrorLog;
             &Timeout;
+            &Options;
             &UseCanonicalName;
             &UseCanonicalPhysicalPort;
          </resource-configuration>
+         
+         <service name="Directory" class="ApacheDirectoryComponent" createDeletePolicy="both">
+            <resource-configuration>
+                <c:simple-property name="path" />
+                <c:simple-property name="regularExpression" type="boolean" default="false"/>
+                &Order;
+                &Allow;
+                &Deny;
+                <c:map-property name="AllowOverride" required="false">
+                    <c:description>
+                        When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                    </c:description>
+                    <c:simple-property name="All" type="boolean" default="true" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                    <c:simple-property name="None" type="boolean" description=".htaccess files are completely ignored. In this case, the server will not even attempt to read .htaccess files in the filesystem."/>
+                    <c:simple-property name="AuthConfig" type="boolean" description="Allow use of the authorization directives (AuthDBMGroupFile, AuthDBMUserFile, AuthGroupFile, AuthName, AuthType, AuthUserFile, Require, etc.)."/>
+                    <c:simple-property name="FileInfo" type="boolean" description="Allow use of the directives controlling document types (DefaultType, ErrorDocument, ForceType, LanguagePriority, SetHandler, SetInputFilter, SetOutputFilter, and mod_mime Add* and Remove* directives, etc.), document meta data (Header, RequestHeader, SetEnvIf, SetEnvIfNoCase, BrowserMatch, CookieExpires, CookieDomain, CookieStyle, CookieTracking, CookieName), mod_rewrite directives RewriteEngine, RewriteOptions, RewriteBase, RewriteCond, RewriteRule) and Action from mod_actions."/>
+                    <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
+                    <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
+                    <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
+                </c:map-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+         
+         <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
+            <resource-configuration>
+                &Order;
+                &Allow;
+                &Deny;
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
+         
+         <service name="Location" class="ApacheLocationComponent" createDeletePolicy="both">
+            <resource-configuration>
+                &Order;
+                &Allow;
+                &Deny;
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
       </service>
 
       <service name="Mod JK" description="Management of mod_jk"

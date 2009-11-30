@@ -259,7 +259,7 @@ public class CoreServerServiceImpl implements CoreServerService {
 
         try {
             em = LookupUtil.getEntityManager();
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
             List<Plugin> resultList = q.getResultList();
             for (Plugin potentialPlugin : resultList) {
                 if (potentialPlugin.isEnabled()) {

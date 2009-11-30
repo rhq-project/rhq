@@ -66,7 +66,7 @@ public class MyLifecycleListener implements ServerPluginComponent {
         }
 
         StringBuilder str = new StringBuilder();
-        str.append("plugin-name=").append(this.context.getPluginEnvironment().getPluginName()).append(",");
+        str.append("plugin-key=").append(this.context.getPluginEnvironment().getPluginKey()).append(",");
         str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(",");
         str.append("plugin-config=[").append(getPluginConfigurationString()).append(']'); // do not append ,
         return str.toString();

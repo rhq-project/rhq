@@ -30,41 +30,52 @@ import org.testng.annotations.Test;
 public class PropertyListTest {
 
     @Test
-    public void deepCopyShouldCopySimpleFields() {
+    public void deepCopyShouldCopyAllSimpleFields() {
         PropertyList original = createPropertyList();
 
-        PropertyList copy = original.deepCopy();
+        PropertyList copy = original.deepCopy(true);
 
         assertNotSame(copy, original, "The copy should not reference the original object");
-        
+
+        assertEquals(copy.getId(), original.getId(), "Failed to copy the id property");
         assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
         assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
     }
 
     @Test
-    public void deepCopyShouldNotCopyIdField() {
+    public void deepCopyShouldNotCopyIdFieldWhenFlagIsFalse() {
         PropertyList original = createPropertyList();
-        PropertyList copy = original.deepCopy();
+        PropertyList copy = original.deepCopy(false);
 
         assertFalse(copy.getId() == original.getId(), "The original id property should not be copied.");
+        assertEquals(copy.getName(), original.getName(), "Failed to copy the name property");
+        assertEquals(copy.getErrorMessage(), original.getErrorMessage(), "Failed to copy the errorMessage property");
     }
 
     @Test
-    public void deepCopyShouldNotCopyReferenceOfUnderlyingList() {
+    public void deepCopyShouldNotCopyReferenceOfUnderlyingListWhenIdIncluded() {
         PropertyList original = createPropertyList();
-        PropertyList copy = original.deepCopy();
+        PropertyList copy = original.deepCopy(true);
 
         assertNotSame(original.getList(), copy.getList(), "The values in the underlying list should be copied, not the variable reference to the list.");
     }
 
     @Test
-    public void deepCopyShouldCopyProperty() {
+    public void deepCopyShouldNotCopyReferenceOfUnderlyingListWhenIdNotIncluded() {
+        PropertyList original = createPropertyList();
+        PropertyList copy = original.deepCopy(false);
+
+        assertNotSame(original.getList(), copy.getList(), "The values in the underlying list should be copied, not the variable reference to the list.");
+    }
+
+    @Test
+    public void deepCopyShouldCopyPropertyWhenIdIncluded() {
         PropertyList original = createPropertyList();
 
         PropertySimple simpleProperty = new PropertySimple("simeplProperty", "Simple Property");
         original.add(simpleProperty);
 
-        PropertyList copy = original.deepCopy();
+        PropertyList copy = original.deepCopy(true);
 
         assertEquals(copy.getList().size(), original.getList().size(), "Failed to copy simple property contained in original property list");
 
@@ -72,13 +83,39 @@ public class PropertyListTest {
     }
 
     @Test
-    public void deepCopyShouldSetParentOfCopiedProperty() {
+    public void deepCopyShouldCopyPropertyWhenIdNotIncluded() {
+        PropertyList original = createPropertyList();
+
+        PropertySimple simpleProperty = new PropertySimple("simeplProperty", "Simple Property");
+        original.add(simpleProperty);
+
+        PropertyList copy = original.deepCopy(false);
+
+        assertEquals(copy.getList().size(), original.getList().size(), "Failed to copy simple property contained in original property list");
+
+        assertNotSame(copy.getList().get(0), original.getList().get(0), "Properties in the list should be copied by value as opposed to just copying the references");
+    }
+
+    @Test
+    public void deepCopyShouldSetParentOfCopiedPropertyWhenIdIncluded() {
         PropertyList original = createPropertyList();
 
         PropertySimple simpleProperty = new PropertySimple("simpleProperty", "Simple Property");
         original.add(simpleProperty);
 
-        PropertyList copy = original.deepCopy();
+        PropertyList copy = original.deepCopy(true);
+
+        assertSame(copy.getList().get(0).getParentList(), copy, "The parentList property of copied properties should be set to the new PropertyList");
+    }
+
+    @Test
+    public void deepCopyShouldSetParentOfCopiedPropertyWhenIdNotIncluded() {
+        PropertyList original = createPropertyList();
+
+        PropertySimple simpleProperty = new PropertySimple("simpleProperty", "Simple Property");
+        original.add(simpleProperty);
+
+        PropertyList copy = original.deepCopy(false);
 
         assertSame(copy.getList().get(0).getParentList(), copy, "The parentList property of copied properties should be set to the new PropertyList");
     }

@@ -23,12 +23,20 @@ import javax.faces.application.FacesMessage;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.In;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
@@ -40,21 +48,32 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  * @author Greg Hinkle
  * @author John Mazzitelli
  */
+@Scope(ScopeType.PAGE)
+@Name("InstalledPluginUIBean")
 public class InstalledPluginUIBean {
-    private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
 
+    private static final String OUTCOME_SUCCESS_SERVER_PLUGIN = "successServerPlugin";
     public static final String MANAGED_BEAN_NAME = InstalledPluginUIBean.class.getSimpleName();
-
-    private Plugin plugin;
+    private final Log log = LogFactory.getLog(InstalledPluginUIBean.class);
+    @In
+    private AbstractPlugin plugin;
     private ConfigurationDefinition pluginConfigurationDefinition;
     private ConfigurationDefinition scheduledJobsDefinition;
 
-    public InstalledPluginUIBean() {
-        lookupPlugin();
+    public AbstractPlugin getPlugin() {
+        return plugin;
     }
 
-    public Plugin getPlugin() {
-        return this.plugin;
+    public void setPlugin(AbstractPlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    public ServerPlugin getServerPlugin() {
+        return (ServerPlugin) this.plugin;
+    }
+
+    public void setServerPlugin(ServerPlugin plugin) {
+        this.plugin = plugin;
     }
 
     public ConfigurationDefinition getPluginConfigurationDefinition() {
@@ -65,19 +84,38 @@ public class InstalledPluginUIBean {
         return this.scheduledJobsDefinition;
     }
 
-    private void lookupPlugin() {
+    public boolean isEditable() {
+        return this.pluginConfigurationDefinition != null || this.scheduledJobsDefinition != null;
+    }
+
+    public String updatePlugin() {
+        // note we assume we are editing a server plugin - we don't support editing agent plugins yet
+        try {
+            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPlugins.updateServerPluginExceptContent(subject, getServerPlugin());
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
+
+            return OUTCOME_SUCCESS_SERVER_PLUGIN;
+        } catch (Exception e) {
+            log.error("Error updating the plugin configurations.", e);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "There was an error changing the configuration settings.", e);
+
+            return null;
+        }
+    }
+
+    @Create
+    public void lookupConfigDefinitions() {
         hasPermission();
-        String pluginName = FacesContextUtility.getRequiredRequestParameter("plugin", String.class);
-        String pluginType = FacesContextUtility.getRequiredRequestParameter("pluginType", String.class);
-        PluginDeploymentType deploymentType = PluginDeploymentType.valueOf(pluginType);
-        if (deploymentType == PluginDeploymentType.AGENT) {
-            this.plugin = LookupUtil.getResourceMetadataManager().getPlugin(pluginName);
-        } else {
-            ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-            this.plugin = serverPluginsBean.getServerPlugin(pluginName);
-            this.plugin = serverPluginsBean.getServerPluginRelationships(this.plugin);
+        String pluginName = this.plugin.getName();
+
+        if (this.plugin.getDeployment() == PluginDeploymentType.SERVER) {
             try {
-                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginName);
+                ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
+                PluginKey pluginKey = new PluginKey((ServerPlugin) plugin);
+                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
                 this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor
                     .getPluginConfiguration());
                 this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginName, descriptor

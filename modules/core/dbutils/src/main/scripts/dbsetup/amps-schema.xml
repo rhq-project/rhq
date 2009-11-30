@@ -12,18 +12,21 @@
         <column name="VERSION" size="200" type="VARCHAR2" required="false"/>
         <column name="AMPS_VERSION" size="16" type="VARCHAR2" required="false"/>
         <column name="ENABLED" type="BOOLEAN" required="true"/>
+        <column name="STATUS" size="16" type="VARCHAR2" required="true"/>
         <column name="HELP" type="CLOB" required="false"/>
         <column name="PATH" size="500" type="VARCHAR2" required="true"/>
         <column name="MD5" size="100" type="VARCHAR2" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         <column name="MTIME" type="LONG" required="true"/>
         <column name="DEPLOYMENT" size="8" type="VARCHAR2" required="true"/>
+        <column name="PTYPE" size="200" type="VARCHAR2" required="false"/>
         <column name="PLUGIN_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
         <column name="JOBS_CONFIG_ID" type="INTEGER" references="RHQ_CONFIG" required="false"/>
         <column name="CONTENT" type="BLOB" required="false"/>
 
-        <index name="RHQ_PLUGIN_NAME_IDX" unique="true">
+        <index name="RHQ_PLUGIN_NAME_DEPLOY_IDX" unique="true">
             <field ref="NAME"/>
+            <field ref="DEPLOYMENT"/>
         </index>
     </table>
 

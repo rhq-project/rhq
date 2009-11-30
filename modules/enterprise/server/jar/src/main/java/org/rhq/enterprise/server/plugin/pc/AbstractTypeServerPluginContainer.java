@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.CronScheduleType;
@@ -131,7 +132,7 @@ public abstract class AbstractTypeServerPluginContainer {
                 try {
                     unloadPlugin(env);
                 } catch (Exception e) {
-                    this.log.warn("Failed to unload plugin [" + env.getPluginName() + "].", e);
+                    this.log.warn("Failed to unload plugin [" + env.getPluginKey().getPluginName() + "].", e);
                 }
             }
 
@@ -195,14 +196,14 @@ public abstract class AbstractTypeServerPluginContainer {
             // process all known plugins and schedule their jobs
             List<ScheduledJobDefinition> jobs;
             for (ServerPluginEnvironment pluginEnv : this.pluginManager.getPluginEnvironments()) {
-                String pluginName = pluginEnv.getPluginName();
+                String pluginName = pluginEnv.getPluginKey().getPluginName();
 
                 try {
                     jobs = this.pluginManager.getServerPluginContext(pluginEnv).getSchedules();
                     if (jobs != null) {
                         for (ScheduledJobDefinition job : jobs) {
                             try {
-                                scheduleJob(job, pluginName);
+                                scheduleJob(job, pluginEnv.getPluginKey());
                             } catch (Throwable t) {
                                 log.warn("Failed to schedule job [" + job + "] for plugin [" + pluginName + "]", t);
                             }
@@ -231,11 +232,26 @@ public abstract class AbstractTypeServerPluginContainer {
      * and able to process the jobs. This method should only be called when a plugin
      * is being disabled or removed.
      * 
+     * @param pluginKey
      * @throws Exception if failed to unschedule jobs
      */
-    public void unschedulePluginJobs(String pluginName) throws Exception {
+    public void unschedulePluginJobs(PluginKey pluginKey) throws Exception {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.resumeJobGroup(pluginName);
+
+        // note: all jobs for a plugin are placed in the same group, where the group name is the plugin name
+        String groupName = pluginKey.getPluginName();
+
+        scheduler.pauseJobGroup(groupName);
+        String[] jobNames = scheduler.getJobNames(groupName);
+        if (jobNames != null) {
+            for (String jobName : jobNames) {
+                boolean deleted = scheduler.deleteJob(jobName, groupName);
+                if (!deleted) {
+                    log.warn("Plugin [" + pluginKey + "] failed to get its job [" + jobName + "] unscheduled!");
+                }
+            }
+        }
+
         return;
     }
 
@@ -264,17 +280,17 @@ public abstract class AbstractTypeServerPluginContainer {
      * job is not enabled, this method returns immediately as a no-op.
      * 
      * @param schedule instructs how the job should be scheduled
-     * @param pluginName the name of the plugin scheduling the job
+     * @param pluginKey the key of the plugin scheduling the job
      *
      * @throws Exception if failed to schedule the job
      */
-    protected void scheduleJob(ScheduledJobDefinition schedule, String pluginName) throws Exception {
+    protected void scheduleJob(ScheduledJobDefinition schedule, PluginKey pluginKey) throws Exception {
 
         if (!schedule.isEnabled()) {
             return;
         }
 
-        String groupName = pluginName;
+        String groupName = pluginKey.getPluginName();
         boolean rescheduleIfExists = true; // just in case the parameters change, we'll always want to reschedule it if it exists
         boolean isVolatile = true; // if plugin is removed, this allows for the schedule to go away upon restart automatically
 
@@ -288,8 +304,8 @@ public abstract class AbstractTypeServerPluginContainer {
 
         // build the data map for the job, setting some values we need, plus adding the callback data for the plugin itself
         JobDataMap jobData = new JobDataMap();
-        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_NAME, pluginName);
-        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, getSupportedServerPluginType().stringify());
+        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_NAME, pluginKey.getPluginName());
+        jobData.put(AbstractJobWrapper.DATAMAP_PLUGIN_TYPE, pluginKey.getPluginType().toString());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_ID, schedule.getJobId());
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TYPE, schedule.getScheduleType().getTypeName());
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TRIGGER, schedule.getScheduleType().getScheduleTrigger());

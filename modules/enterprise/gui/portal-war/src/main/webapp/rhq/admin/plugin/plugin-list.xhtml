@@ -75,9 +75,9 @@
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml">
                   <f:param name="plugin" value="#{agentPlugin.name}"/>
-                  <f:param name="pluginType" value="AGENT"/>
+                  <f:param name="deployment" value="AGENT"/>
                   <h:outputText value="#{agentPlugin.displayName}"/>
                </h:outputLink>
 
@@ -105,7 +105,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Active"/>
+                  <h:outputText styleClass="headerText" value="Enabled"/>
                </f:facet>
 
                <h:outputText value="#{agentPlugin.enabled}"/>
@@ -160,9 +160,10 @@
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml">
                   <f:param name="plugin" value="#{serverPlugin.name}"/>
-                  <f:param name="pluginType" value="SERVER"/>
+                  <f:param name="deployment" value="SERVER"/>
+                  <f:param name="pluginType" value="#{serverPlugin.type}"/>
                   <h:outputText value="#{serverPlugin.displayName}"/>
                </h:outputLink>
 
@@ -190,7 +191,7 @@
 
             <rich:column>
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Active"/>
+                  <h:outputText styleClass="headerText" value="Enabled"/>
                </f:facet>
 
                <h:outputText value="#{serverPlugin.enabled}"/>

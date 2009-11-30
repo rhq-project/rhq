@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -31,13 +32,18 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericPluginManager;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener.LifecycleState;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 @Test
 public class GenericServerPluginTest extends AbstractEJB3Test {
@@ -76,10 +82,21 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
         List<ScheduledJobDefinition> schedules = component.context.getSchedules();
         assert schedules == null;
 
+        ServerPluginsLocal serverPluginsLocal = LookupUtil.getServerPlugins();
+        Map<ServerPluginType, List<PluginKey>> map = serverPluginsLocal.getAllPluginsGroupedByType();
+        assert map.size() == 1;
+        List<PluginKey> pluginNames = map.get(new ServerPluginType(GenericPluginDescriptorType.class));
+        assert pluginNames.size() == 1;
+        assert pluginNames.get(0).getPluginName().equals("TestSimpleGenericPlugin");
+
         // make sure everything is shutdown
         this.pluginService.stopMasterPluginContainer();
         assert pc.state == State.UNINITIALIZED;
         assert component.state == LifecycleState.UNINITIALIZED;
+
+        // with the master down, this method should return an empty map
+        map = serverPluginsLocal.getAllPluginsGroupedByType();
+        assert map.size() == 0;
     }
 
     private File createPluginJar(String jarName, String descriptorXmlFilename) throws Exception {

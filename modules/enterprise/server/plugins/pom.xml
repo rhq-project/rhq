@@ -39,6 +39,8 @@
     <module>yum</module>
     <module>url</module>
     <module>rhnhosted</module>
+    <module>alert-email</module>
+    <!-- <module>alert-mobicents</module> -->
   </modules>
 
 </project>

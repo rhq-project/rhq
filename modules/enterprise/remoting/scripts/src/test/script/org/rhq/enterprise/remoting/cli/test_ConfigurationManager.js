@@ -60,21 +60,8 @@ function testGetAndUpdateRawConfiguration() {
 
     Assert.assertNotNull(rawServer, "Failed to find '" + resourceName + "'");
 
-    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(rawServer.id);
-
-    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
-    Assert.assertTrue(
-        latestUpdate.configuration.rawConfigurations.size() > 0,
-        "Expected to find at least one raw config file for '" + "'"
-    );
-
-    var rawConfigs = java.util.LinkedList(latestUpdate.configuration.rawConfigurations);
-    var rawConfig = rawConfigs.get(0);
-
-    Assert.assertTrue(
-        rawConfig.contents.length > 0,
-        "Contents of raw config file for '" + resourceName + "' should not be empty."
-    );
+    var latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
+    var rawConfig = getRawConfig(resourceName, latestUpdate.configuration, 0);
 
     var contents = java.lang.String(rawConfig.contents);
     var modifiedContents = java.lang.StringBuilder(contents).append("\nModified at ").append(getDate()).toString();
@@ -83,16 +70,9 @@ function testGetAndUpdateRawConfiguration() {
 
     var configUdpate = ConfigurationManager.updateResourceConfiguration(rawServer.id, latestUpdate.configuration);
 
-    while (ConfigurationManager.isResourceConfigurationUpdateInProgress(rawServer.id)) {
-        java.lang.Thread.sleep(1000);
-    }
+    waitForResourceConfigUpdateToComplete(rawServer.id);
 
-    latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(rawServer.id);
-    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
-    Assert.assertTrue(
-        latestUpdate.configuration.rawConfigurations.size() > 0,
-        "Expected to find at least one raw config file for '" + "'"
-    );
+    latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
     
     rawConfigs = java.util.LinkedList(latestUpdate.configuration.rawConfigurations);
     rawConfig = rawConfigs.get(0);
@@ -105,9 +85,39 @@ function testGetAndUpdateRawConfiguration() {
     );
 }
 
+function loadLatestResourceConfigurationUpdate(resourceName, resourceId) {
+    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
+
+    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
+    Assert.assertTrue(
+        latestUpdate.configuration.rawConfigurations.size() > 0,
+        "Expected to find at least one raw config file for '" + "'"
+    );
+
+    return latestUpdate;
+}
+
+function getRawConfig(resourceName, configuration, index) {
+    var rawConfigs = java.util.LinkedList(configuration.rawConfigurations);
+    var rawConfig = rawConfigs.get(index);
+
+    Assert.assertTrue(
+        rawConfig.contents.length > 0,
+        "Contents of raw config file for '" + resourceName + "' should not be empty."
+    );
+
+    return rawConfig;
+}
+
 function getDate() {
     var format = java.text.DateFormat.getDateInstance();
     return format.format(java.util.Date());
+}
+
+function waitForResourceConfigUpdateToComplete(resourceId) {
+    while (ConfigurationManager.isResourceConfigurationUpdateInProgress(resourceId)) {
+        java.lang.Thread.sleep(1000);
+    }
 }
 
 //function testUpdatePluginConfiguration() {

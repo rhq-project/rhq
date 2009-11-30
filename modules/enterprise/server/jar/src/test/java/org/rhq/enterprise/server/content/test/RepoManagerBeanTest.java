@@ -47,6 +47,7 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.ContentTestHelper;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -108,17 +109,8 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @Test(enabled = true)
     public void testSyncRepos() throws Exception {
-        Repo repo = new Repo("testSyncStatus");
+        Repo repo = ContentTestHelper.getTestRepoWithContentSource();
 
-        ContentSourceType type = new ContentSourceType("testGetSyncResultsListCST");
-        Set<ContentSourceType> types = new HashSet<ContentSourceType>();
-        types.add(type);
-        contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
-        ContentSource contentSource = new ContentSource("testGetSyncResultsListCS", type);
-        contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
-        repo.addContentSource(contentSource);
-
-        repoManager.createRepo(overlord, repo);
         Integer[] ids = { repo.getId() };
         int syncCount = repoManager.synchronizeRepos(overlord, ids);
 

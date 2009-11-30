@@ -59,8 +59,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
@@ -942,13 +942,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // REMOVE
-            syncResults = contentSourceManager._mergeDistributionSyncReportREMOVE(contentSource,
-                report, syncResults, progress);
+            syncResults = contentSourceManager._mergeDistributionSyncReportREMOVE(contentSource, report, syncResults,
+                progress);
 
             //////////////////
             // ADD
-            syncResults = contentSourceManager._mergeDistributionSyncReportADD(contentSource, report,
-                syncResults, progress);
+            syncResults = contentSourceManager._mergeDistributionSyncReportADD(contentSource, report, syncResults,
+                progress);
 
             // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
@@ -965,7 +965,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // ThrowableUtil will dump SQL nextException messages, too
             String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
                 + ThrowableUtil.getAllMessages(t);
-            log.error(errorMsg);
+            log.error(errorMsg, t);
             throw new RuntimeException(errorMsg, t);
         }
 
@@ -975,8 +975,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
     public ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo,
-        PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
@@ -994,8 +993,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // REMOVE
-            syncResults = contentSourceManager._mergePackageSyncReportREMOVE(contentSource, repo,
-                report, previous, syncResults, progress);
+            syncResults = contentSourceManager._mergePackageSyncReportREMOVE(contentSource, repo, report, previous,
+                syncResults, progress);
 
             //////////////////
             // ADD
@@ -1018,8 +1017,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 }
 
                 List<ContentProviderPackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
-                syncResults = contentSourceManager._mergePackageSyncReportADD(contentSource, repo,
-                    pkgs, previous, syncResults, progress, fromIndex);
+                syncResults = contentSourceManager._mergePackageSyncReportADD(contentSource, repo, pkgs, previous,
+                    syncResults, progress, fromIndex);
                 addedCount += pkgs.size();
                 fromIndex += chunkSize;
                 toIndex += chunkSize;
@@ -1050,7 +1049,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // ThrowableUtil will dump SQL nextException messages, too
             String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
                 + ThrowableUtil.getAllMessages(t);
-            log.error(errorMsg);
+            log.error(errorMsg, t);
             throw new RuntimeException(errorMsg, t);
         }
 
@@ -1073,12 +1072,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource,
-        Repo repo,
-        PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults,
-        StringBuilder progress) {
+    public ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        ContentSourceSyncResults syncResults, StringBuilder progress) {
 
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
@@ -1138,8 +1134,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource,
-        Repo repo,
+    public ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
@@ -1326,7 +1321,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // for all repos that are associated with this content source, add this package version directly to them
             RepoPackageVersion mapping = new RepoPackageVersion(repo, pv);
             entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
-
 
             // Cleanup
             if ((++flushCount % 100) == 0) {

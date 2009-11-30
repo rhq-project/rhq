@@ -34,11 +34,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSourceSyncResults;
+import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -67,8 +68,7 @@ public class PackageSourceSynchronizer {
     private ContentSource source;
     private ContentProvider provider;
 
-    public PackageSourceSynchronizer(Repo repo, ContentSource source,
-                                     ContentProvider provider) {
+    public PackageSourceSynchronizer(Repo repo, ContentSource source, ContentProvider provider) {
         this.repo = repo;
         this.source = source;
         this.provider = provider;
@@ -93,19 +93,17 @@ public class PackageSourceSynchronizer {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap;
 
         Subject overlord = subjectManager.getOverlord();
-        existingPVCS = contentSourceManager.getPackageVersionsFromContentSourceForRepo(
-            overlord, source.getId(), repo.getId());
+        existingPVCS = contentSourceManager.getPackageVersionsFromContentSourceForRepo(overlord, source.getId(), repo
+            .getId());
 
         int existingCount = existingPVCS.size();
-        keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey,
-            PackageVersionContentSource>(existingCount);
+        keyPVCSMap = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>(existingCount);
         allDetails = new HashSet<ContentProviderPackageDetails>(existingCount);
 
         translateDomainToDto(existingPVCS, allDetails, keyPVCSMap);
 
-        log.info("Synchronize Packages: [" + source.getName() +
-            "]: loaded existing list of size=[" + existingCount + "] (" +
-            (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Packages: [" + source.getName() + "]: loaded existing list of size=[" + existingCount
+            + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         // Ask source to do the sync
         // --------------------------------------------
@@ -114,19 +112,17 @@ public class PackageSourceSynchronizer {
         PackageSyncReport report = new PackageSyncReport();
         packageSource.synchronizePackages(repo.getName(), report, allDetails);
 
-        log.info("Synchronize Packages: [" + source.getName() +
-            "]: got sync report from adapter=[" + report + "] (" +
-            (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Packages: [" + source.getName() + "]: got sync report from adapter=[" + report + "] ("
+            + (System.currentTimeMillis() - start) + ")ms");
 
         // Merge in the results of the synchronization
         // --------------------------------------------
         start = System.currentTimeMillis();
+        ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
+        syncResults = contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, syncResults);
 
-        contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, null);
-
-        log.info("Synchronize Packages: [" + source.getName() +
-            "]: merged sync report=(" +
-            (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Packages: [" + source.getName() + "]: merged sync report=("
+            + (System.currentTimeMillis() - start) + ")ms");
     }
 
     public void synchronizePackageBits() throws Exception {
@@ -137,17 +133,16 @@ public class PackageSourceSynchronizer {
         }
 
         if (source.getDownloadMode() == DownloadMode.NEVER) {
-            log.info("Download mode of NEVER for source [" + source.getName() + "], skipping " +
-                "package bits sync for repo [" + repo.getName() + "]");
+            log.info("Download mode of NEVER for source [" + source.getName() + "], skipping "
+                + "package bits sync for repo [" + repo.getName() + "]");
             return;
         }
 
         if (source.isLazyLoad()) {
-            log.info("Lazy load enabled for source [" + source.getName() + "], skipping " +
-                "package bits sync for repo [" + repo.getName() + "]");
+            log.info("Lazy load enabled for source [" + source.getName() + "], skipping "
+                + "package bits sync for repo [" + repo.getName() + "]");
             return;
         }
-
 
         long start;
 
@@ -162,8 +157,8 @@ public class PackageSourceSynchronizer {
         // TODO: jdob - Need to change this call to only load packages for this repo
         List<PackageVersionContentSource> packageVersionContentSources = contentSourceManager
             .getUnloadedPackageVersionsFromContentSourceInRepo(overlord, source.getId(), repo.getId(), pc);
-        log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName() +
-            "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName()
+            + "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms");
 
         // Download the bits for each unloaded package version. Abort the entire download if we
         // fail getting just one package.
@@ -174,27 +169,22 @@ public class PackageSourceSynchronizer {
 
             try {
                 if (log.isDebugEnabled()) {
-                    log.debug(
-                        "Downloading package version [" + pk.getPackageVersion() + "] located at ["
-                            + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
+                    log.debug("Downloading package version [" + pk.getPackageVersion() + "] located at ["
+                        + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
                 }
 
                 overlord = subjectManager.getOverlord();
                 contentSourceManager.downloadPackageBits(overlord, item);
-            }
-            catch (Exception e) {
-                String errorMsg =
-                    "Failed to load package bits for package version [" + pk.getPackageVersion()
-                        + "] from content source [" + pk.getContentSource() + "] at location [" +
-                        item.getLocation()
-                        + "]." + "No more packages will be downloaded for this content source.";
+            } catch (Exception e) {
+                String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
+                    + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation() + "]."
+                    + "No more packages will be downloaded for this content source.";
 
                 throw new Exception(errorMsg, e);
             }
         }
 
-        log.info("All package bits for content source [" + source.getName() +
-            "] have been downloaded."
+        log.info("All package bits for content source [" + source.getName() + "] have been downloaded."
             + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
 
     }
@@ -210,8 +200,8 @@ public class PackageSourceSynchronizer {
      * @param keyPVCSMap   mapping of package version key to package domain object
      */
     private void translateDomainToDto(List<PackageVersionContentSource> existingPVCS,
-                                      Set<ContentProviderPackageDetails> allDetails,
-                                      Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap) {
+        Set<ContentProviderPackageDetails> allDetails,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> keyPVCSMap) {
 
         for (PackageVersionContentSource pvcs : existingPVCS) {
             PackageVersion pv = pvcs.getPackageVersionContentSourcePK().getPackageVersion();
@@ -219,9 +209,8 @@ public class PackageSourceSynchronizer {
             ResourceType rt = p.getPackageType().getResourceType();
 
             ContentProviderPackageDetailsKey key;
-            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(),
-                p.getPackageType()
-                    .getName(), pv.getArchitecture().getName(), rt.getName(), rt.getPlugin());
+            key = new ContentProviderPackageDetailsKey(p.getName(), pv.getVersion(), p.getPackageType().getName(), pv
+                .getArchitecture().getName(), rt.getName(), rt.getPlugin());
 
             ContentProviderPackageDetails details = new ContentProviderPackageDetails(key);
             details.setClassification(pv.getGeneralPackage().getClassification());

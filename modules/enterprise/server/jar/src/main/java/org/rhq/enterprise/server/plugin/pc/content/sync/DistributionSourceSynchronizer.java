@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
+import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Repo;
@@ -63,8 +64,7 @@ public class DistributionSourceSynchronizer {
     private ContentSource source;
     private ContentProvider provider;
 
-    public DistributionSourceSynchronizer(Repo repo, ContentSource source,
-                                          ContentProvider provider) {
+    public DistributionSourceSynchronizer(Repo repo, ContentSource source, ContentProvider provider) {
         this.repo = repo;
         this.source = source;
         this.provider = provider;
@@ -81,8 +81,7 @@ public class DistributionSourceSynchronizer {
 
         DistributionSource distributionSource = (DistributionSource) provider;
 
-        log.info("Synchronize Distributions: [" + source.getName() +
-            "]: syncing repo [" + repo.getName() + "]");
+        log.info("Synchronize Distributions: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]");
 
         // Load existing distributions to send to source
         // --------------------------------------------
@@ -90,18 +89,15 @@ public class DistributionSourceSynchronizer {
 
         PageControl pc = PageControl.getUnlimitedInstance();
         Subject overlord = subjectManager.getOverlord();
-        List<Distribution> dists = repoManager
-            .findAssociatedDistributions(overlord, repo.getId(), pc);
+        List<Distribution> dists = repoManager.findAssociatedDistributions(overlord, repo.getId(), pc);
         log.debug("Found " + dists.size() + " distributions for repo " + repo.getId());
 
         DistributionSyncReport distReport = new DistributionSyncReport(repo.getId());
-        List<DistributionDetails> distDetails =
-            new ArrayList<DistributionDetails>(dists.size());
+        List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(dists.size());
         translateDomainToDto(dists, distDetails);
 
-        log.info("Synchronize Distributions: [" + source.getName() +
-            "]: loaded existing list of size=["
-            + dists.size() + "] (" + (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Distributions: [" + source.getName() + "]: loaded existing list of size=[" + dists.size()
+            + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         // Ask source to do the sync
         // --------------------------------------------
@@ -109,11 +105,11 @@ public class DistributionSourceSynchronizer {
 
         distributionSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
 
-        log.info("Synchronize Distributions: [" + source.getName() +
-            "]: got sync report from adapter=["
-            + distReport + "] (" + (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Distributions: [" + source.getName() + "]: got sync report from adapter=[" + distReport
+            + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
-        contentSourceManager.mergeDistributionSyncReport(source, distReport, null);
+        ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
+        contentSourceManager.mergeDistributionSyncReport(source, distReport, syncResults);
     }
 
     public void synchronizeDistributionBits() throws Exception {
@@ -121,21 +117,18 @@ public class DistributionSourceSynchronizer {
         contentSourceManager.downloadDistributionBits(overlord, source);
     }
 
-    private void translateDomainToDto(List<Distribution> dists,
-                                      List<DistributionDetails> distDetails) {
+    private void translateDomainToDto(List<Distribution> dists, List<DistributionDetails> distDetails) {
         DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
 
         for (Distribution d : dists) {
-            DistributionDetails detail = new DistributionDetails(d.getLabel(),
-                d.getDistributionType().getName());
+            DistributionDetails detail = new DistributionDetails(d.getLabel(), d.getDistributionType().getName());
             detail.setLabel(d.getLabel());
             detail.setDistributionPath(d.getBasePath());
             detail.setDescription(d.getDistributionType().getDescription());
             List<DistributionFile> files = distManager.getDistributionFilesByDistId(d.getId());
             for (DistributionFile f : files) {
-                DistributionFileDetails dfd =
-                    new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(),
-                        f.getMd5sum());
+                DistributionFileDetails dfd = new DistributionFileDetails(f.getRelativeFilename(), f.getLastModified(),
+                    f.getMd5sum());
                 detail.addFile(dfd);
             }
             distDetails.add(detail);

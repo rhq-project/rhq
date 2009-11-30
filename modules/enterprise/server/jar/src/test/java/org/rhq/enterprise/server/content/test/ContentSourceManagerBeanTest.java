@@ -349,7 +349,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // confirm that we didn't load the bits yet
             pc = PageControl.getUnlimitedInstance();
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord,
+                contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 
@@ -462,7 +463,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // confirm that we didn't load the bits yet
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord,
+                contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 
@@ -492,7 +494,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert inCS.size() == 1 : inCS;
 
             // it should still be unloaded, make sure and check that it really was updated
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord,
+                contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
             assert unloaded.get(0).getPackageVersionContentSourcePK().getPackageVersion().getFileSize() == 9999L;
@@ -584,7 +587,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert results != null;
 
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord,
+                contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 

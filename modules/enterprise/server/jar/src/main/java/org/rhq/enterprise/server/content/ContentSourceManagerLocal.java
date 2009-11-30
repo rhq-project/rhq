@@ -41,9 +41,9 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -245,7 +245,7 @@ public interface ContentSourceManagerLocal {
      *         contains the location where those package versions are located in the content source
      */
     List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject, int contentSourceId,
-                                                                                 int repoId);
+        int repoId);
 
     /**
      * Returns count of PackageVersions associated with the given content source.
@@ -284,8 +284,6 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject, int[] contentSourceIds,
         PageControl pc);
 
-
-
     /**
      * Returns all the package versions that are served by the content source identified by the given ID but whose
      * {@link PackageVersion#getPackageBits() package bits} have not been loaded yet.
@@ -300,8 +298,6 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
         int contentSourceId, int repoId, PageControl pc);
 
-
-
     /**
      * This will download all the distribution bits associated with a specific content source.
      *
@@ -309,7 +305,6 @@ public interface ContentSourceManagerLocal {
      * @param contentSource
      */
     void downloadDistributionBits(Subject subject, ContentSource contentSource);
-
 
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package
@@ -401,9 +396,7 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource,
-        Repo repo,
-        PackageSyncReport report,
+    ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults);
 
@@ -417,19 +410,17 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource,
-                                                         DistributionSyncReport report,
-                                                         ContentSourceSyncResults syncResults);
+    ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        ContentSourceSyncResults syncResults);
 
     void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
-    ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource,
-        Repo repo, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+    ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
+        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource,
-        Repo repo, Collection<ContentProviderPackageDetails> newPackages,
+    ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
+        Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount);
 
@@ -437,8 +428,8 @@ public interface ContentSourceManagerLocal {
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
 
     ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
         DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);

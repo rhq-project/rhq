@@ -105,7 +105,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      *
      * @throws SchedulerException if failed to schedule the job for immediate execution
      */
-    public void syncNow(final ContentSource contentSource) throws SchedulerException {
+    public void syncProviderNow(final ContentSource contentSource) throws SchedulerException {
         // Create our job with a trigger that fires immediately and doesn't repeat.
         // Make the name unique - we may already have our cron job schedules.
         // What happens if this is triggered when our cron job is triggered? the job will abort and let the current job finish
@@ -120,11 +120,8 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
         Date next = scheduler.scheduleJob(job, trigger);
 
-        getLog().info(
-            "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + next
-                + "] for [" + contentSource + "]");
-
-        return;
+        getLog().info("Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() +
+            "] to fire now at [" + next + "] for [" + contentSource + "]");
     }
 
     /**

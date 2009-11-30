@@ -428,7 +428,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // Schedule a job for the future
             pc.scheduleProviderSyncJob(contentSource);
             // Also sync immediately so we have the metadata
-            pc.syncNow(contentSource);
+            pc.syncProviderNow(contentSource);
 
         } catch (InitializationException ie) {
             log.warn("Failed to start adapter for [" + contentSource + "]", ie);
@@ -495,7 +495,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             pc.unscheduleSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
             pc.scheduleProviderSyncJob(contentSource);
-            pc.syncNow(contentSource);
+            pc.syncProviderNow(contentSource);
         } catch (Exception e) {
             log.warn("Failed to restart adapter for [" + contentSource + "]", e);
         }
@@ -547,7 +547,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             ContentSource contentSource = entityManager.find(ContentSource.class, contentSourceId);
 
             if (contentSource != null) {
-                pc.syncNow(contentSource);
+                pc.syncProviderNow(contentSource);
             } else {
                 log.warn("Asked to synchronize a non-existing content source [" + contentSourceId + "]");
             }

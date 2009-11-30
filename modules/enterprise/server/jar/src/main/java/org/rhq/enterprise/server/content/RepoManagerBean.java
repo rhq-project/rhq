@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -556,7 +555,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             entityManager.clear();
 
             // ask to synchronize the content source immediately (is this the right thing to do?)
-            pc.syncNow(cs);
+            pc.syncProviderNow(cs);
         }
 
         return;
@@ -894,7 +893,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Repo found = this.getRepo(subject, repoId);
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
         List<RepoSyncResults> syncResults = found.getSyncResults();
-        // Add the most recent sync results status 
+        // Add the most recent sync results status
         if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
             stati.add(syncResults.get(0).getStatus());
         } else {

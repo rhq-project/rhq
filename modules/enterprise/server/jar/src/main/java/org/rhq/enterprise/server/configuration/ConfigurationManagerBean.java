@@ -20,12 +20,12 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
-import java.util.Collection;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -48,9 +48,9 @@ import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -59,8 +59,8 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
@@ -702,7 +702,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
-            boolean fromStructured) throws Exception {
+        boolean fromStructured) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -980,6 +980,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    private void dumpProperties(Configuration configuration) {
+        for (String key : configuration.getAllProperties().keySet()) {
+            log.error("key = ");
+        }
+    }
+
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
@@ -988,7 +994,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
         ResourceConfigurationUpdate newUpdate;
-
+        dumpProperties(newConfiguration);
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
         // this can return null if newConfiguration is not actually different.
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,
@@ -1321,8 +1327,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      *
      * @return the resource's live configuration or <code>null</code> if it could not be retrieved from the agent
      */
-    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst,
-            boolean fromStructured) {
+    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst, boolean fromStructured) {
         Configuration liveConfig = null;
 
         try {
@@ -1354,8 +1359,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         return liveConfig;
     }
-
-
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public AbstractResourceConfigurationUpdate mergeConfigurationUpdate(
@@ -1900,11 +1903,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
 
             return configService.merge(configuration, resourceId, fromStructured);
-        }
-        catch (PluginContainerException e) {
+        } catch (PluginContainerException e) {
             log.error("An error occurred while trying to translate the configuration.", e);
             return null;
         }
     }
-    
+
 }

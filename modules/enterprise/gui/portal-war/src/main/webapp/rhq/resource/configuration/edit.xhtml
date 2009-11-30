@@ -30,9 +30,9 @@ THIS TEXT WILL BE REMOVED.
          
          <h:outputText value="#{messages.youareviewingstructured}" />
 	  
-		 <h:panelGroup rendered="#{rawConfigCollection.rawSupported}" >
+		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}" >
 		   <h:outputText value=" #{messages.switch2}" />
-           <h:commandLink action="#{rawConfigCollection.switchToraw}"  >
+           <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToraw}"  >
              <f:param name="conversationId" value="#{conversation.id}"/>
              <f:param name="id" value="#{ResourceUIBean.id}"/>
              <h:outputText value=" files mode"/>

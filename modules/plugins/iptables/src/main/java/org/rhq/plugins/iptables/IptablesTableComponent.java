@@ -1,3 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.iptables;
 
 import org.rhq.augeas.AugeasComponent;
@@ -8,46 +30,50 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-
+/**
+ * 
+ * @author Filip Drabek
+ *
+ */
 public class IptablesTableComponent implements AugeasRHQComponent<AugeasRHQComponent>, ConfigurationFacet{
 
-	private String tableName;
-	private AugeasRHQComponent parentComponent;
-	
-	public void start(ResourceContext<AugeasRHQComponent> context)
-			throws InvalidPluginConfigurationException, Exception {
+       private String tableName;
+       private AugeasRHQComponent parentComponent;
+       
+       public void start(ResourceContext<AugeasRHQComponent> context)
+                     throws InvalidPluginConfigurationException, Exception {
 
-		tableName =	context.getResourceKey();
-	    parentComponent = context.getParentResourceComponent();
-	}
+              tableName =       context.getResourceKey();
+           parentComponent = context.getParentResourceComponent();
+       }
 
-	public void stop() {
-				
-	}
+       public void stop() {
+                            
+       }
 
-	public AvailabilityType getAvailability() {		
-		return AvailabilityType.UP;
-	}
+       public AvailabilityType getAvailability() {              
+              return AvailabilityType.UP;
+       }
 
-	public Configuration loadResourceConfiguration() throws Exception {
-		
-		return null;
-	}
+       public Configuration loadResourceConfiguration() throws Exception {
+              
+              return null;
+       }
 
-	public void updateResourceConfiguration(ConfigurationUpdateReport arg0) {
-			
-	}
-	
-	public String getTableName(){
-		return tableName;
-	}
+       public void updateResourceConfiguration(ConfigurationUpdateReport arg0) {
+                     
+       }
+       
+       public String getTableName(){
+              return tableName;
+       }
 
-	public AugeasComponent getAugeasComponent() throws Exception {
-		return parentComponent.getAugeasComponent(); 
-	}
+       public AugeasComponent getAugeasComponent() throws Exception {
+              return parentComponent.getAugeasComponent(); 
+       }
 
-	public AugeasTree getAugeasTree() throws Exception {
-		return parentComponent.getAugeasTree();
-	}
+       public AugeasTree getAugeasTree() throws Exception {
+              return parentComponent.getAugeasTree();
+       }
 
 }

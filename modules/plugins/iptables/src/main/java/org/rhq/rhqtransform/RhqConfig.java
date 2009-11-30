@@ -1,3 +1,26 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
+
 package org.rhq.rhqtransform;
 
 import java.io.File;
@@ -5,53 +28,55 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
 import net.augeas.Augeas;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-
-
+/**
+ * 
+ * @author Filip Drabek
+ * @author Ian Springer
+ *
+ */
 
 public class RhqConfig implements AugeasConfiguration{
 
-	    public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
-	    public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
-	    public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
-	    private static final String AUGEAS_LOAD_PATH = "augeasLoadPath";  
-	    
-	    public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
-	    
-	    private final Log log = LogFactory.getLog(this.getClass());
-	    private List<AugeasModuleConfig> modules;
-	    private String loadPath;
-	    
-	public RhqConfig(Configuration configuration) throws AugeasRhqException{
-		List<String> includes = determineGlobs(configuration,INCLUDE_GLOBS_PROP);
-		List<String> excludes = determineGlobs(configuration,EXCLUDE_GLOBS_PROP);
-		modules = new ArrayList<AugeasModuleConfig>();
-	    if (includes.isEmpty())
-	    	throw new AugeasRhqException("At least one Include glob must be defined.");
+           public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
+           public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
+           public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
+           private static final String AUGEAS_LOAD_PATH = "augeasLoadPath";  
+           
+           public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
+           
+           private final Log log = LogFactory.getLog(this.getClass());
+           private List<AugeasModuleConfig> modules;
+           private String loadPath;
+           
+       public RhqConfig(Configuration configuration) throws AugeasRhqException{
+              List<String> includes = determineGlobs(configuration,INCLUDE_GLOBS_PROP);
+              List<String> excludes = determineGlobs(configuration,EXCLUDE_GLOBS_PROP);
+              modules = new ArrayList<AugeasModuleConfig>();
+           if (includes.isEmpty())
+                  throw new AugeasRhqException("At least one Include glob must be defined.");
 
-	      AugeasModuleConfig config = new AugeasModuleConfig();
-	      config.setIncludedGlobs(includes);
-	      config.setExcludedGlobs(excludes);
-	      config.setLensPath(getAugeasModuleName(configuration)+".lns");
-	      config.setModuletName(getAugeasModuleName(configuration));
-	      modules.add(config);	
-	      
-	      loadPath = configuration.getSimpleValue(AUGEAS_LOAD_PATH, null);
-	}
-	
-	
+             AugeasModuleConfig config = new AugeasModuleConfig();
+             config.setIncludedGlobs(includes);
+             config.setExcludedGlobs(excludes);
+             config.setLensPath(getAugeasModuleName(configuration)+".lns");
+             config.setModuletName(getAugeasModuleName(configuration));
+             modules.add(config);       
+             
+             loadPath = configuration.getSimpleValue(AUGEAS_LOAD_PATH, null);
+       }
+       
+       
   protected List<String> determineGlobs(Configuration configuration,String name) {
       PropertySimple includeGlobsProp = configuration.getSimple(name);
       if (includeGlobsProp== null)
-    	  return null;
+             return null;
       
       List<String> ret = new ArrayList<String>();
       ret.addAll(getGlobList(includeGlobsProp));
@@ -60,7 +85,7 @@ public class RhqConfig implements AugeasConfiguration{
   }
   
   protected String getAugeasModuleName(Configuration configuration){
-	  return (configuration.getSimpleValue(AUGEAS_MODULE_NAME_PROP, null));
+         return (configuration.getSimpleValue(AUGEAS_MODULE_NAME_PROP, null));
   }
   
   public static PropertySimple getGlobList(String name, List<String> simples) {
@@ -85,10 +110,10 @@ public class RhqConfig implements AugeasConfiguration{
   }
 
   public Configuration updateConfiguration(Configuration configuration) throws AugeasRhqException{
-	  if (modules.isEmpty())
-		  throw new AugeasRhqException("Error in augeas Configuration.");
-	  AugeasModuleConfig tempModule = modules.get(0);
-	  
+         if (modules.isEmpty())
+                throw new AugeasRhqException("Error in augeas Configuration.");
+         AugeasModuleConfig tempModule = modules.get(0);
+         
       PropertySimple includeProps = getGlobList(INCLUDE_GLOBS_PROP, tempModule.getIncludedGlobs());
       PropertySimple excludeProps = getGlobList(EXCLUDE_GLOBS_PROP, tempModule.getExcludedGlobs());
       configuration.put(includeProps);
@@ -98,18 +123,18 @@ public class RhqConfig implements AugeasConfiguration{
   }
   
 public String getLoadPath() {
-	return loadPath;
+       return loadPath;
 }
 
 public int getMode() {
-	return Augeas.NO_MODL_AUTOLOAD;
+       return Augeas.NO_MODL_AUTOLOAD;
 }
 
 public List<AugeasModuleConfig> getModules() {
-	return modules;
+       return modules;
 }
 
 public String getRootPath() {
-	return DEFAULT_AUGEAS_ROOT_PATH;
+       return DEFAULT_AUGEAS_ROOT_PATH;
 }
 }

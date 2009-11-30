@@ -20,19 +20,21 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.augeas.config;
 
-import java.util.List;
+package org.rhq.rhqtransform;
 
+import org.rhq.augeas.AugeasComponent;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public interface AugeasConfiguration {
-        
-        public List<AugeasModuleConfig> getModules();
-        public String getRootPath();
-        public String getLoadPath();
-        public int getMode();
+public interface RhqAugeasMapping {
+
+       public void updateAugeas(AugeasComponent augeasComponent,Configuration config,
+                     ConfigurationDefinition configDef) throws Exception;
+       public Configuration updateConfiguration(AugeasComponent augeasComponent,ConfigurationDefinition configDef) throws Exception;
+       
 }

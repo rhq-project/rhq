@@ -383,7 +383,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             String repoName = createMe.getName();
 
-            // Make sure the repo doesn't already exist. If we add twice, currently we'll get an exception 
+            // Make sure the repo doesn't already exist. If we add twice, currently we'll get an exception
             List<Repo> existingRepo = repoManager.getRepoByName(repoName);
             if (existingRepo != null) {
                 continue;
@@ -639,8 +639,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
-        int contentSourceId, PageControl pc) {
+    public PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
+        int contentSourceId, int repoId, PageControl pc) {
         pc.initDefaultOrderingField("pvcs.contentSource.id");
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
@@ -649,7 +649,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_NOT_LOADED_COUNT);
 
         query.setParameter("id", contentSourceId);
+        query.setParameter("repo_id", repoId);
         countQuery.setParameter("id", contentSourceId);
+        countQuery.setParameter("repo_id", repoId);
 
         List<PackageVersionContentSource> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();
@@ -940,18 +942,18 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // REMOVE
-            syncResults = contentSourceManager._mergeContentSourceSyncReportREMOVE(contentSource, report, syncResults,
-                progress);
+            syncResults = contentSourceManager._mergeDistributionSyncReportREMOVE(contentSource,
+                report, syncResults, progress);
 
             //////////////////
             // ADD
-            syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, report, syncResults,
-                progress);
+            syncResults = contentSourceManager._mergeDistributionSyncReportADD(contentSource, report,
+                syncResults, progress);
 
             // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
             if ((report.getDistributions().size() > 0) || (report.getDeletedDistributions().size() > 0)) {
-                contentSourceManager._mergeContentSourceSyncReportUpdateRepo(contentSource.getId());
+                contentSourceManager._mergePackageSyncReportUpdateRepo(contentSource.getId());
             }
 
             // let our sync results object know that we completed the merge
@@ -972,7 +974,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, PackageSyncReport report,
+    public ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo,
+        PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults) {
         try {
@@ -991,8 +994,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // REMOVE
-            syncResults = contentSourceManager._mergeContentSourceSyncReportREMOVE(contentSource, report, previous,
-                syncResults, progress);
+            syncResults = contentSourceManager._mergePackageSyncReportREMOVE(contentSource, repo,
+                report, previous, syncResults, progress);
 
             //////////////////
             // ADD
@@ -1015,8 +1018,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 }
 
                 List<ContentProviderPackageDetails> pkgs = newPackages.subList(fromIndex, toIndex);
-                syncResults = contentSourceManager._mergeContentSourceSyncReportADD(contentSource, pkgs, previous,
-                    syncResults, progress, fromIndex);
+                syncResults = contentSourceManager._mergePackageSyncReportADD(contentSource, repo,
+                    pkgs, previous, syncResults, progress, fromIndex);
                 addedCount += pkgs.size();
                 fromIndex += chunkSize;
                 toIndex += chunkSize;
@@ -1028,14 +1031,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             //////////////////
             // UPDATE
-            syncResults = contentSourceManager._mergeContentSourceSyncReportUPDATE(contentSource, report, previous,
+            syncResults = contentSourceManager._mergePackageSyncReportUPDATE(contentSource, report, previous,
                 syncResults, progress);
 
             // if we added/updated/deleted anything, change the last modified time of all repos
             // that get content from this content source
             if ((report.getNewPackages().size() > 0) || (report.getUpdatedPackages().size() > 0)
                 || (report.getDeletedPackages().size() > 0)) {
-                contentSourceManager._mergeContentSourceSyncReportUpdateRepo(contentSource.getId());
+                contentSourceManager._mergePackageSyncReportUpdateRepo(contentSource.getId());
             }
 
             // let our sync results object know that we completed the merge
@@ -1055,7 +1058,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId) {
+    public void _mergePackageSyncReportUpdateRepo(int contentSourceId) {
         // this method should be called only after a merge of a content source
         // added/updated/removed one or more packages.  When this happens, we need to change
         // the last modified time for all repos that get content from the changed content source
@@ -1070,9 +1073,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource,
+        Repo repo,
+        PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        ContentSourceSyncResults syncResults,
+        StringBuilder progress) {
+
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
         syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
@@ -1085,7 +1092,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         // for each removed package, we need to purge the PVCS mapping and the PV itself
 
         for (ContentProviderPackageDetails doomedDetails : report.getDeletedPackages()) {
-            // this is the mapping between the content source and the package version that needs to be deleted
+
+            // Delete the mapping between package version and content provider
             ContentProviderPackageDetailsKey doomedDetailsKey = doomedDetails.getContentProviderPackageDetailsKey();
             PackageVersionContentSource doomedPvcs = previous.get(doomedDetailsKey);
             doomedPvcs = entityManager.find(PackageVersionContentSource.class, doomedPvcs
@@ -1094,17 +1102,20 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 entityManager.remove(doomedPvcs);
             }
 
-            // this is the package version itself that we want to remove
-            // but only delete if there are no other content sources that also serve that PackageVersion
-            // or repos that are directly associated with this package version
+            // Delete the relationship between package and repo IF no other providers provide the
+            // package
+            q = entityManager.createNamedQuery(RepoPackageVersion.DELETE_WHEN_NO_PROVIDER);
+            q.setParameter("repoId", repo.getId());
+            q.executeUpdate();
+
+            // Delete the package version if it is sufficiently orphaned:
+            // - No repos
+            // - No content providers
+            // - No installed packages
             PackageVersion doomedPv = doomedPvcs.getPackageVersionContentSourcePK().getPackageVersion();
-            q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS);
-            q.setParameter("id", doomedPv.getId());
-            try {
-                doomedPv = (PackageVersion) q.getSingleResult();
-                entityManager.remove(doomedPv);
-            } catch (NoResultException nre) {
-            }
+            q = entityManager.createNamedQuery(PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS);
+            q.setParameter("packageVersionId", doomedPv.getId());
+            q.executeUpdate();
 
             if ((++flushCount % 200) == 0) {
                 entityManager.flush();
@@ -1125,78 +1136,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         return syncResults;
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
-
-        progress.append(new Date()).append(": ").append("Removing");
-        syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
-
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-
-        // remove all distributions that are no longer available on the remote repository
-        for (DistributionDetails doomedDetails : report.getDeletedDistributions()) {
-            Distribution doomedDist = distManager.getDistributionByLabel(doomedDetails.getLabel());
-            distManager.deleteDistributionByDistId(overlord, doomedDist.getId());
-            distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
-            progress.append("Removed distribution & distribution files for: " + doomedDetails.getLabel());
-            syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
-        }
-
-        progress.append("Finished Distribution removal...").append('\n');
-        syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
-
-        return syncResults;
-    }
-
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
-
-        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
-        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        List<DistributionDetails> newDetails = report.getDistributions();
-        for (DistributionDetails detail : newDetails) {
-            try {
-
-                log.debug("Attempting to create new distribution based off of: " + detail);
-                DistributionType distType = distManager.getDistributionTypeByName(detail.getDistributionType());
-                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(), detail
-                    .getDistributionPath(), distType);
-                log.debug("Created new distribution: " + newDist);
-                Repo repo = repoManager.getRepo(overlord, report.getRepoId());
-                RepoDistribution repoDist = new RepoDistribution(repo, newDist);
-                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() + ", distId = "
-                    + newDist.getId());
-                entityManager.persist(repoDist);
-                List<DistributionFileDetails> files = detail.getFiles();
-                for (DistributionFileDetails f : files) {
-                    log.debug("Creating DistributionFile for: " + f);
-                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
-                    df.setLastModified(f.getLastModified());
-                    entityManager.persist(df);
-                    entityManager.flush();
-                }
-            } catch (DistributionException e) {
-                progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
-                progress.append("Error is: " + e.getMessage());
-                syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
-                log.error(e);
-            }
-        }
-        return syncResults;
-    }
-
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+    public ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource,
+        Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
@@ -1206,9 +1149,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         Map<ResourceType, ResourceType> knownResourceTypes = new HashMap<ResourceType, ResourceType>();
         Map<PackageType, PackageType> knownPackageTypes = new HashMap<PackageType, PackageType>();
         Map<Architecture, Architecture> knownArchitectures = new HashMap<Architecture, Architecture>();
-        List<Repo> associatedRepos = null;
 
         Map<ResourceType, Map<String, ProductVersion>> knownProductVersions = new HashMap<ResourceType, Map<String, ProductVersion>>();
+
+        // Load this so we have the attached version in the repo <-> package mapping
+        repo = entityManager.find(Repo.class, repo.getId());
 
         // add new packages that are new to the content source.
         // for each new package, we have to find its resource type and package type
@@ -1379,22 +1324,15 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             newPvcs = entityManager.merge(newPvcs);
 
             // for all repos that are associated with this content source, add this package version directly to them
-            if (associatedRepos == null) {
-                q = entityManager.createNamedQuery(Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS);
-                q.setParameter("id", contentSource.getId());
-                associatedRepos = q.getResultList();
-            }
+            RepoPackageVersion mapping = new RepoPackageVersion(repo, pv);
+            entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
 
-            for (Repo associatedRepo : associatedRepos) {
-                RepoPackageVersion mapping = new RepoPackageVersion(associatedRepo, pv);
-                entityManager.merge(mapping); // use merge just in case this mapping somehow already exists
-            }
 
+            // Cleanup
             if ((++flushCount % 100) == 0) {
                 knownResourceTypes.clear();
                 knownPackageTypes.clear();
                 knownArchitectures.clear();
-                associatedRepos = null;
                 knownProductVersions.clear();
                 entityManager.flush();
                 entityManager.clear();
@@ -1411,7 +1349,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource,
+    public ContentSourceSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource,
         PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Updating");
@@ -1485,6 +1423,75 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         syncResults.setResults(progress.toString());
         syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
 
+        return syncResults;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        progress.append(new Date()).append(": ").append("Removing");
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // remove all distributions that are no longer available on the remote repository
+        for (DistributionDetails doomedDetails : report.getDeletedDistributions()) {
+            Distribution doomedDist = distManager.getDistributionByLabel(doomedDetails.getLabel());
+            distManager.deleteDistributionByDistId(overlord, doomedDist.getId());
+            distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
+            progress.append("Removed distribution & distribution files for: " + doomedDetails.getLabel());
+            syncResults.setResults(progress.toString());
+            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        }
+
+        progress.append("Finished Distribution removal...").append('\n');
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+
+        return syncResults;
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<DistributionDetails> newDetails = report.getDistributions();
+        for (DistributionDetails detail : newDetails) {
+            try {
+
+                log.debug("Attempting to create new distribution based off of: " + detail);
+                DistributionType distType = distManager.getDistributionTypeByName(detail.getDistributionType());
+                Distribution newDist = distManager.createDistribution(overlord, detail.getLabel(), detail
+                    .getDistributionPath(), distType);
+                log.debug("Created new distribution: " + newDist);
+                Repo repo = repoManager.getRepo(overlord, report.getRepoId());
+                RepoDistribution repoDist = new RepoDistribution(repo, newDist);
+                log.debug("Created new mapping of RepoDistribution repoId = " + repo.getId() + ", distId = "
+                    + newDist.getId());
+                entityManager.persist(repoDist);
+                List<DistributionFileDetails> files = detail.getFiles();
+                for (DistributionFileDetails f : files) {
+                    log.debug("Creating DistributionFile for: " + f);
+                    DistributionFile df = new DistributionFile(newDist, f.getRelativeFilename(), f.getMd5sum());
+                    df.setLastModified(f.getLastModified());
+                    entityManager.persist(df);
+                    entityManager.flush();
+                }
+            } catch (DistributionException e) {
+                progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
+                progress.append("Error is: " + e.getMessage());
+                syncResults.setResults(progress.toString());
+                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                log.error(e);
+            }
+        }
         return syncResults;
     }
 

@@ -130,9 +130,16 @@ import org.rhq.core.domain.resource.ProductVersion;
 
     // deletes orphaned package versions - that is, if they have no associated content sources or repos and is not installed anywhere
     @NamedQuery(name = PackageVersion.DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
-        + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id "
-        + "                       FROM PackageVersionContentSource pvcs) "
-        + "   AND pv.repoPackageVersions IS EMPTY " + "   AND pv.installedPackages IS EMPTY "
+        + " WHERE pv.id NOT IN (SELECT pvcs.packageVersion.id " //
+        + "                       FROM PackageVersionContentSource pvcs) " //
+        + "   AND pv.repoPackageVersions IS EMPTY " //
+        + "   AND pv.installedPackages IS EMPTY " //
+        + "   AND pv.installedPackageHistory IS EMPTY "),
+
+    @NamedQuery(name = PackageVersion.DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS, query = "DELETE PackageVersion pv "
+        + " WHERE pv.id = :packageVersionId" //
+        + "   AND pv.repoPackageVersions IS EMPTY " //
+        + "   AND pv.installedPackages IS EMPTY " //
         + "   AND pv.installedPackageHistory IS EMPTY "),
 
     // the bulk delete that removes the PVPV mapping from orphaned package versions
@@ -240,6 +247,7 @@ public class PackageVersion implements Serializable {
     public static final String QUERY_FIND_BY_ID_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findByIdIfNoContentSourcesOrRepos";
     public static final String QUERY_GET_PKG_BITS_LENGTH_BY_PKG_DETAILS_AND_RES_ID = "PackageVersion.getPkgBitsLengthByPkgDetailsAndResId";
     public static final String DELETE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteIfNoContentSourcesOrRepos";
+    public static final String DELETE_SINGLE_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deleteSingleIfNoContentSourcesOrRepos";
     public static final String DELETE_PVPV_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.deletePVPVIfNoContentSourcesOrRepos";
     public static final String FIND_EXTRA_PROPS_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedExtraProps";
     public static final String FIND_FILES_IF_NO_CONTENT_SOURCES_OR_REPOS = "PackageVersion.findOrphanedFiles";

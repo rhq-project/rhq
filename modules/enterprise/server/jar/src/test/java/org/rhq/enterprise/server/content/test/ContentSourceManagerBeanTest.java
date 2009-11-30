@@ -69,8 +69,8 @@ import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginServic
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Test
 public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
+
     private static final boolean TESTS_ENABLED = true;
 
     private ContentManagerLocal contentManager;
@@ -259,6 +259,11 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
 
+            // create a repo
+            Repo repo = new Repo("testRepo");
+            repo = repoManager.createRepo(overlord, repo);
+            repoId = repo.getId();
+
             // this report will add a mapping to PV->CS
             // we didn't set up any mappings like that yet - this will be the first one
             PackageSyncReport report = new PackageSyncReport();
@@ -279,7 +284,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             results = contentSourceManager.persistContentSourceSyncResults(results);
             assert results != null;
 
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
             // Verify the product version was created
@@ -305,14 +310,6 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
                 getTransactionManager().rollback();
                 em.close();
             }
-
-            // create a repo
-            pc = PageControl.getUnlimitedInstance();
-            int origRepoCount = repoManager.findRepos(overlord, pc).size();
-            Repo repo = new Repo("testMergeSyncReportRepo");
-            repo = repoManager.createRepo(overlord, repo);
-            assert (origRepoCount + 1) == repoManager.findRepos(overlord, pc).size();
-            repoId = repo.getId();
 
             // see that the resource sees no metadata yet - not subscribed yet
             pc = PageControl.getUnlimitedInstance();
@@ -355,7 +352,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             // confirm that we didn't load the bits yet
             pc = PageControl.getUnlimitedInstance();
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSource(overlord, contentSourceId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 
@@ -416,6 +413,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
         List<PackageVersionContentSource> inCS;
         PageControl pc = PageControl.getUnlimitedInstance();
         int contentSourceId = 0;
+        int repoId = 0;
 
         try {
             // create content source type and content source
@@ -429,6 +427,11 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
+
+            // create repo
+            Repo repo = new Repo("testRepo");
+            repo = repoManager.createRepo(overlord, repo);
+            repoId = repo.getId();
 
             // just make sure there are no package versions yet
             inCS = contentSourceManager.getPackageVersionsFromContentSource(overlord, contentSourceId, pc);
@@ -452,7 +455,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
             // see the package version has been assigned to the content source
@@ -462,7 +465,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // confirm that we didn't load the bits yet
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSource(overlord, contentSourceId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 
@@ -483,7 +486,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addUpdatedPackage(details);
 
             // UPDATE: merge the report!
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
             // see the package version is still assigned to the content source
@@ -492,7 +495,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert inCS.size() == 1 : inCS;
 
             // it should still be unloaded, make sure and check that it really was updated
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSource(overlord, contentSourceId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
             assert unloaded.get(0).getPackageVersionContentSourcePK().getPackageVersion().getFileSize() == 9999L;
@@ -504,7 +507,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addDeletePackage(details);
 
             // REMOVE: merge the report!
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
             // see the package version is gone
@@ -522,6 +525,9 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             throw e;
         } finally {
             try {
+                if (repoId != 0) {
+                    repoManager.deleteRepo(overlord, repoId);
+                }
                 if (contentSourceId != 0) {
                     contentSourceManager.deleteContentSource(overlord, contentSourceId);
                 }
@@ -550,8 +556,9 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             contentSourceId = contentSource.getId();
             assert contentSourceId > 0;
+
             Repo repo = new Repo("testMergeSyncReportAMU2Ch");
-            repoManager.createRepo(overlord, repo);
+            repo = repoManager.createRepo(overlord, repo);
             repoId = repo.getId();
             assert repoId > 0;
             repoManager.addContentSourcesToRepo(overlord, repoId, new int[] { contentSourceId });
@@ -576,15 +583,15 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // ADD: merge the report!
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
             List<PackageVersionContentSource> unloaded;
-            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSource(overlord, contentSourceId, pc);
+            unloaded = contentSourceManager.getUnloadedPackageVersionsFromContentSourceInRepo(overlord, contentSourceId, repoId, pc);
             assert unloaded != null;
             assert unloaded.size() == 1;
 
-            // check the count - since content source was in a repo, the repo gets the PV too
+            // check the count to make sure the pv was added to the repo
             assert 1 == contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
             assert 1 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
 
@@ -597,12 +604,14 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             report.addDeletePackage(details);
 
             // REMOVE: merge the report!
-            results = contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
             assert results != null;
 
-            // check the count - note the repo's PV remains intact!!
+            // check the count - since the pv does not have a provider nor an installed package,
+            // is it removed from the repo as well
             assert 0 == contentSourceManager.getPackageVersionCountFromContentSource(overlord, contentSourceId);
-            assert 1 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
+            long pvCountFromRepo = repoManager.getPackageVersionCountFromRepo(overlord, repoId);
+            assert 0 == pvCountFromRepo : "Expected: 0, Found: " + pvCountFromRepo;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
@@ -853,7 +862,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // create a repo and associate the new content source with it
             Repo repo = new Repo("testMergeWithRepo");
-            repoManager.createRepo(overlord, repo);
+            repo = repoManager.createRepo(overlord, repo);
             repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
 
             // this report will add a mapping to PV->CS
@@ -876,7 +885,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             results = contentSourceManager.persistContentSourceSyncResults(results);
             assert results != null;
 
-            contentSourceManager.mergePackageSyncReport(contentSource, report, previous, results);
+            contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
 
             List<PackageVersion> inRepo;
             inRepo = repoManager.findPackageVersionsInRepo(overlord, repo.getId(), PageControl.getUnlimitedInstance());

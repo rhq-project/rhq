@@ -297,8 +297,8 @@ public interface ContentSourceManagerLocal {
      * @return all unloaded package versions that the content source will be providing content for. The object returned
      *         also contains the location where those package versions are located in the content source
      */
-    PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
-        int contentSourceId, PageControl pc);
+    PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
+        int contentSourceId, int repoId, PageControl pc);
 
 
 
@@ -402,6 +402,7 @@ public interface ContentSourceManagerLocal {
      *         was done
      */
     ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource,
+        Repo repo,
         PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults);
@@ -420,25 +421,26 @@ public interface ContentSourceManagerLocal {
                                                          DistributionSyncReport report,
                                                          ContentSourceSyncResults syncResults);
 
-    void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
+    void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
+    ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource,
+        Repo repo, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        Collection<ContentProviderPackageDetails> newPackages,
+    ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource,
+        Repo repo, Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress, int addCount);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
+    ContentSourceSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
+    ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
         ContentSourceSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+    ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
         DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
 
     /**

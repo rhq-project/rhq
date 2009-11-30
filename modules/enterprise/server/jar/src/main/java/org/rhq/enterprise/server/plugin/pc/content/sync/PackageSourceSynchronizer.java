@@ -122,7 +122,7 @@ public class PackageSourceSynchronizer {
         // --------------------------------------------
         start = System.currentTimeMillis();
 
-        contentSourceManager.mergePackageSyncReport(source, report, keyPVCSMap, null);
+        contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, null);
 
         log.info("Synchronize Packages: [" + source.getName() +
             "]: merged sync report=(" +
@@ -161,7 +161,7 @@ public class PackageSourceSynchronizer {
 
         // TODO: jdob - Need to change this call to only load packages for this repo
         List<PackageVersionContentSource> packageVersionContentSources = contentSourceManager
-            .getUnloadedPackageVersionsFromContentSource(overlord, source.getId(), pc);
+            .getUnloadedPackageVersionsFromContentSourceInRepo(overlord, source.getId(), repo.getId(), pc);
         log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName() +
             "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms");
 

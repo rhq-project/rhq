@@ -687,7 +687,7 @@
                 &DefaultType;
                 &DirectoryIndex;
                 &ErrorDocuments;
-                &Options;
+                <!-- &Options;  Options are ignored in <Location> -->
                 &UseCanonicalName;
                 &UseCanonicalPhysicalPort;
             </resource-configuration>

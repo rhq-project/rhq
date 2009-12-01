@@ -100,4 +100,18 @@ public interface AlertManagerLocal {
      * @return The alert sender plugin manager
      */
     AlertSenderPluginManager getAlertPluginManager();
+
+    /**
+     * Create a human readable description of the conditions that led to this alert.
+     * @param alert Alert to create human readable condition description
+     * @return human readable condition log
+     */
+    String prettyPrintAlertConditions(Alert alert);
+
+    /**
+     * Tells us if the definition of the passed alert will be disabled after this alert was fired
+     * @param alert alert to check
+     * @return true if the definition got disabled
+     */
+    boolean willDefinitionBeDisabled(Alert alert);
 }

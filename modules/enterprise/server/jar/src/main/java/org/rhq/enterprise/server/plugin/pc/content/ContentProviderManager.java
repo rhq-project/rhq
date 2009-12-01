@@ -393,9 +393,8 @@ public class ContentProviderManager {
      *
      * @param pluginManager the plugin manager this object can use to obtain information from (like
      *                      classloaders)
-     * @throws InitializationException if any of the providers throw an error on startup
      */
-    protected void initialize(ContentServerPluginManager pluginManager) throws InitializationException {
+    protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
 
         ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();

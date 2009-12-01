@@ -107,7 +107,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLED)
     public void testSyncRepos() throws Exception {
         Repo repo = ContentTestHelper.getTestRepoWithContentSource();
 

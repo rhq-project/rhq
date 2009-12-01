@@ -55,11 +55,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3Test {
 
-    private static final String PLUGIN_NAME = "testPlugin";
-
     private static final String CUSTOM_IMPORTED_REPO_NAME = "customImportedRepo";
-    public static final String EXISTING_IMPORTED_REPO_NAME = TestContentProvider.EXISTING_IMPORTED_REPO_NAME;
-    public static final String EXISTING_CANDIDATE_REPO_NAME = TestContentProvider.EXISTING_CANDIDATE_REPO_NAME;
 
     private static final String PREVIOUS_CANDIDATE_REPO_NAME = "testPreviousCandidate";
 
@@ -189,7 +185,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         Subject overlord = subjectManager.getOverlord();
 
         // -> Add an already imported repo to the system so it already exists when the report introduces it
-        Repo existingImportedRepo = new Repo(EXISTING_IMPORTED_REPO_NAME);
+        Repo existingImportedRepo = new Repo(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
         existingImportedRepo.setCandidate(false);
         existingImportedRepo.addContentSource(syncSource);
         repoManager.createRepo(overlord, existingImportedRepo);
@@ -201,7 +197,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         repoManager.createRepo(overlord, customImportedRepo);
 
         // -> Simulate a candidate repo from a previous import that will be in this report as well
-        Repo existingCandidateRepo = new Repo(EXISTING_CANDIDATE_REPO_NAME);
+        Repo existingCandidateRepo = new Repo(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
         existingCandidateRepo.setCandidate(true);
         existingCandidateRepo.addContentSource(syncSource);
         repoManager.createCandidateRepo(overlord, existingCandidateRepo);
@@ -282,7 +278,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         assert childRepoRepoRelationship.size() == 1;
 
         // -> Repo that was already imported in the system (make sure there is still only one)
-        retrievedRepos = repoManager.getRepoByName(EXISTING_IMPORTED_REPO_NAME);
+        retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
 
@@ -292,7 +288,7 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         reposToDelete.add(retrievedRepos.get(0).getId());
 
         // -> Repo that was already a candidate in the system (make sure it's not added again)
-        retrievedRepos = repoManager.getRepoByName(EXISTING_CANDIDATE_REPO_NAME);
+        retrievedRepos = repoManager.getRepoByName(TestContentProvider.EXISTING_CANDIDATE_REPO_NAME);
         assert retrievedRepos.size() == 1;
         reposToDelete.add(retrievedRepos.get(0).getId());
 

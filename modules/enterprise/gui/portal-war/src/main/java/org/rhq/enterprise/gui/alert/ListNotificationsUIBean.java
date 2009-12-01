@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -34,11 +35,15 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -61,7 +66,7 @@ public class ListNotificationsUIBean {
     private Configuration alertProperties;
 
     @RequestParameter("ad")
-    private int alertDefinitionId;
+    private Integer alertDefinitionId;
 
     public ListNotificationsUIBean() {
     }
@@ -113,7 +118,24 @@ public class ListNotificationsUIBean {
     }
 
     public void setSelectedSender(String selectedSender) {
+        // If the user selects a different sender in the drop down, clean out the
+        // properties that may have been set
+        if (!selectedSender.equals(this.selectedSender)) {
+            alertProperties=null;
+            alertConfigurationDefinition = null;
+        }
         this.selectedSender = selectedSender;
+    }
+
+    public String getAlertDefinitionName() {
+        if (alertDefinitionId==null)
+            return "- unset - ";
+
+        AlertDefinitionManagerLocal mgr = LookupUtil.getAlertDefinitionManager();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        AlertDefinition def = mgr.getAlertDefinitionById(subject,alertDefinitionId);
+
+        return def.getName();
     }
 
     public String mySubmitForm() {
@@ -127,7 +149,25 @@ public class ListNotificationsUIBean {
     public Collection<AlertNotification> getExistingNotifications() {
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
+        if (alertDefinitionId==null)
+            return new ArrayList<AlertNotification>();
+
         List<AlertNotification> notifications = mgr.getNotificationsForAlertDefinition(subject,alertDefinitionId);
         return notifications;
+    }
+
+    public String removeSelectedNotifications() {
+        String[] stringItems = FacesContextUtility.getRequest().getParameterValues("selectedNotification");
+        if (stringItems == null || stringItems.length == 0) {
+            return OUTCOME_SUCCESS; // TODO leave message
+        }
+
+        Integer[] notificationIds = StringUtility.getIntegerArray(stringItems);
+
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        mgr.removeNotifications(subject,alertDefinitionId,notificationIds);
+
+        return OUTCOME_SUCCESS;
     }
 }

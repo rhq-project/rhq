@@ -989,7 +989,17 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
-        return null;
+
+        Configuration translatedConfig = translateResourceConfiguration(subject, resourceId, newConfiguration,
+            fromStructured);
+
+        ResourceConfigurationUpdate newUpdate =
+            configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, translatedConfig,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
+
+        executeResourceConfigurationUpdate(newUpdate, fromStructured);
+
+        return newUpdate;
     }
 
     @Nullable
@@ -1006,21 +1016,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,
             newConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
-        executeResourceConfigurationUpdate(newUpdate);
+        executeResourceConfigurationUpdate(newUpdate, true);
 
         return newUpdate;
     }
 
     public void executeResourceConfigurationUpdate(int updateId) {
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
-        executeResourceConfigurationUpdate(update);
+        executeResourceConfigurationUpdate(update, true);
     }
 
     /**
      * Tells the Agent to asynchonously update a managed resource's configuration as per the specified
      * <code>ResourceConfigurationUpdate</code>.
      */
-    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
+    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update, boolean fromStructured) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update

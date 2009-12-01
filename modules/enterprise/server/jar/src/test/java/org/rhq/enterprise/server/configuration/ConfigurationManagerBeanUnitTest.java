@@ -32,15 +32,19 @@ import org.rhq.test.jmock.PropertyMatcher;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
 import org.jmock.Expectations;
+import org.jmock.Sequence;
 import org.hamcrest.Matcher;
 
 import javax.persistence.EntityManager;
@@ -48,9 +52,14 @@ import java.lang.reflect.Field;
 
 public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
+    static final boolean FROM_STRUCTURED = true;
+    static final boolean FROM_RAW = false;
+
     ConfigurationManagerLocal configurationMgrLocal;
 
     AgentManagerLocal agentMgr;
+
+    AuthorizationManagerLocal authorizationMgr;
 
     EntityManager entityMgr;
 
@@ -65,6 +74,9 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
         agentMgr = context.mock(AgentManagerLocal.class);
         setField(configurationMgr, "agentManager", agentMgr);
+
+        authorizationMgr = context.mock(AuthorizationManagerLocal.class);
+        setField(configurationMgr, "authorizationManager", authorizationMgr);
 
         entityMgr = context.mock(EntityManager.class);
         setField(configurationMgr, "entityManager", entityMgr);
@@ -128,7 +140,112 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
             newConfig);
 
-        assertSame(actualUpdate, expectedUpdate, "");
+        assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
+    }
+
+    @Test
+    public void updateResourceConfigShouldTranslateStructuredWhenStructredConfigHasEdits() throws Exception {
+        final Subject subject = new Subject("rhqadmin", true, true);
+        final int resourceId = -1;
+        final Configuration newConfig = new Configuration();
+        final boolean isPartOfGroupUpdate = false;
+
+        final Configuration translatedConfig = newConfig.deepCopy();
+        translatedConfig.addRawConfiguration(new RawConfiguration());
+
+        final Resource resource = new Resource(resourceId);
+        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
+
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
+            subject.getName());
+        expectedUpdate.setId(-1);
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
+            expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
+
+        final Sequence configUdpate = context.sequence("structured-config-update");
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+
+            allowing(authorizationMgr).canViewResource(subject, resourceId); will(returnValue(true));
+
+            oneOf(configAgentService).merge(newConfig, resourceId, FROM_STRUCTURED);
+            will(returnValue(translatedConfig)); inSequence(configUdpate);
+
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId,
+                translatedConfig, INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            will(returnValue(expectedUpdate));
+            inSequence(configUdpate);
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
+            inSequence(configUdpate);
+        }});
+
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+            newConfig, FROM_STRUCTURED);
+
+        assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
+    }
+
+    @Test
+    public void updateResourceConfigShouldTranslateRawWhenRawConfigHasEdits() throws Exception {
+        final Subject subject = new Subject("rhqadmin", true, true);
+        final int resourceId = -1;
+        final Configuration newConfig = new Configuration();
+        newConfig.addRawConfiguration(new RawConfiguration());
+        final boolean isPartOfGroupUpdate = false;
+
+        final Configuration translatedConfig = newConfig.deepCopy();
+        translatedConfig.put(new PropertySimple("x", "y"));
+
+        final Resource resource = new Resource(resourceId);
+        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
+
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
+            subject.getName());
+        expectedUpdate.setId(-1);
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
+            expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
+
+        final Sequence configUdpate = context.sequence("raw-config-update");
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+
+            allowing(authorizationMgr).canViewResource(subject, resourceId); will(returnValue(true));
+
+            oneOf(configAgentService).merge(newConfig, resourceId, FROM_RAW);
+            will(returnValue(translatedConfig)); inSequence(configUdpate);
+
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId,
+                translatedConfig, INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            will(returnValue(expectedUpdate));
+            inSequence(configUdpate);
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
+            inSequence(configUdpate);
+        }});
+
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+            newConfig, FROM_RAW);
+
+        assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
     }
 
     @Test
@@ -154,10 +271,10 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
                 INPROGRESS, subject.getName(), isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
 
-            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); 
-            will(throwException(exception));
-
             oneOf(configurationMgrLocal).mergeConfigurationUpdate(expectedUpdate);
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent());
+            will(throwException(exception));
         }});
 
         ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,

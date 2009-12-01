@@ -70,7 +70,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
 
     private static final String PREVIOUS_CANDIDATE_REPO_NAME = "testPreviousCandidate";
 
-    TestContentServerPluginService pluginService;
+    private TestContentServerPluginService pluginService;
 
     // The following variables need to be cleaned up at the end of the test
 
@@ -219,23 +219,17 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject overlord = subjectManager.getOverlord();
 
-        Set<String> reposThatShouldBeSyncced = new HashSet();
-
         // -> Add an already imported repo to the system so it already exists when the report introduces it
         Repo existingImportedRepo = new Repo(EXISTING_IMPORTED_REPO_NAME);
         existingImportedRepo.setCandidate(false);
         existingImportedRepo.addContentSource(syncSource);
         repoManager.createRepo(overlord, existingImportedRepo);
 
-        reposThatShouldBeSyncced.add(EXISTING_IMPORTED_REPO_NAME);
-
         // -> Add an already imported repo that wasn't introduced from the report; a user created repo
         Repo customImportedRepo = new Repo(CUSTOM_IMPORTED_REPO_NAME);
         customImportedRepo.setCandidate(false);
         customImportedRepo.addContentSource(syncSource);
         repoManager.createRepo(overlord, customImportedRepo);
-
-        reposThatShouldBeSyncced.add(CUSTOM_IMPORTED_REPO_NAME);
 
         // -> Simulate a candidate repo from a previous import that will be in this report as well
         Repo existingCandidateRepo = new Repo(EXISTING_CANDIDATE_REPO_NAME);

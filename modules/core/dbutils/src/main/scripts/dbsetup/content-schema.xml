@@ -395,31 +395,18 @@
             </primaryKey>
         </constraint>
     </table>
-    
-    <table name="RHQ_ADVISORY_TYPE">
-        <column name="ID" default="sequence-only" initial="101" primarykey="true" required="true" type="INTEGER"/>
-        <column name="NAME" size="200" type="VARCHAR2" required="true"/>
-        <column name="DESCRIPTION" size="500" type="VARCHAR2" required="false"/>
-
-    </table>
-
-    <table name="RHQ_ADVISORY_SEVERITY" >
-        <column name="ID" default="sequence-only" initial="101" primarykey="true" required="true" type="INTEGER"/>
-        <column name="RANK" type="INTEGER" required="true"/>
-        <column name="LABEL" size="40" type="VARCHAR2" required="true"/>
-    </table>
 
     <table name="RHQ_ADVISORY">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ADVISORY" size="64" type="VARCHAR2" required="true"/>
-        <column name="ADVISORY_TYPE_ID" type="INTEGER"  required="true" references="RHQ_ADVISORY_TYPE"/>
-        <column name="ADVISORY_REL" size="64" type="VARCHAR2" required="true"/>
+        <column name="ADVISORY_TYPE" size="64" type="VARCHAR2"  required="true" />
+        <column name="ADVISORY_REL" size="64" type="VARCHAR2" required="false"/>
         <column name="ADVISORY_NAME" size="64" type="VARCHAR2" required="true"/>
         <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="true"/>
         <column name="SYNOPSIS" size="4000" type="VARCHAR2" required="true"/>
         <column name="TOPIC" size="4000" type="VARCHAR2" required="false"/>
         <column name="SOLUTION" size="4000" type="VARCHAR2" required="true"/> 
-        <column name="SEVERITY_ID" type="INTEGER"  required="false" references="RHQ_ADVISORY_SEVERITY"/>       
+        <column name="SEVERITY" size="64" type="VARCHAR2"  required="false"/>       
         <column name="ISSUE_DATE" type="LONG" required="true"/>
         <column name="UPDATE_DATE" type="LONG" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>

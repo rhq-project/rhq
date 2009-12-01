@@ -14,7 +14,7 @@ let rangle = Util.del_str ">"
 let modname = /[a-zA-Z0-9._]+/
 let alnum = /[a-zA-Z0-9]+/
 let word = /"([^"\n])*"|'([^'\n])*'|[^'" \t\n]+/
-let wordWithNestQuote = /"([^"\n]|(\"))*"|'([^'\n])*'|[^'" \t\n]+/
+let wordWithNestQuote = /"([^"\n]|(\\\\\"))*"|'([^'\n])*'|[^'" \t\n]+/
 
 (* A that does not end with ">" *)
 let secargBody = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^ \t\n]*[^ \t\n>]/
@@ -28,12 +28,19 @@ let kv1 (k:regexp) (v:regexp) =
   [ wskey k . sep . store v . eol ]
 
 let kv2 (k:regexp) (v:regexp) (l2:string) (v2:regexp) =
-  [ wskey k . sep . store v . [ sep . label "directory" . store word ] . eol ]
+  [ wskey k . sep . store v . [ sep . label l2 . store word ] . eol ]
 
+let kv2_op (k:regexp) (v:regexp) (l2:string) (v2:regexp) = 
+  [ wskey k . sep . store v . [ sep . label l2 . store word ]? . eol ]
+  
 (* A key followed by a space-separated list of values *)
 let kv_arr (k:regexp) (l:string) (v:regexp) =
   [ wskey k . [ sep . label l . store v ]* . eol ]
 
+(* A key followed by a non-empty space separated list of values *)
+let kv_arr1 (k:regexp) (l:string) (v:regexp) = 
+  [ wskey k . [ sep . label l . store v ]+ . eol ]
+  
 let kv_val_arr (k:regexp) (v:regexp) (l:string) (v2:regexp) =
   [ wskey k . sep . store v . [ sep . label l . store v2 ]+ . eol ]
 
@@ -56,21 +63,21 @@ let addAltByEncoding = kv_val_arr "AddAltByEncoding" word "mime" word
 let addAltByType = kv_val_arr "AddAltByType" word "mime" word  
 let addCharset = kv_val_arr "AddCharset" word "extension" word 
 let accessFileName = kv_arr "AccessFileName" "filename" word
-let acceptFilter = [wskey "AcceptFilter". [sep . label "protocol" . sep . store word] . [sep . label "acceptFilter". sep . store word]]
+let acceptFilter = [wskey "AcceptFilter" . [ sep . label "protocol" . store word] . [ sep . label "acceptFilter". store word]]
 let acceptPathInfo = kv1 "AcceptPathInfo" (on_off | "Default")
 let addDescription = kv_val_arr "AddDescription" word "file" word
 let addEncoding = kv_val_arr "AddEncoding" word "extension" word
 let serverAlias = kv_val_arr "ServerAlias" word "hostname" word
-let addType = [wskey "AddType" . [ sep . label "name" . del /[ \t]*/ " ". store word ]+]
-let authType = kv1 "AuthName" ("Basic"|"Digest")
-let action = [wskey "Action". [sep . label "action-type" . sep . store word] . 
-                              [sep . label "cgi-script". sep . store word].
-                              [sep . label "virtual". sep . store word]?]
-let addAlt = [wskey "AddAlt". [sep . label "string" . sep . store word] . 
-                              [sep . label "file". sep . store word]+]
-let filterProvider = [wskey "FilterProvider". [sep . label "filter" . sep . store word] . 
-                              [sep . label "provider". sep . store word].
-                              [sep . label "match". sep . store word]]
+let addType = kv_val_arr "AddType" word "name" word
+let authType = kv1 "AuthType" ("Basic"|"Digest")
+let action = [wskey "Action". [sep . label "action-type" . store word] . 
+                              [sep . label "cgi-script". store word].
+                              [sep . label "virtual". store word]?]
+let addAlt = [wskey "AddAlt". [sep . label "string" . store word] . 
+                              [sep . label "file". store word]+]
+let filterProvider = [wskey "FilterProvider". [sep . label "filter" . store word] . 
+                              [sep . label "provider". store word].
+                              [sep . label "match". store word]]
 let filterTrace = [wskey "FilterTrace" . sep . store word . [ sep . label "level" . store /0|1|2/ ]]
 let addIcon =
   [ wskey "AddIcon" . sep . icon . [ sep . label "name" . store word ]+ . eol ]
@@ -85,11 +92,11 @@ let allow = allow_deny "Allow"
 let allowOverride = 
   let directive_re = /All|None|Limit|Options|FileInfo|AuthConfig|Indexes/ in
   kv_arr "AllowOverride" "directive" directive_re
-let addHandler = [wskey "AddHandler" . [ sep . label "name" . del /[ \t]*/ " ". store word ]+]
+let addHandler = kv_arr1 "AddHandler" "name" word
 let addOutputFilter = kv_val_arr "AddOutputFilter" word "name" word 
 let addOutputFilterByType = kv_val_arr "AddOutputFilterByType" word "mime" word 
-let browserMatch = [wskey "BrowserMatch" . [ sep . label "name" . del /[ \t]*/ " ". store word ]+]
-let browserMatchNoCase = [wskey "BrowserMatchNoCase" . [ sep . label "name" . del /[ \t]*/ " ". store word ]+]
+let browserMatch = kv_arr1 "BrowserMatch" "name" word
+let browserMatchNoCase = kv_arr1 "BrowserMatchNoCase" "name" word
 let customLog = 
   [ wskey "CustomLog" . sep . store word .
       [ sep . label "format" . store word ] .
@@ -101,44 +108,43 @@ let limitExcept = kv_arr "LimitExcept" "nr" number
 let limitInternalRecursion = kv_arr "LimitInternalRecursion" "nr" number
 let nWSSLTrustedCerts =  kv_arr "NWSSLTrustedCerts" "file" word
 let nWSSLUpgradeable = kv_arr "NWSSLUpgradeable" "address" word
-let multiviewsMatch = [wskey "MultiviewsMatch". sep . store /Any|NegotiatedOnly|Filters|Handlers/ . 
-                              [sep . label "param". sep . store /Handlers|Filters/]*]
-let cGIMapExtension =  [ wskey "CGIMapExtension". sep .store word . [sep . label "extension" . sep . store word]]
-let errorDocument = [ wskey "ErrorDocument". sep .store word . [sep . label "document" . sep . store word]]
-let filterDeclare = [ wskey "FilterDeclare". sep .store word . [sep . label "type" . sep . store /RESOURCE|CONTENT_SET|PROTOCOL|TRANSCODE|CONNECTION|NETWORK/]?]
+let multiviewsMatch = kv_val_arr "MultiViewsMatch" /Any|NegotiatedOnly|Filters|Handlers/ "param" /Handlers|Filters/ 
+let cGIMapExtension =  kv2 "CGIMapExtension" word "extension" word
+let errorDocument = kv2 "ErrorDocument" word "document" word
+let filterDeclare = kv2_op "FilterDeclare" word "type" /RESOURCE|CONTENT_SET|PROTOCOL|TRANSCODE|CONNECTION|NETWORK/
 let filterProtocol = [ wskey "FilterProtocol". sep .store word . 
-                                 [sep . label "provider" . sep . store word]?. 
-                                 [sep . label "flags" . sep . store /change=yes|change=1:1|byteranges=no|proxy=no|proxy=transform|cache=no/]*]
-let redirect = [ sep . key "Redirect" . 
-      [ sep . label "status" . sep . store /permanent|temp|seeother|gone/ ]? .
-      [ sep . label "urlpath" . sep . store word].
-      [ sep . label "url" . sep . store word] .eol]
-let redirectPermanent = [ sep . key "RedirectPermanent" . 
-      [ sep . label "urlpath" . sep . store word ] .
-      [ sep . label "url" . sep . store word] .eol]
-let redirectTemp = [ sep . key "RedirectTemp" . 
-      [ sep . label "urlpath" . sep . store word ] .
-      [ sep . label "url" . sep . store word] .eol]
-let redirectMatch = [sep . key "RedirectMatch" . 
-      [ sep . label "status" . sep . store /permanent|temp|seeother|gone/ ]? .
-      [ sep . label "regex" . sep . store word].
-      [ sep . label "url" . sep . store word] .eol]
-let rLimitCPU = [sep . key "RLimitCPU" . 
-      [ sep . label "nr" . sep . store (number|"max") ] .
-      [ sep . label "nr" . sep . store (number|"max")]? .eol]
-let rLimitMEM = [sep . key "RLimitMEM" . 
-      [ sep . label "nr" . sep . store (number|"max") ] .
-      [ sep . label "nr" . sep . store (number|"max")]? .eol]
-let rLimitNPROC= [sep . key "RLimitNPROC" . 
-      [ sep . label "nr" . sep . store (number|"max") ] .
-      [ sep . label "nr" . sep . store (number|"max")]? .eol]
-let script = [sep . key "Script" . 
-      [ sep . label "method" . sep . store word ] .
-      [ sep . label "script" . sep . store word] .eol]
-let secureListen = [sep . key "SecureListen" . 
-      [ sep . label "address" . sep . store word ] .
-      [ sep . label "certName" . sep . store word] .
-      [ sep . label "mutual" . sep . store word] . eol]
+                                 [sep . label "provider" . store alnum]?. 
+                                 [sep . label "flags" . store /change=yes|change=1:1|byteranges=no|proxy=no|proxy=transform|cache=no/]* . eol ]
+let redirect = [ wskey "Redirect" . 
+      [ sep . label "status" . store /permanent|temp|seeother|gone/ ]? .
+      [ sep . label "urlpath" . store word].
+      [ sep . label "url" . store word] . eol ]
+let redirectPermanent = [ wskey "RedirectPermanent" . 
+      [ sep . label "urlpath" . store word ] .
+      [ sep . label "url" . store word] .eol ]
+let redirectTemp = [ wskey "RedirectTemp" . 
+      [ sep . label "urlpath" . store word ] .
+      [ sep . label "url" . store word] . eol ]
+let redirectMatch = [ wskey "RedirectMatch" . 
+      [ sep . label "status" . store /permanent|temp|seeother|gone/ ]? .
+      [ sep . label "regex" . store word].
+      [ sep . label "url" . store word] . eol ]
+let rLimitCPU = [ wskey "RLimitCPU" . 
+      [ sep . label "nr" . store (number|"max") ] .
+      [ sep . label "nr" . store (number|"max")]? . eol ]
+let rLimitMEM = [ wskey "RLimitMEM" . 
+      [ sep . label "nr" . store (number|"max") ] .
+      [ sep . label "nr" . store (number|"max")]? . eol ]
+let rLimitNPROC= [ wskey "RLimitNPROC" . 
+      [ sep . label "nr" . store (number|"max") ] .
+      [ sep . label "nr" . store (number|"max")]? . eol ]
+let script = [ wskey "Script" . 
+      [ sep . label "method" . store word ] .
+      [ sep . label "script" . store word] . eol ]
+let secureListen = [ wskey "SecureListen" . 
+      [ sep . label "address" . store word ] .
+      [ sep . label "certName" . store word] .
+      [ sep . label "mutual" . store word] . eol] 
 let deny = allow_deny "Deny"
 let directoryIndex = kv_arr "DirectoryIndex" "url" word
 let forceLanguagePriority =
@@ -156,9 +162,7 @@ let removeInputFilter = kv_arr "RemoveInputFilter" "extension" word
 let removeLanguage = kv_arr "RemoveLanguage" "extension" word
 let removeOutputFilter = kv_arr "RemoveOutputFilter" "extension" word
 let removeType = kv_arr "RemoveType" "extension" word
-let setEnv = [sep . key "SetEnv" . 
-      [ sep . label "var" . sep . store word ] .
-      [ sep . label "val" . sep . store word] .eol]
+let setEnv = kv2 "SetEnv" alnum "val" word
 let unsetEnv =  kv_arr "UnsetEnv" "env" word
 let require = kv_arr "Require" "entity" word
 let userDir= kv_arr "UserDir" "name" word
@@ -184,8 +188,8 @@ let options =
 let order = kv1 "Order" /Allow,Deny|Deny,Allow|Mutual-failure/
 let scriptAlias = kv2 "ScriptAlias" word "directory" word
 let scriptAliasMatch = [ sep .key "ScriptAliasMatch" . 
-      [ sep . label "regex" . sep . store word ] .
-      [ sep . label "path" . sep . store word]? .eol]
+      [ sep . label "regex" . store word ] .
+      [ sep . label "path" . store word]? . eol ]
 let serverSignature = kv1 "ServerSignature" (on_off | "EMail")
 let traceEnable =  kv1 "TraceEnable" (on_off |"extended")
 let useCanonicalName= kv1 "UseCanonicalName" (on_off |"DNS")
@@ -283,7 +287,6 @@ let dirWithNrParam = "Timeout"
                      | "ScriptLogLength"
                      | "TimeOut"
                      | "TransferLog"
-                     | "TypesConfig"
 
 let directiveWithOnOfParam = kv1 dirWithOnOfNm on_off
 let directiveWithWordParam = kv1 dirWithWordParam word
@@ -309,7 +312,6 @@ let directive = accessFileName
               | addIcon
               | addAlt
               | addIconByEncodingOrType
-              | addLanguage
               | addType
               | addHandler
               | addOutputFilter

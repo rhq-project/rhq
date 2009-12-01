@@ -75,3 +75,10 @@ test Httpd.addIconByEncodingOrType get
       { "icon" = "/icons/compressed.gif"  { "alttext"  = "CMP" } }
       { "encoding" = "x-compress" }
       { "encoding" = "x-gzip" } }
+      
+test Httpd.alias get
+    "Alias /image /ftp/pub/image\n"
+    =
+    {"Alias" = "/image"
+        {"directory" = "/ftp/pub/image" } }
+        

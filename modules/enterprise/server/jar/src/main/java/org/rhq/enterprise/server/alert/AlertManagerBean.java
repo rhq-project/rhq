@@ -771,6 +771,16 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return builder.toString();
     }
 
+    /**
+     * Create a human readable description of the conditions that led to this alert.
+     * @param alert Alert to create human readable condition description
+     * @return human readable condition log
+     */
+    public String prettyPrintAlertConditions(Alert alert) {
+        entityManager.refresh(alert);
+        return prettyPrintAlertConditions(alert.getConditionLogs());
+    }
+
     private String prettyPrintAlertConditions(Set<AlertConditionLog> conditionLogs) {
         StringBuilder builder = new StringBuilder();
 
@@ -953,6 +963,30 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
              */
         }
     }
+
+    /**
+     * Tells us if the definition of the passed alert will be disabled after this alert was fired
+     * @param alert alert to check
+     * @return true if the definition got disabled
+     */
+    public boolean willDefinitionBeDisabled(Alert alert) {
+        entityManager.refresh(alert);
+        AlertDefinition firedDefinition = alert.getAlertDefinition();
+        Subject overlord = subjectManager.getOverlord();
+        Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
+
+        if (recoveryDefinitionId != 0) {
+            AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
+                recoveryDefinitionId);
+            boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
+            if (!wasEnabled)
+                return false;
+        } else if (firedDefinition.getWillRecover()) {
+            return true;
+        }
+        return false; // Default is not to disable the definition
+    }
+
 
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {

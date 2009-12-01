@@ -26,12 +26,14 @@ import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.ContentProviderSyncJob;
+import org.rhq.enterprise.server.scheduler.jobs.RepoSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 
@@ -120,8 +122,31 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
         Date next = scheduler.scheduleJob(job, trigger);
 
-        getLog().info("Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() +
+        getLog().info("Scheduled content provider sync job [" + job.getName() + ':' + job.getGroup() +
             "] to fire now at [" + next + "] for [" + contentSource + "]");
+    }
+
+    /**
+     * Causes the given repo to be scheduled for an immediate sync. The sync will take place through the scheduler,
+     * causing this call to be asynchronous and return before the sync itself takes place.
+     *
+     * @param repo cannot be <code>null</code>
+     * @throws SchedulerException if the job cannot be scheduled
+     */
+    public void syncRepoNow(Repo repo) throws SchedulerException {
+        JobDetail job = new JobDetail(RepoSyncJob.createUniqueJobName(repo), SYNC_JOB_GROUP_NAME,
+            RepoSyncJob.class, false, false, false);
+
+        RepoSyncJob.createJobDataMap(job, repo);
+
+        SimpleTrigger trigger = new SimpleTrigger(job.getName(), job.getGroup());
+        trigger.setVolatility(false);
+
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        Date next = scheduler.scheduleJob(job, trigger);
+
+        getLog().info("Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() +
+            "] to fire now at [" + next + "] for [" + repo + "]");
     }
 
     /**

@@ -986,6 +986,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
     }
 
+    public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration, boolean fromStructured)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        return null;
+    }
+
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)

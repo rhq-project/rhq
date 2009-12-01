@@ -12,8 +12,7 @@
         >
 
     <serverplugin:help>
-        This alert sender plugin is used to send emails when alerts were triggered.
-        Notifications can go via voice calls or short messages etc.
+        This alert sender plugin is used to send voice calls or SMS when alerts were triggered.
     </serverplugin:help>
 
     <!-- startup & tear down listener, + scheduled jobs

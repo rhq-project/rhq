@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-microblog"
+        displayName="Alert:Microblog"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertMicroblog"
+        description="Alert sender plugin that sends alert notifications via Microblog serviecs (twitter, laconi.ca, ..)"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via Microblogging
+        services that use a Twitter-like API like laconi.ca / identi.ca or twitter itself
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+
+    <!-- Global preferences for all mircoblog alerts -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="microblogServerUrl" displayName="Microblog server URL" type="string"
+                           default="http://twitter.com/api"
+                description="Base URL of the Microblog server"/>
+        <c:simple-property name="user" displayName="User name" type="string" />
+        <c:simple-property name="password" displayName="Password" type="password"/>
+
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Microblog</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>MicroblogSender</plugin-class>
+
+</alert-plugin>

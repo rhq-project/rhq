@@ -35,9 +35,9 @@
 	<a4j:form id="editResourceConfigurationForm">
 			
 	<h:outputText value="#{messages.youareviewingraw}" />
-	<h:panelGroup rendered="#{rawConfigCollection.structuredSupported}">		
+	<h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredSupported}">		
 		<h:outputText value=" #{messages.switch2}" />
-    	<h:commandLink  action="#{rawConfigCollection.switchTostructured}">
+    	<h:commandLink  action="#{ExistingResourceConfigurationUIBean.switchTostructured}">
 			<s:conversationId />
 			<f:param name="id" value="#{ResourceUIBean.id}" />
 			<h:outputText value=" #{messages.structured}" />
@@ -53,23 +53,23 @@
 					
 					 <h:panelGroup
 						id="changedFiles" layout="vertical">
-						<ui:repeat value="#{rawConfigCollection.paths}" var="path">
+						<ui:repeat value="#{ExistingResourceConfigurationUIBean.paths}" var="path">
 							<div><h:outputText value="*"
-								rendered="#{rawConfigCollection.isModified(path) }" /> <h:commandLink
-								value="#{path}" action="#{rawConfigCollection.select(path)}"
-								rendered="#{path != rawConfigCollection.current.path}">
+								rendered="#{ExistingResourceConfigurationUIBean.isModified(path) }" /> <h:commandLink
+								value="#{path}" action="#{ExistingResourceConfigurationUIBean.select(path)}"
+								rendered="#{path != ExistingResourceConfigurationUIBean.current.path}">
 								<f:param name="currentPath" value="#{path}" />
 							</h:commandLink> <h:outputText value="#{path}"
-								rendered="#{path == rawConfigCollection.current.path}" /></div>
+								rendered="#{path == ExistingResourceConfigurationUIBean.current.path}" /></div>
 						</ui:repeat>
 					</h:panelGroup>
 					<div>______________________________________</div>
 					<div>* <h:outputText value="#{messages.uncommitted}" /></div>
 					<h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">							
-						<a4j:commandButton action="#{rawConfigCollection.commit}"
+						<a4j:commandButton action="#{ExistingResourceConfigurationUIBean.commit}"
 							value="#{messages.commit}" reRender="changedFiles" styleClass="buttonmed"/> 						
 						<a4j:commandButton
-							action="#{rawConfigCollection.discard}" value="#{messages.discard}"
+							action="#{ExistingResourceConfigurationUIBean.discard}" value="#{messages.discard}"
 							reRender="changedFiles" styleClass="buttonmed"/>
 					</h:panelGrid>
 				 	</td>
@@ -77,7 +77,7 @@
 					<div>
 					<h:outputText value="#{messages.currentfile}" />
 					: <h:outputText
-						value="#{rawConfigCollection.current.path}" styleClass="outhello" />
+						value="#{ExistingResourceConfigurationUIBean.current.path}" styleClass="outhello" />
 					</div>
 					<h:outputLink value="edit-raw-full.xhtml" action="navigateToFullScreen">
 						<img src="/images/viewfullscreen.png" />
@@ -96,7 +96,7 @@
 		            </s:link>	
 									
 					<div><h:inputTextarea cols="80" rows="40"
-						value="#{rawConfigCollection.currentContents}" /></div>
+						value="#{ExistingResourceConfigurationUIBean.currentContents}" /></div>
 					</td>
 				</tr>
 

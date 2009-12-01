@@ -19,12 +19,15 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.AutoCreate;
 import org.jboss.seam.annotations.Factory;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.web.RequestParameter;
+
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginDeploymentType;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -39,8 +42,10 @@ public class InstalledPluginComponent {
 
     @RequestParameter("plugin")
     private String name;
+    @RequestParameter("deployment")
+    private PluginDeploymentType deployment;
     @RequestParameter("pluginType")
-    private PluginDeploymentType type;
+    private String pluginType;
 
     public String getName() {
         return this.name;
@@ -50,21 +55,30 @@ public class InstalledPluginComponent {
         this.name = name;
     }
 
-    public PluginDeploymentType getType() {
-        return this.type;
+    public PluginDeploymentType getDeployment() {
+        return this.deployment;
     }
 
-    public void setType(PluginDeploymentType type) {
-        this.type = type;
+    public void setType(PluginDeploymentType deployment) {
+        this.deployment = deployment;
     }
 
-    @Factory(value="plugin", autoCreate=true, scope=ScopeType.PAGE)
-    public Plugin lookupPlugin() {
-        if (this.type == PluginDeploymentType.AGENT) {
+    public String getPluginType() {
+        return this.pluginType;
+    }
+
+    public void setPluginType(String pluginType) {
+        this.pluginType = pluginType;
+    }
+
+    @Factory(value = "plugin", autoCreate = true, scope = ScopeType.PAGE)
+    public AbstractPlugin lookupPlugin() {
+        if (this.deployment == PluginDeploymentType.AGENT) {
             return LookupUtil.getResourceMetadataManager().getPlugin(this.name);
-        } else if (this.type == PluginDeploymentType.SERVER) {
+        } else if (this.deployment == PluginDeploymentType.SERVER) {
+            PluginKey pluginKey = new PluginKey(this.deployment, this.pluginType, this.name);
             ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
-            Plugin plugin = serverPluginsBean.getServerPlugin(this.name);
+            ServerPlugin plugin = serverPluginsBean.getServerPlugin(pluginKey);
             return serverPluginsBean.getServerPluginRelationships(plugin);
         }
 

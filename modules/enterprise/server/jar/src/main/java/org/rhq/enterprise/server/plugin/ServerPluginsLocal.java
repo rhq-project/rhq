@@ -8,8 +8,9 @@ import javax.ejb.Local;
 import javax.persistence.NoResultException;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -25,15 +26,15 @@ public interface ServerPluginsLocal {
      * 
      * @return all plugins found in the DB
      */
-    List<Plugin> getServerPlugins();
+    List<ServerPlugin> getServerPlugins();
 
     /**
-     * Returns a plugin with the given name.
-     * @param name name of plugin to find
+     * Returns a plugin with the given key.
+     * @param key identifies the plugin to find
      * @return the named plugin
      * @throws NoResultException when no plugin with that name exists
      */
-    Plugin getServerPlugin(String name);
+    ServerPlugin getServerPlugin(PluginKey key);
 
     /**
      * Methods in this object that return plugins normally do not include
@@ -46,7 +47,7 @@ public interface ServerPluginsLocal {
      * @return the same plugin, with the relationship data loaded
      * @throws NoResultException when no plugin with that name exists
      */
-    Plugin getServerPluginRelationships(Plugin plugin);
+    ServerPlugin getServerPluginRelationships(ServerPlugin plugin);
 
     /**
      * Get a list of plugins from their IDs.
@@ -54,26 +55,26 @@ public interface ServerPluginsLocal {
      * @param pluginIds the IDs of the plugins to load.
      * @return plugins matching the given IDs
      */
-    List<Plugin> getServerPluginsById(List<Integer> pluginIds);
+    List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**
-     * Given a plugin name, returns the descriptor for that plugin.
+     * Given a plugin key, returns the descriptor for that plugin.
      * 
-     * @param pluginName
+     * @param pluginKey
      * @return descriptor parsed from the file in the plugin jar
      * @throws Exception if the descriptor could not be retrieved or parsed for the given plugin
      */
-    ServerPluginDescriptorType getServerPluginDescriptor(String pluginName) throws Exception;
+    ServerPluginDescriptorType getServerPluginDescriptor(PluginKey pluginKey) throws Exception;
 
     /**
-     * Returns a list of plugin names for only those server plugins whose
+     * Returns a list of plugin keys for only those server plugins whose
      * enabled flag is equal to the given parameter.
      * 
-     * @param enabled if <code>true</code>, return only the names of plugins that are enabled;
-     *                if <code>false</code>, return only the names of plugins that are disabled.
-     * @return list of plugin names that match the enabled criteria
+     * @param enabled if <code>true</code>, return only the keys of plugins that are enabled;
+     *                if <code>false</code>, return only the keys of plugins that are disabled.
+     * @return list of plugin keys that match the enabled criteria
      */
-    List<String> getServerPluginNamesByEnabled(boolean enabled);
+    List<PluginKey> getServerPluginKeysByEnabled(boolean enabled);
 
     /**
      * Enables the plugins and restarts the server plugin container.
@@ -89,20 +90,20 @@ public interface ServerPluginsLocal {
      *
      * @param subject user making the request
      * @param pluginIds the plugins to be disabled
-     * @return the list of names of the plugins that were disabled
+     * @return the list of keys of the plugins that were disabled
      * @throws Exception if failed to disable a plugin
      */
-    List<String> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<PluginKey> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Removes the plugin from the system and restarts the server plugin container.
      *
      * @param subject user making the request
      * @param pluginIds
-     * @return the list of names of plugins that were undeployed
+     * @return the list of keys of plugins that were undeployed
      * @throws Exception if failed to undeploy a plugin
      */
-    List<String> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
@@ -138,7 +139,7 @@ public interface ServerPluginsLocal {
      * @return the plugin after being persisted
      * @throws Exception if failed to fully register the plugin 
      */
-    Plugin registerServerPlugin(Subject subject, Plugin plugin, File pluginFile) throws Exception;
+    ServerPlugin registerServerPlugin(Subject subject, ServerPlugin plugin, File pluginFile) throws Exception;
 
     /**
      * Given a plugin that already exists, this will update that plugin's data in the database,
@@ -150,38 +151,38 @@ public interface ServerPluginsLocal {
      * @return the updated plugin
      * @throws Exception if the plugin did not already exist or an error occurred that caused the update to fail
      */
-    Plugin updateServerPluginExceptContent(Subject subject, Plugin plugin) throws Exception;
+    ServerPlugin updateServerPluginExceptContent(Subject subject, ServerPlugin plugin) throws Exception;
 
     /**
      * Purges the server plugin from the database. This ensures that, after this method returns,
      * the given plugin will be unknown. The plugin can be installed again later.
      * 
      * This has "requires new" semantics, so the results are committed immediately upon return.
-     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, Plugin, File)} - you'll
+     * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, ServerPlugin, File)} - you'll
      * probably want to use that instead. Do not blindly purge server plugins using this method unless you
      * know what you are doing.
      * 
      * @param subject user making the request
-     * @param pluginName the name of the server plugin to delete
+     * @param pluginKey the key of the server plugin to delete
      */
-    void purgeServerPlugin(Subject subject, String pluginName);
+    void purgeServerPlugin(Subject subject, PluginKey pluginKey);
 
     /**
-     * Given the name of a server plugin, this will return the status of that plugin.
+     * Given the key of a server plugin, this will return the status of that plugin.
      * Use this to determine if a plugin has been deleted or not.
      * 
-     * @param pluginName the name of the plugin whose status is to be returned.
+     * @param pluginKey the key of the plugin whose status is to be returned.
      * @return the status of the plugin, to indicate if the plugin has been deleted or is installed.
      *         <code>null</code> indicates an unknown plugin.
      */
-    PluginStatusType getServerPluginStatus(String pluginName);
+    PluginStatusType getServerPluginStatus(PluginKey pluginKey);
 
     /**
      * This will return a map containing all plugins currently known to the master plugin container.
      * This will return installed plugins that are both enabled and disabled.
      * Note that if the master plugin container is not running, an empty map is returned.
      * 
-     * @return names of all enabled and disabled plugins, keyed on their types 
+     * @return keys of all enabled and disabled plugins, keyed on their types 
      */
-    Map<ServerPluginType, List<String>> getAllPluginsGroupedByType();
+    Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType();
 }

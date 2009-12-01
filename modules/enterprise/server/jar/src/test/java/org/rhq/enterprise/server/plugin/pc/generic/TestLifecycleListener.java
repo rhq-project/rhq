@@ -18,8 +18,8 @@
  */
 package org.rhq.enterprise.server.plugin.pc.generic;
 
-import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 
 /**
  * A sample lifecycle listener for the sample generic plugin. This listener will be
@@ -82,7 +82,7 @@ public class TestLifecycleListener implements ServerPluginComponent {
         }
 
         StringBuilder str = new StringBuilder();
-        str.append("plugin-name=").append(this.context.getPluginEnvironment().getPluginName()).append(",");
+        str.append("plugin-key=").append(this.context.getPluginEnvironment().getPluginKey()).append(",");
         str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(",");
         str.append("data-dir=").append(this.context.getDataDirectory()).append(",");
         str.append("tmp-dir=").append(this.context.getTemporaryDirectory()); // do not append ,

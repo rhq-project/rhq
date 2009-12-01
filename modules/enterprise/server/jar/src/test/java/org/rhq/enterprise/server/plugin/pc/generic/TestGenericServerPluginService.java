@@ -97,7 +97,7 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         }
 
         @Override
-        protected List<PluginKey> getDisabledPluginNames() {
+        protected List<PluginKey> getDisabledPluginKeys() {
             // in the real world, the db is checked for enable flag, here we say all plugins are enabled
             return new ArrayList<PluginKey>();
         }

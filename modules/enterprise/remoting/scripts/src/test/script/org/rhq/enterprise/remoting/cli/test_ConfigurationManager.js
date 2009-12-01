@@ -26,7 +26,6 @@ rhq.login('rhqadmin', 'rhqadmin');
 skippedTests.push('testUpdateResourceGroupConfiguration');
 
 executeAllTests();
-//executeTests(['testGetAndUpdateRawConfiguration']);
 
 rhq.logout();
 
@@ -58,9 +57,7 @@ function testGetAndUpdateRawConfiguration() {
     var resourceName = 'Raw Server'
     var rawServer = findResourceByNameAndParentName(resourceName, 'localhost');
 
-    Assert.assertNotNull(rawServer, "Failed to find '" + resourceName + "'");
-
-    var latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
+    var latestUpdate = loadLatestRawConfigUpdate(resourceName, rawServer.id);
     var rawConfig = getRawConfig(resourceName, latestUpdate.configuration, 0);
 
     var contents = java.lang.String(rawConfig.contents);
@@ -72,7 +69,7 @@ function testGetAndUpdateRawConfiguration() {
 
     waitForResourceConfigUpdateToComplete(rawServer.id);
 
-    latestUpdate = loadLatestResourceConfigurationUpdate(resourceName, rawServer.id);
+    latestUpdate = loadLatestRawConfigUpdate(resourceName, rawServer.id);
     
     rawConfigs = java.util.LinkedList(latestUpdate.configuration.rawConfigurations);
     rawConfig = rawConfigs.get(0);
@@ -85,7 +82,29 @@ function testGetAndUpdateRawConfiguration() {
     );
 }
 
-function loadLatestResourceConfigurationUpdate(resourceName, resourceId) {
+function testGetAndUpdateStructuredConfiguration() {
+    var resourceName = 'Structured Server';
+    var structuredServer = findResourceByNameAndParentName(resourceName, 'localhost');
+
+    var latestUpdate = loadLatestStructuredConfigUpdate(resourceName, structuredServer.id);
+    var modifiedConfig = latestUpdate.configuration;
+
+    modifiedConfig.put(PropertySimple("foo", java.util.Date()));
+
+    var configUdpate = ConfigurationManager.updateResourceConfiguration(structuredServer.id, modifiedConfig);
+
+    waitForResourceConfigUpdateToComplete(structuredServer.id);
+
+    latestUpdate = loadLatestStructuredConfigUpdate(resourceName, structuredServer.id);
+
+    Assert.assertEquals(
+        latestUpdate.configuration,
+        modifiedConfig,
+        "Failed to update structured config for '" + resourceName + "'"
+    );    
+}
+
+function loadLatestRawConfigUpdate(resourceName, resourceId) {
     var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
 
     Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
@@ -93,6 +112,13 @@ function loadLatestResourceConfigurationUpdate(resourceName, resourceId) {
         latestUpdate.configuration.rawConfigurations.size() > 0,
         "Expected to find at least one raw config file for '" + "'"
     );
+
+    return latestUpdate;
+}
+
+function loadLatestStructuredConfigUpdate(resourceName, resourceId) {
+    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
+    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
 
     return latestUpdate;
 }
@@ -185,7 +211,11 @@ function findResourceByNameAndParentName(name, parentName) {
     criteria.addFilterParentResourceName(parentName);
     criteria.strict = true;
 
-    return ResourceManager.findResourcesByCriteria(criteria).get(0);
+    var resource = ResourceManager.findResourcesByCriteria(criteria).get(0);
+
+    Assert.assertNotNull(resource, "Failed to find '" + name + "'");
+
+    return resource;
 }
 
 function findBetaServices(parentName) {

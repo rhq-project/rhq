@@ -8,34 +8,37 @@ import org.rhq.core.domain.configuration.PropertySimple
 import org.rhq.core.domain.configuration.Configuration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rhq.core.domain.configuration.RawConfiguration
+import groovy.util.AntBuilder
 
 class StructuredServer implements ResourceComponent, ResourceConfigurationFacet {
 
-  File rawConfigDir
+  File configDir
 
-  File rawConfig1
+  File structuredConfigFile
+
+  def ant = new AntBuilder()
 
   void start(ResourceContext context) {
-    rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "structured-test-1.txt")
+    configDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
+    structuredConfigFile = new File(configDir, "structured-test-1.txt")
 
     createRawConfigDir()
     createConfigFile()
   }
 
   def createRawConfigDir() {
-    rawConfigDir.mkdirs()
+    configDir.mkdirs()
   }
 
   def createConfigFile() {
-    if (rawConfig1.exists()) {
+    if (structuredConfigFile.exists()) {
       return null
     }
 
     def properties = ["foo": "1", "bar": "2", "bam": "3"]
 
-    rawConfig1.createNewFile()
-    rawConfig1.withWriter { writer ->
+    structuredConfigFile.createNewFile()
+    structuredConfigFile.withWriter { writer ->
       properties.each { key, value -> writer.writeLine("${key}=${value}") }
     }
   }
@@ -48,7 +51,7 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   Configuration loadStructuredConfiguration() {
-    def propertiesConfig = new PropertiesConfiguration(rawConfig1)
+    def propertiesConfig = new PropertiesConfiguration(structuredConfigFile)
     def config = new Configuration()
 
     config.put(new PropertySimple("foo", propertiesConfig.getString("foo")))
@@ -70,6 +73,16 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   void persistStructuredConfiguration(Configuration configuration) {
+    ant.copy(file: structuredConfigFile.absolutePath, tofile: "${structuredConfigFile.absolutePath}.orig")
+    ant.delete(file: structuredConfigFile)
+
+    def file = new File(structuredConfigFile.path)
+    file.createNewFile()
+
+    def propertiesConfig = new PropertiesConfiguration(structuredConfigFile)
+
+    configuration.properties.each { propertiesConfig.setProperty(it.name, it.stringValue)  }
+    propertiesConfig.save(file) 
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {

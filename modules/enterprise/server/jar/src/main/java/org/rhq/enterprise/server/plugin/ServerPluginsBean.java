@@ -137,14 +137,46 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<PluginKey> enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return; // nothing to do
+            return new ArrayList<PluginKey>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
-        reloadPlugins(pluginIds, true);
-        return;
+
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+
+        List<PluginKey> enabledPlugins = new ArrayList<PluginKey>();
+
+        for (Integer pluginId : pluginIds) {
+            ServerPlugin enabledPlugin = null;
+            try {
+                enabledPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
+            } catch (Exception ignore) {
+            }
+            if (enabledPlugin != null) {
+                PluginKey pluginKey = new PluginKey(enabledPlugin);
+                enabledPlugins.add(pluginKey);
+                if (master != null) {
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+                    if (pc != null) {
+                        try {
+                            pc.schedulePluginJobs(pluginKey);
+                        } catch (Exception e) {
+                            log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
+                        }
+                        try {
+                            pc.reloadPlugin(pluginKey, true);
+                        } catch (Exception e) {
+                            log.warn("Failed to enable server plugin [" + pluginKey + "]", e);
+                        }
+                    }
+                }
+            }
+        }
+
+        return enabledPlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -177,12 +209,15 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                         } catch (Exception e) {
                             log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
                         }
+                        try {
+                            pc.reloadPlugin(pluginKey, false);
+                        } catch (Exception e) {
+                            log.warn("Failed to disable server plugin [" + pluginKey + "]", e);
+                        }
                     }
                 }
             }
         }
-
-        reloadPlugins(pluginIds, false);
 
         return doomedPlugins;
     }
@@ -476,66 +511,6 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return;
-    }
-
-    /**
-     * Given a list of plugin IDs, this will reload those plugins with the given
-     * enabled flag. This does nothing if the master plugin container is not started.
-     * If <code>enabled</code> is <code>true</code>, the plugins will be restarted;
-     * if <code>false</code>, the plugins will be stopped if they are already started.
-     * 
-     * @param pluginIds the IDs of the plugins to restart
-     * @param enabled whether or not to start or stop the plugins
-     */
-    private void reloadPlugins(List<Integer> pluginIds, boolean enabled) throws Exception {
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
-        if (master != null) {
-            Map<AbstractTypeServerPluginContainer, List<PluginKey>> pcs;
-            pcs = getPluginContainersForPluginIds(master, pluginIds);
-            for (Map.Entry<AbstractTypeServerPluginContainer, List<PluginKey>> entry : pcs.entrySet()) {
-                AbstractTypeServerPluginContainer pc = entry.getKey();
-                List<PluginKey> pluginKeys = entry.getValue();
-                for (PluginKey pluginKey : pluginKeys) {
-                    pc.reloadPlugin(pluginKey, enabled);
-                }
-            }
-        }
-        return;
-    }
-
-    /**
-     * Given a list IDs of server plugins, this will return all plugin containers that manage those plugins.
-     * 
-     * @param master the master plugin container
-     * @param pluginIds the IDs of plugins whose plugin containers are to be returned
-     * 
-     * @return the plugin containers that manage the plugins with the given IDs
-     */
-    private Map<AbstractTypeServerPluginContainer, List<PluginKey>> getPluginContainersForPluginIds(
-        MasterServerPluginContainer master, List<Integer> pluginIds) {
-
-        Map<AbstractTypeServerPluginContainer, List<PluginKey>> pcs;
-        pcs = new HashMap<AbstractTypeServerPluginContainer, List<PluginKey>>();
-
-        AbstractTypeServerPluginContainer pc;
-
-        List<PluginKey> keys = getPluginKeysFromIds(pluginIds);
-        for (PluginKey key : keys) {
-            try {
-                pc = master.getPluginContainerByPluginType(new ServerPluginType(key.getPluginType()));
-                List<PluginKey> list = pcs.get(pc);
-                if (list == null) {
-                    list = new ArrayList<PluginKey>();
-                    pcs.put(pc, list);
-                }
-                list.add(key);
-            } catch (Exception e) {
-                log.warn("Cannot determine what PC manages plugin [" + key + "]", e);
-            }
-        }
-
-        return pcs;
     }
 
     private List<PluginKey> getPluginKeysFromIds(List<Integer> pluginIds) {

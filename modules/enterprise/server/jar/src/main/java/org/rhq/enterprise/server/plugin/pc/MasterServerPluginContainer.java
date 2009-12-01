@@ -218,7 +218,7 @@ public class MasterServerPluginContainer {
 
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             try {
-                pc.schedulePluginJobs();
+                pc.scheduleAllPluginJobs();
             } catch (Exception e) {
                 log.error("Server plugin container for plugin type [" + pc.getSupportedServerPluginType()
                     + "] failed to scheduled some or all of its jobs", e);

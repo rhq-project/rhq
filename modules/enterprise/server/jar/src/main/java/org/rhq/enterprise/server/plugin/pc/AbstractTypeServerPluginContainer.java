@@ -210,30 +210,47 @@ public abstract class AbstractTypeServerPluginContainer {
      * 
      * @throws Exception if failed to schedule jobs
      */
-    public synchronized void schedulePluginJobs() throws Exception {
+    public synchronized void scheduleAllPluginJobs() throws Exception {
         if (this.pluginManager != null) {
-            // process all known plugins and schedule their jobs
-            List<ScheduledJobDefinition> jobs;
             for (ServerPluginEnvironment pluginEnv : this.pluginManager.getPluginEnvironments()) {
-                String pluginName = pluginEnv.getPluginKey().getPluginName();
-
-                try {
-                    jobs = this.pluginManager.getServerPluginContext(pluginEnv).getSchedules();
-                    if (jobs != null) {
-                        for (ScheduledJobDefinition job : jobs) {
-                            try {
-                                scheduleJob(job, pluginEnv.getPluginKey());
-                            } catch (Throwable t) {
-                                log.warn("Failed to schedule job [" + job + "] for plugin [" + pluginName + "]", t);
-                            }
-                        }
-                    }
-                } catch (Throwable t) {
-                    log.warn("Failed to get scheduled jobs for plugin [" + pluginName + "]", t);
-                }
+                schedulePluginJobs(pluginEnv.getPluginKey());
             }
         } else {
             throw new Exception("Cannot schedule plugins jobs; plugin container is not initialized yet");
+        }
+
+        return;
+    }
+
+    public synchronized void schedulePluginJobs(PluginKey pluginKey) throws Exception {
+        if (this.pluginManager != null) {
+            try {
+                String pluginName = pluginKey.getPluginName();
+                if (this.pluginManager.isPluginEnabled(pluginName)) {
+                    ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
+                    if (pluginEnv != null) {
+                        ServerPluginContext serverPluginContext = this.pluginManager.getServerPluginContext(pluginEnv);
+                        List<ScheduledJobDefinition> jobs = serverPluginContext.getSchedules();
+                        if (jobs != null) {
+                            for (ScheduledJobDefinition job : jobs) {
+                                try {
+                                    scheduleJob(job, pluginKey);
+                                } catch (Throwable t) {
+                                    log.warn("Failed to schedule job [" + job + "] for server plugin [" + pluginKey
+                                        + "]", t);
+                                }
+                            }
+                        }
+                    } else {
+                        log.warn("Failed to get server plugin env for [" + pluginKey + "]; cannot schedule jobs");
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("Failed to get scheduled jobs for server plugin [" + pluginKey + "]", t);
+            }
+        } else {
+            throw new Exception("Cannot schedule plugins jobs for server plugin [" + pluginKey
+                + "]; plugin container is not initialized yet");
         }
 
         return;

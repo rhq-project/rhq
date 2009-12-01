@@ -93,6 +93,38 @@ public class ServerPluginManager {
     }
 
     /**
+     * Returns the plugin container that whose plugins are managed by this manager.
+     * 
+     * @return the plugin container that owns this plugin manager
+     */
+    public AbstractTypeServerPluginContainer getParentPluginContainer() {
+        return this.parentPluginContainer;
+    }
+
+    /**
+     * Returns the {@link ServerPluginEnvironment}s for every plugin this manager has loaded.
+     * The returned collection is a copy and not backed by this manager.
+     *
+     * @return environments for all the plugins
+     */
+    public Collection<ServerPluginEnvironment> getPluginEnvironments() {
+        return new ArrayList<ServerPluginEnvironment>(this.loadedPlugins.values());
+    }
+
+    /**
+     * Given a plugin name, this returns that plugin's environment.
+     * 
+     * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
+     * (e.g. &ltserver-plugin name="thePluginName").</p>
+     *
+     * @param pluginName the plugin whose environment is to be returned
+     * @return given plugin's environment
+     */
+    public ServerPluginEnvironment getPluginEnvironment(String pluginName) {
+        return this.loadedPlugins.get(pluginName);
+    }
+
+    /**
      * Initializes the plugin manager to prepare it to start loading plugins.
      * 
      * @throws Exception if failed to initialize
@@ -177,7 +209,7 @@ public class ServerPluginManager {
     }
 
     protected void startPlugin(String pluginName) {
-        if (Boolean.TRUE.equals(this.enabledPlugins.get(pluginName))) {
+        if (isPluginEnabled(pluginName)) {
             ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
             if (component != null) {
                 ServerPluginEnvironment env = this.loadedPlugins.get(pluginName);
@@ -312,27 +344,8 @@ public class ServerPluginManager {
         return;
     }
 
-    /**
-     * Returns the {@link ServerPluginEnvironment}s for every plugin this manager has loaded.
-     * The returned collection is a copy and not backed by this manager.
-     *
-     * @return environments for all the plugins
-     */
-    public Collection<ServerPluginEnvironment> getPluginEnvironments() {
-        return new ArrayList<ServerPluginEnvironment>(this.loadedPlugins.values());
-    }
-
-    /**
-     * Given a plugin name, this returns that plugin's environment.
-     * 
-     * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
-     * (e.g. &ltserver-plugin name="thePluginName").</p>
-     *
-     * @param pluginName the plugin whose environment is to be returned
-     * @return given plugin's environment
-     */
-    public ServerPluginEnvironment getPluginEnvironment(String pluginName) {
-        return this.loadedPlugins.get(pluginName);
+    protected boolean isPluginEnabled(String pluginName) {
+        return Boolean.TRUE.equals(this.enabledPlugins.get(pluginName));
     }
 
     /**
@@ -347,10 +360,6 @@ public class ServerPluginManager {
      */
     protected ServerPluginComponent getServerPluginComponent(String pluginName) {
         return this.pluginComponentCache.get(pluginName);
-    }
-
-    public AbstractTypeServerPluginContainer getParentPluginContainer() {
-        return this.parentPluginContainer;
     }
 
     protected Log getLog() {

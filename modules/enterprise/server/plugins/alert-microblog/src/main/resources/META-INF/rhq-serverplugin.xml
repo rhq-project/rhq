@@ -24,8 +24,8 @@
     <!-- Global preferences for all mircoblog alerts -->
     <serverplugin:plugin-configuration>
         <c:simple-property name="microblogServerUrl" displayName="Microblog server URL" type="string"
-                           default="http://twitter.com/api"
-                description="Base URL of the Microblog server"/>
+                           default="http://twitter.com/"
+                description="Base URL of the Microblog server (twitter.com for twitter, http://identi.ca/api for Status.net)"/>
         <c:simple-property name="user" displayName="User name" type="string" />
         <c:simple-property name="password" displayName="Password" type="password"/>
 

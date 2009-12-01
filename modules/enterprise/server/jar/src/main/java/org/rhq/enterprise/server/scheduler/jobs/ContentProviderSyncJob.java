@@ -134,8 +134,6 @@ public class ContentProviderSyncJob implements StatefulJob {
 
         int contentSourceId = contentSource.getId();
 
-        // Pulls the metadata down from the remote repository - this creates PackageVersions
-        // and associates them with the content source.
         // If 'completed' is false, there was already a synchronization taking place,
         // so we should abort and let that already running sync take care of everything.
         boolean completed = contentManager.internalSynchronizeContentSource(contentSourceId);
@@ -153,11 +151,11 @@ public class ContentProviderSyncJob implements StatefulJob {
      * If the given details is not <code>null</code>, this will place the
      * created data map in the details for you. Otherwise, you must ensure
      * the returned data map gets associated with the job when it is created.
-     * 
+     *
      * @param contentSource the content source whose sync job's details is being prepared
      * @param details where the job's data map will be stored (may be <code>null</code>)
      *
-     * @return the data map with the data necessary to execute a content sync job 
+     * @return the data map with the data necessary to execute a content sync job
      */
     public static JobDataMap createJobDataMap(ContentSource contentSource, JobDetail details) {
         JobDataMap dataMap;
@@ -177,9 +175,9 @@ public class ContentProviderSyncJob implements StatefulJob {
     /**
      * Creates the name for the scheduled content source's sync job. Calling this
      * method multiple times with the same content source always produces the same name.
-     *  
+     *
      * @param cs the content source whose scheduled job name is to be returned
-     * 
+     *
      * @return the scheduled job name for the given content source
      */
     public static String createJobName(ContentSource cs) {
@@ -203,9 +201,9 @@ public class ContentProviderSyncJob implements StatefulJob {
      * method multiple times with the same content source always produces a different name
      * which is useful if you want to schedule an new job that is separate and distinct
      * from any other job in the system.
-     *  
+     *
      * @param cs the content source
-     * 
+     *
      * @return a unique job name that can be used for a new job to sync a given content source
      */
     public static String createUniqueJobName(ContentSource cs) {

@@ -23,7 +23,6 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +36,6 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
@@ -46,8 +43,6 @@ import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.RepoRepoGroup;
 import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.criteria.RepoCriteria;
-import org.rhq.core.domain.resource.ResourceCategory;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -60,8 +55,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3Test {
 
-    private static final String PACKAGE_TYPE_NAME = "testPackageType";
-    private static final String RESOURCE_TYPE_NAME = "testResourceType";
     private static final String PLUGIN_NAME = "testPlugin";
 
     private static final String CUSTOM_IMPORTED_REPO_NAME = "customImportedRepo";
@@ -81,12 +74,8 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
 
     private Repo nonCandidateOnOtherSource; // Should NOT appear in the sync packages call since its a different source
 
-    private PackageType testPackageType;
-
-    private ResourceType testResourceType;
     private List<Integer> reposToDelete = new ArrayList<Integer>();
     private List<Integer> repoGroupsToDelete = new ArrayList<Integer>();
-    private List<Integer> packagesToDelete = new ArrayList<Integer>();
     private Integer repoId;
     private Integer relatedRepoId;
 
@@ -129,13 +118,6 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         nonCandidateOnOtherSource.addContentSource(nonSyncSource);
         repoManager.createRepo(overlord, nonCandidateOnOtherSource);
 
-        // Create a sample package type that will be used for packages sync'd in the test
-        testResourceType = new ResourceType(RESOURCE_TYPE_NAME, PLUGIN_NAME, ResourceCategory.PLATFORM, null);
-        entityManager.persist(testResourceType);
-
-        testPackageType = new PackageType(PACKAGE_TYPE_NAME, testResourceType);
-        entityManager.persist(testPackageType);
-
         tx.commit();
     }
 
@@ -174,14 +156,6 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
             "contentSourceId", syncSource.getId()).executeUpdate();
 
-        // Delete any packages created in this test
-        for (Integer packageId : packagesToDelete) {
-            PackageVersion deleteMe = entityManager.find(PackageVersion.class, packageId);
-            entityManager.remove(deleteMe);
-        }
-        packagesToDelete.clear();
-        entityManager.flush();
-
         // Delete the existing repos
         nonCandidateOnOtherSource = entityManager.find(Repo.class, nonCandidateOnOtherSource.getId());
         entityManager.remove(nonCandidateOnOtherSource);
@@ -192,14 +166,6 @@ public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3T
 
         nonSyncSource = entityManager.find(ContentSource.class, nonSyncSource.getId());
         entityManager.remove(nonSyncSource);
-
-        // Delete the fake package type
-        testPackageType = entityManager.find(PackageType.class, testPackageType.getId());
-        entityManager.remove(testPackageType);
-
-        // Delete the fake resource type
-        testResourceType = entityManager.find(ResourceType.class, testResourceType.getId());
-        entityManager.remove(testResourceType);
 
         // Delete the fake source type
         testSourceType = entityManager.find(ContentSourceType.class, testSourceType.getId());

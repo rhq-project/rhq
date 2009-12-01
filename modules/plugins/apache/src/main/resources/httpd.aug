@@ -1,5 +1,5 @@
 module Httpd =
-
+    autoload xfm
 (* FIXME: up to line 737 in httpd.conf *)
 
 (* FIXME: Most of the comparisons in Apache are case insensitive       *)
@@ -18,7 +18,8 @@ let wordWithNestQuote = /"([^"\n]|(\\\\\"))*"|'([^'\n])*'|[^'" \t\n]+/
 
 (* A that does not end with ">" *)
 let secargBody = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^ \t\n]*[^ \t\n>]/
-let secarg = (secargBody.(" ".secargBody)?)
+(* let secarg = (secargBody.(" ".secargBody)?) *)
+let secarg = secargBody
 
 (* A key preceded by optional whitespace *)
 let wskey (k:regexp) = del /[ \t]*/ "" . key k
@@ -59,11 +60,12 @@ let comment = [ del /([ \t]*(#.*)*)\n/ "#\n" ]
 
 
 (* Directives with their arguments *)
+
 let addAltByEncoding = kv_val_arr "AddAltByEncoding" word "mime" word 
 let addAltByType = kv_val_arr "AddAltByType" word "mime" word  
 let addCharset = kv_val_arr "AddCharset" word "extension" word 
 let accessFileName = kv_arr "AccessFileName" "filename" word
-let acceptFilter = [wskey "AcceptFilter" . [ sep . label "protocol" . store word] . [ sep . label "acceptFilter". store word]]
+let acceptFilter = [wskey "AcceptFilter" . [ sep . label "protocol" . store word] . [ sep . label "acceptFilter". store word] . eol ]
 let acceptPathInfo = kv1 "AcceptPathInfo" (on_off | "Default")
 let addDescription = kv_val_arr "AddDescription" word "file" word
 let addEncoding = kv_val_arr "AddEncoding" word "extension" word
@@ -72,13 +74,13 @@ let addType = kv_val_arr "AddType" word "name" word
 let authType = kv1 "AuthType" ("Basic"|"Digest")
 let action = [wskey "Action". [sep . label "action-type" . store word] . 
                               [sep . label "cgi-script". store word].
-                              [sep . label "virtual". store word]?]
+                              [sep . label "virtual". store /virtual/]? . eol ]
 let addAlt = [wskey "AddAlt". [sep . label "string" . store word] . 
-                              [sep . label "file". store word]+]
+                              [sep . label "file". store word]+ . eol ]
 let filterProvider = [wskey "FilterProvider". [sep . label "filter" . store word] . 
                               [sep . label "provider". store word].
-                              [sep . label "match". store word]]
-let filterTrace = [wskey "FilterTrace" . sep . store word . [ sep . label "level" . store /0|1|2/ ]]
+                              [sep . label "match". store word] . eol ]
+let filterTrace = [wskey "FilterTrace" . sep . store word . [ sep . label "level" . store /0|1|2/ ] . eol ]
 let addIcon =
   [ wskey "AddIcon" . sep . icon . [ sep . label "name" . store word ]+ . eol ]
 let addInputFilter = kv_val_arr "AddInputFilter" word "extension" word 
@@ -86,7 +88,9 @@ let addIconByEncodingOrType =
   [ wskey /AddIconBy(Encoding|Type)/ . sep .
       icon . [ sep . label "encoding" . store word ]+ . eol ]
 let addLanguage = kv_val_arr "AddLanguage" word "extension" word
+
 let alias = kv2 "Alias" word "directory" word
+
 let aliasMatch = kv_val_arr "AliasMatch" word "file" word
 let allow = allow_deny "Allow"
 let allowOverride = 
@@ -292,7 +296,7 @@ let directiveWithOnOfParam = kv1 dirWithOnOfNm on_off
 let directiveWithWordParam = kv1 dirWithWordParam word
 let directiveWithNrParam = kv1 dirWithNrParam number
 
-let directive = accessFileName
+let directive =  accessFileName
               | addInputFilter
               | addCharset
               | cGIMapExtension
@@ -315,7 +319,7 @@ let directive = accessFileName
               | addType
               | addHandler
               | addOutputFilter
-              | alias
+              | alias 
               | allow
               | allowOverride
               | browserMatch
@@ -376,24 +380,33 @@ let directive = accessFileName
               | unsetEnv
               | useCanonicalName
               | userDir
-              | xBitHack
+              | xBitHack 
 
 (* Containers *)
 
 (* A section with one argument in the <Section ..> tag *)
 let sec1 (name:string) (body:lens) =
-  [ langle . key name . sep . store secarg. rangle . eol .
+  [ langle . key name . sep . store secarg . rangle . eol .
       body .
       Util.del_str ("</" . name . ">") . eol
   ]
 
+let secN (name:string) (args:lens) (body:lens) = 
+    [ langle . key name . sep . args . rangle . eol . 
+        body . 
+        Util.del_str("</" . name . ">") . eol ]
+
 let ifModule (body:lens) = sec1 "IfModule" body
-let directory (body:lens) = sec1 "Directory" body
+let directory (body:lens) = secN "Directory" ([ label "Directory_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let directoryMatch (body:lens) = sec1 "DirectoryMatch" body
 let virtualHost (body:lens) = sec1 "VirtualHost" body
-let files (body:lens) = sec1 "Files" body
+let files (body:lens) = secN "Files" ([label "Files_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let filesMatch (body:lens) = sec1 "FilesMatch" body
+let location (body:lens) = secN "Location" ([label "Location_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let locationMatch (body:lens) = sec1 "LocationMatch" body
 
-let directoryContainer(body:lens) = ifModule body | directory body | virtualHost body | files body
-
+let anySection(body:lens) = ifModule body | directory body | directoryMatch body | 
+    virtualHost body | files body | filesMatch body | location body | locationMatch body
 
 (* What we want ot say is *)
 (* let rec body = (directive|comment)* | ifModule body | directory body | ... *)
@@ -402,6 +415,11 @@ let directoryContainer(body:lens) = ifModule body | directory body | virtualHost
 (* FIXME: *)
 (* - Nesting of sections *)
 (* - comments inside sections *)
-let any_tree = [ key /[^\/]*/ ]
 let prim = (directive | comment)
-let lns = (prim | directoryContainer prim*)*
+let lns = (prim | anySection prim*)*
+
+let filter =
+    incl "/etc/httpd/conf/httpd.conf" .
+    Util.stdexcl
+
+let xfm = transform lns filter

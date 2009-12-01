@@ -61,15 +61,22 @@
 
                  <h:outputLabel styleClass="BlockLabel" value="Path:"/>
                  <h:outputText value="#{plugin.path}"/>
-
               </h:panelGrid>
 
+             <br />
+             <h:outputLink value="/rhq/admin/plugin/plugin-config.xhtml" rendered="#{plugin.deployment eq 'SERVER'}">
+                <f:param name="pluginName" value="#{plugin.name}"/>
+                <h:outputText value="Configure '#{plugin.displayName}'"/>
+             </h:outputLink>
+             <br />
+             <br />
+             
               <rich:panel>
                  <f:facet name="header">
                     <h:outputText value="Plugin Help"/>
                  </f:facet>
 
-                 <h:outputText escape="false"  value="&lt;pre&gt; #{plugin.help} &lt;/pre&gt;"/>
+                 <h:outputText escape="false" value="&lt;pre&gt; #{plugin.help} &lt;/pre&gt;"/>
 
               </rich:panel>
            </rich:panel>

@@ -54,15 +54,46 @@
          placement="after" />
    </menuItem>
    <menuItem
-      name="help"
-      displayName="Help">
+      name="debug"
+      displayName="Debug"
+      isDebug="true">
       <position
          extensionPoint="coreMenu"
          name="administration"
          placement="after" />
    </menuItem>
-
-
+   <menuItem
+      name="help"
+      displayName="Help">
+      <position
+         extensionPoint="coreMenu"
+         name="debug"
+         placement="after" />
+   </menuItem>
+<!-- 
+   <menuItem
+      name="refresh"
+      displayName=""
+      iconUrl="/images/refreshStopped.gif"
+      feature="refreshMenu">
+      <position
+         extensionPoint="coreMenu"
+         name="help"
+         placement="after"
+         location="right" />
+   </menuItem>
+   <menuItem
+      name="loggedInAs"
+      displayName="Logged in as "
+      feature="loggedInAsMenu">
+      <position
+         extensionPoint="coreMenu"
+         name="refresh"
+         placement="after"
+         location="right" />
+   </menuItem>
+ -->
+ 
    <!--  Core Menu: Overview -->
    <menuItem
       name="overview.subsystemViews"
@@ -151,7 +182,7 @@
          extensionPoint="coreMenu"
          name="resources.recentlyViewedResources"
          placement="after"
-         break="true" />
+         addBreak="true" />
    </menuItem>
 
    <!--  Core Menu: Groups -->
@@ -193,7 +224,7 @@
          extensionPoint="coreMenu"
          name="groups.groupDefinitions"
          placement="after"
-         break="true" />
+         addBreak="true" />
    </menuItem>
    <menuItem
       name="groups.newGroupDefinition"
@@ -213,7 +244,7 @@
          extensionPoint="coreMenu"
          name="groups.newGroupDefinition"
          placement="after"
-         break="true" />
+         addBreak="true" />
    </menuItem>
    <menuItem
       name="groups.recentlyViewedGroups"
@@ -234,7 +265,7 @@
          extensionPoint="coreMenu"
          name="groups.recentlyViewedGroups"
          placement="after"
-         break="true" />
+         addBreak="true" />
    </menuItem>
 
    <!--  Core Menu: Administration -->
@@ -248,7 +279,7 @@
    </menuItem>
    <menuItem
       name="administration.systemConfiguration"
-      displayName="systemConfiguration">
+      displayName="System Configuration">
       <position
          extensionPoint="coreMenu"
          name="administration.security"
@@ -298,11 +329,73 @@
          placement="after" />
    </menuItem>
 
+   <!--  Core Menu: Debug -->
+   <menuItem
+      name="debug.sqlInterface"
+      displayName="SQL Interface"
+      isDebug="true"
+      url="/admin/test/sql.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="debug.jpqlHqlInterface"
+      displayName="JPQL/HQL Interface"
+      isDebug="true"
+      url="/admin/test/hibernate.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug.sqlInterface"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="debug.hibernateEntityBrowser"
+      displayName="Hibernate Entity Browser"
+      isDebug="true"
+      url="/admin/test/browser.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug.jpqlHqlInterface"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="debug.administrativeConsole"
+      displayName="Administrative Console"
+      isDebug="true"
+      url="/admin/test/control.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug.hibernateEntityBrowser"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="debug.testEmailConfiguration"
+      displayName="Test Email Configuration"
+      isDebug="true"
+      url="/admin/test/email.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug.administrativeConsole"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="debug.testAgentCommunications"
+      displayName="Test Agent Configurations"
+      isDebug="true"
+      url="/admin/test/agent.jsp">
+      <position
+         extensionPoint="coreMenu"
+         name="debug.testEmailConfiguration"
+         placement="after" />
+   </menuItem>
+
    <!--  Core Menu: Help -->
    <menuItem
       name="help.onlineDocumentation"
       displayName="Online Documentation"
-      feature="newWindow"
+      newWindow="true"
       url="http://www.redhat.com/docs/en-US/JBoss_ON/">
       <position
          extensionPoint="coreMenu"
@@ -312,7 +405,7 @@
    <menuItem
       name="help.openASupportCase"
       displayName="Open a Support Case"
-      feature="newWindow"
+      newWindow="true"
       url="https://support.redhat.com/jbossnetwork/restricted/addCase.html">
       <position
          extensionPoint="coreMenu"
@@ -328,7 +421,7 @@
          extensionPoint="coreMenu"
          name="help.openASupportCase"
          placement="after"
-         break="true" />
+         addBreak="true" />
    </menuItem>
 
    <!--  Core Menu: Overview.Subsystem Views -->
@@ -344,7 +437,7 @@
    </menuItem>
    <menuItem
       name="overview.subsystemViews.suspectMetrics"
-      displayName="suspectMetrics"
+      displayName="Suspect Metrics"
       iconUrl="/images/icons/Monitor_failed_16.png"
       url="/rhq/subsystem/oobHistory.xhtml">
       <position

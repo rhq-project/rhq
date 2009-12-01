@@ -18,7 +18,8 @@
       schemaLocation="rhq-serverplugin.xsd" />
 
    <xs:annotation>
-      <xs:documentation>Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.</xs:documentation>
+      <xs:documentation>Schema for a Perspective Descriptor. Perspective are deployed as Server Plugins.
+      </xs:documentation>
       <xs:appinfo>
          <jaxb:schemaBindings>
             <jaxb:package
@@ -34,7 +35,8 @@
       <xs:annotation>
          <xs:documentation>Defines a Perspective plugin. A Perspective is deployed as a Server Plugin. The Server Plugin
             Container (SPC) handles simple lifecycle management for the deployed plugins (e.g. start, stop). The plugin
-            is otherwise standalone and can do everything it needs to do without additional help from the SPC.</xs:documentation>
+            is otherwise standalone and can do everything it needs to do without additional help from the SPC.
+         </xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectivePluginElement" />
@@ -110,7 +112,8 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Limit task to the designated task pane extension points. Otherwise, all.</xs:documentation>
+               <xs:documentation>Limit task to the designated task pane extension points. Otherwise, all.
+               </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -129,7 +132,8 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Activate the extension only if the user has the required global permissions.</xs:documentation>
+               <xs:documentation>Activate the extension only if the user has the required global permissions.
+               </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
@@ -174,7 +178,8 @@
          type="xs:anyURI"
          use="required">
          <xs:annotation>
-            <xs:documentation>The request URL for the task extension. Typically kicks off a wizard or similar workflow.</xs:documentation>
+            <xs:documentation>The request URL for the task extension. Typically kicks off a wizard or similar workflow.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -202,7 +207,8 @@
       name="menuItem"
       type="perspective:MenuItemType">
       <xs:annotation>
-         <xs:documentation>Add, Replace or Remove a menuItem extension for an existing menu extension point.</xs:documentation>
+         <xs:documentation>Add, Replace or Remove a menuItem extension for an existing menu extension point.
+         </xs:documentation>
          <xs:appinfo>
             <jaxb:class
                name="PerspectiveMenuItemElement" />
@@ -236,7 +242,8 @@
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Activate the extension only if the user has the required global permissions.</xs:documentation>
+               <xs:documentation>Activate the extension only if the user has the required global permissions.
+               </xs:documentation>
             </xs:annotation>
          </xs:element>
       </xs:sequence>
@@ -264,7 +271,8 @@
          type="perspective:DisplayNameType"
          use="optional">
          <xs:annotation>
-            <xs:documentation>The display name for the menuItem extension. If omitted an icon is required.</xs:documentation>
+            <xs:documentation>The display name for the menuItem extension. If omitted an icon is required.
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -272,7 +280,27 @@
          type="perspective:MenuItemFeatureType"
          use="optional">
          <xs:annotation>
-            <xs:documentation>Certain menuItem extensions utilize special built-in rendering features.</xs:documentation>
+            <xs:documentation>Certain menuItem extensions utilize special built-in rendering features.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="newWindow"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>If true the url should be directed to a new window. Otherwise the content should be
+               presented in the current page body.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="isDebug"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>If true render this menuItem in debug mode only.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -559,7 +587,15 @@
          use="required">
       </xs:attribute>
       <xs:attribute
-         name="break"
+         name="location"
+         type="perspective:LocationType"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>Default is left.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="addBreak"
          type="xs:boolean"
          use="optional"
          default="false">
@@ -635,6 +671,26 @@
    </xs:simpleType>
 
    <xs:simpleType
+      name="LocationType">
+      <xs:annotation>
+         <xs:documentation>Suggests a screen location for an extension.</xs:documentation>
+      </xs:annotation>
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="bottom"></xs:enumeration>
+         <xs:enumeration
+            value="center"></xs:enumeration>
+         <xs:enumeration
+            value="left"></xs:enumeration>
+         <xs:enumeration
+            value="right"></xs:enumeration>
+         <xs:enumeration
+            value="top"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
+
+   <xs:simpleType
       name="MenuItemFeatureType">
       <xs:restriction
          base="xs:string">
@@ -650,10 +706,6 @@
             value="resourceFavorites"></xs:enumeration>
          <xs:enumeration
             value="resourceRecentlyViewed"></xs:enumeration>
-         <xs:enumeration
-            value="resourceSearch"></xs:enumeration>
-         <xs:enumeration
-            value="newWindow"></xs:enumeration>
          <xs:enumeration
             value="resourceSearch"></xs:enumeration>
       </xs:restriction>
@@ -704,6 +756,9 @@
 
    <xs:simpleType
       name="PlacementType">
+      <xs:annotation>
+         <xs:documentation>Describes the relative placement of an extension to another extension.</xs:documentation>
+      </xs:annotation>
       <xs:restriction
          base="xs:string">
          <xs:enumeration

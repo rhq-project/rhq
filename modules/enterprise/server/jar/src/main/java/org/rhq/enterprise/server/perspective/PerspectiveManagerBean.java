@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.server.perspective;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -38,6 +40,13 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
 
+    // Map of sessionId to cached menu entry.  The cached menu is re-used for the same sessionId.
+    // This should more appropriately use Subject as the key but since Subject equality is
+    // based on username it's not quite appropriate.
+    // The cache is cleaned anytime there is a new entry.
+    static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
+    private List<MenuItem> coreMenu;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -48,23 +57,51 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
      */
     @Override
-    public List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
-        List<MenuItem> coreMenu = null;
+    public synchronized List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
+        Integer sessionId = subject.getSessionId();
+        CacheEntry cacheEntry = cache.get(sessionId);
 
-        try {
-            coreMenu = PerspectiveManagerHelper.getPluginMetadataManager().getCoreMenu();
-        } catch (Exception e) {
-            throw new PerspectiveException("Failed to get Core Menu.", e);
+        if (null == cacheEntry) {
+            // take this opportunity to clean the cache
+            cleanCache();
+
+            cacheEntry = new CacheEntry();
+            cache.put(sessionId, cacheEntry);
+        }
+
+        List<MenuItem> coreMenu = cacheEntry.getCoreMenu();
+
+        if (null == coreMenu) {
+            try {
+                coreMenu = PerspectiveManagerHelper.getPluginMetadataManager().getCoreMenu();
+
+                // TODO : make safe copy
+                cacheEntry.setCoreMenu(coreMenu);
+            } catch (Exception e) {
+                throw new PerspectiveException("Failed to get Core Menu.", e);
+            }
         }
 
         // TODO: Apply Activators here
 
-        // TODO: Cache session:menu map here
-
-        // TODO: remove this debug code
-        printMenu(coreMenu, "");
-
         return coreMenu;
+    }
+
+    private void cleanCache() {
+        Subject subject;
+
+        for (Integer sessionId : cache.keySet()) {
+            try {
+                subject = subjectManager.getSessionSubject(sessionId);
+                if (null == subject) {
+                    log.debug("Removing perspective cache entry for session " + sessionId);
+                    cache.remove(sessionId);
+                }
+            } catch (Exception e) {
+                log.debug("Removing perspective cache entry for session " + sessionId);
+                cache.remove(sessionId);
+            }
+        }
     }
 
     // TODO: remove this debug code
@@ -76,6 +113,27 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         for (MenuItem menuItem : menu) {
             System.out.println(indent + menuItem.getItem().getName());
             printMenu(menuItem.getChildren(), indent + "..");
+        }
+    }
+
+    private static class CacheEntry {
+        private List<MenuItem> coreMenu = null;
+
+        public CacheEntry() {
+        }
+
+        /**
+         * @return the coreMenu
+         */
+        public List<MenuItem> getCoreMenu() {
+            return coreMenu;
+        }
+
+        /**
+         * @param coreMenu the coreMenu to set
+         */
+        public void setCoreMenu(List<MenuItem> coreMenu) {
+            this.coreMenu = coreMenu;
         }
     }
 

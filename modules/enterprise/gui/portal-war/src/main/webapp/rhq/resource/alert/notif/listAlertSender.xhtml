@@ -42,58 +42,61 @@
         <h:outputText>Existing notifications for Resource '#{ResourceUIBean.name}' and alert definition '#{ListNotificationsUIBean.alertDefinitionName}':</h:outputText>
         <br/>
         <h:form id="notificationListForm">
-        <rich:dataTable id="alertNotificationDataTable"
-                        value="#{ListNotificationsUIBean.existingNotifications}"
-                        var="notif"
-                        width="100%"
-                        columnWidth="5% 10% 85%"
-                        headerClass="tableRowHeader"
-                        footerClass="on-pager-footer"
-                        onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
-                        onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
-            <rich:column>
-               <f:facet name="header">
-                  <onc:allSelect target="selectedNotification"/>
-               </f:facet>
+            <input type="hidden" name="id" value="${param.id}"/>
+            <input type="hidden" name="ad" value="${param.ad}"/>
 
-               <onc:select name="selectedNotification" value="#{notif.id}"/>
-            </rich:column>
+            <rich:dataTable id="alertNotificationDataTable"
+                            value="#{ListNotificationsUIBean.existingNotifications}"
+                            var="notif"
+                            width="100%"
+                            columnWidth="5% 10% 85%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:allSelect target="selectedNotification"/>
+                   </f:facet>
 
-            <rich:column>
-                <f:facet name="header">
-                    <h:outputText styleClass="headerText" value="ID"/>
+                   <onc:select name="selectedNotification" value="#{notif.id}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="ID"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.id}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Sender"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.senderName}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Configuration"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.configuration.toString(true)}"/>
+                </rich:column>
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                      <rich:column colspan="5" width="100%">
+                         <onc:selectCommandButton action="#{ListNotificationsUIBean.removeSelectedNotifications}"
+                                                  target="selectedNotification"
+                                                  value="Remove selected"
+                                                  styleClass="on-pager-button buttonsmall"/>
+                        </rich:column>
+                    </rich:columnGroup>
                 </f:facet>
 
-                <h:outputText value="#{notif.id}"/>
-            </rich:column>
-
-            <rich:column>
-                <f:facet name="header">
-                    <h:outputText styleClass="headerText" value="Sender"/>
-                </f:facet>
-
-                <h:outputText value="#{notif.senderName}"/>
-            </rich:column>
-
-            <rich:column>
-                <f:facet name="header">
-                    <h:outputText styleClass="headerText" value="Configuration"/>
-                </f:facet>
-
-                <h:outputText value="#{notif.configuration.toString(true)}"/>
-            </rich:column>
-            <f:facet name="footer">
-                <rich:columnGroup>
-                  <rich:column colspan="5" width="100%">
-                     <onc:selectCommandButton action="#{ListNotificationsUIBean.removeSelectedNotifications}"
-                                              target="selectedNotification"
-                                              value="Remove selected"
-                                              styleClass="on-pager-button buttonsmall"/>
-                    </rich:column>
-                </rich:columnGroup>
-            </f:facet>
-
-        </rich:dataTable>
+            </rich:dataTable>
         </h:form>
         <p/>
 
@@ -128,7 +131,7 @@
             </rich:panel>
         </h:form>
 
-        <h:outputLink value="rhq/resource/alert/listAlertDefinitions.xhtml">
+        <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
             <f:param name="id" value="#{param.id}"/>
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>

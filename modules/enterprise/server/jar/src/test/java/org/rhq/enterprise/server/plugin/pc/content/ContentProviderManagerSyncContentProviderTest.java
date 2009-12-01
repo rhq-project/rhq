@@ -58,7 +58,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Jason Dobies
  */
-public class ContentProviderManagerTest extends AbstractEJB3Test {
+public class ContentProviderManagerSyncContentProviderTest extends AbstractEJB3Test {
 
     private static final String PACKAGE_TYPE_NAME = "testPackageType";
     private static final String RESOURCE_TYPE_NAME = "testResourceType";
@@ -162,11 +162,13 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
         for (Integer repoId : reposToDelete) {
             repoManager.deleteRepo(overlord, repoId);
         }
+        reposToDelete.clear();
 
         // Delete any repo groups that were created in this test
         for (Integer repoGroupId : repoGroupsToDelete) {
             repoManager.deleteRepoGroup(overlord, repoGroupId);
         }
+        repoGroupsToDelete.clear();
 
         // First disassociate packages from the content source
         entityManager.createNamedQuery(PackageVersionContentSource.DELETE_BY_CONTENT_SOURCE_ID).setParameter(
@@ -177,6 +179,7 @@ public class ContentProviderManagerTest extends AbstractEJB3Test {
             PackageVersion deleteMe = entityManager.find(PackageVersion.class, packageId);
             entityManager.remove(deleteMe);
         }
+        packagesToDelete.clear();
         entityManager.flush();
 
         // Delete the existing repos

@@ -90,6 +90,13 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <!-- /rhq/content/importRepos.xhtml -->
+   <managed-bean>
+      <managed-bean-name>RepoImportUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RepoImportUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/content/createContentProvider.xhtml -->
    <managed-bean>
       <managed-bean-name>CreateContentSourceUIBean</managed-bean-name>
@@ -114,8 +121,8 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
-      <managed-bean-name>ContentSourcePackageVersionsUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean</managed-bean-class>
+      <managed-bean-name>ContentSourceCandidateReposUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ContentSourceCandidateReposUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
@@ -140,6 +147,11 @@
    <managed-bean>
       <managed-bean-name>RepoResourcesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.RepoResourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>RepoDistributionUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RepoDistributionUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    

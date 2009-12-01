@@ -60,6 +60,7 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         if (this.masterPluginContainer == null) {
             log.debug("The server plugin service is now starting the master server plugin container");
             this.masterPluginContainer = createMasterPluginContainer();
+            this.masterPluginContainer.scheduleAllPluginJobs();
         }
 
         return;
@@ -88,6 +89,21 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     public synchronized void restartMasterPluginContainer() {
         stopMasterPluginContainer();
         startMasterPluginContainer();
+    }
+
+    public synchronized void startMasterPluginContainerWithoutSchedulingJobs() {
+        if (!this.started) {
+            throw new IllegalStateException(
+                "The server plugin service is not started - cannot start the master plugin container!");
+        }
+
+        // only initialize if not already started; if already started/initialized, just ignore
+        if (this.masterPluginContainer == null) {
+            log.debug("The server plugin service is now starting the master server plugin container!");
+            this.masterPluginContainer = createMasterPluginContainer();
+        }
+
+        return;
     }
 
     public MasterServerPluginContainer getMasterPluginContainer() {

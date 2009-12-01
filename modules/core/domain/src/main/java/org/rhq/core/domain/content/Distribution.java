@@ -22,20 +22,23 @@
  */
 package org.rhq.core.domain.content;
 
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
+import java.io.Serializable;
 
-import javax.persistence.Entity;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import java.io.Serializable;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
+import org.hibernate.annotations.NamedQueries;
+import org.hibernate.annotations.NamedQuery;
 
 /**
  *
@@ -43,23 +46,22 @@ import java.io.Serializable;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Distribution.QUERY_FIND_ALL,
-            query = "SELECT dt FROM Distribution dt"),
+    @NamedQuery(name = Distribution.QUERY_FIND_ALL, query = "SELECT dt FROM Distribution dt"),
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
         + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
-    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_LABEL,
-            query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.label = :label"),
-    @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_PATH,
-            query = "SELECT dt.base_path FROM Distribution AS dt WHERE dt.base_path = :path")})
+    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_LABEL, query = "SELECT dt FROM Distribution dt WHERE dt.label = :label"),
+    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.base_path = :path"),
+    @NamedQuery(name = Distribution.QUERY_DELETE_BY_DIST_ID, query = "DELETE Distribution dt WHERE dt.id = :distid") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
 public class Distribution implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
     public static final String QUERY_FIND_ALL = "Distribution.findAll";
-    public static final String QUERY_FIND_PATH_BY_DIST_LABEL =  "Distribution.findPathByDistLabel";
-    public static final String QUERY_FIND_PATH_BY_DIST_PATH =  "Distribution.findPathByDistPath";
-    public static final String QUERY_FIND_PATH_BY_DIST_TYPE  =  "Distribution.findPathByDistType";
+    public static final String QUERY_FIND_BY_DIST_LABEL = "Distribution.findByDistLabel";
+    public static final String QUERY_FIND_BY_DIST_PATH = "Distribution.findByDistPath";
+    public static final String QUERY_FIND_PATH_BY_DIST_TYPE = "Distribution.findPathByDistType";
+    public static final String QUERY_DELETE_BY_DIST_ID = "Distribution.deleteByDistId";
 
     // Attributes  --------------------------------------------
 
@@ -69,7 +71,7 @@ public class Distribution implements Serializable {
     private int id;
 
     @JoinColumn(name = "DISTRIBUTION_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     private DistributionType distributionType;
 
     /**
@@ -77,20 +79,22 @@ public class Distribution implements Serializable {
      */
     @Column(name = "LABEL", nullable = false)
     private String label;
-    
+
     /**
      * Base path where the kickstart tree is located
      */
     @Column(name = "BASE_PATH", nullable = false)
     private String base_path;
 
+    @Column(name = "LAST_MODIFIED", nullable = false)
+    private long lastModifiedDate;
 
     // Constructor ----------------------------------------
 
     public Distribution() {
     }
 
-    public Distribution(String label, String basepathIn, DistributionType distributionType ) {
+    public Distribution(String label, String basepathIn, DistributionType distributionType) {
         setLabel(label);
         setBasePath(basepathIn);
         setDistributionType(distributionType);
@@ -112,6 +116,14 @@ public class Distribution implements Serializable {
         this.base_path = basepathIn;
     }
 
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
     /**
      * Describes the capabilities of this distribution.
      */
@@ -123,15 +135,24 @@ public class Distribution implements Serializable {
         this.distributionType = distributionType;
     }
 
+    public void setLastModifiedDate(long lastModifiedDate) {
+        this.lastModifiedDate = lastModifiedDate;
+    }
+
+    public long getLastModifiedDate() {
+        return lastModifiedDate;
+    }
+
     // Object Overridden Methods  --------------------------------------------
 
     @Override
     public String toString() {
-        return String.format("Distribtuion [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
+        return String.format("Distribution [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
     }
 
     @Override
     public boolean equals(Object o) {
+
         if (this == o) {
             return true;
         }
@@ -146,18 +167,29 @@ public class Distribution implements Serializable {
 
         Distribution kstree = (Distribution) o;
 
-        if ((label != null) ? (!label.equals(kstree.label)) : (kstree.label != null)) {
+        if ((getLabel() != null) ? (!getLabel().equals(kstree.getLabel())) : (kstree.getLabel() != null)) {
             return false;
         }
 
         return true;
     }
 
+    @PrePersist
+    void onPersist() {
+        this.setLastModifiedDate(System.currentTimeMillis());
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.setLastModifiedDate(System.currentTimeMillis());
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = (prime * result) + ((label == null) ? 0 : label.hashCode());
+        result = (prime * result) + ((getLabel() == null) ? 0 : getLabel().hashCode());
         return result;
     }
+
 }

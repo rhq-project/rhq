@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugin.pc.generic;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -31,13 +32,12 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.plugin.pc.PeriodicSchedule;
-import org.rhq.enterprise.server.plugin.pc.Schedule;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericPluginManager;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener.LifecycleState;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 @Test
 public class GenericServerPluginTest extends AbstractEJB3Test {
@@ -65,24 +65,21 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
         TestGenericServerPluginContainer pc = this.pluginService.genericPC;
         assert pc.state == State.STARTED;
         TestGenericPluginManager pm = (TestGenericPluginManager) pc.getPluginManager();
-        TestLifecycleListener listener = (TestLifecycleListener) pm.listeners.values().iterator().next();
-        assert listener.state == LifecycleState.STARTED;
+        TestLifecycleListener component = (TestLifecycleListener) pm.components.values().iterator().next();
+        assert component.state == LifecycleState.STARTED;
 
         // make sure the context is correct
-        Configuration config = listener.context.getPluginConfiguration();
+        Configuration config = component.context.getPluginConfiguration();
         assert config != null;
         assert config.getSimple("plugin-simple-prop-1") != null;
 
-        Schedule schedule = listener.context.getSchedule();
-        assert schedule != null;
-        assert schedule.isConcurrent() == false;
-        assert schedule instanceof PeriodicSchedule;
-        assert ((PeriodicSchedule) schedule).getPeriod() == 60000L;
+        List<ScheduledJobDefinition> schedules = component.context.getSchedules();
+        assert schedules == null;
 
         // make sure everything is shutdown
         this.pluginService.stopMasterPluginContainer();
         assert pc.state == State.UNINITIALIZED;
-        assert listener.state == LifecycleState.UNINITIALIZED;
+        assert component.state == LifecycleState.UNINITIALIZED;
     }
 
     private File createPluginJar(String jarName, String descriptorXmlFilename) throws Exception {

@@ -28,8 +28,8 @@ import java.util.Map;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginLifecycleListener;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -154,19 +154,19 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
      * The test plugin manager.
      */
     class TestGenericPluginManager extends ServerPluginManager {
-        public final Map<String, ServerPluginLifecycleListener> listeners;
+        public final Map<String, ServerPluginComponent> components;
 
         public TestGenericPluginManager(TestGenericServerPluginContainer pc) {
             super(pc);
-            listeners = new HashMap<String, ServerPluginLifecycleListener>();
+            components = new HashMap<String, ServerPluginComponent>();
         }
 
         @Override
-        protected ServerPluginLifecycleListener createServerPluginLifecycleListener(ServerPluginEnvironment environment)
+        protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment)
             throws Exception {
-            ServerPluginLifecycleListener listener = super.createServerPluginLifecycleListener(environment);
-            listeners.put(environment.getPluginName(), listener);
-            return listener;
+            ServerPluginComponent component = super.createServerPluginComponent(environment);
+            components.put(environment.getPluginName(), component);
+            return component;
         }
     }
 }

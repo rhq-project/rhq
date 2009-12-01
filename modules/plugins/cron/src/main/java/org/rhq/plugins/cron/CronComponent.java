@@ -26,6 +26,7 @@ import net.augeas.Augeas;
 import net.augeas.AugeasException;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
@@ -88,6 +90,12 @@ public class CronComponent extends AugeasConfigurationComponent<PlatformComponen
             report.setStatus(CreateResourceStatus.FAILURE);
         }
         return report;
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        report.setErrorMessage("This is a readonly view of cron tabs. Update isn't supported.");
+        report.setStatus(ConfigurationUpdateStatus.FAILURE);
     }
 
     @Override

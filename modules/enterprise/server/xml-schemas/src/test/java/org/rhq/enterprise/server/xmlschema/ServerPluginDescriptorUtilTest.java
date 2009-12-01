@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -36,9 +37,9 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.LifecycleListenerType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ScheduleType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
@@ -70,16 +71,48 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDescription().equals("generic description");
         assert descriptor.getPackage().equals("generic.package");
 
-        LifecycleListenerType lifecycleListener = descriptor.getLifecycleListener();
-        ScheduleType schedule = lifecycleListener.getSchedule();
-        assert lifecycleListener.getClazz().equals("generic.plugin.lifecycle.listener");
-        assert schedule.getCron().equals("0 15 10 ? * MON-FRI");
-        assert schedule.getPeriod() == null;
+        ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
+        assert pluginComponent.getClazz().equals("generic.plugin.component");
 
-        ConfigurationDescriptor config = descriptor.getPluginConfiguration();
+        List<ScheduledJobDefinition> scheduledJobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(descriptor);
+        assert scheduledJobs.size() == 3;
+
+        ScheduledJobDefinition jobItem;
+
+        jobItem = scheduledJobs.get(0);
+        assert jobItem.getJobId().equals("myFirstJob");
+        assert jobItem.getMethodName().equals("methodNameFoo");
+        assert !jobItem.isEnabled();
+        assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType() instanceof CronScheduleType;
+        assert ((CronScheduleType) jobItem.getScheduleType()).getCronExpression().equals("0 15 10 ? * MON-FRI");
+        assert jobItem.getCallbackData().size() == 7 : jobItem.getCallbackData();
+        assert jobItem.getCallbackData().getProperty("custom1").equals("true");
+        assert jobItem.getCallbackData().getProperty("anothercustom2").equals("12345");
+        assert jobItem.getCallbackData().getProperty("methodName").equals("methodNameFoo"); // just proves we get the built-in data, too
+
+        jobItem = scheduledJobs.get(1);
+        assert jobItem.getJobId().equals("anotherMethod");
+        assert jobItem.getMethodName().equals("anotherMethod");
+        assert jobItem.isEnabled();
+        assert jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
+        assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 59999L;
+        assert jobItem.getCallbackData().size() == 3 : jobItem.getCallbackData();
+
+        jobItem = scheduledJobs.get(2);
+        assert jobItem.getJobId().equals("allDefaultsJob");
+        assert jobItem.getMethodName().equals("allDefaultsJob");
+        assert jobItem.isEnabled();
+        assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
+        assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 600000L;
+        assert jobItem.getCallbackData().size() == 0 : jobItem.getCallbackData();
+
+        ConfigurationDefinition config;
+        config = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
         assert config != null;
-        assert config.getConfigurationProperty().get(0).getValue().getName().equals("prop1");
-
+        assert config.getPropertyDefinitionSimple("prop1") != null;
         return;
     }
 
@@ -96,15 +129,20 @@ public class ServerPluginDescriptorUtilTest {
         assert descriptor.getDescription().equals("alert plugin wotgorilla?");
         assert descriptor.getPackage().equals("org.alert.package.name.here");
 
-        LifecycleListenerType lifecycleListener = descriptor.getLifecycleListener();
-        ScheduleType schedule = lifecycleListener.getSchedule();
-        assert lifecycleListener.getClazz().equals("alertPluginLifecycleListener");
-        assert schedule.getCron() == null;
-        assert schedule.getPeriod().longValue() == 1000L;
+        ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
+        assert pluginComponent.getClazz().equals("alertPluginComponent");
 
-        ConfigurationDescriptor config = descriptor.getPluginConfiguration();
+        assert descriptor.getScheduledJobs() == null;
+        assert ServerPluginDescriptorMetadataParser.getScheduledJobs(descriptor).size() == 0;
+
+        ConfigurationDescriptor configDescriptor = descriptor.getPluginConfiguration();
+        assert configDescriptor != null;
+        assert configDescriptor.getConfigurationProperty().get(0).getValue().getName().equals("alertprop1");
+
+        ConfigurationDefinition config;
+        config = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
         assert config != null;
-        assert config.getConfigurationProperty().get(0).getValue().getName().equals("alertprop1");
+        assert config.getPropertyDefinitionSimple("alertprop1") != null;
     }
 
     public void testPerspectivePluginDescriptor() throws Exception {

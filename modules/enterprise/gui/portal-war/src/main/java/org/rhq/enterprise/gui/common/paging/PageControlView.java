@@ -30,26 +30,28 @@ import org.rhq.enterprise.gui.configuration.group.GroupResourceConfigurationHist
 import org.rhq.enterprise.gui.configuration.history.ListConfigurationUpdateUIBean;
 import org.rhq.enterprise.gui.content.AuditTrailUIBean;
 import org.rhq.enterprise.gui.content.AvailableResourceReposUIBean;
-import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
-import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
-import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
-import org.rhq.enterprise.gui.content.RepoPackageVersionsUIBean;
-import org.rhq.enterprise.gui.content.RepoResourcesUIBean;
-import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
-import org.rhq.enterprise.gui.content.RepoUnsubscriptionsUIBean;
+import org.rhq.enterprise.gui.content.ContentSourceCandidateReposUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceReposUIBean;
-import org.rhq.enterprise.gui.content.ContentSourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ContentSourceSyncResultsUIBean;
 import org.rhq.enterprise.gui.content.DeployPackagesUIBean;
-import org.rhq.enterprise.gui.content.ListReposUIBean;
 import org.rhq.enterprise.gui.content.ListCompletedContentRequestsUIBean;
 import org.rhq.enterprise.gui.content.ListContentSourcesUIBean;
 import org.rhq.enterprise.gui.content.ListInProgressContentRequestsUIBean;
 import org.rhq.enterprise.gui.content.ListPackageHistoryUIBean;
 import org.rhq.enterprise.gui.content.ListPackageTypesUIBean;
 import org.rhq.enterprise.gui.content.ListPackagesUIBean;
-import org.rhq.enterprise.gui.content.ResourceReposUIBean;
+import org.rhq.enterprise.gui.content.ListReposUIBean;
+import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
+import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
+import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
+import org.rhq.enterprise.gui.content.RepoDistributionUIBean;
+import org.rhq.enterprise.gui.content.RepoImportUIBean;
+import org.rhq.enterprise.gui.content.RepoPackageVersionsUIBean;
+import org.rhq.enterprise.gui.content.RepoResourcesUIBean;
+import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
+import org.rhq.enterprise.gui.content.RepoUnsubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
+import org.rhq.enterprise.gui.content.ResourceReposUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
@@ -123,6 +125,8 @@ public enum PageControlView {
     /** */
     ContentSourcesList(ListContentSourcesUIBean.class),
     /** */
+    ReposToImportList(RepoImportUIBean.class),
+    /** */
     ReposList(ListReposUIBean.class),
     /** */
     ContentSourceSyncResultsList(ContentSourceSyncResultsUIBean.class),
@@ -133,9 +137,11 @@ public enum PageControlView {
     /** */
     RepoResourcesList(RepoResourcesUIBean.class),
     /** */
-    ContentSourcePackageVersionsList(ContentSourcePackageVersionsUIBean.class),
+    ContentSourceCandidateReposList(ContentSourceCandidateReposUIBean.class),
     /** */
     RepoPackageVersionsList(RepoPackageVersionsUIBean.class),
+    /** */
+    RepoDistributionList(RepoDistributionUIBean.class),
     /** */
     RepoAssociationsList(RepoAssociationsUIBean.class),
     /** */

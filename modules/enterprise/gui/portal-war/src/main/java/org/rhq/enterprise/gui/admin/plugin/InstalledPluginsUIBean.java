@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
-import org.rhq.enterprise.server.core.plugin.AgentPluginDeploymentScannerMBean;
+import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.resource.metadata.ResourceMetadataManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -65,7 +65,7 @@ public class InstalledPluginsUIBean {
         hasPermission();
 
         try {
-            AgentPluginDeploymentScannerMBean scanner = LookupUtil.getAgentPluginDeploymentScanner();
+            PluginDeploymentScannerMBean scanner = LookupUtil.getPluginDeploymentScanner();
             scanner.scanAndRegister();
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Done scanning for updated agent plugins.");
         } catch (Exception e) {

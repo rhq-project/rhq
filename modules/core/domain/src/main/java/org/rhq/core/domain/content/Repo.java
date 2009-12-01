@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,8 +40,10 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.CascadeType;
+import javax.persistence.Transient;
 
+import org.rhq.core.domain.common.Tag;
+import org.rhq.core.domain.common.Taggable;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -58,6 +61,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = Repo.QUERY_FIND_BY_NAME, query = "SELECT c FROM Repo c WHERE c.name = :name"),
     @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS, query = "SELECT c FROM Repo c LEFT JOIN FETCH c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
     @NamedQuery(name = Repo.QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = false"),
+    @NamedQuery(name = Repo.QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID, query = "SELECT c FROM Repo c LEFT JOIN c.repoContentSources ccs WHERE ccs.contentSource.id = :id AND c.candidate = true"),
     @NamedQuery(name = Repo.QUERY_FIND_SUBSCRIBER_RESOURCES, query = "SELECT rc.resource FROM ResourceRepo rc WHERE rc.repo.id = :id"),
     @NamedQuery(name = Repo.QUERY_FIND_REPOS_BY_RESOURCE_ID, query = "SELECT c "
         + "FROM ResourceRepo rc JOIN rc.repo c WHERE rc.resource.id = :resourceId "),
@@ -78,15 +82,23 @@ import org.rhq.core.domain.resource.Resource;
         + ") "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate is false "
-        + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
+        + "AND c.candidate is false " + "GROUP BY c, c.name, c.description, c.creationDate, c.lastModifiedDate"),
     @NamedQuery(name = Repo.QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT, query = "SELECT COUNT( c ) "
         + "FROM Repo AS c "
         + "WHERE c.id NOT IN ( SELECT rc.repo.id FROM ResourceRepo rc WHERE rc.resource.id = :resourceId ) "
-        + "AND c.candidate = false ") })
+        + "AND c.candidate = false "),
+    @NamedQuery(name = Repo.QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE, query = "SELECT r FROM Repo r " //
+        + "WHERE r.candidate = true " //
+        + "AND (SELECT COUNT(rcs.repo) FROM RepoContentSource rcs " //
+        + "     WHERE rcs.repo.id = r.id " //
+        + "     AND rcs.contentSource.id = :contentSourceId) = 1 " //
+        + "AND (SELECT COUNT(rcs) FROM RepoContentSource rcs" //
+        + "     WHERE rcs.repo.id = r.id) = 1 ")
+    })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
-public class Repo implements Serializable {
+public class Repo implements Serializable, Taggable {
+
     // Constants  --------------------------------------------
 
     public static final String QUERY_FIND_ALL_IMPORTED_REPOS = "Repo.findAll";
@@ -94,12 +106,14 @@ public class Repo implements Serializable {
     public static final String QUERY_FIND_BY_NAME = "Repo.findByName";
     public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID_FETCH_CCS = "Repo.findByContentSourceIdFetchCCS";
     public static final String QUERY_FIND_IMPORTED_BY_CONTENT_SOURCE_ID = "Repo.findByContentSourceId";
+    public static final String QUERY_FIND_CANDIDATE_BY_CONTENT_SOURCE_ID = "Repo.findCandidateByContentSourceId";
     public static final String QUERY_FIND_SUBSCRIBER_RESOURCES = "Repo.findSubscriberResources";
     public static final String QUERY_FIND_REPOS_BY_RESOURCE_ID = "Repo.findReposByResourceId";
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findRepoCompositesByResourceId";
     public static final String QUERY_FIND_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findRepoCompositesByResourceId_count";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID = "Repo.findAvailableRepoCompositesByResourceId";
     public static final String QUERY_FIND_AVAILABLE_REPO_COMPOSITES_BY_RESOURCE_ID_COUNT = "Repo.findAvailableRepoCompositesByResourceId_count";
+    public static final String QUERY_FIND_CANDIDATES_WITH_ONLY_CONTENT_SOURCE = "Repo.findCandidatesWithOnlyContentSource";
 
     private static final long serialVersionUID = 1L;
 
@@ -136,9 +150,15 @@ public class Repo implements Serializable {
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
-    
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
+
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
+    private Set<RepoTag> repoTags;
+
+    @Transient
+    private String syncStatus;
 
     // Constructor ----------------------------------------
 
@@ -302,6 +322,22 @@ public class Repo implements Serializable {
      */
     public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
+    }
+
+    /**
+     * Get the overall sync status of this Repository.  This is a summation of all the syncs.
+     * 
+     * There is a weight to the status since this returns the most 'relevant' status:
+     * 
+     * 1) ContentSourceSyncStatus.FAILURE
+     * 2) ContentSourceSyncStatus.INPROGRESS
+     * 3) ContentSourceSyncStatus.SUCCESS
+     * 
+     * @return String summary of the status of this Repository
+     */
+    @Transient
+    public String getSyncStatus() {
+        return this.syncStatus;
     }
 
     /**
@@ -532,8 +568,6 @@ public class Repo implements Serializable {
         return doomed;
     }
 
-    
-    
     /**
      * Returns the explicit mapping entities.
      *
@@ -612,8 +646,6 @@ public class Repo implements Serializable {
         return doomed;
     }
 
-    
-    
     @Override
     public String toString() {
         return "Repo: id=[" + this.id + "], name=[" + this.name + "]";
@@ -657,5 +689,106 @@ public class Repo implements Serializable {
     @PreUpdate
     void onUpdate() {
         this.lastModifiedDate = System.currentTimeMillis();
+    }
+
+    public Set<RepoTag> getRepoTags() {
+        return repoTags;
+    }
+
+    public void setRepoTags(Set<RepoTag> tags) {
+        this.repoTags = repoTags;
+    }
+
+    public boolean hasTag(Tag tag) {
+        if ((this.repoTags == null) || (tag == null)) {
+            return false;
+        }
+
+        for (RepoTag rt : this.repoTags) {
+            if (tag.equals(rt.getRepoTagPK().getTag())) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * The tags associated with this repo.
+     */
+    public Set<Tag> getTags() {
+        HashSet<Tag> tags = new HashSet<Tag>();
+
+        if (repoTags != null) {
+            for (RepoTag rt : repoTags) {
+                tags.add(rt.getRepoTagPK().getTag());
+            }
+        }
+
+        return tags;
+    }
+
+    /**
+     * Add a tag association with this repo.
+     *
+     * @param  tag
+     */
+    public void addTag(Tag tag) {
+        if (this.repoTags == null) {
+            this.repoTags = new HashSet<RepoTag>();
+        }
+
+        RepoTag mapping = new RepoTag(this, tag);
+        this.repoTags.add(mapping);
+    }
+
+    /**
+     * Set tag associations with this repo.
+     *
+     * @param  tag
+     */
+    public void setTags(Set<Tag> tags) {
+        if (this.repoTags == null) {
+            this.repoTags = new HashSet<RepoTag>();
+        } else {
+            this.repoTags.clear();
+        }
+
+        for (Tag t : tags) {
+            RepoTag mapping = new RepoTag(this, t);
+            this.repoTags.add(mapping);
+        }
+
+    }
+
+    /**
+     * Removes association with a tag, if it exists. 
+     */
+    public void removeTag(Tag tag) {
+        if ((this.repoTags == null) || (tag == null)) {
+            return;
+        }
+
+        RepoTag doomed = null;
+
+        for (RepoTag rt : this.repoTags) {
+            if (tag.equals(rt.getRepoTagPK().getTag())) {
+                doomed = rt;
+                break;
+            }
+        }
+
+        if (doomed != null) {
+            this.repoTags.remove(doomed);
+        }
+    }
+
+    /**
+     * Set the sync status for this repo.
+     * @param syncStatusIn
+     */
+    @Transient
+    public void setSyncStatus(String syncStatusIn) {
+        this.syncStatus = syncStatusIn;
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,23 +16,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.enterprise.server.perspective;
 
-package org.rhq.enterprise.server.plugin.pc;
+public class PerspectiveException extends Exception {
 
-/**
- * A schedule that triggers based on a cron expression.
- * 
- * @author John Mazzitelli
- */
-public class CronSchedule extends Schedule {
-    private final String cronExpression;
+    private static final long serialVersionUID = 1L;
 
-    public CronSchedule(boolean concurrent, String cronExpression) {
-        super(concurrent);
-        this.cronExpression = cronExpression;
+    public PerspectiveException() {
     }
 
-    public String getCronExpression() {
-        return this.cronExpression;
+    public PerspectiveException(String message) {
+        super(message);
     }
+
+    public PerspectiveException(Throwable cause) {
+        super(cause);
+    }
+
+    public PerspectiveException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

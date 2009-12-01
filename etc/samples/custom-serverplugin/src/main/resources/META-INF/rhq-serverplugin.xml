@@ -10,11 +10,64 @@
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
 
-      <serverplugin:lifecycle-listener class="MyLifecycleListener">
-      </serverplugin:lifecycle-listener>
+    <serverplugin:plugin-component class="MyLifecycleListener" />
 
-      <serverplugin:plugin-configuration>
-         <c:simple-property name="myCustomProperty" type="string" required="true" description="A property my plugin needs to be properly configured" />
-      </serverplugin:plugin-configuration>
+    <serverplugin:scheduled-jobs>
+        <!-- notice that we use the map name as the methodName -->
+        <c:map-property name="myScheduledJobMethod1">
+            <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Whether or not the job should be scheduled"/>
+            <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates when the schedule triggers">
+                <c:property-options>
+                    <c:option value="periodic"/>
+                    <c:option value="cron" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/5 * * * ?" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
+            <c:simple-property name="concurrent" type="boolean" required="false" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+        </c:map-property>
+        
+        <!-- notice we only want this job to be periodic - do not allow for cron -->
+        <!-- notice we always want this to be concurrent  -->
+        <!-- notice that we define our methodName in a property, overriding the map name default (its not summary so you don't see it in the main UI) -->
+        <c:map-property name="anotherJobMapHere" description="This describes what this job does">
+            <c:simple-property name="methodName" type="string" required="true" readOnly="true" default="myScheduledJobMethod2" summary="false" />
+            <c:simple-property name="scheduleType" type="string" required="true" readOnly="true" default="periodic" summary="true" description="Indicates when the schedule triggers" />
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="60000" summary="true" description="Period, in milliseconds, that the job triggers"/>
+            <c:simple-property name="concurrent" type="boolean" required="true" readOnly="true" default="true" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+            <c:simple-property name="custom1" type="boolean" required="true" default="true" summary="true" description="A custom boolean for callback data"/>
+            <c:simple-property name="anothercustom2" type="long" required="true" default="12345" summary="true" description="A custom long for callback data"/>
+        </c:map-property>
+        
+        <c:map-property name="statelessJob1" description="invokes a stateless job class but given a job context">
+            <c:simple-property name="class" type="string" required="true" readOnly="true" default="MyScheduledJob" summary="true" />
+            <c:simple-property name="methodName" type="string" required="true" readOnly="true" default="executeWithContext" summary="true" />
+        </c:map-property>
+        
+        <c:map-property name="statelessJob2" description="invokes a stateless job class no-arg method">
+            <c:simple-property name="class" type="string" required="true" readOnly="true" default="MyScheduledJob" summary="true" />
+            <c:simple-property name="methodName" type="string" required="true" readOnly="true" default="executeNoArg" summary="true" />
+        </c:map-property>
+        
+        <c:list-property name="myUserDefinedJobs" description="A list of user-defined scheduled jobs">
+            <c:map-property name="myUserDefinedJob" description="A user-defined scheduled job">
+                <c:simple-property name="methodName" type="string" required="true" default="" summary="true" description="The method to call on the plugin component when the schedule triggers" />
+                <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Whether or not the job should be scheduled"/>
+                <c:simple-property name="scheduleType" type="string" required="true" default="periodic" summary="true" description="Indicates when the schedule triggers">
+                    <c:property-options>
+                        <c:option value="periodic" default="true"/>
+                        <c:option value="cron" />
+                    </c:property-options>
+                </c:simple-property>
+                <c:simple-property name="scheduleTrigger" type="string" required="true" default="600000" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
+                <c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+            </c:map-property>
+        </c:list-property>
+    </serverplugin:scheduled-jobs>
+
+    <!-- custom global config - unrelated to schedules  -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="myCustomProperty" type="string" required="true" default="custom-prop-value"
+                           description="A property my plugin needs to be properly configured" />
+    </serverplugin:plugin-configuration>
 
 </generic-plugin>

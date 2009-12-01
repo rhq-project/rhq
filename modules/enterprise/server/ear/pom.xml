@@ -229,6 +229,12 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
+                  <artifactId>rhq-aliases-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-apache-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
@@ -326,6 +332,12 @@
 
                 <artifactItem>
                   <groupId>org.rhq</groupId>
+                  <artifactId>rhq-postfix-plugin</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
                   <artifactId>rhq-postgres-plugin</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
@@ -396,6 +408,12 @@
                 <artifactItem>
                   <groupId>org.rhq</groupId>
                   <artifactId>rhq-serverplugin-yum</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-core-perspective</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
 

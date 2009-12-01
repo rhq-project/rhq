@@ -194,6 +194,29 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * Asks that all plugin containers schedule jobs now, if needed.
+     * Note that this is separate from the {@link #initialize(MasterServerPluginContainerConfiguration)}
+     * method because it is possible that the master plugin container has been
+     * initialized before the scheduler is started. In this case, the caller must wait for the scheduler to
+     * be started before this method is called to schedule jobs.
+     */
+    public synchronized void scheduleAllPluginJobs() {
+        log.debug("Master server plugin container will schedule all jobs now");
+
+        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+            try {
+                pc.schedulePluginJobs();
+            } catch (Exception e) {
+                log.error("Server plugin container for plugin type [" + pc.getSupportedServerPluginType()
+                    + "] failed to scheduled some or all of its jobs", e);
+            }
+        }
+
+        log.info("Master server plugin container scheduled all jobs");
+        return;
+    }
+
+    /**
      * Returns the configuration that this object was initialized with. If this plugin container was not
      * {@link #initialize(MasterServerPluginContainerConfiguration) initialized} or has been {@link #shutdown() shutdown},
      * this will return <code>null</code>.

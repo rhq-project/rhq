@@ -34,6 +34,8 @@ import javax.naming.InitialContext;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
+import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePluginMetadataManager;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 
 /**
  * This loads in all perspective server plugins that can be found. You can obtain a loaded plugin's
@@ -44,8 +46,32 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
  */
 public class PerspectiveServerPluginManager extends ServerPluginManager {
 
+    private PerspectivePluginMetadataManager metadataManager;
+
     public PerspectiveServerPluginManager(PerspectiveServerPluginContainer pc) {
         super(pc);
+    }
+
+    @Override
+    public void initialize() throws Exception {
+        super.initialize();
+        this.metadataManager = new PerspectivePluginMetadataManager();
+    }
+
+    @Override
+    public void shutdown() {
+        super.shutdown();
+        this.metadataManager = null;
+    }
+
+    /**
+     * An object that can be used to process and store all metadata from all perspective plugins. This object will contain all the
+     * metadata found in all loaded perspective plugins.
+     *
+     * @return object to retrieve plugin metadata from
+     */
+    public PerspectivePluginMetadataManager getMetadataManager() {
+        return this.metadataManager;
     }
 
     /* At load-time ensure that any WAR files packaged with the server plugin are deployed to the RHQ
@@ -57,6 +83,9 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     @Override
     public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
         super.loadPlugin(env);
+
+        // merge this perspective into any previously loaded perspective definitions 
+        this.metadataManager.loadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
 
         String name = null;
         try {
@@ -118,6 +147,27 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
         return destFile;
     }
 
+    /**
+     * All of the plugins have been loaded, so now let the metadata manager sort through the definitions.
+     *
+     * @see org.rhq.enterprise.server.plugin.pc.ServerPluginManager#startPlugins()
+     */
+    @Override
+    public synchronized void startPlugins() {
+        super.startPlugins();
+
+        this.metadataManager.start();
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.plugin.pc.ServerPluginManager#stopPlugins()
+     */
+    @Override
+    public synchronized void stopPlugins() {
+        // TODO Auto-generated method stub
+        super.stopPlugins();
+    }
+
     /* At unload-time ensure that any WAR files packaged with the server plugin are un-deployed on
      * the RHQ Server.
      * 
@@ -138,6 +188,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
         } catch (Exception e) {
             getLog().error("Failed to deploy " + env.getPluginName() + "#" + name, e);
         }
+
+        this.metadataManager.unloadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
 
         super.unloadPlugin(env);
     }

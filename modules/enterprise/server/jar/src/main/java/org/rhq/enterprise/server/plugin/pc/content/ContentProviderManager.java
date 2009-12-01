@@ -262,7 +262,7 @@ public class ContentProviderManager {
     /**
      * Tests the connection to the content source that has the given ID.
      *
-     * @param contentSourceId
+     * @param contentSourceId refers to a valid content source in the database
      * @return <code>true</code> if there is an adapter that can successfully connect to the given
      *         content source <code>false</code> if there is an adapter but it cannot connect
      * @throws Exception if failed to get an adapter to attempt the connection
@@ -395,7 +395,7 @@ public class ContentProviderManager {
      *                      classloaders)
      * @throws InitializationException if any of the providers throw an error on startup
      */
-    protected void initialize(ContentServerPluginManager pluginManager) {
+    protected void initialize(ContentServerPluginManager pluginManager) throws InitializationException {
         this.pluginManager = pluginManager;
 
         ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();
@@ -424,8 +424,6 @@ public class ContentProviderManager {
                 }
             }
         }
-
-        return;
     }
 
     /**

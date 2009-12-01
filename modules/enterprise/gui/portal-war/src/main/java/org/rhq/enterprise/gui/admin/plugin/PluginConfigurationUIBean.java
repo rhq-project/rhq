@@ -26,6 +26,7 @@ import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.log.Log;
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.auth.Subject;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
 import org.richfaces.event.NodeSelectedEvent;
 import org.richfaces.model.TreeNode;
@@ -50,6 +52,8 @@ import org.richfaces.model.TreeNodeImpl;
 @Name("pluginConfigUIBean")
 public class PluginConfigurationUIBean {
 
+    @RequestParameter
+    private String pluginName;
     @Logger
     private Log log;
     private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
@@ -123,26 +127,52 @@ public class PluginConfigurationUIBean {
         return pluginNode;
     }
 
-    public void processSelection(NodeSelectedEvent event) {
-        HtmlTree tree = (HtmlTree) event.getSource();
-        this.currentPlugin = (ServerPlugin) tree.getRowData();
-
-        lookupConfigDefinitions();
+    public boolean adviseOpened(UITree node) {
+        // Expand the whole tree by default
+        return true;
     }
 
-    public void lookupConfigDefinitions() {
-        if (this.currentPlugin.getDeployment() == PluginDeploymentType.SERVER) {
-            PluginKey pluginKey = new PluginKey(this.currentPlugin);
+    /**
+     * Advise the plugin tree if the provided node should be selected.
+     *
+     * @param node the {@link UITree} in question - will either have data a
+     *             {@link ServerPlugin} or {@link ServerPluginType} is the row
+     *             data.
+     * 
+     * @return <code>true</code> if this node should be selected,
+     *         <code>false</code> otherise
+     */
+    public boolean adviseSelected(UITree node) {
+        if (isServerPluginSelected(node)) {
+            if (this.currentPlugin != null) {
+                return node.getRowData() == this.currentPlugin;
+            } else { // there is no plugin currently selected
+                ServerPlugin plugin = (ServerPlugin) node.getRowData();
 
-            try {
-                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
-                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginKey.getPluginName(), descriptor.getPluginConfiguration());
-                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginKey.getPluginName(), descriptor.getScheduledJobs());
-            } catch (Exception e) {
-                String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
-                log.error(err + " - Cause: " + e);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+                // if this is the node that matches the request parameter,
+                // go ahead and load the config and select this node
+                if (plugin.getName().equals(this.pluginName)) {
+                    this.currentPlugin = plugin;
+                    lookupConfigDefinitions();
+
+                    return true;
+                }
             }
+        }
+
+        // the node is a plugin server type - we don't want to select
+        // that if we don't have to.
+        return false;
+    }
+
+    public void processSelection(NodeSelectedEvent event) {
+        HtmlTree node = (HtmlTree) event.getSource();
+
+        if (isServerPluginSelected(node)) {
+            this.currentPlugin = (ServerPlugin) node.getRowData();
+            lookupConfigDefinitions();
+
+            node.setSelected();
         }
     }
 
@@ -156,6 +186,26 @@ public class PluginConfigurationUIBean {
             log.error("Error updating the plugin configurations.", e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                     "There was an error changing the configuration settings.", e);
+        }
+    }
+
+    private boolean isServerPluginSelected(UITree tree) {
+        return tree.getRowData() instanceof ServerPlugin;
+    }
+
+    private void lookupConfigDefinitions() {
+        if (this.currentPlugin.getDeployment() == PluginDeploymentType.SERVER) {
+            PluginKey pluginKey = new PluginKey(this.currentPlugin);
+
+            try {
+                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
+                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginKey.getPluginName(), descriptor.getPluginConfiguration());
+                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginKey.getPluginName(), descriptor.getScheduledJobs());
+            } catch (Exception e) {
+                String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
+                log.error(err + " - Cause: " + e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
+            }
         }
     }
 

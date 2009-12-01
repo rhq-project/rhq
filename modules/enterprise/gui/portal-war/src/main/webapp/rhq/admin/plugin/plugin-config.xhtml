@@ -54,11 +54,13 @@
                     </f:facet>
 
                     <rich:tree nodeSelectListener="#{pluginConfigUIBean.processSelection}"
+                               adviseNodeSelected="#{pluginConfigUIBean.adviseSelected}"
+                               adviseNodeOpened="#{pluginConfigUIBean.adviseOpened}"
                                reRender="pluginConfig"
                                value="#{pluginConfigUIBean.root}"
                                ajaxSubmitSelection="true"
                                switchType="client"
-                               toggleOnClick="true"
+                               toggleOnClick="false"
                                treeNodeVar="node"
                                var="item"
                                nodeFace="#{node.leaf ? 'plugin' : 'pluginType'}">

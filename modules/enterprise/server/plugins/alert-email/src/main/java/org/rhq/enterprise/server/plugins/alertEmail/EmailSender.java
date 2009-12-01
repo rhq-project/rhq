@@ -49,9 +49,6 @@ public class EmailSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        if(preferences!=null)
-            preferences.getProperties().size();
-
         String emailAddress = alertParameters.getSimpleValue("emailAddress",null);
         if (emailAddress==null) {
             log.warn("Email address was null, should not happen");
@@ -65,7 +62,10 @@ public class EmailSender extends AlertSender {
 
         Properties props = new Properties();
         props.put("mail.smtp.host",mailserver);
-        Session session = Session.getDefaultInstance(props); // TODO pass authenticator
+        props.put("mail.transport.protocol","smtp");
+        props.put("mail.host",mailserver);
+        // TODO for whatever reason, the passed props are ignored and 'localhost' is used
+        Session session = Session.getInstance(props); // TODO pass authenticator
         Message message = new SMTPMessage(session);
         try {
             message.setFrom(new InternetAddress(senderAddress));

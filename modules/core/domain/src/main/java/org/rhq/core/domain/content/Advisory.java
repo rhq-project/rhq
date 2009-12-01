@@ -2,20 +2,32 @@ package org.rhq.core.domain.content;
 
 import java.io.Serializable;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+@Entity
+@NamedQueries( {
+    @NamedQuery(name = Advisory.QUERY_FIND_ALL, query = "SELECT adv FROM Advisory adv"),
+    @NamedQuery(name = Advisory.QUERY_FIND_BY_ADV, query = "SELECT adv " + "  FROM Advisory adv "
+        + " WHERE adv.advisory = :advisory "),
+    @NamedQuery(name = Advisory.QUERY_DELETE_BY_ADV_ID, query = "DELETE Advisory adv WHERE adv.id = :advid") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    public static final String QUERY_FIND_ALL = "Advisory.findAll";
+    public static final String QUERY_FIND_BY_ADV = "Advisory.findByAdv";
+    public static final String QUERY_DELETE_BY_ADV_ID = "Advisory.deleteByAdvId";
 
     // Attributes  --------------------------------------------
 
@@ -27,7 +39,7 @@ public class Advisory implements Serializable {
     @Column(name = "ADVISORY", nullable = false)
     private String advisory;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @Column(name = "ADVISORYTYPE", nullable = false)
     private String advisoryType;
 
     @Column(name = "ADVISORY_REL", nullable = true)

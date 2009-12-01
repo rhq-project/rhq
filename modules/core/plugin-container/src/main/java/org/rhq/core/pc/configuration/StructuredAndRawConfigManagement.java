@@ -84,7 +84,12 @@ public class StructuredAndRawConfigManagement extends ConfigManagementSupport {
             }
     }
 
-    public void executeUpdate(int resourceId, Configuration configuration)
-        throws PluginContainerException {        
+    public void executeUpdate(int resourceId, Configuration configuration) throws PluginContainerException {
+        ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+
+        facet.persistStructuredConfiguration(configuration);
+        for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+            facet.persistRawConfiguration(rawConfig);
+        }
     }
 }

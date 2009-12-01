@@ -75,7 +75,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
         );
 
 
-        addDefaultExpectations(config, rawConfigs);
+        addDefaultExpectationsForLoad(config, rawConfigs);
 
         Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
@@ -88,7 +88,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
         config.put(new PropertySimple("x", "1"));
         config.put(new PropertySimple("y", "2"));
 
-        addDefaultExpectations(config, EMPTY_SET);
+        addDefaultExpectationsForLoad(config, EMPTY_SET);
 
         Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
@@ -100,7 +100,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
         Configuration config = new Configuration();
         config.setNotes(null);
 
-        addDefaultExpectations(config, EMPTY_SET);
+        addDefaultExpectationsForLoad(config, EMPTY_SET);
 
         Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
@@ -113,7 +113,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         Set<RawConfiguration> rawConfigs = toSet(createRawConfiguration("/tmp/foo.txt"));
 
-        addDefaultExpectations(config, rawConfigs);
+        addDefaultExpectationsForLoad(config, rawConfigs);
 
         Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
@@ -131,7 +131,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         Set<RawConfiguration> rawConfigs = null;
 
-        addDefaultExpectations(config, rawConfigs);
+        addDefaultExpectationsForLoad(config, rawConfigs);
 
         Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
 
@@ -162,7 +162,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }
 
-    private void addDefaultExpectations(final Configuration config, final Set<RawConfiguration> rawConfigs)
+    private void addDefaultExpectationsForLoad(final Configuration config, final Set<RawConfiguration> rawConfigs)
         throws Exception {
 
         context.checking(new Expectations() {{
@@ -186,6 +186,34 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
             atLeast(1).of(configUtilityService).validateConfiguration(with(any(Configuration.class)),
                 with(getResourceConfigDefinition()));
         }});
+    }
+
+    @Test
+    public void facetShouldBeCalledToUpdateStructuredAndRaw() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        final boolean isDaemonThread = false;
+
+        context.checking(new Expectations() {{
+            atLeast(1).of(componentService).getComponent(resourceId,
+                                                         ResourceConfigurationFacet.class,
+                                                         FacetLockType.WRITE,
+                                                         ConfigManagement.FACET_METHOD_TIMEOUT,
+                                                         isDaemonThread,
+                                                         onlyIfStarted);
+            will(returnValue(configFacet));
+
+            oneOf(configFacet).persistStructuredConfiguration(config);
+            oneOf(configFacet).persistRawConfiguration(raw1);
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
     }
 
 }

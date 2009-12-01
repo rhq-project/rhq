@@ -138,7 +138,7 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
                                                          onlyIfStarted);
             will(returnValue(configFacet));
 
-            atLeast(1).of(configFacet).persistStructuredConfiguration(structuredConfig);
+            oneOf(configFacet).persistStructuredConfiguration(structuredConfig);
         }});
 
         structuredMgmt.executeUpdate(resourceId, structuredConfig);

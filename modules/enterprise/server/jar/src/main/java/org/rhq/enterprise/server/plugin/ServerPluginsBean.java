@@ -143,7 +143,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
-        restartPlugins(pluginIds);
+        reloadPlugins(pluginIds, true);
         return;
     }
 
@@ -182,7 +182,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
 
-        restartPlugins(pluginIds);
+        reloadPlugins(pluginIds, false);
 
         return doomedPlugins;
     }
@@ -215,7 +215,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                         try {
                             pc.unschedulePluginJobs(pluginKey);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
+                            log.warn("Failed to unschedule jobs for server plugin [" + pluginKey + "]", e);
+                        }
+                        try {
+                            pc.unloadPlugin(pluginKey);
+                        } catch (Exception e) {
+                            log.warn("Failed to unload server plugin [" + pluginKey + "]", e);
                         }
                     }
                 }
@@ -245,8 +250,6 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         log.info("Server plugins " + doomedPlugins + " have been undeployed");
-
-        restartPlugins(pluginIds);
 
         return doomedPlugins;
     }
@@ -476,12 +479,15 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     /**
-     * Given a list of plugin IDs, this will restart those plugins.
-     * this does nothing if the master plugin container is not started.
+     * Given a list of plugin IDs, this will reload those plugins with the given
+     * enabled flag. This does nothing if the master plugin container is not started.
+     * If <code>enabled</code> is <code>true</code>, the plugins will be restarted;
+     * if <code>false</code>, the plugins will be stopped if they are already started.
      * 
      * @param pluginIds the IDs of the plugins to restart
+     * @param enabled whether or not to start or stop the plugins
      */
-    private void restartPlugins(List<Integer> pluginIds) {
+    private void reloadPlugins(List<Integer> pluginIds, boolean enabled) throws Exception {
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
         MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
         if (master != null) {
@@ -490,9 +496,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             for (Map.Entry<AbstractTypeServerPluginContainer, List<PluginKey>> entry : pcs.entrySet()) {
                 AbstractTypeServerPluginContainer pc = entry.getKey();
                 List<PluginKey> pluginKeys = entry.getValue();
-                pc.restartPlugins(pluginKeys);
+                for (PluginKey pluginKey : pluginKeys) {
+                    pc.reloadPlugin(pluginKey, enabled);
+                }
             }
         }
+        return;
     }
 
     /**

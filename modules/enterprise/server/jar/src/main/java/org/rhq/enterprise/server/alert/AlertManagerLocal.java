@@ -80,14 +80,6 @@ public interface AlertManagerLocal {
 
     Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
-
     /**
      * Mark the matching alert as acknowledged by the user
      * @param alertId Id of the alert to acknowledge
@@ -114,4 +106,13 @@ public interface AlertManagerLocal {
      * @return true if the definition got disabled
      */
     boolean willDefinitionBeDisabled(Alert alert);
+
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
+
 }

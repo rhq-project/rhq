@@ -323,7 +323,7 @@ public class ServerPluginManager {
         if (env == null) {
             throw new IllegalArgumentException("Server plugin [" + pluginName + "] was never loaded, cannot enable it");
         }
-        stopPlugin(pluginName); // under normal circumstances, we should need to do this, but just in case the plugin is somehow already started, stop it
+        stopPlugin(pluginName); // under normal circumstances, we should not need to do this, but just in case the plugin is somehow already started, stop it
         unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
         env = rebuildServerPluginEnvironment(env);
         loadPlugin(env, true); // reload it in the enabled state

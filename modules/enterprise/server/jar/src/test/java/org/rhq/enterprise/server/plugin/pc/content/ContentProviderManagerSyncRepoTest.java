@@ -36,10 +36,14 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -94,7 +98,9 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
 
         // A repo sync will query all providers for that repo, so add multiple providers
         ContentSource cs1 = new ContentSource("contentSource1", contentSourceType);
+        cs1.setDownloadMode(DownloadMode.DATABASE);
         ContentSource cs2 = new ContentSource("contentSource2", contentSourceType);
+        cs2.setDownloadMode(DownloadMode.DATABASE);
 
         cs1 = contentManager.simpleCreateContentSource(overlord, cs1);
         cs2 = contentManager.simpleCreateContentSource(overlord, cs2);
@@ -139,6 +145,19 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
 
         // Delete all distributions
         distroManager.deleteDistributionMappingsForRepo(overlord, repoToSync.getId());
+
+        for (String distroLabel : TestContentProvider.DISTRIBUTIONS.keySet()) {
+            Distribution distro = distroManager.getDistributionByLabel(distroLabel);
+            if (distro != null) {
+                // Delete the files
+                query = entityManager.createNamedQuery(DistributionFile.DELETE_BY_DIST_ID);
+                query.setParameter("distId", distro.getId());
+                query.executeUpdate();
+
+                // Delete the actual distro
+                distroManager.deleteDistributionByDistId(overlord, distro.getId());
+            }
+        }
 
         // Delete all package version <-> content source mappings
         for (ContentSource source : repoContentSources) {
@@ -214,16 +233,13 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         assert repoPackages.size() == TestContentProvider.PACKAGES.size() :
             "Expected: " + TestContentProvider.PACKAGES.size() + ", Found: " + repoPackages.size();
 
-
         // Make sure all of the distributions were added
-/*
         query = entityManager.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);
         query.setParameter("repoId", repoToSync.getId());
         List<RepoDistribution> repoDistributions = query.getResultList();
 
         assert repoDistributions.size() == TestContentProvider.DISTRIBUTIONS.size() :
             "Expected: " + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
-*/
 
         tx.rollback();
     }

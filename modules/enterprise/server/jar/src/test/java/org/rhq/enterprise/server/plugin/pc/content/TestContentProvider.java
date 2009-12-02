@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.rhq.core.domain.configuration.Configuration;
 
-public class TestContentProvider implements ContentProvider, PackageSource, RepoSource {
+public class TestContentProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource {
 
     /**
      * Packages returned in a call to {@link #synchronizePackages(String, PackageSyncReport, Collection)} will

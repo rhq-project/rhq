@@ -63,6 +63,7 @@ import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -990,16 +991,27 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Configuration newConfiguration, boolean fromStructured)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
 
-        Configuration translatedConfig = translateResourceConfiguration(subject, resourceId, newConfiguration,
+        Configuration configToUpdate = newConfiguration;
+
+        if (isStructuredAndRawSupported(resourceId)) {
+            configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration,
             fromStructured);
+        }
 
         ResourceConfigurationUpdate newUpdate =
-            configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, translatedConfig,
+            configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, configToUpdate,
                 ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
         executeResourceConfigurationUpdate(newUpdate, fromStructured);
 
         return newUpdate;
+    }
+
+    private boolean isStructuredAndRawSupported(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
+
+        return ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat();
     }
 
     @Nullable

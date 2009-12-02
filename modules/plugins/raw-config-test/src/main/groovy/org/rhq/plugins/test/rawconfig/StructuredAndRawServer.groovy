@@ -8,6 +8,7 @@ import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
+import groovy.util.AntBuilder
 
 class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
 
@@ -18,6 +19,8 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   File rawConfig2
 
   File rawConfig3
+
+  def ant = new AntBuilder()
 
   void start(ResourceContext context) {
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
@@ -153,7 +156,13 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   void persistStructuredConfiguration(Configuration config) {
   }
 
-  void persistRawConfiguration(RawConfiguration rawConfig) {    
+  void persistRawConfiguration(RawConfiguration rawConfig) {
+    ant.copy(file: rawConfig.path, tofile: "${rawConfig.path}.orig")
+    ant.delete(file: rawConfig.path)
+
+    def file = new File(rawConfig.path)
+    file.createNewFile()
+    file << rawConfig.contents    
   }
 
 }

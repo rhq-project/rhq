@@ -34,8 +34,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
@@ -154,6 +157,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         translatedConfig.addRawConfiguration(new RawConfiguration());
 
         final Resource resource = new Resource(resourceId);
+        resource.setResourceType(createStructuredAndRaw());
         resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
 
         final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
@@ -196,6 +200,51 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     }
 
     @Test
+    public void updateResourceConfigShouldNotTranslateStructuredWhenRawNotSupported() throws Exception {
+        final Subject subject = new Subject("rhqadmin", true, true);
+        final int resourceId = -1;
+        final Configuration newConfig = new Configuration();
+        final boolean isPartOfGroupUpdate = false;
+
+        final Resource resource = new Resource(resourceId);
+        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
+        resource.setResourceType(createStructurerdOnly());
+
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, newConfig,
+            subject.getName());
+        expectedUpdate.setId(-1);
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
+            expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
+
+        final Sequence configUdpate = context.sequence("structured-config-update");
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId, newConfig,
+                INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            will(returnValue(expectedUpdate));
+            inSequence(configUdpate);
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
+            inSequence(configUdpate);
+        }});
+
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+            newConfig, FROM_STRUCTURED);
+
+        assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
+    }
+
+    @Test
     public void updateResourceConfigShouldTranslateRawWhenRawConfigHasEdits() throws Exception {
         final Subject subject = new Subject("rhqadmin", true, true);
         final int resourceId = -1;
@@ -207,6 +256,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         translatedConfig.put(new PropertySimple("x", "y"));
 
         final Resource resource = new Resource(resourceId);
+        resource.setResourceType(createStructuredAndRaw());
         resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
 
         final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
@@ -285,6 +335,26 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
 
     public static Matcher<ConfigurationUpdateRequest> matchingUpdateRequest(ConfigurationUpdateRequest expected) {
         return new PropertyMatcher<ConfigurationUpdateRequest>(expected);
+    }
+
+    ResourceType createStructuredAndRaw() {
+        ConfigurationDefinition configDef = new ConfigurationDefinition("structured-and-raw", "structured and raw");
+        configDef.setConfigurationFormat(ConfigurationFormat.STRUCTURED_AND_RAW);
+
+        ResourceType resourceType = new ResourceType();
+        resourceType.setResourceConfigurationDefinition(configDef);
+
+        return resourceType;
+    }
+
+    ResourceType createStructurerdOnly() {
+        ConfigurationDefinition configDef = new ConfigurationDefinition("structred-config-def", "structured config def");
+        configDef.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
+
+        ResourceType resourceType = new ResourceType();
+        resourceType.setResourceConfigurationDefinition(configDef);
+
+        return resourceType;
     }
 
 }

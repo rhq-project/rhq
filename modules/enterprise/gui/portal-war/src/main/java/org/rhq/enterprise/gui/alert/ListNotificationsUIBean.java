@@ -104,7 +104,10 @@ public class ListNotificationsUIBean {
         if (alertProperties==null) {
             if (alertConfigurationDefinition==null)
                 alertConfigurationDefinition = getAlertConfigurationDefinition();
-            alertProperties = alertConfigurationDefinition.getDefaultTemplate().getConfiguration();
+            if (alertConfigurationDefinition!=null)
+                alertProperties = alertConfigurationDefinition.getDefaultTemplate().getConfiguration();
+            else
+                alertProperties = new Configuration();
         }
         return alertProperties;
     }
@@ -139,7 +142,6 @@ public class ListNotificationsUIBean {
     }
 
     public String mySubmitForm() {
-        log.info("In submit Form ");
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         mgr.addAlertNotification(subject, alertDefinitionId,selectedSender,alertProperties);

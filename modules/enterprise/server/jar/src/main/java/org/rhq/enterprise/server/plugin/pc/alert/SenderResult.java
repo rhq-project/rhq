@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -27,8 +30,12 @@ import org.apache.commons.logging.LogFactory;
  */
 public class SenderResult {
 
+    /** Message returned for logging purposes */
     private String message;
+    /** Was calling the AlertSender.send() method successful? */
     private ResultState state;
+    /** A list of email addresses that should be notified */
+    private List<String> emails = new ArrayList<String>();
 
     public SenderResult(ResultState state, String message) {
         this.message = message;
@@ -51,12 +58,25 @@ public class SenderResult {
         this.state = state;
     }
 
+    public List<String> getEmails() {
+        return emails;
+    }
+
+    public void setEmails(List<String> emails) {
+        this.emails = emails;
+    }
+
+    public void addEmail(String email) {
+        emails.add(email);
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         sb.append("SenderResult");
         sb.append("{message='").append(message).append('\'');
         sb.append(", state=").append(state);
+        sb.append(", emails=").append(emails);
         sb.append('}');
         return sb.toString();
     }

@@ -24,6 +24,8 @@ package org.rhq.enterprise.server.plugin.pc.alert;
  * @see SenderResult
  */
 public enum ResultState {
+    /** Success  */
     SUCCESS,
-    FAILURE;
+    /** Failure */
+    FAILURE
 }

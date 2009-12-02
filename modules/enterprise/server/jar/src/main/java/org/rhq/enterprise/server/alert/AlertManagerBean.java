@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -90,6 +91,7 @@ import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
 import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -672,6 +674,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 if (sender!=null) {
                     try {
                         SenderResult result = sender.send(alert);
+                        if (result.getState() == ResultState.SUCCESS) {
+                            if (result.getEmails()!=null && !result.getEmails().isEmpty())
+                                emailAddresses.addAll(result.getEmails());
+                        }
                         // TODO log result
                     }
                     catch (Throwable t) {

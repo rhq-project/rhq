@@ -47,6 +47,11 @@ public abstract class AlertSender {
     /**
      * This method is called to actually send an alert notification.
      * This is where you implement all functionality.
+     *
+     * The return value is a SenderResult object, which encodes a log message,
+     * success or failure and can contain email addresses that got computed by
+     * your AlertSender and which will be sent by the system after *all* senders
+     * have been run.
      * @param alert the Alert to operate on
      * @return result of sending - a ResultState and a message for auditing
      */

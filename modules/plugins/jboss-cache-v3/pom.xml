@@ -23,6 +23,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
         <jbossas.version>5.2.0-SNAPSHOT</jbossas.version>
+        <rhq.groupId>org.rhq</rhq.groupId>
     </properties>
                       
     <dependencyManagement>
@@ -49,14 +50,14 @@
      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${rhq.version}</version>
+         <version>${version}</version>
          <scope>provided</scope>
      </dependency>
 
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
-         <version>${rhq.version}</version>
+         <version>${version}</version>
          <scope>provided</scope>
      </dependency>
 

@@ -21,6 +21,8 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -108,8 +110,6 @@ public class PrimaryXML {
         } else if (flags == (RPM_SENSE_EQUAL)) {
             return "EQ";
         }
-
-        log.debug("Unknown rpm sense value of " + sense + " which parsed to an integer of " + tmp);
         return "";
     }
 
@@ -319,7 +319,34 @@ public class PrimaryXML {
         if (obs_type != null) {
             List<Serializable> obsoletes = obs_type.getContent();
             for (Serializable s : obsoletes) {
-                RhnPackageObsoletesEntryType obsEntry = (RhnPackageObsoletesEntryType) s;
+                RhnPackageObsoletesEntryType obsEntry = null;
+                if (s instanceof String) {
+                    String obsString = (String) s;
+                    if (StringUtils.isBlank(obsString)) {
+                        continue;
+                    }
+                    log.info("Adding Obsoletes info <String Class> value = " + obsString);
+                    Element entry = new Element("entry", rpmNS);
+                    entry.setAttribute("name", obsString);
+                    rpmObsoletes.addContent(entry);
+                    // skip rest of obs processing for this entry
+                    continue;
+                }
+                //
+                // Below obs entry processing is for JAXBElement types only
+                //
+                if (s instanceof JAXBElement) {
+                    JAXBElement je = (JAXBElement) s;
+                    log.debug("Processing obsolete info for JAXBElement of type : " + je.getDeclaredType());
+                    obsEntry = (RhnPackageObsoletesEntryType) je.getValue();
+                } else if (s instanceof RhnPackageObsoletesEntryType) {
+                    obsEntry = (RhnPackageObsoletesEntryType) s;
+                } else {
+                    log.info("Processing obsoletes info:  unable to determine what class obsoletes entry is: "
+                        + "getClass() =  " + s.getClass() + ", toString() = " + s.toString() + ", hashCode = "
+                        + s.hashCode());
+                    continue;
+                }
                 Element entry = new Element("entry", rpmNS);
                 entry.setAttribute("name", obsEntry.getName());
                 String obsVer = obsEntry.getVersion();

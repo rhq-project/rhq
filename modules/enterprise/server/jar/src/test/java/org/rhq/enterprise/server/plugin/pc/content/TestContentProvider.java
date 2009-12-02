@@ -75,13 +75,23 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         PACKAGES.put(key2, details2);
     }
 
+    /**
+     * Number of associated distribution files: 2
+     */
+    public static final String DISTRIBUTION_1_LABEL = "distribution1";
+
+    /**
+     * Number of associated distribution files: 1
+     */
+    public static final String DISTRIBUTION_2_LABEL = "distribution2";
+
     public static final Map<String, DistributionDetails> DISTRIBUTIONS =
         new HashMap<String, DistributionDetails>(2);
     static {
 
         // Note: The type "kickstart" should already be in the database from installation
 
-        DistributionDetails dis1 = new DistributionDetails("distribution1", "kickstart");
+        DistributionDetails dis1 = new DistributionDetails(DISTRIBUTION_1_LABEL, "kickstart");
         dis1.setDistributionPath("/kstrees");
         DistributionFileDetails file11 = new DistributionFileDetails("dist1file1",
             System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
@@ -92,7 +102,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         DISTRIBUTIONS.put(dis1.getLabel(), dis1);
 
-        DistributionDetails dis2 = new DistributionDetails("distribution2", "kickstart");
+        DistributionDetails dis2 = new DistributionDetails(DISTRIBUTION_2_LABEL, "kickstart");
         dis2.setDistributionPath("/kstrees");
         DistributionFileDetails file21 = new DistributionFileDetails("dist2file1",
             System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");

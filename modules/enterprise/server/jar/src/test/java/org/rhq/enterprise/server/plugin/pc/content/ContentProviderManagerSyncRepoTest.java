@@ -241,6 +241,30 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         assert repoDistributions.size() == TestContentProvider.DISTRIBUTIONS.size() :
             "Expected: " + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
 
+        // Make sure each distribution has the correct files associated
+        int distro1FileCount = countDistroFiles(entityManager, TestContentProvider.DISTRIBUTION_1_LABEL);
+        assert distro1FileCount == 2 : "Expected: 2, Found: " + distro1FileCount;
+
+        int distro2FileCount = countDistroFiles(entityManager, TestContentProvider.DISTRIBUTION_2_LABEL);
+        assert distro2FileCount == 1 : "Expected: 1, Found: " + distro1FileCount;
+
         tx.rollback();
+    }
+
+    private int countDistroFiles(EntityManager entityManager, String label) {
+        Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_LABEL);
+        query.setParameter("label", label);
+        Distribution distro = (Distribution) query.getSingleResult();
+
+        query = entityManager.createNamedQuery(DistributionFile.SELECT_BY_DIST_ID);
+        query.setParameter("distId", distro.getId());
+        List distroFiles = query.getResultList();
+
+        if (distroFiles == null) {
+            return 0;
+        }
+        else {
+            return distroFiles.size();
+        }
     }
 }

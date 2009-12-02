@@ -11,7 +11,7 @@
 '>
 
 <!ENTITY Aliases '
-    <c:list-property name="Aliases">
+    <c:list-property name="Alias">
         <c:description>
             The Alias directive allows documents to be stored in the local filesystem other than under the DocumentRoot.
             With " Alias /image /ftp/pub/image", a request for http://myserver/image/foo.gif would cause the server to return the file /ftp/pub/image/foo.gif. Only complete path segments are matched, so the above alias would not match a request for http://myserver/imagefoo.gif.
@@ -19,9 +19,9 @@
             In particular, if you are creating an Alias to a directory outside of your DocumentRoot, you may need to explicitly permit access to the target directory.
         </c:description>
         <c:map-property name="Alias">
-            <c:simple-property name="urlPath" description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
+            <c:simple-property name="." description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
             <c:simple-property name="regex" type="boolean" default="false" description="Is the url-path a regular expression or not"/>
-            <c:simple-property name="filesystemPath" description="The path on the filesystem that will serve content for given url-path."/>
+            <c:simple-property name="directory" description="The path on the filesystem that will serve content for given url-path."/>
         </c:map-property> 
     </c:list-property>
 '>
@@ -32,7 +32,7 @@
         Configure the logging of requests to the server.
         </c:description>
         <c:map-property name="CustomLog">
-            <c:simple-property name="destination">
+            <c:simple-property name=".">
                 <c:description>
                     Either a file path relative to the ServerRoot or a &#39;|&#39; followed by the name of program to receive the log information on its standard input.
                     Note that the program will be run by the same user that started httpd.
@@ -87,8 +87,8 @@
             The first option is the default, while options 2-4 are configured using the ErrorDocument directive, which is followed by the HTTP response code and a URL or a message. Apache will sometimes offer additional information regarding the problem/error.
         </c:description>
         <c:map-property name="ErrorDocument">
-            <c:simple-property name="ErrorCode" description="HTTP response code of the error." type="integer" />
-            <c:simple-property name="Document" description="URLs can begin with a slash (/) for local web-paths (relative to the DocumentRoot), or be a full URL which the client can resolve. Alternatively, a message can be provided to be displayed by the browser." />
+            <c:simple-property name="." description="HTTP response code of the error." type="integer" />
+            <c:simple-property name="document" description="URLs can begin with a slash (/) for local web-paths (relative to the DocumentRoot), or be a full URL which the client can resolve. Alternatively, a message can be provided to be displayed by the browser." />
         </c:map-property>
     </c:list-property>
 '>
@@ -202,7 +202,7 @@
             The environment variables settings are not supported in the user interface.
         </c:description>
         <c:map-property name="Allow">
-            <c:simple-property name="host"/>
+            <c:simple-property name="."/>
         </c:map-property>
     </c:list-property>
 '>                
@@ -213,7 +213,7 @@
             The arguments for the Deny directive are identical to the arguments for the Allow directive.
         </c:description>
         <c:map-property name="Deny">
-            <c:simple-property name="host"/>
+            <c:simple-property name="."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -398,11 +398,11 @@
       <resource-configuration>
         <c:list-property name="ListenAddresses">
             <c:map-property name="Listen">
-                <c:simple-property name="IP" required="false"/>
-                <c:simple-property name="Port">
+                <c:simple-property name="ip" required="false"/>
+                <c:simple-property name="port">
                     <c:constraint><c:integer-constraint minimum="0" maximum="65535"/></c:constraint>
                 </c:simple-property>
-                <c:simple-property name="Scheme" required="false"/>
+                <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
         &DocumentRoot;
@@ -616,7 +616,7 @@
             &ServerName;
             <c:list-property name="ServerAliases">
                 <c:map-property name="ServerAlias">
-                    <c:simple-property name="ServerAlias"/>
+                    <c:simple-property name="hostname"/>
                 </c:map-property>
             </c:list-property>
             &ServerAdmin;

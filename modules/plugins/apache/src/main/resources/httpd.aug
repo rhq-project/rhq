@@ -69,7 +69,7 @@ let acceptFilter = [wskey "AcceptFilter" . [ sep . label "protocol" . store word
 let acceptPathInfo = kv1 "AcceptPathInfo" (on_off | "Default")
 let addDescription = kv_val_arr "AddDescription" word "file" word
 let addEncoding = kv_val_arr "AddEncoding" word "extension" word
-let serverAlias = kv_val_arr "ServerAlias" word "hostname" word
+let serverAlias = kv_arr1 "ServerAlias" "hostname" word
 let addType = kv_val_arr "AddType" word "name" word
 let authType = kv1 "AuthType" ("Basic"|"Digest")
 let action = [wskey "Action". [sep . label "action-type" . store word] . 
@@ -104,7 +104,7 @@ let browserMatchNoCase = kv_arr1 "BrowserMatchNoCase" "name" word
 let customLog = 
   [ wskey "CustomLog" . sep . store word .
       [ sep . label "format" . store word ] .
-      [ sep . label "env" . Util.del_str "=" . store /[^= \t\n]+/ ]? . eol ]
+      [ sep . key "env" . Util.del_str "=" . store /[^= \t\n]+/ ]? . eol ]
 let imapMenu = kv1 "ImapMenu" /none|formatted|semiformatted|unformatted/
 let indexOrderDefault = kv1 "IndexOrderDefault" /Ascending|Descending Name|Date|Size|Description/
 let iSAPICacheFile = kv_arr "ISAPICacheFile" "file" word 
@@ -200,7 +200,11 @@ let useCanonicalName= kv1 "UseCanonicalName" (on_off |"DNS")
 let xBitHack = kv1 "XBitHack" (on_off |"full")
 let serverTokens =
   kv1 "ServerTokens" /Major|Minor|Min(imal)?|Prod(uctOnly)?|OS|Full/
-
+let listen = [ wskey "Listen" . sep .
+    [ label "ip" . store /([0-9\.]+)|(\[[0-9a-fA-F:]+\])/ . Util.del_str ":" ]? .
+    [ label "port" . store number ] .
+    [ sep . label "scheme" . store alnum ]? . eol ]
+    
 let dirWithOnOfNm =    "KeepAlive"
                      | "HostnameLookups"
                      | "EnableSendFile"
@@ -280,7 +284,6 @@ let dirWithNrParam = "Timeout"
                      | "MaxKeepAliveRequests" 
                      | "KeepAliveTimeout"
                      | "MaxClients"
-                     | "Listen"
                      | "ISAPIReadAheadBuffer"
                      | "LimitRequestBody"
                      | "LimitRequestFields"
@@ -335,6 +338,7 @@ let directive =  accessFileName
               | loadModule
               | logFormat
               | logLevel
+              | listen
               | options
               | order
               | scriptAlias

@@ -162,14 +162,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                     AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
                     if (pc != null) {
                         try {
-                            pc.schedulePluginJobs(pluginKey);
-                        } catch (Exception e) {
-                            log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
-                        }
-                        try {
                             pc.reloadPlugin(pluginKey, true);
                         } catch (Exception e) {
                             log.warn("Failed to enable server plugin [" + pluginKey + "]", e);
+                        }
+                        try {
+                            pc.schedulePluginJobs(pluginKey);
+                        } catch (Exception e) {
+                            log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
                         }
                     }
                 }

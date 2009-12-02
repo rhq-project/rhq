@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.perspective;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.InventoryActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionType;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -45,10 +53,12 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // based on username it's not quite appropriate.
     // The cache is cleaned anytime there is a new entry.
     static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
-    private List<MenuItem> coreMenu;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
+
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -75,14 +85,18 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             try {
                 coreMenu = PerspectiveManagerHelper.getPluginMetadataManager().getCoreMenu();
 
+                // We have to be careful not to mess with the core menu as it is returned from
+                // the perspective manager. The core menu for each subject/sessionid could
+                // differ based on activation checks. So, get a new mnu structure when applying
+                // activation filters.
+                coreMenu = getActivatedMenu(subject, coreMenu);
+
                 // TODO : make safe copy
                 cacheEntry.setCoreMenu(coreMenu);
             } catch (Exception e) {
                 throw new PerspectiveException("Failed to get Core Menu.", e);
             }
         }
-
-        // TODO: Apply Activators here
 
         return coreMenu;
     }
@@ -102,6 +116,79 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
                 cache.remove(sessionId);
             }
         }
+    }
+
+    /**
+     * Given a menu return a filtered copy such that inactive menu items are not present. Recursively
+     * handles children menus.
+     * 
+     * @param subject
+     * @param coreMenu
+     * @return A filtered copy of the menu structure. This results in new Lists and new MenuItems
+     * that refer to the original MenuItemType objects.
+     */
+    private List<MenuItem> getActivatedMenu(Subject subject, List<MenuItem> menu) {
+        List<MenuItem> result = new ArrayList<MenuItem>(menu.size());
+
+        for (MenuItem menuItem : menu) {
+            MenuItemType item = menuItem.getItem();
+            List<InventoryActivatorSetType> inventoryActivatorSets = item.getInventoryActivatorSet();
+            List<PermissionActivatorSetType> permissionActivatorSets = item.getPermissionActivatorSet();
+
+            // Make sure activators are satisfied before copying
+            if (checkActivators(subject, inventoryActivatorSets, permissionActivatorSets)) {
+                MenuItem copy = new MenuItem(menuItem.getItem());
+
+                result.add(copy);
+                if (menuItem.isMenuGroup()) {
+                    copy.setChildren(getActivatedMenu(subject, menuItem.getChildren()));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private boolean checkActivators(Subject subject, List<InventoryActivatorSetType> inventoryActivatorSets,
+        List<PermissionActivatorSetType> permissionActivatorSets) {
+
+        // global perm checking is relatively fast, make sure these pass before checking inventory activators
+        for (PermissionActivatorSetType permissionActivatorSet : permissionActivatorSets) {
+            boolean any = permissionActivatorSet.isAny();
+            boolean anyPassed = false;
+            boolean anyFailed = false;
+
+            for (PermissionActivatorType permissionActivator : permissionActivatorSet.getPermissionActivator()) {
+                boolean hasPermission = hasGlobalPermission(subject, permissionActivator.getPermission());
+                anyPassed = hasPermission;
+                anyFailed = !hasPermission;
+
+                if (any && anyPassed) {
+                    break;
+                }
+                if (!any && anyFailed) {
+                    break;
+                }
+            }
+
+            if ((any && !anyPassed) || (!any && anyFailed)) {
+                return false;
+            }
+        }
+
+        for (InventoryActivatorSetType inventoryActivatorSet : inventoryActivatorSets) {
+            //TODO: impl
+        }
+
+        return true;
+    }
+
+    private boolean hasGlobalPermission(Subject subject, PermissionType permissionType) {
+        if (permissionType == PermissionType.SUPERUSER) {
+            return authorizationManager.isSystemSuperuser(subject);
+        }
+
+        return authorizationManager.hasGlobalPermission(subject, Permission.valueOf(permissionType.name()));
     }
 
     // TODO: remove this debug code

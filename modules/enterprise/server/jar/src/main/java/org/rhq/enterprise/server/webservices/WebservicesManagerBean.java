@@ -370,6 +370,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration);
     }
 
+    public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration, boolean fromStructured)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
+    }
+
     public ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId) {
         return configurationManager.getPackageTypeConfigurationDefinition(subject, packageTypeId);
     }

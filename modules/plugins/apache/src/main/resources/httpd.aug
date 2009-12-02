@@ -189,7 +189,7 @@ let logLevel = kv1 "LogLevel" /emerg|alert|crit|error|warn|notice|info|debug/
 let options =
   let opt_re = /[+-]?(None|Indexes|Includes(NOEXEC)?|FollowSymLinks|SymLinksIfOwnerMatch|ExecCGI|MultiViews|RunScripts|All)/ in
   kv_arr "Options" "option" opt_re
-let order = kv1 "Order" /Allow,Deny|Deny,Allow|Mutual-failure/
+let order = kv1 "Order" /[aA]llow,[dD]eny|[dD]eny,[aA]llow|[mM]utual-failure/
 let scriptAlias = kv2 "ScriptAlias" word "directory" word
 let scriptAliasMatch = [ sep .key "ScriptAliasMatch" . 
       [ sep . label "regex" . store word ] .
@@ -396,13 +396,18 @@ let secN (name:string) (args:lens) (body:lens) =
         body . 
         Util.del_str("</" . name . ">") . eol ]
 
+(* A helper for <Directory>-like sections that can optionally have ~ preceeding the 
+   path argument making httpd interpret it as a regex *)
+let pathSpec (l:string) =
+    [ label l . Util.del_str "~" . sep ]? . store secarg
+
 let ifModule (body:lens) = sec1 "IfModule" body
-let directory (body:lens) = secN "Directory" ([ label "Directory_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let directory (body:lens) = secN "Directory" (pathSpec "Directory_regexp") body
 let directoryMatch (body:lens) = sec1 "DirectoryMatch" body
 let virtualHost (body:lens) = sec1 "VirtualHost" body
-let files (body:lens) = secN "Files" ([label "Files_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let files (body:lens) = secN "Files" (pathSpec "Files_regexp") body
 let filesMatch (body:lens) = sec1 "FilesMatch" body
-let location (body:lens) = secN "Location" ([label "Location_regexp" . Util.del_str "~" . sep ]? . store secarg) body
+let location (body:lens) = secN "Location" (pathSpec "Location_regexp") body
 let locationMatch (body:lens) = sec1 "LocationMatch" body
 
 let anySection(body:lens) = ifModule body | directory body | directoryMatch body | 

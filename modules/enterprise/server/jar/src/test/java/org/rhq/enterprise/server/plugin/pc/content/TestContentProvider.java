@@ -3,8 +3,10 @@ package org.rhq.enterprise.server.plugin.pc.content;
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
 import java.io.BufferedInputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -39,12 +41,17 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public static final String REPO_WITH_PACKAGES = EXISTING_IMPORTED_REPO_NAME;
 
     /**
+     * This content provider will return distributions when asked to synchronize a repo with this name.
+     */
+    public static final String REPO_WITH_DISTRIBUTIONS = EXISTING_IMPORTED_REPO_NAME;
+
+    /**
      * Collection of packages that will be returned from calling
      * {@link #synchronizePackages(String, PackageSyncReport, Collection)} passing in a repo with the name
      * {@link #REPO_WITH_PACKAGES}.
      */
     public static final Map<ContentProviderPackageDetailsKey, ContentProviderPackageDetails> PACKAGES =
-        new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(3);
+        new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(2);
     static {
 
         ContentProviderPackageDetailsKey key1 =
@@ -52,6 +59,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
                 RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
         ContentProviderPackageDetails details1 = new ContentProviderPackageDetails(key1);
         details1.setFileName("filename1");
+        details1.setFileSize(4L);
         details1.setLocation("foo1");
 
         PACKAGES.put(key1, details1);
@@ -61,6 +69,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
                 RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
         ContentProviderPackageDetails details2 = new ContentProviderPackageDetails(key2);
         details2.setFileName("filename2");
+        details2.setFileSize(4L);
         details2.setLocation("foo2");
 
         PACKAGES.put(key2, details2);
@@ -70,6 +79,35 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
      * If <code>true</code>, the call to {@link #testConnection()} will throw an exception.
      */
     private boolean failTest = false;
+
+    /**
+     * Holds a list of all repo names that were passed into calls to
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} to track when and with
+     * what data these calls are made.
+     */
+    private List<String> logSynchronizePackagesRepos = new ArrayList<String>();
+
+    /**
+     * Holds a list of all locations passed into calls to {@link #getInputStream(String)}
+     */
+    private List<String> logGetInputStreamLocations = new ArrayList<String>();
+
+    public void initialize(Configuration configuration) throws Exception {
+        // No-op
+    }
+
+    public void shutdown() {
+        // No-op
+    }
+
+    public void testConnection() throws Exception {
+
+        if (failTest) {
+            throw new Exception("Mock content provider configured to fail the connection test");
+        }
+
+        System.out.println("Connection tested.");
+    }
 
     public RepoImportReport importRepos() throws Exception {
         RepoImportReport report = new RepoImportReport();
@@ -111,6 +149,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public void synchronizePackages(String repoName, PackageSyncReport report,
         Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
 
+        logSynchronizePackagesRepos.add(repoName);
+
         if (!REPO_WITH_PACKAGES.equals(repoName)) {
             return;
         }
@@ -130,24 +170,9 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         }
     }
 
-    public void initialize(Configuration configuration) throws Exception {
-        // No-op
-    }
-
-    public void shutdown() {
-        // No-op
-    }
-
-    public void testConnection() throws Exception {
-
-        if (failTest) {
-            throw new Exception("Mock content provider configured to fail the connection test");
-        }
-
-        System.out.println("Connection tested.");
-    }
-
     public InputStream getInputStream(String location) throws Exception {
+
+        logGetInputStreamLocations.add(location);
 
         String seed = "Test Bits " + System.currentTimeMillis();
         ByteArrayInputStream bais = new ByteArrayInputStream(seed.getBytes());
@@ -163,6 +188,22 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
      */
     public void setFailTest(boolean failTest) {
         this.failTest = failTest;
+    }
+
+    public List<String> getLogSynchronizePackagesRepos() {
+        return logSynchronizePackagesRepos;
+    }
+
+    public List<String> getLogGetInputStreamLocations() {
+        return logGetInputStreamLocations;
+    }
+
+    /**
+     * Rests the logging of calls made into this instance.
+     */
+    public void reset() {
+        logGetInputStreamLocations.clear();
+        logSynchronizePackagesRepos.clear();
     }
 
     private ContentProviderPackageDetails findDetailsByKey(ContentProviderPackageDetailsKey key,

@@ -154,7 +154,6 @@ public class PackageSourceSynchronizer {
         PageControl pc = PageControl.getUnlimitedInstance();
         Subject overlord = subjectManager.getOverlord();
 
-        // TODO: jdob - Need to change this call to only load packages for this repo
         List<PackageVersionContentSource> packageVersionContentSources = contentSourceManager
             .getUnloadedPackageVersionsFromContentSourceInRepo(overlord, source.getId(), repo.getId(), pc);
         log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName()

@@ -498,6 +498,13 @@ public class ConfigurationTest {
         Configuration serializedConfig = TestUtil.serializeAndDeserialize(config);
 
         assertEquals(serializedConfig.getMap(), config.getMap(), "Failed to property serialize the map property");
+        for (Property property : serializedConfig.getProperties()) {
+            assertEquals(
+                property.getConfiguration(),
+                serializedConfig,
+                "Failed to update parent reference of property during serialization"
+            );
+        }
     }
 
     @Test
@@ -667,6 +674,13 @@ public class ConfigurationTest {
             config.getRawConfigurations(),
             "Failed to properly serialize rawConfigurations property"
         );
+        for (RawConfiguration rawConfig : serializedConfig.getRawConfigurations()) {
+            assertEquals(
+                rawConfig.getConfiguration(),
+                serializedConfig,
+                "Failed to update parent reference of raw config during serialization"
+            );
+        }
     }
 
     private void updateModifiedTime(Configuration config) {

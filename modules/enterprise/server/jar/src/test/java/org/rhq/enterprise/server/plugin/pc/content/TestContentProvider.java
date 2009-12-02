@@ -75,6 +75,32 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         PACKAGES.put(key2, details2);
     }
 
+    public static final Map<String, DistributionDetails> DISTRIBUTIONS =
+        new HashMap<String, DistributionDetails>(2);
+    static {
+
+        // Note: The type "kickstart" should already be in the database from installation
+
+        DistributionDetails dis1 = new DistributionDetails("distribution1", "kickstart");
+        dis1.setDistributionPath("/kstrees");
+        DistributionFileDetails file11 = new DistributionFileDetails("dist1file1",
+            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
+        DistributionFileDetails file12 = new DistributionFileDetails("dist1file2",
+            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
+        dis1.addFile(file11);
+        dis1.addFile(file12);
+
+        DISTRIBUTIONS.put(dis1.getLabel(), dis1);
+
+        DistributionDetails dis2 = new DistributionDetails("distribution2", "kickstart");
+        dis2.setDistributionPath("/kstrees");
+        DistributionFileDetails file21 = new DistributionFileDetails("dist2file1",
+            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
+        dis2.addFile(file21);
+
+        DISTRIBUTIONS.put(dis2.getLabel(), dis2);
+    }
+
     /**
      * If <code>true</code>, the call to {@link #testConnection()} will throw an exception.
      */
@@ -88,9 +114,15 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     private List<String> logSynchronizePackagesRepos = new ArrayList<String>();
 
     /**
-     * Holds a list of all locations passed into calls to {@link #getInputStream(String)}
+     * Holds a list of all locations passed into calls to {@link #getInputStream(String)}.
      */
     private List<String> logGetInputStreamLocations = new ArrayList<String>();
+
+    /**
+     * Holds a list of all repo names that were passed into calls to
+     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)}.
+     */
+    private List<String> logSynchronizeDistroRepos = new ArrayList<String>();
 
     public void initialize(Configuration configuration) throws Exception {
         // No-op
@@ -181,6 +213,35 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return bis;
     }
 
+    public void synchronizeDistribution(String repoName, DistributionSyncReport report,
+                                        Collection<DistributionDetails> existingDistros) throws Exception {
+
+        logSynchronizeDistroRepos.add(repoName);
+
+        if (!REPO_WITH_DISTRIBUTIONS.equals(repoName)) {
+            return;
+        }
+
+        for (DistributionDetails distro : DISTRIBUTIONS.values()) {
+
+            boolean existing = false;
+            for (DistributionDetails existingDistro : existingDistros) {
+                if (distro.getLabel().equals(existingDistro.getLabel())) {
+                    existing = true;
+                    break;
+                }
+            }
+
+            if (!existing) {
+                report.addDistro(distro);
+            }
+        }
+    }
+
+    public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
+        return "foo";
+    }
+
     /**
      * Indicates if the {@link #testConnection()} method should fail (i.e. throw an exception).
      *
@@ -190,12 +251,39 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         this.failTest = failTest;
     }
 
+    /**
+     * Returns a list of repo names that were used to all calls to
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} either since the creation
+     * of this instance or the last call to {@link #reset()}.
+     *
+     * @return handle to the actual list used to capture these names; be careful about iterating this
+     *         list while making other calls against this instance
+     */
     public List<String> getLogSynchronizePackagesRepos() {
         return logSynchronizePackagesRepos;
     }
 
+    /**
+     * Returns a list of locations passed into all calls to {@link #getInputStream(String)} since
+     * the creation of this instance or the lsat call to {@link #reset()}.
+     *
+     * @return handle to the actual list used to capture these names; be careful about iterating this
+     *         list while making other calls against this instance
+     */
     public List<String> getLogGetInputStreamLocations() {
         return logGetInputStreamLocations;
+    }
+
+    /**
+     * Returns a list of repo names that were used to all calls to
+     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)} either since the
+     * creation of this instance or the last call to {@link #reset()}.
+     *
+     * @return handle to the actual list used to capture these names; be careful about iterating this
+     *         list while making other calls against this instance
+     */
+    public List<String> getLogSynchronizeDistroRepos() {
+        return logSynchronizeDistroRepos;
     }
 
     /**
@@ -204,6 +292,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public void reset() {
         logGetInputStreamLocations.clear();
         logSynchronizePackagesRepos.clear();
+        logSynchronizeDistroRepos.clear();
     }
 
     private ContentProviderPackageDetails findDetailsByKey(ContentProviderPackageDetailsKey key,

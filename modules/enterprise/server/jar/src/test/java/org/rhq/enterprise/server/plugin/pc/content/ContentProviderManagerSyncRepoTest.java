@@ -40,10 +40,12 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -128,10 +130,16 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         tx.begin();
         EntityManager entityManager = getEntityManager();
 
+        Query query;
+
         ContentSourceManagerLocal contentSourceManagerLocal = LookupUtil.getContentSourceManager();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        DistributionManagerLocal distroManager = LookupUtil.getDistributionManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         Subject overlord = subjectManager.getOverlord();
+
+        // Delete all distributions
+//        distroManager.deleteDistributionByRepo(overlord, repoToSync.getId());
 
         // Delete all package version <-> content source mappings
         for (ContentSource source : repoContentSources) {
@@ -146,7 +154,7 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         for (ContentProviderPackageDetails details : TestContentProvider.PACKAGES.values()) {
             String packageName = details.getContentProviderPackageDetailsKey().getName();
 
-            Query query = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
+            query = entityManager.createNamedQuery(Package.QUERY_FIND_BY_NAME_PKG_TYPE_ID);
             query.setParameter("name", packageName);
             query.setParameter("packageTypeId", packageType.getId());
 
@@ -183,6 +191,7 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = TESTS_ENABLED)
+    @SuppressWarnings("unchecked")
     public void synchronizeRepo() throws Exception {
 
         // Test
@@ -211,5 +220,18 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
 
         assert repoPackages.size() == TestContentProvider.PACKAGES.size() :
             "Expected: " + TestContentProvider.PACKAGES.size() + ", Found: " + repoPackages.size();
+
+        tx.rollback();
+
+        // Make sure all of the distributions were added
+/*
+        query = entityManager.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);
+        query.setParameter("repoId", repoToSync.getId());
+        List<RepoDistribution> repoDistributions = query.getResultList();
+
+        assert repoDistributions.size() == TestContentProvider.DISTRIBUTIONS.size() :
+            "Expected: " + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
+*/
+
     }
 }

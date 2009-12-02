@@ -3,14 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.jboss.on</groupId>
-      <!--  Bypass the jon-plugins-parent which can not have children. It must build after the plugins in order to execute integration tests on them. -->
-      <artifactId>jopr-modules-parent</artifactId>
-      <version>2.4.0-SNAPSHOT</version>
+      <groupId>org.rhq</groupId>      
+      <artifactId>rhq-plugins-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
     </parent>
     
    <groupId>org.jboss.on</groupId>
-    <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
+   <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
    <packaging>jar</packaging>
 
    <name>RHQ JBossCache 3.x Plugin</name>
@@ -23,7 +22,8 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
-        <jbossas.version>5.2.0-SNAPSHOT</jbossas.version>
+        
+        <jbossas.version>6.0.0.M1</jbossas.version>
     </properties>
                       
     <dependencyManagement>
@@ -50,7 +50,7 @@
      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
      </dependency>
 

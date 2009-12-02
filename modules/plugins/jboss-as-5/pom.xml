@@ -29,7 +29,7 @@
     <properties>
         <scm.module.path>modules/plugins/jboss-as-5/</scm.module.path>
 
-        <jbossas.version>5.2.0-SNAPSHOT</jbossas.version>        
+        <jbossas.version>6.0.0.M1</jbossas.version>        
     </properties>
     
     <dependencyManagement>

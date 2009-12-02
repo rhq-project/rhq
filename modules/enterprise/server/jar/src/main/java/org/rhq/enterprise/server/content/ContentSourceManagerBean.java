@@ -691,7 +691,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             int contentSourceId = contentSource.getId();
             ContentProviderManager cpMgr = pc.getAdapterManager();
             ContentProvider provider = cpMgr.getIsolatedContentProvider(contentSource.getId());
-            assert (provider instanceof DistributionSource);
+
+            if (!(provider instanceof DistributionSource)) {
+                return;
+            }
+
             DistributionSource distSource = (DistributionSource) provider;
 
             //

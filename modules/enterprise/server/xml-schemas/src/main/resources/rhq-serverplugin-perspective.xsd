@@ -117,7 +117,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivator"
+            ref="perspective:inventoryActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -128,7 +128,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:permissionActivator"
+            ref="perspective:permissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -228,7 +228,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivator"
+            ref="perspective:inventoryActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -238,7 +238,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:permissionActivator"
+            ref="perspective:permissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -373,7 +373,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivator"
+            ref="perspective:inventoryActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -383,7 +383,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:permissionActivator"
+            ref="perspective:permissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -448,57 +448,127 @@
    </xs:complexType>
 
    <xs:element
-      name="inventoryActivator">
+      name="permissionActivatorSet"
+      type="perspective:PermissionActivatorSetType">
       <xs:annotation>
-         <xs:documentation>An activator specifying inventory conditions that must be satisfied in order for the
-            extension to be active.</xs:documentation>
+         <xs:documentation>One or more permission conditions that must be satisfied in order for the extension to be
+            active.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
-               name="InventoryActivatorElement" />
+               name="PermissionActivatorSetElement" />
          </xs:appinfo>
       </xs:annotation>
-
-      <xs:complexType>
-         <xs:sequence>
-            <xs:element
-               ref="perspective:permissionActivator"
-               minOccurs="0"
-               maxOccurs="unbounded">
-            </xs:element>
-            <xs:element
-               ref="perspective:traitActivator"
-               minOccurs="0"
-               maxOccurs="unbounded">
-            </xs:element>
-         </xs:sequence>
-         <xs:attribute
-            name="plugin"
-            type="xs:string"
-            use="required">
-            <xs:annotation>
-               <xs:documentation>Plugin for the specified resource type.</xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-         <xs:attribute
-            name="resourceType"
-            type="xs:string"
-            use="required">
-            <xs:annotation>
-               <xs:documentation>Resource Type that must be in inventory to activate the extension point.
-               </xs:documentation>
-            </xs:annotation>
-         </xs:attribute>
-      </xs:complexType>
    </xs:element>
 
    <xs:element
+      name="traitActivatorSet"
+      type="perspective:TraitActivatorSetType">
+      <xs:annotation>
+         <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
+            active.</xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="TraitActivatorSetElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:element
+      name="inventoryActivatorSet"
+      type="perspective:InventoryActivatorSetType">
+      <xs:annotation>
+         <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
+            active.</xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="InventoryActivatorSetElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="PermissionActivatorSetType">
+      <xs:sequence>
+         <xs:element
+            ref="perspective:permissionActivator"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="any"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+               activators must be satisfied. Default is false.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType
+      name="TraitActivatorSetType">
+      <xs:sequence>
+         <xs:element
+            ref="perspective:traitActivator"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="any"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+               activators must be satisfied. Default is false.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType
+      name="InventoryActivatorSetType">
+      <xs:sequence>
+         <xs:element
+            ref="perspective:inventoryActivator"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="any"
+         type="xs:boolean"
+         use="optional"
+         default="false">
+         <xs:annotation>
+            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+               activators must be satisfied. Default is false.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:element
       name="permissionActivator"
-      type="perspective:PermissionType">
+      type="perspective:PermissionActivatorType">
       <xs:annotation>
          <xs:documentation>An activator specifying a permission condition that must be satisfied in order for the
             extension to be active.</xs:documentation>
       </xs:annotation>
    </xs:element>
+
+   <xs:complexType
+      name="PermissionActivatorType">
+      <xs:attribute
+         name="permission"
+         type="perspective:PermissionType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>The required permission.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
 
    <xs:element
       name="traitActivator"
@@ -544,6 +614,52 @@
          default="false">
          <xs:annotation>
             <xs:documentation>If true perform a case sensitive test. If false (default) test is case insensitive.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:element
+      name="inventoryActivator"
+      type="perspective:InventoryActivatorType">
+      <xs:annotation>
+         <xs:documentation>An activator specifying inventory conditions that must be satisfied in order for the
+            extension to be active.</xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="InventoryActivatorElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="InventoryActivatorType">
+      <xs:sequence>
+         <xs:element
+            ref="perspective:permissionActivatorSet"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+         <xs:element
+            ref="perspective:traitActivatorSet"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+      </xs:sequence>
+      <xs:attribute
+         name="plugin"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>Plugin for the specified resource type.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="resourceType"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>Resource Type that must be in inventory to activate the extension point.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -726,6 +842,9 @@
       name="PermissionType">
       <xs:restriction
          base="xs:string">
+         <xs:enumeration
+            value="SUPERUSER"></xs:enumeration>
+
          <xs:enumeration
             value="MANAGE_INVENTORY"></xs:enumeration>
          <xs:enumeration

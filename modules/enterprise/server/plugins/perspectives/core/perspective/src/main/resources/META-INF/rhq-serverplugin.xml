@@ -61,6 +61,10 @@
          extensionPoint="coreMenu"
          name="administration"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="SUPERUSER" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="help"
@@ -70,30 +74,7 @@
          name="debug"
          placement="after" />
    </menuItem>
-<!-- 
-   <menuItem
-      name="refresh"
-      displayName=""
-      iconUrl="/images/refreshStopped.gif"
-      feature="refreshMenu">
-      <position
-         extensionPoint="coreMenu"
-         name="help"
-         placement="after"
-         location="right" />
-   </menuItem>
-   <menuItem
-      name="loggedInAs"
-      displayName="Logged in as "
-      feature="loggedInAsMenu">
-      <position
-         extensionPoint="coreMenu"
-         name="refresh"
-         placement="after"
-         location="right" />
-   </menuItem>
- -->
- 
+
    <!--  Core Menu: Overview -->
    <menuItem
       name="overview.subsystemViews"
@@ -225,6 +206,10 @@
          name="groups.groupDefinitions"
          placement="after"
          addBreak="true" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="groups.newGroupDefinition"
@@ -234,6 +219,10 @@
          extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="groups.favoriteGroups"
@@ -284,6 +273,13 @@
          extensionPoint="coreMenu"
          name="administration.security"
          placement="after" />
+      <permissionActivatorSet
+         any="true">
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+         <permissionActivator
+            permission="MANAGE_SETTINGS" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.content"
@@ -292,6 +288,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.highAvailability"
@@ -300,6 +300,10 @@
          extensionPoint="coreMenu"
          name="administration.content"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.reports"
@@ -327,6 +331,10 @@
          extensionPoint="coreMenu"
          name="administration.download"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_SETTINGS" />
+      </permissionActivatorSet>
    </menuItem>
 
    <!--  Core Menu: Debug -->
@@ -505,6 +513,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration"
          placement="start" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_SETTINGS" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.systemConfiguration.plugins"
@@ -514,6 +526,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration.settings"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_SETTINGS" />
+      </permissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.systemConfiguration.templates"
@@ -523,6 +539,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration.plugins"
          placement="after" />
+      <permissionActivatorSet>
+         <permissionActivator
+            permission="MANAGE_INVENTORY" />
+      </permissionActivatorSet>
    </menuItem>
 
    <!--  Core Menu: administration.content -->

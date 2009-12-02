@@ -16,6 +16,9 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * Interface to the methods that interact with the serve-side plugin infrastructure.
+ * Most of these methods will only return information on {@link PluginStatusType#INSTALLED}
+ * plugins; only when explicitly stated will a method return data on
+ * {@link PluginStatusType#DELETED} plugins, too.
  * 
  * @author John Mazzitelli
  */
@@ -68,6 +71,14 @@ public interface ServerPluginsLocal {
     List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**
+     * Get a list of both installed and deleted plugins from their IDs.
+     * 
+     * @param pluginIds the IDs of the plugins to load.
+     * @return plugins matching the given IDs
+     */
+    List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds);
+
+    /**
      * Given a plugin key, returns the descriptor for that plugin.
      * 
      * @param pluginKey
@@ -115,6 +126,17 @@ public interface ServerPluginsLocal {
      * @throws Exception if failed to undeploy a plugin
      */
     List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    /**
+     * Purges the undeployed plugins from the system so there is no record of them to have
+     * ever existed. This deletes all remnants of the plugin from the database.
+     *
+     * @param subject user making the request
+     * @param pluginIds the plugins to be purged
+     * @return the list of keys of plugins that were purged
+     * @throws Exception if failed to purge a plugin
+     */
+    List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
      * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.

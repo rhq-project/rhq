@@ -40,7 +40,6 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -139,7 +138,7 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         Subject overlord = subjectManager.getOverlord();
 
         // Delete all distributions
-//        distroManager.deleteDistributionByRepo(overlord, repoToSync.getId());
+        distroManager.deleteDistributionMappingsForRepo(overlord, repoToSync.getId());
 
         // Delete all package version <-> content source mappings
         for (ContentSource source : repoContentSources) {
@@ -158,14 +157,8 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
             query.setParameter("name", packageName);
             query.setParameter("packageTypeId", packageType.getId());
 
-            try {
-                Package p = (Package) query.getSingleResult();
-                entityManager.remove(p);
-            }
-            catch (Exception e) {
-                System.out.println("===================================");
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
+            Package p = (Package) query.getSingleResult();
+            entityManager.remove(p);
         }
 
         // Delete the package type
@@ -221,7 +214,6 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         assert repoPackages.size() == TestContentProvider.PACKAGES.size() :
             "Expected: " + TestContentProvider.PACKAGES.size() + ", Found: " + repoPackages.size();
 
-        tx.rollback();
 
         // Make sure all of the distributions were added
 /*
@@ -233,5 +225,6 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
             "Expected: " + TestContentProvider.DISTRIBUTIONS.size() + ", Found: " + repoDistributions.size();
 */
 
+        tx.rollback();
     }
 }

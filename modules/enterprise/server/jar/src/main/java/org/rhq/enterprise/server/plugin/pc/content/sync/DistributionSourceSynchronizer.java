@@ -113,6 +113,10 @@ public class DistributionSourceSynchronizer {
     }
 
     public void synchronizeDistributionBits() throws Exception {
+        if (!(provider instanceof DistributionSource)) {
+            return;
+        }
+
         Subject overlord = subjectManager.getOverlord();
         contentSourceManager.downloadDistributionBits(overlord, source);
     }

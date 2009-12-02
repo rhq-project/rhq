@@ -36,7 +36,7 @@ import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * A server plugin.
- * 
+ *
  * This object contains information about the plugin jar itself (e.g. its name and MD5).
  * It may also contain the jar contents ({@link #getContent()}).
  */
@@ -50,13 +50,13 @@ import org.rhq.core.domain.configuration.Configuration;
         + "  WHERE p.name = :name)"), //
 
     // helps you determine which installed plugins are enabled or disabled
-    @NamedQuery(name = ServerPlugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
+    @NamedQuery(name = ServerPlugin.QUERY_GET_KEYS_BY_ENABLED, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
         + "        p.deployment, " //
         + "        p.type, " //
         + "        p.name) " //
         + "   FROM ServerPlugin AS p " //
-        + "  WHERE p.enabled = :enabled " // 
+        + "  WHERE p.enabled = :enabled " //
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
@@ -78,9 +78,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -103,9 +103,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.name=:name " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -129,9 +129,9 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.name=:name "), //
 
     // finds all installed - ignores those plugins marked as deleted
@@ -155,9 +155,30 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.pluginConfiguration " //
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.status = 'INSTALLED' "), //
+
+    // returns all installed plugins, both enabled and disabled
+    // this is faster than QUERY_FIND_ALL_INSTALLED because it doesn't join configs
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
+        + "        p.deployment, " //
+        + "        p.type, " //
+        + "        p.name) " //
+        + "   FROM ServerPlugin AS p " //
+        + "  WHERE p.status = 'INSTALLED' "), //
+
+    // returns all installed plugins, both enabled and disabled
+    // this is faster than QUERY_FIND_BY_IDS because it doesn't join configs
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_KEYS_BY_IDS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.PluginKey( " //
+        + "        p.deployment, " //
+        + "        p.type, " //
+        + "        p.name) " //
+        + "   FROM ServerPlugin AS p " //
+        + "  WHERE p.id IN (:ids) " //
+        + "        AND p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
     @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
@@ -171,11 +192,13 @@ public class ServerPlugin extends AbstractPlugin {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_GET_STATUS_BY_NAME = "ServerPlugin.queryGetStatusByName";
-    public static final String QUERY_GET_NAMES_BY_ENABLED = "ServerPlugin.queryGetNamesByEnabled";
+    public static final String QUERY_GET_KEYS_BY_ENABLED = "ServerPlugin.queryGetKeysByEnabled";
     public static final String QUERY_FIND_BY_IDS = "ServerPlugin.findByIds";
     public static final String QUERY_FIND_BY_NAME = "ServerPlugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
+    public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
+    public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
@@ -231,7 +254,7 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * If the plugin, itself, has configuration associated with it, this is that configuration.
-     * 
+     *
      * @return the configuration associated with the plugin itself
      */
     public Configuration getPluginConfiguration() {
@@ -244,7 +267,7 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * If the plugin has jobs associated with it, this is the configuration for those jobs.
-     * 
+     *
      * @return scheduled job configuration for jobs that the plugin defined.
      */
     public Configuration getScheduledJobsConfiguration() {
@@ -257,8 +280,8 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * Plugin type string.
-     * 
-     * @return plugin type 
+     *
+     * @return plugin type
      */
     public String getType() {
         return this.type;

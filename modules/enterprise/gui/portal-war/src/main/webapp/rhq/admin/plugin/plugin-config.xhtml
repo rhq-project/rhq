@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+    <ui:param name="pageTitle" value="Server Plugins Configuration"/>
+
+    <ui:define name="metaHeaders">
+        <style>
+            .col1 {
+                width: 20%;
+                vertical-align: top;
+            }
+
+            .col2 {
+                width: 80%;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="breadcrumbs">
+        <h:outputLink value="/admin/config/Config.do?mode=edit">
+            <h:outputText value="Server Settings"/>
+        </h:outputLink>
+        &gt;
+        <h:outputLink value="plugin-config.xhtml">
+            <h:outputText value="Server Plugins Configuration"/>
+        </h:outputLink>
+    </ui:define>
+
+    <ui:define name="body">
+        <br/>
+        <h:messages showSummary="true"
+                    showDetail="true"
+                    infoClass="InfoBlock"
+                    warnClass="WarnBlock"
+                    errorClass="ErrorBlock"
+                    fatalClass="FatalBlock"
+                    globalOnly="true"
+                    layout="table"
+                    width="100%"/>
+
+        <h:form id="pluginsConfigForm">
+            <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
+                <rich:panel>
+                    <f:facet name="header">
+                        <h:outputText value="Available Plugins" />
+                    </f:facet>
+
+                    <rich:tree nodeSelectListener="#{pluginConfigUIBean.processSelection}"
+                               adviseNodeSelected="#{pluginConfigUIBean.adviseSelected}"
+                               adviseNodeOpened="#{pluginConfigUIBean.adviseOpened}"
+                               reRender="pluginConfig"
+                               value="#{pluginConfigUIBean.root}"
+                               ajaxSubmitSelection="true"
+                               switchType="client"
+                               toggleOnClick="false"
+                               treeNodeVar="node"
+                               var="item"
+                               nodeFace="#{node.leaf ? 'plugin' : 'pluginType'}">
+
+                        <rich:treeNode type="pluginType" disabled="true">
+                            <h:outputText value="#{item}s" />
+                        </rich:treeNode>
+                        <rich:treeNode type="plugin">
+                            <h:outputText value="#{item.displayName}" />
+                        </rich:treeNode>
+                    </rich:tree>
+                </rich:panel>
+
+                <h:panelGroup id="pluginConfig">
+                    <rich:panel rendered="#{pluginConfigUIBean.currentPlugin.pluginConfiguration != null}">
+                        <f:facet name="header">
+                            <h:outputText value="Plugin Configuration"/>
+                        </f:facet>
+                        <onc:config configurationDefinition="#{pluginConfigUIBean.pluginConfigurationDefinition}"
+                                    configuration="#{pluginConfigUIBean.currentPlugin.pluginConfiguration}" />
+                    </rich:panel>
+
+                    <rich:panel rendered="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration != null}">
+                        <f:facet name="header">
+                            <h:outputText value="Scheduled Jobs"/>
+                        </f:facet>
+                        <onc:config configurationDefinition="#{pluginConfigUIBean.scheduledJobsDefinition}"
+                                    configuration="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration}" />
+                    </rich:panel>
+
+                    <h:panelGroup id="pluginButtons" rendered="#{pluginConfigUIBean.editable}">
+                        <h:commandButton value="SAVE" type="submit" action="#{pluginConfigUIBean.updatePlugin}"
+                                 alt="Click to Save Changes" styleClass="buttonmed" />
+                        <h:commandButton value="RESET" type="reset" immediate="true"
+                                 title="Click to Reset Fields" styleClass="buttonmed"/>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:panelGrid>
+        </h:form>
+    </ui:define>
+
+</ui:composition>
+
+</html>

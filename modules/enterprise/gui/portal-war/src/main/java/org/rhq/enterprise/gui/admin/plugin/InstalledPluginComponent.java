@@ -71,7 +71,7 @@ public class InstalledPluginComponent {
         this.pluginType = pluginType;
     }
 
-    @Factory(value = "plugin", autoCreate = true, scope = ScopeType.PAGE)
+    @Factory(value = "plugin", autoCreate = true)
     public AbstractPlugin lookupPlugin() {
         if (this.deployment == PluginDeploymentType.AGENT) {
             return LookupUtil.getResourceMetadataManager().getPlugin(this.name);

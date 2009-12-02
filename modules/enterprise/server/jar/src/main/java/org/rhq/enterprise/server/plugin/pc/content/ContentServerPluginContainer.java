@@ -73,8 +73,8 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     @Override
-    public void schedulePluginJobs() throws Exception {
-        super.schedulePluginJobs();
+    public void scheduleAllPluginJobs() throws Exception {
+        super.scheduleAllPluginJobs();
         scheduleSyncJobs();
         return;
     }

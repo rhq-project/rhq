@@ -28,17 +28,6 @@
       </navigation-case>
       
    </navigation-rule>
-
-   <navigation-rule>
-      <from-view-id>/rhq/admin/plugin/plugin-details-edit.xhtml</from-view-id>
-
-      <navigation-case>
-         <from-outcome>successServerPlugin</from-outcome>
-         <to-view-id>/rhq/admin/plugin/plugin-details-view.xhtml?plugin=#{plugin.name}&amp;deployment=#{plugin.deployment}&amp;pluginType=#{serverPlugin.type}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-   </navigation-rule>
    
    <navigation-rule>
       <navigation-case>

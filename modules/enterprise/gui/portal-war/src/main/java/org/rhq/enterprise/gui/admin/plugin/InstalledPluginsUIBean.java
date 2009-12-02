@@ -71,7 +71,7 @@ public class InstalledPluginsUIBean {
     public Collection<ServerPlugin> getInstalledServerPlugins() {
 
         hasPermission();
-        return serverPluginsBean.getServerPlugins();
+        return serverPluginsBean.getAllServerPlugins();
     }
 
     public void scan() {

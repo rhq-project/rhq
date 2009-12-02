@@ -134,6 +134,30 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
         + "  WHERE p.name=:name "), //
 
+    // finds all installed AND deleted
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration "),
+
     // finds all installed - ignores those plugins marked as deleted
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_INSTALLED, query = "" //
@@ -196,6 +220,7 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_BY_IDS = "ServerPlugin.findByIds";
     public static final String QUERY_FIND_BY_NAME = "ServerPlugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
+    public static final String QUERY_FIND_ALL = "ServerPlugin.findAll";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";

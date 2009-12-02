@@ -85,6 +85,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return q.getResultList();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<ServerPlugin> getAllServerPlugins() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL);
+        return q.getResultList();
+    }
+
     public ServerPlugin getServerPlugin(PluginKey key) {
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
         query.setParameter("name", key.getPluginName());

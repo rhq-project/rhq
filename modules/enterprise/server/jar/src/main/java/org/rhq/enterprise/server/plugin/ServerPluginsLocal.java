@@ -22,11 +22,21 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 @Local
 public interface ServerPluginsLocal {
     /**
-     * Returns a list of all the server plugins in the database.
+     * Returns a list of all the installed server plugins in the database
      * 
-     * @return all plugins found in the DB
+     * @return all installed server plugins found in the DB
      */
     List<ServerPlugin> getServerPlugins();
+
+    /**
+     * Returns a list of all the installed and deleted server plugins in the database.
+     * When a plugin is "undeployed", it still exists in the database, but is flagged
+     * as "deleted". This method returns those deleted plugins in addition to those plugins
+     * that are still installed.
+     * 
+     * @return all installed and deleted server plugins found in the DB
+     */
+    List<ServerPlugin> getAllServerPlugins();
 
     /**
      * Returns a plugin with the given key.

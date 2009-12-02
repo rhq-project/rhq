@@ -754,7 +754,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             }
         } catch (Exception e) {
             log.error(e);
-            e.printStackTrace();
         }
     }
 

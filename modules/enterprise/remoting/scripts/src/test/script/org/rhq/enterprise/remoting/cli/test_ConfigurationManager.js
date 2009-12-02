@@ -104,13 +104,66 @@ function testGetAndUpdateStructuredConfiguration() {
     );    
 }
 
+function testGetAndUpdateStructuredandRawConfigurationOnRawEdit() {
+    var resourceName = 'Structured and Raw Server';
+    var structuredAndRawServer = findResourceByNameAndParentName(resourceName, 'localhost');
+
+    var latestUpdate = loadLatestStructuredAndRawConfigUpdate(resourceName, structuredAndRawServer.id);
+
+    var rawConfig = getRawConfig(resourceName, latestUpdate.configuration, 0);
+
+    var contents = java.lang.String(rawConfig.contents);
+    var modifiedContents = java.lang.StringBuilder(contents).append("\nModified at ").append(getDate()).toString();
+
+    rawConfig.contents = modifiedContents.bytes;
+
+    var configUpdate = ConfigurationManager.updateResourceConfiguration(structuredAndRawServer.id,
+        latestUpdate.configuration, false);
+
+    waitForResourceConfigUpdateToComplete(structuredAndRawServer.id);
+
+    latestpdate = loadLatestStructuredAndRawConfigUpdate(resourceName, structuredAndRawServer.id);
+
+    rawConfigs = java.util.LinkedList(latestUpdate.configuration.rawConfigurations);
+    rawConfig = rawConfigs.get(0);
+    var updatedContents = rawConfig.contents;
+
+    Assert.assertEquals(
+        java.lang.String(updatedContents),
+        java.lang.String(modifiedContents),
+        "Failed to update raw config for '" + resourceName + "'"
+    );
+}
+
+function testGetAndUpdateStrucuturedOnStructuredEdit() {
+    var resourceName = 'Structured and Raw Server';
+    var structuredAndRawServer = findResourceByNameAndParentName(resourceName, 'localhost');
+
+    var latestUpdate = loadLatestStructuredAndRawConfigUpdate(resourceName, structuredAndRawServer.id);
+    var modifiedConfig = latestUpdate.configuration;
+
+    modifiedConfig.put(PropertySimple("x", java.util.Date()));
+
+    ConfigurationManager.updateResourceConfiguration(structuredAndRawServer.id, modifiedConfig, true);
+
+    waitForResourceConfigUpdateToComplete(structuredAndRawServer.id);
+
+    latestUpdate = loadLatestStructuredAndRawConfigUpdate(resourceName, structuredAndRawServer.id);
+
+    Assert.assertEquals(
+        latestUpdate.configuration.properties,
+        modifiedConfig.properties,
+        "Failed to update structured config for '" + resourceName + "'"
+    );
+}
+
 function loadLatestRawConfigUpdate(resourceName, resourceId) {
     var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
 
     Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
     Assert.assertTrue(
         latestUpdate.configuration.rawConfigurations.size() > 0,
-        "Expected to find at least one raw config file for '" + "'"
+        "Expected to find at least one raw config file for '" + resourceName + "'"
     );
 
     return latestUpdate;
@@ -119,6 +172,18 @@ function loadLatestRawConfigUpdate(resourceName, resourceId) {
 function loadLatestStructuredConfigUpdate(resourceName, resourceId) {
     var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
     Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
+
+    return latestUpdate;
+}
+
+function loadLatestStructuredAndRawConfigUpdate(resourceName, resourceId) {
+    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resourceId);
+
+    Assert.assertNotNull(latestUpdate, "Failed to find latest resource configuration update for '" + resourceName + "'");
+    Assert.assertTrue(
+        latestUpdate.configuration.rawConfigurations.size() > 0,
+        "Expected to find at least one raw config file for '" + resourceName + "'"
+    )
 
     return latestUpdate;
 }

@@ -69,8 +69,8 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      * @throws Exception
      */
     @Override
-    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        super.loadPlugin(env);
+    public void loadPlugin(ServerPluginEnvironment env,boolean enable) throws Exception {
+        super.loadPlugin(env,enable);
 
         AlertPluginDescriptorType type = (AlertPluginDescriptorType) env.getPluginDescriptor();
 
@@ -84,7 +84,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         catch (Exception e) {
             log.warn("Can't find pluginClass " + className + ". Plugin will be ignored");
             try {
-                unloadPlugin(env);
+                unloadPlugin(env.getPluginKey().getPluginName());
             }
             catch (Throwable t) {
                 log.warn("  +--> unload failed too " + t.getMessage());

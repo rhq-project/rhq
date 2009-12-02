@@ -75,27 +75,31 @@
                 </rich:panel>
 
                 <h:panelGroup id="pluginConfig">
-                    <rich:panel rendered="#{pluginConfigUIBean.currentPlugin.pluginConfiguration != null}">
+                    <rich:panel rendered="#{pluginConfigUIBean.plugin.pluginConfiguration != null}">
                         <f:facet name="header">
                             <h:outputText value="Plugin Configuration"/>
                         </f:facet>
                         <onc:config configurationDefinition="#{pluginConfigUIBean.pluginConfigurationDefinition}"
-                                    configuration="#{pluginConfigUIBean.currentPlugin.pluginConfiguration}" />
+                                    configuration="#{pluginConfigUIBean.plugin.pluginConfiguration}"
+                                    readOnly="true" />
                     </rich:panel>
 
-                    <rich:panel rendered="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration != null}">
+                    <rich:panel rendered="#{pluginConfigUIBean.plugin.scheduledJobsConfiguration != null}">
                         <f:facet name="header">
                             <h:outputText value="Scheduled Jobs"/>
                         </f:facet>
                         <onc:config configurationDefinition="#{pluginConfigUIBean.scheduledJobsDefinition}"
-                                    configuration="#{pluginConfigUIBean.currentPlugin.scheduledJobsConfiguration}" />
+                                    configuration="#{pluginConfigUIBean.plugin.scheduledJobsConfiguration}"
+                                    readOnly="true" />
                     </rich:panel>
 
                     <h:panelGroup id="pluginButtons" rendered="#{pluginConfigUIBean.editable}">
-                        <h:commandButton value="SAVE" type="submit" action="#{pluginConfigUIBean.updatePlugin}"
-                                 alt="Click to Save Changes" styleClass="buttonmed" />
-                        <h:commandButton value="RESET" type="reset" immediate="true"
-                                 title="Click to Reset Fields" styleClass="buttonmed"/>
+                        <h:outputLink value="/rhq/admin/plugin/plugin-edit.xhtml" styleClass="buttonmed">
+                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                            <h:outputText value="EDIT"/>
+                        </h:outputLink>
                     </h:panelGroup>
                 </h:panelGroup>
             </h:panelGrid>

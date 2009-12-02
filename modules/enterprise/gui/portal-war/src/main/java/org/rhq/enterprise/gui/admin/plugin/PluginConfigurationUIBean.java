@@ -18,30 +18,17 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
-import javax.faces.application.FacesMessage;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
-import org.jboss.seam.log.Log;
-import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.plugin.PluginDeploymentType;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.richfaces.component.UITree;
 import org.richfaces.component.html.HtmlTree;
 import org.richfaces.event.NodeSelectedEvent;
@@ -50,44 +37,23 @@ import org.richfaces.model.TreeNodeImpl;
 
 @Scope(ScopeType.PAGE)
 @Name("pluginConfigUIBean")
-public class PluginConfigurationUIBean {
+public class PluginConfigurationUIBean extends AbstractPluginConfigurationUIBean implements Serializable {
 
     @RequestParameter
     private String pluginName;
-    @Logger
-    private Log log;
-    private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
     private TreeNode root;
-    private ServerPlugin currentPlugin;
-    private ConfigurationDefinition pluginConfigurationDefinition;
-    private ConfigurationDefinition scheduledJobsDefinition;
 
     public TreeNode getRoot() {
         return root;
     }
 
-    public ServerPlugin getCurrentPlugin() {
-        return currentPlugin;
-    }
-
-    public ConfigurationDefinition getPluginConfigurationDefinition() {
-        return this.pluginConfigurationDefinition;
-    }
-
-    public ConfigurationDefinition getScheduledJobsDefinition() {
-        return this.scheduledJobsDefinition;
-    }
-
-    public boolean isEditable() {
-        return this.currentPlugin != null &&
-                (this.currentPlugin.getPluginConfiguration() != null ||
-                this.currentPlugin.getScheduledJobsConfiguration() != null);
-    }
-
     @Create
-    public void createTree() {
-        hasPermission();
+    public void init() {
+        checkPermission();
+        createTree();
+    }
 
+    private void createTree() {
         this.root = new TreeNodeImpl();
         Map<ServerPluginType, List<PluginKey>> types = serverPluginsBean.getInstalledServerPluginsGroupedByType();
 
@@ -144,15 +110,15 @@ public class PluginConfigurationUIBean {
      */
     public boolean adviseSelected(UITree node) {
         if (isServerPluginSelected(node)) {
-            if (this.currentPlugin != null) {
-                return node.getRowData() == this.currentPlugin;
+            if (getPlugin() != null) {
+                return node.getRowData() == getPlugin();
             } else { // there is no plugin currently selected
                 ServerPlugin plugin = (ServerPlugin) node.getRowData();
 
                 // if this is the node that matches the request parameter,
                 // go ahead and load the config and select this node
                 if (plugin.getName().equals(this.pluginName)) {
-                    this.currentPlugin = plugin;
+                    setPlugin(plugin);
                     lookupConfigDefinitions();
 
                     return true;
@@ -165,59 +131,23 @@ public class PluginConfigurationUIBean {
         return false;
     }
 
+    /**
+     * Responds to node selection events in the plugin tree widget.
+     *
+     * @param event
+     */
     public void processSelection(NodeSelectedEvent event) {
         HtmlTree node = (HtmlTree) event.getSource();
 
         if (isServerPluginSelected(node)) {
-            this.currentPlugin = (ServerPlugin) node.getRowData();
+            setPlugin((ServerPlugin) node.getRowData());
             lookupConfigDefinitions();
 
             node.setSelected();
         }
     }
 
-    public void updatePlugin() {
-        try {
-            ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPlugins.updateServerPluginExceptContent(subject, this.currentPlugin);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
-        } catch (Exception e) {
-            log.error("Error updating the plugin configurations.", e);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "There was an error changing the configuration settings.", e);
-        }
-    }
-
     private boolean isServerPluginSelected(UITree tree) {
         return tree.getRowData() instanceof ServerPlugin;
-    }
-
-    private void lookupConfigDefinitions() {
-        if (this.currentPlugin.getDeployment() == PluginDeploymentType.SERVER) {
-            PluginKey pluginKey = new PluginKey(this.currentPlugin);
-
-            try {
-                ServerPluginDescriptorType descriptor = serverPluginsBean.getServerPluginDescriptor(pluginKey);
-                this.pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginKey.getPluginName(), descriptor.getPluginConfiguration());
-                this.scheduledJobsDefinition = ConfigurationMetadataParser.parse("jobs:" + pluginKey.getPluginName(), descriptor.getScheduledJobs());
-            } catch (Exception e) {
-                String err = "Cannot determine what the plugin configuration or scheduled jobs configuration looks like";
-                log.error(err + " - Cause: " + e);
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, err, e);
-            }
-        }
-    }
-
-    // TODO:  Find a more centralized way to do this - maybe via annotation
-    //        on the class??
-    /**
-     * Throws a permission exception if the user is not allowed to access this functionality.
-     */
-    private void hasPermission() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
-            throw new PermissionException("User [" + subject.getName() + "] does not have the proper permissions to view or manage plugins");
-        }
     }
 }

@@ -48,7 +48,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -103,7 +103,7 @@ public abstract class ServerPluginDescriptorUtil {
      *         <code>null</code> is returned if they are the same (i.e. they have the same MD5)
      * @throws IllegalArgumentException if the two plugins have different logical names
      */
-    public static Plugin determineObsoletePlugin(Plugin plugin1, Plugin plugin2) {
+    public static ServerPlugin determineObsoletePlugin(ServerPlugin plugin1, ServerPlugin plugin2) {
         if (!plugin1.getName().equals(plugin2.getName())) {
             throw new IllegalArgumentException("The two plugins don't have the same name:" + plugin1 + ":" + plugin2);
         }

@@ -30,6 +30,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
@@ -60,7 +61,7 @@ public class MasterServerPluginContainer {
      * Because the individual plugin containers are only managing enabled plugins (they are never told about plugins that disabled).
      * this map contains the lists of plugins that are disabled so others can find out what plugins are registered but not running.
      */
-    private Map<ServerPluginType, List<String>> disabledPlugins = new HashMap<ServerPluginType, List<String>>();
+    private Map<ServerPluginType, List<PluginKey>> disabledPlugins = new HashMap<ServerPluginType, List<PluginKey>>();
 
     /**
      * Starts the master plugin container, which will load all plugins and begin managing them.
@@ -115,7 +116,9 @@ public class MasterServerPluginContainer {
                 URL pluginUrl = entry.getKey();
                 ServerPluginDescriptorType descriptor = entry.getValue();
                 String pluginName = descriptor.getName();
-                ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginName);
+                ServerPluginType pluginType = new ServerPluginType(descriptor);
+                PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), pluginName);
+                ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
                 AbstractTypeServerPluginContainer pc = getPluginContainerByDescriptor(descriptor);
                 if (pc != null) {
                     log.debug("Loading server plugin [" + pluginUrl + "] into its plugin container");
@@ -251,7 +254,7 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * Given a plugin type, this will return the names of all known plugins of that type.
+     * Given a plugin type, this will return the keys of all known plugins of that type.
      * This includes all types that are currently started as well as plugins
      * that have been disabled.
      * 
@@ -261,8 +264,8 @@ public class MasterServerPluginContainer {
      *
      * @return list of both enabled and disabled plugins of the given type
      */
-    public List<String> getAllPluginsByPluginType(ServerPluginType pluginType) {
-        List<String> allPlugins = new ArrayList<String>();
+    public List<PluginKey> getAllPluginsByPluginType(ServerPluginType pluginType) {
+        List<PluginKey> allPlugins = new ArrayList<PluginKey>();
 
         AbstractTypeServerPluginContainer pc = getPluginContainerByPluginType(pluginType);
         if (pc != null) {
@@ -272,13 +275,13 @@ public class MasterServerPluginContainer {
                 Collection<ServerPluginEnvironment> envs = pluginManager.getPluginEnvironments();
                 if (envs != null) {
                     for (ServerPluginEnvironment env : envs) {
-                        allPlugins.add(env.getPluginName());
+                        allPlugins.add(env.getPluginKey());
                     }
                 }
             }
 
             // add the disabled plugins
-            List<String> disabled = this.disabledPlugins.get(pluginType);
+            List<PluginKey> disabled = this.disabledPlugins.get(pluginType);
             if (disabled != null) {
                 allPlugins.addAll(disabled);
             }
@@ -317,17 +320,24 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * Given the name of a deployed plugin, this returns the plugin container that is hosting
-     * that plugin. If there is no plugin with the given name or that plugin is not
+     * Given the key of a deployed plugin, this returns the plugin container that is hosting
+     * that plugin. If there is no plugin with the given key or that plugin is not
      * loaded in any plugin container (e.g. when it is disabled), then <code>null</code> is returned.
      * 
-     * @param pluginName
-     * @return the plugin container that is managing the named plugin of <code>null</code>
+     * @param pluginKey
+     * @return the plugin container that is managing the named plugin or <code>null</code>
      */
-    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByPlugin(String pluginName) {
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByPlugin(PluginKey pluginKey) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
-            if (null != pc.getPluginManager().getPluginEnvironment(pluginName)) {
-                return (T) pc;
+            try {
+                if (pc.getSupportedServerPluginType().equals(new ServerPluginType(pluginKey.getPluginType()))) {
+                    if (null != pc.getPluginManager().getPluginEnvironment(pluginKey.getPluginName())) {
+                        return (T) pc;
+                    }
+                }
+            } catch (Exception skip) {
+                // should never really happen
+                log.error("Bad plugin key: " + pluginKey);
             }
         }
         return null;
@@ -381,7 +391,7 @@ public class MasterServerPluginContainer {
 
             if (pluginFiles != null) {
 
-                List<String> allDisabledPlugins = getDisabledPluginNames();
+                List<PluginKey> allDisabledPlugins = getDisabledPluginNames();
 
                 for (File pluginFile : pluginFiles) {
                     if (pluginFile.getName().endsWith(".jar")) {
@@ -391,19 +401,22 @@ public class MasterServerPluginContainer {
                             ServerPluginDescriptorType descriptor;
                             descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
                             if (descriptor != null) {
-                                if (!allDisabledPlugins.contains(descriptor.getName())) {
+                                PluginKey pluginKey = PluginKey.createServerPluginKey(new ServerPluginType(descriptor)
+                                    .stringify(), descriptor.getName());
+
+                                if (!allDisabledPlugins.contains(pluginKey)) {
                                     log.debug("pre-loaded server plugin from URL: " + pluginUrl);
                                     plugins.put(pluginUrl, descriptor);
                                 } else {
                                     log.info("Server plugin [" + descriptor.getName()
                                         + "] is disabled and will not be initialized");
                                     ServerPluginType pluginType = new ServerPluginType(descriptor);
-                                    List<String> disabledByType = this.disabledPlugins.get(pluginType);
+                                    List<PluginKey> disabledByType = this.disabledPlugins.get(pluginType);
                                     if (disabledByType == null) {
-                                        disabledByType = new ArrayList<String>(1);
+                                        disabledByType = new ArrayList<PluginKey>(1);
                                         this.disabledPlugins.put(pluginType, disabledByType);
                                     }
-                                    disabledByType.add(descriptor.getName());
+                                    disabledByType.add(pluginKey);
                                 }
                             }
                         } catch (Throwable t) {
@@ -419,14 +432,14 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * This will return a list of plugin names that represent all the plugins that are to be
-     * disabled. If a plugin jar is found on the filesystem, its plugin name should be checked with
-     * this "blacklist" if it its name is found, that plugin should not be loaded.
+     * This will return a list of plugin keys that represent all the plugins that are to be
+     * disabled. If a plugin jar is found on the filesystem, its plugin key should be checked with
+     * this "blacklist" - if its key is found, that plugin should not be loaded.
      * 
      * @return names of "blacklisted" plugins that should not be loaded
      */
-    protected List<String> getDisabledPluginNames() {
-        List<String> disabledPlugins = LookupUtil.getServerPlugins().getServerPluginNamesByEnabled(false);
+    protected List<PluginKey> getDisabledPluginNames() {
+        List<PluginKey> disabledPlugins = LookupUtil.getServerPlugins().getServerPluginKeysByEnabled(false);
         return disabledPlugins;
     }
 

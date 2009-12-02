@@ -2190,6 +2190,23 @@
         <schema-alterColumn table="RHQ_PLUGIN" column="STATUS" nullable="FALSE"/>
       </schemaSpec>
 
+      <schemaSpec version="2.69.2">
+        <!-- plugin names must be unique only if they are deployed on the same side (agent vs. server) -->
+        <schema-directSQL>
+          <statement desc="Dropping unique index on RHQ_PLUGIN (NAME)">
+            DROP INDEX RHQ_PLUGIN_NAME_IDX
+          </statement>
+          <statement desc="Creating unique index on RHQ_PLUGIN (NAME, DEPLOYMENT) so server plugin names need not be unique with agent plugins">
+            CREATE UNIQUE INDEX RHQ_PLUGIN_NAME_DEPLOY_IDX ON RHQ_PLUGIN (NAME, DEPLOYMENT)
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
+      <schemaSpec version="2.69.3">
+        <!-- add the new column that indicates what type of plugin this is (e.g. alert, generic, content) - for server plugins only -->
+        <schema-addColumn table="RHQ_PLUGIN" column="PTYPE" columnType="VARCHAR2" precision="200"/>
+      </schemaSpec>
+
     </dbupgrade>
   </target>
 </project>

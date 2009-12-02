@@ -30,7 +30,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
@@ -117,7 +117,7 @@ public class ServerPluginManager {
      * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
      */
     public void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        String pluginName = env.getPluginName();
+        String pluginName = env.getPluginKey().getPluginName();
         log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
         // tell the plugin we are loading it
@@ -198,7 +198,7 @@ public class ServerPluginManager {
      * @throws Exception if the plugin manager cannot unload the plugin
      */
     public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
-        String pluginName = env.getPluginName();
+        String pluginName = env.getPluginKey().getPluginName();
         log.debug("Unloading server plugin [" + pluginName + "]");
 
         try {
@@ -271,7 +271,7 @@ public class ServerPluginManager {
 
     protected ServerPluginContext getServerPluginContext(ServerPluginEnvironment env) {
 
-        String pluginName = env.getPluginName();
+        String pluginName = env.getPluginKey().getPluginName();
         ServerPluginContext context = this.pluginContextCache.get(pluginName);
 
         // if we already created it, return it immediately and don't create another
@@ -288,7 +288,7 @@ public class ServerPluginManager {
         List<ScheduledJobDefinition> schedules;
 
         try {
-            Plugin plugin = getPlugin(env);
+            ServerPlugin plugin = getPlugin(env);
             plugnConfig = plugin.getPluginConfiguration();
             Configuration scheduledJobsConfig = plugin.getScheduledJobsConfiguration();
             schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(scheduledJobsConfig);
@@ -306,12 +306,12 @@ public class ServerPluginManager {
      * the plugin configuration and scheduled jobs configuration.
      * 
      * @param pluginEnv
-     * @return the Plugin object for the given plugin
+     * @return the ServerPlugin object for the given plugin
      */
-    protected Plugin getPlugin(ServerPluginEnvironment pluginEnv) {
+    protected ServerPlugin getPlugin(ServerPluginEnvironment pluginEnv) {
         // get the plugin data from the database
         ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
-        Plugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginName());
+        ServerPlugin plugin = serverPluginsManager.getServerPlugin(pluginEnv.getPluginKey());
         return plugin;
     }
 
@@ -332,7 +332,7 @@ public class ServerPluginManager {
      */
     protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment) throws Exception {
 
-        String pluginName = environment.getPluginName();
+        String pluginName = environment.getPluginKey().getPluginName();
         ServerPluginComponent instance = null;
 
         ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();

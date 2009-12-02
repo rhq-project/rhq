@@ -68,15 +68,15 @@
 						<h:panelGroup id="changedFiles" layout="vertical">
 							<h:form>
 							<input type="hidden" name="id" value="#{ResourceUIBean.id}" />							
-							<ui:repeat value="#{RawConfigViewer.paths}" var="path">
+							<ui:repeat value="#{ExistingResourceConfigurationViewUIBean.paths}" var="path">
 								<div>
 									<h:commandLink
-									    action="#{RawConfigViewer.select(path)}"  
+									    action="#{ExistingResourceConfigurationViewUIBean.select(path)}"  
 										value="#{path}"
-										rendered="#{path != RawConfigViewer.current.path}">
+										rendered="#{path != ExistingResourceConfigurationViewUIBean.current.path}">
 											<f:param name="currentPath" value="#{path}" />
 									</h:commandLink> 
-									<h:outputText value="#{path}" rendered="#{path == RawConfigViewer.current.path}" />
+									<h:outputText value="#{path}" rendered="#{path == ExistingResourceConfigurationViewUIBean.current.path}" />
 								</div>
 							</ui:repeat>
 							</h:form>
@@ -86,20 +86,20 @@
 			</td>
 			<td>
 				<div>
-					Current File: <h:outputText value="#{RawConfigViewer.current.path}"
+					Current File: <h:outputText value="#{ExistingResourceConfigurationViewUIBean.current.path}"
 						styleClass="outhello" />
 				</div>			
 						<h:outputLink value="view-raw-full.xhtml"  action="navigateToUpload" >
 							<img src="/images/viewfullscreen.png" /> 
 							<h:outputText value=" Full Screen " />
 							<f:param name="id" value="#{ResourceUIBean.id}" />
-						</h:outputLink><s:link action="#{rawConfigDownload.download}">
+						</h:outputLink><s:link action="#{ExistingResourceConfigurationViewUIBean.download}">
 		            		<img src="/images/download.png" />
 		            		<h:outputText value=" Download " />
 							<f:param name="id" value="#{ResourceUIBean.id}" />
 		            	</s:link>	
 						<div>
-						<pre><h:outputText value="#{RawConfigViewer.currentContents}" /></pre>
+						<pre><h:outputText value="#{ExistingResourceConfigurationViewUIBean.currentContents}" /></pre>
 						</div>
 			</td>
 		</tr>	

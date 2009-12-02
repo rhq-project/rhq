@@ -27,7 +27,7 @@
     <h:form id="uploadform" enctype="multipart/form-data">
         <rich:fileUpload  
             id="upload"
-            fileUploadListener="#{rawConfigCollection.fileUploadListener}"
+            fileUploadListener="#{ExistingResourceConfigurationUIBean.fileUploadListener}"
             maxFilesQuantity="1"
             noDuplicate="true"
             immediateUpload="true"
@@ -35,13 +35,13 @@
             allowFlash="false"
             maxRequestSize="100000"
              >
-            <a4j:support event="onuploadcomplete" action="#{rawConfigCollection.upload}" />
+            <a4j:support event="onuploadcomplete" action="#{ExistingResourceConfigurationUIBean.upload}" />
         </rich:fileUpload>
         </h:form>
     </h:panelGrid>
 	<h:outputLink value="edit-raw.xhtml"  action="toEditRaw" >
 		<h:outputText value="#{messages.uploadcomplete}" />
-		<f:param name="id" value="#{rawConfigCollection.resourceId}" />		
+		<f:param name="id" value="#{ExistingResourceConfigurationUIBean.resourceId}" />		
 	</h:outputLink>
 </rich:panel>
 

@@ -25,7 +25,8 @@ rhq.login('rhqadmin', 'rhqadmin');
 
 skippedTests.push('testUpdateResourceGroupConfiguration');
 
-executeAllTests();
+//executeAllTests();
+executeTests(['testTranslateConfigFromStructuredToRaw'])
 
 rhq.logout();
 
@@ -155,6 +156,46 @@ function testGetAndUpdateStrucuturedOnStructuredEdit() {
         modifiedConfig.properties,
         "Failed to update structured config for '" + resourceName + "'"
     );
+}
+
+function testTranslateConfigFromStructuredToRaw() {
+    var resourceName = 'Structured and Raw Server';
+    var server = findResourceByNameAndParentName(resourceName, 'localhost');
+
+    var latestUpdate = loadLatestStructuredAndRawConfigUpdate(resourceName, server.id);
+    var latestConfig = latestUpdate.configuration;
+
+    var newValue = "merged - " + java.util.Date().toString();
+    latestConfig.put(PropertySimple("y", newValue));
+
+    var mergedConfig = ConfigurationManager.translateResourceConfiguration(server.id, latestConfig, true);
+
+    Assert.assertNotNull(mergedConfig, "Expected to get back a configuration object after translation");
+
+    var rawConfigs = java.util.ArrayList(mergedConfig.rawConfigurations);
+
+    Assert.assertNumberEqualsJS(rawConfigs.size(), 3, "Expected there to be 3 raw config files");
+
+    var rawConfig = null;
+    for (i = 0; i < rawConfigs.size(); i++) {
+        if (rawConfigs.get(i).path.endsWith('structured-and-raw-test-1.txt')) {
+            rawConfig = rawConfigs.get(i);
+            break;
+        }
+    }
+
+    Assert.assertNotNull(rawConfig, "Failed to find modified raw config");
+
+    var contents = java.lang.String(rawConfig.contents);
+
+    Assert.assertTrue(contents.contains(newValue), "Failed to modifiy raw config");
+
+    var properties = java.util.ArrayList(mergedConfig.properties);
+    for (i = 0; i < properties.size(); i++) {
+        var property = properties.get(i);
+        Assert.assertNotNull(property.configuration);
+        Assert.assertNumberEqualsJS(property.configuration.id, latestConfig.id, "Property references the wrong configuration");
+    }
 }
 
 function loadLatestRawConfigUpdate(resourceName, resourceId) {

@@ -261,4 +261,7 @@ public interface ConfigurationManagerRemote {
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "packageTypeId") int packageTypeId);
 
+    Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException;
+
 }

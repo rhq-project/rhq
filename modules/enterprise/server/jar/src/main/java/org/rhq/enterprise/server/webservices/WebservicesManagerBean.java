@@ -380,6 +380,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.getPackageTypeConfigurationDefinition(subject, packageTypeId);
     }
 
+    public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException {
+        return configurationManager.translateResourceConfiguration(subject, resourceId, configuration, fromStructured);
+    }
+
     //CONFIGURATIONMANAGER: END ----------------------------------
 
     //CONTENTMANAGER: BEGIN ----------------------------------

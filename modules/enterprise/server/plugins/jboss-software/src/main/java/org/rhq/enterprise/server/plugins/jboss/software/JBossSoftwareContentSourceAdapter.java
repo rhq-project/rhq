@@ -23,32 +23,32 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.parser.RssParser;
-
+import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourceAdapter;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.parser.RssParser;
 
 /**
  * Hook into the server to field requests on JBoss software related packages.
  *
  * @author Jason Dobies
  */
-public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
-    // Attributes  --------------------------------------------
+public class JBossSoftwareContentSourceAdapter implements ContentProvider, PackageSource {
 
     // Connection properties, read from the user specified values specified at content source creation time
     private String url;
@@ -61,7 +61,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
 
     /**
      * Indicates if the feed parsing should be performed. This check is only done at the call to
-     * {@link #synchronizePackages(PackageSyncReport, java.util.Collection)}. This flag is not used in the
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}. This flag is not used in the
      * call to {@link #getInputStream(String)}; it only refers to the feed retrieval and parsing. If you managed to
      * get the patches into the system prior to deactivating this content source, you will still be able to
      * retrieve the bits for them.
@@ -74,8 +74,6 @@ public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
     private RssFeedParser parser = new RssFeedParser();
 
     private final Log log = LogFactory.getLog(this.getClass());
-
-    // ContentSourceAdapter Implementation  --------------------------------------------
 
     public void initialize(Configuration configuration) throws Exception {
         url = safeGetConfigurationProperty("url", configuration);
@@ -112,8 +110,8 @@ public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
         retrieveRssDocument();
     }
 
-    public void synchronizePackages(PackageSyncReport report, Collection<ContentSourcePackageDetails> existingPackages)
-        throws Exception {
+    public void synchronizePackages(String repoName, PackageSyncReport report,
+                                    Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
         if (!active)
             return;
 
@@ -151,22 +149,16 @@ public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
         return stream;
     }
 
-    // Public  --------------------------------------------
-
-    @Override
     public String toString() {
         return "JBossSoftwareContentSourceAdapter[url=" + this.url + ", username=" + this.username + "]";
     }
-
-    // Private  --------------------------------------------
 
     /**
      * Returns the string value of a property in a configuration. This method will check the property for null before
      * extracting the string value.
      *
-     * @param  propertyName  property being retrieved
-     * @param  configuration contains property values
-     *
+     * @param propertyName  property being retrieved
+     * @param configuration contains property values
      * @return string value of the property if it's in the configuration; <code>null</code> if the property was missing
      */
     private String safeGetConfigurationProperty(String propertyName, Configuration configuration) {
@@ -179,7 +171,6 @@ public class JBossSoftwareContentSourceAdapter implements ContentSourceAdapter {
      * into churchill domain objects.
      *
      * @return churchill domain representation of the RSS feed contents
-     *
      * @throws Exception if there are any errors in connecting to the feed
      */
     private RssDocument retrieveRssDocument() throws Exception {

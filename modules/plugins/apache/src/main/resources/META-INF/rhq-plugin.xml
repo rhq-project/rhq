@@ -635,6 +635,9 @@
          </resource-configuration>
          
          <service name="Directory" class="ApacheDirectoryComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+            </plugin-configuration>
             <resource-configuration>
                 <c:simple-property name="path" />
                 <c:simple-property name="regularExpression" type="boolean" default="false"/>
@@ -664,6 +667,9 @@
          </service>
          
          <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+            </plugin-configuration>
             <resource-configuration>
                 &Order;
                 &Allow;
@@ -679,6 +685,9 @@
          </service>
          
          <service name="Location" class="ApacheLocationComponent" createDeletePolicy="both">
+            <plugin-configuration>
+                <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+            </plugin-configuration>
             <resource-configuration>
                 &Order;
                 &Allow;

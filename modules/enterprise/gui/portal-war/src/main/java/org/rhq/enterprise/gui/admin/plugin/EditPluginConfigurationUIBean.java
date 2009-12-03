@@ -26,8 +26,11 @@ import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.log.Log;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
@@ -40,6 +43,17 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
 
     @Logger
     private Log log;
+
+    private Configuration currentConfiguration;
+    private ConfigurationDefinition currentConfigurationDefinition;
+
+    public Configuration getCurrentConfiguration() {
+        return currentConfiguration;
+    }
+
+    public ConfigurationDefinition getCurrentConfigurationDefinition() {
+        return currentConfigurationDefinition;
+    }
 
     @Create
     public void init() {
@@ -55,6 +69,29 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
         if (currentPlugin != null) {
             setPlugin(currentPlugin);
         }
+    }
+
+    @RequestParameter("listName")
+    public void setListName(String listName) {
+        ServerPlugin plugin = getPlugin();
+
+        if (listName != null && plugin != null) {
+            if (hasListName(plugin.getPluginConfiguration(), listName)) {
+                this.currentConfiguration = plugin.getPluginConfiguration();
+                this.currentConfigurationDefinition = getPluginConfigurationDefinition();
+            } else if (hasListName(plugin.getScheduledJobsConfiguration(), listName)) {
+                this.currentConfiguration = plugin.getScheduledJobsConfiguration();
+                this.currentConfigurationDefinition = getScheduledJobsDefinition();
+            }
+        }
+    }
+
+    private boolean hasListName(Configuration config, String listName) {
+        if (config != null) {
+            return config.getList(listName) != null;
+        }
+
+        return false;
     }
 
     public String finishMap() {

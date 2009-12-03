@@ -16,8 +16,8 @@
     <ui:param name="editBreadCrumb" value="true" />
 
     <ui:define name="mapConfig">
-        <onc:config configurationDefinition="#{editPluginConfigurationUIBean.scheduledJobsDefinition}"
-                    configuration="#{editPluginConfigurationUIBean.plugin.scheduledJobsConfiguration}"
+        <onc:config configurationDefinition="#{editPluginConfigurationUIBean.currentConfigurationDefinition}"
+                    configuration="#{editPluginConfigurationUIBean.currentConfiguration}"
                     listName="#{param.listName}" />
 
         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">

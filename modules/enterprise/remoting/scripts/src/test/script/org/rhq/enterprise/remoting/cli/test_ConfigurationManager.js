@@ -48,7 +48,8 @@ function testUpdateResourceConfiguration() {
         java.lang.Thread.sleep(1000);
     }
 
-    config = ConfigurationManager.getResourceConfiguration(resource.id);
+    var latestUpdate = ConfigurationManager.getLatestResourceConfigurationUpdate(resource.id);
+    var config = latestUpdate.configuration;
     var updatedProperty = config.getSimple(propertyName);
 
     Assert.assertEquals(updatedProperty.stringValue, propertyValue, 'Failed to update resource configuration');

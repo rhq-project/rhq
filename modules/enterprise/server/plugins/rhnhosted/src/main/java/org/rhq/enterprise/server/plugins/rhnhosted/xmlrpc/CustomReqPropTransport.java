@@ -90,8 +90,9 @@ public class CustomReqPropTransport extends RhnSSLTransport {
             if (!StringUtils.isBlank(dumpFilePath)) {
                 // dumpFilePath was specified so use that, even though we may be over-writing it
                 tempFile = new File(dumpFilePath);
+            } else {
+                tempFile = File.createTempFile("RHQ-rhn-xmlrpc-output", ".tmp");
             }
-            tempFile = File.createTempFile("RHQ-rhn-xmlrpc-output", ".tmp");
             outStream = new BufferedOutputStream(new FileOutputStream(tempFile, false));
             final byte[] buffer = new byte[0x100000];
 

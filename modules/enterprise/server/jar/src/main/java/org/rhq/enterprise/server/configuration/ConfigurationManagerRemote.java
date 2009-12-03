@@ -180,8 +180,13 @@ public interface ConfigurationManagerRemote {
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
-    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
+    @WebMethod(operationName = "updateStructuredOrRawResourceConfiguration")
+    ResourceConfigurationUpdate updateResourceConfiguration(
+        @WebParam Subject subject,
+        @WebParam int resourceId,
+        @WebParam
+        @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration,
+        @WebParam boolean fromStructured)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     /**

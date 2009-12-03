@@ -15,7 +15,7 @@
    <description>RHQ Enterprise Remoting Parent POM</description>
 
    <modules>
-      <!--<module>webservices</module>-->
+      <module>webservices</module>
    </modules>
 
    <profiles>
@@ -27,7 +27,7 @@
          </activation>
 
          <modules>
-            <!--<module>webservices</module>-->
+            <module>webservices</module>
             <module>cli</module>
             <!--
                Temporarily commenting out scripts module from build. The scripts tests require a running server and

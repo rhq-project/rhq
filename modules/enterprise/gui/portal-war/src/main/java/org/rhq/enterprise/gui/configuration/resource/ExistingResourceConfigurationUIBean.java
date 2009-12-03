@@ -81,6 +81,16 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String updateConfiguration() {
+        return updateConfiguration(true);
+
+    }
+
+    public String updateRawConfiguration() {
+        return updateConfiguration(false);
+    }
+
+    public String updateConfiguration(boolean fromStructured) {
+
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
@@ -89,7 +99,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
 
         AbstractResourceConfigurationUpdate updateRequest = this.configurationManager.updateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), resourceId, configuration);
+            EnterpriseFacesContextUtility.getSubject(), resourceId, configuration, fromStructured);
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:

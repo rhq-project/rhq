@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import org.rhq.core.domain.util.StringUtils;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -83,7 +84,8 @@ public class ServerPluginType {
 
     @Override
     public String toString() {
-        return this.descriptorType.getSimpleName().replace("DescriptorType", "");
+        String typeName = this.descriptorType.getSimpleName().replace("DescriptorType", "");
+        return StringUtils.deCamelCase(typeName);
     }
 
     @Override

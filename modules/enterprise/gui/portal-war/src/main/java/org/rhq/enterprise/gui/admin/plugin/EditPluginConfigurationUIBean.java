@@ -34,7 +34,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.SESSION)
 @Name("editPluginConfigurationUIBean")
 public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUIBean implements Serializable {
 
@@ -50,14 +50,19 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
     // The superclass holds the plugin instance variable, but in this
     // case we want it injected via the PluginFactory - so this serves as
     // the injection point
-    @In(value="plugin", required=false)
+    @In(value = "plugin", required = false)
     public void setCurrentPlugin(ServerPlugin currentPlugin) {
         if (currentPlugin != null) {
             setPlugin(currentPlugin);
         }
     }
 
-    public void updatePlugin() {
+    public String finishMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
+        return "success";
+    }
+
+    public String updatePlugin() {
         try {
             ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
             Subject subject = EnterpriseFacesContextUtility.getSubject();
@@ -67,6 +72,10 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
             log.error("Error updating the plugin configurations.", e);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                     "There was an error changing the configuration settings.", e);
+
+            return null;
         }
+
+        return "success";
     }
 }

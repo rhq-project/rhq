@@ -20,7 +20,7 @@
             <h:outputText value="Server Plugins Configuration"/>
         </h:outputLink>
         &gt;
-        <h:outputLink value="plugin-edit.xhtml?pluginName">
+        <h:outputLink value="plugin-edit.xhtml?plugin=#{editPluginConfigurationUIBean.plugin.name}&amp;pluginType=#{editPluginConfigurationUIBean.plugin.type}&amp;deployment=#{editPluginConfigurationUIBean.plugin.deployment}">
             <h:outputText value="Edit #{editPluginConfigurationUIBean.plugin.displayName} Configuration"/>
         </h:outputLink>
     </ui:define>

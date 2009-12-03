@@ -31,8 +31,8 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Component responsible for looking up a {@link Plugin}, obtaining
- * the <code>name</code> and <code>type</code> from request parameters.
+ * Component responsible for providing a {@link Plugin} via request
+ * parameters.
  *
  * @author jharris
  */

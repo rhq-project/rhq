@@ -28,6 +28,63 @@
       </navigation-case>
       
    </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-config.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-view-map.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}&amp;listName=#{param.listName}&amp;listIndex=#{param.listIndex}</to-view-id>
+
+         <redirect />
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.addNewMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-add-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
+         <to-view-id>/rhq/admin/plugin/plugin-edit-update-map.xhtml</to-view-id>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{editPluginConfigurationUIBean.updatePlugin}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-config.xhtml?pluginName=#{editPluginConfigurationUIBean.plugin.name}</to-view-id>
+
+         <redirect />
+      </navigation-case>
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit-add-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-edit.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}</to-view-id>
+
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
+
+   <navigation-rule>
+      <from-view-id>/rhq/admin/plugin/plugin-edit-update-map.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/admin/plugin/plugin-edit.xhtml?plugin=#{pluginConfigUIBean.plugin.name}&amp;deployment=#{pluginConfigUIBean.plugin.deployment}&amp;pluginType=#{pluginConfigUIBean.plugin.type}</to-view-id>
+
+         <redirect/>
+      </navigation-case>
+
+   </navigation-rule>
    
    <navigation-rule>
       <navigation-case>

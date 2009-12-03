@@ -93,7 +93,7 @@
          <id>dev</id>
 
          <properties>
-            <rhq.rootDir>../../..</rhq.rootDir>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
             <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
          </properties>

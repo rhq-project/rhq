@@ -94,12 +94,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
-        //TODO this is two round trips to the agent.  need to blend these into one.
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
-
         AbstractResourceConfigurationUpdate updateRequest = this.configurationManager.updateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), resourceId, configuration, fromStructured);
+            EnterpriseFacesContextUtility.getSubject(), resourceId, getMergedConfiguration(), fromStructured);
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:

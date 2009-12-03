@@ -77,16 +77,17 @@ public interface ServerPluginsLocal {
     List<PluginKey> getServerPluginKeysByEnabled(boolean enabled);
 
     /**
-     * Enables the plugins and restarts the server plugin container.
+     * Enables the plugins and restarts them.
      *
      * @param subject user making the request
      * @param pluginIds the plugins to be enabled
+     * @return the list of keys of the plugins that were enabled
      * @throws Exception if failed to disable a plugin
      */
-    void enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+    List<PluginKey> enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * Disables the plugins and restarts the server plugin container.
+     * Disables the plugins and unschedules their jobs.
      *
      * @param subject user making the request
      * @param pluginIds the plugins to be disabled
@@ -96,10 +97,10 @@ public interface ServerPluginsLocal {
     List<PluginKey> disableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * Removes the plugin from the system and restarts the server plugin container.
+     * Removes the plugins from the system and unschedules their jobs.
      *
      * @param subject user making the request
-     * @param pluginIds
+     * @param pluginIds the plugins to be undeployed
      * @return the list of keys of plugins that were undeployed
      * @throws Exception if failed to undeploy a plugin
      */
@@ -178,11 +179,9 @@ public interface ServerPluginsLocal {
     PluginStatusType getServerPluginStatus(PluginKey pluginKey);
 
     /**
-     * This will return a map containing all plugins currently known to the master plugin container.
-     * This will return installed plugins that are both enabled and disabled.
-     * Note that if the master plugin container is not running, an empty map is returned.
+     * This will return a map containing all installed plugins that are both enabled and disabled.
      * 
      * @return keys of all enabled and disabled plugins, keyed on their types 
      */
-    Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType();
+    Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType();
 }

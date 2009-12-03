@@ -1,10 +1,11 @@
-<%@page import="org.rhq.enterprise.gui.configuration.resource.RawConfigCollection"%><%
+
+<%@page import="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"%><%
 	response.setContentType("text/plain");
-	Object o =	request.getSession().getValue("RawConfigCollection");
+	Object o =	request.getSession().getValue("ExistingResourceConfigurationUIBean");
 	if ( o == null){
 		response.getWriter().append("Error message goes here.");	
 	}else{
-		RawConfigCollection rawConfigCollection = (RawConfigCollection)o; 
-		response.setHeader("Content-Disposition", "attachment;filename="+rawConfigCollection.getCurrentPath()); 
-		response.getWriter().append(new String(rawConfigCollection.getCurrentContents()));
+		ExistingResourceConfigurationUIBean existingResourceConfigurationUIBean = (ExistingResourceConfigurationUIBean)o; 
+		response.setHeader("Content-Disposition", "attachment;filename="+existingResourceConfigurationUIBean.getCurrentPath()); 
+		response.getWriter().append(new String(existingResourceConfigurationUIBean.getCurrentContents()));
 	}%>

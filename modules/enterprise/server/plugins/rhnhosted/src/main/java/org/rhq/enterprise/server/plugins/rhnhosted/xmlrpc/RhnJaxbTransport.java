@@ -1,10 +1,7 @@
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,7 +9,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
@@ -24,30 +20,12 @@ import org.jdom.input.SAXBuilder;
 
 public class RhnJaxbTransport extends CustomReqPropTransport {
 
-    protected String PROP_NAME_TO_SAVE_TEMP_FILES = "RhnJaxbSaveTempFiles";
     protected String jaxbDomain;
-    protected boolean dumpMessageToFile; // used during debug to save a copy of the data received
-    protected String dumpPath; // location to save
+
     private final Log log = LogFactory.getLog(RhnJaxbTransport.class);
 
     public RhnJaxbTransport(XmlRpcClient pClient) {
         super(pClient);
-    }
-
-    public void setDumpMessageToFile(boolean dump) {
-        dumpMessageToFile = dump;
-    }
-
-    public boolean getDumpMessageToFile() {
-        return dumpMessageToFile;
-    }
-
-    public void setDumpFilePath(String path) {
-        dumpPath = path;
-    }
-
-    public String getDumpFilePath() {
-        return dumpPath;
     }
 
     public void setJaxbDomain(String domain) {
@@ -74,57 +52,6 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         }
 
         return false;
-    }
-
-    protected File cacheResponseToFile(InputStream inStream) throws XmlRpcException {
-
-        //
-        // We will read the response and write it to a file.  Prior approach read all data in memory and parsed it.
-        // This created a problem when retrieving package details for large package lists of 6000+ packages.
-        // We were seeing out of memory exceptions,
-        // estimate on "rhel-i386-server-5" are 6200+ packages, metadata size written to disk in xml is 1.1GB
-        // 
-        File tempFile = null;
-        BufferedOutputStream outStream = null;
-        try {
-            if (dumpMessageToFile) {
-                tempFile = new File(getDumpFilePath());
-            } else {
-                tempFile = File.createTempFile("rhn-jaxb-xmlrpc-output", ".tmp");
-            }
-            outStream = new BufferedOutputStream(new FileOutputStream(tempFile, false));
-            final byte[] buffer = new byte[0x100000];
-
-            BufferedInputStream buffInStream = new BufferedInputStream(inStream);
-
-            int read;
-            do {
-                //long startRead = System.currentTimeMillis();
-                read = buffInStream.read(buffer, 0, buffer.length);
-                //read = inStream.read(buffer, 0, buffer.length);
-                if (read > 0) {
-                    //long endRead = System.currentTimeMillis();
-                    //log.debug("Read " + read + " bytes took " + (endRead - startRead) + "ms");
-                    //long startWrite = System.currentTimeMillis();
-                    outStream.write(buffer, 0, read);
-                    //long endWrite = System.currentTimeMillis();
-                    //log.debug("Wrote " + read + " bytes in " + (endWrite - startWrite) + "ms");
-                }
-            } while (read >= 0);
-        } catch (Exception e) {
-            log.warn("RhnJaxbTransport readResponse exception", e);
-            throw new XmlRpcException(e.getMessage());
-        } finally {
-            try {
-                if (outStream != null) {
-                    outStream.close();
-                    outStream = null;
-                }
-            } catch (Exception e) {
-                ; //ignore exceptions from close
-            }
-        }
-        return tempFile;
     }
 
     protected Object readResponse(XmlRpcStreamRequestConfig pConfig, InputStream pStream) throws XmlRpcException {
@@ -184,22 +111,4 @@ public class RhnJaxbTransport extends CustomReqPropTransport {
         }
     }
 
-    protected boolean doWeDeleteTempFile(File f) {
-        // Check basic file access to ensure we could delete the file
-        if (!f.exists() || f.isDirectory() || !f.canWrite()) {
-            return false;
-        }
-        // If we set dumpMessageToFile, then we obviously don't want to delete it
-        if (dumpMessageToFile) {
-            return false;
-        }
-        // Check our System Prop to see if maybe we are debugging and want to keep temp files.
-        String value = System.getProperty(PROP_NAME_TO_SAVE_TEMP_FILES);
-        if (!StringUtils.isBlank(value)) {
-            if (Boolean.parseBoolean(value)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

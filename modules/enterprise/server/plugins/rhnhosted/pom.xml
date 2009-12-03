@@ -170,7 +170,7 @@
                     set this to true if you want the temp xmlrpc data read to be saved.
                     by default the files are stored in /tmp and will be deleted after use.
                     -->
-                    <name>RhnJaxbSaveTempFiles</name>
+                    <name>RhnXmlrpcSaveTempFiles</name>
                     <value>false</value>
                 </property>
                 <property>

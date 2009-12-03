@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -109,20 +111,22 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             throw new InitializationException("Invalid 'Certificate' property", e);
         }
 
+        String systemId = FileUtils.readFileToString(new File(RHNConstants.DEFAULT_SYSTEM_ID));
+        helper = new RHNHelper(locationIn, systemId);
+        log.info("RHNProvider initialized RHNHelper with location = " + locationIn + "\n " + "systemid = " + systemId);
+        // Check basic authentication capabilities with passed in systemid and RHN server
+        // If there is a problem a XmlRpcException will be thrown, we'll allow it to be thrown and not try to catch it
+        helper.checkSystemId(systemId);
+
         // Now we have valid data. Spawn the activation.
         try {
-            rhnObject = new RHNActivator(certificate, location);
+            rhnObject = new RHNActivator(systemId, certificate, location);
             rhnObject.processActivation();
             log.debug("Activation successful");
         } catch (Exception e) {
             log.debug("Activation Failed. Please check your configuration");
             throw new InitializationException("Server Activation Failed.", e);
         }
-
-        // RHQ Server is now active, initialize the handler for the bits.
-        helper = new RHNHelper(locationIn, rhnObject.getSystemid());
-        log.info("RHNProvider initialized RHNHelper with ( location = " + locationIn + "\n " + "systemid = "
-            + rhnObject.getSystemid());
     }
 
     /**

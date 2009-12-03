@@ -20,13 +20,28 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnSatelliteType;
 
 public class RhnComm {
     private final Log log = LogFactory.getLog(RhnComm.class);
+    protected XmlRpcExecutor satHandler;
     protected XmlRpcExecutor dumpHandler;
     protected String serverUrl;
+    protected String SAT_HANDLER = "/SAT";
     protected String SATDUMP_HANDLER = "/SAT-DUMP";
 
     public RhnComm(String serverUrlIn) {
         serverUrl = serverUrlIn;
+        satHandler = XmlRpcExecutorFactory.getJaxbClient(serverUrl + SAT_HANDLER);
         dumpHandler = XmlRpcExecutorFactory.getJaxbClient(serverUrl + SATDUMP_HANDLER);
+    }
+
+    public boolean checkSystemId(String systemId) throws IOException, XmlRpcException {
+        Object[] params = new Object[] { systemId };
+
+        log.debug("checkSystemId() systemId used is " + systemId);
+        Integer result = (Integer) satHandler.execute("authentication.check", params);
+        if (result == 1) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public List<RhnProductNameType> getProductNames(String systemId) throws IOException, XmlRpcException {

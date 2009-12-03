@@ -74,6 +74,10 @@ public class RHNHelper {
 
     }
 
+    public boolean checkSystemId(String systemId) throws IOException, XmlRpcException {
+        return this.rhndata.checkSystemId(systemId);
+    }
+
     public List<DistributionDetails> getDistributionMetaData(List<String> labels) throws IOException, XmlRpcException {
         log.debug("getDistributionMetaData(" + labels + " invoked");
 

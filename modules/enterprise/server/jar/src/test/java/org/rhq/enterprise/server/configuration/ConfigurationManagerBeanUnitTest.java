@@ -193,7 +193,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
             newConfig, FROM_STRUCTURED);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
@@ -238,7 +238,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
             newConfig, FROM_STRUCTURED);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
@@ -292,7 +292,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
             newConfig, FROM_RAW);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");

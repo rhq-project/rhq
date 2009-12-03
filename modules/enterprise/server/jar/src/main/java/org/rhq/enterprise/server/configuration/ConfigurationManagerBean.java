@@ -981,13 +981,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
-    private void dumpProperties(Configuration configuration) {
-        for (String key : configuration.getAllProperties().keySet()) {
-            log.error("key = ");
-        }
-    }
-
-    public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+    public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
 
@@ -1022,7 +1016,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
         ResourceConfigurationUpdate newUpdate;
-        dumpProperties(newConfiguration);
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
         // this can return null if newConfiguration is not actually different.
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,

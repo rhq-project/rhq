@@ -67,7 +67,7 @@ function testGetAndUpdateRawConfiguration() {
 
     rawConfig.contents = modifiedContents.getBytes();
 
-    var configUdpate = ConfigurationManager.updateResourceConfiguration(rawServer.id, latestUpdate.configuration);
+    var configUdpate = ConfigurationManager.updateStructuredOrRawConfiguration(rawServer.id, latestUpdate.configuration);
 
     waitForResourceConfigUpdateToComplete(rawServer.id);
 
@@ -93,7 +93,7 @@ function testGetAndUpdateStructuredConfiguration() {
 
     modifiedConfig.put(PropertySimple("foo", java.util.Date()));
 
-    var configUdpate = ConfigurationManager.updateResourceConfiguration(structuredServer.id, modifiedConfig);
+    var configUdpate = ConfigurationManager.updateStructuredOrRawConfiguration(structuredServer.id, modifiedConfig);
 
     waitForResourceConfigUpdateToComplete(structuredServer.id);
 
@@ -119,7 +119,7 @@ function testGetAndUpdateStructuredandRawConfigurationOnRawEdit() {
 
     rawConfig.contents = modifiedContents.bytes;
 
-    var configUpdate = ConfigurationManager.updateResourceConfiguration(structuredAndRawServer.id,
+    var configUpdate = ConfigurationManager.updateStructuredOrRawConfiguration(structuredAndRawServer.id,
         latestUpdate.configuration, false);
 
     waitForResourceConfigUpdateToComplete(structuredAndRawServer.id);
@@ -146,7 +146,7 @@ function testGetAndUpdateStrucuturedOnStructuredEdit() {
 
     modifiedConfig.put(PropertySimple("x", java.util.Date()));
 
-    ConfigurationManager.updateResourceConfiguration(structuredAndRawServer.id, modifiedConfig, true);
+    ConfigurationManager.updateStructuredOrRawConfiguration(structuredAndRawServer.id, modifiedConfig, true);
 
     waitForResourceConfigUpdateToComplete(structuredAndRawServer.id);
 

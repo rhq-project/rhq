@@ -471,7 +471,7 @@ public interface ConfigurationManagerLocal {
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
-    ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
+    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured)
         throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 

@@ -94,8 +94,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
-        AbstractResourceConfigurationUpdate updateRequest = this.configurationManager.updateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), resourceId, getMergedConfiguration(), fromStructured);
+        AbstractResourceConfigurationUpdate updateRequest =
+            this.configurationManager.updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(),
+                resourceId, getMergedConfiguration(), fromStructured);
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:

@@ -133,7 +133,6 @@ public class RHNHelper {
                 log.warn("Caught exception with getDetails() of package: " + pkg.getName() + " : " + e);
                 log.warn("Package:  id = " + pkg.getId() + " getSourceRpm() = " + pkg.getSourceRpm()
                     + ", getDescription() = " + pkg.getRhnPackageDescription());
-                e.printStackTrace();
                 // something went wrong while constructing the pkg object.
                 // Proceed to next and get as many packages as we can.
                 skippedPackages++;

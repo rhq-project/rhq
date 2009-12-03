@@ -153,7 +153,17 @@
                     This should be set to false by default
                     -->
                     <name>RunRHNProviderTest</name>
-                        <value>false</value>
+                    <value>false</value>
+                </property>
+                <property>
+                    <!--
+                    set this to true if you want to run a more exhaustive test.
+                    This prop will trigger the InputStreams to be read fully while
+                    comparing the resulting md5sum with the expected value.
+                    This will take longer to run, so by default it is left to false
+                    -->
+                    <name>RunRHNMD5SumTests</name>
+                    <value>false</value>
                 </property>
                 <property>
                     <!--

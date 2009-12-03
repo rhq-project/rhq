@@ -19,7 +19,6 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
 
-import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.BaseRHNTest;
+import org.rhq.enterprise.server.plugins.rhnhosted.RHNHelper;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumType;
@@ -299,9 +299,10 @@ public class RhnCommTest extends BaseRHNTest {
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
             String saveFilePath = "./target/" + rpmName;
-            assertTrue(comm.getRPM(SYSTEM_ID, channelName, rpmName, saveFilePath));
-            File t = new File(saveFilePath);
-            assertTrue(t.exists());
+            String locationUrl = RHNHelper.constructPackageUrl(serverUrl, channelName, rpmName);
+            InputStream is = comm.getFileStream(SYSTEM_ID, locationUrl);
+            assertTrue(is != null);
+            //exception should be thrown
             success = true;
         } catch (Exception e) {
             e.printStackTrace();
@@ -322,8 +323,9 @@ public class RhnCommTest extends BaseRHNTest {
             RhnDownloader comm = new RhnDownloader(serverUrl);
             String channelName = "rhel-x86_64-server-5";
             String rpmName = "openhpi-2.4.1-6.el5.1.x86_64.rpm";
-            String saveFilePath = "./target/" + rpmName;
-            assertTrue(comm.getRPM(SYSTEM_ID_BAD, channelName, rpmName, saveFilePath));
+            String locationUrl = RHNHelper.constructPackageUrl(serverUrl, channelName, rpmName);
+            InputStream is = comm.getFileStream(SYSTEM_ID, locationUrl);
+            //exception should be thrown
             assertTrue(false);
         } catch (XmlRpcException e) {
             assertTrue(e.getMessage().contains("Invalid System Credentials"));
@@ -355,7 +357,8 @@ public class RhnCommTest extends BaseRHNTest {
             assertFalse(StringUtils.isBlank(ksRelativePath));
             System.err.println("fetching ks file: " + f.getRelativePath());
             RhnDownloader downloader = new RhnDownloader(serverUrl);
-            InputStream in = downloader.getKickstartTreeFile(SYSTEM_ID, channelName, ksTreeLabel, ksRelativePath);
+            String url = RHNHelper.constructKickstartFileUrl(serverUrl, channelName, ksTreeLabel, ksRelativePath);
+            InputStream in = downloader.getFileStream(SYSTEM_ID, url);
             assertTrue(in != null);
             in.close();
             success = true;

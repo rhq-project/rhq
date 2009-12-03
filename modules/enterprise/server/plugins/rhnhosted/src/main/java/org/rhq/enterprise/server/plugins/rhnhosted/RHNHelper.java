@@ -19,14 +19,15 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
@@ -112,18 +113,37 @@ public class RHNHelper {
      */
     public List<ContentProviderPackageDetails> getPackageDetails(List packageIds, String channelName) throws Exception {
         log.debug("getPackageDetails() for " + packageIds.size() + " packageIds on channel " + channelName);
+        int skippedPackages = 0;
+        int pkgNoName = 0;
         List<ContentProviderPackageDetails> pdlist = new ArrayList<ContentProviderPackageDetails>();
         List<RhnPackageType> pkgs = rhndata.getPackageMetadata(this.systemid, packageIds);
         log.debug(pkgs.size() + " packages were returned from getPackageMetadata().");
         for (RhnPackageType pkg : pkgs) {
             try {
-                pdlist.add(getDetails(pkg, channelName));
+                ContentProviderPackageDetails details = getDetails(pkg, channelName);
+                pdlist.add(details);
             } catch (Exception e) {
+                if (pkg != null) {
+                    if (StringUtils.isBlank(pkg.getName())) {
+                        log.debug("getPackageDetails skipping package with no name.");
+                        pkgNoName++;
+                        continue;
+                    }
+                }
+                log.warn("Caught exception with getDetails() of package: " + pkg.getName() + " : " + e);
+                log.warn("Package:  id = " + pkg.getId() + " getSourceRpm() = " + pkg.getSourceRpm()
+                    + ", getDescription() = " + pkg.getRhnPackageDescription());
+                e.printStackTrace();
                 // something went wrong while constructing the pkg object.
                 // Proceed to next and get as many packages as we can.
+                skippedPackages++;
                 continue;
             }
         }
+        log.info("We skipped: " + skippedPackages + " packages. " + "We also skipped " + pkgNoName
+            + " packages because they had no name");
+        log.info("getPackageDetails was called with a list of package ids size = " + packageIds.size()
+            + " we have fetched metadata for " + pdlist.size() + " packages");
         return pdlist;
     }
 
@@ -145,7 +165,6 @@ public class RHNHelper {
         ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
             "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
-
 
         pkg.setDisplayName(name);
         pkg.setShortDescription(p.getRhnPackageSummary());
@@ -329,7 +348,7 @@ public class RHNHelper {
         return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";
     }
 
-    private byte[] gzip(byte[] input ) throws IOException {
+    private byte[] gzip(byte[] input) throws IOException {
 
         ByteArrayOutputStream zipped = new ByteArrayOutputStream();
         GZIPOutputStream gzip = new GZIPOutputStream(zipped);

@@ -325,7 +325,7 @@ public class PrimaryXML {
                     if (StringUtils.isBlank(obsString)) {
                         continue;
                     }
-                    log.info("Adding Obsoletes info <String Class> value = " + obsString);
+                    //log.debug("Adding Obsoletes info <String Class> value = " + obsString);
                     Element entry = new Element("entry", rpmNS);
                     entry.setAttribute("name", obsString);
                     rpmObsoletes.addContent(entry);
@@ -337,7 +337,7 @@ public class PrimaryXML {
                 //
                 if (s instanceof JAXBElement) {
                     JAXBElement je = (JAXBElement) s;
-                    log.debug("Processing obsolete info for JAXBElement of type : " + je.getDeclaredType());
+                    //log.debug("Processing obsolete info for JAXBElement of type : " + je.getDeclaredType());
                     obsEntry = (RhnPackageObsoletesEntryType) je.getValue();
                 } else if (s instanceof RhnPackageObsoletesEntryType) {
                     obsEntry = (RhnPackageObsoletesEntryType) s;

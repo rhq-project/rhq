@@ -29,6 +29,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -79,6 +80,20 @@ public class LegacyConfigManagement extends ConfigManagementSupport {
         throws PluginContainerException {
         ConfigurationFacet facet = loadConfigurationFacet(resourceId, WRITE);
         ConfigurationUpdateReport report = new ConfigurationUpdateReport(configuration);
+
+        facet.updateResourceConfiguration(report);
+
+        if (ConfigurationUpdateStatus.SUCCESS == report.getStatus()) {
+            return;
+        }
+
+        if (ConfigurationUpdateStatus.INPROGRESS == report.getStatus()) {
+            throw new UpdateInProgressException();
+        }
+
+        if (ConfigurationUpdateStatus.FAILURE == report.getStatus()) {
+            throw new ConfigurationUpdateException(report.getErrorMessage());
+        }
     }
 
 }

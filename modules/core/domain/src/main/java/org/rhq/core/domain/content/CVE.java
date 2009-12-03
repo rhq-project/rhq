@@ -29,6 +29,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -38,11 +40,15 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries( { @NamedQuery(name = CVE.DELETE_BY_CVE_ID, query = "DELETE CVE cve WHERE cve.id = :cveId"),
+    @NamedQuery(name = CVE.FIND_BY_CVE_ID, query = "SELECT cve FROM CVE as cve WHERE cve.id = :cveId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CVE_ID_SEQ")
 @Table(name = "RHQ_CVE")
 public class CVE implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    public static final String FIND_BY_CVE_ID = "CVE.findByCVEId";
+    public static final String DELETE_BY_CVE_ID = "CVE.deleteByCVEId";
 
     // Attributes  --------------------------------------------
 

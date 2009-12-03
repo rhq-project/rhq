@@ -39,16 +39,16 @@ public class Advisory implements Serializable {
     @Column(name = "ADVISORY", nullable = false)
     private String advisory;
 
-    @Column(name = "ADVISORYTYPE", nullable = false)
+    @Column(name = "ADVISORY_TYPE", nullable = false)
     private String advisoryType;
 
     @Column(name = "ADVISORY_REL", nullable = true)
     private String advisory_rel;
 
-    @Column(name = "ADVISORY_NAME", nullable = false)
+    @Column(name = "ADVISORY_NAME", nullable = true)
     private String advisory_name;
 
-    @Column(name = "DESCRIPTION", nullable = false)
+    @Column(name = "DESCRIPTION", nullable = true)
     private String description;
 
     @Column(name = "SYNOPSIS", nullable = false)
@@ -57,22 +57,22 @@ public class Advisory implements Serializable {
     @Column(name = "TOPIC", nullable = true)
     private String topic;
 
-    @Column(name = "SOLUTION", nullable = false)
+    @Column(name = "SOLUTION", nullable = true)
     private String solution;
 
     @Column(name = "SEVERITY", nullable = true)
     private String severity;
 
-    @Column(name = "ISSUE_DATE", nullable = false)
+    @Column(name = "ISSUE_DATE", nullable = true)
     private long issue_date;
 
-    @Column(name = "UPDATE_DATE", nullable = false)
+    @Column(name = "UPDATE_DATE", nullable = true)
     private long update_date;
 
-    @Column(name = "CTIME", nullable = false)
+    @Column(name = "CTIME", nullable = true)
     private long ctime;
 
-    @Column(name = "LAST_MODIFIED", nullable = false)
+    @Column(name = "LAST_MODIFIED", nullable = true)
     private long lastModifiedDate;
 
     // Constructor ----------------------------------------
@@ -80,9 +80,10 @@ public class Advisory implements Serializable {
     public Advisory() {
     }
 
-    public Advisory(String advisory, String advisoryType) {
+    public Advisory(String advisory, String advisoryType, String synopsis) {
         setAdvisory(advisory);
         setAdvisoryType(advisoryType);
+        setSynopsis(synopsis);
 
     }
 

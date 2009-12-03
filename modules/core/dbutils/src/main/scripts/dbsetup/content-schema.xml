@@ -401,16 +401,16 @@
         <column name="ADVISORY" size="64" type="VARCHAR2" required="true"/>
         <column name="ADVISORY_TYPE" size="64" type="VARCHAR2"  required="true" />
         <column name="ADVISORY_REL" size="64" type="VARCHAR2" required="false"/>
-        <column name="ADVISORY_NAME" size="64" type="VARCHAR2" required="true"/>
-        <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="true"/>
+        <column name="ADVISORY_NAME" size="64" type="VARCHAR2" required="false"/>
+        <column name="DESCRIPTION" size="4000" type="VARCHAR2" required="false"/>
         <column name="SYNOPSIS" size="4000" type="VARCHAR2" required="true"/>
         <column name="TOPIC" size="4000" type="VARCHAR2" required="false"/>
-        <column name="SOLUTION" size="4000" type="VARCHAR2" required="true"/> 
+        <column name="SOLUTION" size="4000" type="VARCHAR2" required="false"/> 
         <column name="SEVERITY" size="64" type="VARCHAR2"  required="false"/>       
-        <column name="ISSUE_DATE" type="LONG" required="true"/>
-        <column name="UPDATE_DATE" type="LONG" required="true"/>
-        <column name="CTIME" type="LONG" required="true"/>
-        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <column name="ISSUE_DATE" type="LONG" required="false"/>
+        <column name="UPDATE_DATE" type="LONG" required="false"/>
+        <column name="CTIME" type="LONG" required="false"/>
+        <column name="LAST_MODIFIED" type="LONG" required="false"/>
         
         <index name="RHQ_ADVISORY_NAME_UQ" unique="true">
             <field ref="ADVISORY_NAME"/>
@@ -430,18 +430,17 @@
         
     </table>
     
-    <table name="RHQ_ADVISORY_PACKAGE_MAP">
+    <table name="RHQ_ADVISORY_PACKAGE">
+    	<column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
         <column name="PACKAGE_ID" type="INTEGER" required="true" references="RHQ_PACKAGE"/>
-        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="false"/>
         <column name="CTIME" type="LONG" required="true"/>
         
-        <constraint name="RHQ_ADV_PKG_MAP_KEY" unique="true">
-            <primaryKey>
+        <index name="RHQ_ADVISORY_PKG_IDX" unique="true">
                 <field ref="ADVISORY_ID"/>
                 <field ref="PACKAGE_ID"/>
-            </primaryKey>
-        </constraint>
+        </index>
     </table>
     
     <table name="RHQ_CVE">
@@ -450,32 +449,30 @@
     </table>
     
     <table name="RHQ_ADVISORY_CVE">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
         <column name="CVE_ID" type="INTEGER" required="true" references="RHQ_CVE"/>
-        <column name="LAST_MODIFIED" type="LONG" required="true"/>
+        <column name="LAST_MODIFIED" type="LONG" required="false"/>
         <column name="CTIME" type="LONG" required="true"/>
         
-        <constraint name="RHQ_ADV_CVE_MAP_KEY" unique="true">
-            <primaryKey>
+        <index name="RHQ_ADVISORY_CVE_IDX" unique="true">
                 <field ref="ADVISORY_ID"/>
                 <field ref="CVE_ID"/>
-            </primaryKey>
-        </constraint>
+        </index>
 
     </table>
     
     <table name="RHQ_ADVISORY_BUGLIST">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="ADVISORY_ID" type="INTEGER" required="true" references="RHQ_ADVISORY"/>
         <column name="BUG_ID" size="256" type="VARCHAR2" required="true"/>
         <column name="LAST_MODIFIED" type="LONG" required="true"/>
         <column name="CTIME" type="LONG" required="true"/>
         
-        <constraint name="RHQ_ADV_BUG_LIST_KEY" unique="true">
-            <primaryKey>
+        <index name="RHQ_ADVISORY_BUG_IDX" unique="true">
                 <field ref="ADVISORY_ID"/>
                 <field ref="BUG_ID"/>
-            </primaryKey>
-        </constraint>
+        </index>
     </table>
     
     

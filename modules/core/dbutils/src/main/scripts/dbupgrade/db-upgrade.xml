@@ -2701,6 +2701,54 @@
           </statement>
         </schema-directSQL>
       </schemaSpec>
+    	
+      <schemaSpec version="2.74">
+      	<schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
+      	<schema-createSequence name="RHQ_ADVISORY_CVE_SEQ" initial="10001" />
+   	    <schema-directSQL>
+      	   <statement>
+      	     ALTER TABLE RHQ_ADVISORY_CVE DROP CONSTRAINT RHQ_ADV_CVE_MAP_KEY
+      	   </statement>
+      	</schema-directSQL>
+        <schema-addColumn table="RHQ_ADVISORY_CVE" column="ID" columnType="INTEGER" />
+      	<schema-alterColumn table="RHQ_ADVISORY_CVE" column="ID" nullable="false" />
+        <schema-directSQL>
+      	  <statement>
+      	     ALTER TABLE RHQ_ADVISORY_CVE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_CVE_SEQ')
+      	  </statement>
+      	</schema-directSQL>
+      	<schema-createSequence name="RHQ_ADVISORY_BUG_SEQ" initial="10001" />
+   	    <schema-directSQL>
+      	   <statement>
+      	     ALTER TABLE RHQ_ADVISORY_BUGLIST DROP CONSTRAINT RHQ_ADV_BUG_LIST_KEY
+      	   </statement>
+      	</schema-directSQL>
+        <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="ID" columnType="INTEGER" />
+      	<schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ID" nullable="false" />
+        <schema-directSQL>
+      	  <statement>
+      	     ALTER TABLE RHQ_ADVISORY_BUGLIST ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_BUG_SEQ')
+      	  </statement>
+      	</schema-directSQL>
+   	    <schema-directSQL>
+      	   <statement>
+      	     ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP RENAME TO RHQ_ADVISORY_PACKAGE
+      	   </statement>
+      	</schema-directSQL>
+      	<schema-createSequence name="RHQ_ADVISORY_PKG_SEQ" initial="10001" />
+   	    <schema-directSQL>
+      	   <statement>
+      	     ALTER TABLE RHQ_ADVISORY_PACKAGE DROP CONSTRAINT RHQ_ADV_PKG_MAP_KEY
+      	   </statement>
+      	</schema-directSQL>
+        <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="ID" columnType="INTEGER" />
+      	<schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="ID" nullable="false" />
+        <schema-directSQL>
+      	  <statement>
+      	     ALTER TABLE RHQ_ADVISORY_PACKAGE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_PKG_SEQ')
+      	  </statement>
+      	</schema-directSQL>
+      </schemaSpec>	
 
     </dbupgrade>
   </target>

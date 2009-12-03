@@ -27,10 +27,14 @@ import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
@@ -40,18 +44,26 @@ import javax.persistence.Table;
  */
 
 @Entity
+@NamedQueries( { @NamedQuery(name = AdvisoryBuglist.FIND_BUGS_BY_ADV_ID, query = "SELECT ab FROM AdvisoryBuglist AS ab "
+    + "WHERE ab.advisory.id = :advId") })
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_BUG_SEQ")
 @Table(name = "RHQ_ADVISORY_BUGLIST")
 public class AdvisoryBuglist implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    public static final String FIND_BUGS_BY_ADV_ID = "AdvisoryCVE.findBugsByAveId";
 
     /*
      * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
      */
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
     @Id
-    @ManyToOne
+    private int id;
+
+    //@ManyToOne
     @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
     private Advisory advisory;
 

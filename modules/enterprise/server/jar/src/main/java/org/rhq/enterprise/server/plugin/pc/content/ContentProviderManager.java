@@ -244,16 +244,24 @@ public class ContentProviderManager {
 
         // Synchronize every content provider associated with the repo
         for (ContentSource source : repo.getContentSources()) {
-            ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-            PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source, provider);
-            packageSourceSynchronizer.synchronizePackageMetadata();
-            packageSourceSynchronizer.synchronizePackageBits();
+            // Don't let the entire sync fail if a single content source fails
+            try {
+                ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-            DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(repo,
-                source, provider);
-            distributionSourceSynchronizer.synchronizeDistributionMetadata();
-            distributionSourceSynchronizer.synchronizeDistributionBits();
+                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source, provider);
+                packageSourceSynchronizer.synchronizePackageMetadata();
+                packageSourceSynchronizer.synchronizePackageBits();
+
+                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(repo,
+                    source, provider);
+                distributionSourceSynchronizer.synchronizeDistributionMetadata();
+                distributionSourceSynchronizer.synchronizeDistributionBits();
+            }
+            catch (Exception e) {
+                log.error("Error while synchronizing repo [" + repo + "] with content provider [" +
+                    source + "]. Synchronization for the repo will continue for other providers.", e);
+            }
         }
 
         return true;

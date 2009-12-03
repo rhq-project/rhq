@@ -65,10 +65,13 @@
 					</h:panelGroup>
 					<div>______________________________________</div>
 					<div>* <h:outputText value="#{messages.uncommitted}" /></div>
-					<h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">							
-						<a4j:commandButton action="#{ExistingResourceConfigurationUIBean.commit}"
-							value="#{messages.commit}" reRender="changedFiles" styleClass="buttonmed"/> 						
-						<a4j:commandButton
+					<h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
+					
+					 <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
+                             title="Click to Save Changes" styleClass="buttonmed"
+                             rendered="${ResourceUIBean.permissions.configure}" />
+					
+					<a4j:commandButton
 							action="#{ExistingResourceConfigurationUIBean.discard}" value="#{messages.discard}"
 							reRender="changedFiles" styleClass="buttonmed"/>
 					</h:panelGrid>
@@ -89,11 +92,11 @@
 						<h:outputText value=" #{messages.upload} " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
 						<f:param name="conversationId" value="#{conversation.id}" />
-					</h:outputLink> <s:link action="#{rawConfigDownload.download}">
+					</h:outputLink> <h:outputLink value="download.jsp">
 		            	<img src="/images/download.png" />
-		            	<h:outputText value="  #{messages.download} " />
+		            	<h:outputText value="  dammit #{messages.download} " />
 						<f:param name="id" value="#{ResourceUIBean.id}" />
-		            </s:link>	
+		            </h:outputLink>	
 									
 					<div><h:inputTextarea cols="80" rows="40"
 						value="#{ExistingResourceConfigurationUIBean.currentContents}" /></div>

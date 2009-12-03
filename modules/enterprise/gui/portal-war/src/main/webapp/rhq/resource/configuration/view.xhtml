@@ -29,7 +29,7 @@ THIS TEXT WILL BE REMOVED.
       </h:panelGroup>
 
     	<h:outputText value="#{messages.youareviewingstructured}" />	  
-		 <h:panelGroup rendered="#{rawConfigCollection.rawSupported}" >
+		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}" >
 		   <h:outputText value=" #{messages.switch2}" />
            <h:outputLink value="view-raw.xhtml">
 	  			<f:param name="id" value="#{ResourceUIBean.id}" />
@@ -48,10 +48,10 @@ THIS TEXT WILL BE REMOVED.
                       
             <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
                              title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
+                             rendered="${ResourceUIBean.permissions.configure and ExistingResourceConfigurationUIBean.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
 			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                              title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and rawConfigCollection.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
+                             rendered="${ResourceUIBean.permissions.configure and ExistingResourceConfigurationUIBean.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
          </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"

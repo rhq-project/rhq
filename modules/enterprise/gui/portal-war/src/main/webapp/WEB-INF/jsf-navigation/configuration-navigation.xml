@@ -37,10 +37,12 @@
    <navigation-rule>
 
       <from-view-id>/rhq/resource/configuration/edit-raw.xhtml</from-view-id>
-      <navigation-case>
-          <from-action> #{rawConfigCollection.choseRaw}</from-action>
-      	  <from-outcome>success</from-outcome>
-      	  <to-view-id>/rhq/resource/configuration/edit-raw.xhtml?id=#{param.id}</to-view-id>
+            
+	  <navigation-case>
+         <from-action>#{ExistingResourceConfigurationUIBean.updateConfiguration}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
       </navigation-case>
             
        

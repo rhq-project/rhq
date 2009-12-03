@@ -20,13 +20,13 @@
 
 <h:form id="editResourceConfigurationForm" >
 <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
-<h:commandLink action="#{rawConfigCollection.update}" >
+<h:commandLink action="#{ExistingResourceConfigurationUIBean.update}" >
     <img src="/images/save.png" alt="#{messages.save}" title="#{messages.save}"/> 
 	<f:param name="conversationId" value="#{conversation.id}"/>
     <f:param name="id" value="#{ResourceUIBean.id}"/>
 </h:commandLink> 
 <div>
-<h:inputTextarea cols="800" rows="600" value="#{rawConfigCollection.currentContents}" />
+<h:inputTextarea cols="800" rows="600" value="#{ExistingResourceConfigurationUIBean.currentContents}" />
 </div>
 </h:form>
 </ui:define>

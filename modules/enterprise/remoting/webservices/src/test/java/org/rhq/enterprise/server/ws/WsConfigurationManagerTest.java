@@ -189,7 +189,7 @@ public class WsConfigurationManagerTest extends AssertJUnit implements TestPrope
         config.getPropertySimpleContainer().add(property);
 
         ResourceConfigurationUpdate configUpdate = WEBSERVICE_REMOTE.updateResourceConfiguration(subject, resource.id,
-            config, true);
+            config);
 
         while (WEBSERVICE_REMOTE.isResourceConfigurationUpdateInProgress(subject, resource.id)) {
             java.lang.Thread.sleep(1000);

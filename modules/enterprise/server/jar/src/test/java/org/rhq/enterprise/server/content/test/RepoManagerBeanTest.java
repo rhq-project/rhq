@@ -47,7 +47,6 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
-import org.rhq.enterprise.server.content.ContentTestHelper;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
@@ -104,17 +103,6 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         repos = repoManager.findRepos(overlord, new PageControl());
 
         assert repos.size() == (origsize + 10);
-
-    }
-
-    @Test(enabled = ENABLED)
-    public void testSyncRepos() throws Exception {
-        Repo repo = ContentTestHelper.getTestRepoWithContentSource();
-
-        Integer[] ids = { repo.getId() };
-        int syncCount = repoManager.synchronizeRepos(overlord, ids);
-
-        assert syncCount == 1;
 
     }
 

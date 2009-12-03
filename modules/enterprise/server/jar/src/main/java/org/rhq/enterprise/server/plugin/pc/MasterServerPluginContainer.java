@@ -157,6 +157,7 @@ public class MasterServerPluginContainer {
         } catch (Throwable t) {
             shutdown();
             log.error("Failed to initialize master plugin container! Server side plugins will not start.", t);
+            throw new RuntimeException(t);
         }
 
         return;

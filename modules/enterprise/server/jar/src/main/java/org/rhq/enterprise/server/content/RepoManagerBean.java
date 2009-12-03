@@ -66,11 +66,11 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
-import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -311,7 +311,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
-
         repo.setCandidate(false);
 
         log.debug("User [" + subject + "] is creating repo [" + repo + "]");

@@ -150,7 +150,6 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         MasterServerPluginContainerConfiguration config;
         config = new MasterServerPluginContainerConfiguration(pluginDir, dataDir, tmpDir, null);
         pc.initialize(config);
-
         return pc;
     }
 }

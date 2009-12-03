@@ -1,8 +1,8 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -50,13 +50,12 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
      * {@link #synchronizePackages(String, PackageSyncReport, Collection)} passing in a repo with the name
      * {@link #REPO_WITH_PACKAGES}.
      */
-    public static final Map<ContentProviderPackageDetailsKey, ContentProviderPackageDetails> PACKAGES =
-        new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(2);
+    public static final Map<ContentProviderPackageDetailsKey, ContentProviderPackageDetails> PACKAGES = new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(
+        2);
     static {
 
-        ContentProviderPackageDetailsKey key1 =
-            new ContentProviderPackageDetailsKey("package1", "version1", PACKAGE_TYPE_NAME, "noarch",
-                RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
+        ContentProviderPackageDetailsKey key1 = new ContentProviderPackageDetailsKey("package1", "version1",
+            PACKAGE_TYPE_NAME, "noarch", RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
         ContentProviderPackageDetails details1 = new ContentProviderPackageDetails(key1);
         details1.setFileName("filename1");
         details1.setFileSize(4L);
@@ -64,9 +63,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         PACKAGES.put(key1, details1);
 
-        ContentProviderPackageDetailsKey key2 =
-            new ContentProviderPackageDetailsKey("package2", "version2", PACKAGE_TYPE_NAME, "noarch",
-                RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
+        ContentProviderPackageDetailsKey key2 = new ContentProviderPackageDetailsKey("package2", "version2",
+            PACKAGE_TYPE_NAME, "noarch", RESOURCE_TYPE_NAME, RESOURCE_TYPE_PLUGIN_NAME);
         ContentProviderPackageDetails details2 = new ContentProviderPackageDetails(key2);
         details2.setFileName("filename2");
         details2.setFileSize(4L);
@@ -85,18 +83,17 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
      */
     public static final String DISTRIBUTION_2_LABEL = "distribution2";
 
-    public static final Map<String, DistributionDetails> DISTRIBUTIONS =
-        new HashMap<String, DistributionDetails>(2);
+    public static final Map<String, DistributionDetails> DISTRIBUTIONS = new HashMap<String, DistributionDetails>(2);
     static {
 
         // Note: The type "kickstart" should already be in the database from installation
 
         DistributionDetails dis1 = new DistributionDetails(DISTRIBUTION_1_LABEL, "kickstart");
         dis1.setDistributionPath("/kstrees");
-        DistributionFileDetails file11 = new DistributionFileDetails("dist1file1",
-            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
-        DistributionFileDetails file12 = new DistributionFileDetails("dist1file2",
-            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
+        DistributionFileDetails file11 = new DistributionFileDetails("dist1file1", System.currentTimeMillis(),
+            "1c07207667b6c40488a7ea14f5f2538c");
+        DistributionFileDetails file12 = new DistributionFileDetails("dist1file2", System.currentTimeMillis(),
+            "1c07207667b6c40488a7ea14f5f2538c");
         dis1.addFile(file11);
         dis1.addFile(file12);
 
@@ -104,8 +101,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         DistributionDetails dis2 = new DistributionDetails(DISTRIBUTION_2_LABEL, "kickstart");
         dis2.setDistributionPath("/kstrees");
-        DistributionFileDetails file21 = new DistributionFileDetails("dist2file1",
-            System.currentTimeMillis(), "1c07207667b6c40488a7ea14f5f2538c");
+        DistributionFileDetails file21 = new DistributionFileDetails("dist2file1", System.currentTimeMillis(),
+            "1c07207667b6c40488a7ea14f5f2538c");
         dis2.addFile(file21);
 
         DISTRIBUTIONS.put(dis2.getLabel(), dis2);
@@ -202,8 +199,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         // on the first call to this method. This will likely be changed as new requirements emerge.
         for (ContentProviderPackageDetails pkg : PACKAGES.values()) {
 
-            ContentProviderPackageDetails existingPackage =
-                findDetailsByKey(pkg.getContentProviderPackageDetailsKey(), existingPackages);
+            ContentProviderPackageDetails existingPackage = findDetailsByKey(pkg.getContentProviderPackageDetailsKey(),
+                existingPackages);
 
             if (existingPackage == null) {
                 report.addNewPackage(pkg);
@@ -224,7 +221,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-                                        Collection<DistributionDetails> existingDistros) throws Exception {
+        Collection<DistributionDetails> existingDistros) throws Exception {
 
         logSynchronizeDistroRepos.add(repoName);
 
@@ -306,7 +303,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     private ContentProviderPackageDetails findDetailsByKey(ContentProviderPackageDetailsKey key,
-                                                           Collection<ContentProviderPackageDetails> packages) {
+        Collection<ContentProviderPackageDetails> packages) {
 
         for (ContentProviderPackageDetails pkg : packages) {
             if (pkg.getContentProviderPackageDetailsKey().equals(key)) {
@@ -316,4 +313,5 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         return null;
     }
+
 }

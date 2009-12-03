@@ -691,7 +691,6 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             int contentSourceId = contentSource.getId();
             ContentProviderManager cpMgr = pc.getAdapterManager();
             ContentProvider provider = cpMgr.getIsolatedContentProvider(contentSource.getId());
-
             if (!(provider instanceof DistributionSource)) {
                 return;
             }
@@ -752,8 +751,9 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     }
                 }
             }
-        } catch (Exception e) {
-            log.error(e);
+        } catch (Throwable t) {
+            log.error(t);
+            throw new RuntimeException(t);
         }
     }
 

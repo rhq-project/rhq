@@ -137,7 +137,7 @@ public class ServerPluginService implements ServerPluginServiceManagement {
 
         File pluginDir = getServerPluginsDirectory();
 
-        File serverDataDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+        File serverDataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
         File dataDir = new File(serverDataDir, "server-plugins");
         dataDir.mkdirs(); // make sure the data directory exists
 

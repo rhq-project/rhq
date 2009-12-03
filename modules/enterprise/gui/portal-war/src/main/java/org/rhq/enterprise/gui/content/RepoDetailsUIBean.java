@@ -20,6 +20,9 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -29,6 +32,9 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoDetailsUIBean {
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private Repo repo;
 
     public Repo getRepo() {
@@ -55,6 +61,7 @@ public class RepoDetailsUIBean {
         }
         catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
+            log.error("Error synchronizing repo ID [" + repoIds + "]", e);
             return "edit";
         }
         if (syncCount > 0) {

@@ -6,12 +6,12 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
-public class VirtHostDiscoveryComponent implements ResourceDiscoveryComponent{
+public class VirtHostDiscoveryComponent implements ResourceDiscoveryComponent {
 
-	public Set discoverResources(ResourceDiscoveryContext context)
-			throws InvalidPluginConfigurationException, Exception {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    public Set discoverResources(ResourceDiscoveryContext context) throws InvalidPluginConfigurationException,
+        Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
 }

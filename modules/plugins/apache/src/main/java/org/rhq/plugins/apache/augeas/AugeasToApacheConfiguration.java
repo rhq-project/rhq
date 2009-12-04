@@ -13,52 +13,48 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 
-public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple{
+public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
 
-	
-	public AugeasToApacheConfiguration(){
-		super();
-	}
-	
-	public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception{
-        String value="";
+    public AugeasToApacheConfiguration() {
+        super();
+    }
+
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception {
+        String value = "";
         String propertyName = propDefSimple.getName();
 
-        if (propertyName.equals(".")){
-        	return new PropertySimple(propDefSimple.getName(), node.getValue());
+        if (propertyName.equals(".")) {
+            return new PropertySimple(propDefSimple.getName(), node.getValue());
         }
-        
+
         if (propertyName.startsWith("."))
-        	propertyName = propertyName.substring(1);
-               
-        
+            propertyName = propertyName.substring(1);
+
         List<AugeasNode> simpleNode = node.getChildByLabel(propertyName);
         if (simpleNode.isEmpty())
-        	return new PropertySimple(propDefSimple.getName(), null);
-        
-        for (AugeasNode nd : simpleNode){
-           value = value + " " + nd.getValue();
+            return new PropertySimple(propDefSimple.getName(), null);
+
+        for (AugeasNode nd : simpleNode) {
+            value = value + " " + nd.getValue();
         }
-        
+
         return new PropertySimple(propDefSimple.getName(), value);
     }
-	
-	
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception{
-                         
-          PropertyList propList = new PropertyList(propDefList.getName());
-                  
-          PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
-         
-          List<AugeasNode> nodes = tree.matchRelative(node, listMemberPropDef.getName());
-          
-          for (AugeasNode nd : nodes ){
-             propList.add(loadProperty(listMemberPropDef,nd));
-          }
-          
-          return propList;
-      }
-    
+
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception {
+
+        PropertyList propList = new PropertyList(propDefList.getName());
+
+        PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
+
+        List<AugeasNode> nodes = tree.matchRelative(node, listMemberPropDef.getName());
+
+        for (AugeasNode nd : nodes) {
+            propList.add(loadProperty(listMemberPropDef, nd));
+        }
+
+        return propList;
+    }
 
     public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
@@ -67,5 +63,5 @@ public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple{
         }
         return propMap;
     }
-    
+
 }

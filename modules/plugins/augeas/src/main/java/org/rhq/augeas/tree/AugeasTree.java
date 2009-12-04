@@ -26,23 +26,37 @@ package org.rhq.augeas.tree;
 import java.util.List;
 
 import org.rhq.augeas.node.AugeasNode;
+
+
 /**
  * 
  * @author Filip Drabek
  *
  */
 public interface AugeasTree {
-       public void update();
-       public void save();
-       public AugeasNode getNode(String path) throws AugeasTreeException;
-       public List<AugeasNode> match(String expression) throws AugeasTreeException;
-       public List<AugeasNode> matchRelative(AugeasNode node,String expression) throws AugeasTreeException;
-       public AugeasNode createNode(String fullPath) throws AugeasTreeException;
-       public AugeasNode createNode(AugeasNode parentNode,String name ,String value,int seq)throws AugeasTreeException;
-       public String get(String expr);
-       public AugeasNode getRootNode();
-       public void removeNode(AugeasNode node,boolean updateSeq) throws Exception;
-       public void setValue(AugeasNode node,String value);
-       public String summarizeAugeasError();
-       public void setRootNode(AugeasNode node);
+    public void update();
+
+    public void save();
+
+    public AugeasNode getNode(String path) throws AugeasTreeException;
+
+    public List<AugeasNode> match(String expression) throws AugeasTreeException;
+
+    public List<AugeasNode> matchRelative(AugeasNode node, String expression) throws AugeasTreeException;
+
+    public AugeasNode createNode(String fullPath) throws AugeasTreeException;
+
+    public AugeasNode createNode(AugeasNode parentNode, String name, String value, int seq) throws AugeasTreeException;
+
+    public String get(String expr);
+
+    public AugeasNode getRootNode();
+
+    public void removeNode(AugeasNode node, boolean updateSeq) throws Exception;
+
+    public void setValue(AugeasNode node, String value);
+
+    public String summarizeAugeasError();
+
+    public void setRootNode(AugeasNode node);
 }

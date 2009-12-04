@@ -30,10 +30,14 @@ import java.util.List;
  *
  */
 public interface AugeasConfiguration {
-        
-        public List<AugeasModuleConfig> getModules();
-        public AugeasModuleConfig getModuleByName(String name);
-        public String getRootPath();
-        public String getLoadPath();
-        public int getMode();
+
+    public List<AugeasModuleConfig> getModules();
+
+    public AugeasModuleConfig getModuleByName(String name);
+
+    public String getRootPath();
+
+    public String getLoadPath();
+
+    public int getMode();
 }

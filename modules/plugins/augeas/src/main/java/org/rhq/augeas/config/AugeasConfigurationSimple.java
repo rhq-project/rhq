@@ -25,69 +25,66 @@ package org.rhq.augeas.config;
 
 import java.util.ArrayList;
 import java.util.List;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasConfigurationSimple implements AugeasConfiguration{
-        
-        private String loadPath;
-        private int mode;
-        private String rootPath;
-        private List<AugeasModuleConfig> modules;
-        
-        public void setLoadPath(String loadPath) {
-                this.loadPath = loadPath;
-        }
+public class AugeasConfigurationSimple implements AugeasConfiguration {
 
-        public void setMode(int mode) {
-                this.mode = mode;
-        }
+    private String loadPath;
+    private int mode;
+    private String rootPath;
+    private List<AugeasModuleConfig> modules;
 
-        public void setRootPath(String rootPath) {
-                this.rootPath = rootPath;
-        }
+    public void setLoadPath(String loadPath) {
+        this.loadPath = loadPath;
+    }
 
-        public void setModules(List<AugeasModuleConfig> modules) {
-                this.modules = modules;
-        }
+    public void setMode(int mode) {
+        this.mode = mode;
+    }
 
-        public AugeasConfigurationSimple()
-        {
-                 modules = new ArrayList<AugeasModuleConfig>();
-        }
-        
-        public String getLoadPath() {
-                return loadPath;
-        }
+    public void setRootPath(String rootPath) {
+        this.rootPath = rootPath;
+    }
 
-        
-        public int getMode() {        
-                return mode;
-        }
-        
-        public List<AugeasModuleConfig> getModules() {
-                return modules;
-        }
+    public void setModules(List<AugeasModuleConfig> modules) {
+        this.modules = modules;
+    }
 
-        
-        public String getRootPath() {
-                return rootPath;
-        }
+    public AugeasConfigurationSimple() {
+        modules = new ArrayList<AugeasModuleConfig>();
+    }
 
-        public void addModuleConfig(AugeasModuleConfig config)
-        {
-                if (modules.contains(config))
-                        return;
-        modules.add(config);        	
-        }
+    public String getLoadPath() {
+        return loadPath;
+    }
 
-		public AugeasModuleConfig getModuleByName(String name) {
-			for (AugeasModuleConfig module : modules){
-				if (module.getModuletName().equals(name))
-					return module;
-			}
-			return null;
-		}
+    public int getMode() {
+        return mode;
+    }
+
+    public List<AugeasModuleConfig> getModules() {
+        return modules;
+    }
+
+    public String getRootPath() {
+        return rootPath;
+    }
+
+    public void addModuleConfig(AugeasModuleConfig config) {
+        if (modules.contains(config))
+            return;
+        modules.add(config);
+    }
+
+    public AugeasModuleConfig getModuleByName(String name) {
+        for (AugeasModuleConfig module : modules) {
+            if (module.getModuletName().equals(name))
+                return module;
+        }
+        return null;
+    }
 }

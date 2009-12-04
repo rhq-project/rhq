@@ -54,6 +54,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // The cache is cleaned anytime there is a new entry.
     static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
 
+    static private Map<Integer, String> urlMap = new HashMap<Integer, String>();
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -87,11 +89,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
                 // We have to be careful not to mess with the core menu as it is returned from
                 // the perspective manager. The core menu for each subject/sessionid could
-                // differ based on activation checks. So, get a new mnu structure when applying
+                // differ based on activation checks. So, get a new menu structure when applying
                 // activation filters.
                 coreMenu = getActivatedMenu(subject, coreMenu);
 
-                // TODO : make safe copy
                 cacheEntry.setCoreMenu(coreMenu);
             } catch (Exception e) {
                 throw new PerspectiveException("Failed to get Core Menu.", e);
@@ -101,6 +102,39 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return coreMenu;
     }
 
+    /**
+     * Return a unique key for the url.
+     * @param url
+     * @return
+     */
+    public synchronized int getUrlKey(String url) {
+        int key = url.hashCode();
+
+        // in the very unlikely case that we have multiple urls with the same hashcode, protect
+        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
+        String mapEntry = urlMap.get(key);
+        while (!((null == mapEntry) || mapEntry.equals(url))) {
+            key *= 13;
+            mapEntry = urlMap.get(key);
+        }
+
+        if (null == mapEntry) {
+            urlMap.put(key, url);
+        }
+
+        return key;
+    }
+
+    /**
+     * Return the url for the given key.
+     */
+    public String getUrlViaKey(int key) {
+        return urlMap.get(key);
+    }
+
+    // TODO: Is there any sort of listener approach we could use to clear an individual cache entry
+    // for various events like: change to role defs, change to inventory? Perhaps even a manual or
+    // automated refresh for the session?
     private void cleanCache() {
         Subject subject;
 

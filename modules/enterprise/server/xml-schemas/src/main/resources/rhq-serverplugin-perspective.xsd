@@ -51,6 +51,11 @@
             base="serverplugin:ServerPluginDescriptorType">
             <xs:sequence>
                <xs:element
+                  ref="perspective:application"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
                   ref="perspective:globalTask"
                   minOccurs="0"
                   maxOccurs="unbounded">
@@ -78,6 +83,46 @@
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
+   </xs:complexType>
+
+   <xs:element
+      name="application"
+      type="perspective:ApplicationType">
+      <xs:annotation>
+         <xs:documentation>Declares a web application referenced by an extension in the perspective. It is assumed that
+            the application will be deployed by the perspective or will be externally available. Extension urls can be
+            absolute or relative. Urls starting with "http" are external and processed as is. Urls starting with "/" are
+            relative to the root application (rhq-portal.war). Any other urls are assumed relative and will prepend the
+            baseUrl of the declared application (required in this case). specify an application will resolve url's
+            relatively to the root application (It is assumed that the root application (rhq-portal.war)
+         </xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="PerspectiveApplicationElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType
+      name="ApplicationType">
+      <xs:attribute
+         name="name"
+         type="perspective:NameType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>Internal name for referencing the application by the extensions. By convention, the
+               context root.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="baseUrl"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>The base url prepended to all extension urls declaring this application.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
    </xs:complexType>
 
    <xs:element
@@ -174,6 +219,15 @@
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
+         name="application"
+         type="xs:string"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>The application servicing the urls for this extension. Default is root (rhq-portal.war).
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
          name="url"
          type="xs:anyURI"
          use="required">
@@ -195,7 +249,7 @@
 
    <xs:element
       name="extensionPoint"
-      type="perspective:ExtensionPointNameType">
+      type="perspective:ExtensionPointType">
    </xs:element>
 
    <xs:element
@@ -301,6 +355,15 @@
          default="false">
          <xs:annotation>
             <xs:documentation>If true render this menuItem in debug mode only.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="application"
+         type="xs:string"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>The application servicing the urls for this extension. Default is root (rhq-portal.war).
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -416,6 +479,15 @@
          use="required">
          <xs:annotation>
             <xs:documentation>The display name for the tab extension.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="application"
+         type="xs:string"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>The application servicing the urls for this extension. Default is root (rhq-portal.war).
+            </xs:documentation>
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
@@ -682,7 +754,7 @@
       name="PositionType">
       <xs:attribute
          name="extensionPoint"
-         type="perspective:ExtensionPointNameType"
+         type="perspective:ExtensionPointType"
          use="required">
          <xs:annotation>
             <xs:documentation>The extension point for which the extension is being positioned.</xs:documentation>
@@ -765,13 +837,11 @@
    </xs:simpleType>
 
    <xs:simpleType
-      name="ExtensionPointNameType">
+      name="ExtensionPointType">
       <xs:restriction
          base="xs:string">
-         <xs:minLength
-            value="1" />
-         <xs:maxLength
-            value="128" />
+         <xs:enumeration
+            value="coreMenu"></xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
 

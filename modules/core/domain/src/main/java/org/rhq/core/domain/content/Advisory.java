@@ -20,7 +20,7 @@ import javax.persistence.Table;
     @NamedQuery(name = Advisory.QUERY_FIND_BY_ADV, query = "SELECT adv " + "  FROM Advisory adv "
         + " WHERE adv.advisory = :advisory "),
     @NamedQuery(name = Advisory.QUERY_DELETE_BY_ADV_ID, query = "DELETE Advisory adv WHERE adv.id = :advid") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
 

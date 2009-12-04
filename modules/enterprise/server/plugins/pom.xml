@@ -39,6 +39,7 @@
     <module>yum</module>
     <module>url</module>
     <module>rhnhosted</module>
+    <module>validate-all-serverplugins</module>
   </modules>
 
 </project>

@@ -103,3 +103,11 @@ test Httpd.lns get
     =
     { "Directory" = "\"/var/www/html\"" 
         { "Options" { "option" = "Indexes" } { "option" = "FollowSymLinks" } } }
+
+test Httpd.restOfDirectives get "RewriteRule ^/auth($|/)(.*)         http://host/auth/$2                [P,L]\n" = 
+    { "RewriteRule" {"param" = "^/auth($|/)(.*)" } { "param" = "http://host/auth/$2" } { "param" = "[P,L]" } }
+
+test Httpd.directive get "Include /etc/httpd/conf/vhosts/www.jboss.org-common/www.jboss.org-config.conf\n" =
+    { "Include" = "/etc/httpd/conf/vhosts/www.jboss.org-common/www.jboss.org-config.conf" }
+
+test Httpd.lns get "Include \\\n /value\n" = { "Include" = "/value" }

@@ -5,19 +5,417 @@ module Httpd =
 (* FIXME: Most of the comparisons in Apache are case insensitive       *)
 (* We do not have a way to express that currently; probably need some *)
 (* additions to the regexp syntax like /[a-z]+/i                      *)
-let sep = Util.del_ws_spc
-let eol = del /[ \t]*\n/ "\n"
+
+(* This is the list of all httpd directives taken from http://httpd.apache.org/docs/2.2/mod/directives.html *)
+(* If we wanted a simple lens, we could make do with a simple generic "directive" rule that would match any directive and
+   its arguments + a generic section that would do ditto. But because we want to support rich parsing and parameter naming, 
+   we have to create a rule for each directive that we want special treatment for. This brings along an interesting problem
+   of coming up with "catch-all" directive that would match any "non-special" directives/sections. 
+   A construct along the lines of " /[a-zA-Z0-9]+/ - allSpecialDirectiveNames " doesn't work for some reason because Augeas
+   errors out with memory exhaustion error. Thus we have to have a list of all directives there are... *)
+let allDirectives = "AcceptFilter"
+                  | "AcceptMutex"
+                  | "AcceptPathInfo"
+                  | "AccessFileName"
+                  | "Action"
+                  | "AddAlt"
+                  | "AddAltByEncoding"
+                  | "AddAltByType"
+                  | "AddCharset"
+                  | "AddDefaultCharset"
+                  | "AddDescription"
+                  | "AddEncoding"
+                  | "AddHandler"
+                  | "AddIcon"
+                  | "AddIconByEncoding"
+                  | "AddIconByType"
+                  | "AddInputFilter"
+                  | "AddLanguage"
+                  | "AddModuleInfo"
+                  | "AddOutputFilter"
+                  | "AddOutputFilterByType"
+                  | "AddType"
+                  | "Alias"
+                  | "AliasMatch"
+                  | "Allow"
+                  | "AllowCONNECT"
+                  | "AllowEncodedSlashes"
+                  | "AllowOverride"
+                  | "Anonymous"
+                  | "Anonymous_LogEmail"
+                  | "Anonymous_MustGiveEmail"
+                  | "Anonymous_NoUserID"
+                  | "Anonymous_VerifyEmail"
+                  | "AuthBasicAuthoritative"
+                  | "AuthBasicProvider"
+                  | "AuthDBDUserPWQuery"
+                  | "AuthDBDUserRealmQuery"
+                  | "AuthDBMGroupFile"
+                  | "AuthDBMType"
+                  | "AuthDBMUserFile"
+                  | "AuthDefaultAuthoritative"
+                  | "AuthDigestAlgorithm"
+                  | "AuthDigestDomain"
+                  | "AuthDigestNcCheck"
+                  | "AuthDigestNonceFormat"
+                  | "AuthDigestNonceLifetime"
+                  | "AuthDigestProvider"
+                  | "AuthDigestQop"
+                  | "AuthDigestShmemSize"
+                  | "AuthGroupFile"
+                  | "AuthLDAPBindDN"
+                  | "AuthLDAPBindPassword"
+                  | "AuthLDAPCharsetConfig"
+                  | "AuthLDAPCompareDNOnServer"
+                  | "AuthLDAPDereferenceAliases"
+                  | "AuthLDAPGroupAttribute"
+                  | "AuthLDAPGroupAttributeIsDN"
+                  | "AuthLDAPRemoteUserAttribute"
+                  | "AuthLDAPRemoteUserIsDN"
+                  | "AuthLDAPUrl"
+                  | "AuthName"
+                  | "AuthType"
+                  | "AuthUserFile"
+                  | "AuthzDBMAuthoritative"
+                  | "AuthzDBMType"
+                  | "AuthzDefaultAuthoritative"
+                  | "AuthzGroupFileAuthoritative"
+                  | "AuthzLDAPAuthoritative"
+                  | "AuthzOwnerAuthoritative"
+                  | "AuthzUserAuthoritative"
+                  | "BalancerMember"
+                  | "BrowserMatch"
+                  | "BrowserMatchNoCase"
+                  | "BufferedLogs"
+                  | "CacheDefaultExpire"
+                  | "CacheDirLength"
+                  | "CacheDirLevels"
+                  | "CacheDisable"
+                  | "CacheEnable"
+                  | "CacheFile"
+                  | "CacheIgnoreCacheControl"
+                  | "CacheIgnoreHeaders"
+                  | "CacheIgnoreNoLastMod"
+                  | "CacheIgnoreQueryString"
+                  | "CacheIgnoreURLSessionIdentifiers"
+                  | "CacheLastModifiedFactor"
+                  | "CacheMaxExpire"
+                  | "CacheMaxFileSize"
+                  | "CacheMinFileSize"
+                  | "CacheNegotiatedDocs"
+                  | "CacheRoot"
+                  | "CacheStoreNoStore"
+                  | "CacheStorePrivate"
+                  | "CGIMapExtension"
+                  | "CharsetDefault"
+                  | "CharsetOptions"
+                  | "CharsetSourceEnc"
+                  | "CheckCaseOnly"
+                  | "CheckSpelling"
+                  | "ChrootDir"
+                  | "ContentDigest"
+                  | "CookieDomain"
+                  | "CookieExpires"
+                  | "CookieLog"
+                  | "CookieName"
+                  | "CookieStyle"
+                  | "CookieTracking"
+                  | "CoreDumpDirectory"
+                  | "CustomLog"
+                  | "Dav"
+                  | "DavDepthInfinity"
+                  | "DavGenericLockDB"
+                  | "DavLockDB"
+                  | "DavMinTimeout"
+                  | "DBDExptime"
+                  | "DBDKeep"
+                  | "DBDMax"
+                  | "DBDMin"
+                  | "DBDParams"
+                  | "DBDPersist"
+                  | "DBDPrepareSQL"
+                  | "DBDriver"
+                  | "DefaultIcon"
+                  | "DefaultLanguage"
+                  | "DefaultType"
+                  | "DeflateBufferSize"
+                  | "DeflateCompressionLevel"
+                  | "DeflateFilterNote"
+                  | "DeflateMemLevel"
+                  | "DeflateWindowSize"
+                  | "Deny"
+                  | "DirectoryIndex"
+                  | "DirectorySlash"
+                  | "DocumentRoot"
+                  | "DumpIOInput"
+                  | "DumpIOLogLevel"
+                  | "DumpIOOutput"
+                  | "EnableExceptionHook"
+                  | "EnableMMAP"
+                  | "EnableSendfile"
+                  | "ErrorDocument"
+                  | "ErrorLog"
+                  | "Example"
+                  | "ExpiresActive"
+                  | "ExpiresByType"
+                  | "ExpiresDefault"
+                  | "ExtendedStatus"
+                  | "ExtFilterDefine"
+                  | "ExtFilterOptions"
+                  | "FileETag"
+                  | "FilterChain"
+                  | "FilterDeclare"
+                  | "FilterProtocol"
+                  | "FilterProvider"
+                  | "FilterTrace"
+                  | "ForceLanguagePriority"
+                  | "ForceType"
+                  | "ForensicLog"
+                  | "GracefulShutdownTimeout"
+                  | "Group"
+                  | "Header"
+                  | "HeaderName"
+                  | "HostnameLookups"
+                  | "IdentityCheck"
+                  | "IdentityCheckTimeout"
+                  | "ImapBase"
+                  | "ImapDefault"
+                  | "ImapMenu"
+                  | "Include"
+                  | "IndexHeadInsert"
+                  | "IndexIgnore"
+                  | "IndexOptions"
+                  | "IndexOrderDefault"
+                  | "IndexStyleSheet"
+                  | "ISAPIAppendLogToErrors"
+                  | "ISAPIAppendLogToQuery"
+                  | "ISAPICacheFile"
+                  | "ISAPIFakeAsync"
+                  | "ISAPILogNotSupported"
+                  | "ISAPIReadAheadBuffer"
+                  | "KeepAlive"
+                  | "KeepAliveTimeout"
+                  | "LanguagePriority"
+                  | "LDAPCacheEntries"
+                  | "LDAPCacheTTL"
+                  | "LDAPConnectionTimeout"
+                  | "LDAPOpCacheEntries"
+                  | "LDAPOpCacheTTL"
+                  | "LDAPSharedCacheFile"
+                  | "LDAPSharedCacheSize"
+                  | "LDAPTrustedClientCert"
+                  | "LDAPTrustedGlobalCert"
+                  | "LDAPTrustedMode"
+                  | "LDAPVerifyServerCert"
+                  | "LimitInternalRecursion"
+                  | "LimitRequestBody"
+                  | "LimitRequestFields"
+                  | "LimitRequestFieldSize"
+                  | "LimitRequestLine"
+                  | "LimitXMLRequestBody"
+                  | "Listen"
+                  | "ListenBackLog"
+                  | "LoadFile"
+                  | "LoadModule"
+                  | "LockFile"
+                  | "LogFormat"
+                  | "LogLevel"
+                  | "MaxClients"
+                  | "MaxKeepAliveRequests"
+                  | "MaxMemFree"
+                  | "MaxRequestsPerChild"
+                  | "MaxRequestsPerThread"
+                  | "MaxSpareServers"
+                  | "MaxSpareThreads"
+                  | "MaxThreads"
+                  | "MCacheMaxObjectCount"
+                  | "MCacheMaxObjectSize"
+                  | "MCacheMaxStreamingBuffer"
+                  | "MCacheMinObjectSize"
+                  | "MCacheRemovalAlgorithm"
+                  | "MCacheSize"
+                  | "MetaDir"
+                  | "MetaFiles"
+                  | "MetaSuffix"
+                  | "MimeMagicFile"
+                  | "MinSpareServers"
+                  | "MinSpareThreads"
+                  | "MMapFile"
+                  | "ModMimeUsePathInfo"
+                  | "MultiviewsMatch"
+                  | "NameVirtualHost"
+                  | "NoProxy"
+                  | "NWSSLTrustedCerts"
+                  | "NWSSLUpgradeable"
+                  | "Options"
+                  | "Order"
+                  | "PassEnv"
+                  | "PidFile"
+                  | "ProtocolEcho"
+                  | "ProxyBadHeader"
+                  | "ProxyBlock"
+                  | "ProxyDomain"
+                  | "ProxyErrorOverride"
+                  | "ProxyFtpDirCharset"
+                  | "ProxyIOBufferSize"
+                  | "ProxyMaxForwards"
+                  | "ProxyPass"
+                  | "ProxyPassInterpolateEnv"
+                  | "ProxyPassMatch"
+                  | "ProxyPassReverse"
+                  | "ProxyPassReverseCookieDomain"
+                  | "ProxyPassReverseCookiePath"
+                  | "ProxyPreserveHost"
+                  | "ProxyReceiveBufferSize"
+                  | "ProxyRemote"
+                  | "ProxyRemoteMatch"
+                  | "ProxyRequests"
+                  | "ProxySCGIInternalRedirect"
+                  | "ProxySCGISendfile"
+                  | "ProxySet"
+                  | "ProxyStatus"
+                  | "ProxyTimeout"
+                  | "ProxyVia"
+                  | "ReadmeName"
+                  | "ReceiveBufferSize"
+                  | "Redirect"
+                  | "RedirectMatch"
+                  | "RedirectPermanent"
+                  | "RedirectTemp"
+                  | "RemoveCharset"
+                  | "RemoveEncoding"
+                  | "RemoveHandler"
+                  | "RemoveInputFilter"
+                  | "RemoveLanguage"
+                  | "RemoveOutputFilter"
+                  | "RemoveType"
+                  | "RequestHeader"
+                  | "Require"
+                  | "RewriteBase"
+                  | "RewriteCond"
+                  | "RewriteEngine"
+                  | "RewriteLock"
+                  | "RewriteLog"
+                  | "RewriteLogLevel"
+                  | "RewriteMap"
+                  | "RewriteOptions"
+                  | "RewriteRule"
+                  | "RLimitCPU"
+                  | "RLimitMEM"
+                  | "RLimitNPROC"
+                  | "Satisfy"
+                  | "ScoreBoardFile"
+                  | "Script"
+                  | "ScriptAlias"
+                  | "ScriptAliasMatch"
+                  | "ScriptInterpreterSource"
+                  | "ScriptLog"
+                  | "ScriptLogBuffer"
+                  | "ScriptLogLength"
+                  | "ScriptSock"
+                  | "SecureListen"
+                  | "SeeRequestTail"
+                  | "SendBufferSize"
+                  | "ServerAdmin"
+                  | "ServerAlias"
+                  | "ServerLimit"
+                  | "ServerName"
+                  | "ServerPath"
+                  | "ServerRoot"
+                  | "ServerSignature"
+                  | "ServerTokens"
+                  | "SetEnv"
+                  | "SetEnvIf"
+                  | "SetEnvIfNoCase"
+                  | "SetHandler"
+                  | "SetInputFilter"
+                  | "SetOutputFilter"
+                  | "SSIEnableAccess"
+                  | "SSIEndTag"
+                  | "SSIErrorMsg"
+                  | "SSIStartTag"
+                  | "SSITimeFormat"
+                  | "SSIUndefinedEcho"
+                  | "SSLCACertificateFile"
+                  | "SSLCACertificatePath"
+                  | "SSLCADNRequestFile"
+                  | "SSLCADNRequestPath"
+                  | "SSLCARevocationFile"
+                  | "SSLCARevocationPath"
+                  | "SSLCertificateChainFile"
+                  | "SSLCertificateFile"
+                  | "SSLCertificateKeyFile"
+                  | "SSLCipherSuite"
+                  | "SSLCryptoDevice"
+                  | "SSLEngine"
+                  | "SSLHonorCipherOrder"
+                  | "SSLMutex"
+                  | "SSLOptions"
+                  | "SSLPassPhraseDialog"
+                  | "SSLProtocol"
+                  | "SSLProxyCACertificateFile"
+                  | "SSLProxyCACertificatePath"
+                  | "SSLProxyCARevocationFile"
+                  | "SSLProxyCARevocationPath"
+                  | "SSLProxyCheckPeerCN"
+                  | "SSLProxyCheckPeerExpire"
+                  | "SSLProxyCipherSuite"
+                  | "SSLProxyEngine"
+                  | "SSLProxyMachineCertificateFile"
+                  | "SSLProxyMachineCertificatePath"
+                  | "SSLProxyProtocol"
+                  | "SSLProxyVerify"
+                  | "SSLProxyVerifyDepth"
+                  | "SSLRandomSeed"
+                  | "SSLRenegBufferSize"
+                  | "SSLRequire"
+                  | "SSLRequireSSL"
+                  | "SSLSessionCache"
+                  | "SSLSessionCacheTimeout"
+                  | "SSLStrictSNIVHostCheck"
+                  | "SSLUserName"
+                  | "SSLVerifyClient"
+                  | "SSLVerifyDepth"
+                  | "StartServers"
+                  | "StartThreads"
+                  | "Substitute"
+                  | "SuexecUserGroup"
+                  | "ThreadLimit"
+                  | "ThreadsPerChild"
+                  | "ThreadStackSize"
+                  | "TimeOut"
+                  | "TraceEnable"
+                  | "TransferLog"
+                  | "TypesConfig"
+                  | "UnsetEnv"
+                  | "UseCanonicalName"
+                  | "UseCanonicalPhysicalPort"
+                  | "User"
+                  | "UserDir"
+                  | "VirtualDocumentRoot"
+                  | "VirtualDocumentRootIP"
+                  | "VirtualScriptAlias"
+                  | "VirtualScriptAliasIP"
+                  | "Win32DisableAcceptEx"
+                  | "XBitHack"
+
+(* Now let the specialization commence *)
+
+(* Newlines can be escaped *)
+let sep = del /([ \t]+(\\\\\n)?)+/ " "
+let eol = del /([ \t]*(\\\\\n)?)*\n/ "\n"
 let number = /[0-9]+/
 let on_off = /[Oo](n|ff)/
-let langle = Util.del_str "<"
+let langle = del /[ \t]*</ "<"
 let rangle = Util.del_str ">"
 let modname = /[a-zA-Z0-9._]+/
 let alnum = /[a-zA-Z0-9]+/
-let word = /"([^"\n])*"|'([^'\n])*'|[^'" \t\n]+/
-let wordWithNestQuote = /"([^"\n]|(\\\\\"))*"|'([^'\n])*'|[^'" \t\n]+/
+(* let word = /"([^"\n])*"|'([^'\n])*'|[^'" \t\n]+/ *)
+let word = /"([^"\n]|\\\\")*"|'([^'\n])*'|[^'" \t\n]+/
+let wordWithNestQuote = word
 
 (* A that does not end with ">" *)
-let secargBody = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^ \t\n]*[^ \t\n>]/
+let secargBody = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^'" \t\n>]+/
 (* let secarg = (secargBody.(" ".secargBody)?) *)
 let secarg = secargBody
 
@@ -104,11 +502,10 @@ let browserMatchNoCase = kv_arr1 "BrowserMatchNoCase" "name" word
 let customLog = 
   [ wskey "CustomLog" . sep . store word .
       [ sep . label "format" . store word ] .
-      [ sep . key "env" . Util.del_str "=" . store /[^= \t\n]+/ ]? . eol ]
+      [ sep . key "env" . Util.del_str "=" . store (word - "=") ]? . eol ]
 let imapMenu = kv1 "ImapMenu" /none|formatted|semiformatted|unformatted/
 let indexOrderDefault = kv1 "IndexOrderDefault" /Ascending|Descending Name|Date|Size|Description/
 let iSAPICacheFile = kv_arr "ISAPICacheFile" "file" word 
-let limitExcept = kv_arr "LimitExcept" "nr" number 
 let limitInternalRecursion = kv_arr "LimitInternalRecursion" "nr" number
 let nWSSLTrustedCerts =  kv_arr "NWSSLTrustedCerts" "file" word
 let nWSSLUpgradeable = kv_arr "NWSSLUpgradeable" "address" word
@@ -166,7 +563,7 @@ let removeInputFilter = kv_arr "RemoveInputFilter" "extension" word
 let removeLanguage = kv_arr "RemoveLanguage" "extension" word
 let removeOutputFilter = kv_arr "RemoveOutputFilter" "extension" word
 let removeType = kv_arr "RemoveType" "extension" word
-let setEnv = kv2 "SetEnv" alnum "val" word
+let setEnv = kv2 "SetEnv" word "val" word
 let unsetEnv =  kv_arr "UnsetEnv" "env" word
 let require = kv_arr "Require" "entity" word
 let userDir= kv_arr "UserDir" "name" word
@@ -191,7 +588,7 @@ let options =
   kv_arr "Options" "option" opt_re
 let order = kv1 "Order" /[aA]llow,[dD]eny|[dD]eny,[aA]llow|[mM]utual-failure/
 let scriptAlias = kv2 "ScriptAlias" word "directory" word
-let scriptAliasMatch = [ sep .key "ScriptAliasMatch" . 
+let scriptAliasMatch = [ wskey "ScriptAliasMatch" . 
       [ sep . label "regex" . store word ] .
       [ sep . label "path" . store word]? . eol ]
 let serverSignature = kv1 "ServerSignature" (on_off | "EMail")
@@ -204,6 +601,93 @@ let listen = [ wskey "Listen" . sep .
     [ label "ip" . store /([0-9\.]+)|(\[[0-9a-fA-F:]+\])/ . Util.del_str ":" ]? .
     [ label "port" . store number ] .
     [ sep . label "scheme" . store alnum ]? . eol ]
+
+(* this is a list of the names of the directives defined using the special rules above.
+   We use this to construct the generic catch-all rule that will match "everything we don't know better *)
+let definedDirectiveNames = "AddAltByEncoding"
+                          | "AddAltByType"
+                          | "AddCharset"
+                          | "AccessFileName"
+                          | "AcceptFilter"
+                          | "AcceptPathInfo"
+                          | "AddDescription"
+                          | "AddEncoding"
+                          | "ServerAlias"
+                          | "AddType"
+                          | "AuthType"
+                          | "Action"
+                          | "AddAlt"
+                          | "FilterProvider"
+                          | "FilterTrace"
+                          | "AddIcon"
+                          | "AddInputFilter"
+                          | /AddIconBy(Encoding|Type)/
+                          | "AddLanguage"
+                          | "Alias"
+                          | "AliasMatch"
+                          | "Allow"
+                          | "AllowOverride"
+                          | "AddHandler"
+                          | "AddOutputFilter"
+                          | "AddOutputFilterByType"
+                          | "BrowserMatch"
+                          | "BrowserMatchNoCase"
+                          | "CustomLog"
+                          | "ImapMenu"
+                          | "IndexOrderDefault"
+                          | "ISAPICacheFile"
+                          | "LimitExcept"
+                          | "LimitInternalRecursion"
+                          | "NWSSLTrustedCerts"
+                          | "NWSSLUpgradeable"
+                          | "MultiViewsMatch"
+                          | "CGIMapExtension"
+                          | "ErrorDocument"
+                          | "FilterDeclare"
+                          | "FilterProtocol"
+                          | "Redirect"
+                          | "RedirectPermanent"
+                          | "RedirectTemp"
+                          | "RedirectMatch"
+                          | "RLimitCPU"
+                          | "RLimitMEM"
+                          | "RLimitNPROC"
+                          | "Script"
+                          | "SecureListen"
+                          | "Deny"
+                          | "DirectoryIndex"
+                          | "ForceLanguagePriority"
+                          | "Group"
+                          | "Satisfy"
+                          | "SetHandler"
+                          | "IndexIgnore"
+                          | "PassEnv"
+                          | "RemoveCharset"
+                          | "RemoveEncoding"
+                          | "RemoveHandler"
+                          | "RemoveInputFilter"
+                          | "RemoveLanguage"
+                          | "RemoveOutputFilter"
+                          | "RemoveType"
+                          | "SetEnv"
+                          | "UnsetEnv"
+                          | "Require"
+                          | "UserDir"
+                          | "IndexOptions"
+                          | "LanguagePriority"
+                          | "LoadModule"
+                          | "LogFormat"
+                          | "LogLevel"
+                          | "Options"
+                          | "Order"
+                          | "ScriptAlias"
+                          | "ScriptAliasMatch"
+                          | "ServerSignature"
+                          | "TraceEnable"
+                          | "UseCanonicalName"
+                          | "XBitHack"
+                          | "ServerTokens"
+                          | "Listen"
     
 let dirWithOnOfNm =    "KeepAlive"
                      | "HostnameLookups"
@@ -271,6 +755,7 @@ let dirWithWordParam = "User"
                    | "SSIStartTag"
                    | "SSITimeFormat"
                    | "SSIUndefinedEcho"
+                   | "TransferLog"
 
 let dirWithNrParam = "Timeout"
                      | "ThreadsPerChild"
@@ -293,7 +778,6 @@ let dirWithNrParam = "Timeout"
                      | "ScriptLogBuffer"
                      | "ScriptLogLength"
                      | "TimeOut"
-                     | "TransferLog"
 
 let directiveWithOnOfParam = kv1 dirWithOnOfNm on_off
 let directiveWithWordParam = kv1 dirWithWordParam word
@@ -322,6 +806,7 @@ let directive =  accessFileName
               | addType
               | addHandler
               | addOutputFilter
+              | addOutputFilterByType
               | alias 
               | allow
               | allowOverride
@@ -351,7 +836,6 @@ let directive =  accessFileName
               | imapMenu
               | indexOrderDefault
               | iSAPICacheFile
-              | limitExcept
               | limitInternalRecursion
               | multiviewsMatch
               | nWSSLTrustedCerts
@@ -388,23 +872,20 @@ let directive =  accessFileName
 
 (* Containers *)
 
-(* A section with one argument in the <Section ..> tag *)
-let sec1 (name:string) (body:lens) =
-  [ langle . key name . sep . store secarg . rangle . eol .
-      body .
-      Util.del_str ("</" . name . ">") . eol
-  ]
-
 let secN (name:string) (args:lens) (body:lens) = 
-    [ langle . key name . sep . args . rangle . eol . 
+    [ langle . key name . args . rangle . eol . 
         body . 
-        Util.del_str("</" . name . ">") . eol ]
+        del (/[ \t]*<\// . name . ">") ("</" . name . ">") . eol ]
+
+(* A section with one argument in the <Section ..> tag *)
+let sec1 (name:string) (body:lens) = secN name (sep . store secarg) body
 
 (* A helper for <Directory>-like sections that can optionally have ~ preceeding the 
    path argument making httpd interpret it as a regex *)
 let pathSpec (l:string) =
-    [ label l . Util.del_str "~" . sep ]? . store secarg
+    [ sep . label l . Util.del_str "~" ]? . sep . store secarg
 
+(* these are all the sections there are possible in the Apache configuration according to the Apache 2.2 documentation *)
 let ifModule (body:lens) = sec1 "IfModule" body
 let directory (body:lens) = secN "Directory" (pathSpec "Directory_regexp") body
 let directoryMatch (body:lens) = sec1 "DirectoryMatch" body
@@ -413,9 +894,22 @@ let files (body:lens) = secN "Files" (pathSpec "Files_regexp") body
 let filesMatch (body:lens) = sec1 "FilesMatch" body
 let location (body:lens) = secN "Location" (pathSpec "Location_regexp") body
 let locationMatch (body:lens) = sec1 "LocationMatch" body
+let authnProviderAlias (body:lens) = secN "AuthnProviderAlias" ([sep . label "baseProvider" . store word ] . [sep .  label "alias" . store word ]) body
+let ifDefine (body:lens) = sec1 "IfDefine" body
+let ifVersion (body:lens) = secN "IfVersion" ([sep . label "operator" . store /[<>=]+/ ] . sep . [label "version" . store /[0-9\.]+/ ]) body
+let limit (body:lens) = secN "Limit" 
+    [ sep . label "method" . store /GET|POST|PUT|DELETE|CONNECT|OPTIONS|PATCH|PROPFIND|PROPPATCH|MKCOL|COPY|MOVE|LOCK|UNLOCK/ ]+
+    body
+let limitExcept (body:lens) = secN "LimitExcept" [sep . label "method" . store alnum ]+ body
+let proxy (body:lens) = sec1 "Proxy" body
+let proxyMatch (body:lens) = sec1 "ProxyMatch" body
 
-let anySection(body:lens) = ifModule body | directory body | directoryMatch body | 
-    virtualHost body | files body | filesMatch body | location body | locationMatch body
+let sectionsWithoutVirtualHost (body:lens) = ifModule body | directory body | directoryMatch body | 
+    files body | filesMatch body | location body | locationMatch body | authnProviderAlias body |
+    ifDefine body | ifVersion body | limit body | limitExcept body | proxy body | proxyMatch body
+
+let restOfDirectives = [ wskey (allDirectives - definedDirectiveNames - dirWithNrParam - dirWithOnOfNm - dirWithWordParam) .
+    [ sep . label "param" . store wordWithNestQuote ]* . eol ]
 
 (* What we want ot say is *)
 (* let rec body = (directive|comment)* | ifModule body | directory body | ... *)
@@ -424,8 +918,10 @@ let anySection(body:lens) = ifModule body | directory body | directoryMatch body
 (* FIXME: *)
 (* - Nesting of sections *)
 (* - comments inside sections *)
-let prim = (directive | comment)
-let lns = (prim | anySection prim*)*
+let prim = ( directive | restOfDirectives | comment)
+let directiveOrSectionWithoutVirtualHost = prim | sectionsWithoutVirtualHost prim*
+let directiveOrSection = directiveOrSectionWithoutVirtualHost | virtualHost directiveOrSectionWithoutVirtualHost*
+let lns = directiveOrSection*
 
 let filter =
     incl "/etc/httpd/conf/httpd.conf" .

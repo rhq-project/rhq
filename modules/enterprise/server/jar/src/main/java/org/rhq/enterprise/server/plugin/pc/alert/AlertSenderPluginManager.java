@@ -28,10 +28,8 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.w3c.dom.Element;
 
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -52,7 +50,6 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.CustomUi
 public class AlertSenderPluginManager extends ServerPluginManager {
 
     private final Log log = getLog();
-    private Map<String,String> pluginNameToType = new HashMap<String, String>();
     private Map<String,String> pluginClassByName = new HashMap<String, String>();
     private Map<String,ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
     private Map<String,AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
@@ -72,11 +69,12 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     @Override
     public void loadPlugin(ServerPluginEnvironment env,boolean enable) throws Exception {
+        log.info("Start loading alert plugin " + env.getPluginKey().getPluginName());
         super.loadPlugin(env,enable);
 
         AlertPluginDescriptorType type = (AlertPluginDescriptorType) env.getPluginDescriptor();
 
-        String className = ((Element)type.getPluginClass()).getTextContent();
+        String className = type.getPluginClass();
         if (!className.contains(".")) {
             className = type.getPackage() + "." + className;
         }
@@ -84,7 +82,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             Class.forName(className,false,env.getPluginClassLoader());
         }
         catch (Exception e) {
-            log.error("Can't find pluginClass " + className + ". Plugin will be ignored");
+            log.error("Can't find pluginClass " + className + ". Plugin " + env.getPluginKey().getPluginName() + " will be ignored");
             try {
                 unloadPlugin(env.getPluginKey().getPluginName());
             }
@@ -95,7 +93,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
 
         // The short name is basically the key into the plugin
-        String shortName = ((Element) type.getShortName()).getTextContent();
+        String shortName = type.getShortName();
         pluginClassByName.put(shortName,className);
 
         //
@@ -118,24 +116,48 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                 log.error("Plugin will be ignored");
                 return;
             }
+
+            // Get the backing bean class
+            className = customUI.getBackingBeanName();
+            if (!className.contains(".")) {
+                className = type.getPackage() + "." + className;
+            }
+            try {
+                Class.forName(className,true,env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
+            }
+            catch (Throwable t ) {
+                log.error("Backing bean " + className + " not found for plugin " + shortName);
+            }
         }
 
-        AlertSenderInfo info = new AlertSenderInfo(shortName, "-TODO-", env.getPluginKey());
+        AlertSenderInfo info = new AlertSenderInfo(shortName, type.getDescription(), env.getPluginKey());
         info.setUiSnippetUrl(uiSnippetUrl);
         senderInfoByName.put(shortName, info);
 
         pluginEnvByName.put(shortName,env);
 
-        ConfigurationDescriptor desc = type.getAlertConfiguration();
+    }
 
-        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
-        mgr.handleAlertConfigurationDefinition(null); // TODO remove ?
+    @Override
+    protected void unloadPlugin(String pluginName) throws Exception {
+        log.info("Unloading plugin " + pluginName );
+        super.unloadPlugin(pluginName);
+        String shortName=null;
+        for (AlertSenderInfo info: senderInfoByName.values()) {
+            if (info.getPluginName().equals(pluginName)) {
+                shortName = info.getShortName();
+                break;
+            }
+        }
+        pluginClassByName.remove(shortName);
+        senderInfoByName.remove(shortName);
+        pluginEnvByName.remove(shortName);
     }
 
     /**
      * Instantiate an AlertSender for the passed shortName, which is the name you have provided
      * in the plugin descriptor in the &lt;shortName&gt; element
-     * @param notification
+     * @param notification The alert notification we need the sender for. Wanted sender is in notification.getSenderName()
      * @return a new AlertSender with preferences set
      * @see AlertSender
      */
@@ -163,10 +185,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             return null;
         }
 
-        // TODO We have no entityManager lying around here, which means
+        // We have no entityManager lying around here, which means
         // Configuration is an uninitialized Proxy and we'd get a LazyInit
         // Exception later.
-        // So lets get a session and attach the stuff... TODO
+        // So lets get it from the SessionBeans
         ServerPluginContext ctx = getServerPluginContext(env);
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
 
@@ -194,11 +216,6 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     public List<String> getPluginList() {
         return new ArrayList<String>(pluginClassByName.keySet());
-    }
-
-
-    public String getPluginNameForShortName(String shortName) {
-        return pluginNameToType.get(shortName);
     }
 
     public AlertSenderInfo getAlertSenderInfo(String shortName) {

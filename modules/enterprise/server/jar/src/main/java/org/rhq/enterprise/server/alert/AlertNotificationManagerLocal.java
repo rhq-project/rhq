@@ -71,8 +71,6 @@ public interface AlertNotificationManagerLocal {
 
     int purgeOrphanedAlertNotifications();
 
-    void handleAlertConfigurationDefinition(ConfigurationDefinition desc);
-
     public Configuration getAlertPropertiesConfiguration(AlertNotification notification);
 
     /**

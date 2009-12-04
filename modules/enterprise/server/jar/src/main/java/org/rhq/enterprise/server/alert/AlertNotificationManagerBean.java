@@ -451,11 +451,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
     }
 
-    public void handleAlertConfigurationDefinition(ConfigurationDefinition desc) {
-
-        // TODO
-    }
-
     public Configuration getAlertPropertiesConfiguration(AlertNotification notification) {
         Configuration config = notification.getConfiguration();
         if (config!=null)
@@ -465,12 +460,15 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     }
 
     public ConfigurationDefinition getConfigurationDefinitionForSender(String shortName) {
+
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
-        String pluginName = pluginmanager.getPluginNameForShortName(shortName);
-        PluginKey key = pluginmanager.getAlertSenderInfo(shortName).getPluginKey();
+
+        AlertSenderInfo senderInfo = pluginmanager.getAlertSenderInfo(shortName);
+        String pluginName = senderInfo.getPluginName();
+        PluginKey key = senderInfo.getPluginKey();
+
         try {
             AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) serverPluginsBean.getServerPluginDescriptor(key);
-            // TODO get alert-propertis, not plugin-configuration
             //ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
             ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:" + pluginName, descriptor.getAlertConfiguration());
 

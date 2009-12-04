@@ -22,14 +22,15 @@
  */
 
 package org.rhq.augeas.tree;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasTreeException extends Exception{
+public class AugeasTreeException extends Exception {
 
-       public AugeasTreeException(String msg){
-              super(msg);
-       }
+    public AugeasTreeException(String msg) {
+        super(msg);
+    }
 }

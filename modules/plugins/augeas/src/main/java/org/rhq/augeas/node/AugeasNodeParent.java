@@ -27,57 +27,59 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.augeas.tree.AugeasTree;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
 public class AugeasNodeParent {
-       
-       protected String path;
-       protected String  label;
-       protected String value;
-       protected AugeasTree ag;
-       protected int seq;
-       protected AugeasNode parentNode;
-       protected List<AugeasNode> childNodes;
 
-       public AugeasNodeParent(){
-              childNodes = new ArrayList<AugeasNode>();
-       }
-       public String getPath() {
-              return path;
-       }
+    protected String path;
+    protected String label;
+    protected String value;
+    protected AugeasTree ag;
+    protected int seq;
+    protected AugeasNode parentNode;
+    protected List<AugeasNode> childNodes;
 
-       public String getLabel() {
-              return label;
-       }
+    public AugeasNodeParent() {
+        childNodes = new ArrayList<AugeasNode>();
+    }
 
-       public void setLabel(String label) {
-              this.label = label;
-       }
+    public String getPath() {
+        return path;
+    }
 
-       public String getValue() {
-              return value;
-       }
+    public String getLabel() {
+        return label;
+    }
 
-       public void setValue(String value) {
-              this.value = value;
-       }
+    public void setLabel(String label) {
+        this.label = label;
+    }
 
-       public int getSeq() {
-              return seq;
-       }
+    public String getValue() {
+        return value;
+    }
 
-       public void setSeq(int seq) {
-              this.seq = seq;
-       }
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-       public AugeasNode getParentNode() {
-              return parentNode;
-       }
+    public int getSeq() {
+        return seq;
+    }
 
-       public List<AugeasNode> getChildNodes() {
-              return childNodes;
-       }
+    public void setSeq(int seq) {
+        this.seq = seq;
+    }
+
+    public AugeasNode getParentNode() {
+        return parentNode;
+    }
+
+    public List<AugeasNode> getChildNodes() {
+        return childNodes;
+    }
 }

@@ -13,35 +13,35 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.RhqConfig;
 
-public class AugaesConfigurationApache extends RhqConfig implements AugeasConfiguration{
 
-	
-	public static String INCLUDE_DIRECTIVE= "";
-	private AugeasModuleConfig module;
-	
-	public AugaesConfigurationApache(Configuration configuration) throws AugeasRhqException{
-		super(configuration);
-		
-		if (modules.isEmpty())
-			throw new AugeasRhqException("There is not configuration for this resource.");
-		try {
-		 module = modules.get(0);
-		
-		updateIncludes();
-		}catch(Exception e){
-			throw new AugeasRhqException(e.getMessage());
-		}
-	}
-	
-	public List<String> getIncludes(File file){
-		List<String> includeFiles = new ArrayList<String>();
-		
-		return includeFiles;
-	}
-	
-	public void updateIncludes() throws Exception{
-			
-		
+public class AugaesConfigurationApache extends RhqConfig implements AugeasConfiguration {
+
+    public static String INCLUDE_DIRECTIVE = "";
+    private AugeasModuleConfig module;
+
+    public AugaesConfigurationApache(Configuration configuration) throws AugeasRhqException {
+        super(configuration);
+
+        if (modules.isEmpty())
+            throw new AugeasRhqException("There is not configuration for this resource.");
+        try {
+            module = modules.get(0);
+
+            updateIncludes();
+        } catch (Exception e) {
+            throw new AugeasRhqException(e.getMessage());
+        }
+    }
+
+    public List<String> getIncludes(File file) {
+        List<String> includeFiles = new ArrayList<String>();
+
+        return includeFiles;
+    }
+
+    public void updateIncludes() throws Exception {
+
+    	
 		boolean updated = false;
 		AugeasProxy augeas = new AugeasProxy(this);
 		augeas.load();
@@ -65,6 +65,6 @@ public class AugaesConfigurationApache extends RhqConfig implements AugeasConfig
 		}
 		}
 		if (updated)
-			updateIncludes();
-	}
+			updateIncludes();		
+    }
 }

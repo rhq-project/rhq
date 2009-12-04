@@ -42,6 +42,8 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 import org.rhq.rhqtransform.NameMap;
+
+
 /**
  * 
  * @author Filip Drabek
@@ -51,73 +53,73 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
     private final Log log = LogFactory.getLog(this.getClass());
     protected AugeasTree tree;
     protected NameMap nameMap;
-    
-       public AugeasToConfigurationSimple(){
-                
-       }
-       
-       public void setTree(AugeasTree tree)
-       {
-              this.tree = tree;
-       }
-       
-       public void setNameMap(NameMap nameMap){
-              this.nameMap = nameMap;
-       }
-       
-         public Configuration loadResourceConfiguration(AugeasNode startNode,ConfigurationDefinition resourceConfigDef) throws Exception {
 
-               Configuration resourceConfig = new Configuration();
-              
-               Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
+    public AugeasToConfigurationSimple() {
 
-               for (PropertyDefinition propDef : propDefs) {
-                   resourceConfig.put(loadProperty(propDef,startNode));
-               }
+    }
 
-               return resourceConfig;
-           }
+    public void setTree(AugeasTree tree) {
+        this.tree = tree;
+    }
 
-           public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws Exception{
-                     
-               Property prop;
-               if (propDef instanceof PropertyDefinitionSimple) {
-                   prop = createPropertySimple((PropertyDefinitionSimple) propDef, parentNode);
-               } else if (propDef instanceof PropertyDefinitionMap) {
-                   prop = createPropertyMap((PropertyDefinitionMap) propDef,  parentNode);
-               } else if (propDef instanceof PropertyDefinitionList) {
-                   prop = createPropertyList((PropertyDefinitionList) propDef,  parentNode);
-               } else {
-                   throw new IllegalStateException("Unsupported PropertyDefinition subclass: " + propDef.getClass().getName());
-               }
-              return prop;
-           }
+    public void setNameMap(NameMap nameMap) {
+        this.nameMap = nameMap;
+    }
 
-           public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception{
-               Object value;
-               value = node.getValue();
-               return new PropertySimple(propDefSimple.getName(), value);
-           }
+    public Configuration loadResourceConfiguration(AugeasNode startNode, ConfigurationDefinition resourceConfigDef)
+        throws Exception {
 
-           public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception {
-               PropertyMap propMap = new PropertyMap(propDefMap.getName());
-               for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
-                   propMap.put(loadProperty(mapEntryPropDef, node));
-               }
-               return propMap;
-           }
+        Configuration resourceConfig = new Configuration();
 
-           public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception{
-                              
-                  PropertyList propList = new PropertyList(propDefList.getName());
-                   
-               List<AugeasNode> nodes = tree.matchRelative(node, propDefList.getName());
-               PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
-              
-               for (AugeasNode listMemberNode : nodes){
-                      propList.add(loadProperty(listMemberPropDef,listMemberNode));
-               }
+        Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
 
-               return propList;
-           }
+        for (PropertyDefinition propDef : propDefs) {
+            resourceConfig.put(loadProperty(propDef, startNode));
+        }
+
+        return resourceConfig;
+    }
+
+    public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws Exception {
+
+        Property prop;
+        if (propDef instanceof PropertyDefinitionSimple) {
+            prop = createPropertySimple((PropertyDefinitionSimple) propDef, parentNode);
+        } else if (propDef instanceof PropertyDefinitionMap) {
+            prop = createPropertyMap((PropertyDefinitionMap) propDef, parentNode);
+        } else if (propDef instanceof PropertyDefinitionList) {
+            prop = createPropertyList((PropertyDefinitionList) propDef, parentNode);
+        } else {
+            throw new IllegalStateException("Unsupported PropertyDefinition subclass: " + propDef.getClass().getName());
+        }
+        return prop;
+    }
+
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception {
+        Object value;
+        value = node.getValue();
+        return new PropertySimple(propDefSimple.getName(), value);
+    }
+
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception {
+        PropertyMap propMap = new PropertyMap(propDefMap.getName());
+        for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
+            propMap.put(loadProperty(mapEntryPropDef, node));
+        }
+        return propMap;
+    }
+
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception {
+
+        PropertyList propList = new PropertyList(propDefList.getName());
+
+        List<AugeasNode> nodes = tree.matchRelative(node, propDefList.getName());
+        PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
+
+        for (AugeasNode listMemberNode : nodes) {
+            propList.add(loadProperty(listMemberPropDef, listMemberNode));
+        }
+
+        return propList;
+    }
 }

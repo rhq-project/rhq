@@ -31,17 +31,28 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
 public interface ConfigurationToAugeas {
-       
-        public void setTree(AugeasTree tree);
-        public void updateResourceConfiguration(AugeasNode node,ConfigurationDefinition resourceConfigDef,Configuration resourceConfig) throws Exception;
-        public void updateMap(PropertyDefinitionMap propDefMap, Property prop,AugeasNode mapNode,int seq) throws Exception;
-        public void updateList(PropertyDefinitionList propDef, Property prop,AugeasNode listNode,int seq) throws Exception;
-        public void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef,Property prop,int seq) throws Exception;
-        public void updateProperty(PropertyDefinition propDef, Property parentProp,AugeasNode parentNode,int seq) throws Exception;
+
+    public void setTree(AugeasTree tree);
+
+    public void updateResourceConfiguration(AugeasNode node, ConfigurationDefinition resourceConfigDef,
+        Configuration resourceConfig) throws Exception;
+
+    public void updateMap(PropertyDefinitionMap propDefMap, Property prop, AugeasNode mapNode, int seq)
+        throws Exception;
+
+    public void updateList(PropertyDefinitionList propDef, Property prop, AugeasNode listNode, int seq)
+        throws Exception;
+
+    public void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef, Property prop, int seq)
+        throws Exception;
+
+    public void updateProperty(PropertyDefinition propDef, Property parentProp, AugeasNode parentNode, int seq)
+        throws Exception;
 }

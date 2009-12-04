@@ -21,6 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.rhqtransform;
+
 /**
  * 
  * @author Filip Drabek
@@ -28,8 +29,10 @@ package org.rhq.rhqtransform;
  */
 public interface NameMap {
 
-       public String getSimplePropertyName();
-       public String getMapPropertyName();
-       public String getListPropertyName();
-       
+    public String getSimplePropertyName();
+
+    public String getMapPropertyName();
+
+    public String getListPropertyName();
+
 }

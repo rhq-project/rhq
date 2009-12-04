@@ -31,46 +31,47 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
 import org.rhq.rhqtransform.RhqAugeasMapping;
+
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class RhqAugeasMappingSimple implements RhqAugeasMapping{
+public class RhqAugeasMappingSimple implements RhqAugeasMapping {
 
-       private AugeasToConfiguration augeasToConfiguration;
-       private ConfigurationToAugeas configurationToAugeas;
-       private String moduleName;
+    private AugeasToConfiguration augeasToConfiguration;
+    private ConfigurationToAugeas configurationToAugeas;
+    private String moduleName;
 
-       
-       public RhqAugeasMappingSimple(String moduleName){
-              this.augeasToConfiguration = new AugeasToConfigurationSimple();
-              this.configurationToAugeas = new ConfigurationToAugeasSimple();
-              this.moduleName = moduleName;
-       }
-       
-       public RhqAugeasMappingSimple(AugeasToConfiguration toConfig,ConfigurationToAugeas toAugeas,String moduleName){
-              this.augeasToConfiguration = toConfig;
-              this.configurationToAugeas = toAugeas;
-              this.moduleName = moduleName;
-       }
-       
-       
-       public void updateAugeas(AugeasProxy component, Configuration config,
-                     ConfigurationDefinition configDef) throws Exception{
-              AugeasTree tree = component.getAugeasTree(moduleName, true);
-              AugeasNode startNode = getStartNode(tree);
-              configurationToAugeas.updateResourceConfiguration(startNode, configDef, config);
-       }
+    public RhqAugeasMappingSimple(String moduleName) {
+        this.augeasToConfiguration = new AugeasToConfigurationSimple();
+        this.configurationToAugeas = new ConfigurationToAugeasSimple();
+        this.moduleName = moduleName;
+    }
 
-       public Configuration updateConfiguration(AugeasProxy augeasComponent,ConfigurationDefinition configDef) throws Exception{
-              AugeasTree tree = augeasComponent.getAugeasTree(moduleName, true);
-              AugeasNode startNode = getStartNode(tree);
-              return augeasToConfiguration.loadResourceConfiguration(startNode, configDef);
-       }
-       
-       protected AugeasNode getStartNode(AugeasTree tree) throws Exception{
-              return tree.getRootNode();
-       }
+    public RhqAugeasMappingSimple(AugeasToConfiguration toConfig, ConfigurationToAugeas toAugeas, String moduleName) {
+        this.augeasToConfiguration = toConfig;
+        this.configurationToAugeas = toAugeas;
+        this.moduleName = moduleName;
+    }
+
+    public void updateAugeas(AugeasProxy component, Configuration config, ConfigurationDefinition configDef)
+        throws Exception {
+        AugeasTree tree = component.getAugeasTree(moduleName, true);
+        AugeasNode startNode = getStartNode(tree);
+        configurationToAugeas.updateResourceConfiguration(startNode, configDef, config);
+    }
+
+    public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef)
+        throws Exception {
+        AugeasTree tree = augeasComponent.getAugeasTree(moduleName, true);
+        AugeasNode startNode = getStartNode(tree);
+        return augeasToConfiguration.loadResourceConfiguration(startNode, configDef);
+    }
+
+    protected AugeasNode getStartNode(AugeasTree tree) throws Exception {
+        return tree.getRootNode();
+    }
 
 }

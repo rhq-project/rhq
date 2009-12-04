@@ -23,6 +23,7 @@
 package org.rhq.augeas.node;
 
 import java.util.List;
+
 /**
  * 
  * @author Filip Drabek
@@ -30,35 +31,35 @@ import java.util.List;
  */
 public interface AugeasNode {
 
-       public String getPath();
+    public String getPath();
 
-       public void setPath(String path) throws Exception;
-       
-       public String getLabel() ;
+    public void setPath(String path) throws Exception;
 
-       public void setLabel(String label);
+    public String getLabel();
 
-       public String getValue();
+    public void setLabel(String label);
 
-       public void setValue(String value) ;
+    public String getValue();
 
-       public int getSeq();
+    public void setValue(String value);
 
-       public void setSeq(int seq);
+    public int getSeq();
 
-       public AugeasNode getParentNode();
+    public void setSeq(int seq);
 
-       public List<AugeasNode> getChildNodes() ;
-       
-       public boolean equals(Object obj);
-       
-       public String getFullPath();
-       
-       public void addChildNode(AugeasNode node);
-       
-       public List<AugeasNode> getChildByLabel(String labelName);
-       
-       public void remove(boolean updateSeq) throws Exception;
-       
-       public void updateFromParent();
+    public AugeasNode getParentNode();
+
+    public List<AugeasNode> getChildNodes();
+
+    public boolean equals(Object obj);
+
+    public String getFullPath();
+
+    public void addChildNode(AugeasNode node);
+
+    public List<AugeasNode> getChildByLabel(String labelName);
+
+    public void remove(boolean updateSeq) throws Exception;
+
+    public void updateFromParent();
 }

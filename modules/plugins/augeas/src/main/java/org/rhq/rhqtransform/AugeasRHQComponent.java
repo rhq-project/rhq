@@ -26,14 +26,16 @@ package org.rhq.rhqtransform;
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
+
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public interface AugeasRHQComponent <T extends ResourceComponent> extends ResourceComponent<T>{
-   
-       public AugeasTree getAugeasTree() throws Exception;
+public interface AugeasRHQComponent<T extends ResourceComponent> extends ResourceComponent<T> {
+
+    public AugeasTree getAugeasTree() throws Exception;
+
     public AugeasProxy getAugeasComponent() throws Exception;
 }
-

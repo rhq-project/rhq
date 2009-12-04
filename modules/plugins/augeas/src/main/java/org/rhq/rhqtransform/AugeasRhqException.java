@@ -21,16 +21,16 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 package org.rhq.rhqtransform;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasRhqException extends Exception{
+public class AugeasRhqException extends Exception {
 
-       public AugeasRhqException(String text)
-       {
-              super(text);
-       }
-       
+    public AugeasRhqException(String text) {
+        super(text);
+    }
+
 }

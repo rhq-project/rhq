@@ -32,18 +32,26 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
 public interface AugeasToConfiguration {
-       
-       public void setTree(AugeasTree tree);
-       public void setNameMap(NameMap nameMap);
-       public Configuration loadResourceConfiguration(AugeasNode startNode,ConfigurationDefinition resourceConfigDef)throws Exception;
+
+    public void setTree(AugeasTree tree);
+
+    public void setNameMap(NameMap nameMap);
+
+    public Configuration loadResourceConfiguration(AugeasNode startNode, ConfigurationDefinition resourceConfigDef)
+        throws Exception;
+
     public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws Exception;
+
     public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception;
+
     public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception;
+
     public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception;
 }

@@ -26,6 +26,7 @@ package org.rhq.rhqtransform;
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+
 /**
  * 
  * @author Filip Drabek
@@ -33,8 +34,10 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
  */
 public interface RhqAugeasMapping {
 
-       public void updateAugeas(AugeasProxy augeasComponent,Configuration config,
-                     ConfigurationDefinition configDef) throws Exception;
-       public Configuration updateConfiguration(AugeasProxy augeasComponent,ConfigurationDefinition configDef) throws Exception;
-       
+    public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef)
+        throws Exception;
+
+    public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef)
+        throws Exception;
+
 }

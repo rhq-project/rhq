@@ -16,77 +16,69 @@ import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.rhqtransform.AugeasRHQComponent;
 
-public class ServerComponent implements AugeasRHQComponent,ConfigurationFacet{
-	   
-	   private ResourceContext context;
-       private final Log log = LogFactory.getLog(this.getClass());
-       private AugeasTree augeasTree;
-       private AugeasProxy augeasComponent;
-       
-       
-	public void start(ResourceContext context)
-			throws InvalidPluginConfigurationException, Exception {
-		
-		this.context = context;
-		
-	}
+public class ServerComponent implements AugeasRHQComponent, ConfigurationFacet {
 
-	public void stop() {
-		// TODO Auto-generated method stub
-		
-	}
+    private ResourceContext context;
+    private final Log log = LogFactory.getLog(this.getClass());
+    private AugeasTree augeasTree;
+    private AugeasProxy augeasComponent;
 
+    public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
+
+        this.context = context;
+
+    }
+
+    public void stop() {
+        // TODO Auto-generated method stub
+
+    }
 
     public AvailabilityType getAvailability() {
-           return AvailabilityType.UP;
-           }
-    
-    
-	   public void loadAugeas() throws Exception{              
-	    	AugaesConfigurationApache config = new AugaesConfigurationApache(context.getPluginConfiguration());
-	    	AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
-	        augeasComponent = new AugeasProxy(config,builder);
-	        augeasComponent.load();
-	        augeasTree = augeasComponent.getAugeasTree("httpd", true);               
-	     }
-	 
-	    public AugeasProxy getAugeasComponent() throws Exception{
-	      if (augeasComponent == null)
-	        loadAugeas();
-	      
-	       return augeasComponent;
-	     }
+        return AvailabilityType.UP;
+    }
 
-	    
-	    public AugeasTree getAugeasTree() throws Exception {
-	         if (augeasTree == null)
-	               loadAugeas();
-	        
-	        return augeasTree;
-	     }
+    public void loadAugeas() throws Exception {
+        AugaesConfigurationApache config = new AugaesConfigurationApache(context.getPluginConfiguration());
+        AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
+        augeasComponent = new AugeasProxy(config, builder);
+        augeasComponent.load();
+        augeasTree = augeasComponent.getAugeasTree("httpd", true);
+    }
 
-		
-		public Configuration loadResourceConfiguration() throws Exception {
-		     Configuration pluginConfiguration = null;
-		     ConfigurationDefinition resourceConfigDef = this.context.getResourceType()
-	          .getResourceConfigurationDefinition();
-             try {       
-              
-            	 AugeasTree tree = getAugeasTree();
-            	 AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-            	 config.setTree(tree);
-            	 
-            	pluginConfiguration  = config.loadResourceConfiguration(tree.getRootNode(),resourceConfigDef);
-             }catch(Exception e)
-             {
-                    log.error(e.getMessage());
-                    
-             }
-          return pluginConfiguration;
-		}
+    public AugeasProxy getAugeasComponent() throws Exception {
+        if (augeasComponent == null)
+            loadAugeas();
 
-		public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-			// TODO Auto-generated method stub
-			
-		}
+        return augeasComponent;
+    }
+
+    public AugeasTree getAugeasTree() throws Exception {
+        if (augeasTree == null)
+            loadAugeas();
+
+        return augeasTree;
+    }
+
+    public Configuration loadResourceConfiguration() throws Exception {
+        Configuration pluginConfiguration = null;
+        ConfigurationDefinition resourceConfigDef = this.context.getResourceType().getResourceConfigurationDefinition();
+        try {
+
+            AugeasTree tree = getAugeasTree();
+            AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
+            config.setTree(tree);
+
+            pluginConfiguration = config.loadResourceConfiguration(tree.getRootNode(), resourceConfigDef);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+
+        }
+        return pluginConfiguration;
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        // TODO Auto-generated method stub
+
+    }
 }

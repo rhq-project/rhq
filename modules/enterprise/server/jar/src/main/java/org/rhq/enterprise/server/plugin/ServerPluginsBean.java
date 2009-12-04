@@ -79,9 +79,20 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void restartMasterPluginContainer(Subject subject) {
+        LookupUtil.getServerPluginService().restartMasterPluginContainer();
+    }
+
     @SuppressWarnings("unchecked")
     public List<ServerPlugin> getServerPlugins() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
+        return q.getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ServerPlugin> getAllServerPlugins() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL);
         return q.getResultList();
     }
 
@@ -117,6 +128,15 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<ServerPlugin>(); // nothing to do
         }
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_BY_IDS);
+        query.setParameter("ids", pluginIds);
+        return query.getResultList();
+    }
+
+    public List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds) {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<ServerPlugin>(); // nothing to do
+        }
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_BY_IDS);
         query.setParameter("ids", pluginIds);
         return query.getResultList();
     }
@@ -287,6 +307,24 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         log.info("Server plugins " + doomedPlugins + " have been undeployed");
 
         return doomedPlugins;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<PluginKey>(); // nothing to do
+        }
+
+        // first, ensure we undeploy them
+        List<PluginKey> purgePlugins = undeployServerPlugins(subject, pluginIds);
+
+        // now remove them from the db
+        for (PluginKey pluginKey : purgePlugins) {
+            purgeServerPlugin(subject, pluginKey); // delete the row in the DB
+        }
+
+        log.info("Server plugins " + purgePlugins + " have been undeployed");
+        return purgePlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

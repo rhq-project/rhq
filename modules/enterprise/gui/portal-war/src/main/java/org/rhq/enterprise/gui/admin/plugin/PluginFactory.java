@@ -32,13 +32,13 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Component responsible for looking up a {@link Plugin}, obtaining
- * the <code>name</code> and <code>type</code> from request parameters.
+ * Component responsible for providing a {@link Plugin} via request
+ * parameters.
  *
  * @author jharris
  */
-@Name("installedPlugin")
-public class InstalledPluginComponent {
+@Name("pluginFactory")
+public class PluginFactory {
 
     @RequestParameter("plugin")
     private String name;
@@ -46,30 +46,6 @@ public class InstalledPluginComponent {
     private PluginDeploymentType deployment;
     @RequestParameter("pluginType")
     private String pluginType;
-
-    public String getName() {
-        return this.name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public PluginDeploymentType getDeployment() {
-        return this.deployment;
-    }
-
-    public void setType(PluginDeploymentType deployment) {
-        this.deployment = deployment;
-    }
-
-    public String getPluginType() {
-        return this.pluginType;
-    }
-
-    public void setPluginType(String pluginType) {
-        this.pluginType = pluginType;
-    }
 
     @Factory(value = "plugin", autoCreate = true)
     public AbstractPlugin lookupPlugin() {

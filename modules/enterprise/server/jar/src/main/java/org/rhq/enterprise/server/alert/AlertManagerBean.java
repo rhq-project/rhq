@@ -665,7 +665,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 if (sender!=null) {
                     try {
                         SenderResult result = sender.send(alert);
-                        if (result.getState() == ResultState.SUCCESS) {
+                        if (result == null) {
+                            log.warn("- !! -- sender " + alertNotification.getSenderName() + " did not return a SenderResult. Please fix this -- !! - ");
+                        } else if (result.getState() == ResultState.SUCCESS) {
                             if (result.getEmails()!=null && !result.getEmails().isEmpty())
                                 emailAddresses.addAll(result.getEmails());
                         }

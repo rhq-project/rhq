@@ -26,14 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
-
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
-
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -61,10 +53,6 @@ public class DownloadsUIBean implements Serializable {
 
     }
 
-    private MBeanServer getMBeanServer() {
-        return MBeanServerLocator.locateJBoss();
-    }
-
     public List<File> getConnectorDownloadFiles() throws Exception {
         File downloadDir = getConnectorDownloadsDir();
         File[] filesArray = downloadDir.listFiles();
@@ -80,10 +68,7 @@ public class DownloadsUIBean implements Serializable {
     }
 
     private File getConnectorDownloadsDir() throws Exception {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/connectors");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing connectors downloads directory at [" + downloadDir + "]");
@@ -92,10 +77,7 @@ public class DownloadsUIBean implements Serializable {
     }
 
     private File getClientDownloadDir() throws Exception {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-client");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing remote client download directory at [" + downloadDir + "]");

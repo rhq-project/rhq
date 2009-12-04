@@ -76,6 +76,28 @@ public class ServerPluginDescriptorMetadataParser {
     }
 
     /**
+     * Returns the scheduled jobs configuration definition for the plugin.
+     * Use {@link #getScheduledJobs(ServerPluginDescriptorType)} to return a list of a more
+     * strongly typed jobs object, as opposed to a generic configuration definition.
+     * 
+     * @param descriptor
+     * 
+     * @return the scheduled jobs configuration definition, or <code>null</code> if the descriptor did not define plugin config.
+     *
+     * @throws Exception if the plugin descriptor was invalid
+     */
+    public static ConfigurationDefinition getScheduledJobsDefinition(ServerPluginDescriptorType descriptor)
+        throws Exception {
+
+        ConfigurationDefinition config = null;
+        ConfigurationDescriptor configXml = descriptor.getScheduledJobs();
+        if (configXml != null) {
+            config = ConfigurationMetadataParser.parse(descriptor.getName(), configXml);
+        }
+        return config;
+    }
+
+    /**
      * Given a descriptor, this will parse it and return any scheduled jobs that it finds.
      * This essentially gives you a list of the pre-defined jobs, prior to a user customizing
      * them with their own settings.

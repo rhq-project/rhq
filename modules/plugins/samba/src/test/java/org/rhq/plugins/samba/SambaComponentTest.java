@@ -34,7 +34,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
         config.put(new PropertySimple("encrypt passwords", "yes"));
         config.put(new PropertySimple("load printers", "yes"));
         config.put(new PropertySimple("cups options", "raw"));
-
+        config.put(new PropertySimple("enableRecycleBin", false));
         return config;
     }
 
@@ -48,7 +48,6 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
         return "Samba Server";
     }
 
-
     @Override
     protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
@@ -59,6 +58,7 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
         config.put(new PropertySimple("encrypt passwords", "DUMBCHANGE"));
         config.put(new PropertySimple("load printers", "DUMBCHANGE"));
         config.put(new PropertySimple("cups options", "DUMBCHANGE"));
+        config.put(new PropertySimple("enableRecycleBin", true));
 
         return config;
     }

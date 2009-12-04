@@ -150,8 +150,24 @@ abstract class AbstractJobWrapper implements Job {
             throwJobExecutionException(pluginName, pluginTypeString, jobId, "Datamap had invalid plugin type string", t);
         }
 
+        // do not execute the job if the master plugin container has been stopped
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        if (!serverPluginService.isMasterPluginContainerStarted()) {
+            String msg = "The master plugin container is shutdown, will not execute job here, will resubmit";
+            log.error(logMsg(pluginName, pluginType, jobId, msg, null));
+            JobExecutionException exception = new JobExecutionException();
+
+            // we only refire immediately if we are in an HA environment- which means another server might
+            // be able to take over - and that other server might have its master PC running for us to execute in.
+            boolean isHA = LookupUtil.getCloudManager().getNormalServerCount() > 1;
+            exception.setRefireImmediately(isHA);
+
+            // abort this invocation now - we can't run without the plugin containers
+            return;
+        }
+
         // determine which plugin component class will be invoked to perform the work of the job
-        MasterServerPluginContainer mpc = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        MasterServerPluginContainer mpc = serverPluginService.getMasterPluginContainer();
         AbstractTypeServerPluginContainer pc = mpc.getPluginContainerByPluginType(pluginType);
 
         Object pluginJobObject = null;
@@ -163,9 +179,11 @@ abstract class AbstractJobWrapper implements Job {
                 + "]", null);
         }
 
+        ServerPluginComponent pluginComponent = pluginManager.getServerPluginComponent(pluginName);
+
         if (jobClass == null) {
             // null classname means use the stateful plugin component as the target object
-            pluginJobObject = pluginManager.getServerPluginComponent(pluginName);
+            pluginJobObject = pluginComponent;
             if (pluginJobObject == null) {
                 throwJobExecutionException(pluginName, pluginType, jobId, "no plugin component to process job", null);
             }
@@ -198,7 +216,7 @@ abstract class AbstractJobWrapper implements Job {
             ScheduledJobDefinition jobDefinition = new ScheduledJobDefinition(jobId, true, jobClass, jobMethodName,
                 scheduleType, callbackData);
             ServerPluginContext pluginContext = pluginManager.getServerPluginContext(pluginEnv);
-            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext);
+            params[0] = new ScheduledJobInvocationContext(jobDefinition, pluginContext, pluginComponent);
         } catch (NoSuchMethodException e) {
             try {
                 // see if there is a no-arg method of the given name

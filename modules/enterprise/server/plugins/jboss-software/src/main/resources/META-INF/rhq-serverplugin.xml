@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="JBossASPatchContentSourcePlugin"
-        xmlns="urn:xmlns:rhq-serverplugin.content"
-        xmlns:c="urn:xmlns:rhq-configuration">
+<content-plugin name="JBossASPatchContentSourcePlugin"
+                version="1.0"
+                apiVersion="2.0"
+                xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="JBossASPatchSource"
                       displayName="JBoss AS Patch Content Source"
@@ -35,4 +37,4 @@
 
    </contentSourceType>
 
-</plugin>
+</content-plugin>

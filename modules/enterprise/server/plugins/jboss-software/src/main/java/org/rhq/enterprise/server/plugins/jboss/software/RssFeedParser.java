@@ -29,23 +29,23 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
 
-import churchillobjects.rss4j.RssRepo;
-import churchillobjects.rss4j.RssRepoItem;
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.RssDublinCore;
-import churchillobjects.rss4j.RssJbnDependency;
-import churchillobjects.rss4j.RssJbnPatch;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetailsKey;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+
+import churchillobjects.rss4j.RssChannel;
+import churchillobjects.rss4j.RssChannelItem;
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.RssDublinCore;
+import churchillobjects.rss4j.RssJbnDependency;
+import churchillobjects.rss4j.RssJbnPatch;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -86,12 +86,12 @@ public class RssFeedParser {
     // Public  --------------------------------------------
 
     public void parseResults(RssDocument feed, PackageSyncReport report,
-        Collection<ContentSourcePackageDetails> existingPackages) throws Exception {
+                             Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
 
         // Used to determine if a package was already sent to the server or is new
-        Map<PackageDetailsKey, ContentSourcePackageDetails> existingPackageMap = unpack(existingPackages);
+        Map<PackageDetailsKey, ContentProviderPackageDetails> existingPackageMap = unpack(existingPackages);
 
-        Enumeration repos = feed.repos();
+        Enumeration repos = feed.channels();
 
         // do setup in preparation for parsing the automated installation instructions
         DocumentBuilderFactory xmlFact = DocumentBuilderFactory.newInstance();
@@ -102,11 +102,11 @@ public class RssFeedParser {
         String instructionExpression = "/automatedInstallation/instructions/instructionSet";
 
         while (repos.hasMoreElements()) {
-            RssRepo repo = (RssRepo) repos.nextElement();
+            RssChannel repo = (RssChannel) repos.nextElement();
             Enumeration repotems = repo.items();
 
             while (repotems.hasMoreElements()) {
-                RssRepoItem item = (RssRepoItem) repotems.nextElement();
+                RssChannelItem item = (RssChannelItem) repotems.nextElement();
 
                 RssJbnPatch patch = item.getJbnPatch();
                 RssDublinCore dublinCore = item.getDublinCore();
@@ -164,7 +164,7 @@ public class RssFeedParser {
                         continue;
                     }
 
-                    ContentSourcePackageDetailsKey key = new ContentSourcePackageDetailsKey(packageName, version,
+                    ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(packageName, version,
                         PACKAGE_TYPE_CUMULATIVE_PATCH, ARCHITECTURE, RESOURCE_TYPE_JBOSS_AS, getPluginName(version));
 
                     // If this package is already known to the server, don't add it as a new package
@@ -174,7 +174,7 @@ public class RssFeedParser {
                         continue;
                     }
 
-                    ContentSourcePackageDetails packageDetails = new ContentSourcePackageDetails(key);
+                    ContentProviderPackageDetails packageDetails = new ContentProviderPackageDetails(key);
 
                     packageDetails.setClassification(softwareType);
                     packageDetails.setDisplayName(packageName);
@@ -202,7 +202,8 @@ public class RssFeedParser {
                             // bytes will be retrieved using platform encoding on the agent side so use the same
                             // on the server side and assume they are identical
                             packageDetails.setMetadata(choppedInstructions.trim().getBytes());
-                        } catch (Exception e) {
+                        }
+                        catch (Exception e) {
                             log.error("Could not parse or set automated installation instructions for package: "
                                 + packageName);
                             continue;
@@ -237,7 +238,7 @@ public class RssFeedParser {
         }
 
         // For each entry still in the map, we didn't find it again, so report it as deleted
-        for (ContentSourcePackageDetails pkg : existingPackageMap.values()) {
+        for (ContentProviderPackageDetails pkg : existingPackageMap.values()) {
             report.addDeletePackage(pkg);
         }
     }
@@ -247,20 +248,20 @@ public class RssFeedParser {
     /**
      * Translates the set of packages into a map, using the package key object as the map's key entry.
      *
-     * @param  existingPackages packages sent from the server as already known for this content source
-     *
+     * @param existingPackages packages sent from the server as already known for this content source
      * @return map of the same size as the existingPackages collection; empty map if existingPackages is <code>
      *         null</code>
      */
-    private Map<PackageDetailsKey, ContentSourcePackageDetails> unpack(
-        Collection<ContentSourcePackageDetails> existingPackages) {
-        Map<PackageDetailsKey, ContentSourcePackageDetails> map = new HashMap<PackageDetailsKey, ContentSourcePackageDetails>();
+    private Map<PackageDetailsKey, ContentProviderPackageDetails> unpack(
+        Collection<ContentProviderPackageDetails> existingPackages) {
+        Map<PackageDetailsKey, ContentProviderPackageDetails> map =
+            new HashMap<PackageDetailsKey, ContentProviderPackageDetails>();
 
         if (existingPackages == null) {
             return map;
         }
 
-        for (ContentSourcePackageDetails pkg : existingPackages) {
+        for (ContentProviderPackageDetails pkg : existingPackages) {
             map.put(pkg.getKey(), pkg);
         }
 
@@ -270,8 +271,7 @@ public class RssFeedParser {
     /**
      * Parses out the cumulative patch version from the package title.
      *
-     * @param  title name of the package
-     *
+     * @param title name of the package
      * @return patch string if the title matches the expected title for a cumulative patch; <code>null</code> otherwise
      */
     private String parseCumulativePatchVersion(String title) {
@@ -288,7 +288,7 @@ public class RssFeedParser {
 
     /**
      * Determines what plugin to use based on the version of jboss the feed we're parsing is for.
-     * 
+     *
      * @param jbossVersion the jboss version specified in the patch
      * @return name of the plugin to handle this patch
      */

@@ -51,16 +51,23 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Ian Springer
  */
-//@ Name(value = "ExistingResourceConfigurationUIBean")
-//@ Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
+
+    /**
+     * 
+     */
+    private String selectedPath;
+    private TreeMap<String, RawConfiguration> raws;
+    private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
+    private RawConfiguration current = null;
 
     // =========== actions ===========
 
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
+
     }
 
     public String editConfiguration() {
@@ -81,6 +88,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String updateConfiguration() {
+
+        modified = null;
+
         return updateConfiguration(true);
 
     }
@@ -94,9 +104,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
-        AbstractResourceConfigurationUpdate updateRequest =
-            this.configurationManager.updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(),
-                resourceId, getMergedConfiguration(), fromStructured);
+        AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
+            .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
+                getMergedConfiguration(), fromStructured);
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:
@@ -224,27 +234,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfiguration().getId();
     }
 
-    /*
-        public Configuration getConfiguration() {
-            if (null == configuration) {
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-                int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-                AbstractResourceConfigurationUpdate configurationUpdate = LookupUtil.getConfigurationManager()
-                    .getLatestResourceConfigurationUpdate(subject, resourceId);
-                Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-                if (configuration != null) {
-                    //ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-                }
-
-                return configuration;
-
-            }
-            return configuration;
-        
-        }
-    */
-
     private ConfigurationFormat getConfigurationFormat() {
         return getConfigurationDefinition().getConfigurationFormat();
     }
@@ -333,10 +322,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void setCurrentContents(String updated) {
 
-        String original = new String(getCurrent().getContents());
+        String original = getCurrent().getContentString();
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
-            current.setContents(updated.getBytes());
+            current.setContentString(updated);
             //TODO update other values like MD5
             getModified().put(current.getPath(), current);
         }
@@ -354,14 +343,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void setModified(RawConfiguration raw) {
         getModified().put(raw.getPath(), raw);
-    }
-
-    /**
-     * This is a no-op, since the upload work was done by upload file
-     * But is kept as a target for the "save" icon from the full screen page
-     */
-    public String update() {
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
     /**
@@ -441,13 +422,5 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
         return raws;
     }
-
-    /**
-     * 
-     */
-    String selectedPath;
-    private TreeMap<String, RawConfiguration> raws;
-    TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
-    RawConfiguration current = null;
 
 }

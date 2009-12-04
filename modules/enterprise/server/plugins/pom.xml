@@ -41,7 +41,8 @@
     <module>rhnhosted</module>
     <module>alert-email</module>
     <module>alert-mobicents</module>
-      <module>alert-microblog</module>
+    <module>alert-microblog</module>
+    <module>alert-roles</module>
   </modules>
 
 </project>

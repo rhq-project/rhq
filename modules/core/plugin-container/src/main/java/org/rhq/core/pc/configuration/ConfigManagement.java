@@ -40,7 +40,7 @@ public interface ConfigManagement {
 
     void setConfigurationUtilityService(ConfigurationUtilityService configUtilityService);
 
-    Configuration execute(int resourceId) throws PluginContainerException;
+    Configuration executeLoad(int resourceId) throws PluginContainerException;
 
     void executeUpdate(int resourceId, Configuration configuration)
         throws PluginContainerException;

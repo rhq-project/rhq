@@ -39,7 +39,7 @@ public class RawConfigManagement extends ConfigManagementSupport {
 
     private final Log log = LogFactory.getLog(RawConfigManagement.class);
 
-    public Configuration execute(int resourceId) throws PluginContainerException {
+    public Configuration executeLoad(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();

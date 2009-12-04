@@ -26,7 +26,6 @@ package org.rhq.core.pc.configuration;
 import static org.testng.Assert.*;
 import static java.util.Collections.*;
 
-import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.domain.configuration.Configuration;
@@ -42,10 +41,6 @@ import java.util.Set;
 
 public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
-    ComponentService componentService;
-
-    ConfigurationUtilityService configUtilityService;
-
     ResourceConfigurationFacet configFacet;
 
     StructuredAndRawConfigManagement structuredAndRawConfigManagement;
@@ -54,9 +49,6 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
     public void setup() {
         resourceType = new ResourceType();
         resourceType.setResourceConfigurationDefinition(new ConfigurationDefinition("", ""));
-
-        componentService = context.mock(ComponentService.class);
-        configUtilityService = context.mock(ConfigurationUtilityService.class);
 
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
@@ -77,7 +69,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config, rawConfigs);
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -90,7 +82,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config, EMPTY_SET);
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         assertStructuredLoaded(config, loadedConfig);
     }
@@ -102,7 +94,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config, EMPTY_SET);
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -115,7 +107,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config, rawConfigs);
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         Configuration emptyStructured = new Configuration();
 
@@ -133,7 +125,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config, rawConfigs);
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         assertRawsLoaded(EMPTY_SET, loadedConfig);
         assertStructuredLoaded(config, loadedConfig);
@@ -157,7 +149,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
             oneOf(configFacet).loadRawConfigurations(); will(returnValue(null));
         }});
 
-        Configuration loadedConfig = structuredAndRawConfigManagement.execute(resourceId);
+        Configuration loadedConfig = structuredAndRawConfigManagement.executeLoad(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for both structured and raw.");
     }

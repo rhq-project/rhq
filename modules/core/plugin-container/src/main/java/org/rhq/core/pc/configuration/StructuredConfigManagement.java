@@ -36,7 +36,7 @@ public class StructuredConfigManagement extends ConfigManagementSupport {
 
     private final Log log = LogFactory.getLog(StructuredConfigManagement.class);
 
-    public Configuration execute(int resourceId) throws PluginContainerException {
+    public Configuration executeLoad(int resourceId) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResouceConfiguratonFacet(resourceId);
 
         Configuration configuration = facet.loadStructuredConfiguration();

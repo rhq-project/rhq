@@ -23,10 +23,10 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 
 @Local
 public interface PerspectiveManagerLocal {
-
     /**
      * Return the core menu for the specified subject. Depending on their inventory and roles the
      * core menu for one subject1 could differ from that of subject2.
@@ -38,4 +38,13 @@ public interface PerspectiveManagerLocal {
      * @return
      */
     List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException;
+
+    /**
+     * Returns the list of tabs that should be displayed for the specified user for the specified Resource.
+     *
+     * @param subject a user
+     * @param resource an inventoried Resource
+     * @return the list of tabs that should be displayed for the specified user for the specified Resource
+     */
+    List<Tab> getResourceTabs(Subject subject, Resource resource);
 }

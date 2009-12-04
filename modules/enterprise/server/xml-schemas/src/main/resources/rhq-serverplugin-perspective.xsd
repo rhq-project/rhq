@@ -66,12 +66,7 @@
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  ref="perspective:resourceTab"
-                  minOccurs="0"
-                  maxOccurs="unbounded">
-               </xs:element>
-               <xs:element
-                  ref="perspective:resourceSubTab"
+                  ref="perspective:tab"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
@@ -117,7 +112,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivatorSet"
+            ref="perspective:inventoriedResourceActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -128,7 +123,7 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:permissionActivatorSet"
+            ref="perspective:globalPermissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
@@ -228,21 +223,22 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivatorSet"
+            ref="perspective:inventoriedResourceActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Activate the extension only if the user has resources of the specified type in
-                  inventory. Activated only if the user has the required permissions. Activated for resources only if
-                  specified trait conditions are also met.</xs:documentation>
+               <xs:documentation>Activate the extension only if there is at least one Resource in inventory that
+                  satisfies the specified conditions. Conditions include the Resource's type or facet, the current
+                  user's permissions for the Resource, or a Resource trait with a certain value.
+               </xs:documentation>
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:permissionActivatorSet"
+            ref="perspective:globalPermissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Activate the extension only if the user has the required global permissions.
+               <xs:documentation>Activate the extension only if the current user has the specified; global permissions.
                </xs:documentation>
             </xs:annotation>
          </xs:element>
@@ -334,7 +330,7 @@
    </xs:complexType>
 
    <xs:element
-      name="resourceTab"
+      name="tab"
       type="perspective:TabType">
       <xs:annotation>
          <xs:documentation>
@@ -342,21 +338,7 @@
          </xs:documentation>
          <xs:appinfo>
             <jaxb:class
-               name="PerspectiveResourceTabElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-   <xs:element
-      name="resourceSubTab"
-      type="perspective:TabType">
-      <xs:annotation>
-         <xs:documentation>
-            Add, Replace or Remove a resourceSubTab extension for a ResourceTab extension point.
-         </xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="PerspectiveResourceSubTabElement" />
+               name="TabElement" />
          </xs:appinfo>
       </xs:annotation>
    </xs:element>
@@ -373,21 +355,15 @@
             </xs:annotation>
          </xs:element>
          <xs:element
-            ref="perspective:inventoryActivatorSet"
+            ref="perspective:currentResourceOrGroupActivatorSet"
             minOccurs="0"
-            maxOccurs="unbounded">
-            <xs:annotation>
-               <xs:documentation>Activate the extension only if the user has resources of the specified type in
-                  inventory. Activated only if the user has the required permissions. Activated for resources only if
-                  specified trait conditions are also met.</xs:documentation>
-            </xs:annotation>
-         </xs:element>
+            maxOccurs="unbounded"/>
          <xs:element
-            ref="perspective:permissionActivatorSet"
+            ref="perspective:globalPermissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
             <xs:annotation>
-               <xs:documentation>Activate task only if the user has the required global permissions.</xs:documentation>
+               <xs:documentation>Activate tab only if the user has the required global permissions.</xs:documentation>
             </xs:annotation>
          </xs:element>
       </xs:sequence>
@@ -448,17 +424,30 @@
    </xs:complexType>
 
    <xs:element
-      name="permissionActivatorSet"
-      type="perspective:PermissionActivatorSetType">
+      name="globalPermissionActivatorSet"
+      type="perspective:GlobalPermissionActivatorSetType">
       <xs:annotation>
-         <xs:documentation>One or more permission conditions that must be satisfied in order for the extension to be
+         <xs:documentation>One or more global permission conditions that must be satisfied in order for the extension to be
             active.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
-               name="PermissionActivatorSetElement" />
+               name="GlobalPermissionActivatorSetElement" />
          </xs:appinfo>
       </xs:annotation>
    </xs:element>
+
+    <xs:element
+       name="resourcePermissionActivatorSet"
+       type="perspective:ResourcePermissionActivatorSetType">
+       <xs:annotation>
+          <xs:documentation>One or more Resource permission conditions that must be satisfied in order for the extension to be
+             active.</xs:documentation>
+          <xs:appinfo>
+             <jaxb:class
+                name="ResourcePermissionActivatorSetElement" />
+          </xs:appinfo>
+       </xs:annotation>
+    </xs:element>
 
    <xs:element
       name="traitActivatorSet"
@@ -474,23 +463,69 @@
    </xs:element>
 
    <xs:element
-      name="inventoryActivatorSet"
-      type="perspective:InventoryActivatorSetType">
+      name="inventoriedResourceActivatorSet"
+      type="perspective:ResourceActivatorSetType">
       <xs:annotation>
          <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
             active.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
-               name="InventoryActivatorSetElement" />
+               name="InventoriedResourceActivatorSetElement" />
+         </xs:appinfo>
+      </xs:annotation>
+   </xs:element>
+
+    <xs:element
+       name="currentResourceOrGroupActivatorSet"
+       type="perspective:ResourceActivatorSetType">
+       <xs:annotation>
+          <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
+             active.</xs:documentation>
+          <xs:appinfo>
+             <jaxb:class
+                name="CurrentResourceOrGroupActivatorSetElement" />
+          </xs:appinfo>
+       </xs:annotation>
+    </xs:element>
+
+   <xs:element
+      name="facetActivatorSet"
+      type="perspective:FacetActivatorSetType">
+      <xs:annotation>
+         <xs:documentation>One or more ResourceType facets that the current Resource or Compatible Group must implement
+             in order for the extension to be active.</xs:documentation>
+         <xs:appinfo>
+            <jaxb:class
+               name="FacetActivatorSetElement" />
          </xs:appinfo>
       </xs:annotation>
    </xs:element>
 
    <xs:complexType
-      name="PermissionActivatorSetType">
+       name="FacetActivatorSetType">
+       <xs:sequence>
+          <xs:element
+             ref="perspective:facetActivator"
+             minOccurs="0"
+             maxOccurs="unbounded"/>
+       </xs:sequence>
+       <xs:attribute
+          name="any"
+          type="xs:boolean"
+          use="optional"
+          default="false">
+          <xs:annotation>
+             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+                activators must be satisfied. Default is false.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType
+      name="GlobalPermissionActivatorSetType">
       <xs:sequence>
          <xs:element
-            ref="perspective:permissionActivator"
+            ref="perspective:globalPermissionActivator"
             minOccurs="0"
             maxOccurs="unbounded">
          </xs:element>
@@ -506,6 +541,27 @@
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
+
+    <xs:complexType
+       name="ResourcePermissionActivatorSetType">
+       <xs:sequence>
+          <xs:element
+             ref="perspective:resourcePermissionActivator"
+             minOccurs="0"
+             maxOccurs="unbounded">
+          </xs:element>
+       </xs:sequence>
+       <xs:attribute
+          name="any"
+          type="xs:boolean"
+          use="optional"
+          default="false">
+          <xs:annotation>
+             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+                activators must be satisfied. Default is false.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+    </xs:complexType>
 
    <xs:complexType
       name="TraitActivatorSetType">
@@ -528,44 +584,86 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType
-      name="InventoryActivatorSetType">
-      <xs:sequence>
-         <xs:element
-            ref="perspective:inventoryActivator"
-            minOccurs="0"
-            maxOccurs="unbounded">
-         </xs:element>
-      </xs:sequence>
-      <xs:attribute
-         name="any"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-               activators must be satisfied. Default is false.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
+    <xs:complexType
+       name="ResourceActivatorSetType">
+       <xs:sequence>
+          <xs:element
+             ref="perspective:resourceActivator"
+             minOccurs="0"
+             maxOccurs="unbounded">
+          </xs:element>
+       </xs:sequence>
+       <xs:attribute
+          name="any"
+          type="xs:boolean"
+          use="optional"
+          default="false">
+          <xs:annotation>
+             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
+                activators must be satisfied. Default is false.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+    </xs:complexType>
 
    <xs:element
-      name="permissionActivator"
-      type="perspective:PermissionActivatorType">
+      name="globalPermissionActivator"
+      type="perspective:GlobalPermissionActivatorType">
       <xs:annotation>
-         <xs:documentation>An activator specifying a permission condition that must be satisfied in order for the
+         <xs:documentation>An activator specifying a global permission condition that must be satisfied in order for the
             extension to be active.</xs:documentation>
       </xs:annotation>
    </xs:element>
 
+    <xs:element
+       name="resourcePermissionActivator"
+       type="perspective:ResourcePermissionActivatorType">
+       <xs:annotation>
+          <xs:documentation>An activator specifying a resource permission condition that must be satisfied in order for
+             the extension to be active.</xs:documentation>
+       </xs:annotation>
+    </xs:element>
+
+    <xs:element
+       name="facetActivator"
+       type="perspective:FacetActivatorType">
+       <xs:annotation>
+          <xs:documentation>An activator specifying a facet that must be implemented by the current Resource or
+              Compatible Group in order for the extension to be active.</xs:documentation>
+       </xs:annotation>
+    </xs:element>
+
+    <xs:complexType
+       name="FacetActivatorType">
+       <xs:attribute
+          name="facet"
+          type="perspective:FacetType"
+          use="required">
+          <xs:annotation>
+             <xs:documentation>The required facet.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+    </xs:complexType>
+
+    <xs:complexType
+       name="GlobalPermissionActivatorType">
+       <xs:attribute
+          name="permission"
+          type="perspective:GlobalPermissionType"
+          use="required">
+          <xs:annotation>
+             <xs:documentation>The required Global permission.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+    </xs:complexType>
+
    <xs:complexType
-      name="PermissionActivatorType">
+      name="ResourcePermissionActivatorType">
       <xs:attribute
          name="permission"
-         type="perspective:PermissionType"
+         type="perspective:ResourcePermissionType"
          use="required">
          <xs:annotation>
-            <xs:documentation>The required permission.</xs:documentation>
+            <xs:documentation>The required Resource permission.</xs:documentation>
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
@@ -620,23 +718,42 @@
    </xs:complexType>
 
    <xs:element
-      name="inventoryActivator"
-      type="perspective:InventoryActivatorType">
+      name="resourceActivator"
+      type="perspective:ResourceActivatorType">
       <xs:annotation>
-         <xs:documentation>An activator specifying inventory conditions that must be satisfied in order for the
+         <xs:documentation>A Resource with this ResourceType must be in inventory in order for the
             extension to be active.</xs:documentation>
          <xs:appinfo>
             <jaxb:class
-               name="InventoryActivatorElement" />
+               name="ResourceActivatorElement" />
          </xs:appinfo>
       </xs:annotation>
    </xs:element>
 
+    <xs:element
+       name="resourceTypeActivator"
+       type="perspective:ResourceTypeActivatorType">
+       <xs:annotation>
+          <xs:documentation>The Resource or Compatible Group must be of this ResourceType
+              in order for the extension to be active.</xs:documentation>
+          <xs:appinfo>
+             <jaxb:class
+                name="ResourceTypeActivatorElement" />
+          </xs:appinfo>
+       </xs:annotation>
+    </xs:element>
+
    <xs:complexType
-      name="InventoryActivatorType">
+      name="ResourceActivatorType">
       <xs:sequence>
+         <xs:choice>
+             <xs:element ref="perspective:resourceTypeActivator">
+             </xs:element>
+             <xs:element ref="perspective:facetActivatorSet">
+             </xs:element>
+         </xs:choice>
          <xs:element
-            ref="perspective:permissionActivatorSet"
+            ref="perspective:resourcePermissionActivatorSet"
             minOccurs="0"
             maxOccurs="unbounded">
          </xs:element>
@@ -664,6 +781,27 @@
          </xs:annotation>
       </xs:attribute>
    </xs:complexType>
+
+    <xs:complexType
+       name="ResourceTypeActivatorType">
+       <xs:attribute
+          name="plugin"
+          type="xs:string"
+          use="required">
+          <xs:annotation>
+             <xs:documentation>Plugin for the specified resource type.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+       <xs:attribute
+          name="resourceType"
+          type="xs:string"
+          use="required">
+          <xs:annotation>
+             <xs:documentation>Resource Type that must be in inventory to activate the extension point.
+             </xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+    </xs:complexType>
 
    <xs:element
       name="position"
@@ -839,7 +977,7 @@
    </xs:simpleType>
 
    <xs:simpleType
-      name="PermissionType">
+      name="GlobalPermissionType">
       <xs:restriction
          base="xs:string">
          <xs:enumeration
@@ -851,27 +989,75 @@
             value="MANAGE_SECURITY"></xs:enumeration>
          <xs:enumeration
             value="MANAGE_SETTINGS"></xs:enumeration>
-
-         <xs:enumeration
-            value="CONFIGURE"></xs:enumeration>
-         <xs:enumeration
-            value="CONTROL"></xs:enumeration>
-         <xs:enumeration
-            value="CREATE_CHILD_RESOURCE"></xs:enumeration>
-         <xs:enumeration
-            value="DELETE_RESOURCE"></xs:enumeration>
-         <xs:enumeration
-            value="MANAGE_ALERTS"></xs:enumeration>
-         <xs:enumeration
-            value="MANAGE_CONTENT"></xs:enumeration>
-         <xs:enumeration
-            value="MANAGE_MEASUREMENTS"></xs:enumeration>
-         <xs:enumeration
-            value="MODIFY_RESOURCE"></xs:enumeration>
-         <xs:enumeration
-            value="VIEW_RESOURCE"></xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
+
+    <xs:simpleType
+       name="ResourcePermissionType">
+       <xs:restriction
+          base="xs:string">
+          <xs:enumeration
+             value="CONFIGURE"></xs:enumeration>
+          <xs:enumeration
+             value="CONTROL"></xs:enumeration>
+          <xs:enumeration
+             value="CREATE_CHILD_RESOURCE"></xs:enumeration>
+          <xs:enumeration
+             value="DELETE_RESOURCE"></xs:enumeration>
+          <xs:enumeration
+             value="MANAGE_ALERTS"></xs:enumeration>
+          <xs:enumeration
+             value="MANAGE_CONTENT"></xs:enumeration>
+          <xs:enumeration
+             value="MANAGE_MEASUREMENTS"></xs:enumeration>
+          <xs:enumeration
+             value="MODIFY_RESOURCE"></xs:enumeration>
+          <xs:enumeration
+             value="VIEW_RESOURCE"></xs:enumeration>
+       </xs:restriction>
+    </xs:simpleType>
+
+   <xs:simpleType
+       name="FacetType">
+       <xs:restriction
+          base="xs:string">
+          <xs:enumeration value="measurement" >
+              <xs:annotation>
+                 <xs:documentation>The Resource type defines one or more metrics.</xs:documentation>
+              </xs:annotation>
+          </xs:enumeration>
+           <xs:enumeration value="event" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more events.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+           <xs:enumeration value="pluginConfiguration" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more plugin configuration (aka connection) properties.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+           <xs:enumeration value="configuration" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more resource configuration properties.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+           <xs:enumeration value="operation" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more operations.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+           <xs:enumeration value="content" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more packages.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+           <xs:enumeration value="callTime" >
+               <xs:annotation>
+                  <xs:documentation>The Resource type defines one or more call-time metrics.</xs:documentation>
+               </xs:annotation>
+           </xs:enumeration>
+       </xs:restriction>
+    </xs:simpleType>
 
    <xs:simpleType
       name="PlacementType">

@@ -32,12 +32,13 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Me
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PlacementType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PositionType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TabType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TaskType;
 
 /**
  * This loads in all deployed perspective server plugins and maintains the complete set of
  * {@link #getMetadataManager() metadata} found in all plugin descriptors. Individual plugin
- * metadata is irrelevant and not retrievable.  The union of the perpective definitions is
+ * metadata is irrelevant and not retrievable.  The union of the perspective definitions is
  * maintained and made available.  Conflict resolution rules are applied as needed for
  * clashing perspective definitions.
  * 
@@ -46,7 +47,6 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
  *
  * @author Jay Shaughnessy
  */
-
 public class PerspectivePluginMetadataManager {
     private final String CORE_PERSPECTIVE_NAME = "CorePerspective";
 
@@ -59,6 +59,7 @@ public class PerspectivePluginMetadataManager {
     private boolean isStarted = false;
     private List<TaskType> globalTasks = null;
     private List<TaskType> resourceTasks = null;
+    private List<TabType> tabs;
     private List<MenuItem> coreMenu = null;
 
     public PerspectivePluginMetadataManager() {
@@ -97,8 +98,9 @@ public class PerspectivePluginMetadataManager {
                 + CORE_PERSPECTIVE_NAME);
         }
 
-        globalTasks = cp.getGlobalTask();
-        resourceTasks = cp.getResourceTask();
+        this.globalTasks = cp.getGlobalTask();
+        this.resourceTasks = cp.getResourceTask();
+        this.tabs = cp.getTab(); // TODO
 
         // Setup core menus
         if (null == this.coreMenu) {
@@ -194,4 +196,18 @@ public class PerspectivePluginMetadataManager {
         return coreMenu;
     }
 
+    public List<TaskType> getGlobalTasks()
+    {
+        return globalTasks;
+    }
+
+    public List<TaskType> getResourceTasks()
+    {
+        return resourceTasks;
+    }
+
+    public List<TabType> getTabs()
+    {
+        return tabs;
+    }
 }

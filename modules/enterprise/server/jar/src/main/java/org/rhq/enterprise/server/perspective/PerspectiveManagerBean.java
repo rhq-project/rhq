@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.perspective;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,16 +32,18 @@ import javax.persistence.PersistenceContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.InventoryActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionActivatorSetType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionActivatorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PermissionType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -65,8 +68,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
-     */
-    @Override
+     */    
     public synchronized List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
         Integer sessionId = subject.getSessionId();
         CacheEntry cacheEntry = cache.get(sessionId);
@@ -101,6 +103,13 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return coreMenu;
     }
 
+    @NotNull
+    public List<Tab> getResourceTabs(Subject subject, Resource resource)
+    {
+        // TODO: implement
+        return Collections.emptyList();
+    }
+
     private void cleanCache() {
         Subject subject;
 
@@ -132,11 +141,11 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
         for (MenuItem menuItem : menu) {
             MenuItemType item = menuItem.getItem();
-            List<InventoryActivatorSetType> inventoryActivatorSets = item.getInventoryActivatorSet();
-            List<PermissionActivatorSetType> permissionActivatorSets = item.getPermissionActivatorSet();
+            List<ResourceActivatorSetType> inventoriedResourceActivatorSet = item.getInventoriedResourceActivatorSet();
+            List<GlobalPermissionActivatorSetType> globalPermissionActivatorSet = item.getGlobalPermissionActivatorSet();
 
             // Make sure activators are satisfied before copying
-            if (checkActivators(subject, inventoryActivatorSets, permissionActivatorSets)) {
+            if (checkActivators(subject, inventoriedResourceActivatorSet, globalPermissionActivatorSet)) {
                 MenuItem copy = new MenuItem(menuItem.getItem());
 
                 result.add(copy);
@@ -149,16 +158,16 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return result;
     }
 
-    private boolean checkActivators(Subject subject, List<InventoryActivatorSetType> inventoryActivatorSets,
-        List<PermissionActivatorSetType> permissionActivatorSets) {
+    private boolean checkActivators(Subject subject, List<ResourceActivatorSetType> resourceActivatorSets,
+        List<GlobalPermissionActivatorSetType> permissionActivatorSets) {
 
         // global perm checking is relatively fast, make sure these pass before checking inventory activators
-        for (PermissionActivatorSetType permissionActivatorSet : permissionActivatorSets) {
+        for (GlobalPermissionActivatorSetType permissionActivatorSet : permissionActivatorSets) {
             boolean any = permissionActivatorSet.isAny();
             boolean anyPassed = false;
             boolean anyFailed = false;
 
-            for (PermissionActivatorType permissionActivator : permissionActivatorSet.getPermissionActivator()) {
+            for (GlobalPermissionActivatorType permissionActivator : permissionActivatorSet.getGlobalPermissionActivator()) {
                 boolean hasPermission = hasGlobalPermission(subject, permissionActivator.getPermission());
                 anyPassed = hasPermission;
                 anyFailed = !hasPermission;
@@ -176,15 +185,15 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             }
         }
 
-        for (InventoryActivatorSetType inventoryActivatorSet : inventoryActivatorSets) {
+        for (ResourceActivatorSetType resourceActivatorSet : resourceActivatorSets) {
             //TODO: impl
         }
 
         return true;
     }
 
-    private boolean hasGlobalPermission(Subject subject, PermissionType permissionType) {
-        if (permissionType == PermissionType.SUPERUSER) {
+    private boolean hasGlobalPermission(Subject subject, GlobalPermissionType permissionType) {
+        if (permissionType == GlobalPermissionType.SUPERUSER) {
             return authorizationManager.isSystemSuperuser(subject);
         }
 

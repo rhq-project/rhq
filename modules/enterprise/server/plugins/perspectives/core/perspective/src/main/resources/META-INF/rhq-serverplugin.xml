@@ -61,10 +61,10 @@
          extensionPoint="coreMenu"
          name="administration"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="SUPERUSER" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="help"
@@ -206,10 +206,10 @@
          name="groups.groupDefinitions"
          placement="after"
          addBreak="true" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="groups.newGroupDefinition"
@@ -219,10 +219,10 @@
          extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="groups.favoriteGroups"
@@ -273,13 +273,13 @@
          extensionPoint="coreMenu"
          name="administration.security"
          placement="after" />
-      <permissionActivatorSet
+      <globalPermissionActivatorSet
          any="true">
-         <permissionActivator
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-         <permissionActivator
+         <globalPermissionActivator
             permission="MANAGE_SETTINGS" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.content"
@@ -288,10 +288,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.highAvailability"
@@ -300,10 +300,10 @@
          extensionPoint="coreMenu"
          name="administration.content"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.reports"
@@ -331,10 +331,10 @@
          extensionPoint="coreMenu"
          name="administration.download"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_SETTINGS" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
 
    <!--  Core Menu: Debug -->
@@ -513,10 +513,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration"
          placement="start" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_SETTINGS" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.systemConfiguration.plugins"
@@ -526,10 +526,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration.settings"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_SETTINGS" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="administration.systemConfiguration.templates"
@@ -539,10 +539,10 @@
          extensionPoint="coreMenu"
          name="administration.systemConfiguration.plugins"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
 
    <!--  Core Menu: administration.content -->

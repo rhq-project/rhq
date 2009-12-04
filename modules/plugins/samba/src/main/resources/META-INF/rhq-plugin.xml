@@ -42,7 +42,7 @@
 
             <c:simple-property name="workgroup" description="The workgroup your server will appear to be in when queried by clients" required="false"/>
             <c:simple-property name="server string" description="Value that will display in the printer comment box in print manager" required="false"/>
-
+			<c:simple-property name="enableRecycleBin" type="boolean" description="Enable recycle bin for all the shares. Deleted files or directories will be copied to a .recycle under the tree."/>
         </c:group>
 
           <c:group name="Security">

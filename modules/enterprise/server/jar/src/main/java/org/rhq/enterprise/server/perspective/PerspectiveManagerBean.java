@@ -36,11 +36,14 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.enterprise.gui.legacy.util.Tab;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")

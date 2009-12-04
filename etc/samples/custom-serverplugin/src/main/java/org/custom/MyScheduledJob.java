@@ -28,13 +28,14 @@ import org.rhq.enterprise.server.plugin.pc.ScheduledJobInvocationContext;
  */
 public class MyScheduledJob {
     public void executeWithContext(ScheduledJobInvocationContext jobContext) throws Exception {
-        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] jobId="
-            + jobContext.getJobDefinition().getJobId() + ", methodName="
+        System.out.println("The sample plugin scheduled job [executeWithContext] (stateless) has triggered!!! : ["
+            + this.getClass() + "] jobId=" + jobContext.getJobDefinition().getJobId() + ", methodName="
             + jobContext.getJobDefinition().getMethodName() + ", callbackData="
             + jobContext.getJobDefinition().getCallbackData());
     }
 
     public void executeNoArg() throws Exception {
-        System.out.println("Sample scheduled job has been triggered! [" + this.getClass() + "] NO CONTEXT!");
+        System.out.println("The sample plugin scheduled job [executeNoArg] has triggered!!! : [" + this.getClass()
+            + "] - NO CONTEXT!");
     }
 }

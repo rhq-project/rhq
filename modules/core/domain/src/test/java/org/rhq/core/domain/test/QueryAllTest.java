@@ -52,9 +52,9 @@ import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
@@ -65,6 +65,7 @@ import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1D;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric1H;
@@ -134,6 +135,9 @@ public class QueryAllTest extends AbstractEJB3Test {
         Agent.class.getSimpleName(),
         Resource.class.getSimpleName(),
         ResourceType.class.getSimpleName(),
+
+        // HA stuff
+        Server.class.getSimpleName(),
 
         // content stuff
         Architecture.class.getSimpleName(), Repo.class.getSimpleName(), ContentServiceRequest.class.getSimpleName(),
@@ -283,6 +287,7 @@ public class QueryAllTest extends AbstractEJB3Test {
                     continue;
                 }
 
+                System.out.println("Testing queries for: " + shortName);
                 List<NamedQuery> nqs = getNamedQueriesForEntity(entity);
                 for (NamedQuery nq : nqs) {
                     boolean hasId;
@@ -326,7 +331,7 @@ public class QueryAllTest extends AbstractEJB3Test {
 
                         query.setMaxResults(5);
                         Collection results = query.getResultList();
-                        System.out.println("   ==> #results: " + results.size());
+                        System.out.println("   " + nq.name() + "==> #results: " + results.size());
                     } catch (Throwable t) {
                         assert false : "Failed to query named query " + nq.name() + ": "
                             + ThrowableUtil.getAllMessages(t, true);

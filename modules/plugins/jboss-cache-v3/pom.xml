@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-      <groupId>org.rhq</groupId>      
+      <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
       <version>1.4.0-SNAPSHOT</version>
     </parent>
@@ -22,7 +22,6 @@
 
     <properties>
         <scm.module.path>modules/plugins/jboss-cache-v3/</scm.module.path>
-        
         <jbossas.version>6.0.0.M1</jbossas.version>
     </properties>
                       
@@ -57,7 +56,7 @@
      <dependency>
          <groupId>${project.groupId}</groupId>
          <artifactId>jopr-jboss-as-5-plugin</artifactId>
-         <version>${project.version}</version>
+         <version>${version}</version>
          <scope>provided</scope>
      </dependency>
 
@@ -588,3 +587,4 @@
     </reporting>
  
 </project>
+

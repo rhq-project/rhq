@@ -6,6 +6,7 @@
               displayName="alert plugin display name"
               name="alert plugin name"
               package="org.alert.package.name.here"
+              disabledOnDiscovery="true"
               xmlns="urn:xmlns:rhq-serverplugin.alert"
               xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
               xmlns:c="urn:xmlns:rhq-configuration"

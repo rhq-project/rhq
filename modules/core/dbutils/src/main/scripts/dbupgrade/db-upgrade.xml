@@ -1484,39 +1484,39 @@
         </schema-directSQL>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="CONFIG_ID" columnType="INTEGER"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="CONFIG_ID" 
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="CONFIG_ID"
                             columnType="INTEGER"
                             nullable="false"/>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="PATH" columnType="VARCHAR2"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="PATH" 
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="PATH"
                             columnType="VARCHAR2"
                             precision="512"/>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="CONTENTS" columnType="BLOB"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="CONTENTS" 
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="CONTENTS"
                             columnType="BLOB"
                             nullable="false"/>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="SHA256" columnType="VARCHAR2"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="SHA256" 
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="SHA256"
                             columnType="VARCHAR2"
-                            precision="64" 
+                            precision="64"
                             nullable="false"/>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="CTIME" columnType="LONG"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="CTIME"  
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="CTIME"
                             columnType="LONG"
                             nullable="false"/>
 
         <schema-addColumn table="RHQ_RAW_CONFIG" column="MTIME" columnType="LONG"/>
-        <schema-alterColumn table="RHQ_RAW_CONFIG" 
-                            column="MTIME" 
+        <schema-alterColumn table="RHQ_RAW_CONFIG"
+                            column="MTIME"
                             columnType="LONG"
                             nullable="false"/>
 
@@ -2024,62 +2024,60 @@
           <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
-    	
-    	<!-- Generic tagging support -->
+
+      <!-- Generic tagging support -->
       <schemaSpec version="2.64">
-    	<schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
-    	  <schema-directSQL>
-    	    <statement>
-    	      CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
-    	    </statement>
-    	  </schema-directSQL>
-    	 <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
-    	 <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
-    	 <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
-    	 <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
-      </schemaSpec>
-    	
-   	  <!-- Distribution Files -->
-      <schemaSpec version="2.65">
-      	 <schema-directSQL>
-      	    <statement>
-      	        CREATE TABLE RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID INTEGER )
-      	    </statement>
-      	 </schema-directSQL>
-      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
-      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
-      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false" />
-      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
-      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false" />
-      	 <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG" />
-      	 <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false" />
-      	<schema-directSQL>
-      	  <statement targetDBVendor="postgresql">
-      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
-      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
-      	  </statement>
-      	  <statement targetDBVendor="oracle">
-      	   CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
-      	   ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
-      	  </statement>
-      	</schema-directSQL>
-      	<schema-directSQL>
-      	 <statement targetDBVendor="oracle">
-      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
-      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
-      	  FOREIGN KEY ( DISTRIBUTION_ID)
-      	  REFERENCES RHQ_DISTRIBUTION ( ID )
-      	 </statement>
-      	 <statement targetDBVendor="postgresql">
-      	  ALTER TABLE RHQ_DISTRIBUTION_FILE
-      	  ADD CONSTRAINT RHQ_DIST_FILE_FKEY
-      	  FOREIGN KEY ( DISTRIBUTION_ID)
-      	  REFERENCES RHQ_DISTRIBUTION ( ID )
-      	 </statement>
+      <schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
+          </statement>
         </schema-directSQL>
-      	
+        <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
+        <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
+        <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
       </schemaSpec>
 
+      <!-- Distribution Files -->
+      <schemaSpec version="2.65">
+        <schema-directSQL>
+          <statement>
+            CREATE TABLE RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID INTEGER )
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
+        <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false" />
+        <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false" />
+        <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG" />
+        <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false" />
+        <schema-directSQL>
+          <statement targetDBVendor="postgresql">
+            CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+            ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+          </statement>
+          <statement targetDBVendor="oracle">
+            CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
+            ON RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID, RELATIVE_FILENAME )
+          </statement>
+        </schema-directSQL>
+        <schema-directSQL>
+          <statement targetDBVendor="oracle">
+            ALTER TABLE RHQ_DISTRIBUTION_FILE
+            ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+            FOREIGN KEY ( DISTRIBUTION_ID)
+            REFERENCES RHQ_DISTRIBUTION ( ID )
+          </statement>
+          <statement targetDBVendor="postgresql">
+            ALTER TABLE RHQ_DISTRIBUTION_FILE
+            ADD CONSTRAINT RHQ_DIST_FILE_FKEY
+            FOREIGN KEY ( DISTRIBUTION_ID)
+            REFERENCES RHQ_DISTRIBUTION ( ID )
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
 
       <!-- RHQ_REPO_TAG_MAP -->
       <schemaSpec version="2.66">
@@ -2123,23 +2121,84 @@
       </schemaSpec>
 
       <schemaSpec version="2.68">
-      	<schema-createSequence name="RHQ_DISTRIBUTION_FILE_SEQ" initial="10001" />
+        <schema-createSequence name="RHQ_DISTRIBUTION_FILE_SEQ" initial="10001" />
         <schema-directSQL>
-            <statement>
-                ALTER TABLE RHQ_DISTRIBUTION_FILE DROP CONSTRAINT RHQ_DISTRIBUTION_FILE_PKEY
-            </statement>
+          <statement>
+            ALTER TABLE RHQ_DISTRIBUTION_FILE DROP CONSTRAINT RHQ_DISTRIBUTION_FILE_PKEY
+          </statement>
         </schema-directSQL>
-        	
+
         <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />
-      	
-      	<schema-directSQL>	
-        	<statement>
-        		ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
-            </statement>
+
+        <schema-directSQL>
+          <statement>
+            ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
+          </statement>
         </schema-directSQL>
-       </schemaSpec>
-              
+      </schemaSpec>
+
+      <!-- Add support for server-side plugins -->
+      <schemaSpec version="2.69">
+        <!-- add the new column that indicates if this is deployed on the SERVER or AGENT -->
+        <schema-addColumn table="RHQ_PLUGIN" column="DEPLOYMENT" columnType="VARCHAR2" precision="8"/>
+        <schema-directSQL>
+          <statement desc="Updating existing plugins with default deployment of AGENT">
+            UPDATE RHQ_PLUGIN SET DEPLOYMENT = 'AGENT'
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PLUGIN" column="DEPLOYMENT" nullable="FALSE"/>
+
+        <!-- add the new column that provides configuration to a plugin -->
+        <schema-addColumn table="RHQ_PLUGIN" column="PLUGIN_CONFIG_ID" columnType="INTEGER" />
+        <schema-directSQL>
+          <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for plugin config">
+            ALTER TABLE RHQ_PLUGIN
+            ADD CONSTRAINT RHQ_PLUGIN_P_CFG_ID_FKEY
+            FOREIGN KEY (PLUGIN_CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
+          </statement>
+        </schema-directSQL>
+
+        <!-- add the new column that provides configuration to a plugin -->
+        <schema-addColumn table="RHQ_PLUGIN" column="JOBS_CONFIG_ID" columnType="INTEGER" />
+        <schema-directSQL>
+          <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for scheduled jobs">
+            ALTER TABLE RHQ_PLUGIN
+            ADD CONSTRAINT RHQ_PLUGIN_JOBS_CFG_ID_FKEY
+            FOREIGN KEY (JOBS_CONFIG_ID)
+            REFERENCES RHQ_CONFIG (ID)
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
+      <schemaSpec version="2.69.1">
+        <!-- add the new column that indicates if this is plugin has been deleted -->
+        <schema-addColumn table="RHQ_PLUGIN" column="STATUS" columnType="VARCHAR2" precision="16"/>
+        <schema-directSQL>
+          <statement desc="Updating existing plugins with status of INSTALLED">
+            UPDATE RHQ_PLUGIN SET STATUS = 'INSTALLED'
+          </statement>
+        </schema-directSQL>
+        <schema-alterColumn table="RHQ_PLUGIN" column="STATUS" nullable="FALSE"/>
+      </schemaSpec>
+
+      <schemaSpec version="2.69.2">
+        <!-- plugin names must be unique only if they are deployed on the same side (agent vs. server) -->
+        <schema-directSQL>
+          <statement desc="Dropping unique index on RHQ_PLUGIN (NAME)">
+            DROP INDEX RHQ_PLUGIN_NAME_IDX
+          </statement>
+          <statement desc="Creating unique index on RHQ_PLUGIN (NAME, DEPLOYMENT) so server plugin names need not be unique with agent plugins">
+            CREATE UNIQUE INDEX RHQ_PLUGIN_NAME_DEPLOY_IDX ON RHQ_PLUGIN (NAME, DEPLOYMENT)
+          </statement>
+        </schema-directSQL>
+      </schemaSpec>
+
+      <schemaSpec version="2.69.3">
+        <!-- add the new column that indicates what type of plugin this is (e.g. alert, generic, content) - for server plugins only -->
+        <schema-addColumn table="RHQ_PLUGIN" column="PTYPE" columnType="VARCHAR2" precision="200"/>
+      </schemaSpec>
 
     </dbupgrade>
   </target>

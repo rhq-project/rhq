@@ -29,10 +29,12 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -45,8 +47,13 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 public class MasterServerPluginContainer {
     private static final Log log = LogFactory.getLog(MasterServerPluginContainer.class);
 
+    /** The configuration for the master plugin container itself. */
     private MasterServerPluginContainerConfiguration configuration;
+
+    /** the plugin containers for all the different types of plugins that are supported */
     private Map<ServerPluginType, AbstractTypeServerPluginContainer> pluginContainers = new HashMap<ServerPluginType, AbstractTypeServerPluginContainer>();
+
+    /** the object that provides all the classloaders for all plugins */
     private ClassLoaderManager classLoaderManager;
 
     /**
@@ -98,18 +105,24 @@ public class MasterServerPluginContainer {
 
             // Create classloaders/environments for all plugins and load plugins into their plugin containers.
             // Note that we do not care what order we load plugins - in the future we may want dependencies.
+            List<PluginKey> allDisabledPlugins = getDisabledPluginKeys();
+
             for (Map.Entry<URL, ? extends ServerPluginDescriptorType> entry : plugins.entrySet()) {
                 URL pluginUrl = entry.getKey();
                 ServerPluginDescriptorType descriptor = entry.getValue();
-                String pluginName = descriptor.getName();
-                ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginName);
                 AbstractTypeServerPluginContainer pc = getPluginContainerByDescriptor(descriptor);
                 if (pc != null) {
-                    log.debug("Loading server plugin [" + pluginUrl + "] into its plugin container");
+                    String pluginName = descriptor.getName();
+                    ServerPluginType pluginType = new ServerPluginType(descriptor);
+                    PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), pluginName);
+                    ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
+                    log.debug("Loading server plugin [" + pluginKey + "] from [" + pluginUrl
+                        + "] into its plugin container");
                     try {
                         ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader, descriptor);
-                        pc.loadPlugin(env);
-                        log.info("Loaded server plugin [" + pluginUrl + "]");
+                        boolean enabled = !allDisabledPlugins.contains(pluginKey);
+                        pc.loadPlugin(env, enabled);
+                        log.info("Loaded server plugin [" + pluginKey.getPluginName() + "]");
                     } catch (Exception e) {
                         log.warn("Failed to load server plugin [" + pluginUrl + "]", e);
                     }
@@ -205,7 +218,7 @@ public class MasterServerPluginContainer {
 
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             try {
-                pc.schedulePluginJobs();
+                pc.scheduleAllPluginJobs();
             } catch (Exception e) {
                 log.error("Server plugin container for plugin type [" + pc.getSupportedServerPluginType()
                     + "] failed to scheduled some or all of its jobs", e);
@@ -237,6 +250,18 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * This will return all known server plugins types. These are the types of plugins
+     * that are supported by a server plugin container. You can obtain the server
+     * plugin container that manages a particular server plugin type via
+     * {@link #getPluginContainerByPluginType(ServerPluginType)}.
+     * 
+     * @return all known server plugin types
+     */
+    public synchronized List<ServerPluginType> getServerPluginTypes() {
+        return new ArrayList<ServerPluginType>(this.pluginContainers.keySet());
+    }
+
+    /**
      * Get the plugin container of the given class. This method provides a strongly typed return value,
      * based on the type of plugin container the caller wants returned.
      * 
@@ -244,7 +269,7 @@ public class MasterServerPluginContainer {
      * @return the plugin container of the given class (<code>null</code> if none found)
      */
     @SuppressWarnings("unchecked")
-    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainer(Class<T> clazz) {
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByClass(Class<T> clazz) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             if (clazz.isInstance(pc)) {
                 return (T) pc;
@@ -254,12 +279,38 @@ public class MasterServerPluginContainer {
     }
 
     /**
-     * Given a plugin's descriptor, this will return the plugin container that can manage the plugin.
+     * Given the key of a deployed plugin, this returns the plugin container that is hosting
+     * that plugin. If there is no plugin with the given key or that plugin is not
+     * loaded in any plugin container (e.g. when it is disabled), then <code>null</code> is returned.
      * 
-     * @param descriptor descriptor to identify a plugin whose container is to be returned
-     * @return a plugin container that can handle the plugin with the given descriptor
+     * @param pluginKey
+     * @return the plugin container that is managing the named plugin or <code>null</code>
      */
-    protected synchronized AbstractTypeServerPluginContainer getPluginContainerByPluginType(ServerPluginType pluginType) {
+    public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByPlugin(PluginKey pluginKey) {
+        for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
+            try {
+                if (pc.getSupportedServerPluginType().equals(new ServerPluginType(pluginKey.getPluginType()))) {
+                    if (null != pc.getPluginManager().getPluginEnvironment(pluginKey.getPluginName())) {
+                        return (T) pc;
+                    }
+                }
+            } catch (Exception skip) {
+                // should never really happen
+                log.error("Bad plugin key: " + pluginKey);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Given a server plugin type, this will return the plugin container that can manage that type of plugin.
+     * If the server plugin type is unknown to the master, or if the master plugin is not started, this will
+     * return <code>null</code>.
+     * 
+     * @param pluginType the type of server plugin whose PC is to be returned
+     * @return a plugin container that can handle the given type of server plugin
+     */
+    public synchronized AbstractTypeServerPluginContainer getPluginContainerByPluginType(ServerPluginType pluginType) {
         AbstractTypeServerPluginContainer pc = this.pluginContainers.get(pluginType);
         return pc;
     }
@@ -282,7 +333,7 @@ public class MasterServerPluginContainer {
      * Finds all plugins and parses their descriptors. This is only called during
      * this master plugin container's {@link #initialize(MasterServerPluginContainerConfiguration) initialization}.
      * 
-     * If a plugin fails to load, it will be ignored - other plugins will still load.
+     * If a plugin fails to preload, it will be ignored - other plugins will still preload.
      * 
      * @return a map of plugins, keyed on the plugin jar URL whose values are the parsed descriptors
      *
@@ -303,7 +354,6 @@ public class MasterServerPluginContainer {
                 for (File pluginFile : pluginFiles) {
                     if (pluginFile.getName().endsWith(".jar")) {
                         URL pluginUrl = pluginFile.toURI().toURL();
-
                         try {
                             ServerPluginDescriptorType descriptor;
                             descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
@@ -321,6 +371,18 @@ public class MasterServerPluginContainer {
         }
 
         return plugins;
+    }
+
+    /**
+     * This will return a list of plugin keys that represent all the plugins that are to be
+     * disabled. If a plugin jar is found on the filesystem, its plugin key should be checked with
+     * this "blacklist" - if its key is found, that plugin should be disabled.
+     * 
+     * @return names of "blacklisted" plugins that should not be started (i.e. loaded as a disabled plugin)
+     */
+    protected List<PluginKey> getDisabledPluginKeys() {
+        List<PluginKey> disabledPlugins = LookupUtil.getServerPlugins().getServerPluginKeysByEnabled(false);
+        return disabledPlugins;
     }
 
     /**

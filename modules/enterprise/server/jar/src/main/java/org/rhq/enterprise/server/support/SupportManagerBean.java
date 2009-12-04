@@ -26,23 +26,17 @@ import java.net.URL;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
-
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Provides some methods that are useful for supporting managed resources. This includes being
@@ -95,10 +89,7 @@ public class SupportManagerBean implements SupportManagerLocal, SupportManagerRe
     }
 
     private File getDownloadsDir() throws Exception {
-        MBeanServer mbs = MBeanServerLocator.locateJBoss();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/support");
         if (!downloadDir.isDirectory()) {
             downloadDir.mkdirs();

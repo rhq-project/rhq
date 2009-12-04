@@ -39,12 +39,14 @@
       </f:facet>
 
       <h:panelGrid columns="1" width="100%">
+      <rich:tabPanel>
+      <rich:tab label="Agent Plugins">
 
-         <rich:dataTable id="pluginsDataTable"
-                         value="#{InstalledPluginsUIBean.installedPlugins}"
-                         var="plugin"
+         <rich:dataTable id="agentPluginsDataTable"
+                         value="#{InstalledPluginsUIBean.installedAgentPlugins}"
+                         var="agentPlugin"
                          width="100%"
-                         columnsWidth="20%, 45%, 15%, 9%"
+                         columnsWidth="20%, 50%, 20%, 10%"
                          headerClass="tableRowHeader"
                          footerClass="on-pager-footer"
                          onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -56,7 +58,7 @@
                   <onc:allSelect target="selectedPlugin"/>
                </f:facet>
 
-               <onc:select name="selectedPlugin" value="#{plugin.id}"/>
+               <onc:select name="selectedPlugin" value="#{agentPlugin.id}"/>
             </rich:column>-->
 
             <rich:column rendered="#{param.debug}">
@@ -64,7 +66,7 @@
                   <h:outputText styleClass="headerText" value="ID"/>
                </f:facet>
 
-               <h:outputText value="#{plugin.id}"/>
+               <h:outputText value="#{agentPlugin.id}"/>
             </rich:column>
 
 
@@ -73,9 +75,10 @@
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
-                  <f:param name="plugin" value="#{plugin.name}"/>
-                  <h:outputText value="#{plugin.displayName}"/>
+               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml">
+                  <f:param name="plugin" value="#{agentPlugin.name}"/>
+                  <f:param name="deployment" value="AGENT"/>
+                  <h:outputText value="#{agentPlugin.displayName}"/>
                </h:outputLink>
 
             </rich:column>
@@ -86,7 +89,7 @@
                   <h:outputText styleClass="headerText" value="Description"/>
                </f:facet>
 
-               <h:outputText value="#{plugin.description}"/>
+               <h:outputText value="#{agentPlugin.description}"/>
             </rich:column>
 
             <rich:column>
@@ -94,7 +97,7 @@
                   <h:outputText styleClass="headerText" value="Last Update"/>
                </f:facet>
 
-               <h:outputText value="#{plugin.mtime}">
+               <h:outputText value="#{agentPlugin.mtime}">
                   <f:converter converterId="UserDateTimeConverter" />
                </h:outputText>
             </rich:column>
@@ -102,10 +105,10 @@
 
             <rich:column>
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Active"/>
+                  <h:outputText styleClass="headerText" value="Enabled"/>
                </f:facet>
 
-               <h:outputText value="#{plugin.enabled}"/>
+               <h:outputText value="#{agentPlugin.enabled}"/>
             </rich:column>
 
             <f:facet name="footer">
@@ -120,6 +123,103 @@
 
          </rich:dataTable>
 
+      </rich:tab>
+
+      <rich:tab label="Server Plugins">
+
+         <rich:dataTable id="serverPluginsDataTable"
+                         value="#{InstalledPluginsUIBean.installedServerPlugins}"
+                         var="serverPlugin"
+                         width="100%"
+                         columnsWidth="3%, 20%, 52%, 15%, 10%"
+                         headerClass="tableRowHeader"
+                         footerClass="on-pager-footer"
+                         onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                         onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+            <rich:column>
+               <f:facet name="header">
+                  <onc:allSelect target="selectedPlugin"/>
+               </f:facet>
+
+               <onc:select name="selectedPlugin" value="#{serverPlugin.id}"/>
+            </rich:column>
+
+            <rich:column rendered="#{param.debug}">
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="ID"/>
+               </f:facet>
+
+               <h:outputText value="#{serverPlugin.id}"/>
+            </rich:column>
+
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Name"/>
+               </f:facet>
+
+               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+                  <f:param name="plugin" value="#{serverPlugin.name}"/>
+                  <f:param name="deployment" value="SERVER"/>
+                  <f:param name="pluginType" value="#{serverPlugin.type}"/>
+                  <h:outputText value="#{serverPlugin.displayName}"/>
+               </h:outputLink>
+
+            </rich:column>
+
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Description"/>
+               </f:facet>
+
+               <h:outputText value="#{serverPlugin.description}"/>
+            </rich:column>
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Last Update"/>
+               </f:facet>
+
+               <h:outputText value="#{serverPlugin.mtime}">
+                  <f:converter converterId="UserDateTimeConverter" />
+               </h:outputText>
+            </rich:column>
+
+
+            <rich:column>
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Enabled"/>
+               </f:facet>
+
+               <h:outputText value="#{serverPlugin.enabled}"/>
+            </rich:column>
+
+            <f:facet name="footer">
+               <rich:columnGroup>
+                  <rich:column colspan="5" width="100%">
+                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
+                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableServerPlugins}"
+                                              value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.disableServerPlugins}"
+                                              value="DISABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.undeployServerPlugins}"
+                                              value="UNDEPLOY" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                  </rich:column>
+               </rich:columnGroup>
+            </f:facet>
+
+         </rich:dataTable>
+
+      </rich:tab>
+      </rich:tabPanel>
       </h:panelGrid>
 
    </rich:panel>

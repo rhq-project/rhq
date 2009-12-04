@@ -70,17 +70,19 @@ public class SnmpSender extends AlertSender {
         String platformName = lineage.get(0).getName();
         String conditions = alertManager.prettyPrintAlertConditions(alert);
         String alertUrl = alertManager.prettyPrintAlertURL(alert);
+
+        SenderResult res ;
         try {
             bootTime = new Date(); // TODO = LookupUtil.getCoreServer().getBootTime();
             result = snmpTrapSender.sendSnmpTrap(alert, alertParameters, platformName, conditions, bootTime, alertUrl);
+            res = new SenderResult(ResultState.SUCCESS,result);
         } catch (Throwable t) {
             result = "failed - cause: " + t;
+            res = new SenderResult(ResultState.FAILURE,result);
         }
 
         log.debug("Result of sending SNMP trap: " + result);
-        // TODO: Log the action result to the DB (i.e. as an AlertNotificationLog).
-        //       (see http://jira.jboss.com/jira/browse/JBNADM-1820)
 
-        return null;  // TODO: Customise this generated block
+        return res;
     }
 }

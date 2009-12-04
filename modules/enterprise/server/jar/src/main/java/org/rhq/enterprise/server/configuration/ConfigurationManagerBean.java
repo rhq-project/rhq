@@ -1012,6 +1012,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException {
+
+        if (isStructuredAndRawSupported(resourceId)) {
+            throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that " +
+                "supports both structured and raw configuration using this method because there is insufficient " +
+                "information. You should instead call updateStructuredOrRawConfiguration() which requires you " +
+                "whether the structured or raw was updated.");
+        }
+
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)

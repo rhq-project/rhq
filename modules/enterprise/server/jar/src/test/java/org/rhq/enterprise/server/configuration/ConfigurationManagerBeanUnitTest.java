@@ -109,18 +109,11 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     }
 
     @Test
-    public void updateResourceConfigShouldAddUpdateToAuditTrailAndSendUpdateToAgent() throws Exception {
-        final Subject subject = new Subject("rhqadmin", true, true);
-        final int resourceId = -1;
-        final Configuration newConfig = new Configuration();
-        final boolean isPartOfGroupUpdate = false;
+    public void updateStructuredResourceConfigShouldUpdateAuditTrailAndSendUpdateToAgent() throws Exception {
+        final ResourceConfigUpdateFixture fixture = newStructuredResourceConfigUpdateFixture();
 
-        Resource resource = new Resource(resourceId);
-        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
-
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, newConfig,
-            subject.getName());
-        expectedUpdate.setId(-1);
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            fixture.configuration, fixture.subject.getName());
 
         final AgentClient agentClient = context.mock(AgentClient.class);
         final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
@@ -129,8 +122,11 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
 
         context.checking(new Expectations() {{
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId, newConfig,
-                INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+            
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
 
             allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
@@ -140,28 +136,66 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
-            newConfig);
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
     }
 
     @Test
-    public void updateResourceConfigShouldTranslateStructuredWhenStructredConfigHasEdits() throws Exception {
-        final Subject subject = new Subject("rhqadmin", true, true);
-        final int resourceId = -1;
-        final Configuration newConfig = new Configuration();
-        final boolean isPartOfGroupUpdate = false;
+    public void updateRawResourceConfigShouldUpdateAuditTrailAndSendUpdateToAgent() throws Exception {
+        final ResourceConfigUpdateFixture fixture = newRawResourceConfigUpdateFixture();
 
-        final Configuration translatedConfig = newConfig.deepCopy();
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            fixture.configuration, fixture.subject.getName());
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final ConfigurationUpdateRequest expectedUpdateRequest = new ConfigurationUpdateRequest(expectedUpdate.getId(),
+            expectedUpdate.getConfiguration(), expectedUpdate.getResource().getId());
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                fixture.isPartOfGroupUpdate);
+            will(returnValue(expectedUpdate));
+
+            allowing(agentMgr).getAgentClient(expectedUpdate.getResource().getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).updateResourceConfiguration(with(matchingUpdateRequest(expectedUpdateRequest)));
+        }});
+
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration);
+
+        assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
+    }
+
+    @Test(expectedExceptions = ConfigurationUpdateNotSupportedException.class)
+    public void exceptionShouldBeThrownWhenCallingWrongMethodForConfigThatSupportsStructuredAndRaw() throws Exception {
+        final ResourceConfigUpdateFixture fixture = newStructuredAndRawResourceConfigUpdateFixture();
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+        }});
+
+        configurationMgr.updateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration);
+    }
+
+    @Test
+    public void updateResourceConfigShouldTranslateStructuredWhenStructredConfigHasEdits() throws Exception {
+        final ResourceConfigUpdateFixture fixture = newStructuredAndRawResourceConfigUpdateFixture();
+
+        final Configuration translatedConfig = fixture.configuration.deepCopy();
         translatedConfig.addRawConfiguration(new RawConfiguration());
 
-        final Resource resource = new Resource(resourceId);
-        resource.setResourceType(createStructuredAndRaw());
-        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
-
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
-            subject.getName());
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            translatedConfig, fixture.subject.getName());
         expectedUpdate.setId(-1);
 
         final AgentClient agentClient = context.mock(AgentClient.class);
@@ -173,15 +207,16 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("structured-config-update");
 
         context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
-            allowing(authorizationMgr).canViewResource(subject, resourceId); will(returnValue(true));
+            allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
 
-            oneOf(configAgentService).merge(newConfig, resourceId, FROM_STRUCTURED);
+            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
             will(returnValue(translatedConfig)); inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId,
-                translatedConfig, INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+                fixture.resourceId, translatedConfig, INPROGRESS, fixture.subject.getName(),
+                fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
             inSequence(configUdpate);
 
@@ -193,25 +228,18 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
-            newConfig, FROM_STRUCTURED);
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration, FROM_STRUCTURED);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
     }
 
     @Test
     public void updateResourceConfigShouldNotTranslateStructuredWhenRawNotSupported() throws Exception {
-        final Subject subject = new Subject("rhqadmin", true, true);
-        final int resourceId = -1;
-        final Configuration newConfig = new Configuration();
-        final boolean isPartOfGroupUpdate = false;
+        final ResourceConfigUpdateFixture fixture = newStructuredResourceConfigUpdateFixture();
 
-        final Resource resource = new Resource(resourceId);
-        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
-        resource.setResourceType(createStructurerdOnly());
-
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, newConfig,
-            subject.getName());
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            fixture.configuration, fixture.subject.getName());
         expectedUpdate.setId(-1);
 
         final AgentClient agentClient = context.mock(AgentClient.class);
@@ -223,10 +251,11 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("structured-config-update");
 
         context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId, newConfig,
-                INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+                fixture.resourceId, fixture.configuration, INPROGRESS, fixture.subject.getName(),
+                fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
             inSequence(configUdpate);
 
@@ -238,29 +267,22 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
-            newConfig, FROM_STRUCTURED);
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration, FROM_STRUCTURED);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
     }
 
     @Test
     public void updateResourceConfigShouldTranslateRawWhenRawConfigHasEdits() throws Exception {
-        final Subject subject = new Subject("rhqadmin", true, true);
-        final int resourceId = -1;
-        final Configuration newConfig = new Configuration();
-        newConfig.addRawConfiguration(new RawConfiguration());
-        final boolean isPartOfGroupUpdate = false;
+        final ResourceConfigUpdateFixture fixture = newStructuredAndRawResourceConfigUpdateFixture();
+        fixture.configuration.addRawConfiguration(new RawConfiguration());
 
-        final Configuration translatedConfig = newConfig.deepCopy();
+        final Configuration translatedConfig = fixture.configuration.deepCopy();
         translatedConfig.put(new PropertySimple("x", "y"));
 
-        final Resource resource = new Resource(resourceId);
-        resource.setResourceType(createStructuredAndRaw());
-        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
-
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, translatedConfig,
-            subject.getName());
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource, translatedConfig,
+            fixture.subject.getName());
         expectedUpdate.setId(-1);
 
         final AgentClient agentClient = context.mock(AgentClient.class);
@@ -272,15 +294,16 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         final Sequence configUdpate = context.sequence("raw-config-update");
 
         context.checking(new Expectations() {{
-            allowing(entityMgr).find(Resource.class, resourceId); will(returnValue(resource));
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
 
-            allowing(authorizationMgr).canViewResource(subject, resourceId); will(returnValue(true));
+            allowing(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
 
-            oneOf(configAgentService).merge(newConfig, resourceId, FROM_RAW);
+            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
             will(returnValue(translatedConfig)); inSequence(configUdpate);
 
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId,
-                translatedConfig, INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject,
+                fixture.resourceId, translatedConfig, INPROGRESS, fixture.subject.getName(),
+                fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
             inSequence(configUdpate);
 
@@ -292,33 +315,29 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             inSequence(configUdpate);
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(subject, resourceId,
-            newConfig, FROM_RAW);
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateStructuredOrRawConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration, FROM_RAW);
 
         assertSame(actualUpdate, expectedUpdate, "Expected to get back the persisted configuration update");
     }
 
     @Test
     public void updateResourceConfigShouldMarkUpdateAsFailureWhenExceptionOccurs() throws Exception {
-        final Subject subject = new Subject("rhqadmin", true, true);
-        final int resourceId = -1;
-        final Configuration newConfig = new Configuration();
-        final boolean isPartOfGroupUpdate = false;
-
-        Resource resource = new Resource(resourceId);
-        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
+        final ResourceConfigUpdateFixture fixture = newStructuredResourceConfigUpdateFixture();
 
         final RuntimeException exception = new RuntimeException();
 
-        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(resource, newConfig,
-            subject.getName());
+        final ResourceConfigurationUpdate expectedUpdate = new ResourceConfigurationUpdate(fixture.resource,
+            fixture.configuration, fixture.subject.getName());
         expectedUpdate.setId(-1);
         expectedUpdate.setStatus(FAILURE);
         expectedUpdate.setErrorMessageFromThrowable(exception);
 
         context.checking(new Expectations() {{
-            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(subject, resourceId, newConfig,
-                INPROGRESS, subject.getName(), isPartOfGroupUpdate);
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+            
+            oneOf(configurationMgrLocal).persistNewResourceConfigurationUpdateHistory(fixture.subject, fixture.resourceId,
+                fixture.configuration, INPROGRESS, fixture.subject.getName(), fixture.isPartOfGroupUpdate);
             will(returnValue(expectedUpdate));
 
             oneOf(configurationMgrLocal).mergeConfigurationUpdate(expectedUpdate);
@@ -327,8 +346,8 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
             will(throwException(exception));
         }});
 
-        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(subject, resourceId,
-            newConfig);
+        ResourceConfigurationUpdate actualUpdate = configurationMgr.updateResourceConfiguration(fixture.subject, 
+            fixture.resourceId, fixture.configuration);
 
         assertPropertiesMatch(expectedUpdate, actualUpdate, "Expected to get back a failure update");
     }
@@ -337,7 +356,55 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         return new PropertyMatcher<ConfigurationUpdateRequest>(expected);
     }
 
-    ResourceType createStructuredAndRaw() {
+    ResourceConfigUpdateFixture newStructuredResourceConfigUpdateFixture() {
+        ResourceConfigUpdateFixture fixture = new ResourceConfigUpdateFixture();
+        fixture.resource = createResourceWithStructuredConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    ResourceConfigUpdateFixture newRawResourceConfigUpdateFixture() {
+        ResourceConfigUpdateFixture fixture = new ResourceConfigUpdateFixture();
+        fixture.resource = createResourceWithRawConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    ResourceConfigUpdateFixture newStructuredAndRawResourceConfigUpdateFixture() {
+        ResourceConfigUpdateFixture fixture = new ResourceConfigUpdateFixture();
+        fixture.resource = createResourceWithStructuredAndRawConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    Resource createResource(int resourceId) {
+        Resource resource = new Resource(resourceId);
+        resource.setAgent(new Agent("test-agent", "localhost", 7080, null, null));
+        return resource;
+    }
+
+    Resource createResourceWithStructuredConfig(int resourceId) {
+        Resource resource = createResource(resourceId);
+        resource.setResourceType(createStructurerdOnlyResourceType());
+
+        return resource;
+    }
+
+    Resource createResourceWithStructuredAndRawConfig(int resourceId) {
+        Resource resource = createResource(resourceId);
+        resource.setResourceType(createStructuredAndRawResourceType());
+
+        return resource;
+    }
+
+    Resource createResourceWithRawConfig(int resourceId) {
+        Resource resource = createResource(resourceId);
+        resource.setResourceType(createRawResourceType());
+
+        return resource;
+    }
+
+    ResourceType createStructuredAndRawResourceType() {
         ConfigurationDefinition configDef = new ConfigurationDefinition("structured-and-raw", "structured and raw");
         configDef.setConfigurationFormat(ConfigurationFormat.STRUCTURED_AND_RAW);
 
@@ -347,7 +414,7 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         return resourceType;
     }
 
-    ResourceType createStructurerdOnly() {
+    ResourceType createStructurerdOnlyResourceType() {
         ConfigurationDefinition configDef = new ConfigurationDefinition("structred-config-def", "structured config def");
         configDef.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
 
@@ -355,6 +422,24 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         resourceType.setResourceConfigurationDefinition(configDef);
 
         return resourceType;
+    }
+
+    ResourceType createRawResourceType() {
+        ConfigurationDefinition configDef = new ConfigurationDefinition("raw-config-def", "raw config def");
+        configDef.setConfigurationFormat(ConfigurationFormat.RAW);
+
+        ResourceType resourceType = new ResourceType();
+        resourceType.setResourceConfigurationDefinition(configDef);
+
+        return resourceType;
+    }
+
+    static class ResourceConfigUpdateFixture {
+        Subject subject = new Subject("rhqadmin", true, true);
+        int resourceId = -1;
+        Configuration configuration = new Configuration();
+        boolean isPartOfGroupUpdate = false;
+        Resource resource;
     }
 
 }

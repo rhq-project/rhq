@@ -43,20 +43,23 @@ public class LegacyConfigManagement extends ConfigManagementSupport {
 
     private static final Log log = LogFactory.getLog(LegacyConfigManagement.class);
 
-    public Configuration execute(int resourceId) throws PluginContainerException {
+    public Configuration executeLoad(int resourceId) throws PluginContainerException {
         Configuration configuration = loadConfigFromFacet(resourceId, READ);
+
+        if (configuration == null) {
+            return null;
+        }
+        
         ResourceType resourceType = componentService.getResourceType(resourceId);
 
-        // If the plugin didn't already set the notes field, set it to something useful.
         if (configuration.getNotes() == null) {
             configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
         }
 
         ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 
-        // Normalize and validate the config.
-        ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-        List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
+        configUtilityService.normalizeConfiguration(configuration, configurationDefinition);
+        List<String> errorMessages = configUtilityService.validateConfiguration(configuration,
             configurationDefinition);
         for (String errorMessage : errorMessages) {
             log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "

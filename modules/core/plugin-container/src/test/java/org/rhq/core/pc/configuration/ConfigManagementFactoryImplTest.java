@@ -34,13 +34,11 @@ import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.test.JMockTest;
 import org.jmock.Expectations;
 
-public class ConfigManagementFactoryImplTest extends JMockTest {
+public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
 
     static final String LEGACY_AMPS_VERSION = "2.0";
 
     static final String NON_LEGACY_AMPS_VERSION = "2.1";
-
-    ComponentService componentService;
 
     int resourceId = -1;
 
@@ -48,8 +46,6 @@ public class ConfigManagementFactoryImplTest extends JMockTest {
 
     @BeforeMethod
     public void setup() {
-        componentService = context.mock(ComponentService.class);
-
         factory = new ConfigManagementFactoryImpl();
         factory.setComponentService(componentService);
     }

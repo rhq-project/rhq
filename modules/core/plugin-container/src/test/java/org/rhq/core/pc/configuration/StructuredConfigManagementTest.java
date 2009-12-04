@@ -26,7 +26,6 @@ package org.rhq.core.pc.configuration;
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import static org.testng.Assert.assertNull;
@@ -35,19 +34,12 @@ import org.testng.annotations.Test;
 
 public class StructuredConfigManagementTest extends ConfigManagementTest {
 
-    ComponentService componentService;
-
-    ConfigurationUtilityService configUtilityService;
-
     ResourceConfigurationFacet configFacet;
 
     StructuredConfigManagement structuredMgmt;
 
     @BeforeMethod
     public void setup() {
-        componentService = context.mock(ComponentService.class);
-        configUtilityService = context.mock(ConfigurationUtilityService.class);
-
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
         structuredMgmt = new StructuredConfigManagement();
@@ -63,7 +55,7 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config);
 
-        Configuration loadedConfig = structuredMgmt.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.executeLoad(resourceId);
 
         assertStructuredLoaded(config, loadedConfig);
     }
@@ -75,7 +67,7 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(config);
 
-        Configuration loadedConfig = structuredMgmt.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.executeLoad(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -98,7 +90,7 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
             atLeast(1).of(configFacet).loadStructuredConfiguration(); will(returnValue(null));    
         }});
 
-        Configuration loadedConfig = structuredMgmt.execute(resourceId);
+        Configuration loadedConfig = structuredMgmt.executeLoad(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for structured.");
     }

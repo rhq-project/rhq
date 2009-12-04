@@ -28,13 +28,11 @@ import static org.testng.Assert.*;
 import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
@@ -46,7 +44,6 @@ import org.hamcrest.Matcher;
 
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.Callable;
 
 public class ConfigurationManagerTest extends ConfigManagementTest {
 
@@ -60,15 +57,11 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
 
     ConfigManagementFactory configMgmtFactory;
 
-    ComponentService componentService;
-
     ConfigurationManager configurationMgr;
 
     @BeforeMethod
     public void setup() {
         configMgmtFactory = context.mock(ConfigManagementFactory.class);
-
-        componentService = context.mock(ComponentService.class);
 
         configurationMgr = new ConfigurationManager();
         configurationMgr.setConfigManagementFactory(configMgmtFactory);
@@ -84,7 +77,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         context.checking(new Expectations() {{
             atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(expectedConfig));
+            atLeast(1).of(loadConfig).executeLoad(resourceId); will(returnValue(expectedConfig));
         }});
 
         Configuration actualConfig = configurationMgr.loadResourceConfiguration(resourceId);
@@ -99,7 +92,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         context.checking(new Expectations() {{
             atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            atLeast(1).of(loadConfig).execute(resourceId); will(returnValue(null));
+            atLeast(1).of(loadConfig).executeLoad(resourceId); will(returnValue(null));
 
             allowing(componentService).getResourceType(resourceId); will(returnValue(new ResourceType()));
         }});
@@ -116,7 +109,7 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
 
             atLeast(1).of(configMgmtFactory).getStrategy(resourceId); will(returnValue(loadConfig));
 
-            atLeast(1).of(loadConfig).execute(resourceId); will(throwException(new RuntimeException()));
+            atLeast(1).of(loadConfig).executeLoad(resourceId); will(throwException(new RuntimeException()));
         }});
 
         configurationMgr.loadResourceConfiguration(resourceId);

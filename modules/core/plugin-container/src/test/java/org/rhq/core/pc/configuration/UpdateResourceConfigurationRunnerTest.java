@@ -34,14 +34,8 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.INPROGRESS;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
-import org.rhq.core.pc.util.ComponentService;
-import static org.rhq.core.pc.configuration.ConfigManagement.FACET_METHOD_TIMEOUT;
-import static org.rhq.core.pc.util.FacetLockType.WRITE;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import org.rhq.test.jmock.PropertyMatcher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -52,13 +46,10 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
     ConfigurationServerService configServerService;
 
-    ConfigurationUtilityService configUtilService;
-
     @BeforeMethod
     public void setup() throws Exception {
         configMgmt = context.mock(ConfigManagement.class);
         configServerService = context.mock(ConfigurationServerService.class);
-        configUtilService = context.mock(ConfigurationUtilityService.class);
     }
 
     @Test
@@ -71,7 +62,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
             resourceType, configMgmt, updateRequest);
-        updateRunner.setConfigUtilService(configUtilService);
+        updateRunner.setConfigUtilService(configUtilityService);
 
         final ConfigurationUpdateResponse successResponse = new ConfigurationUpdateResponse(configUpdateId, null,
             SUCCESS, null);
@@ -79,8 +70,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         context.checking(new Expectations() {{
             oneOf(configMgmt).executeUpdate(resourceId, config);
 
-            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
-            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(successResponse)));
         }});
@@ -100,7 +91,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
             configMgmt, updateRequest);
-        updateRunner.setConfigUtilService(configUtilService);
+        updateRunner.setConfigUtilService(configUtilityService);
 
         final ConfigurationUpdateResponse successResponse = new ConfigurationUpdateResponse(configUpdateId, null,
             SUCCESS, null);
@@ -108,8 +99,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         context.checking(new Expectations() {{
             oneOf(configMgmt).executeUpdate(resourceId, config);
 
-            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
-            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
 
         }});
 
@@ -128,7 +119,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
             resourceType, configMgmt, updateRequest);
-        updateRunner.setConfigUtilService(configUtilService);
+        updateRunner.setConfigUtilService(configUtilityService);
 
         String errorMsg = "Configuration facet did not indicate success or failure - assuming failure.";
 
@@ -138,8 +129,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         context.checking(new Expectations() {{
             oneOf(configMgmt).executeUpdate(resourceId, config); will(throwException(new UpdateInProgressException()));
 
-            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
-            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
         }});
@@ -159,7 +150,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(configServerService,
             resourceType, configMgmt, updateRequest);
-        updateRunner.setConfigUtilService(configUtilService);
+        updateRunner.setConfigUtilService(configUtilityService);
 
         String errorMsg = "Configuration update failed.";
 
@@ -171,8 +162,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         context.checking(new Expectations() {{
             oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
-            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
-            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
 
             oneOf(configServerService).completeConfigurationUpdate(with(matchingResponse(failureResponse)));
         }});
@@ -192,7 +183,7 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
 
         UpdateResourceConfigurationRunner updateRunner = new UpdateResourceConfigurationRunner(null, resourceType,
             configMgmt, updateRequest);
-        updateRunner.setConfigUtilService(configUtilService);
+        updateRunner.setConfigUtilService(configUtilityService);
 
         String errorMsg = "Configuration update failed.";
 
@@ -204,8 +195,8 @@ public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest 
         context.checking(new Expectations() {{
             oneOf(configMgmt).executeUpdate(resourceId, config); will(throwExceptionFromFacet(exception));
 
-            oneOf(configUtilService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
-            oneOf(configUtilService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).normalizeConfiguration(config, resourceType.getResourceConfigurationDefinition());
+            oneOf(configUtilityService).validateConfiguration(config, resourceType.getResourceConfigurationDefinition());
         }});
 
         ConfigurationUpdateResponse actualResponse = updateRunner.call();

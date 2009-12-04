@@ -30,10 +30,12 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.test.JMockTest;
 
 import static org.rhq.test.AssertUtils.*;
 import static org.testng.Assert.assertEquals;
+import org.testng.annotations.BeforeMethod;
 
 import java.util.HashSet;
 import java.util.Random;
@@ -47,6 +49,14 @@ public class ConfigManagementTest extends JMockTest {
     int resourceId = -1;
     boolean daemonThread = true;
     boolean onlyIfStarted = true;
+    ComponentService componentService;
+    ConfigurationUtilityService configUtilityService;
+
+    @BeforeMethod
+    public void initMocks() {
+        componentService = context.mock(ComponentService.class);
+        configUtilityService = context.mock(ConfigurationUtilityService.class);
+    }
 
     Configuration createStructuredConfig() {
         Configuration config = new Configuration();

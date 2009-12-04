@@ -245,7 +245,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         Configuration configuration = null;
 
         try {
-            configuration = loadConfig.execute(resourceId);
+            configuration = loadConfig.executeLoad(resourceId);
         } catch (Throwable t) {
             throw new PluginContainerException(createErrorMsg(resourceId, "An exception was thrown."), t);
         }

@@ -23,16 +23,13 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 import static java.util.Collections.EMPTY_SET;
 
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -41,19 +38,12 @@ import java.util.Set;
 
 public class RawConfigManagementTest extends ConfigManagementTest {
 
-    ComponentService componentService;
-
-    ConfigurationUtilityService configUtilityService;
-
     ResourceConfigurationFacet configFacet;
 
     RawConfigManagement rawConfigMgmt;
 
     @BeforeMethod
     public void setup() {
-        componentService = context.mock(ComponentService.class);
-        configUtilityService = context.mock(ConfigurationUtilityService.class);
-
         configFacet = context.mock(ResourceConfigurationFacet.class);
 
         rawConfigMgmt = new RawConfigManagement();
@@ -70,7 +60,7 @@ public class RawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(rawConfigs);
 
-        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.executeLoad(resourceId);
 
         assertRawsLoaded(rawConfigs, loadedConfig);
     }
@@ -82,7 +72,7 @@ public class RawConfigManagementTest extends ConfigManagementTest {
 
         addDefaultExpectationsForLoad(EMPTY_SET);
 
-        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.executeLoad(resourceId);
 
         assertNotesSetToDefault(loadedConfig);
     }
@@ -93,7 +83,7 @@ public class RawConfigManagementTest extends ConfigManagementTest {
         
         addDefaultExpectationsForLoad(rawConfigs);
 
-        Configuration loadedConfig = rawConfigMgmt.execute(resourceId);
+        Configuration loadedConfig = rawConfigMgmt.executeLoad(resourceId);
 
         assertNull(loadedConfig, "Expected null to be returned when facet returns null for raw.");
     }

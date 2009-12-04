@@ -37,13 +37,27 @@ public class AugeasModuleConfig {
        private String lensPath;      
        private List<String> excludedGlobs;       
        private List<String> includedGlobs;     
-         
+       private List<String> configFiles;
+       
        public AugeasModuleConfig(){              
          excludedGlobs = new ArrayList<String>();              
           includedGlobs = new ArrayList<String>();       
+          configFiles = new ArrayList<String>();
         }       
 
-      public String getModuletName() {              
+    public List<String> getConfigFiles() {
+		return configFiles;
+	}
+
+	public void setConfigFiles(List<String> configFiles) {
+		this.configFiles = configFiles;
+	}
+	
+	public void addConfigFile(String configFile){
+		this.configFiles.add(configFile);
+	}
+
+	public String getModuletName() {              
           return moduletName;       
         }       
 

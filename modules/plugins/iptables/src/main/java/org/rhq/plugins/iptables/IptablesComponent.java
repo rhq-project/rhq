@@ -24,7 +24,7 @@ package org.rhq.plugins.iptables;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.AugeasComponent;
+import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -32,7 +32,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.rhqtransform.RhqConfig;
+import org.rhq.rhqtransform.impl.RhqConfig;
 /**
  * 
  * @author Filip Drabek
@@ -43,7 +43,7 @@ public class IptablesComponent implements AugeasRHQComponent, ConfigurationFacet
        private ResourceContext context;
        private final Log log = LogFactory.getLog(this.getClass());
        private AugeasTree augeasTree;
-       private AugeasComponent augeasComponent;
+       private AugeasProxy augeasComponent;
        
        public void start(ResourceContext context)
                      throws InvalidPluginConfigurationException, Exception {
@@ -62,13 +62,12 @@ public class IptablesComponent implements AugeasRHQComponent, ConfigurationFacet
               Configuration pluginConfiguration = new Configuration();
               
               AugeasTree tree=null;
-              AugeasComponent augeas =null;
+              AugeasProxy augeas =null;
               try {       
                       RhqConfig config = new RhqConfig(context.getPluginConfiguration());
-                      augeas = new AugeasComponent(config);
+                      augeas = new AugeasProxy(config);
                       augeas.load();
                       tree = augeas.getAugeasTree("Iptables", true);
-                      tree.load();
                       
               }catch(Exception e)
               {
@@ -82,10 +81,10 @@ public class IptablesComponent implements AugeasRHQComponent, ConfigurationFacet
        public void updateResourceConfiguration(ConfigurationUpdateReport report) {
               Configuration pluginConfiguration = new Configuration();
               AugeasTree tree=null;
-              AugeasComponent augeas =null;
+              AugeasProxy augeas =null;
               try {       
                       RhqConfig config = new RhqConfig(context.getPluginConfiguration());
-                      augeas = new AugeasComponent(config);
+                      augeas = new AugeasProxy(config);
                       
                       tree = augeas.getAugeasTree("Iptables", false);
                       
@@ -99,13 +98,12 @@ public class IptablesComponent implements AugeasRHQComponent, ConfigurationFacet
 
        public void loadAugeas() throws Exception{              
               RhqConfig config = new RhqConfig(context.getPluginConfiguration());
-              augeasComponent = new AugeasComponent(config);
+              augeasComponent = new AugeasProxy(config);
               augeasComponent.load();
               augeasTree = augeasComponent.getAugeasTree("Iptables", true);
-              augeasTree.load();
                       
        }
-       public AugeasComponent getAugeasComponent() throws Exception{
+       public AugeasProxy getAugeasComponent() throws Exception{
        if (augeasComponent == null)
               loadAugeas();
        

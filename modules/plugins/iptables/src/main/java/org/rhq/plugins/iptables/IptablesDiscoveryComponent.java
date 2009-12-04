@@ -30,7 +30,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.rhqtransform.RhqConfig;
+import org.rhq.rhqtransform.impl.RhqConfig;
 /**
  * 
  * @author Filip Drabek

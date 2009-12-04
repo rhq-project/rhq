@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.rhqtransform;
+package org.rhq.rhqtransform.impl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -35,6 +35,7 @@ import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.rhqtransform.AugeasRhqException;
 /**
  * 
  * @author Filip Drabek
@@ -52,8 +53,8 @@ public class RhqConfig implements AugeasConfiguration{
            public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
            
            private final Log log = LogFactory.getLog(this.getClass());
-           private List<AugeasModuleConfig> modules;
-           private String loadPath;
+           protected List<AugeasModuleConfig> modules;
+           protected String loadPath;
            
        public RhqConfig(Configuration configuration) throws AugeasRhqException{
               List<String> includes = determineGlobs(configuration,INCLUDE_GLOBS_PROP);
@@ -122,19 +123,28 @@ public class RhqConfig implements AugeasConfiguration{
       return configuration;
   }
   
-public String getLoadPath() {
+   public String getLoadPath() {
        return loadPath;
-}
+   }
 
-public int getMode() {
+   public int getMode() {
        return Augeas.NO_MODL_AUTOLOAD;
-}
+     }
 
-public List<AugeasModuleConfig> getModules() {
+   public List<AugeasModuleConfig> getModules() {
        return modules;
-}
+     }
 
-public String getRootPath() {
+   public String getRootPath() {
        return DEFAULT_AUGEAS_ROOT_PATH;
-}
+     }
+   
+   public AugeasModuleConfig getModuleByName(String name) {
+		for (AugeasModuleConfig module : modules){
+			if (module.getModuletName().equals(name))
+				return module;
+		}
+		return null;
+	}
+   
 }

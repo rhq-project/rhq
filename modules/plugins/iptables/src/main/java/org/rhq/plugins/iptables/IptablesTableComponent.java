@@ -22,7 +22,7 @@
  */
 package org.rhq.plugins.iptables;
 
-import org.rhq.augeas.AugeasComponent;
+import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -68,7 +68,7 @@ public class IptablesTableComponent implements AugeasRHQComponent<AugeasRHQCompo
               return tableName;
        }
 
-       public AugeasComponent getAugeasComponent() throws Exception {
+       public AugeasProxy getAugeasComponent() throws Exception {
               return parentComponent.getAugeasComponent(); 
        }
 

@@ -48,9 +48,9 @@ import org.rhq.rhqtransform.NameMap;
  * @author Ian Springer
  */
 public class AugeasToConfigurationSimple implements AugeasToConfiguration {
-       private final Log log = LogFactory.getLog(this.getClass());
-    private AugeasTree tree;
-    private NameMap nameMap;
+    private final Log log = LogFactory.getLog(this.getClass());
+    protected AugeasTree tree;
+    protected NameMap nameMap;
     
        public AugeasToConfigurationSimple(){
                 

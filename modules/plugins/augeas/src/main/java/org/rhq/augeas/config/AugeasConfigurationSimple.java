@@ -82,4 +82,12 @@ public class AugeasConfigurationSimple implements AugeasConfiguration{
                         return;
         modules.add(config);        	
         }
+
+		public AugeasModuleConfig getModuleByName(String name) {
+			for (AugeasModuleConfig module : modules){
+				if (module.getModuletName().equals(name))
+					return module;
+			}
+			return null;
+		}
 }

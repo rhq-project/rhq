@@ -21,19 +21,20 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.plugins.iptables;
+package org.rhq.rhqtransform;
 
 import org.rhq.augeas.AugeasProxy;
-import org.rhq.augeas.tree.AugeasTree;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public interface AugeasRHQComponent <T extends ResourceComponent> extends ResourceComponent<T>{
-   
-       public AugeasTree getAugeasTree() throws Exception;
-    public AugeasProxy getAugeasComponent() throws Exception;
-}
+public interface RhqAugeasMapping {
 
+       public void updateAugeas(AugeasProxy augeasComponent,Configuration config,
+                     ConfigurationDefinition configDef) throws Exception;
+       public Configuration updateConfiguration(AugeasProxy augeasComponent,ConfigurationDefinition configDef) throws Exception;
+       
+}

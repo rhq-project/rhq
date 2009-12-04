@@ -32,7 +32,6 @@ import org.rhq.augeas.node.AugeasNode;
  *
  */
 public interface AugeasTree {
-       public void load() throws AugeasTreeException;
        public void update();
        public void save();
        public AugeasNode getNode(String path) throws AugeasTreeException;
@@ -45,4 +44,5 @@ public interface AugeasTree {
        public void removeNode(AugeasNode node,boolean updateSeq) throws Exception;
        public void setValue(AugeasNode node,String value);
        public String summarizeAugeasError();
+       public void setRootNode(AugeasNode node);
 }

@@ -20,19 +20,20 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.augeas.config;
 
-import java.util.List;
+package org.rhq.rhqtransform;
 
+import org.rhq.augeas.AugeasProxy;
+import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public interface AugeasConfiguration {
-        
-        public List<AugeasModuleConfig> getModules();
-        public String getRootPath();
-        public String getLoadPath();
-        public int getMode();
+public interface AugeasRHQComponent <T extends ResourceComponent> extends ResourceComponent<T>{
+   
+       public AugeasTree getAugeasTree() throws Exception;
+    public AugeasProxy getAugeasComponent() throws Exception;
 }
+

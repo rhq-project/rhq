@@ -40,7 +40,7 @@ public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
        {
               super();
               
-              this.ag = ag;
+           this.ag = ag;
            this.path = FullPath.substring(0,FullPath.lastIndexOf(File.separatorChar)+1);
            String val = FullPath.substring(FullPath.lastIndexOf(File.separatorChar)+1,FullPath.length());
            

@@ -20,8 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-
-package org.rhq.augeas.tree;
+package org.rhq.augeas.tree.impl;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -31,35 +30,34 @@ import net.augeas.Augeas;
 
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.node.AugeasNodeLazy;
+import org.rhq.augeas.node.AugeasNodeReal;
 import org.rhq.augeas.node.AugeasRootNode;
+import org.rhq.augeas.tree.AugeasNodeBuffer;
+import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasTreeLazy implements AugeasTree{
+public class AugeasTreeReal implements AugeasTree{
        private AugeasModuleConfig moduleConfig;
        private Augeas ag;
        private AugeasNode rootNode;
        private AugeasNode rootConfigNode;
        private AugeasNodeBuffer nodeBuffer;
        private String [] errorNodes = {"pos","line","char","lens","message"};
+       
        private static String AUGEAS_DATA_PATH=File.separatorChar+"files";
        
-       public AugeasTreeLazy(Augeas ag ,AugeasModuleConfig moduleConfig)
+       public AugeasTreeReal(Augeas ag ,AugeasModuleConfig moduleConfig)
        {
-              rootNode = new AugeasRootNode();
               nodeBuffer = new AugeasNodeBuffer();
               this.moduleConfig = moduleConfig;
               this.ag = ag;
        }
        
-       public void load() throws AugeasTreeException
-       {
-              buildTree();
-       }
-       
+
        public void update()
        {
        
@@ -83,7 +81,7 @@ public class AugeasTreeLazy implements AugeasTree{
        {
               AugeasNode node;
               try {
-                node = getLoadedNode(path);
+              node = getLoadedNode(path);
               }catch(AugeasTreeException e)
               {
                node = createNode(path);       
@@ -127,12 +125,26 @@ public class AugeasTreeLazy implements AugeasTree{
        
        public AugeasNode createNode(String fullPath) throws AugeasTreeException
        {
-                     AugeasNode node=null;              
-                     
-                     ag.set(fullPath, null);
-                     node = new AugeasNodeLazy(fullPath,this);
-                     nodeBuffer.addNode(node);
-                     return node;              
+            AugeasNode node=null;
+              
+                       int  index = fullPath.lastIndexOf(File.separatorChar);
+                        if (index!=-1){
+                            String parentPath = fullPath.substring(0,index);
+                            AugeasNode parentNode = getNode(parentPath);
+                            node= new AugeasNodeReal(parentNode,this,fullPath);
+                        } else
+                               throw new AugeasTreeException("Node can not be created. Parent node does not exist.");
+              
+              node.setValue(get(fullPath));
+       
+              List<AugeasNode> childs = match(fullPath + File.separatorChar+"*");
+              
+              for (AugeasNode chd : childs){
+                     node.addChildNode(chd);
+              }
+              nodeBuffer.addNode(node);
+              return node;
+              
        }
        
        public AugeasNode createNode(AugeasNode parentNode,String name,String value,int seq) throws AugeasTreeException
@@ -152,27 +164,29 @@ public class AugeasTreeLazy implements AugeasTree{
               return rootNode;
        }
        
-       private void buildTree() throws AugeasTreeException
-       {
-              rootConfigNode = createNode("/augeas");
-              
-              for (String name : moduleConfig.getIncludedGlobs())
-                     {
-                     rootNode.addChildNode(createNode(AUGEAS_DATA_PATH+File.separatorChar+name));
-                     }
-       }
+
        
        public void removeNode(AugeasNode node,boolean updateSeq) throws Exception
        {
-              int res = ag.remove(node.getFullPath());
-              nodeBuffer.removeNode(node,updateSeq,true);
+              int seq = node.getSeq();
+       
+              List<AugeasNode> nodes = matchRelative(node.getParentNode(), File.separatorChar+node.getLabel()+"[position() > "+String.valueOf(seq)+"]");
               
+              for (AugeasNode nds : nodes){
+                     nds.setSeq(nds.getSeq()-1);
+                     nds.updateFromParent();
+              }
+              
+              int res = ag.remove(node.getFullPath());
+              nodeBuffer.removeNode(node,updateSeq,false);
    }
        
        public void setValue(AugeasNode node,String value)
        {
               ag.set(node.getFullPath(), value);
        }
+       
+       
        
           public String summarizeAugeasError() {
                
@@ -198,5 +212,9 @@ public class AugeasTreeLazy implements AugeasTree{
 
                return builder.toString();
            }
-
+          
+          public void setRootNode(AugeasNode node) {
+  			this.rootNode = node;
+  			
+  		}
 }

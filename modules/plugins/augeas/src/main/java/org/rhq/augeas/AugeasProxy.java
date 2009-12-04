@@ -31,9 +31,11 @@ import net.augeas.Augeas;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
-import org.rhq.augeas.tree.AugeasTreeLazy;
-import org.rhq.augeas.tree.AugeasTreeReal;
+import org.rhq.augeas.tree.impl.AugeasTreeLazy;
+import org.rhq.augeas.tree.impl.AugeasTreeReal;
+import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
 import org.rhq.augeas.util.Glob;
 
 /**
@@ -42,15 +44,23 @@ import org.rhq.augeas.util.Glob;
  * @author Ian Springer
  *
  */
-public class AugeasComponent {
+public class AugeasProxy {
 
         private AugeasConfiguration config;
         private Augeas augeas;
         private List<String> modules;
-
-        public AugeasComponent(AugeasConfiguration config){
+        private AugeasTreeBuilder augeasTreeBuilder;
+        
+        public AugeasProxy(AugeasConfiguration config){
                 this.config = config;
                 modules = new ArrayList<String>();
+                augeasTreeBuilder = new DefaultAugeasTreeBuilder();
+        }
+     
+        public AugeasProxy(AugeasConfiguration config,AugeasTreeBuilder builder){
+            this.config = config;
+            this.augeasTreeBuilder = builder;
+            modules = new ArrayList<String>();
         }
  
         public void load() throws Exception
@@ -63,7 +73,7 @@ public class AugeasComponent {
                          augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
 
                      int idx = 1;
-                     for (String incl : module.getIncludedGlobs()) {
+                     for (String incl : module.getConfigFiles()) {
                           augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
                          }
                      idx = 1;
@@ -85,9 +95,9 @@ public class AugeasComponent {
 
                 if (includeGlobs.size()<=0) {
                         throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
-             }
+                 }
 
-             List<File> files = Glob.matchAll(root, includeGlobs);
+                List<File> files = Glob.matchAll(root, includeGlobs);
 
               if (module.getExcludedGlobs()!=null)
                  {
@@ -105,7 +115,10 @@ public class AugeasComponent {
                     if (configFile.isDirectory()) {
                        throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
                      }
+                    if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+                       module.addConfigFile(configFile.getAbsolutePath());
                  }
+       
              }
              
          public AugeasTree getAugeasTree(String name,boolean lazy) throws AugeasTreeException
@@ -116,6 +129,7 @@ public class AugeasComponent {
                 try {
                         if (augeas == null)
                            load();
+                        
                 }catch(Exception e){
                    throw new AugeasTreeException("Loading of augeas failed");
                }
@@ -131,12 +145,13 @@ public class AugeasComponent {
                       }
                }
                AugeasTree tree;
-            
-               if (lazy==true)
-                    tree = new AugeasTreeLazy(augeas,module);
-                else
-                     tree = new AugeasTreeReal(augeas,module);
-
+               
+              try {
+                  tree = augeasTreeBuilder.buildTree(this, config, name, lazy);
+                 }catch(Exception e){
+        	          throw new AugeasTreeException(e.getMessage());
+                   }
+             
                return tree;
              }
             

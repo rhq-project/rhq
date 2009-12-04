@@ -29,7 +29,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.augeas.AugeasComponent;
+import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -89,7 +89,7 @@ public class IptablesChainComponent implements AugeasRHQComponent<IptablesTableC
               trans.updateAugeas(config.getConfiguration(), new ArrayList<AugeasNode>());
        }
        
-       public AugeasComponent getAugeasComponent() throws Exception {
+       public AugeasProxy getAugeasComponent() throws Exception {
               return parentComponent.getAugeasComponent();
        }
 

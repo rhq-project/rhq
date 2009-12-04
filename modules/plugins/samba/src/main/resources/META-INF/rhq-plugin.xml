@@ -16,6 +16,15 @@
             class="SambaServerComponent">
 
        <plugin-configuration>
+          <c:group name="Active Server Directory">
+              <c:simple-property name="krealm" displayName="Kerberos Realm" required="false"/>
+              <c:simple-property name="kdc" displayName="KDC" required="false"/>
+              <c:simple-property name="kadmin" displayName="Admin Server" required="false"/>
+              <c:simple-property name="realm" displayName="ADS Realm" required="false"/>
+              <c:simple-property name="domain" displayName="Domain" required="false"/>
+          </c:group>
+
+          <c:group name="Augeas">
            <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
                               description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
 
@@ -25,6 +34,7 @@
 
            <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
                               default="/files/etc/samba/smb.conf/target[.='global']"/>
+           </c:group>
        </plugin-configuration>
 
       <resource-configuration>
@@ -53,6 +63,16 @@
               <c:simple-property name="load printers" required="false" displayName="Printing Enabled" type="boolean" description="Controls whether all printers in the printcap will be loaded for browsing by default"/>
               <c:simple-property name="cups options" required="false" description="Free form string of options passed to cups library"/>
 
+          </c:group>
+
+          <c:group name="Active Server Directory">
+              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
+              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
+              <c:simple-property name="winbind use default domain" required="false" displayName="Use default domain" type="boolean" description="Operate on users without domain component in usernames"/>
+              <c:simple-property name="winbind offline logon" required="false" displayName="Offline logon" type="boolean" description="Use pam_winbind module with Cached Credentials"/>
+              <c:simple-property name="winbind enum users" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of user info"/>
+              <c:simple-property name="winbind enum groups" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of group info"/>
+              <c:simple-property name="winbind separator" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
           </c:group>
       </resource-configuration>
 

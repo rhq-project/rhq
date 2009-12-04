@@ -83,10 +83,10 @@
          extensionPoint="coreMenu"
          name="custom.child1"
          placement="start" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
    <menuItem
       name="custom.child1.newGroupDefinition"
@@ -98,9 +98,9 @@
          extensionPoint="coreMenu"
          name="custom.child1.newGroup"
          placement="after" />
-      <permissionActivatorSet>
-         <permissionActivator
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
-      </permissionActivatorSet>
+      </globalPermissionActivatorSet>
    </menuItem>
 </perspectivePlugin>

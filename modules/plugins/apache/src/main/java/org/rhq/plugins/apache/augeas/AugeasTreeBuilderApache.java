@@ -68,7 +68,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder{
 
 	public void updateIncludes(ApacheAugeasNode parentNode,AugeasTree tree, String fileName) throws Exception{
 		 
-	  	  List<String> nestedNodes = ag.match(fileName+File.separator+"*");
+	  	  List<String> nestedNodes = ag.match(ApacheAugeasTree.AUGEAS_DATA_PATH+fileName+File.separator+"*");
 	  	  
 	  	  List<AugeasNode> createdNodes = new ArrayList<AugeasNode>();
 	  	  

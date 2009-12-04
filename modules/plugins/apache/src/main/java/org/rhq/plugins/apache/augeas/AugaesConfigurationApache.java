@@ -41,23 +41,30 @@ public class AugaesConfigurationApache extends RhqConfig implements AugeasConfig
 	
 	public void updateIncludes() throws Exception{
 			
+		
 		boolean updated = false;
 		AugeasProxy augeas = new AugeasProxy(this);
 		augeas.load();
 		
 		AugeasTree tree = augeas.getAugeasTree("httpd", true);
-		List<AugeasNode> nodes = tree.match("Include");
+		
+		AugeasNode nd = tree.getRootNode();
+		List<AugeasNode> nds = nd.getChildNodes();
+	
+		for (AugeasNode ns : nds)
+		{
+		List<AugeasNode> nodes = tree.matchRelative(ns,"/Include");
 		for (AugeasNode node : nodes)
 		{
 			String value = node.getValue();
-			if (!module.getIncludedGlobs().contains(value));
+			if (!module.getIncludedGlobs().contains(value))
 			{
 				module.addIncludedGlob(value);
 				updated = true;
 			}
 		}
-		
+		}
 		if (updated)
-			updateIncludes();		
+			updateIncludes();
 	}
 }

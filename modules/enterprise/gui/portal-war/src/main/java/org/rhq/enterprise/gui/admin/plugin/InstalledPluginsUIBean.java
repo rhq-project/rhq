@@ -64,6 +64,19 @@ public class InstalledPluginsUIBean {
     public InstalledPluginsUIBean() {
     }
 
+    public void restartMasterPluginContainer() {
+
+        hasPermission();
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.restartMasterPluginContainer(subject);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Master plugin container has been restarted.");
+        } catch (Exception e) {
+            processException("Failed to restart the master plugin container", e);
+        }
+        return;
+    }
+
     public Collection<Plugin> getInstalledAgentPlugins() {
 
         hasPermission();

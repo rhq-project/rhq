@@ -25,6 +25,14 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 @Local
 public interface ServerPluginsLocal {
     /**
+     * Recycles the master plugin container, essentially shutting down all server plugins
+     * and then restarting them.
+     * 
+     * @param subject the user asking to restart the master plugin container 
+     */
+    void restartMasterPluginContainer(Subject subject);
+
+    /**
      * Returns a list of all the installed server plugins in the database
      * 
      * @return all installed server plugins found in the DB

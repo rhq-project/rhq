@@ -216,17 +216,6 @@
             <f:facet name="footer">
                <rich:columnGroup>
                   <rich:column colspan="#{InstalledPluginsSessionUIBean.showAllServerPlugins ? 6 : 5}" width="100%">
-                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
-                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
-                     </h:commandButton>
-                     <h:commandButton action="#{InstalledPluginsSessionUIBean.showUndeployedServerPlugins}"
-                                      rendered="#{!InstalledPluginsSessionUIBean.showAllServerPlugins}"
-                                      value="SHOW UNDEPLOYED" styleClass="on-pager-button buttonsmall">
-                     </h:commandButton>
-                     <h:commandButton action="#{InstalledPluginsSessionUIBean.hideUndeployedServerPlugins}"
-                                      rendered="#{InstalledPluginsSessionUIBean.showAllServerPlugins}"
-                                      value="HIDE UNDEPLOYED" styleClass="on-pager-button buttonsmall">
-                     </h:commandButton>
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableServerPlugins}"
                                               value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
@@ -239,6 +228,22 @@
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.purgeServerPlugins}"
                                               value="PURGE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
+                  </rich:column>
+                  <rich:column breakBefore="true" colspan="#{InstalledPluginsSessionUIBean.showAllServerPlugins ? 6 : 5}" width="100%">
+                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
+                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsUIBean.restartMasterPluginContainer}"
+                                      value="RESTART MASTER PLUGIN CONTAINER" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.showUndeployedServerPlugins}"
+                                      rendered="#{!InstalledPluginsSessionUIBean.showAllServerPlugins}"
+                                      value="SHOW UNDEPLOYED" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.hideUndeployedServerPlugins}"
+                                      rendered="#{InstalledPluginsSessionUIBean.showAllServerPlugins}"
+                                      value="HIDE UNDEPLOYED" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
                   </rich:column>
                </rich:columnGroup>
             </f:facet>

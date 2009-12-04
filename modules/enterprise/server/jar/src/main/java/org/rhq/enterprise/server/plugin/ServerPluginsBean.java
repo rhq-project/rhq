@@ -79,6 +79,11 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void restartMasterPluginContainer(Subject subject) {
+        LookupUtil.getServerPluginService().restartMasterPluginContainer();
+    }
+
     @SuppressWarnings("unchecked")
     public List<ServerPlugin> getServerPlugins() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);

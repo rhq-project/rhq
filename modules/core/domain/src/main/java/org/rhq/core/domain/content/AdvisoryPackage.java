@@ -49,7 +49,7 @@ import javax.persistence.Table;
     @NamedQuery(name = AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID, query = "SELECT ap FROM AdvisoryPackage AS ap "
         + "WHERE ap.advisory.id = :advId"),
     @NamedQuery(name = AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID, query = "DELETE AdvisoryPackage ap WHERE ap.advisory.id = :advId") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_PKG_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_PACKAGE")
 public class AdvisoryPackage implements Serializable {
 

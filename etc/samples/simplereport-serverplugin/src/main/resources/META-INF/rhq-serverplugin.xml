@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="SimpleReportGenericPlugin"
+                displayName="Simple Report Plugin"
+                description="A generic plugin that periodically dumps simple reports. The reports contain RHQ data."
+                package="org.custom"
+                version="1.0"
+                apiVersion="2.0"
+                disabledOnDiscovery="true"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+       This is a sample server plugin that will periodically dump reports on RHQ data on the local filesystem.
+    ]]></serverplugin:help>
+
+    <serverplugin:plugin-component class="SimpleReportPluginComponent"/>
+
+    <serverplugin:scheduled-jobs>
+        <!-- notice that we use the map name as the methodName -->
+        <c:map-property name="generateSimpleReport">
+            <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true"
+                               description="Whether or not the reports should be generated"/>
+            <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true"
+                               description="Indicates when the reports should be generated">
+                <c:property-options>
+                    <c:option value="periodic"/>
+                    <c:option value="cron" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/5 * * * ?" summary="true"
+                               description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression to say when the reports should be generated"/>
+
+            <!-- custom properties specifically needed by the job class itself -->
+            <c:simple-property name="showPlatforms" type="boolean" required="true" default="true" summary="true"
+                               description="Whether or not the reports contain platform data"/>
+            <c:simple-property name="showServers" type="boolean" required="true" default="true" summary="true"
+                               description="Whether or not the reports contain server data"/>
+            <c:simple-property name="showServices" type="boolean" required="true" default="true" summary="true"
+                               description="Whether or not the reports contain service data"/>
+
+            <!-- not summary - user should not need to see these and must not change them -->
+            <c:simple-property name="concurrent" type="boolean" required="true" readOnly="true" default="false"/>
+        </c:map-property>
+    </serverplugin:scheduled-jobs>
+
+    <!-- custom plugin config -->
+    <serverplugin:plugin-configuration>
+        <!--
+             Where should we put the reports? Note this is required but there is no default; this is why
+             disabledOnDiscovery="true" because we need the user to configure this plugin before it can be enabled.
+        -->
+        <c:simple-property name="reportDirectory" type="file" required="true"
+                           description="The absolute pathname of the directory where the reports are stored." />
+        <c:simple-property name="reportHeader" type="string" required="false"
+                           description="If specified, this string will appear at the top of the report." />
+    </serverplugin:plugin-configuration>
+
+</generic-plugin>

@@ -170,7 +170,7 @@
    <menuItem
       name="groups.compatibleGroups"
       displayName="Compatible Groups"
-      iconUrl="images/icons/Cluster_up_16.png"
+      iconUrl="/images/icons/Cluster_up_16.png"
       url="/GroupHub.do?groupCategory=COMPATIBLE">
       <position
          extensionPoint="coreMenu"

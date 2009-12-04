@@ -11,6 +11,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 
 public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
@@ -19,7 +20,7 @@ public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
         super();
     }
 
-    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception {
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException {
         String value = "";
         String propertyName = propDefSimple.getName();
 
@@ -41,7 +42,7 @@ public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
         return new PropertySimple(propDefSimple.getName(), value);
     }
 
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception {
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException {
 
         PropertyList propList = new PropertyList(propDefList.getName());
 
@@ -56,7 +57,7 @@ public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
         return propList;
     }
 
-    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception {
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
         for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
             propMap.put(loadProperty(mapEntryPropDef, node));

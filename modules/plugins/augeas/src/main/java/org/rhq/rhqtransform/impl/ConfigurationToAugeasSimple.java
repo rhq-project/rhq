@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
 
 
@@ -59,7 +60,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
     }
 
     public void updateResourceConfiguration(AugeasNode node, ConfigurationDefinition resourceConfigDef,
-        Configuration resourceConfig) throws Exception {
+        Configuration resourceConfig) throws AugeasRhqException {
 
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
         PropertyMap startProp = new PropertyMap();
@@ -73,7 +74,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
     }
 
     public void updateMap(PropertyDefinitionMap propDefMap, Property prop, AugeasNode mapNode, int seq)
-        throws Exception {
+        throws AugeasRhqException {
 
         PropertyMap map = null;
 
@@ -111,7 +112,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
     }
 
     public void updateList(PropertyDefinitionList propDef, Property prop, AugeasNode listNode, int seq)
-        throws Exception {
+        throws AugeasRhqException {
 
         PropertyList listProperty = null;
         PropertyDefinition childDefinition = propDef.getMemberDefinition();
@@ -144,7 +145,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
     }
 
     public void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef, Property prop, int seq)
-        throws Exception {
+        throws AugeasRhqException {
 
         PropertySimple simpleProp = null;
         AugeasNode node = null;
@@ -171,7 +172,7 @@ public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
     }
 
     public void updateProperty(PropertyDefinition propDef, Property parentProp, AugeasNode parentNode, int seq)
-        throws Exception {
+        throws AugeasRhqException {
 
         if (propDef instanceof PropertyDefinitionSimple) {
             PropertyDefinitionSimple propDefSimple = (PropertyDefinitionSimple) propDef;

@@ -144,7 +144,7 @@ public class AugeasTreeLazy implements AugeasTree {
         return rootNode;
     }
 
-    public void removeNode(AugeasNode node, boolean updateSeq) throws Exception {
+    public void removeNode(AugeasNode node, boolean updateSeq) throws AugeasTreeException {
         int res = ag.remove(node.getFullPath());
         nodeBuffer.removeNode(node, updateSeq, true);
 

@@ -90,7 +90,7 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         return tempNode;
     }
 
-    public void setPath(String path) throws Exception {
+    public void setPath(String path) throws AugeasTreeException {
         this.path = path;
 
     }

@@ -15,6 +15,7 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.util.Glob;
+import org.rhq.rhqtransform.AugeasRhqException;
 
 
 public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
@@ -30,7 +31,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
     }
 
     public AugeasTree buildTree(AugeasProxy component, AugeasConfiguration config, String name, boolean lazy)
-        throws Exception {
+        throws AugeasRhqException {
 
         this.ag = component.getAugeas();
 
@@ -40,7 +41,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
         List<String> incl = module.getConfigFiles();
 
         if (incl.isEmpty())
-            throw new Exception("No configuration provided.");
+            throw new AugeasRhqException("No configuration provided.");
 
         String rootPath = incl.get(0);
 
@@ -65,7 +66,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
         return tree;
     }
 
-    public void updateIncludes(ApacheAugeasNode parentNode, AugeasTree tree, String fileName) throws Exception {
+    public void updateIncludes(ApacheAugeasNode parentNode, AugeasTree tree, String fileName) throws AugeasRhqException {
 
    	 
 	  	  List<String> nestedNodes = ag.match(ApacheAugeasTree.AUGEAS_DATA_PATH+fileName+File.separator+"*");

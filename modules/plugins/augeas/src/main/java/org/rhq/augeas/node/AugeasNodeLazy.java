@@ -125,11 +125,11 @@ public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
         return tempNode;
     }
 
-    public void remove(boolean updateSeq) throws Exception {
+    public void remove(boolean updateSeq) throws AugeasTreeException {
         ag.removeNode(this, updateSeq);
     }
 
-    public void setPath(String path) throws Exception {
+    public void setPath(String path) throws AugeasTreeException {
         this.path = path;
 
     }

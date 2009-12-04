@@ -63,7 +63,7 @@ public class AugeasProxy {
         modules = new ArrayList<String>();
     }
 
-    public void load() throws Exception {
+    public void load() throws AugeasTreeException {
         augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
 
         for (AugeasModuleConfig module : config.getModules()) {

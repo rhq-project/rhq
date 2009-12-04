@@ -27,6 +27,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rhq.augeas.tree.AugeasTreeException;
+
 /**
  * 
  * @author Filip Drabek
@@ -78,12 +80,12 @@ public class AugeasRootNode extends AugeasNodeParent implements AugeasNode {
         return tempNode;
     }
 
-    public void remove(boolean updateSeq) throws Exception {
-        throw new Exception(
+    public void remove(boolean updateSeq) throws AugeasTreeException {
+        throw new AugeasTreeException(
             "Root node is virtual and can not be removed. If you want to remove data remove all child nodes.");
     }
 
-    public void setPath(String path) throws Exception {
+    public void setPath(String path) throws AugeasTreeException {
         // TODO Auto-generated method stub
 
     }

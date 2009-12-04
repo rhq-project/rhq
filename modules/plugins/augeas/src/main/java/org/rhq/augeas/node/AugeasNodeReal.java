@@ -27,6 +27,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
  * 
@@ -113,11 +114,11 @@ public class AugeasNodeReal extends AugeasNodeParent implements AugeasNode {
         return tempNode;
     }
 
-    public void remove(boolean updateSeq) throws Exception {
+    public void remove(boolean updateSeq) throws AugeasTreeException {
         ag.removeNode(this, updateSeq);
     }
 
-    public void setPath(String path) throws Exception {
+    public void setPath(String path) throws AugeasTreeException {
         int end;
         if (path.lastIndexOf(File.separatorChar) == path.length()) {
             end = path.length() - 1;

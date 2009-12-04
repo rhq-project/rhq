@@ -9,6 +9,7 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.node.AugeasRootNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
+import org.rhq.augeas.tree.AugeasTreeException;
 
 public class DefaultAugeasTreeBuilder implements AugeasTreeBuilder {
     private static String AUGEAS_DATA_PATH = File.separatorChar + "files";
@@ -17,7 +18,7 @@ public class DefaultAugeasTreeBuilder implements AugeasTreeBuilder {
     }
 
     public AugeasTree buildTree(AugeasProxy component, AugeasConfiguration moduleConfig, String name, boolean lazy)
-        throws Exception {
+        throws AugeasTreeException {
 
         AugeasTree tree;
         AugeasModuleConfig module = moduleConfig.getModuleByName(name);

@@ -13,13 +13,12 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.RhqConfig;
 
-
-public class AugaesConfigurationApache extends RhqConfig implements AugeasConfiguration {
+public class AugeasConfigurationApache extends RhqConfig implements AugeasConfiguration {
 
     public static String INCLUDE_DIRECTIVE = "";
     private AugeasModuleConfig module;
 
-    public AugaesConfigurationApache(Configuration configuration) throws AugeasRhqException {
+    public AugeasConfigurationApache(Configuration configuration) throws AugeasRhqException {
         super(configuration);
 
         if (modules.isEmpty())

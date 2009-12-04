@@ -2,6 +2,7 @@ package org.rhq.plugins.apache.augeasApache;
 
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -12,12 +13,12 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
 
 public class VirtHostComponent implements AugeasRHQComponent, ConfigurationFacet {
 
-    public AugeasProxy getAugeasComponent() throws Exception {
+    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
         // TODO Auto-generated method stub
         return null;
     }
 
-    public AugeasTree getAugeasTree() throws Exception {
+    public AugeasTree getAugeasTree() throws AugeasTreeException {
         // TODO Auto-generated method stub
         return null;
     }

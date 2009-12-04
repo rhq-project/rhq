@@ -35,9 +35,9 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 public interface RhqAugeasMapping {
 
     public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef)
-        throws Exception;
+        throws AugeasRhqException;
 
     public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef)
-        throws Exception;
+        throws AugeasRhqException;
 
 }

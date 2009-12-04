@@ -46,7 +46,7 @@ import javax.persistence.Table;
 @Entity
 @NamedQueries( { @NamedQuery(name = AdvisoryBuglist.FIND_BUGS_BY_ADV_ID, query = "SELECT ab FROM AdvisoryBuglist AS ab "
     + "WHERE ab.advisory.id = :advId") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_BUG_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_BUGLIST_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_BUGLIST")
 public class AdvisoryBuglist implements Serializable {
 

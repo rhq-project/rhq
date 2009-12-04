@@ -48,7 +48,7 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = AdvisoryCVE.FIND_CVE_BY_ADV_ID, query = "SELECT ac FROM AdvisoryCVE AS ac WHERE ac.advisory.id = :advId"),
     @NamedQuery(name = AdvisoryCVE.DELETE_BY_ADV_ID, query = "DELETE AdvisoryCVE ac WHERE ac.advisory.id = :advId") })
-@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_CVE_SEQ")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_CVE_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_CVE")
 public class AdvisoryCVE implements Serializable {
 

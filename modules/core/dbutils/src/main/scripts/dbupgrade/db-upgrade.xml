@@ -2704,7 +2704,7 @@
     	
       <schemaSpec version="2.74">
       	<schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
-      	<schema-createSequence name="RHQ_ADVISORY_CVE_SEQ" initial="10001" />
+      	<schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001" />
    	    <schema-directSQL>
       	   <statement>
       	     ALTER TABLE RHQ_ADVISORY_CVE DROP CONSTRAINT RHQ_ADV_CVE_MAP_KEY
@@ -2717,7 +2717,7 @@
       	     ALTER TABLE RHQ_ADVISORY_CVE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_CVE_SEQ')
       	  </statement>
       	</schema-directSQL>
-      	<schema-createSequence name="RHQ_ADVISORY_BUG_SEQ" initial="10001" />
+      	<schema-createSequence name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
    	    <schema-directSQL>
       	   <statement>
       	     ALTER TABLE RHQ_ADVISORY_BUGLIST DROP CONSTRAINT RHQ_ADV_BUG_LIST_KEY
@@ -2735,7 +2735,7 @@
       	     ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP RENAME TO RHQ_ADVISORY_PACKAGE
       	   </statement>
       	</schema-directSQL>
-      	<schema-createSequence name="RHQ_ADVISORY_PKG_SEQ" initial="10001" />
+      	<schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
    	    <schema-directSQL>
       	   <statement>
       	     ALTER TABLE RHQ_ADVISORY_PACKAGE DROP CONSTRAINT RHQ_ADV_PKG_MAP_KEY

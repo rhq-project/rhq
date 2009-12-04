@@ -61,21 +61,7 @@ public class InstalledPluginsUIBean {
     private ResourceMetadataManagerLocal resourceMetadataManagerBean = LookupUtil.getResourceMetadataManager();
     private ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
-    private String selectedTab;
-
     public InstalledPluginsUIBean() {
-    }
-
-    public String getSelectedTab() {
-        if (selectedTab == null) {
-            selectedTab = FacesContextUtility.getOptionalRequestParameter("tab");
-        }
-
-        return selectedTab;
-    }
-
-    public void setSelectedTab(String selectedTab) {
-        this.selectedTab = selectedTab;
     }
 
     public void restartMasterPluginContainer() {

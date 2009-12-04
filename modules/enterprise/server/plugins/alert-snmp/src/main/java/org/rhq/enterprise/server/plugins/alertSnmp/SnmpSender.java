@@ -62,7 +62,7 @@ public class SnmpSender extends AlertSender {
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-        SnmpTrapSender snmpTrapSender = new SnmpTrapSender();
+        SnmpTrapSender snmpTrapSender = new SnmpTrapSender(preferences);
         log.debug("Sending SNMP trap with OID " + oid + " to SNMP engine "
             + host + ":" + port + "...");
         String result;

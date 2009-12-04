@@ -43,6 +43,7 @@
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-roles</module>
+    <module>alert-snmp</module>
   </modules>
 
 </project>

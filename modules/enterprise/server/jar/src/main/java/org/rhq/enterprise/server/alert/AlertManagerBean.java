@@ -25,7 +25,6 @@ import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +57,9 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -659,10 +654,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     String emailAddress = emailNotification.getEmailAddress();
 
                     processEmailAddress(alert, emailAddress, emailAddresses);
-                } else if (alertNotification instanceof SnmpNotification) {
-                    SnmpNotification snmpNotification = (SnmpNotification) alertNotification;
-
-                    sendAlertSnmpTrap(alert, snmpNotification);
                 }
 
 
@@ -882,44 +873,23 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return builder.toString();
     }
 
-    private String prettyPrintAlertURL(Alert alert) {
+    public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
         String baseUrl = systemManager.getSystemConfiguration().getProperty(RHQConstants.BaseURL);
         builder.append(baseUrl);
-        if (baseUrl.endsWith("/") == false) {
+        if (!baseUrl.endsWith("/")) {
             builder.append("/");
         }
 
         builder.append("alerts/Alerts.do?mode=viewAlert");
 
-        builder.append("&id=" + alert.getAlertDefinition().getResource().getId());
-        builder.append("&a=" + alert.getId());
+        builder.append("&id=").append(alert.getAlertDefinition().getResource().getId());
+        builder.append("&a=").append(alert.getId());
 
         return builder.toString();
     }
 
-    private void sendAlertSnmpTrap(Alert alert, SnmpNotification snmpNotification) {
-        SnmpTrapSender snmpTrapSender = new SnmpTrapSender();
-        log.debug("Sending SNMP trap with OID " + snmpNotification.getOid() + " to SNMP engine "
-            + snmpNotification.getHost() + ":" + snmpNotification.getPort() + "...");
-        String result;
-        List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
-        String platformName = lineage.get(0).getName();
-        String conditions = prettyPrintAlertConditions(alert.getConditionLogs());
-        String alertUrl = prettyPrintAlertURL(alert);
-        try {
-            if (bootTime == null)
-                bootTime = LookupUtil.getCoreServer().getBootTime();
-            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime, alertUrl);
-        } catch (Throwable t) {
-            result = "failed - cause: " + t;
-        }
-
-        log.debug("Result of sending SNMP trap: " + result);
-        // TODO: Log the action result to the DB (i.e. as an AlertNotificationLog).
-        //       (see http://jira.jboss.com/jira/browse/JBNADM-1820)
-    }
 
     private void processRecovery(AlertDefinition firedDefinition) {
         Subject overlord = subjectManager.getOverlord();

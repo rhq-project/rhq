@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.alert;
+package org.rhq.enterprise.server.plugins.alertSnmp;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,7 +73,10 @@ import org.snmp4j.util.PDUFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
+import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -334,10 +337,15 @@ public class SnmpTrapSender implements PDUFactory {
         return octetString;
     }
 
-    private static Address createAddress(SnmpNotification snmpNotification) {
+    private static Address createAddress(Configuration properties) {
         // TODO: Make transport configurable (ips, 09/12/07).
+
+        String host = properties.getSimpleValue("host",null);
+        String portS = properties.getSimpleValue("port","161");
+        Integer port = Integer.valueOf(portS);
+
         final String transport = UDP_TRANSPORT;
-        String address = snmpNotification.getHost() + "/" + snmpNotification.getPort();
+        String address = host + "/" + port;
         if (transport.equalsIgnoreCase(UDP_TRANSPORT)) {
             return new UdpAddress(address);
         } else if (transport.equalsIgnoreCase(TCP_TRANSPORT)) {
@@ -456,17 +464,18 @@ public class SnmpTrapSender implements PDUFactory {
      * @param alertUrl TODO
      * @return 'Error code' of the operation
      */
-    public String sendSnmpTrap(Alert alert, SnmpNotification snmpNotification, String platformName, String conditions,
+    public String sendSnmpTrap(Alert alert, Configuration alertParameters, String platformName, String conditions,
         Date bootTime, String alertUrl) {
         if (!this.snmpEnabled) {
             return "SNMP is not enabled.";
         }
 
+        String baseOid = alertParameters.getSimpleValue("OID",null);
+
         // TODO add a request id and a timestamp
 
-        this.address = createAddress(snmpNotification);
-        String baseOid = snmpNotification.getOid();
-        // bind the alert definitions name on the oid set in the alert 
+        this.address = createAddress(alertParameters);
+        // bind the alert definitions name on the oid set in the alert
         getVariableBindings(baseOid + ".1" + "={s}" + alert.getAlertDefinition().getName());
         // the resource the alert was defined on
         getVariableBindings(baseOid + ".2" + "={s}" + alert.getAlertDefinition().getResource().getName());

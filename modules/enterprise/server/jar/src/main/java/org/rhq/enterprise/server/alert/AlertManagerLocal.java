@@ -115,4 +115,5 @@ public interface AlertManagerLocal {
 
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 
+    String prettyPrintAlertURL(Alert alert);
 }

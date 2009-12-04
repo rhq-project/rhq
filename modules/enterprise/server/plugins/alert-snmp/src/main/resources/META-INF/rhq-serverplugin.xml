@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-snmp"
+        displayName="Alert:SNMP"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertSnmp"
+        description="Alert sender plugin that sends alert notifications via SNMP traps"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via SNMP traps
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+
+    <!-- Global preferences for all mircoblog alerts -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="snmpVersion" displayName="Snmp protcol version" type="string">
+            <c:property-options>
+                <c:option value="1"/>
+                <c:option value="2c"/>
+                <c:option value="3"/>
+            </c:property-options>
+        </c:simple-property>
+
+        <c:simple-property name="trapOid" displayName="Trap OID" description="OID for the trap sent" type="string"/>
+        <c:group name="1" displayName="Snmp version 1 properties" hiddenByDefault="true">
+            <c:simple-property name="v1Community" type="string" default="public"/>
+            <c:simple-property name="engineId" />
+            <c:simple-property name="genericId" />
+            <c:simple-property name="enterpriseOid"/>
+            <c:simple-property name="specificId" />
+            <c:simple-property name="agentAddress" description="Address of our SNMP agent"/>
+        </c:group>
+        <c:group name="2c" displayName="Snmp version 2c properties" hiddenByDefault="true">
+            <c:simple-property name="v2Community" type="string"/>
+        </c:group>
+        <c:group name="3" displayName="Snmp version 3 properties" hiddenByDefault="true">
+            <c:simple-property name="authProtocol" type="string" default="MD5">
+                <c:property-options>
+                    <c:option value="none"/>
+                    <c:option value="MD5"/>
+                    <c:option value="SHA"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="privacyProtocol" default="AES">
+                <c:property-options>
+                    <c:option value="None"/>
+                    <c:option value="DES"/>
+                    <c:option value="AES"/>
+                    <c:option value="AES192"/>
+                    <c:option value="AES256"/>
+                </c:property-options>
+            </c:simple-property>
+
+
+        </c:group>
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>SNMP</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>SnmpSender</plugin-class>
+
+    <alert-configuration>
+        <c:simple-property name="host" type="string" required="true" description="Trap target host"/>
+        <c:simple-property name="port" type="integer" required="false" default="161" description="Trap target port"/>
+        <c:simple-property name="OID" type="string" required="true" description="OID of the trap sent"/>
+
+    </alert-configuration>
+</alert-plugin>

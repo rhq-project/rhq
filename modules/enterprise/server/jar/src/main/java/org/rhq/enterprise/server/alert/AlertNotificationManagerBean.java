@@ -60,6 +60,7 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
@@ -493,6 +494,13 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return senders;
     }
 
+    public AlertSenderInfo getAlertInfoForSender(String shortName) {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        AlertSenderInfo info = pluginmanager.getAlertSenderInfo(shortName);
+
+        return info;
+    }
+
     /**
      * Add a new AlertNotification to the passed definition
      * @param user subject of the caller
@@ -514,7 +522,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         notif.setConfiguration(configuration);
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);
-        
+
     }
 
     /**

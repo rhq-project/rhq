@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 /**
  * @author Joseph Marques
@@ -103,4 +104,6 @@ public interface AlertNotificationManagerLocal {
      *
      */
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
+
+    AlertSenderInfo getAlertInfoForSender(String shortName);
 }

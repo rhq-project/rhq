@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +42,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.CustomUi;
 
 /**
  * Plugin manager that takes care of loading the plug-ins and instantiating
@@ -82,7 +84,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             Class.forName(className,false,env.getPluginClassLoader());
         }
         catch (Exception e) {
-            log.warn("Can't find pluginClass " + className + ". Plugin will be ignored");
+            log.error("Can't find pluginClass " + className + ". Plugin will be ignored");
             try {
                 unloadPlugin(env.getPluginKey().getPluginName());
             }
@@ -91,16 +93,43 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             }
             return;
         }
+
+        // The short name is basically the key into the plugin
         String shortName = ((Element) type.getShortName()).getTextContent();
         pluginClassByName.put(shortName,className);
-        senderInfoByName.put(shortName,new AlertSenderInfo(shortName,"-TODO-",env.getPluginKey()));
+
+        //
+        // Ok, we have a valid plugin class, so we can look for other things
+        // and store the info
+        //
+
+        String uiSnippetPath;
+        URL uiSnippetUrl = null;
+        CustomUi customUI = type.getCustomUi();
+        if (customUI!=null) {
+            uiSnippetPath = customUI.getUiSnippetName();
+
+            try {
+                uiSnippetUrl = env.getPluginClassLoader().getResource(uiSnippetPath);
+                log.info("UI snipped for " + shortName + " is at " + uiSnippetUrl);
+            }
+            catch (Exception e) {
+                log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName + "Error is "+ e.getMessage());
+                log.error("Plugin will be ignored");
+                return;
+            }
+        }
+
+        AlertSenderInfo info = new AlertSenderInfo(shortName, "-TODO-", env.getPluginKey());
+        info.setUiSnippetUrl(uiSnippetUrl);
+        senderInfoByName.put(shortName, info);
 
         pluginEnvByName.put(shortName,env);
 
         ConfigurationDescriptor desc = type.getAlertConfiguration();
 
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
-        mgr.handleAlertConfigurationDefinition(null); // TODO
+        mgr.handleAlertConfigurationDefinition(null); // TODO remove ?
     }
 
     /**

@@ -36,6 +36,7 @@
             </xs:appinfo>
         </xs:annotation>
     </xs:element>
+
     <xs:complexType name="AlertPluginDescriptorType">
         <xs:complexContent>
             <xs:extension base="serverplugin:ServerPluginDescriptorType">
@@ -57,6 +58,7 @@
                    </xs:element>
                   <!-- alert specific schema goes here. note, serverplugin xsd gives you global <plugin-configuration> already -->
                    <xs:element ref="alert:alert-configuration" minOccurs="0" maxOccurs="1"/>
+                   <xs:element ref="alert:custom-ui" minOccurs="0" maxOccurs="1"/>
                </xs:sequence>
             </xs:extension>
         </xs:complexContent>
@@ -68,7 +70,32 @@
                 This section defines the configuration items that are used for individual alert templates.
             </xs:documentation>
         </xs:annotation>
-
     </xs:element>
+
+    <xs:element name="custom-ui">
+        <xs:annotation>
+            <xs:documentation>
+                 This element provides information for custom configuration UIs. If it is used,
+                the configuration from &lt;alert:alert-configuration/&gt; is *not* used and the user
+                is responsible itself for filling in the alertProperties configuration that gets
+                injected into the alert sender.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ui-snippet-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The name of a file that provides Facelets or xhtml content,
+                            which gets included via &lt;ui:include/&gt; into the configuration
+                            page. Put the file into the src/resources/ folder in the maven build
+                            which puts them into the root of the generated jar file.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
 
 </xs:schema>

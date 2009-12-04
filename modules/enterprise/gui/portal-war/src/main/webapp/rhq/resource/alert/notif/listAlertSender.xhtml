@@ -129,6 +129,10 @@
                 action="#{ListNotificationsUIBean.mySubmitForm}"
                     />
             </rich:panel>
+
+            <!-- user supplied UI -->
+            <ui:include src="#{ListNotificationsUIBean.customContentUrl}"/>
+
         </h:form>
 
         <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">

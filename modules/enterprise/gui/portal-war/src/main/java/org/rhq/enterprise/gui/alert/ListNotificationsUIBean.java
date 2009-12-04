@@ -45,6 +45,7 @@ import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -171,5 +172,17 @@ public class ListNotificationsUIBean {
         mgr.removeNotifications(subject,alertDefinitionId,notificationIds);
 
         return OUTCOME_SUCCESS;
+    }
+
+
+    public String getCustomContentUrl() {
+        AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        AlertSenderInfo info = mgr.getAlertInfoForSender(selectedSender); 
+        if (info!=null && info.getUiSnippetUrl()!=null)
+            return info.getUiSnippetUrl().toString();
+        else
+            return "/rhq/empty.xhtml";
     }
 }

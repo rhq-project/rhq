@@ -31,19 +31,16 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.enterprise.gui.legacy.util.Tab;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorSetType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -57,6 +54,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // The cache is cleaned anytime there is a new entry.
     static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
 
+    static private Map<Integer, String> urlMap = new HashMap<Integer, String>();
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -68,7 +67,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
-     */    
+     */
     public synchronized List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
         Integer sessionId = subject.getSessionId();
         CacheEntry cacheEntry = cache.get(sessionId);
@@ -89,11 +88,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
                 // We have to be careful not to mess with the core menu as it is returned from
                 // the perspective manager. The core menu for each subject/sessionid could
-                // differ based on activation checks. So, get a new mnu structure when applying
+                // differ based on activation checks. So, get a new menu structure when applying
                 // activation filters.
                 coreMenu = getActivatedMenu(subject, coreMenu);
 
-                // TODO : make safe copy
                 cacheEntry.setCoreMenu(coreMenu);
             } catch (Exception e) {
                 throw new PerspectiveException("Failed to get Core Menu.", e);
@@ -104,12 +102,44 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     }
 
     @NotNull
-    public List<Tab> getResourceTabs(Subject subject, Resource resource)
-    {
+    public List<Tab> getResourceTabs(Subject subject, Resource resource) {
         // TODO: implement
         return Collections.emptyList();
     }
 
+    /**
+     * Return a unique key for the url.
+     * @param url
+     * @return
+     */
+    public synchronized int getUrlKey(String url) {
+        int key = url.hashCode();
+
+        // in the very unlikely case that we have multiple urls with the same hashcode, protect
+        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
+        String mapEntry = urlMap.get(key);
+        while (!((null == mapEntry) || mapEntry.equals(url))) {
+            key *= 13;
+            mapEntry = urlMap.get(key);
+        }
+
+        if (null == mapEntry) {
+            urlMap.put(key, url);
+        }
+
+        return key;
+    }
+
+    /**
+     * Return the url for the given key.
+     */
+    public String getUrlViaKey(int key) {
+        return urlMap.get(key);
+    }
+
+    // TODO: Is there any sort of listener approach we could use to clear an individual cache entry
+    // for various events like: change to role defs, change to inventory? Perhaps even a manual or
+    // automated refresh for the session?
     private void cleanCache() {
         Subject subject;
 
@@ -142,7 +172,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         for (MenuItem menuItem : menu) {
             MenuItemType item = menuItem.getItem();
             List<ResourceActivatorSetType> inventoriedResourceActivatorSet = item.getInventoriedResourceActivatorSet();
-            List<GlobalPermissionActivatorSetType> globalPermissionActivatorSet = item.getGlobalPermissionActivatorSet();
+            List<GlobalPermissionActivatorSetType> globalPermissionActivatorSet = item
+                .getGlobalPermissionActivatorSet();
 
             // Make sure activators are satisfied before copying
             if (checkActivators(subject, inventoriedResourceActivatorSet, globalPermissionActivatorSet)) {
@@ -167,7 +198,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             boolean anyPassed = false;
             boolean anyFailed = false;
 
-            for (GlobalPermissionActivatorType permissionActivator : permissionActivatorSet.getGlobalPermissionActivator()) {
+            for (GlobalPermissionActivatorType permissionActivator : permissionActivatorSet
+                .getGlobalPermissionActivator()) {
                 boolean hasPermission = hasGlobalPermission(subject, permissionActivator.getPermission());
                 anyPassed = hasPermission;
                 anyFailed = !hasPermission;

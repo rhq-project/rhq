@@ -26,8 +26,10 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.perspective.ExtensionPoint;
 import org.rhq.enterprise.server.perspective.MenuItem;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ActionType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ApplicationType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionPointType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PlacementType;
@@ -86,6 +88,7 @@ public class PerspectivePluginMetadataManager {
 
         // always process the core perspective first as other perspectives may reference its definitions
         processCorePerspective();
+        processNonCorePerspectives();
 
         isStarted = true;
     }
@@ -106,18 +109,100 @@ public class PerspectivePluginMetadataManager {
         if (null == this.coreMenu) {
             this.coreMenu = new ArrayList<MenuItem>();
         }
-        for (MenuItemType menuItemDef : cp.getMenuItem()) {
-            PositionType position = menuItemDef.getPosition();
-            if (ExtensionPoint.coreMenu == ExtensionPoint.valueOf(position.getExtensionPoint())) {
-                addToMenu(this.coreMenu, menuItemDef);
-            } else {
-                throw new IllegalArgumentException("Unknown Extension Point defined in menuItem ["
-                    + menuItemDef.getName() + "] : " + position.getExtensionPoint());
+
+        processPerspective(cp);
+
+        // TODO: remove this debug code
+        //printMenu(this.coreMenu, "");
+    }
+
+    private void processNonCorePerspectives() {
+        for (String key : loadedPlugins.keySet()) {
+            if (!CORE_PERSPECTIVE_NAME.equals(key)) {
+                processPerspective(loadedPlugins.get(key));
             }
         }
 
         // TODO: remove this debug code
         //printMenu(this.coreMenu, "");
+    }
+
+    private void processPerspective(PerspectivePluginDescriptorType perspective) {
+        List<ApplicationType> applications = perspective.getApplication();
+
+        for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
+            resolveUrls(applications, rawMenuItem);
+            ActionType action = rawMenuItem.getAction();
+            ExtensionPointType extensionPoint = rawMenuItem.getPosition().getExtensionPoint();
+            if (ExtensionPointType.CORE_MENU == extensionPoint) {
+                if (ActionType.ADD == action) {
+                    menuAdd(this.coreMenu, rawMenuItem);
+                } else if (ActionType.REMOVE == action) {
+                    menuRemove(this.coreMenu, rawMenuItem);
+                } else if (ActionType.REPLACE == action) {
+                    menuReplace(this.coreMenu, rawMenuItem);
+                }
+            } else {
+                throw new IllegalArgumentException("Unknown Extension Point defined in menuItem ["
+                    + rawMenuItem.getName() + "] : " + extensionPoint);
+            }
+        }
+    }
+
+    /**
+     * Update the url and iconUrl as needed by applying delclard application information.
+     *  
+     * @param applications
+     * @param rawMenuItem
+     */
+    private void resolveUrls(List<ApplicationType> applications, MenuItemType rawMenuItem) {
+        ApplicationType applicationType = getApplicationByName(applications, rawMenuItem.getApplication());
+
+        rawMenuItem.setUrl(resolveUrl(applicationType, rawMenuItem.getUrl()));
+        rawMenuItem.setIconUrl(resolveUrl(applicationType, rawMenuItem.getIconUrl()));
+    }
+
+    private String resolveUrl(ApplicationType applicationType, String url) {
+        String result = url;
+
+        if (null != url) {
+            if (isRelativeUrl(url)) {
+                if (null == applicationType) {
+                    throw new IllegalArgumentException(
+                        "Relative URL found without application. Add application attribute to fully resolve url '"
+                            + url + "'");
+                }
+
+                String baseUrl = applicationType.getBaseUrl();
+                // fix the baseUrl if it lacks the separator
+                if (!baseUrl.endsWith("/")) {
+                    baseUrl = baseUrl + "/";
+                    applicationType.setBaseUrl(baseUrl);
+                }
+                result = baseUrl + url;
+            }
+        }
+
+        return result;
+    }
+
+    private boolean isRelativeUrl(String url) {
+        return (!(url.startsWith("/") || url.startsWith("http")));
+    }
+
+    private ApplicationType getApplicationByName(List<ApplicationType> applications, String name) {
+        ApplicationType result = null;
+
+        if (null != applications && null != name) {
+            for (ApplicationType application : applications) {
+                if (application.getName().equals(name)) {
+                    result = application;
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
     // TODO: remove this debug code
@@ -132,11 +217,11 @@ public class PerspectivePluginMetadataManager {
         }
     }
 
-    private void addToMenu(List<MenuItem> menu, MenuItemType menuItemDef) {
+    private void menuAdd(List<MenuItem> menu, MenuItemType rawMenuItem) {
 
-        PositionType position = menuItemDef.getPosition();
-        List<MenuItem> containingMenu = getContainingMenu(menu, menuItemDef);
-        MenuItem menuItem = new MenuItem(menuItemDef);
+        PositionType position = rawMenuItem.getPosition();
+        List<MenuItem> containingMenu = getContainingMenu(menu, rawMenuItem);
+        MenuItem menuItem = new MenuItem(rawMenuItem);
 
         if (PlacementType.START == position.getPlacement()) {
             containingMenu.add(0, menuItem);
@@ -145,7 +230,7 @@ public class PerspectivePluginMetadataManager {
         } else {
             int index = getMenuItemIndex(containingMenu, position.getName());
             if (-1 == index) {
-                throw new IllegalArgumentException("Invalid position defined for menuItem [" + menuItemDef.getName()
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
                     + "]. Referenced menuItem not found : " + position.getName()
                     + ". Make sure supporting menus are defined for the menuItem.");
             }
@@ -154,15 +239,61 @@ public class PerspectivePluginMetadataManager {
         }
     }
 
-    private List<MenuItem> getContainingMenu(List<MenuItem> menu, MenuItemType menuItemDef) {
-        String name = menuItemDef.getName();
+    private void menuRemove(List<MenuItem> menu, MenuItemType rawMenuItem) {
+
+        PositionType position = rawMenuItem.getPosition();
+        List<MenuItem> containingMenu;
+        try {
+            containingMenu = getContainingMenu(menu, rawMenuItem);
+            int index = getMenuItemIndex(containingMenu, rawMenuItem.getName());
+            if (-1 == index) {
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
+                    + "]. Referenced menuItem not found : " + position.getName()
+                    + ". Make sure supporting menus are defined for the menuItem.");
+            }
+
+            containingMenu.remove(index);
+
+        } catch (IllegalArgumentException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Menu item not found. Ignoring removal of " + rawMenuItem.getName(), e);
+            }
+        }
+    }
+
+    private void menuReplace(List<MenuItem> menu, MenuItemType rawMenuItem) {
+
+        PositionType position = rawMenuItem.getPosition();
+        List<MenuItem> containingMenu;
+        try {
+            containingMenu = getContainingMenu(menu, rawMenuItem);
+            int index = getMenuItemIndex(containingMenu, rawMenuItem.getName());
+            if (-1 == index) {
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
+                    + "]. Referenced menuItem not found : " + position.getName()
+                    + ". Make sure supporting menus are defined for the menuItem.");
+            }
+
+            containingMenu.set(index, new MenuItem(rawMenuItem));
+
+        } catch (IllegalArgumentException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Menu item not found. Ignoring replacement and attempting add for " + rawMenuItem.getName(),
+                    e);
+            }
+            menuAdd(menu, rawMenuItem);
+        }
+    }
+
+    private List<MenuItem> getContainingMenu(List<MenuItem> menu, MenuItemType rawMenuItem) {
+        String name = rawMenuItem.getName();
         String[] nameTokens = (null != name) ? name.split("\\.") : new String[0];
         List<MenuItem> result = menu;
 
         for (int i = 0; (i + 1 < nameTokens.length); ++i) {
             int index = this.getMenuItemIndex(result, nameTokens[i]);
             if (-1 == index) {
-                throw new IllegalArgumentException("Invalid position defined for menuItem [" + menuItemDef.getName()
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
                     + "]. No containing menu found for : " + name
                     + ". Make sure supporting menus are defined for the menuItem.");
             }

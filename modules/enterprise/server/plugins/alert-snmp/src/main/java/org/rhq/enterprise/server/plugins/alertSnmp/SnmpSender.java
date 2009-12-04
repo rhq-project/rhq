@@ -35,7 +35,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * // TODO: Document this
+ * AlertSender that sends alerts via SNMP Traps
  * @author Heiko W. Rupp
  */
 public class SnmpSender extends AlertSender {

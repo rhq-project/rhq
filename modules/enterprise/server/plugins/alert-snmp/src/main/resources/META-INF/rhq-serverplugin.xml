@@ -22,7 +22,7 @@
 
     <!-- Global preferences for all mircoblog alerts -->
     <serverplugin:plugin-configuration>
-        <c:simple-property name="snmpVersion" displayName="Snmp protcol version" type="string">
+        <c:simple-property name="snmpVersion" displayName="Snmp protcol version" type="string" required="false" default="1">
             <c:property-options>
                 <c:option value="1"/>
                 <c:option value="2c"/>
@@ -30,18 +30,21 @@
             </c:property-options>
         </c:simple-property>
 
-        <c:simple-property name="trapOid" displayName="Trap OID" description="OID for the trap sent" type="string"/>
-        <c:group name="1" displayName="Snmp version 1 properties" hiddenByDefault="true">
-            <c:simple-property name="v1Community" type="string" default="public"/>
-            <c:simple-property name="engineId" />
-            <c:simple-property name="genericId" />
-            <c:simple-property name="enterpriseOid"/>
-            <c:simple-property name="specificId" />
-            <c:simple-property name="agentAddress" description="Address of our SNMP agent"/>
+        <c:simple-property name="trapOid" displayName="Trap OID" description="OID for the trap sent" type="string" />
+        <c:simple-property name="community" type="string" default="public" description="Community - v1 and v2c only" required="false"/>
+
+        <c:group name="1" displayName="Snmp version 1 properties" hiddenByDefault="true" >
+            <c:simple-property name="engineId" required="false"/>
+            <c:simple-property name="genericId" required="false"/>
+            <c:simple-property name="enterpriseOid" required="false"/>
+            <c:simple-property name="specificId" required="false"/>
+            <c:simple-property name="agentAddress" description="Address of our SNMP agent" required="false"/>
         </c:group>
+        <!--
         <c:group name="2c" displayName="Snmp version 2c properties" hiddenByDefault="true">
-            <c:simple-property name="v2Community" type="string"/>
+             Nothing special
         </c:group>
+        -->
         <c:group name="3" displayName="Snmp version 3 properties" hiddenByDefault="true">
             <c:simple-property name="authProtocol" type="string" default="MD5">
                 <c:property-options>
@@ -52,14 +55,16 @@
             </c:simple-property>
             <c:simple-property name="privacyProtocol" default="AES">
                 <c:property-options>
-                    <c:option value="None"/>
                     <c:option value="DES"/>
                     <c:option value="AES"/>
                     <c:option value="AES192"/>
                     <c:option value="AES256"/>
                 </c:property-options>
             </c:simple-property>
-
+            <c:simple-property name="targetContext" displayName="Target Context Name" type="string" required="false"/>
+            <c:simple-property name="authPassphrase" description="Auto Passphrase is required with autorization enabled" type="password" required="false"/>
+            <c:simple-property name="privacyPassphrase" description="Privacy Passphrase is required with privacy enabled" type="password" required="false"/>
+            <c:simple-property name="securityName" type="string" required="false"/>
 
         </c:group>
     </serverplugin:plugin-configuration>

@@ -23,7 +23,10 @@
 
 package org.rhq.enterprise.server.configuration;
 
-public class TranslationNotSupportedException extends Exception {
+import javax.ejb.ApplicationException;
+
+@ApplicationException(rollback = true)
+public class TranslationNotSupportedException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
 

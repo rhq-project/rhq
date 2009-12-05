@@ -1913,7 +1913,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException {
+        boolean fromStructured) {
+
+        if (!isStructuredAndRawSupported(resourceId)) {
+            throw new TranslationNotSupportedException("The translation operation is only supported for " +
+                "configurations that support both structured and raw.");
+        }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
 

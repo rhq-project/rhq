@@ -352,6 +352,92 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         assertPropertiesMatch(expectedUpdate, actualUpdate, "Expected to get back a failure update");
     }
 
+    @Test
+    public void translatingFromStructuredToRawShouldReturnModifiedConfig() throws Exception {
+        final ConfigTranslationFixture fixture = newStructuredAndRawTranslationFixture();
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final Configuration expectedConfig = new Configuration();
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+
+            allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_STRUCTURED);
+            will(returnValue(expectedConfig));
+        }});
+
+        Configuration translatedConfig = configurationMgr.translateResourceConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration, FROM_STRUCTURED);
+
+        assertSame(
+            translatedConfig,
+            expectedConfig,
+            "Expected to get back the configuration translated by the " + ConfigurationAgentService.class.getSimpleName());
+    }
+
+    @Test
+    public void translatingFromRawToStructuredShouldReturnModifiedConfig() throws Exception {
+        final ConfigTranslationFixture fixture = newStructuredAndRawTranslationFixture();
+
+        final AgentClient agentClient = context.mock(AgentClient.class);
+        final ConfigurationAgentService configAgentService = context.mock(ConfigurationAgentService.class);
+
+        final Configuration expectedConfig = new Configuration();
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+
+            oneOf(authorizationMgr).canViewResource(fixture.subject, fixture.resourceId); will(returnValue(true));
+
+            allowing(agentMgr).getAgentClient(fixture.resource.getAgent()); will(returnValue(agentClient));
+
+            allowing(agentClient).getConfigurationAgentService(); will(returnValue(configAgentService));
+
+            oneOf(configAgentService).merge(fixture.configuration, fixture.resourceId, FROM_RAW);
+            will(returnValue(expectedConfig));
+        }});
+
+        Configuration translatedConfig = configurationMgr.translateResourceConfiguration(fixture.subject,
+            fixture.resourceId, fixture.configuration, FROM_RAW);
+
+        assertSame(
+            translatedConfig,
+            expectedConfig,
+            "Expected to get back the configuration translated by the " + ConfigurationAgentService.class.getSimpleName());
+    }
+
+    @Test(expectedExceptions = TranslationNotSupportedException.class)
+    public void exceptionShouldBeThrownWhenTryingToTranslateStructuredOnlyConfig() throws Exception {
+        final ConfigTranslationFixture fixture = newStructuredTranslationFixture();
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));    
+        }});
+
+        configurationMgr.translateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration,
+            FROM_STRUCTURED);
+    }
+
+    @Test(expectedExceptions = TranslationNotSupportedException.class)
+    public void exceptionShouldBeThrownWhenTryingToTranslateRawOnlyConfig() throws Exception {
+        final ConfigTranslationFixture fixture = newRawTranslationFixture();
+
+        context.checking(new Expectations() {{
+            allowing(entityMgr).find(Resource.class, fixture.resourceId); will(returnValue(fixture.resource));
+        }});
+
+        configurationMgr.translateResourceConfiguration(fixture.subject, fixture.resourceId, fixture.configuration,
+            FROM_RAW);                
+    }
+
     public static Matcher<ConfigurationUpdateRequest> matchingUpdateRequest(ConfigurationUpdateRequest expected) {
         return new PropertyMatcher<ConfigurationUpdateRequest>(expected);
     }
@@ -373,6 +459,27 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
     ResourceConfigUpdateFixture newStructuredAndRawResourceConfigUpdateFixture() {
         ResourceConfigUpdateFixture fixture = new ResourceConfigUpdateFixture();
         fixture.resource = createResourceWithStructuredAndRawConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    ConfigTranslationFixture newStructuredAndRawTranslationFixture() {
+        ConfigTranslationFixture fixture = new ConfigTranslationFixture();
+        fixture.resource = createResourceWithStructuredAndRawConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    ConfigTranslationFixture newStructuredTranslationFixture() {
+        ConfigTranslationFixture fixture = new ConfigTranslationFixture();
+        fixture.resource = createResourceWithStructuredConfig(fixture.resourceId);
+
+        return fixture;
+    }
+
+    ConfigTranslationFixture newRawTranslationFixture() {
+        ConfigTranslationFixture fixture = new ConfigTranslationFixture();
+        fixture.resource = createResourceWithRawConfig(fixture.resourceId);
 
         return fixture;
     }
@@ -439,6 +546,13 @@ public class ConfigurationManagerBeanUnitTest extends JMockTest {
         int resourceId = -1;
         Configuration configuration = new Configuration();
         boolean isPartOfGroupUpdate = false;
+        Resource resource;
+    }
+
+    static class ConfigTranslationFixture {
+        Subject subject = new Subject("rhqadmin", true, true);
+        int resourceId = -1;
+        Configuration configuration = new Configuration();
         Resource resource;
     }
 

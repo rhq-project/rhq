@@ -126,17 +126,14 @@ public class SimpleReportsPluginComponent implements ServerPluginComponent {
         File file = new File(this.reportDir, "availabilities.txt");
         PrintStream ps = new PrintStream(file);
         try {
-            ps.println("=== AVAILABILITY REPORT ===");
             printHeader(ps);
-            ps.println("Date Generated: " + new Date());
+            ps.println("  Report: AVAILABILITY");
+            ps.println("    Date: " + new Date());
             for (ResourceAvailability avail : avails) {
-                if (avail.getAvailabilityType() == null) {
-                    ps.printf("%8s", "UNKNOWN");
-                } else {
-                    ps.printf("%8s", avail.getAvailabilityType().toString());
-                }
-                ps.printf(" : %10d : ", avail.getResource().getId());
-                ps.println(avail.getResource().getName());
+                ps.printf("Resource: %6d | %4s | %s\n", //
+                    avail.getResource().getId(), //
+                    (avail.getAvailabilityType() == null) ? "???" : avail.getAvailabilityType().toString(), //
+                    avail.getResource().getName());
             }
         } finally {
             ps.close();
@@ -180,13 +177,13 @@ public class SimpleReportsPluginComponent implements ServerPluginComponent {
         File file = new File(this.reportDir, "platforms.txt");
         PrintStream ps = new PrintStream(file);
         try {
-            ps.println("=== PLATFORM REPORT ===");
             printHeader(ps);
-            ps.println("Date Generated: " + new Date());
-            ps.println("     Committed: " + committed);
-            ps.println("       Ignored: " + ignored);
-            ps.println("       Deleted: " + deleted);
-            ps.println(" Uninventoried: " + uninventoried);
+            ps.println("       Report: PLATFORM");
+            ps.println("         Date: " + new Date());
+            ps.println("    Committed: " + committed);
+            ps.println("      Ignored: " + ignored);
+            ps.println("      Deleted: " + deleted);
+            ps.println("Uninventoried: " + uninventoried);
         } finally {
             ps.close();
         }
@@ -206,13 +203,13 @@ public class SimpleReportsPluginComponent implements ServerPluginComponent {
         File file = new File(this.reportDir, "servers.txt");
         PrintStream ps = new PrintStream(file);
         try {
-            ps.println("=== SERVER REPORT ===");
             printHeader(ps);
-            ps.println("Date Generated: " + new Date());
-            ps.println("     Committed: " + committed);
-            ps.println("       Ignored: " + ignored);
-            ps.println("       Deleted: " + deleted);
-            ps.println(" Uninventoried: " + uninventoried);
+            ps.println("       Report: SERVER");
+            ps.println("         Date: " + new Date());
+            ps.println("    Committed: " + committed);
+            ps.println("      Ignored: " + ignored);
+            ps.println("      Deleted: " + deleted);
+            ps.println("Uninventoried: " + uninventoried);
         } finally {
             ps.close();
         }
@@ -232,13 +229,13 @@ public class SimpleReportsPluginComponent implements ServerPluginComponent {
         File file = new File(this.reportDir, "services.txt");
         PrintStream ps = new PrintStream(file);
         try {
-            ps.println("=== SERVICE REPORT ===");
             printHeader(ps);
-            ps.println(" Date Generated: " + new Date());
-            ps.println("     Committed: " + committed);
-            ps.println("       Ignored: " + ignored);
-            ps.println("       Deleted: " + deleted);
-            ps.println(" Uninventoried: " + uninventoried);
+            ps.println("       Report: SERVICE");
+            ps.println("         Date: " + new Date());
+            ps.println("    Committed: " + committed);
+            ps.println("      Ignored: " + ignored);
+            ps.println("      Deleted: " + deleted);
+            ps.println("Uninventoried: " + uninventoried);
         } finally {
             ps.close();
         }
@@ -247,11 +244,7 @@ public class SimpleReportsPluginComponent implements ServerPluginComponent {
 
     private void printHeader(PrintStream ps) {
         if (this.reportHeader != null) {
-            ps.println();
             ps.println(this.reportHeader);
-            ps.println();
-        } else {
-            ps.println();
         }
     }
 

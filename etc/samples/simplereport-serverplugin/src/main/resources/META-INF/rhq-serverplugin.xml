@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<generic-plugin name="SimpleReportGenericPlugin"
-                displayName="Simple Report Plugin"
+<generic-plugin name="SimpleReportsGenericPlugin"
+                displayName="Simple Reports Plugin"
                 description="A generic plugin that periodically dumps simple reports. The reports contain RHQ data."
                 package="org.custom"
                 version="1.0"
@@ -15,18 +15,18 @@
        This is a sample server plugin that will periodically dump reports on RHQ data on the local filesystem.
     ]]></serverplugin:help>
 
-    <serverplugin:plugin-component class="SimpleReportPluginComponent"/>
+    <serverplugin:plugin-component class="SimpleReportsPluginComponent"/>
 
     <serverplugin:scheduled-jobs>
         <!-- notice that we use the map name as the methodName -->
-        <c:map-property name="generateSimpleReport">
+        <c:map-property name="generateSimpleReports" description="Writes simple reports on the current inventory">
             <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true"
                                description="Whether or not the reports should be generated"/>
             <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true"
                                description="Indicates when the reports should be generated">
                 <c:property-options>
                     <c:option value="periodic"/>
-                    <c:option value="cron" default="true"/>
+                    <c:option value="cron" default="true" />
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/5 * * * ?" summary="true"
@@ -39,6 +39,27 @@
                                description="Whether or not the reports contain server data"/>
             <c:simple-property name="showServices" type="boolean" required="true" default="true" summary="true"
                                description="Whether or not the reports contain service data"/>
+
+            <!-- not summary - user should not need to see these and must not change them -->
+            <c:simple-property name="concurrent" type="boolean" required="true" readOnly="true" default="false"/>
+        </c:map-property>
+
+        <c:map-property name="generateResourceAvailabilityReport" description="Writes a report that indicates the live availability for a set of resources.">
+            <c:simple-property name="enabled" type="boolean" required="true" default="false" summary="true"
+                               description="Whether or not the report should be generated"/>
+            <c:simple-property name="scheduleType" type="string" required="true" default="periodic" summary="true"
+                               description="Indicates when the report should be generated">
+                <c:property-options>
+                    <c:option value="periodic" default="true" />
+                    <c:option value="cron" />
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="5000" summary="true"
+                               description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression to say when the report should be generated"/>
+
+            <!-- custom properties specifically needed by the job class itself -->
+            <c:simple-property name="resourceIds" type="string" required="true" default="0" summary="true"
+                               description="Comma-separated list of resource IDs. These will be the resources whose live status will be checked."/>
 
             <!-- not summary - user should not need to see these and must not change them -->
             <c:simple-property name="concurrent" type="boolean" required="true" readOnly="true" default="false"/>

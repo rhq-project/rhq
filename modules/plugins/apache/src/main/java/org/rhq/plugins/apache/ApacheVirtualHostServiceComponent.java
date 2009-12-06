@@ -26,8 +26,12 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -41,6 +45,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -107,8 +112,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet#loadResourceConfiguration()
      */
     public Configuration loadResourceConfiguration() throws Exception {
-        // TODO Auto-generated method stub
-        return null;
+        AugeasTree tree = resourceContext.getParentResourceComponent().getAugeasTree();
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+        
+        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
+        config.setTree(tree);
+
+        return config.loadResourceConfiguration(getMyNode(tree), resourceConfigDef);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -224,5 +234,60 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         oid = strBuf.toString();
         return oid;
+    }
+    
+    private AugeasNode getMyNode(AugeasTree tree) {
+        String resourceKey = resourceContext.getResourceKey();
+        
+        if (ApacheVirtualHostServiceDiscoveryComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+            return tree.getRootNode();
+        }
+        
+        String serverName = null;
+        int pipeIdx = resourceKey.indexOf('|');
+        int addrStartIdx = pipeIdx + 1;
+        if (pipeIdx >= 0) {
+            serverName = resourceKey.substring(0, pipeIdx);
+        }
+        String[] addrs = resourceKey.substring(addrStartIdx).split(" ");
+
+        StringBuilder expr = new StringBuilder("VirtualHost");
+        boolean hasParams = serverName != null || addrs.length > 0;
+        
+        if (hasParams) {
+            expr.append("[");
+        }
+        
+        if (serverName != null) {
+            expr.append("ServerName = \"").append(serverName).append("\""); 
+        }
+        
+        if (addrs.length > 0) {
+            String firstAddr = addrs[0];
+            if (serverName != null) {
+                expr.append(" and ");
+            }
+            
+            expr.append("address = \"").append(firstAddr).append("\"");
+            
+            for(int i = 1; i < addrs.length; ++i) {
+                expr.append(" and address = \"").append(addrs[i]).append("\"");
+            }
+        }
+        if (hasParams) {
+            expr.append("]");
+        }
+        
+        List<AugeasNode> virtualHosts = tree.matchRelative(tree.getRootNode(), expr.toString());
+        
+        if (virtualHosts.size() == 0) {
+            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: " +  resourceKey);
+        }
+        
+        if (virtualHosts.size() > 1) {
+            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: " + resourceKey);
+        }
+        
+        return virtualHosts.get(0);
     }
 }

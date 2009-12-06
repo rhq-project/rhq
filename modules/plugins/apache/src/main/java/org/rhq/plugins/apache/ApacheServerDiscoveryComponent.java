@@ -42,6 +42,7 @@ import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.apache.util.OsProcessUtility;
+import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -52,12 +53,12 @@ import org.rhq.plugins.www.snmp.SNMPValue;
  *
  * @author Ian Springer
  */
-public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>, ManualAddFacet<PlatformComponent> {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         // Process any PC-discovered OS processes...
@@ -128,7 +129,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
+                                                      ResourceDiscoveryContext<PlatformComponent> discoveryContext)
             throws InvalidPluginConfigurationException {
         validateServerRootAndServerConfigFile(pluginConfig);
 
@@ -165,10 +166,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private boolean isSupportedVersion(String version) {
         // TODO: Compare against a version range defined in the plugin descriptor.
-        return (version != null) && (version.startsWith("1.3") || version.startsWith("2."));
+        return (version != null) && version.startsWith("2.");
     }
 
-    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
+    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
         String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();

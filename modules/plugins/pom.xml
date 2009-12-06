@@ -107,7 +107,7 @@
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
       <module>hosts</module>
-      <module>sudoers</module>      
+      <module>sudoers</module>
       <module>hudson</module>
       <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
       <module>mysql</module>
@@ -122,6 +122,7 @@
       <module>sshd</module>
       <module>twitter</module>
       <!--<module>virt</module>-->
+       <module>script2</module>
 
       <!-- make this the last - it will validate all the plugins -->
       <module>validate-all-plugins</module>

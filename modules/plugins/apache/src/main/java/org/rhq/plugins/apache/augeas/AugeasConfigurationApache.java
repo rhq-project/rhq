@@ -45,7 +45,7 @@ public class AugeasConfigurationApache extends RhqConfig implements AugeasConfig
 		AugeasProxy augeas = new AugeasProxy(this);
 		augeas.load();
 		
-		AugeasTree tree = augeas.getAugeasTree("httpd", true);
+		AugeasTree tree = augeas.getAugeasTree(module.getModuletName(), true);
 		
 		AugeasNode nd = tree.getRootNode();
 		List<AugeasNode> nds = nd.getChildNodes();

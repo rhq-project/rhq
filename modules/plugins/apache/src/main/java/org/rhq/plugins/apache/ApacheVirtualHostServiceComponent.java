@@ -32,7 +32,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -47,7 +49,7 @@ import org.rhq.plugins.www.util.WWWUtils;
 /**
  * @author Ian Springer
  */
-public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet {
+public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String SNMP_WWW_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
@@ -101,10 +103,26 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return WWWUtils.isAvailable(this.url) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
+    /* (non-Javadoc)
+     * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet#loadResourceConfiguration()
+     */
+    public Configuration loadResourceConfiguration() throws Exception {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
+    /* (non-Javadoc)
+     * @see org.rhq.core.pluginapi.inventory.DeleteResourceFacet#deleteResource()
+     */
+    public void deleteResource() throws Exception {
+        // TODO Auto-generated method stub
+        
+    }
+    
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         int primaryIndex = pluginConfig.getSimple(SNMP_WWW_SERVICE_INDEX_CONFIG_PROP).getIntegerValue();

@@ -39,12 +39,19 @@
          <scope>provided</scope>
       </dependency>
       
-        <dependency>
+      <dependency>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-augeas-plugin</artifactId>
         <version>${project.version}</version>
       </dependency>
-      
+
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar</artifactId>
+        <version>${sigar.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
    </dependencies>
 
    <build>

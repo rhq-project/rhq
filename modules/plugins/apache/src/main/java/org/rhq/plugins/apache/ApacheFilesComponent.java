@@ -27,6 +27,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -37,7 +38,7 @@ import org.rhq.plugins.platform.PlatformComponent;
  * 
  * @author Lukas Krejci
  */
-public class ApacheFilesComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet {
+public class ApacheFilesComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet, DeleteResourceFacet {
 
     ResourceContext<ApacheServerComponent> resourceContext;
     
@@ -68,6 +69,14 @@ public class ApacheFilesComponent implements ResourceComponent<ApacheServerCompo
      */
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         // TODO Auto-generated method stub
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.core.pluginapi.inventory.DeleteResourceFacet#deleteResource()
+     */
+    public void deleteResource() throws Exception {
+        // TODO Auto-generated method stub
+        
     }
 
 

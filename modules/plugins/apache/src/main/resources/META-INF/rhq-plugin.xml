@@ -235,6 +235,16 @@
       <!-- Plugin config props are values that the plugin components need to connect and interact with the managed
            resource. -->
       <plugin-configuration>
+          <!-- Augeas Configuration -->
+          <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
+                                        description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+          <c:simple-property name="configurationFilesInclusionPatterns" 
+              displayName="Httpd config file" required="true" readOnly="true"
+                                          default="/etc/httpd/conf/httpd.conf" 
+          description="Location of the iptables file."/>
+          <c:simple-property name="augeasLoadPath" required="true" readOnly="true"
+                                         default="/usr/share/augeas/lenses"/>
+      
          <!-- Defaults:
                type: string
                required: true
@@ -720,84 +730,4 @@
       </service>
 
    </server>
-   
-<server name="HTTPD" discovery="org.rhq.plugins.apache.augeasApache.ServerDiscoveryComponent" class="org.rhq.plugins.apache.augeasApache.ServerComponent"
-           supportsManualAdd="true"
-           description="an Apache HTTP Server instance">
-
-<!-- Plugin config props are values that the plugin components need to connect and interact with the managed
-           resource. -->
-<plugin-configuration>
-<!-- Augeas Configuration -->
-<c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="httpd" required="true" readOnly="true"
-                             description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
-<c:simple-property name="configurationFilesInclusionPatterns" displayName="Httpd config file" required="true" readOnly="true"
-                               default="/home/fdrabek/Work/httpd.conf" description="Location of the iptables file."/>
-<c:simple-property name="augeasLoadPath" required="true" readOnly="true"
-                              default="/home/fdrabek/Work"/>
-</plugin-configuration>
-
-<resource-configuration>
-<c:list-property name="ListenAddresses">
-<c:map-property name="Listen">
-<c:simple-property name="ip" required="false"/>
-<c:simple-property name="port">
-<c:constraint><c:integer-constraint minimum="0" maximum="65535"/></c:constraint>
-</c:simple-property>
-<c:simple-property name="scheme" required="false"/>
-</c:map-property>
-</c:list-property>
-&DocumentRoot;
-&DirectoryIndex;
-&DefaultType;
-&AddDefaultCharset;
-&Aliases;
-&ErrorDocuments;
-&ServerAdmin;
-&Timeout;
-<c:simple-property name="NameVirtualHost" required="false">
-<c:description>
-                A required directive if you want to configure name-based virtual hosts.
-                Although the value can be hostname it is recommended that you always use an IP address.
-                IPv6 addresses must be enclosed in square brackets.
-                To receive requests on all interfaces, you can set the value to *.
-                Note that the IP address of a name-based virtual host must exactly match the value of this property.
-</c:description>
-</c:simple-property>
-&Options;
-&UseCanonicalName;
-&UseCanonicalPhysicalPort;
-<c:group name="Logging">
-&ErrorLog;
-&CustomLogs;
-</c:group>
-
-</resource-configuration>
-
-<service name="Apache Virtual Host" discovery="org.rhq.plugins.apache.augeasApache.VirtHostDiscoveryComponent" class="org.rhq.plugins.apache.augeasApache.VirtHostComponent" createDeletePolicy="both">
-
-<resource-configuration>
-&ServerName;
-<c:list-property name="ServerAliases">
-<c:map-property name="ServerAlias">
-<c:simple-property name="hostname"/>
-</c:map-property>
-</c:list-property>
-&ServerAdmin;
-&DocumentRoot;
-&AddDefaultCharset;
-&Aliases;
-&CustomLogs;
-&DefaultType;
-&DirectoryIndex;
-&ErrorDocuments;
-&ErrorLog;
-&Timeout;
-&Options;
-&UseCanonicalName;
-&UseCanonicalPhysicalPort;
-</resource-configuration>
-</service>
-</server> 
-
 </plugin>

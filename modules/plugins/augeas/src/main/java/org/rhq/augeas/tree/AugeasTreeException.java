@@ -28,9 +28,36 @@ package org.rhq.augeas.tree;
  * @author Filip Drabek
  *
  */
-public class AugeasTreeException extends Exception {
+public class AugeasTreeException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
 
-    public AugeasTreeException(String msg) {
-        super(msg);
+    /**
+     * 
+     */
+    public AugeasTreeException() {
+        super();
     }
+
+    /**
+     * @param message
+     * @param cause
+     */
+    public AugeasTreeException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * @param message
+     */
+    public AugeasTreeException(String message) {
+        super(message);
+    }
+
+    /**
+     * @param cause
+     */
+    public AugeasTreeException(Throwable cause) {
+        super(cause);
+    }
+
 }

@@ -40,6 +40,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 import org.rhq.rhqtransform.NameMap;
 
@@ -67,7 +68,7 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
     }
 
     public Configuration loadResourceConfiguration(AugeasNode startNode, ConfigurationDefinition resourceConfigDef)
-        throws Exception {
+        throws AugeasRhqException {
 
         Configuration resourceConfig = new Configuration();
 
@@ -80,7 +81,7 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
         return resourceConfig;
     }
 
-    public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws Exception {
+    public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws AugeasRhqException {
 
         Property prop;
         if (propDef instanceof PropertyDefinitionSimple) {
@@ -95,13 +96,13 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
         return prop;
     }
 
-    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception {
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException {
         Object value;
         value = node.getValue();
         return new PropertySimple(propDefSimple.getName(), value);
     }
 
-    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception {
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
         PropertyMap propMap = new PropertyMap(propDefMap.getName());
         for (PropertyDefinition mapEntryPropDef : propDefMap.getPropertyDefinitions().values()) {
             propMap.put(loadProperty(mapEntryPropDef, node));
@@ -109,7 +110,7 @@ public class AugeasToConfigurationSimple implements AugeasToConfiguration {
         return propMap;
     }
 
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception {
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException {
 
         PropertyList propList = new PropertyList(propDefList.getName());
 

@@ -152,7 +152,7 @@ public class AugeasTreeReal implements AugeasTree {
         return rootNode;
     }
 
-    public void removeNode(AugeasNode node, boolean updateSeq) throws Exception {
+    public void removeNode(AugeasNode node, boolean updateSeq) throws AugeasTreeException {
         int seq = node.getSeq();
 
         List<AugeasNode> nodes = matchRelative(node.getParentNode(), File.separatorChar + node.getLabel()

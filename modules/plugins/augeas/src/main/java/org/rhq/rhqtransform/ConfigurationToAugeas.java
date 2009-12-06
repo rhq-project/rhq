@@ -42,17 +42,17 @@ public interface ConfigurationToAugeas {
     public void setTree(AugeasTree tree);
 
     public void updateResourceConfiguration(AugeasNode node, ConfigurationDefinition resourceConfigDef,
-        Configuration resourceConfig) throws Exception;
+        Configuration resourceConfig) throws AugeasRhqException;
 
     public void updateMap(PropertyDefinitionMap propDefMap, Property prop, AugeasNode mapNode, int seq)
-        throws Exception;
+        throws AugeasRhqException;
 
     public void updateList(PropertyDefinitionList propDef, Property prop, AugeasNode listNode, int seq)
-        throws Exception;
+        throws AugeasRhqException;
 
     public void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef, Property prop, int seq)
-        throws Exception;
+        throws AugeasRhqException;
 
     public void updateProperty(PropertyDefinition propDef, Property parentProp, AugeasNode parentNode, int seq)
-        throws Exception;
+        throws AugeasRhqException;
 }

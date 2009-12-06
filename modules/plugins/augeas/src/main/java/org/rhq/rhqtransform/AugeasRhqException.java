@@ -27,10 +27,38 @@ package org.rhq.rhqtransform;
  * @author Filip Drabek
  *
  */
-public class AugeasRhqException extends Exception {
+public class AugeasRhqException extends RuntimeException {
 
-    public AugeasRhqException(String text) {
-        super(text);
+    private static final long serialVersionUID = 1L;
+
+    /**
+     * 
+     */
+    public AugeasRhqException() {
+        super();
     }
 
+    /**
+     * @param message
+     * @param cause
+     */
+    public AugeasRhqException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    /**
+     * @param message
+     */
+    public AugeasRhqException(String message) {
+        super(message);
+    }
+
+    /**
+     * @param cause
+     */
+    public AugeasRhqException(Throwable cause) {
+        super(cause);
+    }
+
+    
 }

@@ -24,6 +24,8 @@ package org.rhq.augeas.node;
 
 import java.util.List;
 
+import org.rhq.augeas.tree.AugeasTreeException;
+
 /**
  * 
  * @author Filip Drabek
@@ -33,7 +35,7 @@ public interface AugeasNode {
 
     public String getPath();
 
-    public void setPath(String path) throws Exception;
+    public void setPath(String path) throws AugeasTreeException;
 
     public String getLabel();
 

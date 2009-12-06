@@ -52,7 +52,7 @@ public interface AugeasTree {
 
     public AugeasNode getRootNode();
 
-    public void removeNode(AugeasNode node, boolean updateSeq) throws Exception;
+    public void removeNode(AugeasNode node, boolean updateSeq) throws AugeasTreeException;
 
     public void setValue(AugeasNode node, String value);
 

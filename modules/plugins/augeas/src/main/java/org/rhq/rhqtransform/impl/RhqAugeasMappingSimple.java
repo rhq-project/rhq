@@ -28,6 +28,7 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
 import org.rhq.rhqtransform.RhqAugeasMapping;
@@ -57,20 +58,20 @@ public class RhqAugeasMappingSimple implements RhqAugeasMapping {
     }
 
     public void updateAugeas(AugeasProxy component, Configuration config, ConfigurationDefinition configDef)
-        throws Exception {
+        throws AugeasRhqException {
         AugeasTree tree = component.getAugeasTree(moduleName, true);
         AugeasNode startNode = getStartNode(tree);
         configurationToAugeas.updateResourceConfiguration(startNode, configDef, config);
     }
 
     public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef)
-        throws Exception {
+        throws AugeasRhqException {
         AugeasTree tree = augeasComponent.getAugeasTree(moduleName, true);
         AugeasNode startNode = getStartNode(tree);
         return augeasToConfiguration.loadResourceConfiguration(startNode, configDef);
     }
 
-    protected AugeasNode getStartNode(AugeasTree tree) throws Exception {
+    protected AugeasNode getStartNode(AugeasTree tree) throws AugeasRhqException {
         return tree.getRootNode();
     }
 

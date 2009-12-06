@@ -45,13 +45,13 @@ public interface AugeasToConfiguration {
     public void setNameMap(NameMap nameMap);
 
     public Configuration loadResourceConfiguration(AugeasNode startNode, ConfigurationDefinition resourceConfigDef)
-        throws Exception;
+        throws AugeasRhqException;
 
-    public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws Exception;
+    public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws AugeasRhqException;
 
-    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws Exception;
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException;
 
-    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws Exception;
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException;
 
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws Exception;
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException;
 }

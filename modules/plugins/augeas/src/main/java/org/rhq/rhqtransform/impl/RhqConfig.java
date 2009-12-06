@@ -53,7 +53,8 @@ public class RhqConfig implements AugeasConfiguration {
     private static final String AUGEAS_LOAD_PATH = "augeasLoadPath";
 
     public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
-
+    public static final String DEFAULT_AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
+    
     private final Log log = LogFactory.getLog(this.getClass());
     protected List<AugeasModuleConfig> modules;
     protected String loadPath;
@@ -72,7 +73,7 @@ public class RhqConfig implements AugeasConfiguration {
         config.setModuletName(getAugeasModuleName(configuration));
         modules.add(config);
 
-        loadPath = configuration.getSimpleValue(AUGEAS_LOAD_PATH, null);
+        loadPath = configuration.getSimpleValue(AUGEAS_LOAD_PATH, DEFAULT_AUGEAS_LOAD_PATH);
     }
 
     protected List<String> determineGlobs(Configuration configuration, String name) {

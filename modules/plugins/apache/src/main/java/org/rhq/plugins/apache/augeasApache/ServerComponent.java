@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -11,12 +12,13 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.plugins.apache.augeas.AugaesConfigurationApache;
+import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
+import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.rhqtransform.AugeasRHQComponent;
 
-public class ServerComponent implements AugeasRHQComponent, ConfigurationFacet {
+public class ServerComponent implements AugeasRHQComponent<PlatformComponent>, ConfigurationFacet {
 
     private ResourceContext context;
     private final Log log = LogFactory.getLog(this.getClass());
@@ -38,22 +40,22 @@ public class ServerComponent implements AugeasRHQComponent, ConfigurationFacet {
         return AvailabilityType.UP;
     }
 
-    public void loadAugeas() throws Exception {
-        AugaesConfigurationApache config = new AugaesConfigurationApache(context.getPluginConfiguration());
+    public void loadAugeas() throws AugeasTreeException {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(context.getPluginConfiguration());
         AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
         augeasComponent = new AugeasProxy(config, builder);
         augeasComponent.load();
         augeasTree = augeasComponent.getAugeasTree("httpd", true);
     }
 
-    public AugeasProxy getAugeasComponent() throws Exception {
+    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
         if (augeasComponent == null)
             loadAugeas();
 
         return augeasComponent;
     }
 
-    public AugeasTree getAugeasTree() throws Exception {
+    public AugeasTree getAugeasTree() throws AugeasTreeException {
         if (augeasTree == null)
             loadAugeas();
 

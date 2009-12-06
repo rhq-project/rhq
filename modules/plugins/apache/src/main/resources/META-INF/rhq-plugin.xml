@@ -228,6 +228,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
+   <depends plugin="Augeas" useClasses="true"/>
+   
    <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
            supportsManualAdd="true"
            description="an Apache HTTP Server instance">
@@ -241,7 +243,7 @@
           <c:simple-property name="configurationFilesInclusionPatterns" 
               displayName="Httpd config file" required="true" readOnly="true"
                                           default="/etc/httpd/conf/httpd.conf" 
-          description="Location of the iptables file."/>
+          description="Location of the Apache main configuration file."/>
           <c:simple-property name="augeasLoadPath" required="true" readOnly="true"
                                          default="/usr/share/augeas/lenses"/>
       

@@ -646,13 +646,12 @@
             &UseCanonicalPhysicalPort;
          </resource-configuration>
          
-         <service name="Directory" class="ApacheDirectoryComponent" createDeletePolicy="both">
+         <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
-                <c:simple-property name="path" />
-                <c:simple-property name="regularExpression" type="boolean" default="false"/>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;
@@ -683,6 +682,7 @@
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;
@@ -701,6 +701,7 @@
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;

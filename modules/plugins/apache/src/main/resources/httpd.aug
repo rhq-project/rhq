@@ -882,17 +882,17 @@ let sec1 (name:string) (body:lens) = secN name (sep . store secarg) body
 
 (* A helper for <Directory>-like sections that can optionally have ~ preceeding the 
    path argument making httpd interpret it as a regex *)
-let pathSpec (l:string) =
-    [ sep . label l . Util.del_str "~" ]? . sep . store secarg
+let pathSpec =
+    [ sep . label "regexp" . Util.del_str "~" ]? . sep . store secarg
 
 (* these are all the sections there are possible in the Apache configuration according to the Apache 2.2 documentation *)
 let ifModule (body:lens) = sec1 "IfModule" body
-let directory (body:lens) = secN "Directory" (pathSpec "Directory_regexp") body
+let directory (body:lens) = secN "Directory" pathSpec body
 let directoryMatch (body:lens) = sec1 "DirectoryMatch" body
 let virtualHost (body:lens) = secN "VirtualHost" [ sep . label "address" . store secarg ]+ body
-let files (body:lens) = secN "Files" (pathSpec "Files_regexp") body
+let files (body:lens) = secN "Files" pathSpec body
 let filesMatch (body:lens) = sec1 "FilesMatch" body
-let location (body:lens) = secN "Location" (pathSpec "Location_regexp") body
+let location (body:lens) = secN "Location" pathSpec body
 let locationMatch (body:lens) = sec1 "LocationMatch" body
 let authnProviderAlias (body:lens) = secN "AuthnProviderAlias" ([sep . label "baseProvider" . store word ] . [sep .  label "alias" . store word ]) body
 let ifDefine (body:lens) = sec1 "IfDefine" body

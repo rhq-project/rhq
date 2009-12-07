@@ -65,13 +65,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         //read the virtual hosts from augeas
         AugeasTree ag = context.getParentResourceComponent().getAugeasTree();
 
-        List<AugeasNode> virtualHosts = ag.matchRelative(ag.getRootNode(), "VirtualHost");
+        List<AugeasNode> virtualHosts = ag.matchRelative(ag.getRootNode(), "<VirtualHost");
 
         for (AugeasNode node : virtualHosts) {
-            List<AugeasNode> hosts = ag.matchRelative(node, "address");
+            List<AugeasNode> hosts = ag.matchRelative(node, "param");
             String firstAddress = hosts.get(0).getValue();
             
-            List<AugeasNode> serverNames = node.getChildByLabel("ServerName");
+            List<AugeasNode> serverNames = ag.matchRelative(node, "ServerName/param");
             String serverName = null;
             if (serverNames.size() > 0) {
                 serverName = serverNames.get(0).getValue();

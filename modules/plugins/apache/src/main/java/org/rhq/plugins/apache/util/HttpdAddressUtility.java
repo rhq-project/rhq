@@ -25,6 +25,7 @@ package org.rhq.plugins.apache.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
@@ -60,21 +61,25 @@ public class HttpdAddressUtility {
         //there has to be at least one Listen directive
         AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
         
+        List<AugeasNode> params = listen.getChildByLabel("param");
+        String address = params.get(0).getValue();
+        
         String host = null;
         String port = null;
-        for(AugeasNode child : listen.getChildNodes()) {
-            if (child.getLabel().equals("ip")) {
-                host = child.getValue();
-            } else if (child.getLabel().equals("port")) {
-                port = child.getValue();
+        if (address.startsWith("[")) {
+            int bracketIdx = address.indexOf(']');
+            host = address.substring(1, bracketIdx);
+            port = address.substring(bracketIdx + 2);
+        } else {
+            String[] hostPort = address.split(":");
+            if (hostPort.length == 1) {
+                port = hostPort[0];
+            } else {
+                host = hostPort[0];
+                port = hostPort[1];
             }
         }
-        
-        if (host != null) {
-            if (host.startsWith("[")) {
-                host = host.substring(1, host.length() - 1);
-            }
-        } else {
+        if (host == null) {
             try {
                 host = InetAddress.getLocalHost().getHostAddress();
             } catch (UnknownHostException e) {

@@ -72,20 +72,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
         
-        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration() {
-
-            @Override
-            public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node)
-                throws AugeasRhqException {
-                if ("regexp".equals(propDefSimple.getName())) {
-                    List<AugeasNode> regexp = node.getChildByLabel("regexp");
-                    return new PropertySimple("regexp", !regexp.isEmpty());
-                } else {
-                    return super.createPropertySimple(propDefSimple, node);
-                }
-            }
-            
-        };
+        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
         
         config.setTree(tree);
 
@@ -110,7 +97,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     private AugeasNode getNode(AugeasNode virtualHost) {
-        List<AugeasNode> directories = virtualHost.getChildByLabel("Directory");
+        List<AugeasNode> directories = virtualHost.getChildByLabel("<Directory");
         int index = resourceContext.getPluginConfiguration().getSimple(DIRECTIVE_INDEX_PROP).getIntegerValue();
         
         for(AugeasNode dir : directories) {

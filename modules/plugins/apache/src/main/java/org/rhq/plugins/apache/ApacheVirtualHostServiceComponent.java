@@ -53,6 +53,7 @@ import org.rhq.plugins.www.util.WWWUtils;
 
 /**
  * @author Ian Springer
+ * @author Lukas Krejci
  */
 public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());

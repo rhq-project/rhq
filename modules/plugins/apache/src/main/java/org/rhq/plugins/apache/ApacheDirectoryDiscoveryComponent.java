@@ -55,7 +55,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         AugeasTree tree = context.getParentResourceComponent().getServerConfigurationTree();
 
-        List<AugeasNode> directories = context.getParentResourceComponent().getNode(tree).getChildByLabel("Directory");
+        List<AugeasNode> directories = tree.matchRelative(context.getParentResourceComponent().getNode(tree), "<Directory/param");
 
         ResourceType resourceType = context.getResourceType();
 
@@ -71,8 +71,6 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));
-
-            idx++;
         }
         return discoveredResources;
     }

@@ -109,10 +109,12 @@ public interface AdvisoryManagerLocal {
 
     /**
      * find packages associated for a given advisory
+     * @param subject
      * @param advId
+     * @param pc
      * @return a list of package objects
      */
-    List<AdvisoryPackage> findPackageByAdvisory(int advId);
+    PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc);
 
     /**
      * find CVEs associated to a given advisory

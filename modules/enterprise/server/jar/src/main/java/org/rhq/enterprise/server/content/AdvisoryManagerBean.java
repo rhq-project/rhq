@@ -21,12 +21,10 @@ package org.rhq.enterprise.server.content;
 
 import java.util.List;
 
-import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,10 +41,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.core.AgentManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 /**
  * @author Pradeep Kilambi
@@ -60,21 +55,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
-    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
-
-    @EJB
-    private AgentManagerLocal agentManager;
-
-    @EJB
-    private AuthorizationManagerLocal authorizationManager;
-
-    @EJB
-    private AdvisoryManagerLocal advisoryManager;
-
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Advisory createAdvisory(Subject user, String advisory, String advisoryType, String synopsis)
@@ -224,17 +204,14 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
      */
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public List<AdvisoryPackage> findPackageByAdvisory(int advId) {
+    public PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc) {
         Query query = entityManager.createNamedQuery(AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID);
-
+        System.out.println("ZZZZZZZZZZZZZZZ" + query);
         query.setParameter("advId", advId);
         List<AdvisoryPackage> results = query.getResultList();
 
-        if (results.size() > 0) {
-            return results;
-        } else {
-            return null;
-        }
+        long count = getPackageCountFromAdv(subject, advId);
+        return new PageList<AdvisoryPackage>(results, (int) count, pc);
 
     }
 

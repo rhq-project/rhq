@@ -48,11 +48,10 @@ import org.rhq.enterprise.server.plugin.pc.content.AdvisoryPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Holds the methods necessary to interact with a plugin and execute its distribution related
+ * Holds the methods necessary to interact with a plugin and execute its advisory related
  * synchronization tasks.
  *
  * @author Pradeep Kilambi
@@ -110,20 +109,11 @@ public class AdvisorySourceSynchronizer {
 
         advisorySource.synchronizeAdvisory(repo.getName(), advReport, advDetails);
 
-        log.info("Synchronize Distributions: [" + source.getName() + "]: got sync report from adapter=[" + advReport
-            + "] (" + (System.currentTimeMillis() - start) + ")ms");
+        log.info("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport + "] ("
+            + (System.currentTimeMillis() - start) + ")ms");
 
         ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
         contentSourceManager.mergeAdvisorySyncReport(source, advReport, syncResults);
-    }
-
-    public void synchronizeDistributionBits() throws Exception {
-        if (!(provider instanceof DistributionSource)) {
-            return;
-        }
-
-        Subject overlord = subjectManager.getOverlord();
-        contentSourceManager.downloadDistributionBits(overlord, source);
     }
 
     private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails) {
@@ -140,7 +130,7 @@ public class AdvisorySourceSynchronizer {
             detail.setTopic(d.getTopic());
             detail.setUpdate_date(d.getUpdate_date());
 
-            List<AdvisoryPackage> pkgs = advManager.findPackageByAdvisory(d.getId());
+            List<AdvisoryPackage> pkgs = advManager.findPackageByAdvisory(overlord, d.getId(), pc);
 
             for (AdvisoryPackage pkg : pkgs) {
                 AdvisoryPackageDetails apkg = new AdvisoryPackageDetails(pkg.getAdvisory(), pkg.getPkg());

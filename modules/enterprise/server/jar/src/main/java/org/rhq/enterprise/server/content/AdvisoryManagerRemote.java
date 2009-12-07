@@ -122,11 +122,14 @@ public interface AdvisoryManagerRemote {
 
     /**
      * find packages associated for a given advisory
+     * @param subject
      * @param advId
+     * @param pc
      * @return a list of package objects
      */
     @WebMethod
-    List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "advId") int advId);
+    List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc);
 
     /**
      * find CVEs associated to a given advisory

@@ -413,20 +413,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return removed;
     }
 
-    public void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> alertNotifications = alertDefinition.getAlertNotifications();
-        for (AlertNotification alertNotification : alertNotifications) {
-            if (alertNotification instanceof SnmpNotification) {
-                alertNotifications.remove(alertNotification);
-            }
-        }
-
-        alertNotifications.add(snmpNotification);
-
-        postProcessAlertDefinition(alertDefinition);
-    }
-
     public int purgeOrphanedAlertNotifications() {
         Query purgeQuery = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_ORPHANED);
         return purgeQuery.executeUpdate();

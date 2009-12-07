@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.context.ExternalContext;
-import javax.faces.context.FacesContext;
+import javax.faces.application.FacesMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -54,7 +54,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Scope(ScopeType.PAGE)
 @Name("ListNotificationsUIBean")
-public class ListNotificationsUIBean {
+public class ListNotificationsUIBean implements Serializable {
 
     public static final String MANAGED_BEAN_NAME = "ListNotificationsUIBean";
     private static final String OUTCOME_SUCCESS = "success";
@@ -146,6 +146,7 @@ public class ListNotificationsUIBean {
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         mgr.addAlertNotification(subject, alertDefinitionId,selectedSender,alertProperties);
+        // TODO leave message after checking success from backend
         return OUTCOME_SUCCESS;
     }
 
@@ -162,14 +163,16 @@ public class ListNotificationsUIBean {
     public String removeSelectedNotifications() {
         String[] stringItems = FacesContextUtility.getRequest().getParameterValues("selectedNotification");
         if (stringItems == null || stringItems.length == 0) {
-            return OUTCOME_SUCCESS; // TODO leave message
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"Nothing selected");
+            return OUTCOME_SUCCESS;
         }
 
         Integer[] notificationIds = StringUtility.getIntegerArray(stringItems);
 
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
-        mgr.removeNotifications(subject,alertDefinitionId,notificationIds);
+        int count = mgr.removeNotifications(subject,alertDefinitionId,notificationIds);
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,"Removed " + count + " items");
 
         return OUTCOME_SUCCESS;
     }
@@ -179,7 +182,7 @@ public class ListNotificationsUIBean {
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-        AlertSenderInfo info = mgr.getAlertInfoForSender(selectedSender); 
+        AlertSenderInfo info = mgr.getAlertInfoForSender(selectedSender);
         if (info!=null && info.getUiSnippetUrl()!=null)
             return info.getUiSnippetUrl().toString();
         else

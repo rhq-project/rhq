@@ -47,8 +47,6 @@ public interface AlertNotificationManagerLocal {
 
     int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
 
-    void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification);
-
     PageList<EmailNotification> getEmailNotifications(Integer alertDefinitionId, PageControl pageControl);
 
     PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl);
@@ -67,6 +65,13 @@ public interface AlertNotificationManagerLocal {
 
     PageList<SubjectNotification> getSubjectNotificationsBySubjects(Integer[] subjectId, PageControl pageControl);
 
+    /**
+     * Remove the passed notifications from the passed alert definition (all identified by their id)
+     * @param subject Caller
+     * @param alertDefinitionId alert definition to modify
+     * @param notificationIds Notifications to remove
+     * @return number of notifications removed
+     */
     int removeNotifications(Subject subject, Integer alertDefinitionId, Integer[] notificationIds);
 
     int purgeOrphanedAlertNotifications();

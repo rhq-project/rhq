@@ -206,7 +206,7 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc) {
         Query query = entityManager.createNamedQuery(AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID);
-        System.out.println("ZZZZZZZZZZZZZZZ" + query);
+
         query.setParameter("advId", advId);
         List<AdvisoryPackage> results = query.getResultList();
 

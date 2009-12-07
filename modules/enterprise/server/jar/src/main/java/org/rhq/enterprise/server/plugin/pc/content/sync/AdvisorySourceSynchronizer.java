@@ -89,8 +89,6 @@ public class AdvisorySourceSynchronizer {
 
         log.info("Synchronize Advisory: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]");
 
-        // Load existing distributions to send to source
-        // --------------------------------------------
         long start = System.currentTimeMillis();
 
         List<Advisory> advs = repoManager.findAssociatedAdvisory(overlord, repo.getId(), pc);

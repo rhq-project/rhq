@@ -65,9 +65,7 @@ public class AdvisoryManagerBeanTest extends AbstractEJB3Test {
 
         assert advobject != null;
         assert id1 == advobject.getId();
-        System.out.println("advisory Created " + advobject);
         advManager.deleteAdvisoryByAdvId(overlord, advobject.getId());
-        System.out.println("advisory deleted " + advobject);
         advobject = advManager.getAdvisoryByName(advobject.getAdvisory());
         assert advobject == null;
 
@@ -117,7 +115,6 @@ public class AdvisoryManagerBeanTest extends AbstractEJB3Test {
             ResourceCategory.PLATFORM, null);
         em.persist(resourceType1);
         em.flush();
-        System.out.println("persisted resourceTYpe");
 
         Architecture architecture1 = em.find(Architecture.class, 1);
 
@@ -131,7 +128,6 @@ public class AdvisoryManagerBeanTest extends AbstractEJB3Test {
         packageType1.setResourceType(resourceType1);
         em.persist(packageType1);
         em.flush();
-        System.out.println("persisted packageType");
         Package package1 = new Package("Package1", packageType1);
 
         package1.addVersion(new PackageVersion(package1, "1.0.0", architecture1));
@@ -139,16 +135,13 @@ public class AdvisoryManagerBeanTest extends AbstractEJB3Test {
 
         em.persist(package1);
         em.flush();
-        System.out.println("persisted pqckage");
         //AdvisoryPackage ap = new AdvisoryPackage(advobject, package1);
         //em.persist(ap);
 
         AdvisoryPackage ap = advManager.createAdvisoryPackage(overlord, advobject, package1);
 
-        System.out.println("persisted aadvisoryPackage" + ap);
         PageList<AdvisoryPackage> pkglist = advManager.findPackageByAdvisory(overlord, id1, PageControl
             .getUnlimitedInstance());
-        System.out.println("list of pkgs" + pkglist);
         assert pkglist != null;
         assert pkglist.size() != 0;
 

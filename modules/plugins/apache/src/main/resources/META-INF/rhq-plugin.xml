@@ -227,7 +227,12 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
+<<<<<<< HEAD:modules/plugins/apache/src/main/resources/META-INF/rhq-plugin.xml
    <depends plugin="Augeas"/>
+=======
+
+   <depends plugin="Augeas" useClasses="true"/>
+>>>>>>> e6d33692e86119a1c8a9c8278e5240131b84b5f3:modules/plugins/apache/src/main/resources/META-INF/rhq-plugin.xml
    
    <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
            supportsManualAdd="true"
@@ -242,7 +247,7 @@
           <c:simple-property name="configurationFilesInclusionPatterns" 
               displayName="Httpd config file" required="true" readOnly="true"
                                           default="/etc/httpd/conf/httpd.conf" 
-          description="Location of the iptables file."/>
+          description="Location of the Apache main configuration file."/>
           <c:simple-property name="augeasLoadPath" required="true" readOnly="true"
                                          default="/usr/share/augeas/lenses"/>
       
@@ -645,13 +650,12 @@
             &UseCanonicalPhysicalPort;
          </resource-configuration>
          
-         <service name="Directory" class="ApacheDirectoryComponent" createDeletePolicy="both">
+         <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
-                <c:simple-property name="path" />
-                <c:simple-property name="regularExpression" type="boolean" default="false"/>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;
@@ -682,6 +686,7 @@
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;
@@ -700,6 +705,7 @@
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
+                <c:simple-property name="regexp" type="boolean" default="false"/>
                 &Order;
                 &Allow;
                 &Deny;

@@ -23,7 +23,15 @@
 
 package org.rhq.plugins.apache;
 
+import java.util.List;
+
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
@@ -31,28 +39,28 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.plugins.platform.PlatformComponent;
+import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
+import org.rhq.rhqtransform.AugeasRhqException;
 
 /**
  * 
  * 
  * @author Lukas Krejci
  */
-public class ApacheDirectoryComponent implements ResourceComponent<ApacheServerComponent>, ConfigurationFacet, DeleteResourceFacet {
+public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtualHostServiceComponent>, ConfigurationFacet, DeleteResourceFacet {
 
-    ResourceContext<ApacheServerComponent> resourceContext;
+    public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
+
+    ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
     
-    public void start(ResourceContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException, Exception {
-        // TODO Auto-generated method stub
+    public void start(ResourceContext<ApacheVirtualHostServiceComponent> context) throws InvalidPluginConfigurationException, Exception {
         resourceContext = context;
     }
 
     public void stop() {
-        // TODO Auto-generated method stub
     }
 
     public AvailabilityType getAvailability() {
-        //TODO implement this
         return AvailabilityType.UP;
     }
 
@@ -60,8 +68,30 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheServerC
      * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet#loadResourceConfiguration()
      */
     public Configuration loadResourceConfiguration() throws Exception {
-        // TODO Auto-generated method stub
-        return resourceContext.getResourceType().getResourceConfigurationDefinition().getDefaultTemplate().createConfiguration();
+        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
+        AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+        
+        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration() {
+
+            @Override
+            public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node)
+                throws AugeasRhqException {
+                if ("regexp".equals(propDefSimple.getName())) {
+                    List<AugeasNode> regexp = node.getChildByLabel("regexp");
+                    return new PropertySimple("regexp", !regexp.isEmpty());
+                } else {
+                    return super.createPropertySimple(propDefSimple, node);
+                }
+            }
+            
+        };
+        
+        config.setTree(tree);
+
+        AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
+        
+        return config.loadResourceConfiguration(getNode(virtualHostNode), resourceConfigDef);
     }
 
     /* (non-Javadoc)
@@ -79,4 +109,15 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheServerC
         
     }
 
+    private AugeasNode getNode(AugeasNode virtualHost) {
+        List<AugeasNode> directories = virtualHost.getChildByLabel("Directory");
+        int index = resourceContext.getPluginConfiguration().getSimple(DIRECTIVE_INDEX_PROP).getIntegerValue();
+        
+        for(AugeasNode dir : directories) {
+            if (dir.getSeq() == index) {
+                return dir;
+            }
+        }
+        throw new IllegalStateException("No Directory directive found in the Apache configuration on the configured index.");
+    }
 }

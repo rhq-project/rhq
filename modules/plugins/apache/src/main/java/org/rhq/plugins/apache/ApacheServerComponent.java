@@ -109,8 +109,6 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
-    private AugeasTree augeasTree;
-    private AugeasProxy augeasProxy;
 
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
@@ -287,26 +285,16 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         
     }
 
-    public void loadAugeas() throws AugeasTreeException {
+    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
         AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());
         AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
-        augeasProxy = new AugeasProxy(config, builder);
+        AugeasProxy augeasProxy = new AugeasProxy(config, builder);
         augeasProxy.load();
-        augeasTree = augeasProxy.getAugeasTree("httpd", true);
-    }
-
-    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
-        if (augeasProxy == null)
-            loadAugeas();
-
         return augeasProxy;
     }
 
     public AugeasTree getAugeasTree() throws AugeasTreeException {
-        if (augeasTree == null)
-            loadAugeas();
-
-        return augeasTree;
+        return getAugeasProxy().getAugeasTree("Httpd", true);
     }
     
     /**

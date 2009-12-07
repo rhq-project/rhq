@@ -32,6 +32,8 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 
 /**
  * @author Lukas Krejci
@@ -51,8 +53,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         //first define the root server as one virtual host
         ResourceType resourceType = context.getResourceType();
 
+        Configuration mainServerPluginConfig = new Configuration();
+        PropertySimple mainServerUrl = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, 
+            context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue());
+        mainServerPluginConfig.put(mainServerUrl);
+        
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, MAIN_SERVER_RESOURCE_KEY, "Main Server",
-            null, null, new Configuration(), null);
+            null, null, mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
 
         //read the virtual hosts from augeas
@@ -64,7 +71,18 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             List<AugeasNode> hosts = ag.matchRelative(node, "address");
             String firstAddress = hosts.get(0).getValue();
             
-            StringBuilder keyBuilder = new StringBuilder(firstAddress);
+            List<AugeasNode> serverNames = node.getChildByLabel("ServerName");
+            String serverName = null;
+            if (serverNames.size() > 0) {
+                serverName = serverNames.get(0).getValue();
+            }
+            
+            StringBuilder keyBuilder = new StringBuilder();
+            if (serverName != null) {
+                keyBuilder.append(serverName).append("|");
+            }
+            keyBuilder.append(firstAddress);
+            
             Iterator<AugeasNode> it = hosts.iterator();
             it.next();
             
@@ -74,82 +92,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             String resourceKey = keyBuilder.toString();
             
-            Address address = getVirtualHostSampleAddress(ag, firstAddress);
+            Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
             String url = "http://" + address.host + ":" + address.port + "/";
             
             Configuration pluginConfiguration = new Configuration();
             PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
             pluginConfiguration.put(urlProp);
             
+            String resourceName = "VirtualHost ";
+            if (serverName != null) {
+                resourceName += serverName + ":" + address.port;
+            } else {
+                resourceName += resourceKey;
+            }
+            
             //TODO there is no simple way how to determine the RT log file. The server can listen on multiple
             //ports and vhost can be configured to listen on all of them. Also the server can listen on multiple
             //IPs and virtual host can also listen on all of them. Thus the host_port_rt.log is rather non-deterministic.
             
-            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, "Virtual Host " + resourceKey, null,
-                null, new Configuration(), null));
+            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
+                null, pluginConfiguration, null));
         }
 
         return discoveredResources;
-    }
-    
-    private Address getVirtualHostSampleAddress(AugeasTree ag, String virtualHost) {
-        if (virtualHost.startsWith("[")) {
-            //TODO IPv6 address
-            return null;
-        } else {
-            String[] hostPort = virtualHost.split(":");
-            if (hostPort.length == 1) {
-                //just address specified
-                Address addr = getMainServerSampleAddress(ag);
-                
-                addr.host = hostPort[0];
-                return addr;
-            } else {
-                String host = hostPort[0];
-                if ("*".equals(host)) {
-                    host = getMainServerSampleAddress(ag).host;
-                }
-                String port = hostPort[1];
-                return  new Address(host, Integer.parseInt(port));
-            }
-        }
-    }
-    
-    /**
-     * This just constructs a first available address under which the server or one of its virtual hosts can be reached.
-     * 
-     * @param ag the tree of the httpd configuration
-     * @return the address
-     */
-    private Address getMainServerSampleAddress(AugeasTree ag) {
-        //there has to be at least one Listen directive
-        AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
-        
-        String host = null;
-        String port = null;
-        for(AugeasNode child : listen.getChildNodes()) {
-            if (child.getLabel().equals("ip")) {
-                host = child.getValue();
-            } else if (child.getLabel().equals("port")) {
-                port = child.getValue();
-            }
-        }
-        
-        if (host != null) {
-            if (host.startsWith("[")) {
-                host = host.substring(1, host.length() - 1);
-            }
-        }
-        return new Address(host, Integer.parseInt(port));
     }    
-    
-    private static class Address {
-        public String host;
-        public int port;
-        
-        public Address(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-    }
 }

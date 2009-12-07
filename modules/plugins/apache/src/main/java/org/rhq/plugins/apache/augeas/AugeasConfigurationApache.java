@@ -53,6 +53,7 @@ public class AugeasConfigurationApache extends RhqConfig implements AugeasConfig
         return includeFiles;
     }
 
+<<<<<<< HEAD:modules/plugins/apache/src/main/java/org/rhq/plugins/apache/augeas/AugeasConfigurationApache.java
   
     public void loadIncludes(String expression){
 		    
@@ -85,6 +86,35 @@ public class AugeasConfigurationApache extends RhqConfig implements AugeasConfig
 	        }catch(Exception e){
 	        	throw new IllegalStateException(e);
 	        }
+=======
+    public void updateIncludes() throws Exception {
+
+    	
+		boolean updated = false;
+		AugeasProxy augeas = new AugeasProxy(this);
+		augeas.load();
+		
+		AugeasTree tree = augeas.getAugeasTree(module.getModuletName(), true);
+		
+		AugeasNode nd = tree.getRootNode();
+		List<AugeasNode> nds = nd.getChildNodes();
+	
+		for (AugeasNode ns : nds)
+		{
+		List<AugeasNode> nodes = tree.matchRelative(ns,"/Include");
+		for (AugeasNode node : nodes)
+		{
+			String value = node.getValue();
+			if (!module.getIncludedGlobs().contains(value))
+			{
+				module.addIncludedGlob(value);
+				updated = true;
+			}
+		}
+		}
+		if (updated)
+			updateIncludes();		
+>>>>>>> e6d33692e86119a1c8a9c8278e5240131b84b5f3:modules/plugins/apache/src/main/java/org/rhq/plugins/apache/augeas/AugeasConfigurationApache.java
     }
     
 	public void loadFiles() {

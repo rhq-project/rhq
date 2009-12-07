@@ -653,7 +653,8 @@
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
             <resource-configuration>
-                <c:simple-property name="regexp" type="boolean" default="false"/>
+                <c:simple-property name="~" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
+                                   description="Does the name of this directory denote a regular expression?"/>
                 &Order;
                 &Allow;
                 &Deny;

@@ -27,7 +27,7 @@
 '>
 
 <!ENTITY CustomLogs '
-    <c:list-property name="CustomLogs" displayName="Request logs">
+    <c:list-property name="CustomLog" displayName="Request logs">
         <c:description>
         Configure the logging of requests to the server.
         </c:description>
@@ -77,7 +77,7 @@
 '>
 
 <!ENTITY ErrorDocuments '
-    <c:list-property name="ErrorDocuments">
+    <c:list-property name="ErrorDocument">
         <c:description>
             In the event of a problem or error, Apache can be configured to do one of four things,
                1. output a simple hardcoded error message,
@@ -408,7 +408,7 @@
       <event name="errorLogEntry" description="an entry in the error log file"/>
 
       <resource-configuration>
-        <c:list-property name="ListenAddresses">
+        <c:list-property name="Listen">
             <c:map-property name="Listen">
                 <c:simple-property name="ip" required="false"/>
                 <c:simple-property name="port">
@@ -626,7 +626,7 @@
 
          <resource-configuration>
             &ServerName;
-            <c:list-property name="ServerAliases">
+            <c:list-property name="ServerAlias">
                 <c:map-property name="ServerAlias">
                     <c:simple-property name="hostname"/>
                 </c:map-property>
@@ -655,7 +655,8 @@
                 &Order;
                 &Allow;
                 &Deny;
-                <c:map-property name="AllowOverride" required="false">
+                <c:list-property name="AllowOverride">
+                  <c:map-property name="AllowOverride" required="false">
                     <c:description>
                         When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
                     </c:description>
@@ -666,7 +667,8 @@
                     <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
                     <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
                     <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
-                </c:map-property>
+                  </c:map-property>
+                </c:list-property>
                 &AddDefaultCharset;
                 &DefaultType;
                 &DirectoryIndex;

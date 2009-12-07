@@ -21,25 +21,21 @@ public class AugeasToApacheConfiguration extends AugeasToConfigurationSimple {
     }
 
     public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException {
-        String value = "";
         String propertyName = propDefSimple.getName();
 
-        if (propertyName.equals(".")) {
-            return new PropertySimple(propDefSimple.getName(), node.getValue());
-        }
-
-        if (propertyName.startsWith("."))
-            propertyName = propertyName.substring(1);
-
         List<AugeasNode> simpleNode = node.getChildByLabel(propertyName);
-        if (simpleNode.isEmpty())
-            return new PropertySimple(propDefSimple.getName(), null);
-
-        for (AugeasNode nd : simpleNode) {
-            value = value + " " + nd.getValue();
+        if (simpleNode.size() > 1) {
+            throw new AugeasRhqException("Found multiple values for a simple property " + propertyName);
         }
-
-        return new PropertySimple(propDefSimple.getName(), value);
+        
+        StringBuilder valueBld = new StringBuilder();
+        List<AugeasNode> params = simpleNode.get(0).getChildByLabel("param");
+        for(AugeasNode param : params) {
+            valueBld.append(param.getValue()).append(" ");
+        }
+        valueBld.deleteCharAt(valueBld.length() - 1);
+        
+        return new PropertySimple(propertyName, valueBld.toString());
     }
 
     public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException {

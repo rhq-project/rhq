@@ -160,9 +160,9 @@
         <c:map-property name="Options">
             <c:simple-property name="Mode">
                 <c:property-options>
-                    <c:option value="Set"/>
-                    <c:option value="Add"/>
-                    <c:option value="Remove"/>
+                    <c:option value="" name="Set"/>
+                    <c:option value="+" name="Add"/>
+                    <c:option value="-" name="Remove"/>
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="Option">
@@ -203,6 +203,7 @@
         </c:description>
         <c:map-property name="Allow">
             <c:simple-property name="."/>
+            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>                
@@ -214,6 +215,7 @@
         </c:description>
         <c:map-property name="Deny">
             <c:simple-property name="."/>
+            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -629,6 +631,7 @@
             <c:list-property name="ServerAlias">
                 <c:map-property name="ServerAlias">
                     <c:simple-property name="hostname"/>
+                    <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                 </c:map-property>
             </c:list-property>
             &ServerAdmin;
@@ -655,18 +658,19 @@
                 &Order;
                 &Allow;
                 &Deny;
-                <c:list-property name="AllowOverride">
+                <c:list-property name="AllowOverride" required="false">
                   <c:map-property name="AllowOverride" required="false">
-                    <c:description>
-                        When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
-                    </c:description>
-                    <c:simple-property name="All" type="boolean" default="true" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
-                    <c:simple-property name="None" type="boolean" description=".htaccess files are completely ignored. In this case, the server will not even attempt to read .htaccess files in the filesystem."/>
-                    <c:simple-property name="AuthConfig" type="boolean" description="Allow use of the authorization directives (AuthDBMGroupFile, AuthDBMUserFile, AuthGroupFile, AuthName, AuthType, AuthUserFile, Require, etc.)."/>
-                    <c:simple-property name="FileInfo" type="boolean" description="Allow use of the directives controlling document types (DefaultType, ErrorDocument, ForceType, LanguagePriority, SetHandler, SetInputFilter, SetOutputFilter, and mod_mime Add* and Remove* directives, etc.), document meta data (Header, RequestHeader, SetEnvIf, SetEnvIfNoCase, BrowserMatch, CookieExpires, CookieDomain, CookieStyle, CookieTracking, CookieName), mod_rewrite directives RewriteEngine, RewriteOptions, RewriteBase, RewriteCond, RewriteRule) and Action from mod_actions."/>
-                    <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
-                    <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
-                    <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="All" type="boolean" default="true" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="None" type="boolean" description=".htaccess files are completely ignored. In this case, the server will not even attempt to read .htaccess files in the filesystem."/>
+                      <c:simple-property name="AuthConfig" type="boolean" description="Allow use of the authorization directives (AuthDBMGroupFile, AuthDBMUserFile, AuthGroupFile, AuthName, AuthType, AuthUserFile, Require, etc.)."/>
+                      <c:simple-property name="FileInfo" type="boolean" description="Allow use of the directives controlling document types (DefaultType, ErrorDocument, ForceType, LanguagePriority, SetHandler, SetInputFilter, SetOutputFilter, and mod_mime Add* and Remove* directives, etc.), document meta data (Header, RequestHeader, SetEnvIf, SetEnvIfNoCase, BrowserMatch, CookieExpires, CookieDomain, CookieStyle, CookieTracking, CookieName), mod_rewrite directives RewriteEngine, RewriteOptions, RewriteBase, RewriteCond, RewriteRule) and Action from mod_actions."/>
+                      <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
+                      <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
+                      <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
+                      <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                   </c:map-property>
                 </c:list-property>
                 &AddDefaultCharset;

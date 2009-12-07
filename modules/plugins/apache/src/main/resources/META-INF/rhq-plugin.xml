@@ -227,12 +227,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
-<<<<<<< HEAD:modules/plugins/apache/src/main/resources/META-INF/rhq-plugin.xml
-   <depends plugin="Augeas"/>
-=======
 
    <depends plugin="Augeas" useClasses="true"/>
->>>>>>> e6d33692e86119a1c8a9c8278e5240131b84b5f3:modules/plugins/apache/src/main/resources/META-INF/rhq-plugin.xml
    
    <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
            supportsManualAdd="true"

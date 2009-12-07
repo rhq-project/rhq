@@ -1,61 +1,53 @@
 package org.rhq.plugins.apache.augeas.mappingImpl;
 
+import java.util.List;
+
 import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasTree;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.plugins.apache.augeas.ApacheDirectiveRegExpression;
 import org.rhq.rhqtransform.AugeasRhqException;
-import org.rhq.rhqtransform.AugeasToConfiguration;
-import org.rhq.rhqtransform.NameMap;
+import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 
-public class MappingDirectivePerMap implements AugeasToConfiguration{
+public class MappingDirectivePerMap extends AugeasToConfigurationSimple {
 
-	public Property createPropertyList(PropertyDefinitionList propDefList,
-			AugeasNode node) throws AugeasRhqException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException {
+        PropertyList propList = new PropertyList(propDefList.getName());
 
-	public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap,
-			AugeasNode node) throws AugeasRhqException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        PropertyDefinition listMemberPropDef = propDefList.getMemberDefinition();
 
-	public Property createPropertySimple(
-			PropertyDefinitionSimple propDefSimple, AugeasNode node)
-			throws AugeasRhqException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        List<AugeasNode> nodes = tree.matchRelative(node, listMemberPropDef.getName());
 
-	public Property loadProperty(PropertyDefinition propDef,
-			AugeasNode parentNode) throws AugeasRhqException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        for (AugeasNode nd : nodes) {
+            propList.add(loadProperty(listMemberPropDef, nd));
+        }
 
-	public Configuration loadResourceConfiguration(AugeasNode startNode,
-			ConfigurationDefinition resourceConfigDef)
-			throws AugeasRhqException {
-		// TODO Auto-generated method stub
-		return null;
-	}
+        return propList;
+    }
 
-	public void setNameMap(NameMap nameMap) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException {
+        String directiveName = propDefMap.getName();
 
-	public void setTree(AugeasTree tree) {
-		// TODO Auto-generated method stub
-		
-	}
+        List<String> params = ApacheDirectiveRegExpression.getParams(node);
+
+        PropertyMap map = new PropertyMap(directiveName);
+
+        int idx = 0;
+        for (PropertyDefinition propDef : propDefMap.getPropertyDefinitions().values()) {
+            if (propDef instanceof PropertyDefinitionSimple) {
+                String value = params.get(idx);
+                map.put(Util.createPropertySimple((PropertyDefinitionSimple) propDef, value));
+            }
+            idx++;
+        }
+        return map;
+    }
 
 }

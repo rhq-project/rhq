@@ -91,6 +91,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY = "errorLogMinimumSeverity";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
 
+    public static final String AUXILIARY_INDEX_PROP = "_index";
+    
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
 
     public static final String DEFAULT_EXECUTABLE_PATH = "bin" + File.separator

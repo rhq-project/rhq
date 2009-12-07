@@ -49,9 +49,6 @@
 <tiles:insert page="/admin/config/LDAPForm.jsp"/>
 <br>
 <br>
-<tiles:insert page="/admin/config/SNMPForm.jsp"/>
-<br>
-<br>
 <tiles:insert page="/admin/config/ServerConfigForm.jsp"/>
 
 <%--<tiles:insert page="/admin/config/MiscForm.jsp"/>--%>

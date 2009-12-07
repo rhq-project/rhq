@@ -39,11 +39,11 @@
       </f:facet>
 
       <h:panelGrid columns="1" width="100%">
-      <rich:tabPanel>
+      <rich:tabPanel switchType="ajax" selectedTab="#{InstalledPluginsSessionUIBean.selectedTab}">
       
       <!-- ========== AGENT PLUGINS TAB ========== -->
 
-      <rich:tab label="Agent Plugins">
+      <rich:tab name="AGENT" label="Agent Plugins">
 
          <rich:dataTable id="agentPluginsDataTable"
                          value="#{InstalledPluginsUIBean.installedAgentPlugins}"
@@ -131,7 +131,7 @@
 
       <!-- ========== SERVER PLUGINS TAB ========== -->
 
-      <rich:tab label="Server Plugins">
+      <rich:tab name="SERVER" label="Server Plugins">
 
          <rich:dataTable id="serverPluginsDataTable"
                          value="#{InstalledPluginsUIBean.installedServerPlugins}"
@@ -166,7 +166,7 @@
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml">
                   <f:param name="plugin" value="#{serverPlugin.name}"/>
                   <f:param name="deployment" value="SERVER"/>
                   <f:param name="pluginType" value="#{serverPlugin.type}"/>

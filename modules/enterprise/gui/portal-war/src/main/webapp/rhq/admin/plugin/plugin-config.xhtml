@@ -20,6 +20,7 @@
 
             .col2 {
                 width: 80%;
+                vertical-align: top;
             }
         </style>
     </ui:define>
@@ -91,6 +92,22 @@
                         <onc:config configurationDefinition="#{pluginConfigUIBean.scheduledJobsDefinition}"
                                     configuration="#{pluginConfigUIBean.plugin.scheduledJobsConfiguration}"
                                     readOnly="true" />
+                    </rich:panel>
+
+                    <rich:panel id="noConfigMessage" 
+                                rendered="#{not pluginConfigUIBean.editable and pluginConfigUIBean.plugin != null}"
+                                style="background: #EEEEEE;">
+                        <h:outputText escape="true" value="#{pluginConfigUIBean.plugin.displayName} has no configuration. " />
+                        <br />
+                        <br />
+                        <h:outputText value="See the " />
+                        <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                            <h:outputText value="#{pluginConfigUIBean.plugin.displayName} details page"/>
+                        </h:outputLink>
+                        <h:outputText value=" for more plugin information." />
                     </rich:panel>
 
                     <h:panelGroup id="pluginButtons" rendered="#{pluginConfigUIBean.editable}">

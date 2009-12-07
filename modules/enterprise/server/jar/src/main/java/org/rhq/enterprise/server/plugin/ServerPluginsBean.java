@@ -64,7 +64,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * A server API into the server plugin infrastructure.
- * 
+ *
  * @author John Mazzitelli
  */
 @Stateless

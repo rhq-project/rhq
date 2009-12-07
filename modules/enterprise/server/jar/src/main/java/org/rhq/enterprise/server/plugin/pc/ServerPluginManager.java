@@ -37,17 +37,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Provides functionality to manage plugins for a plugin container. Plugin containers
  * can install their own plugin managers that are extensions to this class if they need to.
- * 
+ *
  * Most of the methods here are protected; they are meant for the plugin container's use only.
  * Usually, anything an external client needs will be done through a delegation method
  * found on the plugin container.
- * 
+ *
  * @author John Mazzitelli
  */
 //TODO: need a R/W lock to make this class thread safe
@@ -81,7 +80,7 @@ public class ServerPluginManager {
 
     /**
      * Creates a plugin manager for the given plugin container.
-     * 
+     *
      * @param pc the plugin manager's owning plugin container
      */
     public ServerPluginManager(AbstractTypeServerPluginContainer pc) {
@@ -94,7 +93,7 @@ public class ServerPluginManager {
 
     /**
      * Returns the plugin container that whose plugins are managed by this manager.
-     * 
+     *
      * @return the plugin container that owns this plugin manager
      */
     public AbstractTypeServerPluginContainer getParentPluginContainer() {
@@ -113,7 +112,7 @@ public class ServerPluginManager {
 
     /**
      * Given a plugin name, this returns that plugin's environment.
-     * 
+     *
      * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
      * (e.g. &ltserver-plugin name="thePluginName").</p>
      *
@@ -126,7 +125,7 @@ public class ServerPluginManager {
 
     /**
      * Initializes the plugin manager to prepare it to start loading plugins.
-     * 
+     *
      * @throws Exception if failed to initialize
      */
     protected void initialize() throws Exception {
@@ -351,12 +350,12 @@ public class ServerPluginManager {
     /**
      * Returns the main plugin component instance that is responsible for initializing and managing
      * the plugin. This will return <code>null</code> if a plugin has not defined a plugin component.
-     * 
+     *
      * @param pluginName the name of the plugin whose plugin component is to be returned
-     * 
+     *
      * @return the plugin component instance that initialized and is managing a plugin. Will
-     *         return <code>null</code> if the plugin has not defined a plugin component. 
-     *         <code>null</code> is also returned if the plugin is not initialized yet. 
+     *         return <code>null</code> if the plugin has not defined a plugin component.
+     *         <code>null</code> is also returned if the plugin is not initialized yet.
      */
     protected ServerPluginComponent getServerPluginComponent(String pluginName) {
         return this.pluginComponentCache.get(pluginName);
@@ -401,7 +400,7 @@ public class ServerPluginManager {
     /**
      * Given a plugin environment, this will rebuild a new one with up-to-date information.
      * This means the descriptor will be reparsed.
-     * 
+     *
      * @param env the original environment
      * @return the new environment that has been rebuild from the original but has newer data
      * @throws Exception if the environment could not be rebuilt - probably due to an invalid descriptor
@@ -418,7 +417,7 @@ public class ServerPluginManager {
     /**
      * Given a plugin environment, return its {@link ServerPlugin} representation, which should also include
      * the plugin configuration and scheduled jobs configuration.
-     * 
+     *
      * @param pluginEnv
      * @return the ServerPlugin object for the given plugin
      */
@@ -450,9 +449,10 @@ public class ServerPluginManager {
         String pluginName = environment.getPluginKey().getPluginName();
         ServerPluginComponent instance = null;
 
-        ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();
-        if (componentXml != null) {
-            String className = componentXml.getClazz();
+        ServerPluginDescriptorType descriptor = environment.getPluginDescriptor();
+        String className = ServerPluginDescriptorMetadataParser.getPluginComponentClassName(descriptor);
+
+        if (className != null) {
             log.debug("Creating plugin component [" + className + "] for plugin [" + pluginName + "]");
             instance = (ServerPluginComponent) instantiatePluginClass(environment, className);
             log.debug("Plugin component created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
@@ -464,7 +464,7 @@ public class ServerPluginManager {
     /**
      * Instantiates a class with the given name within the given environment's classloader using
      * the class' no-arg constructor.
-     * 
+     *
      * @param environment the environment that has the classloader where the class will be loaded
      * @param className the class to instantiate
      * @return the new object that is an instance of the given class
@@ -473,11 +473,6 @@ public class ServerPluginManager {
     protected Object instantiatePluginClass(ServerPluginEnvironment environment, String className) throws Exception {
 
         ClassLoader loader = environment.getPluginClassLoader();
-
-        String pkg = environment.getPluginDescriptor().getPackage();
-        if ((className.indexOf('.') == -1) && (pkg != null)) {
-            className = pkg + '.' + className;
-        }
 
         log.debug("Loading server plugin class [" + className + "]...");
 

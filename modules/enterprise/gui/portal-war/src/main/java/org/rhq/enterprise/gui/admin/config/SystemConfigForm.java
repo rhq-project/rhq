@@ -64,20 +64,6 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String ldapPassword = "";
     private Boolean ldapEnabled = null;
     private boolean reindex = false;
-    private String snmpAuthProtocol = "";
-    private String snmpAuthPassphrase = "";
-    private String snmpPrivacyPassphrase = "";
-    private String snmpCommunity = "";
-    private String snmpEngineID = "";
-    private String snmpContextName = "";
-    private String snmpSecurityName = "";
-    private String snmpTrapOID = "";
-    private String snmpEnterpriseOID = "";
-    private String snmpGenericID = "";
-    private String snmpSpecificID = "";
-    private String snmpAgentAddress = "";
-    private String snmpVersion = "";
-    private String snmpPrivacyProtocol = "";
 
     @Override
     public String toString() {
@@ -97,20 +83,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" ldapSearchFilter=").append(ldapSearchFilter);
         buf.append(" ldapUsername=").append(ldapUsername);
         buf.append(" ldapPassword=").append(ldapPassword);
-        buf.append(" snmpAuthProtocol =").append(snmpAuthProtocol);
-        buf.append(" snmpAuthPassphrase =").append(snmpAuthPassphrase);
-        buf.append(" snmpPrivacyPassphrase =").append(snmpPrivacyPassphrase);
-        buf.append(" snmpCommunity =").append(snmpCommunity);
-        buf.append(" snmpEngineID =").append(snmpEngineID);
-        buf.append(" snmpContextName =").append(snmpContextName);
-        buf.append(" snmpSecurityName =").append(snmpSecurityName);
-        buf.append(" snmpTrapOID =").append(snmpTrapOID);
-        buf.append(" snmpEnterpriseOID =").append(snmpEnterpriseOID);
-        buf.append(" snmpGenericID =").append(snmpGenericID);
-        buf.append(" snmpSpecificID =").append(snmpSpecificID);
-        buf.append(" snmpAgentAddress =").append(snmpAgentAddress);
-        buf.append(" snmpVersion =").append(snmpVersion);
-        buf.append(" snmpPrivacyProtocol =").append(snmpPrivacyProtocol);
 
         return buf.toString();
     }
@@ -153,20 +125,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapSearchFilter = "";
         ldapUsername = "";
         ldapPassword = "";
-        snmpAuthProtocol = "";
-        snmpAuthPassphrase = "";
-        snmpPrivacyPassphrase = "";
-        snmpCommunity = "";
-        snmpEngineID = "";
-        snmpContextName = "";
-        snmpSecurityName = "";
-        snmpTrapOID = "";
-        snmpEnterpriseOID = "";
-        snmpGenericID = "";
-        snmpSpecificID = "";
-        snmpAgentAddress = "";
-        snmpVersion = "";
-        snmpPrivacyProtocol = "";
 
         super.reset(mapping, request);
     }
@@ -264,20 +222,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         String jaasProvider = prop.getProperty(RHQConstants.JAASProvider);
         ldapEnabled = RHQConstants.LDAPJAASProvider.equals(jaasProvider) ? Boolean.TRUE : null;
 
-        snmpAuthProtocol = prop.getProperty(RHQConstants.SNMPAuthProtocol);
-        snmpAuthPassphrase = prop.getProperty(RHQConstants.SNMPAuthPassphrase);
-        snmpPrivacyPassphrase = prop.getProperty(RHQConstants.SNMPPrivacyPassphrase);
-        snmpCommunity = prop.getProperty(RHQConstants.SNMPCommunity);
-        snmpEngineID = prop.getProperty(RHQConstants.SNMPEngineID);
-        snmpContextName = prop.getProperty(RHQConstants.SNMPContextName);
-        snmpSecurityName = prop.getProperty(RHQConstants.SNMPSecurityName);
-        snmpTrapOID = prop.getProperty(RHQConstants.SNMPTrapOID);
-        snmpEnterpriseOID = prop.getProperty(RHQConstants.SNMPEnterpriseOID);
-        snmpGenericID = prop.getProperty(RHQConstants.SNMPGenericID);
-        snmpSpecificID = prop.getProperty(RHQConstants.SNMPSpecificID);
-        snmpAgentAddress = prop.getProperty(RHQConstants.SNMPAgentAddress);
-        snmpVersion = prop.getProperty(RHQConstants.SNMPVersion);
-        snmpPrivacyProtocol = prop.getProperty(RHQConstants.SNMPPrivacyProtocol);
     }
 
     /**
@@ -376,31 +320,6 @@ public class SystemConfigForm extends BaseValidatorForm {
             prop.setProperty(RHQConstants.JAASProvider, RHQConstants.LDAPJAASProvider);
         } else {
             prop.setProperty(RHQConstants.JAASProvider, RHQConstants.JDBCJAASProvider);
-        }
-
-        prop.setProperty(RHQConstants.SNMPVersion, snmpVersion);
-
-        if (snmpVersion.length() > 0) {
-            prop.setProperty(RHQConstants.SNMPTrapOID, snmpTrapOID);
-
-            if ("3".equals(snmpVersion)) {
-                prop.setProperty(RHQConstants.SNMPAuthProtocol, snmpAuthProtocol);
-                prop.setProperty(RHQConstants.SNMPAuthPassphrase, snmpAuthPassphrase);
-                prop.setProperty(RHQConstants.SNMPPrivacyPassphrase, snmpPrivacyPassphrase);
-                prop.setProperty(RHQConstants.SNMPPrivacyProtocol, snmpPrivacyProtocol);
-                prop.setProperty(RHQConstants.SNMPContextName, snmpContextName);
-                prop.setProperty(RHQConstants.SNMPSecurityName, snmpSecurityName);
-            } else {
-                prop.setProperty(RHQConstants.SNMPCommunity, snmpCommunity);
-
-                if ("1".equals(snmpVersion)) {
-                    prop.setProperty(RHQConstants.SNMPEngineID, snmpEngineID);
-                    prop.setProperty(RHQConstants.SNMPEnterpriseOID, snmpEnterpriseOID);
-                    prop.setProperty(RHQConstants.SNMPGenericID, snmpGenericID);
-                    prop.setProperty(RHQConstants.SNMPSpecificID, snmpSpecificID);
-                    prop.setProperty(RHQConstants.SNMPAgentAddress, snmpAgentAddress);
-                }
-            }
         }
 
         return prop;
@@ -664,117 +583,6 @@ public class SystemConfigForm extends BaseValidatorForm {
         this.reindex = reindex;
     }
 
-    public String getSnmpAgentAddress() {
-        return snmpAgentAddress;
-    }
-
-    public void setSnmpAgentAddress(String snmpAgentAddress) {
-        this.snmpAgentAddress = snmpAgentAddress;
-    }
-
-    public String getSnmpAuthPassphrase() {
-        return snmpAuthPassphrase;
-    }
-
-    public void setSnmpAuthPassphrase(String snmpAuthPassphrase) {
-        this.snmpAuthPassphrase = snmpAuthPassphrase;
-    }
-
-    public String getSnmpAuthProtocol() {
-        return snmpAuthProtocol;
-    }
-
-    public void setSnmpAuthProtocol(String snmpAuthProtocol) {
-        this.snmpAuthProtocol = snmpAuthProtocol;
-    }
-
-    public String getSnmpCommunity() {
-        return snmpCommunity;
-    }
-
-    public void setSnmpCommunity(String snmpCommunity) {
-        this.snmpCommunity = snmpCommunity;
-    }
-
-    public String getSnmpContextName() {
-        return snmpContextName;
-    }
-
-    public void setSnmpContextName(String snmpContextName) {
-        this.snmpContextName = snmpContextName;
-    }
-
-    public String getSnmpEngineID() {
-        return snmpEngineID;
-    }
-
-    public void setSnmpEngineID(String snmpEngineID) {
-        this.snmpEngineID = snmpEngineID;
-    }
-
-    public String getSnmpEnterpriseOID() {
-        return snmpEnterpriseOID;
-    }
-
-    public void setSnmpEnterpriseOID(String snmpEnterpriseOID) {
-        this.snmpEnterpriseOID = snmpEnterpriseOID;
-    }
-
-    public String getSnmpGenericID() {
-        return snmpGenericID;
-    }
-
-    public void setSnmpGenericID(String snmpGenericID) {
-        this.snmpGenericID = snmpGenericID;
-    }
-
-    public String getSnmpPrivacyPassphrase() {
-        return snmpPrivacyPassphrase;
-    }
-
-    public void setSnmpPrivacyPassphrase(String snmpPrivacyPassphrase) {
-        this.snmpPrivacyPassphrase = snmpPrivacyPassphrase;
-    }
-
-    public String getSnmpPrivacyProtocol() {
-        return snmpPrivacyProtocol;
-    }
-
-    public void setSnmpPrivacyProtocol(String snmpPrivacyProtocol) {
-        this.snmpPrivacyProtocol = snmpPrivacyProtocol;
-    }
-
-    public String getSnmpSecurityName() {
-        return snmpSecurityName;
-    }
-
-    public void setSnmpSecurityName(String snmpSecurityName) {
-        this.snmpSecurityName = snmpSecurityName;
-    }
-
-    public String getSnmpSpecificID() {
-        return snmpSpecificID;
-    }
-
-    public void setSnmpSpecificID(String snmpSpecificID) {
-        this.snmpSpecificID = snmpSpecificID;
-    }
-
-    public String getSnmpTrapOID() {
-        return snmpTrapOID;
-    }
-
-    public void setSnmpTrapOID(String snmpTrapOID) {
-        this.snmpTrapOID = snmpTrapOID;
-    }
-
-    public String getSnmpVersion() {
-        return snmpVersion;
-    }
-
-    public void setSnmpVersion(String snmpVersion) {
-        this.snmpVersion = snmpVersion;
-    }
 
     /* (non-Javadoc)
      * @see org.apache.struts.action.ActionForm#validate(org.apache.struts.action.ActionMapping,
@@ -786,17 +594,6 @@ public class SystemConfigForm extends BaseValidatorForm {
 
         if (errors == null) {
             errors = new ActionErrors();
-        }
-
-        if (!empty(snmpVersion) && "3".equals(snmpVersion) && !empty(snmpAuthProtocol) && empty(snmpAuthPassphrase)) {
-            ActionMessage errorMessage = new ActionMessage("admin.settings.SNMPAuthPassphrase");
-            errors.add("snmpAuthPassphrase", errorMessage);
-        }
-
-        if (!empty(snmpVersion) && "3".equals(snmpVersion) && !empty(snmpPrivacyProtocol)
-            && empty(snmpPrivacyPassphrase)) {
-            ActionMessage errorMessage = new ActionMessage("admin.settings.SNMPPrivPassphrase");
-            errors.add("snmpPrivacyPassphrase", errorMessage);
         }
 
         if (!empty(baselineDataSetVal)) {

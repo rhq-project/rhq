@@ -30,9 +30,13 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.client.ClientMain;
+import org.rhq.enterprise.client.commands.ScriptCommand;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
+import javax.script.Bindings;
+import javax.script.ScriptContext;
+import javax.script.ScriptEngine;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -137,5 +141,15 @@ public class ScriptUtil {
         }
 
         return history;
+    }
+
+    public boolean isDefined(String identifier) {
+        ScriptCommand cmd = (ScriptCommand) client.getCommands().get("exec");
+        ScriptEngine scriptEngine = cmd.getScriptEngine();
+
+        Bindings engineBindings = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
+        Bindings globalBindings = scriptEngine.getBindings(ScriptContext.GLOBAL_SCOPE);
+
+        return engineBindings.containsKey(identifier) || globalBindings.containsKey(identifier);
     }
 }

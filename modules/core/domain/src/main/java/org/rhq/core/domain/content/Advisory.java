@@ -1,14 +1,18 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
@@ -74,6 +78,15 @@ public class Advisory implements Serializable {
 
     @Column(name = "LAST_MODIFIED", nullable = true)
     private long lastModifiedDate;
+
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<AdvisoryCVE> advisorycves;
+
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<AdvisoryPackage> advisorypkgs;
+
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<AdvisoryBuglist> advisorybugs;
 
     // Constructor ----------------------------------------
 
@@ -189,6 +202,30 @@ public class Advisory implements Serializable {
 
     public long getLastModifiedDate() {
         return lastModifiedDate;
+    }
+
+    public Set<AdvisoryCVE> getAdvisorycves() {
+        return advisorycves;
+    }
+
+    public void setAdvisorycves(Set<AdvisoryCVE> advisorycves) {
+        this.advisorycves = advisorycves;
+    }
+
+    public Set<AdvisoryPackage> getAdvisorypkgs() {
+        return advisorypkgs;
+    }
+
+    public void setAdvisorypkgs(Set<AdvisoryPackage> advisorypkgs) {
+        this.advisorypkgs = advisorypkgs;
+    }
+
+    public Set<AdvisoryBuglist> getAdvisorybugs() {
+        return advisorybugs;
+    }
+
+    public void setAdvisorybugs(Set<AdvisoryBuglist> advisorybugs) {
+        this.advisorybugs = advisorybugs;
     }
 
     // Object Overridden Methods  --------------------------------------------

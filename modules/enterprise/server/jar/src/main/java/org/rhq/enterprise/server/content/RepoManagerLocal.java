@@ -23,6 +23,7 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
@@ -282,6 +283,11 @@ public interface RepoManagerLocal {
      * @see RepoManagerRemote#findAssociatedDistributions(Subject, int, PageControl)
      */
     PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
+
+    /**
+     * @see RepoManagerRemote#findAssociatedAdvisory(Subject, int, PageControl)
+     */
+    PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc);
 
     /**
      * Synchronize the content associated with the repoIds passed in.

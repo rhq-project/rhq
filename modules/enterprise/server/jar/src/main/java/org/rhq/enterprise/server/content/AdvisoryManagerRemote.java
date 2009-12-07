@@ -122,15 +122,11 @@ public interface AdvisoryManagerRemote {
 
     /**
      * find packages associated for a given advisory
-     * @param subject
      * @param advId
-     * @param pc
      * @return a list of package objects
      */
     @WebMethod
-    PageList<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "advId") int advId, //
-        @WebParam(name = "pc") PageControl pc);
+    List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "advId") int advId);
 
     /**
      * find CVEs associated to a given advisory
@@ -150,6 +146,23 @@ public interface AdvisoryManagerRemote {
      * @return list of AdvisoryBuglist objects
      */
     @WebMethod
-    List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject,
+    List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "advId") int advId);
+
+    /**
+     * Deletes a given instance of advisoryBuglist object.
+     * @param user
+     * @param advId
+     */
+    @WebMethod
+    void deleteAdvisoryBugList(@WebParam(name = "subject") Subject overlord, //
+        @WebParam(name = "advId") int id);
+
+    /**
+     * Deletes a given instance of advisoryPackage object.
+     * @param user
+     * @param advId
+     */
+    void deleteAdvisoryPackage(@WebParam(name = "subject") Subject user, //
         @WebParam(name = "advId") int advId);
 }

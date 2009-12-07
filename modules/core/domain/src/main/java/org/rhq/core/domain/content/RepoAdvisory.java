@@ -50,6 +50,7 @@ import javax.persistence.Table;
     @NamedQuery(name = RepoAdvisory.QUERY_FIND_BY_REPO_ID, query = "SELECT rkt FROM RepoAdvisory rkt where rkt.repo.id = :repoId ") })
 @Table(name = "RHQ_REPO_ADVISORY")
 public class RepoAdvisory implements Serializable {
+
     public static final String DELETE_BY_ADVISORY_ID = "RepoAdvisory.deleteByAdvisoryId";
     public static final String DELETE_BY_REPO_ID = "RepoAdvisory.deleteByRepoId";
     public static final String QUERY_FIND_BY_REPO_ID = "RepoAdvisory.queryFindByRepoId";
@@ -93,6 +94,22 @@ public class RepoAdvisory implements Serializable {
 
     public long getLastModified() {
         return last_modified;
+    }
+
+    public Repo getRepo() {
+        return repo;
+    }
+
+    public void setRepo(Repo repo) {
+        this.repo = repo;
+    }
+
+    public Advisory getAdvisory() {
+        return advisory;
+    }
+
+    public void setAdvisory(Advisory advisory) {
+        this.advisory = advisory;
     }
 
     @PrePersist

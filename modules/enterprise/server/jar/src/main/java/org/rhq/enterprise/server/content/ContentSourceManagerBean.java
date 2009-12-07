@@ -56,6 +56,10 @@ import org.jboss.util.StringPropertyReplacer;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.content.Advisory;
+import org.rhq.core.domain.content.AdvisoryBuglist;
+import org.rhq.core.domain.content.AdvisoryCVE;
+import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
@@ -74,6 +78,7 @@ import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoAdvisory;
 import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoPackageVersion;
@@ -94,6 +99,11 @@ import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryBugDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryCVEDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
@@ -1055,6 +1065,130 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             log.error(errorMsg, t);
             throw new RuntimeException(errorMsg, t);
         }
+
+        return syncResults;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    // we really want NEVER, but support tests that might be in a tx
+    public ContentSourceSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
+        ContentSourceSyncResults syncResults) {
+        try {
+            StringBuilder progress = new StringBuilder();
+            if (syncResults.getResults() != null) {
+                progress.append(syncResults.getResults());
+            }
+
+            syncResults = contentSourceManager._mergeAdvisorySyncReportREMOVE(contentSource, report, syncResults,
+                progress);
+
+            syncResults = contentSourceManager
+                ._mergeAdvisorySyncReportADD(contentSource, report, syncResults, progress);
+
+            // if we added/updated/deleted anything, change the last modified time of all repos
+            // that get content from this content source
+            if ((report.getAdvisory().size() > 0) || (report.getDeletedAdvisorys().size() > 0)) {
+                contentSourceManager._mergePackageSyncReportUpdateRepo(contentSource.getId());
+            }
+
+            // let our sync results object know that we completed the merge
+            // don't mark it as successful yet, let the caller do that
+            progress.append(new Date()).append(": ").append("MERGE COMPLETE.\n");
+            syncResults.setResults(progress.toString());
+            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        } catch (Throwable t) {
+            // ThrowableUtil will dump SQL nextException messages, too
+            String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
+                + ThrowableUtil.getAllMessages(t);
+            log.error(errorMsg, t);
+            throw new RuntimeException(errorMsg, t);
+        }
+
+        return syncResults;
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
+        ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        List<AdvisoryDetails> newDetails = report.getAdvisory();
+        for (AdvisoryDetails detail : newDetails) {
+            try {
+
+                log.debug("Attempting to create new distribution based off of: " + detail);
+                //istributionType distType = advManager.getDistributionTypeByName(detail.getDistributionType());
+                Advisory newAdv = advManager.createAdvisory(overlord, detail.getAdvisory(), detail.getAdvisory_type(),
+                    detail.getAdvisory_name());
+                log.debug("Created new distribution: " + newAdv);
+                Repo repo = repoManager.getRepo(overlord, report.getRepoId());
+                RepoAdvisory repoAdv = new RepoAdvisory(repo, newAdv);
+                log.debug("Created new mapping of RepoAdvisory repoId = " + repo.getId() + ", distId = "
+                    + newAdv.getId());
+                entityManager.persist(repoAdv);
+                // persist pkgs associated with an errata
+                List<AdvisoryPackageDetails> pkgs = detail.getPkgs();
+                for (AdvisoryPackageDetails pkg : pkgs) {
+                    AdvisoryPackage apkg = new AdvisoryPackage(pkg.getAdvisory(), pkg.getPkg());
+                    entityManager.persist(apkg);
+                    entityManager.flush();
+                }
+                // persist cves associated with an errata
+                List<AdvisoryCVEDetails> cves = detail.getCVEs();
+                for (AdvisoryCVEDetails cve : cves) {
+                    AdvisoryCVE acve = new AdvisoryCVE(cve.getAdvisory(), cve.getCVE());
+                    entityManager.persist(acve);
+                    entityManager.flush();
+                }
+
+                List<AdvisoryBugDetails> abugs = detail.getBugs();
+                for (AdvisoryBugDetails abug : abugs) {
+                    AdvisoryBuglist abuglist = new AdvisoryBuglist(abug.getAdvisory(), abug.getBugs());
+                    entityManager.persist(abuglist);
+                    entityManager.flush();
+                }
+
+            } catch (AdvisoryException e) {
+                progress.append("Caught exception when trying to add: " + detail.getAdvisory() + "\n");
+                progress.append("Error is: " + e.getMessage());
+                syncResults.setResults(progress.toString());
+                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                log.error(e);
+            }
+        }
+        return syncResults;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public ContentSourceSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource,
+        AdvisorySyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+
+        progress.append(new Date()).append(": ").append("Removing");
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+
+        AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        // remove all advisories that are no longer available on the remote repository
+        for (AdvisoryDetails advDetails : report.getDeletedAdvisorys()) {
+            Advisory nukeAdv = advManager.getAdvisoryByName(advDetails.getAdvisory());
+            advManager.deleteAdvisoryCVE(overlord, nukeAdv.getId());
+            advManager.deleteAdvisoryPackage(overlord, nukeAdv.getId());
+            advManager.deleteAdvisoryBugList(overlord, nukeAdv.getId());
+            advManager.deleteAdvisoryByAdvId(overlord, nukeAdv.getId());
+
+            progress.append("Removed advisory & advisory cves for: " + advDetails.getAdvisory());
+            syncResults.setResults(progress.toString());
+            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        }
+
+        progress.append("Finished Advisory removal...").append('\n');
+        syncResults.setResults(progress.toString());
+        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
 
         return syncResults;
     }

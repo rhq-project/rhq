@@ -168,6 +168,41 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     }
 
+    public void deleteAdvisoryPackage(Subject user, int advId) {
+        log.debug("User [" + user + "] is deleting CVE [" + advId + "]");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        entityManager.createNamedQuery(AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID).setParameter("advId", advId)
+            .executeUpdate();
+
+        AdvisoryPackage advpkg = entityManager.find(AdvisoryPackage.class, advId);
+        if (advpkg != null) {
+            entityManager.remove(advpkg);
+            log.debug("User [" + user + "] deleted CVE [" + advpkg + "]");
+        } else {
+            log.debug("Advisory ID [" + advId + "] doesn't exist - nothing to delete");
+        }
+    }
+
+    public void deleteAdvisoryBugList(Subject user, int advId) {
+        log.debug("User [" + user + "] is deleting CVE [" + advId + "]");
+
+        entityManager.flush();
+        entityManager.clear();
+
+        entityManager.createNamedQuery(AdvisoryBuglist.DELETE_BY_ADV_ID).setParameter("advId", advId).executeUpdate();
+
+        AdvisoryBuglist advbugs = entityManager.find(AdvisoryBuglist.class, advId);
+        if (advbugs != null) {
+            entityManager.remove(advbugs);
+            log.debug("User [" + user + "] deleted CVE [" + advbugs + "]");
+        } else {
+            log.debug("Advisory ID [" + advId + "] doesn't exist - nothing to delete");
+        }
+    }
+
     @SuppressWarnings("unchecked")
     public Advisory getAdvisoryByName(String advlabel) {
         Query query = entityManager.createNamedQuery(Advisory.QUERY_FIND_BY_ADV);
@@ -189,13 +224,17 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
      */
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc) {
+    public List<AdvisoryPackage> findPackageByAdvisory(int advId) {
         Query query = entityManager.createNamedQuery(AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID);
 
         query.setParameter("advId", advId);
         List<AdvisoryPackage> results = query.getResultList();
-        long count = getPackageCountFromAdv(subject, advId);
-        return new PageList<AdvisoryPackage>(results, (int) count, pc);
+
+        if (results.size() > 0) {
+            return results;
+        } else {
+            return null;
+        }
 
     }
 

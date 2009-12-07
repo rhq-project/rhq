@@ -39,6 +39,7 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
@@ -413,6 +414,19 @@ public interface ContentSourceManagerLocal {
     ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
         ContentSourceSyncResults syncResults);
 
+    /**
+     * After a sync has happened, this is responsible for persisting the results.
+     *
+     * @param  contentSource content source that was just sync'ed
+     * @param  report        information on what the current inventory should look like
+     * @param  syncResults   sync results object that should be updated to track this method's progress
+     *
+     * @return the updated syncResults that includes more summary information in the results string that indicates what
+     *         was done
+     */
+    ContentSourceSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
+        ContentSourceSyncResults syncResults);
+
     void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
     ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
@@ -433,6 +447,12 @@ public interface ContentSourceManagerLocal {
 
     ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
         DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
+
+    ContentSourceSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
+        ContentSourceSyncResults syncResults, StringBuilder progress);
+
+    ContentSourceSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource, AdvisorySyncReport report,
+        ContentSourceSyncResults syncResults, StringBuilder progress);
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource

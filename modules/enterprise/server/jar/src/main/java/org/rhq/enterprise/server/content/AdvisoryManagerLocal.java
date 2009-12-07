@@ -109,12 +109,10 @@ public interface AdvisoryManagerLocal {
 
     /**
      * find packages associated for a given advisory
-     * @param subject
      * @param advId
-     * @param pc
      * @return a list of package objects
      */
-    PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc);
+    List<AdvisoryPackage> findPackageByAdvisory(int advId);
 
     /**
      * find CVEs associated to a given advisory
@@ -132,4 +130,18 @@ public interface AdvisoryManagerLocal {
      * @return list of AdvisoryBuglist objects
      */
     List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(Subject subject, int advId);
+
+    /**
+     * Deletes a given instance of advisoryBuglist object.
+     * @param user
+     * @param advId
+     */
+    void deleteAdvisoryBugList(Subject overlord, int id);
+
+    /**
+     * Deletes a given instance of advisoryPackage object.
+     * @param user
+     * @param advId
+     */
+    void deleteAdvisoryPackage(Subject user, int advId);
 }

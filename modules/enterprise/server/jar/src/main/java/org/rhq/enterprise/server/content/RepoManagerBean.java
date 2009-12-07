@@ -38,12 +38,14 @@ import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoAdvisory;
 import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoGroup;
@@ -886,6 +888,36 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         return new PageList<Distribution>(distros, (int) count, pc);
 
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @SuppressWarnings("unchecked")
+    public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc) {
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID, pc);
+
+        query.setParameter("repoId", repoid);
+
+        List<RepoAdvisory> results = query.getResultList();
+
+        ArrayList<Advisory> advs = new ArrayList();
+        for (RepoAdvisory result : results) {
+            advs.add(result.getRepoAdvisoryPK().getAdvisory());
+
+        }
+        long count = getAdvisoryCountFromRepo(subject, repoid);
+
+        return new PageList<Advisory>(advs, (int) count, pc);
+
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public long getAdvisoryCountFromRepo(Subject subject, int repoId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID);
+
+        countQuery.setParameter("repoId", repoId);
+
+        return ((Long) countQuery.getSingleResult()).longValue();
     }
 
     public String calculateSyncStatus(Subject subject, int repoId) {

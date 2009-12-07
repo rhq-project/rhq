@@ -167,6 +167,12 @@ public class Repo implements Serializable, Taggable {
     // latest appears first, oldest last
     private List<RepoSyncResults> syncResults;
 
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoDistribution> repoDistributions;
+
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoAdvisory> repoAdvisories;
+
     @Transient
     private String syncStatus;
 
@@ -332,6 +338,25 @@ public class Repo implements Serializable, Taggable {
      */
     public Set<RepoContentSource> getRepoContentSources() {
         return repoContentSources;
+    }
+
+    /**
+     * Returns the explicit mapping entities.
+     *
+     * @return the mapping entities
+     *
+     * @see    #getContentSources()
+     */
+    public Set<RepoDistribution> getRepoDistributions() {
+        return repoDistributions;
+    }
+
+    public Set<RepoAdvisory> getRepoAdvisories() {
+        return repoAdvisories;
+    }
+
+    public void setRepoAdvisories(Set<RepoAdvisory> repoAdvisories) {
+        this.repoAdvisories = repoAdvisories;
     }
 
     /**

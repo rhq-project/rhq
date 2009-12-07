@@ -25,6 +25,7 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
@@ -261,6 +262,19 @@ public interface RepoManagerRemote {
      */
     @WebMethod
     PageList<Distribution> findAssociatedDistributions( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "repoId") int repoId, //
+        @WebParam(name = "pageControl") PageControl pc);
+
+    /**
+     * gets a list of all associated advisory
+     * @param subject
+     * @param resourceId
+     * @param pc
+     * @return
+     */
+    @WebMethod
+    PageList<Advisory> findAssociatedAdvisory( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "repoId") int repoId, //
         @WebParam(name = "pageControl") PageControl pc);

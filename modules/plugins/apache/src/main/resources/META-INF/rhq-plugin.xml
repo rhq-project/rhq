@@ -20,7 +20,6 @@
         </c:description>
         <c:map-property name="Alias">
             <c:simple-property name="." description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
-            <c:simple-property name="regex" type="boolean" default="false" description="Is the url-path a regular expression or not"/>
             <c:simple-property name="directory" description="The path on the filesystem that will serve content for given url-path."/>
         </c:map-property> 
     </c:list-property>

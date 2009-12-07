@@ -15,7 +15,7 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
 
 	private AugeasTree tree;
 	
-	public void updateAugeas(AugeasNode node,Configuration config,ConfigurationDefinition configDef){
+	public Configuration resourceConfigDef(AugeasNode node,ConfigurationDefinition configDef){
 
         Configuration resourceConfig = new Configuration();
 
@@ -31,6 +31,7 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
         		resourceConfig.put(prop);
         	}
         }
+        return resourceConfig;
 	}
 	
     public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef) {

@@ -30,6 +30,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -297,5 +298,17 @@ public interface RepoManagerLocal {
      * @throws Exception if there is an error connecting with the plugin container
      */
     int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+
+    /**
+     * Creates a new sync results object. Note that this will return <code>null</code> if the given results object has a
+     * status of INPROGRESS but there is already a sync results object that is still INPROGRESS and has been in that
+     * state for less than 24 hours. Use this to prohibit the system from synchronizing on the same content source
+     * concurrently.
+     *
+     * @param  results the results that should be persisted
+     *
+     * @return the persisted object, or <code>null</code> if another sync is currently inprogress.
+     */
+    RepoSyncResults persistRepoSyncResults(RepoSyncResults results);
 
 }

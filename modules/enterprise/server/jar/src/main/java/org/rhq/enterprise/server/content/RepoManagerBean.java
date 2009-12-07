@@ -960,4 +960,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return syncCount;
     }
 
+    @SuppressWarnings("unchecked")
+    public RepoSyncResults persistRepoSyncResults(RepoSyncResults results) {
+
+        ContentManagerHelper helper = new ContentManagerHelper(entityManager);
+        Query q = entityManager.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
+        q.setParameter("repoId", results.getRepo().getId());
+
+        return (RepoSyncResults) helper.persistSyncResults(q, results);
+    }
+
 }

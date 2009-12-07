@@ -64,7 +64,6 @@ import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DistributionType;
@@ -893,44 +892,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     public ContentSourceSyncResults persistContentSourceSyncResults(ContentSourceSyncResults results) {
+        ContentManagerHelper helper = new ContentManagerHelper(entityManager);
         Query q = entityManager.createNamedQuery(ContentSourceSyncResults.QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID);
         q.setParameter("contentSourceId", results.getContentSource().getId());
-        List<ContentSourceSyncResults> inprogressList = q.getResultList(); // will be ordered by start time descending
 
-        boolean alreadyInProgress = false; // will be true if there is already a sync in progress
-
-        if (inprogressList.size() > 0) {
-            // If there is 1 in progress and we are being asked to persist one in progress,
-            // then we either abort the persist if its recent, or we "kill" the old one by marking it failed.
-            // We mark any others after the 1st one as a failure. How can you have more than 1 inprogress at
-            // the same time? We shouldn't under normal circumstances, this is what we are trying to avoid in
-            // this method - so we mark the status as failure because we assume something drastically bad
-            // happened that left them in a bad state which will most likely never change unless we do it here.
-            // If a content source sync takes longer than 24 hours, then we've made a bad assumption here and
-            // this code needs to change - though I doubt any content source will take 24 hours to sync.
-            if (results.getStatus() == ContentSyncStatus.INPROGRESS) {
-                if ((System.currentTimeMillis() - inprogressList.get(0).getStartTime()) < (1000 * 60 * 60 * 24)) {
-                    alreadyInProgress = true;
-                    inprogressList.remove(0); // we need to leave this one as-is, so get rid of it from list
-                }
-            }
-
-            // take this time to mark all old inprogress results as failed
-            for (ContentSourceSyncResults inprogress : inprogressList) {
-                inprogress.setStatus(ContentSyncStatus.FAILURE);
-                inprogress.setEndTime(System.currentTimeMillis());
-                inprogress.setResults("This synchronization seems to have stalled or ended abnormally.");
-            }
-        }
-
-        ContentSourceSyncResults persistedResults = null; // leave it as null if something is already in progress
-
-        if (!alreadyInProgress) {
-            entityManager.persist(results);
-            persistedResults = results;
-        }
-
-        return persistedResults;
+        return (ContentSourceSyncResults) helper.persistSyncResults(q, results);
     }
 
     // we want this in its own tx so other tx's can see it immediately, even if calling method is already in a tx

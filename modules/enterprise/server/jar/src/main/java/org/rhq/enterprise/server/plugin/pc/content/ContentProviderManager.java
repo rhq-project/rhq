@@ -41,6 +41,7 @@ import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -152,6 +153,7 @@ public class ContentProviderManager {
             // at the same time. We could do it more cleverly by synchronizing on a per content source
             // basis, but I don't see a need right now to make this more complicated.
             // We can come back and revisit if we need more fine-grained locking.
+            // ZZZ
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
                 progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
@@ -162,6 +164,7 @@ public class ContentProviderManager {
                 results = new ContentSourceSyncResults(contentSource);
                 results.setResults(progress.toString());
                 results = contentSourceManager.persistContentSourceSyncResults(results);
+
             }
 
             if (results == null) {
@@ -241,6 +244,28 @@ public class ContentProviderManager {
         }
 
         // TODO: Add check to sync results tracking to make sure it's not already synccing
+        // results = contentSourceManager.persistContentSourceSyncResults(results);
+        StringBuilder progress = new StringBuilder();
+        progress.append(new Date()).append(": ");
+        progress.append("Start synchronization of Repository [").append(repo.getName()).append("]");
+        progress.append('\n');
+        progress.append(new Date()).append(": ");
+        progress.append("Getting currently known list of content source packages...");
+        RepoSyncResults results = new RepoSyncResults(repo);
+        results.setResults(progress.toString());
+        results = repoManager.persistRepoSyncResults(results);
+
+        if (results == null) {
+            // note that it technically is still possible to have concurrent syncs - if two
+            // threads running in two different servers (i.e. different VMs) both try to sync the
+            // same content source and both enter the persistContentSourceSyncResults method at
+            // the same time, you'll get two inprogress rows - this is so rare as to not care.
+            // Even if it does happen, it may still work, or
+            // one sync will get an error and rollback its tx and no harm will be done.
+            log.info("Repository [" + repo.getName()
+                + "] is already currently being synchronized, this sync request will be ignored");
+            return false;
+        }
 
         // Synchronize every content provider associated with the repo
         for (ContentSource source : repo.getContentSources()) {
@@ -249,18 +274,18 @@ public class ContentProviderManager {
             try {
                 ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source, provider);
+                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
+                    provider);
                 packageSourceSynchronizer.synchronizePackageMetadata();
                 packageSourceSynchronizer.synchronizePackageBits();
 
-                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(repo,
-                    source, provider);
+                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
+                    repo, source, provider);
                 distributionSourceSynchronizer.synchronizeDistributionMetadata();
                 distributionSourceSynchronizer.synchronizeDistributionBits();
-            }
-            catch (Exception e) {
-                log.error("Error while synchronizing repo [" + repo + "] with content provider [" +
-                    source + "]. Synchronization for the repo will continue for other providers.", e);
+            } catch (Exception e) {
+                log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
+                    + "]. Synchronization for the repo will continue for other providers.", e);
             }
         }
 

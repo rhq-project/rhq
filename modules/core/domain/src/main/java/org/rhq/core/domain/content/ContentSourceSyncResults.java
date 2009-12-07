@@ -55,7 +55,7 @@ import javax.persistence.Table;
         + "  FROM ContentSourceSyncResults cssr " + " WHERE cssr.contentSource.id = :contentSourceId ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SRC_SYNC")
-public class ContentSourceSyncResults implements Serializable {
+public class ContentSourceSyncResults implements ContentSyncResults, Serializable {
     public static final String QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getInProgressByCSId";
     public static final String QUERY_GET_ALL_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getAllByCSId";
 

@@ -54,7 +54,7 @@ import javax.persistence.Table;
         + "  FROM RepoSyncResults rssr " + " WHERE rssr.repo.id = :repoId ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_SYNC_ID_SEQ")
 @Table(name = "RHQ_REPO_SYNC")
-public class RepoSyncResults implements Serializable {
+public class RepoSyncResults implements Serializable, ContentSyncResults {
     public static final String QUERY_GET_INPROGRESS_BY_REPO_ID = "RepoSyncResults.getInProgressByRepoId";
     public static final String QUERY_GET_ALL_BY_REPO_ID = "RepoSyncResults.getAllByRepoId";
 

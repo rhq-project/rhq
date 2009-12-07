@@ -25,6 +25,7 @@ var serverName = '';
 var waitInterval = 100;
 var STRUCTURED_SERVER = 'Structured Server';
 var STRUCTURED_ANR_RAW_SERVER = 'Structured and Raw Server'
+var RAW_SERVER = 'Raw Server';
 
 if (cmdLineArgsValid()) {
     updateConfiguration();
@@ -33,26 +34,28 @@ if (cmdLineArgsValid()) {
 function cmdLineArgsValid() {
     var isValid = true;
 
-    if (!scriptUtil.isDefined('server')) {
-        println("'server' is a required argument");
-        isValid = false;
-    }
-
-    serverName = server;
-    if (!(serverName == 'structured' || serverName == 'structuredandraw')) {
-        println("server argument must be 'structured' or 'structuredandraw'");
-        isValid = false;
-    }
-
-    if (!scriptUtil.isDefined('propertyName')) {
-        println("'propertyName' is a required argument");
-        isValid = false;
-    }
-
-    if (!scriptUtil.isDefined('propertyValue')) {
-        println("'propertyValue' is a required argument\n");
-        isValid = false;
-    }
+//    if (!scriptUtil.isDefined('server')) {
+//        println("'server' is a required argument");
+//        isValid = false;
+//    }
+//
+//    serverName = server;
+//    if (!(serverName == 'structured' || serverName == 'structuredandraw' || 'raw')) {
+//        println("Invalid value for server argument. Must be one of <structured | raw | structuredandraw>");
+//        isValid = false;
+//    }
+//
+//    if (server)
+//
+//    if (!scriptUtil.isDefined('propertyName')) {
+//        println("'propertyName' is a required argument");
+//        isValid = false;
+//    }
+//
+//    if (!scriptUtil.isDefined('propertyValue')) {
+//        println("'propertyValue' is a required argument\n");
+//        isValid = false;
+//    }
 
     return isValid;
 }
@@ -65,27 +68,42 @@ function updateConfiguration() {
     var resource = findServer();
     var configuration = getLatestConfiguration(resource);
 
-    printConfiguration(resource, configuration);
-
-    if (propertyToUpdateIsUndefined(configuration)) {
-        println("The property '" + propertyName + "' is undefined. Update will abort.");
-        return;
+    if (isStructuredUpdate()) {
+        printConfiguration(resource, configuration);
+        verifyPropertyToUpdateExists(configuration)
+        applyStructuredUpdate(resource, configuration);
+    }
+    else {
+        printRawConfiguration(resource, configuration);
+        verifyRawContentExists();
+        applyRawUpdate(resource, configuration);
     }
 
-    applyUpdate(resource, configuration);
     waitForResourceConfigurationUpdateToComplete(resource.id);
 
     println("Configuration update has completed.");
     configuration = getLatestConfiguration(resource);
-    printConfiguration(resource, configuration);
+
+    if (isStructuredUpdate()) {
+        printConfiguration(resource, configuration);
+    }
+    else {
+        printRawConfiguration(resource, configuration);
+    }
 }
 
 function setServerName() {
     if (server == 'structured') {
         serverName = STRUCTURED_SERVER;
     }
-    else {
+    else if (server == 'raw') {
+        serverName = RAW_SERVER;
+    }
+    else if (server == 'structuredandraw') {
         serverName = STRUCTURED_ANR_RAW_SERVER;
+    }
+    else {
+        throw "\nInvalid value for server argument. Must be one of <structured | raw | structuredandraw>";
     }
 }
 
@@ -116,17 +134,59 @@ function printConfiguration(resource, configuration) {
     println('');
 }
 
-function propertyToUpdateIsUndefined(configuration) {
-    return configuration.getSimple(propertyName) == null;
+function printRawConfiguration(resource, configuration) {
+    var rawConfig = getRawConfig(configuration, 0);
+
+    println("Fetching the latest resource configuration for " + resource.name);
+    pretty.print(configuration);
+    println("The contents of " + rawConfig.path + ":\n");
+    println(java.lang.String(rawConfig.contents) + "\n--------------------------------------\n");
 }
 
-function applyUpdate(resource, configuration) {
+function isStructuredUpdate() {
+    return serverName == STRUCTURED_ANR_RAW_SERVER || serverName == STRUCTURED_SERVER;
+}
+
+function verifyPropertyToUpdateExists(configuration) {
+    if(configuration.getSimple(propertyName) == null) {
+        throw "\nThe property '" + propertyName + "' is undefined. Update will abort."
+    }
+}
+
+function verifyRawContentExists() {
+    if (!isDefined('contents')) {
+        throw "\n'contents' argument is required when updating " + serverName;
+    }
+}
+
+function applyStructuredUpdate(resource, configuration) {
     var property = configuration.getSimple(propertyName);
     property.stringValue = propertyValue;
 
     println("Apply resource configuration update...");
 
     ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, true);
+}
+
+function applyRawUpdate(resource, configuration) {
+    var rawConfig = getRawConfig(configuration, 0);
+
+    configuration.rawConfigurations.remove(rawConfig);
+
+    var contentsString = java.lang.String(eval(contents));
+    rawConfig.contents = contentsString.bytes;
+    configuration.rawConfigurations.add(rawConfig);
+
+    println("Apply resource configuration update...");
+
+    ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, false);
+}
+
+function getRawConfig(configuration, index) {
+    var rawConfigs = java.util.LinkedList(configuration.rawConfigurations);
+    var rawConfig = rawConfigs.get(index);
+
+    return rawConfig;
 }
 
 function waitForResourceConfigurationUpdateToComplete(resourceId) {

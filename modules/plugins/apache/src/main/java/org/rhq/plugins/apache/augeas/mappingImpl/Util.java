@@ -32,7 +32,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
  * 
  * @author Lukas Krejci
  */
-class Util {
+public class Util {
     private Util() {
         
     }

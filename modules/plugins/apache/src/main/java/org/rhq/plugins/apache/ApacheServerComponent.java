@@ -55,6 +55,7 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
@@ -271,10 +272,13 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
 
             AugeasTree tree = getAugeasTree();
-            AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-            config.setTree(tree);
-
-            return config.loadResourceConfiguration(tree.getRootNode(), resourceConfigDef);
+//            AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
+//            config.setTree(tree);
+//
+//            
+//            return config.loadResourceConfiguration(tree.getRootNode(), resourceConfigDef);
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
         } catch (Exception e) {
             log.error("Failed to load Apache configuration.", e);
             throw e;

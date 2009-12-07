@@ -19,7 +19,7 @@
             In particular, if you are creating an Alias to a directory outside of your DocumentRoot, you may need to explicitly permit access to the target directory.
         </c:description>
         <c:map-property name="Alias">
-            <c:simple-property name="." description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
+            <c:simple-property name="URL" description="URLs with a (&#37;-decoded) path beginning with this value will be mapped to local files beginning with directory-path. The value is case-sensitive, even on case-insensitive file systems."/>
             <c:simple-property name="directory" description="The path on the filesystem that will serve content for given url-path."/>
         </c:map-property> 
     </c:list-property>

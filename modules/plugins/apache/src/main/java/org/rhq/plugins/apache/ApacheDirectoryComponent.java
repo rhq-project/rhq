@@ -39,6 +39,7 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
 import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.rhqtransform.AugeasRhqException;
 
@@ -72,13 +73,15 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
         
-        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-        
-        config.setTree(tree);
+//        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
+//        
+//        config.setTree(tree);
+//
+//        return config.loadResourceConfiguration(getNode(virtualHostNode), resourceConfigDef);
 
         AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
-        
-        return config.loadResourceConfiguration(getNode(virtualHostNode), resourceConfigDef);
+        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+        return mapping.updateConfiguration(getNode(virtualHostNode), resourceConfigDef);
     }
 
     /* (non-Javadoc)

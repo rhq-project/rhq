@@ -40,7 +40,7 @@ public class ApacheDirectiveRegExpression {
 	     directiveRegex.put("Options",new String[]{"([+-])?"+"("+word+")"+ ws});	
 	     directiveRegex.put("Allow", new String[]{"from", "(?:" + wsMan + "(" + word + "))"});
 	     directiveRegex.put("Deny", new String[]{ "from", "(?:" + wsMan + "(" + word + "))"});
-	     directiveRegex.put("Listen",  new String[]{"(" + word + ")(?:" + wsMan + "(" + word + "))?"});
+	     directiveRegex.put("Listen",  new String[]{"(?:((?:\\[[a-zA-Z0-9:]+\\])|(?:[0-9\\.]+)):)?([0-9]+)(?:" + wsMan + "(" + word + "))?"});
 	     directiveRegex.put("ServerAlias", new String[]{ws+"("+word+")"});
 	     directiveRegex.put("AllowOverride", new String[]{"(All|None|Limit|Options|FileInfo|AuthConfig|Indexes)"});
 	}

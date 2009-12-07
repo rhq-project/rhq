@@ -45,6 +45,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
 import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
@@ -116,10 +117,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
         
-        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-        config.setTree(tree);
+//        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
+//        config.setTree(tree);
+//
+//        return config.loadResourceConfiguration(getNode(tree), resourceConfigDef);
 
-        return config.loadResourceConfiguration(getNode(tree), resourceConfigDef);
+        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+        return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {

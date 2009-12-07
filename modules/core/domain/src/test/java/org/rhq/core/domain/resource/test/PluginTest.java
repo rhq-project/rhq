@@ -244,6 +244,9 @@ public class PluginTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
+            Query query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
+            int originalNumberOfPlugins = query.getResultList().size();
+
             String name = "PluginTest-testPersist";
             String path = "/test/Persist";
             String displayName = "Plugin Test - testPersist";
@@ -291,7 +294,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert new String(plugin.getContent()).equals(new String(content));
 
             // test our queries that purposefully do not load in the content blob
-            Query query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
             plugin = (Plugin) query.getSingleResult();
             assert plugin != null;
@@ -350,7 +353,7 @@ public class PluginTest extends AbstractEJB3Test {
 
             // mark a plugin deleted - all of our queries should then never see it
             plugin.setStatus(PluginStatusType.DELETED);
-            em.merge(plugin);
+            plugin = em.merge(plugin);
 
             query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
@@ -364,7 +367,7 @@ public class PluginTest extends AbstractEJB3Test {
 
             query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
             results = query.getResultList();
-            assert results.size() == 0;
+            assert results.size() == originalNumberOfPlugins;
 
         } finally {
             getTransactionManager().rollback();

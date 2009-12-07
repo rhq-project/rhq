@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-roles"
+        displayName="Alert:Roles"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertRoles"
+        description="Alert sender plugin that sends alert notifications to RHQ roles"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications to RHQ roles
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Roles</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>RolesSender</plugin-class>
+
+    <custom-ui>
+        <ui-snippet-name>roles.xhtml</ui-snippet-name>
+        <backing-bean-name>RolesBackingBean</backing-bean-name>
+    </custom-ui>
+</alert-plugin>

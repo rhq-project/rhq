@@ -39,6 +39,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
         + "  FROM EmailNotification en " + " WHERE en.alertDefinition.id = :alertDefinitionId "),
     @NamedQuery(name = EmailNotification.QUERY_FIND_BY_IDS, query = "SELECT en " + "  FROM EmailNotification en "
         + " WHERE en.id IN ( :ids )") })
+@Deprecated
 public class EmailNotification extends AlertNotification {
 
     private static final long serialVersionUID = 1L;

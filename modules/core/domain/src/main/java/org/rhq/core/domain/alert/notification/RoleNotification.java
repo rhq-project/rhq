@@ -43,6 +43,7 @@ import org.rhq.core.domain.authz.Role;
         + " WHERE rn.id IN ( :ids )"),
     @NamedQuery(name = RoleNotification.QUERY_FIND_BY_ROLE_IDS, query = "SELECT rn " + "  FROM RoleNotification rn "
         + " WHERE rn.role.id IN ( :ids )") })
+@Deprecated
 public class RoleNotification extends AlertNotification {
 
     private static final long serialVersionUID = 1L;

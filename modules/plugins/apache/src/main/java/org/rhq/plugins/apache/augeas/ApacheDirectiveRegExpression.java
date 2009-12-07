@@ -6,11 +6,11 @@ import org.rhq.augeas.node.AugeasNode;
 
 public class ApacheDirectiveRegExpression {
 
-    public List<String> getParams(AugeasNode parentNodde){
+    public static List<String> getParams(AugeasNode parentNodde){
     	return null;
     }
     
-    public DirectiveMappingEnum getMappingType(String directiveName){
+    public static DirectiveMappingEnum getMappingType(String directiveName){
     	return DirectiveMappingEnum.DirectivePerMap;
     }
 }

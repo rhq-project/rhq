@@ -2210,8 +2210,8 @@
                     REFERENCES RHQ_SUBJECT(ID)
                 </statement>
             </schema-directSQL>
-            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" type="VARCHAR2"/>
-            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" type="INTEGER"/>
+            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" columnType="VARCHAR2"/>
+            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" columnType="INTEGER"/>
             <schema-directSQL>
                 <statement>
                     ALTER TABLE RHQ_ALERT_NOTIFICATION

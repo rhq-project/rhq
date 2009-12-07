@@ -64,10 +64,11 @@ public class AugeasProxy {
     }
 
     public void load() throws AugeasTreeException {
-        augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
+        config.loadFiles();
+    	augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
 
         for (AugeasModuleConfig module : config.getModules()) {
-            checkModule(module);
+          
             modules.add(module.getModuletName());
             augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
 
@@ -75,47 +76,9 @@ public class AugeasProxy {
             for (String incl : module.getConfigFiles()) {
                 augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
             }
-            idx = 1;
-
-            if (module.getExcludedGlobs() != null)
-                for (String excl : module.getExcludedGlobs()) {
-                    augeas.set("/augeas/load/" + module.getModuletName() + "/excl[" + (idx++) + "]", excl);
-                }
 
         }
         augeas.load();
-    }
-
-    private void checkModule(AugeasModuleConfig module) {
-        File root = new File(config.getRootPath());
-
-        List<String> includeGlobs = module.getIncludedGlobs();
-
-        if (includeGlobs.size() <= 0) {
-            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
-        }
-
-        List<File> files = Glob.matchAll(root, includeGlobs);
-
-        if (module.getExcludedGlobs() != null) {
-            List<String> excludeGlobs = module.getExcludedGlobs();
-            Glob.excludeAll(files, excludeGlobs);
-        }
-
-        for (File configFile : files) {
-            if (!configFile.isAbsolute()) {
-                throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
-            }
-            if (!configFile.exists()) {
-                throw new IllegalStateException("Configuration files inclusion patterns refer to a non-existent file.");
-            }
-            if (configFile.isDirectory()) {
-                throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
-            }
-            if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
-                module.addConfigFile(configFile.getAbsolutePath());
-        }
-
     }
 
     public AugeasTree getAugeasTree(String name, boolean lazy) throws AugeasTreeException {

@@ -40,4 +40,7 @@ public interface AugeasConfiguration {
     public String getLoadPath();
 
     public int getMode();
+    
+    public void loadFiles();
+    
 }

@@ -23,8 +23,11 @@
 
 package org.rhq.augeas.config;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rhq.augeas.util.Glob;
 
 /**
  * 
@@ -87,4 +90,37 @@ public class AugeasConfigurationSimple implements AugeasConfiguration {
         }
         return null;
     }
+
+	public void loadFiles() {
+		  File root = new File(getRootPath());
+
+		  for (AugeasModuleConfig module : modules){
+	        List<String> includeGlobs = module.getIncludedGlobs();
+
+	        if (includeGlobs.size() <= 0) {
+	            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
+	        }
+
+	        List<File> files = Glob.matchAll(root, includeGlobs);
+
+	        if (module.getExcludedGlobs() != null) {
+	            List<String> excludeGlobs = module.getExcludedGlobs();
+	            Glob.excludeAll(files, excludeGlobs);
+	        }
+
+	        for (File configFile : files) {
+	            if (!configFile.isAbsolute()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
+	            }
+	            if (!configFile.exists()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns refer to a non-existent file.");
+	            }
+	            if (configFile.isDirectory()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+	            }
+	            if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+	                module.addConfigFile(configFile.getAbsolutePath());
+	        }
+		  }
+	}
 }

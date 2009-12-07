@@ -79,6 +79,7 @@ public class ApacheAugeasTree implements AugeasTree {
                 }
             }
         }
+
         return matchRelative(node, expression.substring(max + 1));
     }
 

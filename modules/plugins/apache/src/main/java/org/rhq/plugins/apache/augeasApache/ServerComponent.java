@@ -71,6 +71,7 @@ public class ServerComponent implements AugeasRHQComponent<PlatformComponent>, C
             AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
             config.setTree(tree);
 
+            
             pluginConfiguration = config.loadResourceConfiguration(tree.getRootNode(), resourceConfigDef);
         } catch (Exception e) {
             log.error(e.getMessage());

@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
@@ -67,7 +66,6 @@ import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.plugins.www.util.WWWUtils;
 import org.rhq.rhqtransform.AugeasRHQComponent;
-import org.rhq.rhqtransform.AugeasRhqException;
 
 /**
  * The resource component for Apache 2.x servers.

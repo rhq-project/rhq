@@ -28,11 +28,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import net.augeas.Augeas;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
+import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.rhqtransform.AugeasRhqException;
@@ -148,5 +151,38 @@ public class RhqConfig implements AugeasConfiguration {
         }
         return null;
     }
+    
+	public void loadFiles() {
+		  File root = new File(getRootPath());
+
+		  for (AugeasModuleConfig module : modules){
+	        List<String> includeGlobs = module.getIncludedGlobs();
+
+	        if (includeGlobs.size() <= 0) {
+	            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
+	        }
+
+	        List<File> files = Glob.matchAll(root, includeGlobs);
+
+	        if (module.getExcludedGlobs() != null) {
+	            List<String> excludeGlobs = module.getExcludedGlobs();
+	            Glob.excludeAll(files, excludeGlobs);
+	        }
+
+	        for (File configFile : files) {
+	            if (!configFile.isAbsolute()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
+	            }
+	            if (!configFile.exists()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns refer to a non-existent file.");
+	            }
+	            if (configFile.isDirectory()) {
+	                throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+	            }
+	            if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+	                module.addConfigFile(configFile.getAbsolutePath());
+	        }
+		  }
+	}
 
 }

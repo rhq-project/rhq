@@ -227,7 +227,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
-
+   <depends plugin="Augeas"/>
+   
    <server name="Apache HTTP Server" discovery="ApacheServerDiscoveryComponent" class="ApacheServerComponent"
            supportsManualAdd="true"
            description="an Apache HTTP Server instance">
@@ -730,4 +731,5 @@
       </service>
 
    </server>
+
 </plugin>

@@ -37,7 +37,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -450,9 +449,10 @@ public class ServerPluginManager {
         String pluginName = environment.getPluginKey().getPluginName();
         ServerPluginComponent instance = null;
 
-        ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();
-        if (componentXml != null) {
-            String className = componentXml.getClazz();
+        ServerPluginDescriptorType descriptor = environment.getPluginDescriptor();
+        String className = ServerPluginDescriptorMetadataParser.getPluginComponentClassName(descriptor);
+
+        if (className != null) {
             log.debug("Creating plugin component [" + className + "] for plugin [" + pluginName + "]");
             instance = (ServerPluginComponent) instantiatePluginClass(environment, className);
             log.debug("Plugin component created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
@@ -473,11 +473,6 @@ public class ServerPluginManager {
     protected Object instantiatePluginClass(ServerPluginEnvironment environment, String className) throws Exception {
 
         ClassLoader loader = environment.getPluginClassLoader();
-
-        String pkg = environment.getPluginDescriptor().getPackage();
-        if ((className.indexOf('.') == -1) && (pkg != null)) {
-            className = pkg + '.' + className;
-        }
 
         log.debug("Loading server plugin class [" + className + "]...");
 

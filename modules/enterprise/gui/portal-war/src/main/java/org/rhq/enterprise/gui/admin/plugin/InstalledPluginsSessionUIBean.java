@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.admin.plugin;
 
 public class InstalledPluginsSessionUIBean {
     private boolean showAllServerPlugins = false;
+    private String selectedTab;
 
     public InstalledPluginsSessionUIBean() {
     }
@@ -38,5 +39,13 @@ public class InstalledPluginsSessionUIBean {
 
     public void hideUndeployedServerPlugins() {
         setShowAllServerPlugins(false);
+    }
+
+    public String getSelectedTab() {
+        return selectedTab;
+    }
+
+    public void setSelectedTab(String selectedTab) {
+        this.selectedTab = selectedTab;
     }
 }

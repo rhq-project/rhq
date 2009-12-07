@@ -35,8 +35,10 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -53,6 +55,34 @@ public class ServerPluginDescriptorMetadataParser {
     private static final String SCHEDULED_JOB_PROP_NAME_CONCURRENT = "concurrent";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE = "scheduleType";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER = "scheduleTrigger";
+
+    /**
+     * Returns the fully qualified class name of the plugin component.
+     * If the descriptor did not define a plugin component, this will return <code>null</code>.
+     * @param descriptor
+     *
+     * @return the name of the plugin component class, or <code>null</code> if not specified
+     */
+    public static String getPluginComponentClassName(ServerPluginDescriptorType descriptor) {
+
+        ServerPluginComponentType componentXml = descriptor.getPluginComponent();
+        if (componentXml == null) {
+            return null;
+        }
+
+        String className = componentXml.getClazz();
+        if (className == null) {
+            // this should never happen, the xml schema validation should have caught this earlier
+            throw new IllegalArgumentException("Missing plugin component classname for plugin " + descriptor.getName());
+        }
+
+        String pkg = descriptor.getPackage();
+        if ((className.indexOf('.') == -1) && (pkg != null)) {
+            className = pkg + '.' + className;
+        }
+
+        return className;
+    }
 
     /**
      * Returns the global configuration definition for the plugin. This does not include any scheduled
@@ -170,6 +200,9 @@ public class ServerPluginDescriptorMetadataParser {
             }
 
             job = new ScheduledJobDefinition(jobId, enabled, className, methodName, scheduleType, callbackData);
+        } else if (!(mapDef instanceof PropertyDefinitionList)) {
+            // mapDef isn't even a list (which would have indicated its a valid list-of-maps of jobs) - so assume its invalid 
+            throw new Exception("Invalid scheduled job definition [" + mapDef.getName() + "]");
         }
 
         return job;

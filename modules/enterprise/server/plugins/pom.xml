@@ -44,6 +44,7 @@
     <module>alert-microblog</module>
     <module>alert-roles</module>
     <module>alert-snmp</module>
+    <module>validate-all-serverplugins</module>
   </modules>
 
 </project>

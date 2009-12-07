@@ -47,7 +47,7 @@ let virtualHost = sec "VirtualHost" (directive|comment|sections)*
 
 (* FIXME: *)
 (* - Nesting of sections *)
-let lns = (directive)* (* | comment | sections | virtualHost)* *)
+let lns = (directive | comment | sections | virtualHost)*
 
 let filter =
     incl "/etc/httpd/conf/httpd.conf" .

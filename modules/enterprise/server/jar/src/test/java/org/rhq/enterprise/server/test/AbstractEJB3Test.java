@@ -48,6 +48,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
+import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
@@ -63,6 +64,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public abstract class AbstractEJB3Test extends AssertJUnit {
     @BeforeSuite(groups = "integration.ejb3")
     public static void startupEmbeddedJboss() throws Exception {
+        // Setting content location to the tmp dir
+        System.setProperty(ContentSourceManagerBean.FILESYSTEM_PROPERTY, System.getProperty("java.io.tmpdir"));
+
         System.out.println("Starting ejb3...");
         String deployDir = System.getProperty("deploymentDirectory", "target/classes");
         System.out.println("Loading EJB3 deployments from directory: " + deployDir);
@@ -113,6 +117,7 @@ public abstract class AbstractEJB3Test extends AssertJUnit {
                 .getSessionFactory();
             stats = sessionFactory.getStatistics();
             stats.setStatisticsEnabled(true);
+
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
             // and throw a cryptic NPE (see http://jira.codehaus.org/browse/SUREFIRE-157)!

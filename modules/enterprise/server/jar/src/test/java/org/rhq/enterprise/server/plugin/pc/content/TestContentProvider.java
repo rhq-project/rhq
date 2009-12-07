@@ -113,6 +113,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
      */
     private boolean failTest = false;
 
+    private boolean longRunningSyncs = false;
+
     /**
      * Holds a list of all repo names that were passed into calls to
      * {@link #synchronizePackages(String, PackageSyncReport, Collection)} to track when and with
@@ -207,6 +209,10 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
             }
 
         }
+        if (this.longRunningSyncs) {
+            System.out.println(this.getClass().getSimpleName() + ".synchronizePackages sleeping for 5 seconds");
+            Thread.sleep(5000);
+        }
     }
 
     public InputStream getInputStream(String location) throws Exception {
@@ -300,6 +306,16 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         logGetInputStreamLocations.clear();
         logSynchronizePackagesRepos.clear();
         logSynchronizeDistroRepos.clear();
+    }
+
+    /**
+     * Indicate you want this test to simulate a long running sync.  Will pause for ~10 seconds during
+     * the package sync phase.
+     * 
+     * @param longRunningSyncs
+     */
+    public void setLongRunningSyncs(boolean longRunningSyncs) {
+        this.longRunningSyncs = longRunningSyncs;
     }
 
     private ContentProviderPackageDetails findDetailsByKey(ContentProviderPackageDetailsKey key,

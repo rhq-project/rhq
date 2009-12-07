@@ -89,6 +89,31 @@
                      <h:outputText value="#{RepoDetailsUIBean.repo.syncStatus}"/>
                   </td>
                </tr>
+               <tr>
+                  <td align="right"><b>Syncronization Results:</b></td>
+                  <td align="left">
+                     <h:outputLink rendered="#{RepoDetailsUIBean.syncResults.results ne null}"
+                                value="#" id="resultsLink">
+                     <h:outputText value="Click here to view..."/>
+                       <rich:componentControl for="resultsModalPanel" attachTo="resultsLink" operation="show" event="onclick"/>
+                  	 </h:outputLink>
+	                  <h:outputText rendered="#{syncitem.results eq null}" value=""/>
+	                  <rich:modalPanel id="resultsModalPanel" width="640" height="300" style="overflow: auto;">
+	                     <f:facet name="header">
+	                        <h:panelGroup>
+	                           <h:outputText value="Results" />
+	                        </h:panelGroup>
+	                     </f:facet>
+	                     <f:facet name="controls">
+	                        <h:panelGroup>
+	                           <h:graphicImage value="/images/close.png" style="cursor:pointer" id="resultsModelPanelHideLink"/>
+	                           <rich:componentControl for="resultsModalPanel" attachTo="resultsModelPanelHideLink" operation="hide" event="onclick"/>
+	                        </h:panelGroup>
+	                     </f:facet>
+	                     <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
+	                  </rich:modalPanel>
+                  </td>
+               </tr>
             </table>
          </rich:panel>
 

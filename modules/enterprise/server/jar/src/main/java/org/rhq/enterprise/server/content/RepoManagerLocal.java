@@ -311,4 +311,42 @@ public interface RepoManagerLocal {
      */
     RepoSyncResults persistRepoSyncResults(RepoSyncResults results);
 
+    /**
+     * Updates an existing sync results object. Do not use this method to create a new sync results object - use
+     * {@link #persistContentRepoSyncResults(RepoSyncResults)} for that.
+     *
+     * @param  results the existing results that should be or merged
+     *
+     * @return the merged object
+     */
+    RepoSyncResults mergeRepoSyncResults(RepoSyncResults results);
+
+    /**
+     * Allows the caller to page through a list of historical sync results for a content source.
+     *
+     * @param  subject user asking to perform this
+     * @param  contentSourceId The id of a content source.
+     * @param  pc pagination controls
+     *
+     * @return the list of results
+     */
+    PageList<RepoSyncResults> getRepoSyncResults(Subject subject, int repoId, PageControl pc);
+
+    /**
+     * Returns the full sync results object.
+     *
+     * @param  resultsId the ID of the object to return
+     *
+     * @return the full sync results
+     */
+    RepoSyncResults getRepoSyncResults(int resultsId);
+
+    /**
+     * Get the most recent RepoSyncResults for this Repo
+     * @param subject caller
+     * @param repoId to fetch most recent sync results for
+     * @return RepoSyncResults if found, null if not
+     */
+    RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId);
+
 }

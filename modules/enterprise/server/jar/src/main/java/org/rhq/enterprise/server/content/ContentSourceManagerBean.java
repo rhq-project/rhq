@@ -129,6 +129,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Stateless
 //@WebService(endpointInterface = "org.rhq.enterprise.server.content.ContentSourceManagerRemote")
 public class ContentSourceManagerBean implements ContentSourceManagerLocal {
+    /**
+     * The location we store the bits and distro files
+     */
+    public static final String FILESYSTEM_PROPERTY = "rhq.server.content.filesystem";
+
     private final Log log = LogFactory.getLog(ContentSourceManagerBean.class);
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -1914,11 +1919,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     private File getDistributionFileBitsLocalFilesystemFile(String distLabel, String fileName) {
-        final String filesystemProperty = "rhq.server.content.filesystem";
-        String filesystem = System.getProperty(filesystemProperty);
+        String filesystem = System.getProperty(FILESYSTEM_PROPERTY);
 
         if (filesystem == null) {
-            throw new IllegalStateException("Server is misconfigured - missing system property '" + filesystemProperty
+            throw new IllegalStateException("Server is misconfigured - missing system property '" + FILESYSTEM_PROPERTY
                 + "'. Don't know where distribution bits are stored.");
         }
 
@@ -1932,11 +1936,11 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     private File getPackageBitsLocalFilesystemFile(int packageVersionId, String fileName) {
-        final String filesystemProperty = "rhq.server.content.filesystem";
-        String filesystem = System.getProperty(filesystemProperty);
+
+        String filesystem = System.getProperty(FILESYSTEM_PROPERTY);
 
         if (filesystem == null) {
-            throw new IllegalStateException("Server is misconfigured - missing system property '" + filesystemProperty
+            throw new IllegalStateException("Server is misconfigured - missing system property '" + FILESYSTEM_PROPERTY
                 + "'. Don't know where package bits are stored.");
         }
 

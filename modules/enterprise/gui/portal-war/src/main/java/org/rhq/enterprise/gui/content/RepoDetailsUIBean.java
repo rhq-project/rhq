@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
@@ -50,6 +51,13 @@ public class RepoDetailsUIBean {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+
+    }
+
+    public RepoSyncResults getSyncResults() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        return LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
     }
 
     public String sync() {
@@ -58,8 +66,7 @@ public class RepoDetailsUIBean {
         int syncCount = 0;
         try {
             syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
             log.error("Error synchronizing repo ID [" + repoIds + "]", e);
             return "edit";

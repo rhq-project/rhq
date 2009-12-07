@@ -29,10 +29,10 @@ public class RepoSyncingTest extends AbstractEJB3Test {
     private Repo repo;
     private ContentSource contentSource;
     private TestContentServerPluginService pluginService;
+    TestContentProvider p1;
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
-
         TransactionManager tx = getTransactionManager();
         tx.begin();
         em = getEntityManager();
@@ -46,6 +46,8 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         em.flush();
 
         repo = new Repo(TestContentProvider.EXISTING_IMPORTED_REPO_NAME);
+        p1 = new TestContentProvider();
+        pluginService.associateContentProvider(contentSource, p1);
         repo.addContentSource(contentSource);
         em.persist(repo);
         em.flush();
@@ -53,31 +55,63 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
     @Test(enabled = true)
     public void testSyncRepos() throws Exception {
+        p1.setLongRunningSyncs(true);
 
         assert repo.getContentSources().size() == 1;
         // We have to commit because bean has new transaction inside it
         getTransactionManager().commit();
+        getTransactionManager().begin();
 
+        RepoSyncResults results = getSyncResults(repo.getId());
+        assert results == null;
+
+        System.out.println("Starting sync");
+        SyncerThread st = new SyncerThread();
+        st.start();
+
+        boolean gotInProgress = false;
+        boolean gotResults = false;
+        // Run 30 times or until it is synced. 
+        for (int i = 0; ((i < 30) && !st.isSynced()); i++) {
+            results = getSyncResults(repo.getId());
+            if (results != null) {
+                if (results.getStatus() == ContentSyncStatus.INPROGRESS) {
+                    gotInProgress = true;
+                }
+                if (results.getResults() != null) {
+                    gotResults = true;
+                }
+            }
+            System.out.println("st: " + st.isSynced());
+            Thread.sleep(1000);
+        }
+        System.out.println("Finished sync");
+        getTransactionManager().commit();
+        assert gotInProgress;
+        assert gotResults;
+
+        assert st.isSynced();
+        results = getSyncResults(repo.getId());
+        assert results != null;
+        assert (results.getStatus() == ContentSyncStatus.SUCCESS);
+        assert (results.getResults() != null);
+
+        results = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(
+            LookupUtil.getSubjectManager().getOverlord(), repo.getId());
+        assert results != null;
+
+    }
+
+    private RepoSyncResults getSyncResults(int repoId) {
         Query q = em.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
-        q.setParameter("repoId", repo.getId());
+        q.setParameter("repoId", repoId);
 
         List<RepoSyncResults> rlist = q.getResultList(); // will be ordered by start time descending
-        assert (rlist != null);
-        assert (rlist.size() == 0);
-
-        boolean synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
-        assert synced;
-
-        q = em.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
-        q.setParameter("repoId", repo.getId());
-
-        rlist = q.getResultList(); // will be ordered by start time descending
-        assert (rlist != null);
-        assert (rlist.size() > 0);
-        RepoSyncResults results = rlist.get(0);
-        assert (results.getResults() != null);
-        assert (results.getStatus() == ContentSyncStatus.INPROGRESS);
-
+        if (rlist != null && rlist.size() > 0) {
+            return rlist.get(0);
+        } else {
+            return null;
+        }
     }
 
     @Test(enabled = true)
@@ -123,5 +157,25 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         if (tx != null) {
             tx.commit();
         }
+    }
+
+    class SyncerThread extends Thread {
+
+        boolean synced = false;
+
+        @Override
+        public void run() {
+            try {
+                synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+        }
+
+        public boolean isSynced() {
+            return synced;
+        }
+
     }
 }

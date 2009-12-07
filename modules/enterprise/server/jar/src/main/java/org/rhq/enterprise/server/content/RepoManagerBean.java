@@ -62,6 +62,7 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -942,6 +943,18 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return null;
     }
 
+    public RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId) {
+        Repo found = this.getRepo(subject, repoId);
+        Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
+        List<RepoSyncResults> syncResults = found.getSyncResults();
+
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
+            return syncResults.get(0);
+        } else {
+            return null;
+        }
+    }
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         int syncCount = 0;
@@ -968,6 +981,34 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         q.setParameter("repoId", results.getRepo().getId());
 
         return (RepoSyncResults) helper.persistSyncResults(q, results);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<RepoSyncResults> getRepoSyncResults(Subject subject, int repoId, PageControl pc) {
+        pc.initDefaultOrderingField("cssr.startTime", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID);
+
+        query.setParameter("repoId", repoId);
+        countQuery.setParameter("repoId", repoId);
+
+        List<RepoSyncResults> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<RepoSyncResults>(results, (int) count, pc);
+    }
+
+    // we want this in its own tx so other tx's can see it immediately, even if calling method is already in a tx
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public RepoSyncResults mergeRepoSyncResults(RepoSyncResults results) {
+        return entityManager.merge(results);
+    }
+
+    public RepoSyncResults getRepoSyncResults(int resultsId) {
+        return entityManager.find(RepoSyncResults.class, resultsId);
     }
 
 }

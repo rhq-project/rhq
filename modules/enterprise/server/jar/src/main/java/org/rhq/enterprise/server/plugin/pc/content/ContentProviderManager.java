@@ -153,7 +153,6 @@ public class ContentProviderManager {
             // at the same time. We could do it more cleverly by synchronizing on a per content source
             // basis, but I don't see a need right now to make this more complicated.
             // We can come back and revisit if we need more fine-grained locking.
-            // ZZZ
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
                 progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
@@ -243,7 +242,6 @@ public class ContentProviderManager {
             throw new Exception("Invalid repo ID specified for sync: " + repoId);
         }
 
-        // TODO: Add check to sync results tracking to make sure it's not already synccing
         // results = contentSourceManager.persistContentSourceSyncResults(results);
         StringBuilder progress = new StringBuilder();
         progress.append(new Date()).append(": ");
@@ -254,14 +252,9 @@ public class ContentProviderManager {
         RepoSyncResults results = new RepoSyncResults(repo);
         results.setResults(progress.toString());
         results = repoManager.persistRepoSyncResults(results);
+        log.debug("synchronizeRepo :: inProgress");
 
         if (results == null) {
-            // note that it technically is still possible to have concurrent syncs - if two
-            // threads running in two different servers (i.e. different VMs) both try to sync the
-            // same content source and both enter the persistContentSourceSyncResults method at
-            // the same time, you'll get two inprogress rows - this is so rare as to not care.
-            // Even if it does happen, it may still work, or
-            // one sync will get an error and rollback its tx and no harm will be done.
             log.info("Repository [" + repo.getName()
                 + "] is already currently being synchronized, this sync request will be ignored");
             return false;
@@ -283,9 +276,46 @@ public class ContentProviderManager {
                     repo, source, provider);
                 distributionSourceSynchronizer.synchronizeDistributionMetadata();
                 distributionSourceSynchronizer.synchronizeDistributionBits();
+
+                // Update status to finished.
+                progress = new StringBuilder();
+                progress.append(new Date()).append(": ");
+                progress.append(" Repository [").append(repo.getName()).append("]");
+                progress.append('\n');
+                progress.append(new Date()).append(": ");
+                progress.append("completed syncing.");
+                results = repoManager.getRepoSyncResults(results.getId());
+                results.setResults(progress.toString());
+                results.setStatus(ContentSyncStatus.SUCCESS);
+                log.debug("synchronizeRepo :: Success");
+
             } catch (Exception e) {
                 log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
                     + "]. Synchronization for the repo will continue for other providers.", e);
+
+                // try to reload the results in case it was updated by the SLSB before the
+                // exception happened
+                RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(results.getId());
+                if (reloadedResults != null) {
+                    results = reloadedResults;
+                    if (results.getResults() != null) {
+                        progress = new StringBuilder(results.getResults());
+                    }
+                }
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                e.printStackTrace(new PrintStream(baos));
+                progress.append(new Date()).append(": ");
+                progress.append("SYNCHRONIZATION ERROR - STACK TRACE FOLLOWS:\n");
+                progress.append(baos.toString());
+                results.setResults(progress.toString());
+                results.setStatus(ContentSyncStatus.FAILURE);
+            } finally {
+                if (results != null) {
+                    results.setEndTime(System.currentTimeMillis());
+                    repoManager.mergeRepoSyncResults(results);
+                    System.out.println("2222222");
+                }
             }
         }
 

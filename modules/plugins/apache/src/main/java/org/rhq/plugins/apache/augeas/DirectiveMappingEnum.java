@@ -6,7 +6,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingDirectivePerMap;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingParamPerMap;
-import org.rhq.plugins.apache.augeas.mappingImpl.MappingParamPerMapIndex;
+import org.rhq.plugins.apache.augeas.mappingImpl.MappingDirectivePerMapIndex;
 import org.rhq.rhqtransform.AugeasToConfiguration;
 
 public enum DirectiveMappingEnum {
@@ -26,9 +26,9 @@ public enum DirectiveMappingEnum {
 			return config.loadResourceConfiguration(startNode, resourceConfigDef);
 		};
 	},
-	ParamPerMapIndex{
+	DirectivePerMapIndex{
 		public Configuration execute(AugeasTree tree,AugeasNode startNode, ConfigurationDefinition resourceConfigDef){
-			AugeasToConfiguration config = new MappingParamPerMapIndex();
+			AugeasToConfiguration config = new MappingDirectivePerMapIndex();
 			config.setTree(tree);
 			return config.loadResourceConfiguration(startNode, resourceConfigDef);
 		};

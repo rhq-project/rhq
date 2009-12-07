@@ -672,6 +672,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                                 emailAddresses.addAll(result.getEmails());
                         }
                         // TODO log result
+                        log.info(result);
                     }
                     catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());

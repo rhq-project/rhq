@@ -35,6 +35,15 @@ public class SambaComponentTest extends AbstractAugeasConfigurationComponentTest
         config.put(new PropertySimple("load printers", "yes"));
         config.put(new PropertySimple("cups options", "raw"));
         config.put(new PropertySimple("enableRecycleBin", false));
+
+        config.put(new PropertySimple("idmap uid", null));
+        config.put(new PropertySimple("idmap gid", null));
+        config.put(new PropertySimple("winbind use default domain", null));
+        config.put(new PropertySimple("winbind offline logon", null));
+        config.put(new PropertySimple("winbind offline logon", null));
+        config.put(new PropertySimple("winbind enum users", null));
+        config.put(new PropertySimple("winbind enum groups", null));
+        config.put(new PropertySimple("winbind separator", null));
         return config;
     }
 

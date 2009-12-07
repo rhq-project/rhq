@@ -69,6 +69,7 @@ public class AugeasConfigurationApache extends RhqConfig implements AugeasConfig
 	        	    	if (m.matches())
                           {
 	        	    		String glob = m.group(1);
+	        	    		
                     	    module.addIncludedGlob(glob);
                     	    loadIncludes(glob);
                           }

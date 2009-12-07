@@ -8,7 +8,7 @@ import org.rhq.rhqtransform.RhqAugeasMapping;
 public class ApacheAugeasMapping implements RhqAugeasMapping {
 
     public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef) {
-
+     
     }
 
     public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef) {

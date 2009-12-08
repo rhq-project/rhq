@@ -43,6 +43,7 @@ import org.rhq.core.domain.auth.Subject;
         + " WHERE sn.id IN ( :ids )"),
     @NamedQuery(name = SubjectNotification.QUERY_FIND_BY_SUBJECT_IDS, query = "SELECT sn "
         + "  FROM SubjectNotification sn " + " WHERE sn.subject.id IN ( :ids )") })
+@Deprecated
 public class SubjectNotification extends AlertNotification {
 
     private static final long serialVersionUID = 1L;

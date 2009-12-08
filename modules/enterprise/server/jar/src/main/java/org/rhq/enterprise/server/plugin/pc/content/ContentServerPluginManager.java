@@ -79,40 +79,41 @@ public class ContentServerPluginManager extends ServerPluginManager {
     }
 
     @Override
-    public void loadPlugin(ServerPluginEnvironment env) throws Exception {
+    public void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
 
-        super.loadPlugin(env);
+        super.loadPlugin(env, enabled);
 
-        Collection<ContentSourceType> newTypes;
-        newTypes = this.metadataManager.loadPlugin((ContentPluginDescriptorType) env.getPluginDescriptor());
+        if (enabled) {
+            Collection<ContentSourceType> newTypes;
+            newTypes = this.metadataManager.loadPlugin((ContentPluginDescriptorType) env.getPluginDescriptor());
 
-        // double check that the api classes are loadable, if not, very bad
-        Set<ContentSourceType> newTypesCopy = new HashSet<ContentSourceType>(newTypes);
-        for (ContentSourceType newType : newTypesCopy) {
-            try {
-                String className = newType.getContentSourceApiClass();
-                Class<?> apiClass = Class.forName(className, false, env.getPluginClassLoader());
-
-                if (!ContentProvider.class.isAssignableFrom(apiClass)) {
-                    throw new Exception("The API class [" + className + "] should implement ["
-                        + ContentProvider.class.getName() + "] but does not");
-                }
-            } catch (Exception e) {
-                // do not deploy this plugin - its stinky
+            // double check that the api classes are loadable, if not, very bad
+            Set<ContentSourceType> newTypesCopy = new HashSet<ContentSourceType>(newTypes);
+            for (ContentSourceType newType : newTypesCopy) {
                 try {
-                    unloadPlugin(env);
-                } catch (Exception ignore) {
+                    String className = newType.getContentSourceApiClass();
+                    Class<?> apiClass = Class.forName(className, false, env.getPluginClassLoader());
+
+                    if (!ContentProvider.class.isAssignableFrom(apiClass)) {
+                        throw new Exception("The API class [" + className + "] should implement ["
+                            + ContentProvider.class.getName() + "] but does not");
+                    }
+                } catch (Exception e) {
+                    // do not deploy this plugin - its stinky
+                    try {
+                        unloadPlugin(env.getPluginKey().getPluginName());
+                    } catch (Exception ignore) {
+                    }
+                    throw e;
                 }
-                throw e;
             }
         }
-
         return;
     }
 
     @Override
-    public void unloadPlugin(ServerPluginEnvironment env) throws Exception {
-        metadataManager.unloadPlugin(env.getPluginKey().getPluginName());
-        super.unloadPlugin(env);
+    public void unloadPlugin(String pluginName) throws Exception {
+        metadataManager.unloadPlugin(pluginName);
+        super.unloadPlugin(pluginName);
     };
 }

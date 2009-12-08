@@ -72,7 +72,6 @@ public class PortalAction extends ResourceController {
         keyMethodMap.setProperty("viewOthers", "viewDefinitionOthers");
         keyMethodMap.setProperty("viewRoles", "viewDefinitionRoles");
         keyMethodMap.setProperty("viewUsers", "viewDefinitionUsers");
-        keyMethodMap.setProperty("viewSnmp", "viewDefinitionSNMP");
 
         keyMethodMap.setProperty("addOthers", "addOthersDefinitions");
         keyMethodMap.setProperty("addRoles", "addRolesDefinitions");
@@ -125,16 +124,6 @@ public class PortalAction extends ResourceController {
         } catch (ParameterNotFoundException e) {
             // it's okay
             log.trace("couldn't find alert definition: " + e.getMessage());
-        }
-    }
-
-    private void setSNMPEnabled(HttpServletRequest request) throws RemoteException {
-        Properties props = LookupUtil.getSystemManager().getSystemConfiguration();
-
-        // See if the property exists
-        if (props.containsKey(RHQConstants.SNMPVersion)) {
-            String ver = props.getProperty(RHQConstants.SNMPVersion);
-            request.setAttribute("snmpEnabled", ver.length() > 0);
         }
     }
 
@@ -208,7 +197,6 @@ public class PortalAction extends ResourceController {
         // JW - this shouldn't be a dialog ... portal.setDialog(true);
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
-        setSNMPEnabled(request);
         return null;
     }
 
@@ -222,7 +210,6 @@ public class PortalAction extends ResourceController {
         // JW - this shouldn't be a dialog ... portal.setDialog(true);
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
-        setSNMPEnabled(request);
         return null;
     }
 
@@ -236,21 +223,9 @@ public class PortalAction extends ResourceController {
         // JW - this shouldn't be a dialog ... portal.setDialog(true);
         request.setAttribute(Constants.PORTAL_KEY, portal);
 
-        setSNMPEnabled(request);
         return null;
     }
 
-    public ActionForward viewDefinitionSNMP(ActionMapping mapping, ActionForm form, HttpServletRequest request,
-        HttpServletResponse response) throws Exception {
-        setResource(request);
-        Portal portal = Portal.createPortal();
-        setTitle(request, portal, "alert.config.platform.props.ViewDef.users.Title");
-        portal.addPortlet(new Portlet(".events.config.view.snmp"), 1);
-        request.setAttribute(Constants.PORTAL_KEY, portal);
-
-        setSNMPEnabled(request);
-        return null;
-    }
 
     public ActionForward monitorConfigureAlerts(ActionMapping mapping, ActionForm form, HttpServletRequest request,
         HttpServletResponse response) throws Exception {

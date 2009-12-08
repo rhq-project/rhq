@@ -26,36 +26,41 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * Discovery component for an SNMP trapd 
+ * Discovery component for an SNMP trapd
  * @author Heiko W. Rupp
  *
  */
-public class SnmpTrapdDiscovery implements ResourceDiscoveryComponent<SnmpTrapdComponent> {
+public class SnmpTrapdDiscovery implements ResourceDiscoveryComponent<SnmpTrapdComponent>, ManualAddFacet<SnmpTrapdComponent> {
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
+    /*
+     * Autodiscovery is not supported.
      */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context)
         throws InvalidPluginConfigurationException, Exception {
 
-        Set<DiscoveredResourceDetails> results = new HashSet<DiscoveredResourceDetails>();
+        return new HashSet<DiscoveredResourceDetails>();
 
-        String pcName = context.getPluginContainerName();
+    }
+
+    /*
+     * Manual discovery
+     */
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
+                                                      ResourceDiscoveryContext<SnmpTrapdComponent> ctx) throws InvalidPluginConfigurationException {
+
+        String pcName = ctx.getPluginContainerName();
         String key = "Trapd (" + pcName + ")";
         String name = key;
         String description = "SNMP Trap receiver on " + pcName;
-        Configuration configuration = context.getDefaultPluginConfiguration();
-        ResourceType resourceType = context.getResourceType();
-        DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, key, name, null, description,
-            configuration, null);
+        ResourceType resourceType = ctx.getResourceType();
+        DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceType, key, name, null, description,
+            pluginConfiguration, null);
 
-        results.add(detail);
-
-        return results;
+        return details;
     }
-
 }

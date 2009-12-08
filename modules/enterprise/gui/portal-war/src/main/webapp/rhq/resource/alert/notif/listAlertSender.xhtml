@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/layout/main.xhtml">
+
+    <ui:param name="pageTitle" value="List Alert Notifications for Resource '#{ResourceUIBean.name}'"/>
+
+    <ui:define name="breadcrumbs">
+        <h:outputLink value="http://localhost:7080/alerts/Config.do">
+            <f:param name="mode" value="viewRoles"/>
+            <f:param name="id" value="#{param.id}"/>
+            <f:param name="ad" value="#{param.ad}"/>
+            <h:outputText>Alert Definitions</h:outputText>
+        </h:outputLink>
+        <h:outputText> &gt; </h:outputText>
+        <h:outputLink value="listAlertSender.xhtml">
+            New Alert Sender stuff
+        </h:outputLink>
+    </ui:define>
+
+    <ui:define name="body">
+        <br/>
+        <h:messages showSummary="true"
+                    showDetail="true"
+                    infoClass="InfoBlock"
+                    warnClass="WarnBlock"
+                    errorClass="ErrorBlock"
+                    fatalClass="FatalBlock"
+                    globalOnly="true"
+                    layout="table"
+                    width="100%"/>
+
+        <p/>
+        <h:outputText>Existing notifications for Resource '#{ResourceUIBean.name}' and alert definition '#{ListNotificationsUIBean.alertDefinitionName}':</h:outputText>
+        <br/>
+        <h:form id="notificationListForm">
+            <input type="hidden" name="id" value="${param.id}"/>
+            <input type="hidden" name="ad" value="${param.ad}"/>
+
+            <rich:dataTable id="alertNotificationDataTable"
+                            value="#{ListNotificationsUIBean.existingNotifications}"
+                            var="notif"
+                            width="100%"
+                            columnWidth="5% 10% 85%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+                <rich:column>
+                   <f:facet name="header">
+                      <onc:allSelect target="selectedNotification"/>
+                   </f:facet>
+
+                   <onc:select name="selectedNotification" value="#{notif.id}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="ID"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.id}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Sender"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.senderName}"/>
+                </rich:column>
+
+                <rich:column>
+                    <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Configuration"/>
+                    </f:facet>
+
+                    <h:outputText value="#{notif.configuration.toString(true)}"/>
+                </rich:column>
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                      <rich:column colspan="5" width="100%">
+                         <onc:selectCommandButton action="#{ListNotificationsUIBean.removeSelectedNotifications}"
+                                                  target="selectedNotification"
+                                                  value="Remove selected"
+                                                  styleClass="on-pager-button buttonsmall"/>
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+
+            </rich:dataTable>
+        </h:form>
+        <p/>
+
+        <h:outputText>Add a sender:</h:outputText>
+        <br/>
+        <h:form id="listSenderForm">
+            <input type="hidden" name="id" value="${param.id}"/>
+            <input type="hidden" name="ad" value="${param.ad}"/>
+            <h:selectOneMenu id="senderList" value="#{ListNotificationsUIBean.selectedSender}">
+                <f:selectItems value="#{ListNotificationsUIBean.allAlertSenders}"/>
+            </h:selectOneMenu>
+            <h:commandButton
+                id="submit"
+                value="go"
+                action="nextPage"/>
+
+        <p/>
+            <rich:panel rendered="#{ListNotificationsUIBean.selectedSender != null}">
+                <h:outputText>Properties for: #{ListNotificationsUIBean.selectedSender}</h:outputText>
+                <h:outputText>Rendered:</h:outputText>
+                    <h:outputText value="#{ListNotificationsUIBean.selectedSender}"/>
+                <onc:config
+                    configurationDefinition="#{ListNotificationsUIBean.alertConfigurationDefinition}"
+                    configuration="#{ListNotificationsUIBean.alertProperties}"
+                    readOnly="false"/>
+            <h:commandButton
+                id="submit2"
+                value="Submit it"
+                type="submit"
+                action="#{ListNotificationsUIBean.mySubmitForm}"
+                    />
+            </rich:panel>
+
+            <!-- user supplied UI -->
+            <ui:include src="#{ListNotificationsUIBean.customContentUrl}"/>
+
+        </h:form>
+
+        <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
+            <f:param name="id" value="#{param.id}"/>
+            <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
+        </h:outputLink>
+    </ui:define>
+</ui:composition>
+</html>

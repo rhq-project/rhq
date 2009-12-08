@@ -36,7 +36,7 @@ import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 
 /**
  * The abstract superclass for all plugin containers of the different {@link ServerPluginType plugin types}.
- * 
+ *
  * @author John Mazzitelli
  */
 public abstract class AbstractTypeServerPluginContainer {
@@ -49,7 +49,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * Instantiates the plugin container. All subclasses must support this and only this
      * constructor.
-     * 
+     *
      * @param master the master plugin container that is creating this instance.
      */
     public AbstractTypeServerPluginContainer(MasterServerPluginContainer master) {
@@ -60,14 +60,14 @@ public abstract class AbstractTypeServerPluginContainer {
      * Each plugin container will tell the master which plugins it can support via this method; this
      * method returns the type of plugin that the plugin container can process. Only one
      * plugin container can support a plugin type.
-     * 
+     *
      * @return the type of plugin that this plugin container instance can support
      */
     public abstract ServerPluginType getSupportedServerPluginType();
 
     /**
      * Returns the master plugin container that is responsible for managing this instance.
-     * 
+     *
      * @return this plugin container's master
      */
     public MasterServerPluginContainer getMasterServerPluginContainer() {
@@ -76,7 +76,7 @@ public abstract class AbstractTypeServerPluginContainer {
 
     /**
      * Returns the object that manages the plugins.
-     * 
+     *
      * @return the plugin manager for this container
      */
     public ServerPluginManager getPluginManager() {
@@ -86,7 +86,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * The initialize method that prepares the plugin container. This should get the plugin
      * container ready to accept plugins.
-     * 
+     *
      * Subclasses are free to perform additional tasks by overriding this method.
      *
      * @throws Exception if the plugin container failed to initialize for some reason
@@ -120,7 +120,7 @@ public abstract class AbstractTypeServerPluginContainer {
 
     /**
      * The shutdown method that will stop and unload all plugins.
-     * 
+     *
      * Subclasses are free to perform additional tasks by overriding this method.
      */
     public synchronized void shutdown() {
@@ -130,7 +130,7 @@ public abstract class AbstractTypeServerPluginContainer {
             Collection<ServerPluginEnvironment> envs = this.pluginManager.getPluginEnvironments();
             for (ServerPluginEnvironment env : envs) {
                 try {
-                    unloadPlugin(env);
+                    unloadPlugin(env.getPluginKey());
                 } catch (Exception e) {
                     this.log.warn("Failed to unload plugin [" + env.getPluginKey().getPluginName() + "].", e);
                 }
@@ -147,15 +147,17 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
-     * Informs the plugin container that it has a plugin that it must being to start managing.
-     * 
-     * @param env the plugin environment, including the plugin jar and its descriptor
+     * Informs the plugin container that it has a plugin that it must begin to start managing.
      *
-     * @throws Exception if failed to load the plugin 
+     * @param env the plugin environment, including the plugin jar and its descriptor
+     * @param enabled <code>true</code> if the plugin should be initialized; <code>false</code> if
+     *                the plugin's existence should be noted but it should not be initialized or started
+     *
+     * @throws Exception if failed to load the plugin
      */
-    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.loadPlugin(env);
+            this.pluginManager.loadPlugin(env, enabled);
         } else {
             throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
         }
@@ -164,16 +166,33 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * Informs the plugin container that a plugin should be unloaded and any of its resources
      * should be released.
-     * 
-     * @param env the plugin environment, including the plugin jar and its descriptor
      *
-     * @throws Exception if failed to unload the plugin 
+     * @param pluginKey identifies the plugin that should be shutdown
+     *
+     * @throws Exception if failed to unload the plugin
      */
-    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.unloadPlugin(env);
+            this.pluginManager.unloadPlugin(pluginKey.getPluginName());
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
+        }
+    }
+
+    /**
+     * Informs the plugin container that a plugin should be reloaded and any of its resources
+     * should be started if being enabled.
+     *
+     * @param pluginKey identifies the plugin that should be reloaded
+     * @param enabled indicates if the plugin should be enabled or disabled after being loaded
+     *
+     * @throws Exception if failed to unload the plugin
+     */
+    public synchronized void reloadPlugin(PluginKey pluginKey, boolean enabled) throws Exception {
+        if (this.pluginManager != null) {
+            this.pluginManager.reloadPlugin(pluginKey.getPluginName(), enabled);
+        } else {
+            throw new Exception("Cannot reload a plugin; plugin container has been shutdown");
         }
     }
 
@@ -181,37 +200,20 @@ public abstract class AbstractTypeServerPluginContainer {
      * If a plugin has scheduled jobs, this method will schedule them now.
      * This particular method implementation schedules the global jobs as defined in the
      * plugin descriptors.
-     * 
+     *
      * Subclasses are free to extend this method to schedule additional plugin jobs, but must
      * ensure they call this method so the global scheduled jobs get added to the scheduler.
-     * 
+     *
      * Note that this is separate from the {@link #start()} method because it is possible that
      * the plugin container has been started before the scheduler has. In this case, the caller
      * must wait for the scheduler to be started before this method is called to schedule jobs.
-     * 
+     *
      * @throws Exception if failed to schedule jobs
      */
-    public synchronized void schedulePluginJobs() throws Exception {
+    public synchronized void scheduleAllPluginJobs() throws Exception {
         if (this.pluginManager != null) {
-            // process all known plugins and schedule their jobs
-            List<ScheduledJobDefinition> jobs;
             for (ServerPluginEnvironment pluginEnv : this.pluginManager.getPluginEnvironments()) {
-                String pluginName = pluginEnv.getPluginKey().getPluginName();
-
-                try {
-                    jobs = this.pluginManager.getServerPluginContext(pluginEnv).getSchedules();
-                    if (jobs != null) {
-                        for (ScheduledJobDefinition job : jobs) {
-                            try {
-                                scheduleJob(job, pluginEnv.getPluginKey());
-                            } catch (Throwable t) {
-                                log.warn("Failed to schedule job [" + job + "] for plugin [" + pluginName + "]", t);
-                            }
-                        }
-                    }
-                } catch (Throwable t) {
-                    log.warn("Failed to get scheduled jobs for plugin [" + pluginName + "]", t);
-                }
+                schedulePluginJobs(pluginEnv.getPluginKey());
             }
         } else {
             throw new Exception("Cannot schedule plugins jobs; plugin container is not initialized yet");
@@ -220,18 +222,52 @@ public abstract class AbstractTypeServerPluginContainer {
         return;
     }
 
+    public synchronized void schedulePluginJobs(PluginKey pluginKey) throws Exception {
+        if (this.pluginManager != null) {
+            try {
+                String pluginName = pluginKey.getPluginName();
+                if (this.pluginManager.isPluginEnabled(pluginName)) {
+                    ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
+                    if (pluginEnv != null) {
+                        ServerPluginContext serverPluginContext = this.pluginManager.getServerPluginContext(pluginEnv);
+                        List<ScheduledJobDefinition> jobs = serverPluginContext.getSchedules();
+                        if (jobs != null) {
+                            for (ScheduledJobDefinition job : jobs) {
+                                try {
+                                    scheduleJob(job, pluginKey);
+                                } catch (Throwable t) {
+                                    log.warn("Failed to schedule job [" + job + "] for server plugin [" + pluginKey
+                                        + "]", t);
+                                }
+                            }
+                        }
+                    } else {
+                        log.warn("Failed to get server plugin env for [" + pluginKey + "]; cannot schedule jobs");
+                    }
+                }
+            } catch (Throwable t) {
+                log.warn("Failed to get scheduled jobs for server plugin [" + pluginKey + "]", t);
+            }
+        } else {
+            throw new Exception("Cannot schedule plugins jobs for server plugin [" + pluginKey
+                + "]; plugin container is not initialized yet");
+        }
+
+        return;
+    }
+
     /**
      * Unschedules any plugin jobs that are currently scheduled for the named plugin.
-     * 
+     *
      * Subclasses are free to extend this method to unschedule those additional plugin jobs
      * they created, but must ensure they call this method so the global scheduled jobs get
      * removed from the scheduler.
-     * 
+     *
      * Note that this is separate from the {@link #stop()} method because we never want
      * to unschedule jobs since other plugin containers on other servers may be running
      * and able to process the jobs. This method should only be called when a plugin
      * is being disabled or removed.
-     * 
+     *
      * @param pluginKey
      * @throws Exception if failed to unschedule jobs
      */
@@ -258,7 +294,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * This will be called when its time for this plugin container to create its plugin manager.
      * Subclasses are free to override this if they need their own specialized plugin manager.
-     * 
+     *
      * @return the plugin manager for use by this plugin container
      */
     protected ServerPluginManager createPluginManager() {
@@ -268,7 +304,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * Returns the logger that can be used to log messages. A convienence object so all
      * subclasses don't have to explicitly declare and create their own.
-     * 
+     *
      * @return this instance's logger object
      */
     protected Log getLog() {
@@ -278,7 +314,7 @@ public abstract class AbstractTypeServerPluginContainer {
     /**
      * Schedules a job for periodic execution. Note that if the <code>schedule</code> indicates the
      * job is not enabled, this method returns immediately as a no-op.
-     * 
+     *
      * @param schedule instructs how the job should be scheduled
      * @param pluginKey the key of the plugin scheduling the job
      *

@@ -75,9 +75,9 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
     }
 
     @Override
-    public void schedulePluginJobs() throws Exception {
-        super.schedulePluginJobs();
-        scheduleProviderSyncJobs();
+    public void scheduleAllPluginJobs() throws Exception {
+        super.scheduleAllPluginJobs();
+        scheduleSyncJobs();
         return;
     }
 
@@ -178,7 +178,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * It will schedule one job per adapter such that each adapter is scheduled to be synchronized as per its defined
      * sync schedule. This must only be called when all content source adapters have been initialized.
      */
-    public void scheduleProviderSyncJobs() {
+    public void scheduleSyncJobs() {
         if (this.adapterManager != null) {
             for (ContentSource contentSource : this.adapterManager.getAllContentSources()) {
                 try {

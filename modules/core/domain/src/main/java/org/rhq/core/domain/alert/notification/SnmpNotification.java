@@ -42,6 +42,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 @Entity
 @NamedQueries( { @NamedQuery(name = SnmpNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID, query = "SELECT sn "
     + "  FROM SnmpNotification sn " + " WHERE sn.alertDefinition.id = :alertDefinitionId ") })
+@Deprecated
 public class SnmpNotification extends AlertNotification {
 
     private static final long serialVersionUID = 1L;

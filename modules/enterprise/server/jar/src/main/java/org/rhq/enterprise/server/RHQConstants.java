@@ -20,7 +20,7 @@ package org.rhq.enterprise.server;
 
 /**
  * Global constants file to be used for config Properties, as well as any other constant used across subsystems
- * 
+ *
  * NOTE: The defaults for these properties can be found in sysconfig-data.xml in the dbutils module.
  */
 public class RHQConstants {
@@ -107,21 +107,5 @@ public class RHQConstants {
 
     // Syslog Actions enabled
     public static final String SyslogActionsEnabled = "CAM_SYSLOG_ACTIONS_ENABLED";
-
-    // SNMP configurations
-    public static final String SNMPAuthProtocol = "SNMP_AUTH_PROTOCOL";
-    public static final String SNMPAuthPassphrase = "SNMP_AUTH_PASSPHRASE";
-    public static final String SNMPPrivacyPassphrase = "SNMP_PRIV_PASSPHRASE";
-    public static final String SNMPCommunity = "SNMP_COMMUNITY";
-    public static final String SNMPEngineID = "SNMP_ENGINE_ID";
-    public static final String SNMPContextName = "SNMP_CONTEXT_NAME";
-    public static final String SNMPSecurityName = "SNMP_SECURITY_NAME";
-    public static final String SNMPTrapOID = "SNMP_TRAP_OID";
-    public static final String SNMPEnterpriseOID = "SNMP_ENTERPRISE_OID";
-    public static final String SNMPGenericID = "SNMP_GENERIC_ID";
-    public static final String SNMPSpecificID = "SNMP_SPECIFIC_ID";
-    public static final String SNMPAgentAddress = "SNMP_AGENT_ADDRESS";
-    public static final String SNMPVersion = "SNMP_VERSION";
-    public static final String SNMPPrivacyProtocol = "SNMP_PRIVACY_PROTOCOL";
 
 }

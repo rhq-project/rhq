@@ -2,6 +2,7 @@
 
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
            xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:config="urn:xmlns:rhq-configuration"
            xmlns:c="urn:xmlns:rhq-configuration"
            xmlns:alert="urn:xmlns:rhq-serverplugin.alert"
            targetNamespace="urn:xmlns:rhq-serverplugin.alert"
@@ -15,7 +16,7 @@
 
     <xs:annotation>
         <xs:documentation>
-            Schema for alert server-side plugins.
+            Schema for alert server-side plug-ins.
         </xs:documentation>
         <xs:appinfo>
             <jaxb:schemaBindings>
@@ -27,7 +28,7 @@
     <xs:element name="alert-plugin" type="alert:AlertPluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
         <xs:annotation>
             <xs:documentation>
-                Defines an alert plugin. This type of plugin allows you to create your own
+                Defines an alert plug-in. This type of plug-in allows you to create your own
                 alert handlers, enabling you to send alerts to custom endpoints.
             </xs:documentation>
             <xs:appinfo>
@@ -35,14 +36,75 @@
             </xs:appinfo>
         </xs:annotation>
     </xs:element>
+
     <xs:complexType name="AlertPluginDescriptorType">
         <xs:complexContent>
             <xs:extension base="serverplugin:ServerPluginDescriptorType">
                <xs:sequence>
+                   <xs:element name="short-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The short name of this plugin as it will be shown in Headers and drop down boxes
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+                   <xs:element name="plugin-class" minOccurs="1" maxOccurs="1" type="xs:string">
+                       <xs:annotation>
+                           <xs:documentation>
+                               The name of the class implementing the plugin functionality. This class needs to
+                               implement the org.rhq.enterprise.server.plugin.pc.alert.AlertSender base class.
+                               If not fully qualified, the package given on the &lt;alert-plugin> element will be taken.
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
                   <!-- alert specific schema goes here. note, serverplugin xsd gives you global <plugin-configuration> already -->
+                   <xs:element ref="alert:alert-configuration" minOccurs="0" maxOccurs="1"/>
+                   <xs:element ref="alert:custom-ui" minOccurs="0" maxOccurs="1"/>
                </xs:sequence>
             </xs:extension>
         </xs:complexContent>
     </xs:complexType>
+
+    <xs:element name="alert-configuration" type="config:configuration">
+        <xs:annotation>
+            <xs:documentation>
+                This section defines the configuration items that are used for individual alert templates.
+            </xs:documentation>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:element name="custom-ui">
+        <xs:annotation>
+            <xs:documentation>
+                 This element provides information for custom configuration UIs. If it is used,
+                the configuration from &lt;alert:alert-configuration/&gt; is *not* used and the user
+                is responsible itself for filling in the alertProperties configuration that gets
+                injected into the alert sender.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="ui-snippet-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The name of a file that provides Facelets or xhtml content,
+                            which gets included via &lt;ui:include/&gt; into the configuration
+                            page. Put the file into the src/resources/ folder in the maven build
+                            which puts them into the root of the generated jar file.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="backing-bean-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The class name of a backing bean used in this ui-snippet.
+                            If not fully qualified, the package given on the &lt;alert-plugin> element will be taken.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
 
 </xs:schema>

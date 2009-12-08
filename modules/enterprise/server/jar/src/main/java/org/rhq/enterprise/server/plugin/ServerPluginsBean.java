@@ -64,7 +64,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * A server API into the server plugin infrastructure.
- * 
+ *
  * @author John Mazzitelli
  */
 @Stateless
@@ -79,8 +79,20 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     @EJB
     private ServerPluginsLocal serverPluginsBean; //self
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void restartMasterPluginContainer(Subject subject) {
+        LookupUtil.getServerPluginService().restartMasterPluginContainer();
+    }
+
+    @SuppressWarnings("unchecked")
     public List<ServerPlugin> getServerPlugins() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
+        return q.getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ServerPlugin> getAllServerPlugins() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL);
         return q.getResultList();
     }
 
@@ -120,6 +132,15 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return query.getResultList();
     }
 
+    public List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds) {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<ServerPlugin>(); // nothing to do
+        }
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_BY_IDS);
+        query.setParameter("ids", pluginIds);
+        return query.getResultList();
+    }
+
     public ServerPluginDescriptorType getServerPluginDescriptor(PluginKey pluginKey) throws Exception {
         ServerPlugin plugin = getServerPlugin(pluginKey);
         File pluginsDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();
@@ -130,25 +151,52 @@ public class ServerPluginsBean implements ServerPluginsLocal {
     }
 
     public List<PluginKey> getServerPluginKeysByEnabled(boolean enabled) {
-        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_NAMES_BY_ENABLED);
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_KEYS_BY_ENABLED);
         query.setParameter("enabled", Boolean.valueOf(enabled));
         return query.getResultList();
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public void enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+    public List<PluginKey> enableServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
         if (pluginIds == null || pluginIds.size() == 0) {
-            return; // nothing to do
+            return new ArrayList<PluginKey>(); // nothing to do
         }
 
         serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
 
-        // only restart the master if it was started to begin with
         ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        if (serverPluginService.isMasterPluginContainerStarted()) {
-            serverPluginService.restartMasterPluginContainer();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+
+        List<PluginKey> enabledPlugins = new ArrayList<PluginKey>();
+
+        for (Integer pluginId : pluginIds) {
+            ServerPlugin enabledPlugin = null;
+            try {
+                enabledPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
+            } catch (Exception ignore) {
+            }
+            if (enabledPlugin != null) {
+                PluginKey pluginKey = new PluginKey(enabledPlugin);
+                enabledPlugins.add(pluginKey);
+                if (master != null) {
+                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+                    if (pc != null) {
+                        try {
+                            pc.reloadPlugin(pluginKey, true);
+                        } catch (Exception e) {
+                            log.warn("Failed to enable server plugin [" + pluginKey + "]", e);
+                        }
+                        try {
+                            pc.schedulePluginJobs(pluginKey);
+                        } catch (Exception e) {
+                            log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
+                        }
+                    }
+                }
+            }
         }
-        return;
+
+        return enabledPlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -181,14 +229,14 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                         } catch (Exception e) {
                             log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
                         }
+                        try {
+                            pc.reloadPlugin(pluginKey, false);
+                        } catch (Exception e) {
+                            log.warn("Failed to disable server plugin [" + pluginKey + "]", e);
+                        }
                     }
                 }
             }
-        }
-
-        // only restart if the master was started to begin with; otherwise, leave it down
-        if (master != null) {
-            serverPluginService.restartMasterPluginContainer();
         }
 
         return doomedPlugins;
@@ -222,7 +270,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                         try {
                             pc.unschedulePluginJobs(pluginKey);
                         } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
+                            log.warn("Failed to unschedule jobs for server plugin [" + pluginKey + "]", e);
+                        }
+                        try {
+                            pc.unloadPlugin(pluginKey);
+                        } catch (Exception e) {
+                            log.warn("Failed to unload server plugin [" + pluginKey + "]", e);
                         }
                     }
                 }
@@ -253,12 +306,25 @@ public class ServerPluginsBean implements ServerPluginsLocal {
 
         log.info("Server plugins " + doomedPlugins + " have been undeployed");
 
-        // only restart if the master was started to begin with; otherwise, leave it down
-        if (master != null) {
-            serverPluginService.restartMasterPluginContainer();
+        return doomedPlugins;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<PluginKey>(); // nothing to do
         }
 
-        return doomedPlugins;
+        // first, ensure we undeploy them
+        List<PluginKey> purgePlugins = undeployServerPlugins(subject, pluginIds);
+
+        // now remove them from the db
+        for (PluginKey pluginKey : purgePlugins) {
+            purgeServerPlugin(subject, pluginKey); // delete the row in the DB
+        }
+
+        log.info("Server plugins " + purgePlugins + " have been undeployed");
+        return purgePlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -425,24 +491,25 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return status;
     }
 
-    // we need this method to talk to the master plugin container because the plugin data model
-    // does not contain information as to what type a plugin is. It only has information about
-    // where the plugin is deployed (agent or server) but it doesn't indicate if a plugin
-    // if of type "alert plugin" or "generic plugin". That is only known when the plugin descriptor
-    // is parsed, which happens when the master plugin container is initialized. Therefore, this
-    // needs to get plugin info from the master plugin container while the master is running.
-    public Map<ServerPluginType, List<PluginKey>> getAllPluginsGroupedByType() {
+    public Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType() {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS);
+        List<PluginKey> keys = q.getResultList(); // all installed plugins, both enabled and disabled
+
         Map<ServerPluginType, List<PluginKey>> allPlugins = new HashMap<ServerPluginType, List<PluginKey>>();
 
-        MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
-        if (master != null) {
-            List<ServerPluginType> types = master.getServerPluginTypes();
-            for (ServerPluginType type : types) {
-                List<PluginKey> plugins = master.getAllPluginsByPluginType(type);
-                allPlugins.put(type, plugins);
+        for (PluginKey key : keys) {
+            try {
+                ServerPluginType type = new ServerPluginType(key.getPluginType());
+                List<PluginKey> knownPluginsForType = allPlugins.get(type);
+                if (knownPluginsForType == null) {
+                    knownPluginsForType = new ArrayList<PluginKey>();
+                    allPlugins.put(type, knownPluginsForType);
+                }
+                knownPluginsForType.add(key);
+            } catch (Exception e) {
+                log.warn("Invalid plugin key found [" + key + "]", e);
             }
         }
-
         return allPlugins;
     }
 
@@ -482,5 +549,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return;
+    }
+
+    private List<PluginKey> getPluginKeysFromIds(List<Integer> pluginIds) {
+        Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_KEYS_BY_IDS);
+        q.setParameter("ids", pluginIds);
+        List<PluginKey> keys = q.getResultList();
+        return keys;
     }
 }

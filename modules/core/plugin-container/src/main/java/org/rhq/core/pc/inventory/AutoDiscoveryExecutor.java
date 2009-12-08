@@ -204,6 +204,15 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                 log.error("Error in auto discovery", e);
             }
         }
+
+        // if we have nothing, our plugins didn't discovery anything, but we want to at least report the platform
+        if (report.getAddedRoots().isEmpty()) {
+            if (platformContainer.getSynchronizationState() == ResourceContainer.SynchronizationState.NEW) {
+                report.addAddedRoot(platformResource);
+            }
+        }
+
+        return;
     }
 
     private List<ProcessScanResult> performProcessScans(List<ProcessInfo> processInfos, ResourceType serverType) {

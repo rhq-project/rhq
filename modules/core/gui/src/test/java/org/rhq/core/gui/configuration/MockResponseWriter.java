@@ -9,7 +9,7 @@ import javax.faces.context.ResponseWriter;
 
 public class MockResponseWriter extends ResponseWriter {
 
-    StringWriter stringWriter = new StringWriter();
+    public StringWriter stringWriter = new StringWriter();
 
     @Override
     public ResponseWriter cloneWithWriter(Writer writer) {

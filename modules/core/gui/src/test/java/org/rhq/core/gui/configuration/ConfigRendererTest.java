@@ -8,7 +8,6 @@ import javax.faces.FactoryFinder;
 import javax.faces.application.ApplicationFactory;
 import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
-import javax.faces.context.ResponseWriter;
 import javax.faces.lifecycle.Lifecycle;
 import javax.faces.render.RenderKitFactory;
 
@@ -25,16 +24,12 @@ import org.rhq.core.gui.util.FacesContextUtility;
 public class ConfigRendererTest {
 
     RenderKitFactory rkf;
-
     ConfigUIComponent configUIComponent;
     ConfigRenderer configRenderer;
-
     FacesContext facesContext;
     ExternalContext externalContext;
-
     AjaxContext ajaxContext;
-    ResponseWriter mockResponseWriter;
-
+    MockResponseWriter mockResponseWriter;
     Lifecycle lifecycle;
 
     @BeforeMethod
@@ -57,29 +52,20 @@ public class ConfigRendererTest {
         FactoryFinder.setFactory(FactoryFinder.RENDER_KIT_FACTORY, MockRenderKitFactory.class.getName());
         FactoryFinder.setFactory(FactoryFinder.APPLICATION_FACTORY, MockApplicationFactory.class.getName());
 
+        HashMap<Object, Object> map = new HashMap();
+        facesContext.getExternalContext().getRequestMap().put("com.sun.faces.util.RequestStateManager", map);
+        FacesContextImpl impl = new FacesContextImpl(externalContext, lifecycle);
+        map.put("com.sun.faces.FacesContextImpl", impl);
+        ValueExpression binding = new MockValueExpression();
+        binding.setValue(FacesContextUtility.getFacesContext().getELContext(), new Configuration());
+        configUIComponent.setValueExpression("configuration", binding);
+
     }
 
     @Test
-    public void testDecodeReadWrite() {
-
-        HashMap<Object, Object> map = new HashMap();
-
-        facesContext.getExternalContext().getRequestMap().put("com.sun.faces.util.RequestStateManager", map);
-
-        FacesContextImpl impl = new FacesContextImpl(externalContext, lifecycle);
-
-        map.put("com.sun.faces.FacesContextImpl", impl);
-
+    public void testDecode() {
         configUIComponent.setReadOnly(false);
-
-        ValueExpression binding = new MockValueExpression();
-        binding.setValue(FacesContextUtility.getFacesContext().getELContext(), new Configuration());
-
-        configUIComponent.setValueExpression("configuration", binding);
-
-        Configuration configuration = configUIComponent.getConfiguration();
-        Assert.assertNotNull(configuration);
-
+        Assert.assertNotNull(configUIComponent.getConfiguration());
         configRenderer.decode(facesContext, configUIComponent);
     }
 
@@ -88,13 +74,7 @@ public class ConfigRendererTest {
         configRenderer.encodeBegin(this.facesContext, configUIComponent);
         configRenderer.encodeChildren(facesContext, configUIComponent);
         configRenderer.encodeEnd(facesContext, configUIComponent);
-        //System.out.println(mockResponseWriter.stringWriter.getBuffer().toString());
+        System.out.println(mockResponseWriter.stringWriter.getBuffer().toString());
     }
 
-    public static void main(String[] args) throws Exception {
-        ConfigRendererTest test = new ConfigRendererTest();
-        test.setUp();
-        test.testDecodeReadWrite();
-
-    }
 }

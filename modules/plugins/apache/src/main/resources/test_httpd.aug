@@ -93,4 +93,4 @@ test Httpd.lns get
 test Httpd.directive get "Include /etc/httpd/conf/vhosts/www.jboss.org-common/www.jboss.org-config.conf\n" =
     { "Include" { "param" = "/etc/httpd/conf/vhosts/www.jboss.org-common/www.jboss.org-config.conf" } }
 
-(* test Httpd.lns get "Include \\\n /value\n" = { "Include" {"param" =  "/value" } } *)
+test Httpd.lns get "Include \\\n /value\n" = { "Include" {"param" =  "/value" } }

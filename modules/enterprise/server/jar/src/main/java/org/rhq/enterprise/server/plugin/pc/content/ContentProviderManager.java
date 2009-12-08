@@ -269,12 +269,16 @@ public class ContentProviderManager {
 
                 PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
                     provider);
+                results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEMETADATA);
                 packageSourceSynchronizer.synchronizePackageMetadata();
+                results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEBITS);
                 packageSourceSynchronizer.synchronizePackageBits();
 
                 DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
                     repo, source, provider);
+                results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROMETADATA);
                 distributionSourceSynchronizer.synchronizeDistributionMetadata();
+                results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROBITS);
                 distributionSourceSynchronizer.synchronizeDistributionBits();
 
                 // Update status to finished.
@@ -320,6 +324,14 @@ public class ContentProviderManager {
         }
 
         return true;
+    }
+
+    private RepoSyncResults updateSyncResults(int resultsId, ContentSyncStatus status) {
+        RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(resultsId);
+        reloadedResults.setStatus(status);
+        reloadedResults = repoManager.mergeRepoSyncResults(reloadedResults);
+        return reloadedResults;
     }
 
     /**

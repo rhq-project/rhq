@@ -632,24 +632,30 @@
 
     </plugins>
 
+    <!-- To allow deploying release artifacts to SVN and snapshot artifacts to HTTP/Dav. -->
     <extensions>
-
-      <!-- Add support for scm URLs in the distributionManagement section. -->
       <extension>
         <groupId>org.apache.maven.wagon</groupId>
         <artifactId>wagon-scm</artifactId>
         <version>1.0-beta-6</version>
       </extension>
-
-      <!-- Add support for dav URLs in the distributionManagement section. -->
       <extension>
-        <groupId>org.apache.maven.wagon</groupId>
-        <artifactId>wagon-webdav-jackrabbit</artifactId>
-        <version>1.0-beta-6</version>
+        <groupId>org.apache.maven.scm</groupId>
+        <artifactId>maven-scm-manager-plexus</artifactId>
+        <version>1.0</version>
       </extension>
-
-    </extensions>
-
+      <extension>
+        <groupId>org.apache.maven.scm</groupId>
+        <artifactId>maven-scm-provider-svnexe</artifactId>
+        <version>1.0</version>
+      </extension>
+      <extension>
+         <groupId>org.apache.maven.wagon</groupId>
+         <artifactId>wagon-webdav</artifactId>
+         <version>1.0-beta-2</version>
+      </extension>
+   </extensions>
+   
   </build>
 
   <repositories>

@@ -60,39 +60,39 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         assert repo.getContentSources().size() == 1;
         // We have to commit because bean has new transaction inside it
         getTransactionManager().commit();
-        getTransactionManager().begin();
 
         RepoSyncResults results = getSyncResults(repo.getId());
         assert results == null;
 
-        System.out.println("Starting sync");
+        System.out.println("Starting sync: " + repo.getId());
+        // boolean synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+
         SyncerThread st = new SyncerThread();
         st.start();
 
-        boolean gotInProgress = false;
+        boolean gotPackageBits = false;
         boolean gotResults = false;
         // Run 30 times or until it is synced. 
-        for (int i = 0; ((i < 30) && !st.isSynced()); i++) {
+        for (int i = 0; ((i < 300) && !st.isSynced() && !st.isErrored()); i++) {
             results = getSyncResults(repo.getId());
             if (results != null) {
-                if (results.getStatus() == ContentSyncStatus.INPROGRESS) {
-                    gotInProgress = true;
+                if (results.getStatus() == ContentSyncStatus.PACKAGEMETADATA) {
+                    gotPackageBits = true;
                 }
                 if (results.getResults() != null) {
                     gotResults = true;
                 }
             }
-            System.out.println("st: " + st.isSynced());
             Thread.sleep(1000);
         }
         System.out.println("Finished sync");
-        getTransactionManager().commit();
-        assert gotInProgress;
+        assert gotPackageBits;
         assert gotResults;
 
         assert st.isSynced();
         results = getSyncResults(repo.getId());
         assert results != null;
+
         assert (results.getStatus() == ContentSyncStatus.SUCCESS);
         assert (results.getResults() != null);
 
@@ -102,19 +102,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
     }
 
-    private RepoSyncResults getSyncResults(int repoId) {
-        Query q = em.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
-        q.setParameter("repoId", repoId);
-
-        List<RepoSyncResults> rlist = q.getResultList(); // will be ordered by start time descending
-        if (rlist != null && rlist.size() > 0) {
-            return rlist.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testSyncCount() throws Exception {
 
         Integer[] ids = { repo.getId() };
@@ -124,6 +112,20 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
         assert syncCount == 1;
 
+    }
+
+    private RepoSyncResults getSyncResults(int repoId) {
+        Query q = em.createNamedQuery(RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID);
+        q.setParameter("repoId", repoId);
+        List<RepoSyncResults> rlist = q.getResultList(); // will be ordered by start time descending
+        if (rlist != null && rlist.size() > 0) {
+            assert rlist.size() == 1;
+            RepoSyncResults retval = rlist.get(0);
+            em.refresh(retval);
+            return rlist.get(0);
+        } else {
+            return null;
+        }
     }
 
     @AfterMethod
@@ -157,17 +159,29 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         if (tx != null) {
             tx.commit();
         }
+
     }
 
     class SyncerThread extends Thread {
 
         boolean synced = false;
+        boolean errored = false;
+
+        public boolean isErrored() {
+            return errored;
+        }
 
         @Override
         public void run() {
             try {
+                TransactionManager tx = getTransactionManager();
+                tx.begin();
+                System.out.println("SyncerThread :: Starting sync");
                 synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+                System.out.println("SyncerThread :: Finished sync : " + synced);
+                tx.commit();
             } catch (Exception e) {
+                errored = true;
                 throw new RuntimeException(e);
             }
 

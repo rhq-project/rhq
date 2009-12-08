@@ -974,6 +974,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public RepoSyncResults persistRepoSyncResults(RepoSyncResults results) {
 
         ContentManagerHelper helper = new ContentManagerHelper(entityManager);

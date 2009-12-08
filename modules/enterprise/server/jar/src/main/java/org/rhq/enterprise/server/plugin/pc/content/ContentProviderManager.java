@@ -318,7 +318,7 @@ public class ContentProviderManager {
                 if (results != null) {
                     results.setEndTime(System.currentTimeMillis());
                     repoManager.mergeRepoSyncResults(results);
-                    log.debug("merging results.");
+                    log.debug("synchronizeRepo :: merging results.");
                 }
             }
         }

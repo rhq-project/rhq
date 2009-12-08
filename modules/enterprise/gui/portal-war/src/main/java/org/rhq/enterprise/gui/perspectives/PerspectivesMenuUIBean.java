@@ -53,4 +53,25 @@ public class PerspectivesMenuUIBean {
 
         return result;
     }
+
+    public String getUrlKey() {
+        String url = FacesContextUtility.getRequest().getParameter("url");
+        int key = perspectiveManager.getUrlKey(url);
+
+        return Integer.toString(key);
+    }
+
+    public String getKeyViaUrl(String url) {
+        int key = perspectiveManager.getUrlKey(url);
+
+        return Integer.toString(key);
+    }
+
+    public String getUrlViaKey() {
+        String key = FacesContextUtility.getRequest().getParameter("key");
+        String url = (null == key) ? null : perspectiveManager.getUrlViaKey(Integer.valueOf(key));
+
+        return url;
+    }
+
 }

@@ -47,4 +47,9 @@ public interface PerspectiveManagerLocal {
      * @return the list of tabs that should be displayed for the specified user for the specified Resource
      */
     List<Tab> getResourceTabs(Subject subject, Resource resource);
+
+    public int getUrlKey(String url);
+
+    public String getUrlViaKey(int key);
+
 }

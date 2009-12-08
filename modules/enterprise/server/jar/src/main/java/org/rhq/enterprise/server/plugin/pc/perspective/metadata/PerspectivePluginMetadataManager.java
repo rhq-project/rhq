@@ -131,7 +131,7 @@ public class PerspectivePluginMetadataManager {
         List<ApplicationType> applications = perspective.getApplication();
 
         for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
-            resolveUrls(applications, rawMenuItem);
+            resolveUrls(applications, rawMenuItem, "/rhq/common/perspective-main.xhtml?targetUrl=");
             ActionType action = rawMenuItem.getAction();
             ExtensionPointType extensionPoint = rawMenuItem.getPosition().getExtensionPoint();
             if (ExtensionPointType.CORE_MENU == extensionPoint) {
@@ -155,14 +155,14 @@ public class PerspectivePluginMetadataManager {
      * @param applications
      * @param rawMenuItem
      */
-    private void resolveUrls(List<ApplicationType> applications, MenuItemType rawMenuItem) {
+    private void resolveUrls(List<ApplicationType> applications, MenuItemType rawMenuItem, String targetUrl) {
         ApplicationType applicationType = getApplicationByName(applications, rawMenuItem.getApplication());
 
-        rawMenuItem.setUrl(resolveUrl(applicationType, rawMenuItem.getUrl()));
-        rawMenuItem.setIconUrl(resolveUrl(applicationType, rawMenuItem.getIconUrl()));
+        rawMenuItem.setUrl(resolveUrl(applicationType, rawMenuItem.getUrl(), targetUrl));
+        rawMenuItem.setIconUrl(resolveUrl(applicationType, rawMenuItem.getIconUrl(), targetUrl));
     }
 
-    private String resolveUrl(ApplicationType applicationType, String url) {
+    private String resolveUrl(ApplicationType applicationType, String url, String targetUrl) {
         String result = url;
 
         if (null != url) {
@@ -179,7 +179,7 @@ public class PerspectivePluginMetadataManager {
                     baseUrl = baseUrl + "/";
                     applicationType.setBaseUrl(baseUrl);
                 }
-                result = baseUrl + url;
+                result = targetUrl + baseUrl + url;
             }
         }
 
@@ -327,18 +327,15 @@ public class PerspectivePluginMetadataManager {
         return coreMenu;
     }
 
-    public List<TaskType> getGlobalTasks()
-    {
+    public List<TaskType> getGlobalTasks() {
         return globalTasks;
     }
 
-    public List<TaskType> getResourceTasks()
-    {
+    public List<TaskType> getResourceTasks() {
         return resourceTasks;
     }
 
-    public List<TabType> getTabs()
-    {
+    public List<TabType> getTabs() {
         return tabs;
     }
 }

@@ -67,7 +67,9 @@
    </menuItem>
    <menuItem
       name="custom.child2"
-      displayName="Child-2">
+      displayName="Child-2"
+      application="sample"
+      url="index.html">
       <position
          extensionPoint="coreMenu"
          name="custom.child1"

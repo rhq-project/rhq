@@ -1072,7 +1072,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + configHistoryId + "'");
         }
 
-        updateResourceConfiguration(subject, resourceId, configuration);
+        if (isStructuredAndRawSupported(resourceId)) {
+            updateStructuredOrRawConfiguration(subject, resourceId, configuration, false);
+        }
+        else {
+            updateResourceConfiguration(subject, resourceId, configuration);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)

@@ -65,8 +65,22 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             int idx = node.getSeq();
             
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, idx));
-
-            String directoryParam = node.getChildByLabel("param").get(0).getValue();
+            
+            List<AugeasNode> params = node.getChildByLabel("param");
+            
+            String directoryParam;
+            boolean isRegexp;
+            
+            if (params.size() > 1) {
+                directoryParam = params.get(1).getValue();
+                isRegexp = true;
+            } else {
+                directoryParam = params.get(0).getValue();
+                isRegexp = false;
+            }
+            
+            pluginConfiguration.put(new PropertySimple("regexp", isRegexp));
+            
             String resourceKey = directoryParam + "|" + idx;
             String resourceName = unescape(directoryParam);
 

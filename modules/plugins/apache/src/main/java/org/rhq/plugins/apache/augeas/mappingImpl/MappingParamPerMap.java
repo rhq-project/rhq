@@ -43,7 +43,7 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
             List<String> params = ApacheDirectiveRegExpression.getParams(directiveNode);
 
             for (int i = 0; i < params.size(); i += propCnt) {
-                int idx = 0;
+                int idx = i;
                 PropertyMap map = new PropertyMap(mapDef.getName());
                 propList.add(map);
                 for (PropertyDefinition def : mapDef.getPropertyDefinitions().values()) {
@@ -55,10 +55,6 @@ public class MappingParamPerMap extends AugeasToConfigurationSimple {
                     }
                 }
             }
-            for (AugeasNode nd : nodes) {
-                propList.add(loadProperty(listMemberPropDef, nd));
-            }
-
         }
         return propList;
     }

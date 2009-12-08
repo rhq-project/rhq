@@ -24,6 +24,7 @@
 package org.rhq.plugins.apache.augeas.mappingImpl;
 
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
@@ -43,9 +44,17 @@ public class Util {
             return new PropertySimple(name, value != null);
         }
 
-        //options with empty values correspond to null values
         if (!definition.getEnumeratedValues().isEmpty()) {
+            //options with empty values correspond to null values
             if (value == null) value = "";
+            
+            //apache configuration values are usually case-insensitive.
+            String valLowerCase = value.toLowerCase();
+            for (PropertyDefinitionEnumeration option : definition.getEnumeratedValues()) {
+                if (option.getValue().toLowerCase().equals(valLowerCase)) {
+                    value = option.getValue();
+                }
+            }
         }
         
         return new PropertySimple(name, value);

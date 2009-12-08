@@ -31,7 +31,7 @@
         Configure the logging of requests to the server.
         </c:description>
         <c:map-property name="CustomLog">
-            <c:simple-property name=".">
+            <c:simple-property name="Destination">
                 <c:description>
                     Either a file path relative to the ServerRoot or a &#39;|&#39; followed by the name of program to receive the log information on its standard input.
                     Note that the program will be run by the same user that started httpd.
@@ -86,7 +86,7 @@
             The first option is the default, while options 2-4 are configured using the ErrorDocument directive, which is followed by the HTTP response code and a URL or a message. Apache will sometimes offer additional information regarding the problem/error.
         </c:description>
         <c:map-property name="ErrorDocument">
-            <c:simple-property name="." description="HTTP response code of the error." type="integer" />
+            <c:simple-property name="responseCode" displayName="HTTP Response Code" description="HTTP response code of the error." type="integer" />
             <c:simple-property name="document" description="URLs can begin with a slash (/) for local web-paths (relative to the DocumentRoot), or be a full URL which the client can resolve. Alternatively, a message can be provided to be displayed by the browser." />
         </c:map-property>
     </c:list-property>
@@ -201,7 +201,7 @@
             The environment variables settings are not supported in the user interface.
         </c:description>
         <c:map-property name="Allow">
-            <c:simple-property name="."/>
+            <c:simple-property name="host"/>
             <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
@@ -213,7 +213,7 @@
             The arguments for the Deny directive are identical to the arguments for the Allow directive.
         </c:description>
         <c:map-property name="Deny">
-            <c:simple-property name="."/>
+            <c:simple-property name="host"/>
             <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
@@ -651,10 +651,10 @@
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
+                <c:simple-property name="regexp" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
+                                   description="Does the name of this directory denote a regular expression?"/>
             </plugin-configuration>
             <resource-configuration>
-                <c:simple-property name="~" displayName="Regular Expression" type="boolean" default="false" readOnly="true"
-                                   description="Does the name of this directory denote a regular expression?"/>
                 &Order;
                 &Allow;
                 &Deny;

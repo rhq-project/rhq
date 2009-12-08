@@ -60,7 +60,7 @@ public enum DirectiveMappingEnum {
                 }
 
                 if (simpleNode.isEmpty()) {
-                    resourceConfig.put(Util.createPropertySimple((PropertyDefinitionSimple) propDef, null));
+                    resourceConfig.put(new PropertySimple(propertyName, null));
                 } else {
                     String value = null;
                     List<AugeasNode> params = simpleNode.get(0).getChildByLabel("param");

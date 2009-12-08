@@ -94,12 +94,12 @@ public class ConfigurationDefinition implements Serializable {
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy
-    private Map<String, PropertyDefinition> propertyDefinitions;
+    private Map<String, PropertyDefinition> propertyDefinitions = new LinkedHashMap<String, PropertyDefinition>();
 
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy
-    private Map<String, ConfigurationTemplate> templates;
+    private Map<String, ConfigurationTemplate> templates = new LinkedHashMap<String, ConfigurationTemplate>();
 
     @Column(name = "config_format")
     @Enumerated(EnumType.STRING)

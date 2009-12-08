@@ -42,7 +42,9 @@ public class ApacheDirectiveRegExpression {
 	     directiveRegex.put("Deny", new String[]{ "from", "(?:" + wsMan + "(" + word + "))"});
 	     directiveRegex.put("Listen",  new String[]{"(?:((?:\\[[a-zA-Z0-9:]+\\])|(?:[0-9\\.]+)):)?([0-9]+)(?:" + wsMan + "(" + word + "))?"});
 	     directiveRegex.put("ServerAlias", new String[]{ws+"("+word+")"});
-	     directiveRegex.put("AllowOverride", new String[]{"(All|None|Limit|Options|FileInfo|AuthConfig|Indexes)"});
+	     //strange as it is, the order of the groups in the regex below has to be the same as the order of 
+	     //corresponding simple props in the resource config
+	     directiveRegex.put("AllowOverride", new String[]{"(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)"});
 	}
 	
     public static List<String> getParams(AugeasNode parentNode){

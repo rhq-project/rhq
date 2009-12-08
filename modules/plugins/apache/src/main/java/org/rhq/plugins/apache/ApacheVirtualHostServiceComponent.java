@@ -206,7 +206,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
         String[] addrs = resourceKey.substring(addrStartIdx).split(" ");
 
-        StringBuilder expr = new StringBuilder("VirtualHost");
+        StringBuilder expr = new StringBuilder("<VirtualHost");
         boolean hasParams = serverName != null || addrs.length > 0;
         
         if (hasParams) {
@@ -214,7 +214,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
         
         if (serverName != null) {
-            expr.append("ServerName = \"").append(serverName).append("\""); 
+            expr.append("ServerName/param = \"").append(serverName).append("\""); 
         }
         
         if (addrs.length > 0) {
@@ -223,10 +223,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 expr.append(" and ");
             }
             
-            expr.append("address = \"").append(firstAddr).append("\"");
+            expr.append("param = \"").append(firstAddr).append("\"");
             
             for(int i = 1; i < addrs.length; ++i) {
-                expr.append(" and address = \"").append(addrs[i]).append("\"");
+                expr.append(" and param = \"").append(addrs[i]).append("\"");
             }
         }
         if (hasParams) {

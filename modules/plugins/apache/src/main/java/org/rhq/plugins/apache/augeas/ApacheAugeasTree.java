@@ -94,19 +94,83 @@ public class ApacheAugeasTree implements AugeasTree {
         }
     }
 
+    private int subExpressionIndex(String expr) {
+        //we have to parse the expression carefully because of the 
+        //potential xpath qualifier that can contain path separators.
+        
+        //0 = normal
+        //1 = in xpath qualifier
+        //2 = in double-quoted string (inside the qualifier)
+        //3 = in single-quoted string (inside the qualifier)
+        int state = 0;
+        int idx = 0;
+        boolean found = false;
+        while (!found && idx < expr.length()) {
+            char currentChar = expr.charAt(idx);
+            switch (state) {
+            case 0: //normal
+                switch (currentChar) {
+                case '[':
+                    state = 1;
+                    break;
+                case '/':
+                    found = true;
+                    break;
+                }
+                break;
+            case 1: //xpath qualifier
+                switch (currentChar) {
+                case ']':
+                    state = 0;
+                    break;
+                case '"':
+                    state = 2;
+                    break;
+                case '\'':
+                    state = 3;
+                    break;
+                }
+                break;
+            case 2: //double quoted string
+                switch (currentChar) {
+                case '"':
+                    state = 1;
+                    break;
+                case '\\':
+                    idx++;
+                    break;
+                }
+                break;
+            case 3: //single quoted string
+                switch (currentChar) {
+                case '\'':
+                    state = 1;
+                    break;
+                case '\\':
+                    idx++;
+                    break;
+                }
+                break;
+            }
+            idx++;
+        }
+        
+        return idx == expr.length() ? -1 : idx;
+    }
+    
     private List<AugeasNode> parseExpr(AugeasNode nd, String expr) throws Exception {
 
-        int index = expr.indexOf(File.separatorChar);
+        int index = subExpressionIndex(expr);
         if (index == -1)
             return search(nd, expr);
 
-        String subExpr = expr.substring(0, index);
+        String subExpr = expr.substring(0, index - 1);
         List<AugeasNode> nodes = search(nd, subExpr);
 
         List<AugeasNode> nds = new ArrayList<AugeasNode>();
 
         for (AugeasNode node : nodes) {
-            List<AugeasNode> tempNodes = parseExpr(node, expr.substring(index + 1));
+            List<AugeasNode> tempNodes = parseExpr(node, expr.substring(index));
             if (tempNodes != null)
                 nds.addAll(tempNodes);
         }

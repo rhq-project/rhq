@@ -55,7 +55,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         AugeasTree tree = context.getParentResourceComponent().getServerConfigurationTree();
 
-        List<AugeasNode> directories = tree.matchRelative(context.getParentResourceComponent().getNode(tree), "<Directory/param");
+        List<AugeasNode> directories = tree.matchRelative(context.getParentResourceComponent().getNode(tree), "<Directory");
 
         ResourceType resourceType = context.getResourceType();
 
@@ -66,8 +66,9 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, idx));
 
-            String resourceKey = node.getValue() + "|" + idx;
-            String resourceName = unescape(node.getValue());
+            String directoryParam = node.getChildByLabel("param").get(0).getValue();
+            String resourceKey = directoryParam + "|" + idx;
+            String resourceName = unescape(directoryParam);
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));

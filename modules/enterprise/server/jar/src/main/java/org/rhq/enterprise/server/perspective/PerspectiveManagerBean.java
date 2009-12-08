@@ -19,7 +19,6 @@
 package org.rhq.enterprise.server.perspective;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,24 +35,33 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.FacetActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.FacetActivatorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorSetType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorType;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
+/**
+ * @author Jay Shaughnessy
+ * @author Ian Springer
+ */
 public class PerspectiveManagerBean implements PerspectiveManagerLocal, PerspectiveManagerRemote {
 
     private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
 
     // Map of sessionId to cached menu entry.  The cached menu is re-used for the same sessionId.
-    // This should more appropriately use Subject as the key but since Subject equality is
-    // based on username it's not quite appropriate.
+    // This should more appropriately use Subject as the key, but since Subject equality is
+    // based on username, it's not quite appropriate.
     // The cache is cleaned anytime there is a new entry.
     static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
 
@@ -67,6 +75,9 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
 
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
@@ -106,8 +117,78 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     @NotNull
     public List<Tab> getResourceTabs(Subject subject, Resource resource) {
-        // TODO: implement
-        return Collections.emptyList();
+        List<Tab> resourceTabs;
+        try
+        {
+            resourceTabs = PerspectiveManagerHelper.getPluginMetadataManager().getResourceTabs();
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException(e);
+        }
+
+        List<Tab> activeResourceTabs = new ArrayList<Tab>();
+        ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType().getId());
+        for (Tab resourceTab : resourceTabs) {
+            if (isActive(resourceTab, facets)) {
+                activeResourceTabs.add(resourceTab);                                
+                List<Tab> subtabs = resourceTab.getChildren();
+                List<Tab> activeSubtabs = new ArrayList<Tab>();
+                for (Tab subtab : subtabs)
+                {
+                    if (isActive(subtab, facets)) {
+                        activeSubtabs.add(subtab);
+                    }
+                }
+                resourceTab.setChildren(activeSubtabs);
+            }
+        }
+        // TODO: Cache these at some level.
+        return activeResourceTabs;
+    }
+
+    private boolean isActive(Tab resourceTab, ResourceFacets facets)
+    {
+        // TODO: Check global perm activators.
+        // TODO: Check monitoring license activator.
+        List<ResourceActivatorSetType> currentResourceActivatorSets = resourceTab.getCurrentResourceOrGroupActivatorSets();
+        if (currentResourceActivatorSets != null) {
+            for (ResourceActivatorSetType currentResourceActivatorSet : currentResourceActivatorSets) {
+                List<ResourceActivatorType> resourceActivators = currentResourceActivatorSet.getResourceActivator();
+                for (ResourceActivatorType resourceActivator : resourceActivators) {
+                    // TODO: Check resourceType activators.
+                    // TODO: Check resource permission activators.
+                    FacetActivatorSetType facetActivatorSet = resourceActivator.getFacetActivatorSet();
+                    List<FacetActivatorType> facetActivators = facetActivatorSet.getFacetActivator();
+                    for (FacetActivatorType facetActivator : facetActivators) {
+                        String facetName = facetActivator.getFacet().value();
+                        // TODO: Create a Facets enum to avoid these ugly string comparisons.
+                        if (facetName.equals("measurement") && !facets.isMeasurement()) {
+                            return false;
+                        }
+                        if (facetName.equals("event") && !facets.isEvent()) {
+                            return false;
+                        }
+                        if (facetName.equals("pluginConfiguration") && !facets.isPluginConfiguration()) {
+                            return false;
+                        }
+                        if (facetName.equals("configuration") && !facets.isConfiguration()) {
+                            return false;
+                        }
+                        if (facetName.equals("operation") && !facets.isOperation()) {
+                            return false;
+                        }
+                        if (facetName.equals("content") && !facets.isOperation()) {
+                            return false;
+                        }
+                        if (facetName.equals("callTime") && !facets.isCallTime()) {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**

@@ -27,9 +27,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.perspective.MenuItem;
+import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ActionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ApplicationType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionPointType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PlacementType;
@@ -39,7 +41,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
 
 /**
  * This loads in all deployed perspective server plugins and maintains the complete set of
- * {@link #getMetadataManager() metadata} found in all plugin descriptors. Individual plugin
+ * metadata found in all plugin descriptors. Individual plugin
  * metadata is irrelevant and not retrievable.  The union of the perspective definitions is
  * maintained and made available.  Conflict resolution rules are applied as needed for
  * clashing perspective definitions.
@@ -48,9 +50,13 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
  * plugin-load-time. 
  *
  * @author Jay Shaughnessy
+ * @author Ian Springer
  */
 public class PerspectivePluginMetadataManager {
     private final String CORE_PERSPECTIVE_NAME = "CorePerspective";
+
+    private static final String MENU_ITEM_TARGET_URL = "/rhq/common/perspective-main.xhtml?targetUrl=";
+    private static final String TAB_TARGET_URL = "/rhq/resource/perspective/index.xhtml?targetUrl=";
 
     private Log log = LogFactory.getLog(PerspectivePluginMetadataManager.class);
 
@@ -59,10 +65,10 @@ public class PerspectivePluginMetadataManager {
     private Map<String, PerspectivePluginDescriptorType> loadedPlugins = new HashMap<String, PerspectivePluginDescriptorType>();
 
     private boolean isStarted = false;
-    private List<TaskType> globalTasks = null;
-    private List<TaskType> resourceTasks = null;
-    private List<TabType> tabs;
-    private List<MenuItem> coreMenu = null;
+    private List<Tab> resourceTabs;
+    private List<MenuItem> coreMenu;
+
+
 
     public PerspectivePluginMetadataManager() {
     }
@@ -71,8 +77,6 @@ public class PerspectivePluginMetadataManager {
      * Transforms the pluginDescriptor into domain object form and stores those objects.
      *
      * @param  descriptor the descriptor to transform
-     *
-     * @return void
      */
     public synchronized void loadPlugin(PerspectivePluginDescriptorType descriptor) {
         loadedPlugins.put(descriptor.getName(), descriptor);
@@ -101,13 +105,15 @@ public class PerspectivePluginMetadataManager {
                 + CORE_PERSPECTIVE_NAME);
         }
 
-        this.globalTasks = cp.getGlobalTask();
-        this.resourceTasks = cp.getResourceTask();
-        this.tabs = cp.getTab(); // TODO
+        // TODO: Init lists of global tasks and resource tasks.
 
         // Setup core menus
         if (null == this.coreMenu) {
             this.coreMenu = new ArrayList<MenuItem>();
+        }
+
+        if (null == this.resourceTabs) {
+            this.resourceTabs = new ArrayList<Tab>();
         }
 
         processPerspective(cp);
@@ -127,11 +133,13 @@ public class PerspectivePluginMetadataManager {
         //printMenu(this.coreMenu, "");
     }
 
-    private void processPerspective(PerspectivePluginDescriptorType perspective) {
+    private void processPerspective(PerspectivePluginDescriptorType perspective) {                
         List<ApplicationType> applications = perspective.getApplication();
 
+        // TODO: Process global tasks and resource tasks.
+
         for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
-            resolveUrls(applications, rawMenuItem);
+            resolveUrls(applications, rawMenuItem, MENU_ITEM_TARGET_URL);
             ActionType action = rawMenuItem.getAction();
             ExtensionPointType extensionPoint = rawMenuItem.getPosition().getExtensionPoint();
             if (ExtensionPointType.CORE_MENU == extensionPoint) {
@@ -147,22 +155,48 @@ public class PerspectivePluginMetadataManager {
                     + rawMenuItem.getName() + "] : " + extensionPoint);
             }
         }
+
+        for (TabType rawTab : perspective.getTab()) {
+            resolveUrls(applications, rawTab, TAB_TARGET_URL);
+            ActionType action = rawTab.getAction();
+            switch (action) {
+                case ADD: addTab(rawTab); break;
+                case REMOVE: removeTab(rawTab); break;
+                case REPLACE: replaceTab(rawTab); break;
+            }            
+        }
     }
 
     /**
-     * Update the url and iconUrl as needed by applying delclard application information.
+     * Update the url and iconUrl as needed by applying declared application information.
      *  
      * @param applications
-     * @param rawMenuItem
+     * @param extension
      */
-    private void resolveUrls(List<ApplicationType> applications, MenuItemType rawMenuItem) {
-        ApplicationType applicationType = getApplicationByName(applications, rawMenuItem.getApplication());
+    private void resolveUrls(List<ApplicationType> applications, ExtensionType extension, String targetUrl) {
+        ApplicationType applicationType = getApplicationByName(applications, extension.getApplication());
 
-        rawMenuItem.setUrl(resolveUrl(applicationType, rawMenuItem.getUrl()));
-        rawMenuItem.setIconUrl(resolveUrl(applicationType, rawMenuItem.getIconUrl()));
+        if (extension instanceof TaskType) {
+            TaskType task = (TaskType)extension;
+            String resolvedUrl = resolveUrl(applicationType, task.getUrl(), targetUrl);
+            task.setUrl(resolvedUrl);
+        }
+        else if (extension instanceof MenuItemType) {
+            MenuItemType menuItem = (MenuItemType)extension;
+            String resolvedUrl = resolveUrl(applicationType, menuItem.getUrl(), targetUrl);
+            menuItem.setUrl(resolvedUrl);
+        }
+        else if (extension instanceof TabType) {
+            TabType tab = (TabType)extension;
+            String resolvedUrl = resolveUrl(applicationType, tab.getUrl(), targetUrl);
+            tab.setUrl(resolvedUrl);
+        }
+
+        String resolvedIconUrl = resolveUrl(applicationType, extension.getIconUrl(), "");
+        extension.setIconUrl(resolvedIconUrl);
     }
 
-    private String resolveUrl(ApplicationType applicationType, String url) {
+    private String resolveUrl(ApplicationType applicationType, String url, String targetUrl) {
         String result = url;
 
         if (null != url) {
@@ -176,10 +210,10 @@ public class PerspectivePluginMetadataManager {
                 String baseUrl = applicationType.getBaseUrl();
                 // fix the baseUrl if it lacks the separator
                 if (!baseUrl.endsWith("/")) {
-                    baseUrl = baseUrl + "/";
+                    baseUrl += "/";
                     applicationType.setBaseUrl(baseUrl);
                 }
-                result = baseUrl + url;
+                result = targetUrl + baseUrl + url;
             }
         }
 
@@ -218,7 +252,6 @@ public class PerspectivePluginMetadataManager {
     }
 
     private void menuAdd(List<MenuItem> menu, MenuItemType rawMenuItem) {
-
         PositionType position = rawMenuItem.getPosition();
         List<MenuItem> containingMenu = getContainingMenu(menu, rawMenuItem);
         MenuItem menuItem = new MenuItem(rawMenuItem);
@@ -240,7 +273,6 @@ public class PerspectivePluginMetadataManager {
     }
 
     private void menuRemove(List<MenuItem> menu, MenuItemType rawMenuItem) {
-
         PositionType position = rawMenuItem.getPosition();
         List<MenuItem> containingMenu;
         try {
@@ -262,7 +294,6 @@ public class PerspectivePluginMetadataManager {
     }
 
     private void menuReplace(List<MenuItem> menu, MenuItemType rawMenuItem) {
-
         PositionType position = rawMenuItem.getPosition();
         List<MenuItem> containingMenu;
         try {
@@ -320,6 +351,97 @@ public class PerspectivePluginMetadataManager {
         return result;
     }
 
+    private void addTab(TabType rawTab) {
+        PositionType position = rawTab.getPosition();
+        List<Tab> siblingTabs = getSiblingTabs(rawTab);
+        Tab tab = new Tab(rawTab);
+
+        if (PlacementType.START == position.getPlacement()) {
+            siblingTabs.add(0, tab);
+        } else if (PlacementType.END == position.getPlacement()) {
+            siblingTabs.add(tab);
+        } else {
+            int index = getTabIndex(siblingTabs, position.getName());
+            if (index == -1) {
+                throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
+                    + "]. Referenced tab not found : " + position.getName()
+                    + ". Make sure supporting tabs are defined for the tab.");
+            }
+            siblingTabs.add((PlacementType.AFTER == position.getPlacement() ? ++index : --index), tab);
+        }
+    }
+
+    private void removeTab(TabType rawTab) {
+        PositionType position = rawTab.getPosition();
+        List<Tab> siblingTabs;
+        try {
+            siblingTabs = getSiblingTabs(rawTab);
+            int index = getTabIndex(siblingTabs, rawTab.getName());
+            if (index == -1) {
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawTab.getName()
+                    + "]. Referenced menuItem not found : " + position.getName()
+                    + ". Make sure supporting menus are defined for the menuItem.");
+            }
+            siblingTabs.remove(index);
+        } catch (IllegalArgumentException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Tab not found. Ignoring removal of tab [" + rawTab.getName() + "].", e);
+            }
+        }
+    }
+
+    private void replaceTab(TabType rawTab) {
+        PositionType position = rawTab.getPosition();
+        List<Tab> siblingTabs;
+        try {
+            siblingTabs = getSiblingTabs(rawTab);
+            int index = getTabIndex(siblingTabs, rawTab.getName());
+            if (-1 == index) {
+                throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
+                    + "]. Referenced tab not found : " + position.getName()
+                    + ". Make sure supporting tabs are defined for the tab.");
+            }
+            siblingTabs.set(index, new Tab(rawTab));
+        } catch (IllegalArgumentException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Tab not found. Ignoring replacement and attempting add for " + rawTab.getName(),
+                    e);
+            }
+            addTab(rawTab);
+        }
+    }
+
+    private List<Tab> getSiblingTabs(TabType rawTab) {
+        String name = rawTab.getName();
+        String[] nameTokens = (name != null) ? name.split("\\.") : new String[0];
+        List<Tab> result = this.resourceTabs;
+
+        for (int i = 0; (i + 1) < nameTokens.length; i++) {
+            int index = getTabIndex(result, nameTokens[i]);
+            if (index == -1) {
+                throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
+                    + "]. No parent tab found for : " + name
+                    + ". Make sure supporting tabs are defined for the tab.");
+            }
+            Tab parentTab = result.get(index);
+            result = parentTab.getChildren();
+        }
+
+        return result;
+    }
+
+    private int getTabIndex(List<Tab> menu, String name) {
+        int result = -1;
+
+        for (int i = 0, size = menu.size(); (i < size); ++i) {
+            if (menu.get(i).getQualifiedName().endsWith(name)) {
+                result = i;
+                break;
+            }
+        }
+        return result;
+    }
+
     /**
      * @return the coreMenu
      */
@@ -327,18 +449,19 @@ public class PerspectivePluginMetadataManager {
         return coreMenu;
     }
 
-    public List<TaskType> getGlobalTasks()
+    public List<Tab> getResourceTabs()
     {
-        return globalTasks;
-    }
-
-    public List<TaskType> getResourceTasks()
-    {
-        return resourceTasks;
-    }
-
-    public List<TabType> getTabs()
-    {
-        return tabs;
+        List<Tab> clone = new ArrayList<Tab>(this.resourceTabs.size());
+        for (Tab resourceTab : this.resourceTabs) {
+            try
+            {
+                clone.add(resourceTab.clone());
+            }
+            catch (CloneNotSupportedException e)
+            {
+                throw new IllegalStateException(e);
+            }
+        }
+        return clone;
     }
 }

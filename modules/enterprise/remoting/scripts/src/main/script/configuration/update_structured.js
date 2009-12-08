@@ -79,6 +79,40 @@ function ConfigUtil(resourceName) {
         }
     }
 
+    this.translateToRaw = function(update) {
+        doTranslation(update, true);
+    }
+
+    this.translateToStructured = function(update) {
+        doTranslation(update, false);
+    }
+
+    function doTranslation(update, doStructured) {
+        println("Loading latest configuration for " + util.resource.name);
+        var configuration = util.getLatestConfiguration();
+
+        printConfiguration(configuration)
+        println('');
+
+        if (doStructured) {
+            doStructuredUpdate(util.resource, configuration, update);
+        }
+        else {
+            doRawUpdate(util.resource, configuration, update);
+        }
+   
+        println("Modified configuration...");
+        printConfiguration(configuration)
+        println('');
+
+        var translatedConfig = ConfigurationManager.translateResourceConfiguration(util.resource.id, configuration, 
+            doStructured);
+
+        println("Translated configuration...");
+        printConfiguration(translatedConfig);
+        println('');
+    }
+
     this.updateConfiguration = function(update, doStructured) {
         println("Loading latest configuration for " + this.resource.name);
         var configuration = this.getLatestConfiguration();
@@ -159,7 +193,11 @@ function ConfigUtil(resourceName) {
 
     function applyStructuredUpdate(resource, configuration, update) {
         println("Applying resource configuration update...");
+        doStructuredUpdate(resource, configuration, update);
+        ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, structured);
+    }
 
+    function doStructuredUpdate(resource, configuration, update) {
         for (key in update) {
             var property = configuration.getSimple(key.toString());
             if (property == null) {
@@ -167,11 +205,15 @@ function ConfigUtil(resourceName) {
             }
             property.stringValue = update[key];
         }
-
-        ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, structured);
     }
 
     function applyRawUpdate(resource, configuration, update) {
+        println("Applying resource configuration update...");
+        doRawUpdate(resource, configuration, update);
+        ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, raw);
+    }
+
+    function doRawUpdate(resourcec, configuration) {
         var updates = 0;
         var rawConfigs = java.util.ArrayList(configuration.rawConfigurations);
         for (path in update) {
@@ -191,9 +233,6 @@ function ConfigUtil(resourceName) {
         if (updates == 0) {
             throw "\nNo matching paths were found. Update will abort.";
         }
-
-        println("Applying resource configuration update...");
-        ConfigurationManager.updateStructuredOrRawConfiguration(resource.id, configuration, raw);
     }
 
     function findRawConfig(path, rawConfigs) {

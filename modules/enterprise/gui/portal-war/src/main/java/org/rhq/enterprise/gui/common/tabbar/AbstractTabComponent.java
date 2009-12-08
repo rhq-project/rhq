@@ -48,6 +48,10 @@ public abstract class AbstractTabComponent extends UIComponentBase {
     }
 
     public String getName() {
+        if (this.name == null) {
+            this.name = FacesComponentUtility.getExpressionAttribute(this, "name");
+        }
+
         return this.name;
     }
 
@@ -56,6 +60,10 @@ public abstract class AbstractTabComponent extends UIComponentBase {
     }
 
     public String getDisplayName() {
+        if (this.displayName == null) {
+            this.displayName = FacesComponentUtility.getExpressionAttribute(this, "displayName");
+        }
+
         return this.displayName;
     }
 

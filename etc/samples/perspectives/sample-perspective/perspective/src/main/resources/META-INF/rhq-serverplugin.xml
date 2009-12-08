@@ -33,7 +33,8 @@
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
    <menuItem
       action="remove"
-      name="groups.newGroup">
+      name="groups.newGroup"
+      displayName="New Group">
       <position
          extensionPoint="coreMenu"
          name="groups.groupDefinitions"
@@ -41,7 +42,8 @@
    </menuItem>
    <menuItem
       action="remove"
-      name="groups.newGroupDefinition">
+      name="groups.newGroupDefinition"
+      displayName="New Group Definition">
       <position
          extensionPoint="coreMenu"
          name="groups.newGroup"
@@ -81,14 +83,14 @@
       application="sample"
       url="/resource/group/Inventory.do?mode=new"
       iconUrl="images/create.png">
-      <position
-         extensionPoint="coreMenu"
-         name="custom.child1"
-         placement="start" />
       <globalPermissionActivatorSet>
          <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
       </globalPermissionActivatorSet>
+       <position
+         extensionPoint="coreMenu"
+         name="custom.child1"
+         placement="start" />
    </menuItem>
    <menuItem
       name="custom.child1.newGroupDefinition"
@@ -96,13 +98,30 @@
       application="sample"
       url="/rhq/definition/group/new.xhtml"
       iconUrl="images/create.png">
+       <globalPermissionActivatorSet>
+          <globalPermissionActivator
+             permission="MANAGE_INVENTORY" />
+       </globalPermissionActivatorSet>
       <position
          extensionPoint="coreMenu"
          name="custom.child1.newGroup"
          placement="after" />
-      <globalPermissionActivatorSet>
-         <globalPermissionActivator
-            permission="MANAGE_INVENTORY" />
-      </globalPermissionActivatorSet>
    </menuItem>
+
+    <tab name="Custom" displayName="Custom" iconUrl="/images/icons/Favorite_16.png"
+         application="sample" url="index.html">
+        <position
+           extensionPoint="coreMenu"
+           name="Inventory"
+           placement="after" />
+    </tab>
+
+    <tab name="Monitor.Reports" displayName="Reports"
+         application="sample" url="index.html">
+        <position
+           extensionPoint="coreMenu"
+           name="Monitor.Tables"
+           placement="after" />
+    </tab>
+
 </perspectivePlugin>

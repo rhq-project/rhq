@@ -1,4 +1,4 @@
-package org.rhq.modules.plugins.Script2;
+package org.rhq.modules.plugins.script2;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -20,8 +20,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * Discovery class
  */
-public class ScriptDiscovery implements ResourceDiscoveryComponent
-,ManualAddFacet
+public class ScriptDiscovery implements ResourceDiscoveryComponent,ManualAddFacet
 {
 
     private final Log log = LogFactory.getLog(this.getClass());
@@ -41,11 +40,20 @@ public class ScriptDiscovery implements ResourceDiscoveryComponent
        */
       public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration, ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
 
-            // TODO implement this
-            DiscoveredResourceDetails detail = null; // new DiscoveredResourceDetails(
-//                context.getResourceType(), // ResourceType
-//            );
+          String lang = pluginConfiguration.getSimpleValue("language", null);
+          String script = pluginConfiguration.getSimpleValue("scriptName",null);
+          String key = "script2Engine::" + lang + "::" + script;
 
-            return detail;
+          DiscoveredResourceDetails detail =  new DiscoveredResourceDetails(
+                  context.getResourceType(), // ResourceType
+                  key, // resource key
+                  "Script " + lang + "::" + script, // resource name TODO get via configuration
+                  null, // version
+                  lang + "Script " + script, // Description
+                  pluginConfiguration, // Configuration
+                  null // Process scans
+          );
+
+          return detail;
       }
 }

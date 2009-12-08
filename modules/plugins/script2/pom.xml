@@ -34,8 +34,8 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.5</source>
-                    <target>1.5</target>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
             </plugin>
 
@@ -51,7 +51,11 @@
                         </goals>
                         <configuration>
                             <artifactItems>
-
+                                <artifactItem>
+                                    <groupId>org.jruby</groupId>
+                                    <artifactId>jruby-complete</artifactId>
+                                    <version>1.4.0</version>
+                                </artifactItem>
                                 <!-- TODO include needed external jars
                                      that should go into your jar file
 
@@ -180,27 +184,9 @@
 
         <dependencies>
             <dependency>
-                <groupId>commons-logging</groupId>
-                <artifactId>commons-logging</artifactId>
-                <version>1.1</version>
-            </dependency>
-            <dependency>
-                <groupId>org.rhq</groupId>
-                <artifactId>rhq-core-domain</artifactId>
-                <version>${rhq.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.rhq</groupId>
-                <artifactId>rhq-core-plugin-api</artifactId>
-                <version>${rhq.version}</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.rhq</groupId>
-                <artifactId>rhq-core-native-system</artifactId>
-                <version>${rhq.version}</version>
-                <scope>provided</scope>
+                <groupId>org.jruby</groupId>
+                <artifactId>jruby-complete</artifactId>
+                <version>1.4.0</version>
             </dependency>
 
             <!-- TODO add your dependencies here -->

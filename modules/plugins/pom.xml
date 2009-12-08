@@ -122,7 +122,6 @@
       <module>sshd</module>
       <module>twitter</module>
       <!--<module>virt</module>-->
-       <module>script2</module>
 
       <!-- make this the last - it will validate all the plugins -->
       <module>validate-all-plugins</module>

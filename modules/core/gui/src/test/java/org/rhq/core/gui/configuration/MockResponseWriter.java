@@ -25,7 +25,7 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void endElement(String name) throws IOException {
-        stringWriter.write("end element:" + name);
+        stringWriter.write("end element:" + name + "\n");
 
     }
 
@@ -55,24 +55,24 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void startElement(String name, UIComponent component) throws IOException {
-        stringWriter.write("startElement: " + name + ": componenet:" + component.getId());
+        stringWriter.write("startElement: " + name + ": componenet:" + component.getId() + "\n");
     }
 
     @Override
     public void writeAttribute(String name, Object value, String property) throws IOException {
-        stringWriter.write("attribute:" + name + "value = " + value.toString() + "property = " + property);
+        stringWriter.write("attribute:" + name + " value = " + value.toString() + " property = " + property + "\n");
 
     }
 
     @Override
     public void writeComment(Object comment) throws IOException {
-        stringWriter.write("comment:" + comment);
+        stringWriter.write("comment:" + comment + "\n");
 
     }
 
     @Override
     public void writeText(Object text, String property) throws IOException {
-        write(text + ":" + property);
+        stringWriter.write("text:" + text + ":" + property + "\n");
     }
 
     @Override
@@ -88,7 +88,7 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void close() throws IOException {
-        stringWriter.close();
+        //stringWriter.close();
     }
 
     @Override

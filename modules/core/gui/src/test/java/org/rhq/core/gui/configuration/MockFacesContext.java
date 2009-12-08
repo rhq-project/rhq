@@ -15,12 +15,12 @@ import javax.faces.render.RenderKit;
 public class MockFacesContext extends FacesContext {
 
     private ExternalContext externalContext;
-    private Object responseCompleteWriter;
-    private MockResponseWriter mockResponseWriter;
+    private MockResponseWriter responseWriter;
 
-    public MockFacesContext(ExternalContext externalContext, ResponseWriter responseWriter) {
+    public MockFacesContext(ExternalContext externalContext, MockResponseWriter responseWriter) {
         this.externalContext = externalContext;
-        this.responseCompleteWriter = responseWriter;
+        this.responseWriter = responseWriter;
+        FacesContext.setCurrentInstance(this);
     }
 
     @Override
@@ -65,10 +65,11 @@ public class MockFacesContext extends FacesContext {
 
     }
 
+    RenderKit mockRenderKit = new MockRenderKit();
+
     @Override
     public RenderKit getRenderKit() {
-        throw new RuntimeException("Function not implemented");
-
+        return mockRenderKit;
     }
 
     @Override
@@ -91,10 +92,7 @@ public class MockFacesContext extends FacesContext {
 
     @Override
     public ResponseWriter getResponseWriter() {
-        if (null == mockResponseWriter) {
-            mockResponseWriter = new MockResponseWriter();
-        }
-        return mockResponseWriter;
+        return responseWriter;
     }
 
     @Override

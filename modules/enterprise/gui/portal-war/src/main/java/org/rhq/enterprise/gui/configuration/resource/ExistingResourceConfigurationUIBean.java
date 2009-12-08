@@ -54,9 +54,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
-    /**
-     * 
-     */
     private String selectedPath;
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
@@ -193,9 +190,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     private Configuration getMergedConfiguration() {
         for (RawConfiguration raw : getModified().values()) {
             getRaws().put(raw.getPath(), raw);
-            log.error("Just merged in raw path =[" + raw.getPath() + "]");
-            log.error("                   file =[" + new String(raw.getContents()) + "]");
-
         }
         getConfiguration().getRawConfigurations().clear();
         getConfiguration().getRawConfigurations().addAll(getRaws().values());
@@ -209,7 +203,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void fileUploadListener(UploadEvent event) throws Exception {
         File uploadFile;
-        log.error("fileUploadListener called");
         uploadFile = event.getUploadItem().getFile();
         if (uploadFile != null) {
             log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
@@ -354,12 +347,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToraw() {
-        log.error("switch2raw called");
-        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
-        log.error("switch2raw post merge");
-        dumpProperties(getConfiguration(), log);
 
         setConfiguration(configuration);
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
@@ -371,21 +360,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    void dumpProperties(Configuration conf, Log log) {
-        for (String key : conf.getAllProperties().keySet()) {
-            log.error("property=" + conf.getAllProperties().get(key));
-        }
-    }
-
     public String switchTostructured() {
-        log.error("switch2structured called");
 
-        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
-        log.error("switch2structured post merge");
-
-        dumpProperties(configuration, log);
 
         for (Property property : configuration.getAllProperties().values()) {
             property.setConfiguration(configuration);

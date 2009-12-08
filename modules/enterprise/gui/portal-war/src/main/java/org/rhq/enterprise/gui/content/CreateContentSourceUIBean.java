@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "CreateContentSourceUIBean";
 
-    ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+    private ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
     private ContentSource newContentSource = new ContentSource();
     private ContentSourceType selectedContentSourceType = null;
@@ -76,6 +77,16 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     }
 
     public ContentSource getContentSource() {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+
+        // If the user gets here trying to create a new content source, reset the previous object's data.
+        // This is to prevent prepopulation of data from an earlier failed attempt if the user navigates off
+        // the second attempt without using the cancel button.
+        if ("new".equals(request.getParameter("mode"))) {
+            newContentSource = new ContentSource();
+            updateSelectedContentSourceType(this.selectedContentSourceType);
+        }
+
         return newContentSource;
     }
 

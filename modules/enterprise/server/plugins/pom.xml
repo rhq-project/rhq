@@ -43,6 +43,7 @@
     <module>rhnhosted</module>
     <module>perspectives/core</module>    
     <module>alert-email</module>
+    <module>alert-irc</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-roles</module>

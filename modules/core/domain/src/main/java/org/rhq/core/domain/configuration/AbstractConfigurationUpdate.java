@@ -24,6 +24,7 @@ package org.rhq.core.domain.configuration;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.io.Serializable;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -44,7 +45,10 @@ import javax.xml.bind.annotation.XmlTransient;
  * Base class for resource configuration and plugin configuration updates (i.e. history items).
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public abstract class AbstractConfigurationUpdate {
+public abstract class AbstractConfigurationUpdate implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     @JoinColumn(name = "CONFIGURATION_ID", referencedColumnName = "ID", nullable = false)
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.EAGER)
     @XmlTransient

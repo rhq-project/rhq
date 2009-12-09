@@ -654,7 +654,9 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     private Map<String, Property> createDeepCopyOfMap() {
         Map<String, Property> copy = new HashMap<String, Property>();
         for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
-            copy.put(entry.getKey(), entry.getValue().deepCopy(true));
+            Property copiedProperty = entry.getValue().deepCopy(true);
+            copiedProperty.setConfiguration(this);
+            copy.put(entry.getKey(), copiedProperty);
         }
         return copy;
     }
@@ -662,7 +664,9 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
     private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
         Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
         for (RawConfiguration rawConfig : this.rawConfigurations) {
-            copy.add(rawConfig.deepCopy(true));
+            RawConfiguration copiedRawConfig = rawConfig.deepCopy(true);
+            copiedRawConfig.setConfiguration(this);
+            copy.add(copiedRawConfig);
         }
         return copy;
     }

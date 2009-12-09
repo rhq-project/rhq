@@ -158,7 +158,7 @@ public class ServerPluginScanner {
             ComparableVersion version; // this must be non-null, the next line ensures this
             version = ServerPluginDescriptorUtil.getPluginVersion(pluginFile, descriptor);
 
-            log.info("Registering RHQ server plugin [" + pluginName + "], version " + version);
+            log.debug("Registering server plugin [" + pluginName + "], version " + version);
 
             ServerPlugin plugin = new ServerPlugin(pluginName, pluginFile.getName());
             plugin.setDisplayName((displayName != null) ? displayName : pluginName);
@@ -179,17 +179,23 @@ public class ServerPluginScanner {
             ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
 
             // see if this plugin has been deleted previously; if so, don't register and delete the file
-            PluginStatusType status = serverPluginsManager.getServerPluginStatus(new PluginKey(plugin));
+            PluginKey newPluginKey = new PluginKey(plugin);
+            PluginStatusType status = serverPluginsManager.getServerPluginStatus(newPluginKey);
+
             if (PluginStatusType.DELETED == status) {
                 log.warn("Plugin file [" + pluginFile + "] has been detected but that plugin with name [" + pluginName
                     + "] was previously undeployed. Will not re-register that plugin and the file will be deleted.");
                 pluginFile.delete();
             } else {
+                // now attempt to register the plugin. "dbPlugin" will be the new updated plugin; but if
+                // the scanned plugin does not obsolete the current plugin, then dbPlugin will be the old, still valid, plugin.
                 SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-                serverPluginsManager.registerServerPlugin(subjectManager.getOverlord(), plugin, pluginFile);
+                ServerPlugin dbPlugin = serverPluginsManager.registerServerPlugin(subjectManager.getOverlord(), plugin,
+                    pluginFile);
+                log.info("Registered server plugin [" + dbPlugin.getName() + "], version " + dbPlugin.getVersion());
             }
         } catch (Exception e) {
-            log.error("Failed to register RHQ plugin file [" + pluginFile + "]", e);
+            log.error("Failed to register server plugin file [" + pluginFile + "]", e);
         }
         return;
     }
@@ -344,6 +350,9 @@ public class ServerPluginScanner {
     /**
      * This method scans the database for any new or updated server plugins and make sure this server
      * has a plugin file on the filesystem for each of those new/updated server plugins.
+     *
+     * This also checks to see if the enabled flag changed for plugins that we already know about.
+     * If it does, and its plugin container has the plugin already loaded, the plugin will be reloaded.
      *
      * @return a list of files that appear to be new or updated and should be deployed
      */

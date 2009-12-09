@@ -192,10 +192,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         ServerPluginContext ctx = getServerPluginContext(env);
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
 
-
         sender.alertParameters = mgr.getAlertPropertiesConfiguration(notification);
-        if (sender.alertParameters == null)
+        if (sender.alertParameters == null) {
             sender.alertParameters = new Configuration(); // Safety measure
+        }
 
         ServerPluginsLocal pluginsMgr = LookupUtil.getServerPlugins();
 
@@ -204,8 +204,11 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         plugin = pluginsMgr.getServerPluginRelationships(plugin);
 
         sender.preferences = plugin.getPluginConfiguration();
-        if (sender.preferences==null)
+        if (sender.preferences==null) {
             sender.preferences = new Configuration(); // Safety measure
+        }
+
+        sender.pluginComponent = getServerPluginComponent(key.getPluginName());
 
         return sender;
     }

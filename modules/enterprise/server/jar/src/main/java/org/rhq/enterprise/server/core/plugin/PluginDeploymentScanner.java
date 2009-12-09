@@ -133,6 +133,8 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
     public void startDeployment() {
         // We are being called by the server's startup servlet which essentially informs us that
         // the server's internal EJB/SLSBs are ready and can be called. This means we are allowed to start.
+        // NOTE: Make sure we are called BEFORE the master plugin container is started!
+
         this.agentPluginScanner.getAgentPluginDeployer().startDeployment();
 
         // this is the runnable task that executes each scan period - it runs in our thread pool

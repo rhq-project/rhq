@@ -20,13 +20,14 @@ import org.rhq.augeas.tree.impl.AugeasTreeLazy;
  * nodes as if the Include directive was replaced by the contents
  * of the included file.
  * 
- * 
  * @author Lukas Krejci
+ * @author Filip Drabek
  */
 public class ApacheAugeasTree extends AugeasTreeLazy {
 
     private Map<AugeasNode, List<String>> includes;
-
+    public static String AUGEAS_DATA_PATH = File.separatorChar + "files";
+    
     public ApacheAugeasTree(Augeas ag, AugeasModuleConfig moduleConfig) {
         super(ag, moduleConfig);
     }

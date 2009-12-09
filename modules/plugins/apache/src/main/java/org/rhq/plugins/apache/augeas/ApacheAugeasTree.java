@@ -9,34 +9,32 @@ import net.augeas.Augeas;
 
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
-import org.rhq.augeas.tree.AugeasNodeBuffer;
-import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
+import org.rhq.augeas.tree.impl.AugeasTreeLazy;
 
-public class ApacheAugeasTree implements AugeasTree {
+/**
+ * For Apache, we need our own implementation of the tree
+ * because we need to build the tree such that it transparently
+ * handles the include directives (i.e. the call to {@link #match(String)}
+ * or {@link #matchRelative(AugeasNode, String)} should return
+ * nodes as if the Include directive was replaced by the contents
+ * of the included file.
+ * 
+ * 
+ * @author Lukas Krejci
+ */
+public class ApacheAugeasTree extends AugeasTreeLazy {
 
-    private AugeasModuleConfig moduleConfig;
-    private Augeas ag;
-    private AugeasNode rootNode;
-    private AugeasNode rootConfigNode;
-    private AugeasNodeBuffer nodeBuffer;
-    private String[] errorNodes = { "pos", "line", "char", "lens", "message" };
-    public static String AUGEAS_DATA_PATH = File.separatorChar + "files";
     private Map<AugeasNode, List<String>> includes;
 
     public ApacheAugeasTree(Augeas ag, AugeasModuleConfig moduleConfig) {
-        nodeBuffer = new AugeasNodeBuffer();
-        this.moduleConfig = moduleConfig;
-        this.ag = ag;
+        super(ag, moduleConfig);
     }
 
-    public void update() {
+    protected AugeasNode instantiateNode(String fullPath) {
+        return new ApacheAugeasNode(fullPath, this);
     }
-
-    public void save() {
-        ag.save();
-    }
-
+    
     public Map<AugeasNode, List<String>> getIncludes() {
         return includes;
     }
@@ -44,24 +42,6 @@ public class ApacheAugeasTree implements AugeasTree {
     public void setIncludes(Map<AugeasNode, List<String>> includes) {
 
         this.includes = includes;
-    }
-
-    private AugeasNode getLoadedNode(String path) throws AugeasTreeException {
-        if (nodeBuffer.isNodeLoaded(path))
-            return nodeBuffer.getNode(path);
-
-        throw new AugeasTreeException("Node not found.");
-    }
-
-    public AugeasNode getNode(String path) throws AugeasTreeException {
-        AugeasNode node;
-        try {
-            node = getLoadedNode(path);
-        } catch (AugeasTreeException e) {
-            node = createNode(path);
-        }
-
-        return node;
     }
 
     public List<AugeasNode> match(String expression) throws AugeasTreeException {
@@ -214,74 +194,5 @@ public class ApacheAugeasTree implements AugeasTree {
             nodes.add(getNode(name));
         }
         return nodes;
-    }
-
-    public AugeasNode createNode(String fullPath) throws AugeasTreeException {
-        AugeasNode node = null;
-        try {
-            node = getLoadedNode(fullPath);
-            return node;
-        } catch (Exception e) {
-            List<String> list = ag.match(fullPath);
-            if (!list.isEmpty())
-                return new ApacheAugeasNode(fullPath, this);
-        }
-        ag.set(fullPath, null);
-        node = new ApacheAugeasNode(fullPath, this);
-        nodeBuffer.addNode(node);
-        return node;
-    }
-
-    public AugeasNode createNode(AugeasNode parentNode, String name, String value, int seq) throws AugeasTreeException {
-        AugeasNode nd = createNode(parentNode.getFullPath() + File.separatorChar + name + "[" + String.valueOf(seq)
-            + "]");
-        nd.setValue(value);
-
-        return nd;
-    }
-
-    public String get(String expr) {
-        return (ag.get(expr));
-    }
-
-    public AugeasNode getRootNode() {
-        return rootNode;
-    }
-
-    public void removeNode(AugeasNode node, boolean updateSeq) throws AugeasTreeException {
-        int res = ag.remove(node.getFullPath());
-        nodeBuffer.removeNode(node, updateSeq, true);
-
-    }
-
-    public void setValue(AugeasNode node, String value) {
-        ag.set(node.getFullPath(), value);
-    }
-
-    public String summarizeAugeasError() {
-
-        String nodePrefix = "/augeas/files";
-        List<String> str = moduleConfig.getIncludedGlobs();
-        StringBuilder builder = new StringBuilder();
-
-        for (String path : str) {
-            String name = nodePrefix + path + File.separatorChar + "error";
-            if (ag.exists(name)) {
-                builder.append("Error " + ag.get(name) + '\n');
-                for (String errNd : errorNodes) {
-                    String pathToMessage = name + File.separatorChar + errNd;
-                    if (ag.exists(pathToMessage)) {
-                        builder.append(errNd + " " + ag.get(pathToMessage) + '\n');
-                    }
-                }
-            }
-        }
-
-        return builder.toString();
-    }
-
-    public void setRootNode(AugeasNode node) {
-        this.rootNode = node;
-
     }
 }

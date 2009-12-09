@@ -43,19 +43,21 @@ import org.rhq.augeas.tree.AugeasTreeException;
  */
 public class AugeasTreeLazy implements AugeasTree {
     private AugeasModuleConfig moduleConfig;
-    private Augeas ag;
-    private AugeasNode rootNode;
-    private AugeasNode rootConfigNode;
-    private AugeasNodeBuffer nodeBuffer;
+    protected Augeas ag;
+    protected AugeasNode rootNode;
+    protected AugeasNodeBuffer nodeBuffer;
     private String[] errorNodes = { "pos", "line", "char", "lens", "message" };
-    private static String AUGEAS_DATA_PATH = File.separatorChar + "files";
-
+    
     public AugeasTreeLazy(Augeas ag, AugeasModuleConfig moduleConfig) {
         nodeBuffer = new AugeasNodeBuffer();
         this.moduleConfig = moduleConfig;
         this.ag = ag;
     }
 
+    protected AugeasNode instantiateNode(String fullPath) {
+        return new AugeasNodeLazy(fullPath, this);
+    }
+    
     public void update() {
 
     }
@@ -120,10 +122,10 @@ public class AugeasTreeLazy implements AugeasTree {
         } catch (Exception e) {
             List<String> list = ag.match(fullPath);
             if (!list.isEmpty())
-                return new AugeasNodeLazy(fullPath, this);
+                return instantiateNode(fullPath);
         }
         ag.set(fullPath, null);
-        node = new AugeasNodeLazy(fullPath, this);
+        node = instantiateNode(fullPath);
         nodeBuffer.addNode(node);
         return node;
     }

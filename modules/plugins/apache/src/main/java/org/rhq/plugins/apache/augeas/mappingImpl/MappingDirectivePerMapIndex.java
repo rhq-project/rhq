@@ -12,6 +12,16 @@ import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.plugins.apache.augeas.ApacheDirectiveRegExpression;
 import org.rhq.rhqtransform.AugeasRhqException;
 
+/**
+ * A mapping strategy similar to {@link MappingDirectivePerMap}.
+ * In addition to base class, the map definition is checked for
+ * a property called {@link ApacheServerComponent#AUXILIARY_INDEX_PROP}
+ * that is supposed to contain the index of the directive inside the
+ * configuration file and if found the property is set the appropriate
+ * value.
+ * 
+ * @author Lukas Krejci
+ */
 public class MappingDirectivePerMapIndex extends MappingDirectivePerMap {
 
     @Override

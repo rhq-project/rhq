@@ -46,7 +46,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
-import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -110,18 +109,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return WWWUtils.isAvailable(this.url) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.configuration.ConfigurationFacet#loadResourceConfiguration()
-     */
     public Configuration loadResourceConfiguration() throws Exception {
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
         
-//        AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-//        config.setTree(tree);
-//
-//        return config.loadResourceConfiguration(getNode(tree), resourceConfigDef);
-
         ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
         return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
     }
@@ -130,9 +121,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.inventory.DeleteResourceFacet#deleteResource()
-     */
     public void deleteResource() throws Exception {
         // TODO Auto-generated method stub
         

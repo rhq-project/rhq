@@ -14,6 +14,14 @@ import org.rhq.plugins.apache.augeas.ApacheDirectiveRegExpression;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 
+/**
+ * A mapping strategy that creates a map for each directive it finds
+ * in the augeas tree. The map is supposed to be enclosed in a list.  
+ * The name of the map definition is supposed to represent the name of the directives
+ * to create the maps for.
+ * 
+ * @author Lukas Krejci
+ */
 public class MappingDirectivePerMap extends AugeasToConfigurationSimple {
 
     @Override

@@ -16,6 +16,23 @@ import org.rhq.plugins.apache.augeas.ApacheDirectiveRegExpression;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 
+/**
+ * The most complicated mapping strategy.
+ * It is used when we have a list of maps in the configuration and
+ * each map corresponds only to a parameter (or more) of a directive (i.e. single directive
+ * can be mapped as multiple maps).
+ * 
+ * This tries to map each (set of) parameters of a directive as a standalone map.
+ * 
+ * The map definition's name is taken as the name of the directive to look for.
+ * Then for all such directives, take all their parameters, chunk them up by the number of 
+ * sub-properties of the map and assign params from each chunk to a new map.
+ * 
+ * Each map is supposed to contain the "_index" property ({@link ApacheServerComponent#AUXILIARY_INDEX_PROP})
+ * which is set to the index of the corresponding directive in the config file.
+ * 
+ * @author Lukas Krejci
+ */
 public class MappingParamPerMap extends AugeasToConfigurationSimple {
 
     @Override

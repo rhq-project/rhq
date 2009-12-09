@@ -36,15 +36,15 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 
 /**
+ * Discovers VirtualHosts under the Apache server by reading them out from Augeas tree constructed
+ * in the parent component.
+ * 
  * @author Lukas Krejci
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
     
-    /* (non-Javadoc)
-     * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
-     */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 

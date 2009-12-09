@@ -3,14 +3,17 @@ module Httpd =
 
 (* Helpers *)
 
-(* Newlines can be escaped but I can see no way of making the lens unambigous and support escaped newlines. *)
-(* let sep = del /([ \t]+(\\\\\n)?)+/ " " *)
-let sep = del /[ \t]+/ " "
-let eol = del /[ \t]*\n/ "\n"
+(* Newlines can be escaped. *)
+let sep = del /([ \t]+(\\\\\n)?)+/ " "
+let eol = del /([ \t]*(\\\\\n)?)*\n/ "\n"
 
 let ws = /[ \t]*/
 let alnum = /[a-zA-Z0-9_]+/
-let word = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^'" \t\n]+/
+(* the last character in the non-quoted word must not be a backslash. I guess this is not completely semantically
+   correct but at the same time, apache discourages to use backslashes for anything else than 
+   line breaking so we should be safe here. This restriction is in place to support 
+   escaped new lines in the sep and eol rules. *)
+let word = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^'" \t\n]*[^'" \t\n\\]/
 let secarg = /\"([^\"\n]|\\\\\")*\"|'([^'\n]|\\\\')*'|[^'" \t\n>]+/
 let wskey (k:regexp) = del ws "" . key k
 let params (param:regexp) = [ sep . label "param" . store param ]*

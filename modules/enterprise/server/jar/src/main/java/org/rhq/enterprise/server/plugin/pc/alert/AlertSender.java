@@ -18,11 +18,10 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 
 /**
  * Abstract base class for all Alert senders. In order to implement your
@@ -35,7 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
  * @author Heiko W. Rupp
  *
  */
-public abstract class AlertSender {
+public abstract class AlertSender<T extends ServerPluginComponent> {
 
     /** Configuration from the global per plugin type preferences */
     protected Configuration preferences;
@@ -43,6 +42,8 @@ public abstract class AlertSender {
     /** Configuration from the per alert definition parameters */
     protected Configuration alertParameters;
 
+    /** Global component holding persistent resources */
+    protected T pluginComponent;
 
     /**
      * This method is called to actually send an alert notification.

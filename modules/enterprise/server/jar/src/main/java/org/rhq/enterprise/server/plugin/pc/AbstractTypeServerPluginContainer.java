@@ -282,8 +282,10 @@ public abstract class AbstractTypeServerPluginContainer {
         if (jobNames != null) {
             for (String jobName : jobNames) {
                 boolean deleted = scheduler.deleteJob(jobName, groupName);
-                if (!deleted) {
-                    log.warn("Plugin [" + pluginKey + "] failed to get its job [" + jobName + "] unscheduled!");
+                if (deleted) {
+                    log.info("Job [" + jobName + "] for plugin [" + pluginKey + "] has been unscheduled!");
+                } else {
+                    log.warn("Job [" + jobName + "] for plugin [" + pluginKey + "] failed to be unscheduled!");
                 }
             }
         }

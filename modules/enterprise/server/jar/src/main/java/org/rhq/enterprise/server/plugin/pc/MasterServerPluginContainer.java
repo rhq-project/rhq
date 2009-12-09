@@ -123,15 +123,15 @@ public class MasterServerPluginContainer {
                     ServerPluginType pluginType = new ServerPluginType(descriptor);
                     PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), pluginName);
                     ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
-                    log.debug("Loading server plugin [" + pluginKey + "] from [" + pluginUrl
+                    log.debug("Pre-loading server plugin [" + pluginKey + "] from [" + pluginUrl
                         + "] into its plugin container");
                     try {
                         ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader, descriptor);
                         boolean enabled = !allDisabledPlugins.contains(pluginKey);
                         pc.loadPlugin(env, enabled);
-                        log.info("Loaded server plugin [" + pluginKey.getPluginName() + "]");
+                        log.info("Preloaded server plugin [" + pluginKey.getPluginName() + "]");
                     } catch (Exception e) {
-                        log.warn("Failed to load server plugin [" + pluginUrl + "]", e);
+                        log.warn("Failed to preload server plugin [" + pluginUrl + "]", e);
                     }
                 } else {
                     log.warn("There is no server plugin container to support plugin: " + pluginUrl);
@@ -215,6 +215,35 @@ public class MasterServerPluginContainer {
     }
 
     /**
+     * Loads a plugin into the appropriate plugin container.
+     * 
+     * @param pluginUrl the location where the new plugin is found
+     * @param enabled indicates if the plugin should be enabled as soon as its loaded
+     * @throws Exception if the plugin's descriptor could not be parsed or could not be loaded into the plugin container 
+     */
+    public synchronized void loadPlugin(URL pluginUrl, boolean enabled) throws Exception {
+        ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
+        ServerPluginType pluginType = new ServerPluginType(descriptor);
+        PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), descriptor.getName());
+        ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
+        log.debug("Loading server plugin [" + pluginKey + "] from [" + pluginUrl + "] into its plugin container");
+        try {
+            ServerPluginEnvironment env = new ServerPluginEnvironment(pluginUrl, classLoader, descriptor);
+            AbstractTypeServerPluginContainer pc = getPluginContainerByDescriptor(descriptor);
+            if (pc != null) {
+                pc.loadPlugin(env, enabled);
+                log.info("Loaded server plugin [" + pluginKey.getPluginName() + "]");
+            } else {
+                throw new Exception("No plugin container can load server plugin [" + pluginKey + "]");
+            }
+        } catch (Exception e) {
+            log.warn("Failed to load server plugin file [" + pluginUrl + "]", e);
+        }
+
+        return;
+    }
+
+    /**
      * Asks that all plugin containers schedule jobs now, if needed.
      * Note that this is separate from the {@link #initialize(MasterServerPluginContainerConfiguration)}
      * method because it is possible that the master plugin container has been
@@ -294,6 +323,7 @@ public class MasterServerPluginContainer {
      * @param pluginKey
      * @return the plugin container that is managing the named plugin or <code>null</code>
      */
+    @SuppressWarnings("unchecked")
     public synchronized <T extends AbstractTypeServerPluginContainer> T getPluginContainerByPlugin(PluginKey pluginKey) {
         for (AbstractTypeServerPluginContainer pc : this.pluginContainers.values()) {
             try {

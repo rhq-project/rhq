@@ -22,7 +22,7 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
     private Map<String, List<File>> includes;
     private Map<AugeasNode, List<String>> incl;
-
+    private String[] nestedIncludesDirective = {"<VirtualHost","<Directory"};
     private Augeas ag;
 
     public AugeasTreeBuilderApache() {
@@ -38,12 +38,12 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
         AugeasModuleConfig module = config.getModuleByName(name);
         ApacheAugeasTree tree = new ApacheAugeasTree(component.getAugeas(), module);
 
-        List<String> incl = module.getConfigFiles();
+        List<String> incld = module.getConfigFiles();
 
-        if (incl.isEmpty())
+        if (incld.isEmpty())
             throw new AugeasRhqException("No configuration provided.");
 
-        String rootPath = incl.get(0);
+        String rootPath = incld.get(0);
 
         AugeasNode rootNode = new ApacheAugeasNode(ApacheAugeasTree.AUGEAS_DATA_PATH + rootPath, tree);
         AugeasConfigurationApache apacheConfig = (AugeasConfigurationApache) config;
@@ -69,9 +69,9 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
         updateIncludes((ApacheAugeasNode) rootNode, tree, rootPath,false);
         
-        List<String> rootconf = new ArrayList<String>();
-        rootconf.add(ApacheAugeasTree.AUGEAS_DATA_PATH + rootPath);
-        this.incl.put(rootNode, rootconf);
+        //List<String> rootconf = new ArrayList<String>();
+       // rootconf.add(ApacheAugeasTree.AUGEAS_DATA_PATH + rootPath);
+      //  this.incl.put(rootNode, rootconf);
         
         tree.setIncludes(this.incl);
         return tree;
@@ -91,21 +91,39 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 	  	if (update)	  
 	  		parentNode.addIncludeNodes(createdNodes);
 	  	   	
-      for (AugeasNode node : createdNodes){		  
+      for (AugeasNode node : createdNodes){
+    	    if (isNested(node.getLabel())){
+    	    	updateIncludes((ApacheAugeasNode)node,tree,fileName+File.separator+node.getLabel(),true);
+    	    }
             if (node.getLabel().equals("Include")){
-	        	if (includes.containsKey(node.getValue()))
+            	String val = ag.get(node.getFullPath()+File.separator+"param");
+	        	if (includes.containsKey(val))
 	        	{
 	        		//include directive contains globNames
-	        	  	List<File> files = includes.get(node.getValue());
+	        	  	List<File> files = includes.get(val);
 	        	  	List<String> names = new ArrayList<String>();
 	        	  	for (File file : files)
-	        	  	{
+	        	  	 {
 	        	      names.add(ApacheAugeasTree.AUGEAS_DATA_PATH+file.getAbsolutePath());
 	        	  	  updateIncludes((ApacheAugeasNode)node.getParentNode(),tree,file.getAbsolutePath(),true);
 	        	  	 }
-	        	  	incl.put(node, names);
+	        	  	if (incl.containsKey(node.getParentNode()))
+	        	  	{
+	        	  		List<String> list = incl.get(node.getParentNode());
+	        	  		list.addAll(names);	        	  	
+	        	    }  else
+	        	    	incl.put(node.getParentNode(), names);
                  }
 	        	}   
          }
+    }
+    
+    private boolean isNested(String name){
+    	for (String directive : nestedIncludesDirective)
+    	{
+    		if (directive.equals(name))
+    			return true;
+    	}
+    	return false;
     }
 }

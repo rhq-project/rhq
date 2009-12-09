@@ -67,7 +67,7 @@ public class ApacheAugeasTree implements AugeasTree {
     public List<AugeasNode> match(String expression) throws AugeasTreeException {
         if (!expression.startsWith(AUGEAS_DATA_PATH))
             expression = AUGEAS_DATA_PATH + expression;
-        AugeasNode node = null;
+        /*AugeasNode node = null;
         int max = 0;
         for (AugeasNode nd : includes.keySet()) {
             for (String file : includes.get(nd)) {
@@ -80,7 +80,12 @@ public class ApacheAugeasTree implements AugeasTree {
             }
         }
 
-        return matchRelative(node, expression.substring(max + 1));
+        if (node == null){
+        	node = rootNode;
+        	max = rootNode.getFullPath().length();
+        }
+        return matchRelative(node, expression.substring(max + 1));*/
+        return matchInternal(expression);
     }
 
     public List<AugeasNode> matchRelative(AugeasNode node, String expression) throws AugeasTreeException {
@@ -197,7 +202,7 @@ public class ApacheAugeasTree implements AugeasTree {
         return nodes;
     }
 
-    private List<AugeasNode> matchInternal(String expression) throws Exception {
+    private List<AugeasNode> matchInternal(String expression) throws AugeasTreeException {
         if (!expression.startsWith(AUGEAS_DATA_PATH))
             expression = AUGEAS_DATA_PATH + expression;
 

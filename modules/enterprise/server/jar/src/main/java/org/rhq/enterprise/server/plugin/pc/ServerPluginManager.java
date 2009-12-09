@@ -163,14 +163,16 @@ public class ServerPluginManager {
      * @param enabled <code>true</code> if the plugin should be initialized; <code>false</code> if
      *        the plugin's existence should be noted but it should not be initialized or started
      *
-     * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
+     * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid.
+     *                   Typically, this method will not throw an exception unless enabled is
+     *                   <code>true</code> - loading a disabled plugin is trivial and should not
+     *                   fail or throw an exception.
      */
     protected void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         String pluginName = env.getPluginKey().getPluginName();
+        log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
         if (enabled) {
-            log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
-
             // tell the plugin we are loading it
             ServerPluginComponent component = createServerPluginComponent(env);
             if (component != null) {
@@ -181,7 +183,7 @@ public class ServerPluginManager {
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.initialize(context);
                 } catch (Throwable t) {
-                    throw new Exception("Plugin component failed to initialize plugin", t);
+                    throw new Exception("Plugin component failed to initialize server plugin", t);
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
                 }
@@ -215,6 +217,9 @@ public class ServerPluginManager {
                 log.debug("Starting plugin component for server plugin [" + pluginName + "]");
                 ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
                 try {
+                    if (env == null) {
+                        throw new Exception("Plugin [" + pluginName + "] was never loaded");
+                    }
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.start();
                 } catch (Throwable t) {
@@ -243,6 +248,9 @@ public class ServerPluginManager {
             log.debug("Stopping plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                if (env == null) {
+                    throw new Exception("Plugin [" + pluginName + "] was never loaded");
+                }
                 Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                 component.stop();
             } catch (Throwable t) {
@@ -325,7 +333,14 @@ public class ServerPluginManager {
         stopPlugin(pluginName); // under normal circumstances, we should not need to do this, but just in case the plugin is somehow already started, stop it
         unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
         env = rebuildServerPluginEnvironment(env);
-        loadPlugin(env, true); // reload it in the enabled state
+        try {
+            // reload it in the enabled state.
+            loadPlugin(env, true);
+        } catch (Exception e) {
+            // we've already unloaded it - so even though we failed to enable it, we need to load it back, albeit disabled
+            loadPlugin(env, false);
+            throw e;
+        }
         startPlugin(pluginName); // since we are enabling the plugin, immediately start it
         return;
     }
@@ -341,6 +356,10 @@ public class ServerPluginManager {
         env = rebuildServerPluginEnvironment(env);
         loadPlugin(env, false); // re-load it in the disabled state
         return;
+    }
+
+    protected boolean isPluginLoaded(String pluginName) {
+        return this.loadedPlugins.containsKey(pluginName);
     }
 
     protected boolean isPluginEnabled(String pluginName) {

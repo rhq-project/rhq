@@ -230,10 +230,10 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
-    @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
+    @NamedQuery(name = ServerPlugin.UPDATE_PLUGIN_ENABLED_BY_ID, query = "" //
         + "UPDATE ServerPlugin p " //
         + "   SET p.enabled = :enabled " //
-        + " WHERE p.id IN (:ids)")
+        + " WHERE p.id = :id)")
 
 })
 @Entity
@@ -250,7 +250,7 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
-    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
+    public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "ServerPlugin.updatePluginEnabledById";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)

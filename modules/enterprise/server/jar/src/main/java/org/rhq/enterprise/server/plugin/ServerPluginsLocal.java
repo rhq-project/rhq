@@ -147,15 +147,15 @@ public interface ServerPluginsLocal {
     List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
+     * Turns on or off the enabled flag in the database but does NOT restart the server plugin.
      * This has "requires new" semantics, so the results are committed immediately upon return.
      * 
      * @param subject user making the request
-     * @param pluginIds the plugins to be enabled
-     * @param enabled the value of the enabled flag for the plugins
-     * @throws if failed to update a plugin
+     * @param pluginId the plugin to be enabled
+     * @param enabled the value of the enabled flag for the plugin
+     * @throws if failed to update the plugin
      */
-    void setServerPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception;
+    void setServerPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 
     /**
      * Sets the status flag in the database but does NOT restart the server plugin container.
@@ -171,8 +171,11 @@ public interface ServerPluginsLocal {
     void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
 
     /**
-     * Registers the given plugin to the database. This does nothing with the master plugin container,
-     * all it does is ensure the database is up-to-date with this new plugin.
+     * Registers the given plugin to the database. This ensures the database is up-to-date with the
+     * new plugin details.
+     * 
+     * If the master plugin container is up, it will attempt to restart the plugin so the new
+     * changes are picked up.
      * 
      * @param subject the user that needs to have permissions to add a plugin to the system
      * @param plugin the plugin definition

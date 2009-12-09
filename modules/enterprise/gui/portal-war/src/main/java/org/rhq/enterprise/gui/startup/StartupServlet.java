@@ -116,7 +116,7 @@ public class StartupServlet extends HttpServlet {
         // (that is, a scheduled job would more likely need to send a message; as opposed to an incoming message
         // causing a job to be scheduled), so that explains the ordering of the comm layer and the scheduler.
         startHibernateStatistics();
-        startPluginDeployer();
+        startPluginDeployer(); // make sure this is before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         installJaasModules();
         startServerCommunicationServices();
@@ -205,6 +205,9 @@ public class StartupServlet extends HttpServlet {
     /**
      * Starts the plugin deployer which will effectively ask the plugin deployer to persist information about all
      * detected agent and server plugins. 
+     *
+     * Because this will scan and register the initial plugins right now, make sure this is called prior
+     * to starting the master plugin container; otherwise, the master PC will not have any plugins to start.
      *
      * @throws ServletException
      */

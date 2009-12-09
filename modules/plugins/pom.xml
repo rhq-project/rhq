@@ -101,7 +101,6 @@
 
       <!--  other, possibly experimental plugins -->
       <module>augeas</module>
-      <module>apt</module>
       <module>cron</module>
       <module>script</module>
       <module>grub</module>

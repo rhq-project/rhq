@@ -123,6 +123,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return plugin;
     }
 
+    @SuppressWarnings("unchecked")
     public List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<ServerPlugin>(); // nothing to do
@@ -132,6 +133,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return query.getResultList();
     }
 
+    @SuppressWarnings("unchecked")
     public List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds) {
         if (pluginIds == null || pluginIds.size() == 0) {
             return new ArrayList<ServerPlugin>(); // nothing to do
@@ -150,6 +152,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return descriptor;
     }
 
+    @SuppressWarnings("unchecked")
     public List<PluginKey> getServerPluginKeysByEnabled(boolean enabled) {
         Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_KEYS_BY_ENABLED);
         query.setParameter("enabled", Boolean.valueOf(enabled));
@@ -162,41 +165,59 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<PluginKey>(); // nothing to do
         }
 
-        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, true);
-
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
-
-        List<PluginKey> enabledPlugins = new ArrayList<PluginKey>();
+        List<PluginKey> pluginKeys = new ArrayList<PluginKey>();
 
         for (Integer pluginId : pluginIds) {
-            ServerPlugin enabledPlugin = null;
+            serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, true);
+
+            ServerPlugin plugin = null;
             try {
-                enabledPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
-            } catch (Exception ignore) {
+                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+            } catch (Exception e) {
+                log.debug("Cannot enable plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
-            if (enabledPlugin != null) {
-                PluginKey pluginKey = new PluginKey(enabledPlugin);
-                enabledPlugins.add(pluginKey);
-                if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
-                    if (pc != null) {
-                        try {
-                            pc.reloadPlugin(pluginKey, true);
-                        } catch (Exception e) {
-                            log.warn("Failed to enable server plugin [" + pluginKey + "]", e);
-                        }
-                        try {
-                            pc.schedulePluginJobs(pluginKey);
-                        } catch (Exception e) {
-                            log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
-                        }
-                    }
+            if (plugin != null) {
+                PluginKey pluginKey = new PluginKey(plugin);
+                boolean success = enableServerPluginInMasterContainer(pluginKey);
+                if (success) {
+                    pluginKeys.add(pluginKey);
+                } else {
+                    // we can't enable the plugin in the container, there must be a problem with it - disable it
+                    serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, false);
                 }
             }
         }
 
-        return enabledPlugins;
+        return pluginKeys;
+    }
+
+    private boolean enableServerPluginInMasterContainer(PluginKey pluginKey) {
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        boolean success = true; // assume everything will be ok
+
+        if (master != null) {
+            AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+            if (pc != null) {
+                try {
+                    pc.reloadPlugin(pluginKey, true);
+                    try {
+                        pc.schedulePluginJobs(pluginKey);
+                    } catch (Exception e) {
+                        // note that we still will report this plugin as enabled - its running
+                        // in the plugin container, its just that we couldn't schedule its jobs
+                        log.warn("Failed to schedule jobs for plugin [" + pluginKey + "]", e);
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to enable server plugin [" + pluginKey + "]", e);
+                    success = false;
+                }
+            }
+        }
+
+        // If the master PC was not started, we will still say it was successful - the next time someone starts
+        // the master PC, they will be told then of any errors that might occur
+        return success;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -205,41 +226,53 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<PluginKey>(); // nothing to do
         }
 
-        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
-
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
-
-        List<PluginKey> doomedPlugins = new ArrayList<PluginKey>();
+        List<PluginKey> pluginKeys = new ArrayList<PluginKey>();
 
         for (Integer pluginId : pluginIds) {
-            ServerPlugin doomedPlugin = null;
+            serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, false);
+
+            ServerPlugin plugin = null;
             try {
-                doomedPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
-            } catch (Exception ignore) {
+                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+            } catch (Exception e) {
+                log.debug("Cannot disable plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
-            if (doomedPlugin != null) {
-                PluginKey pluginKey = new PluginKey(doomedPlugin);
-                doomedPlugins.add(pluginKey);
-                if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
-                    if (pc != null) {
-                        try {
-                            pc.unschedulePluginJobs(pluginKey);
-                        } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
-                        }
-                        try {
-                            pc.reloadPlugin(pluginKey, false);
-                        } catch (Exception e) {
-                            log.warn("Failed to disable server plugin [" + pluginKey + "]", e);
-                        }
-                    }
+            if (plugin != null) {
+                PluginKey pluginKey = new PluginKey(plugin);
+                boolean success = disableServerPluginInMasterContainer(pluginKey);
+                if (success) {
+                    pluginKeys.add(pluginKey);
                 }
             }
         }
 
-        return doomedPlugins;
+        return pluginKeys;
+    }
+
+    private boolean disableServerPluginInMasterContainer(PluginKey pluginKey) {
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        boolean success = true; // assume everything will be ok
+
+        if (master != null) {
+            AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+            if (pc != null) {
+                try {
+                    pc.unschedulePluginJobs(pluginKey);
+                } catch (Exception e) {
+                    // even though we can't unschedule jobs, keep going, assume success if the PC disabled it
+                    log.warn("Failed to unschedule jobs for plugin [" + pluginKey + "]", e);
+                }
+                try {
+                    pc.reloadPlugin(pluginKey, false);
+                } catch (Exception e) {
+                    log.warn("Failed to disable server plugin [" + pluginKey + "]", e);
+                    success = false;
+                }
+            }
+        }
+
+        return success;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -248,65 +281,76 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             return new ArrayList<PluginKey>(); // nothing to do
         }
 
-        serverPluginsBean.setServerPluginEnabledFlag(subject, pluginIds, false);
-
-        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
-
-        List<PluginKey> doomedPlugins = new ArrayList<PluginKey>();
+        List<PluginKey> pluginKeys = new ArrayList<PluginKey>();
 
         for (Integer pluginId : pluginIds) {
-            ServerPlugin doomedPlugin = null;
+            serverPluginsBean.setServerPluginEnabledFlag(subject, pluginId, false);
+
+            ServerPlugin plugin = null;
             try {
-                doomedPlugin = entityManager.getReference(ServerPlugin.class, pluginId);
-            } catch (Exception ignore) {
+                plugin = entityManager.getReference(ServerPlugin.class, pluginId);
+            } catch (Exception e) {
+                log.debug("Cannot undeploy plugin [" + pluginId + "]. Cause: " + ThrowableUtil.getAllMessages(e));
             }
-            if (doomedPlugin != null) {
-                PluginKey pluginKey = new PluginKey(doomedPlugin);
-                doomedPlugins.add(pluginKey);
-                if (master != null) {
-                    AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
-                    if (pc != null) {
-                        try {
-                            pc.unschedulePluginJobs(pluginKey);
-                        } catch (Exception e) {
-                            log.warn("Failed to unschedule jobs for server plugin [" + pluginKey + "]", e);
-                        }
-                        try {
-                            pc.unloadPlugin(pluginKey);
-                        } catch (Exception e) {
-                            log.warn("Failed to unload server plugin [" + pluginKey + "]", e);
-                        }
-                    }
+            if (plugin != null) {
+                PluginKey pluginKey = new PluginKey(plugin);
+                boolean success = undeployServerPluginInMasterContainer(pluginKey);
+                if (success) {
+                    pluginKeys.add(pluginKey);
                 }
 
                 // if this plugin ever gets re-installed, let's support the use-case where the new plugin
                 // will have different config metadata. Here we null out the old config so the new
-                // config can be set to the new cofig definition's default values.
-                if (doomedPlugin.getPluginConfiguration() != null) {
-                    entityManager.remove(doomedPlugin.getPluginConfiguration());
-                    doomedPlugin.setPluginConfiguration(null);
+                // config can be set to the new config definition's default values.
+                if (plugin.getPluginConfiguration() != null) {
+                    entityManager.remove(plugin.getPluginConfiguration());
+                    plugin.setPluginConfiguration(null);
                 }
-                if (doomedPlugin.getScheduledJobsConfiguration() != null) {
-                    entityManager.remove(doomedPlugin.getScheduledJobsConfiguration());
-                    doomedPlugin.setScheduledJobsConfiguration(null);
+                if (plugin.getScheduledJobsConfiguration() != null) {
+                    entityManager.remove(plugin.getScheduledJobsConfiguration());
+                    plugin.setScheduledJobsConfiguration(null);
                 }
-                doomedPlugin.setStatus(PluginStatusType.DELETED);
+                plugin.setStatus(PluginStatusType.DELETED);
 
+                // purge the file from the filesystem, we do not want this deployed again
                 try {
-                    File pluginDir = serverPluginService.getServerPluginsDirectory();
-                    File currentFile = new File(pluginDir, doomedPlugin.getPath());
+                    File pluginDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();
+                    File currentFile = new File(pluginDir, plugin.getPath());
                     currentFile.delete();
                 } catch (Exception e) {
-                    log.error("Failed to delete the undeployed plugin [" + doomedPlugin.getPath() + "]. Cause: "
+                    log.error("Failed to delete the undeployed plugin file [" + plugin.getPath() + "]. Cause: "
                         + ThrowableUtil.getAllMessages(e));
+                }
+                log.info("Server plugin [" + pluginKey + "] has been undeployed");
+            }
+        }
+
+        return pluginKeys;
+    }
+
+    private boolean undeployServerPluginInMasterContainer(PluginKey pluginKey) {
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        boolean success = true; // assume everything will be ok
+
+        if (master != null) {
+            AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+            if (pc != null) {
+                try {
+                    pc.unschedulePluginJobs(pluginKey);
+                } catch (Exception e) {
+                    log.warn("Failed to unschedule jobs for server plugin [" + pluginKey + "]", e);
+                }
+                try {
+                    pc.unloadPlugin(pluginKey);
+                } catch (Exception e) {
+                    log.warn("Failed to unload server plugin [" + pluginKey + "]", e);
+                    success = false;
                 }
             }
         }
 
-        log.info("Server plugins " + doomedPlugins + " have been undeployed");
-
-        return doomedPlugins;
+        return success;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
@@ -323,25 +367,18 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             purgeServerPlugin(subject, pluginKey); // delete the row in the DB
         }
 
-        log.info("Server plugins " + purgePlugins + " have been undeployed");
+        log.info("Server plugins " + purgePlugins + " have been purged");
         return purgePlugins;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void setServerPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception {
-        if (pluginIds == null || pluginIds.size() == 0) {
-            return; // nothing to do
-        }
-        Query q = entityManager.createNamedQuery(ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS);
-        q.setParameter("ids", pluginIds);
+    public void setServerPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
+        Query q = entityManager.createNamedQuery(ServerPlugin.UPDATE_PLUGIN_ENABLED_BY_ID);
+        q.setParameter("id", pluginId);
         q.setParameter("enabled", Boolean.valueOf(enabled));
-        int count = q.executeUpdate();
-        if (count != pluginIds.size()) {
-            throw new Exception("Failed to update [" + pluginIds.size() + "] plugins. Count was [" + count + "]");
-        }
-
-        log.info((enabled ? "Enabling" : "Disabling") + " server plugins with plugin IDs of " + pluginIds);
+        q.executeUpdate();
+        log.info((enabled ? "Enabling" : "Disabling") + " server plugin [" + pluginId + "]");
         return;
     }
 
@@ -368,10 +405,12 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 + "] must be a server plugin to be registered");
         }
 
+        PluginKey pluginKey = new PluginKey(plugin);
         ServerPlugin existingPlugin = null;
         boolean newOrUpdated = false;
+
         try {
-            existingPlugin = getServerPlugin(new PluginKey(plugin));
+            existingPlugin = getServerPlugin(pluginKey);
         } catch (NoResultException nre) {
             newOrUpdated = true; // this is expected for new plugins
         }
@@ -388,20 +427,30 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             plugin.setId(existingPlugin.getId());
         }
 
-        // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
         if (newOrUpdated) {
+            // prepare some defaults if need be
             if (plugin.getDisplayName() == null) {
                 plugin.setDisplayName(plugin.getName());
             }
 
+            // if the ID is 0, it means this is a new plugin and we need to add a row to the db
+            // otherwise, this is an update to an existing plugin so we need to update the existing db row
             if (plugin.getId() == 0) {
-                PluginStatusType status = getServerPluginStatus(new PluginKey(plugin));
+                PluginStatusType status = (existingPlugin != null) ? existingPlugin.getStatus() : null;
                 if (PluginStatusType.DELETED == status) {
                     throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
                         + "], it has been previously marked as deleted.");
                 }
                 entityManager.persist(plugin);
+
+                // load this into the plugin container now
+                ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+                MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+                if (master != null) {
+                    master.loadPlugin(pluginFile.toURI().toURL(), false); // we'll enable it down below, if need be 
+                }
             } else {
+                disableServerPluginInMasterContainer(pluginKey);
                 plugin = updateServerPluginExceptContent(subject, plugin);
             }
 
@@ -409,6 +458,11 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 entityManager.flush();
                 streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
             }
+
+            if (plugin.isEnabled()) {
+                enableServerPluginInMasterContainer(pluginKey);
+            }
+
             log.info("Server plugin [" + plugin.getName() + "] has been registered in the database");
         }
 
@@ -426,7 +480,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         doomed = this.entityManager.getReference(ServerPlugin.class, doomed.getId());
         this.entityManager.remove(doomed);
 
-        log.debug("Server plugin [" + pluginKey + "] has been purged from the db");
+        log.info("Server plugin [" + pluginKey + "] has been purged from the db");
         return;
     }
 
@@ -491,6 +545,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return status;
     }
 
+    @SuppressWarnings("unchecked")
     public Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType() {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS);
         List<PluginKey> keys = q.getResultList(); // all installed plugins, both enabled and disabled
@@ -551,6 +606,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return;
     }
 
+    @SuppressWarnings("unchecked")
     private List<PluginKey> getPluginKeysFromIds(List<Integer> pluginIds) {
         Query q = entityManager.createNamedQuery(ServerPlugin.QUERY_FIND_KEYS_BY_IDS);
         q.setParameter("ids", pluginIds);

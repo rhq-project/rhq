@@ -163,8 +163,13 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     public AlertSender getAlertSenderForNotification(AlertNotification notification) {
 
-        String className = pluginClassByName.get(notification.getSenderName());
-        ServerPluginEnvironment env = pluginEnvByName.get(notification.getSenderName());
+        String senderName = notification.getSenderName();
+        String className = pluginClassByName.get(senderName);
+        if (className==null) {
+            log.error("getAlertSender: No pluginClass found for sender: " + senderName);
+            return null;
+        }
+        ServerPluginEnvironment env = pluginEnvByName.get(senderName);
         Class clazz;
         try {
             clazz = Class.forName(className,true,env.getPluginClassLoader());

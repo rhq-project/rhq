@@ -40,6 +40,7 @@
     <module>url</module>
     <module>rhnhosted</module>
     <module>alert-email</module>
+    <module>alert-irc</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-roles</module>

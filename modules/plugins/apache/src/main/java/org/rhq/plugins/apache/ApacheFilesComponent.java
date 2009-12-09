@@ -31,10 +31,11 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.plugins.platform.PlatformComponent;
 
 /**
+ * Represents a &lt;Files&gt; section in the apache configuration.
  * 
+ * This class is a stub and is not implemented as of yet.
  * 
  * @author Lukas Krejci
  */

@@ -23,6 +23,7 @@
 
 package org.rhq.augeas.tree;
 
+import java.io.File;
 import java.util.List;
 
 import org.rhq.augeas.node.AugeasNode;
@@ -34,6 +35,8 @@ import org.rhq.augeas.node.AugeasNode;
  *
  */
 public interface AugeasTree {
+    public static final String AUGEAS_DATA_PATH = File.separatorChar + "files";
+    
     public void update();
 
     public void save();

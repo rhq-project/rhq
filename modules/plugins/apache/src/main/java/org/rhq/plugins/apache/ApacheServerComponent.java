@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
@@ -57,7 +58,6 @@ import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
-import org.rhq.plugins.apache.augeas.AugeasToApacheConfiguration;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.platform.PlatformComponent;
@@ -272,11 +272,6 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
 
             AugeasTree tree = getAugeasTree();
-//            AugeasToApacheConfiguration config = new AugeasToApacheConfiguration();
-//            config.setTree(tree);
-//
-//            
-//            return config.loadResourceConfiguration(tree.getRootNode(), resourceConfigDef);
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
         } catch (Exception e) {

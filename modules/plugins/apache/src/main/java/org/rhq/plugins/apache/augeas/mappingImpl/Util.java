@@ -29,15 +29,27 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 
 /**
- * 
+ * Methods common to the mapping classes in this package. 
  * 
  * @author Lukas Krejci
  */
-public class Util {
+class Util {
     private Util() {
         
     }
     
+    /**
+     * Creates a simple property from given definition and given value.
+     * 
+     * If the property is a boolean, it is true if the value is non-null.
+     * 
+     * If the property has enumerated possible values, the value is compared to them 
+     * in case insensitive manner.
+     * 
+     * @param definition the definition of the property to create
+     * @param value the value of the property
+     * @return a new simple property
+     */
     public static PropertySimple createPropertySimple(PropertyDefinitionSimple definition, String value) {
         String name = definition.getName();
         if (definition.getType() == PropertySimpleType.BOOLEAN) {

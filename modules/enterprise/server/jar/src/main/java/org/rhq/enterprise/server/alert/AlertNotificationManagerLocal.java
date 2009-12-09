@@ -23,8 +23,10 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
+import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
@@ -109,4 +111,12 @@ public interface AlertNotificationManagerLocal {
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
 
     AlertSenderInfo getAlertInfoForSender(String shortName);
+
+    /**
+     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
+     * @param template NotificationTemplate to apply
+     * @param def AlertDefinition  to apply the template to
+     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
+     */
+    void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications);
 }

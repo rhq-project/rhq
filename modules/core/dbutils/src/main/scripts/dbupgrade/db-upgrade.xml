@@ -2222,6 +2222,20 @@
             </schema-directSQL>
 
          </schemaSpec>
+        <schemaSpec version="2.70.1">
+            <schema-directSQL>
+              <statement>
+                CREATE TABLE RHQ_ALERT_NOTIF_TEMPL ( ID INTEGER )
+              </statement>
+              <statement>
+                ALTER TABLE RHQ_ALERT_NOTIF_TEMPL
+                ADD CONSTRAINT RHQ_ALERT_NOTIF_TEMPL_KEY
+                PRIMARY KEY ( ID )
+              </statement>
+            </schema-directSQL>
+            <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" columnType="VARCHAR2"/>
+            <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" columnType="VARCHAR2"/>
+        </schemaSpec>
 
     </dbupgrade>
   </target>

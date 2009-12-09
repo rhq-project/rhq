@@ -40,6 +40,7 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
+import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
@@ -535,5 +536,22 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             }
         }
         return result;
+    }
+
+    /**
+     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
+     * @param template NotificationTemplate to apply
+     * @param def AlertDefinition  to apply the template to
+     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
+     */
+    public void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications) {
+
+        if (removeOldNotifications)
+            def.getAlertNotifications().clear();
+
+        for (AlertNotification notif : template.getNotifications()) {
+            def.addAlertNotification(notif.copy(false)); // Attach a copy, as the ones in the template should not be shared
+        }
+
     }
 }

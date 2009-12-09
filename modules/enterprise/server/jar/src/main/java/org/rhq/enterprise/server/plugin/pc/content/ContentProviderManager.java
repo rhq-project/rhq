@@ -269,15 +269,22 @@ public class ContentProviderManager {
 
                 PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
                     provider);
+                log.debug("synchronizeRepo :: synchronizePackageMetadata");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEMETADATA);
                 packageSourceSynchronizer.synchronizePackageMetadata();
+
+                log.debug("synchronizeRepo :: synchronizePackageBits");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEBITS);
                 packageSourceSynchronizer.synchronizePackageBits();
 
                 DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
                     repo, source, provider);
+
+                log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROMETADATA);
                 distributionSourceSynchronizer.synchronizeDistributionMetadata();
+
+                log.debug("synchronizeRepo :: synchronizeDistributionBits");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROBITS);
                 distributionSourceSynchronizer.synchronizeDistributionBits();
 

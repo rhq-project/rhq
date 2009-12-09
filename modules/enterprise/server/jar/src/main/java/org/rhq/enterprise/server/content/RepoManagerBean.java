@@ -927,20 +927,10 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         List<RepoSyncResults> syncResults = found.getSyncResults();
         // Add the most recent sync results status
         if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
-            stati.add(syncResults.get(0).getStatus());
+            return syncResults.get(0).getStatus().toString();
         } else {
-            stati.add(ContentSyncStatus.NONE);
+            return ContentSyncStatus.NONE.toString();
         }
-        if (stati.contains(ContentSyncStatus.FAILURE)) {
-            return ContentSyncStatus.FAILURE.toString();
-        }
-        if (stati.contains(ContentSyncStatus.INPROGRESS)) {
-            return ContentSyncStatus.INPROGRESS.toString();
-        }
-        if (stati.contains(ContentSyncStatus.SUCCESS)) {
-            return ContentSyncStatus.SUCCESS.toString();
-        }
-        return null;
     }
 
     public RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId) {

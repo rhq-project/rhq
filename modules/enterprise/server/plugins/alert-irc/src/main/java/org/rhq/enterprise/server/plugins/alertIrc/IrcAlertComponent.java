@@ -71,8 +71,9 @@ public class IrcAlertComponent implements ServerPluginComponent {
 
         try {
             this.ircBot.connect(server, port);
+            log.info("Connected to server " + server + ":" + port);
         } catch (Exception e) {
-            log.error("Error joining IRC", e);
+            log.error("Error joining IRC: " + e.getMessage());
 
             return;
         }
@@ -149,6 +150,9 @@ public class IrcAlertComponent implements ServerPluginComponent {
         @Override
         public void onMessage(String channel, String sender, String login,
                 String hostname, String message) {
+
+            if (!message.contains(nick))
+                return;
 
             if (this.response != null) {
                 if (channel != null && channel.length() > 0) {

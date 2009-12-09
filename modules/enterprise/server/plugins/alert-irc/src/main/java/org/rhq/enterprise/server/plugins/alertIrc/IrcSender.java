@@ -41,13 +41,15 @@ public class IrcSender extends AlertSender<IrcAlertComponent> {
     public SenderResult send(Alert alert) {
         SenderResult result;
         String channel = this.alertParameters.getSimpleValue("channel", null);
+        String server = preferences.getSimpleValue("server","-not set-");
+        String chan = "irc://" + server + "/" + channel;
 
         try {
             this.pluginComponent.sendIrcMessage(channel, getIrcMessage(alert));
-            result = new SenderResult(ResultState.SUCCESS, "IRC Alert sent.");
+            result = new SenderResult(ResultState.SUCCESS, "IRC Alert sent to channel [" + chan + "].");
         } catch (IllegalStateException e) {
-            log.error(e.getMessage(), e);
-            result = new SenderResult(ResultState.FAILURE, "IRC Alert failed!");
+            log.error(e.getMessage());
+            result = new SenderResult(ResultState.FAILURE, "IRC Alert to [" + chan + "] failed! " + e.getMessage());
         }
 
         return result;
@@ -62,6 +64,8 @@ public class IrcSender extends AlertSender<IrcAlertComponent> {
         b.append(alert.getAlertDefinition().getResource().getName());
         b.append("):  ");
         b.append(alertManager.prettyPrintAlertURL(alert));
+        b.append("\n");
+        b.append(alertManager.prettyPrintAlertConditions(alert));
 
         return b.toString();
     }

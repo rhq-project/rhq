@@ -174,7 +174,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         // Check sync status
         cs.getSyncResults();
         String status = repoManager.calculateSyncStatus(overlord, repo.getId());
-        assert status.equals(ContentSourceSyncStatus.SUCCESS.toString());
+        assert status.equals(ContentSourceSyncStatus.SUCCESS.toString()) : "Result was : " + status ;
     }
 
     @Test(enabled = ENABLED)

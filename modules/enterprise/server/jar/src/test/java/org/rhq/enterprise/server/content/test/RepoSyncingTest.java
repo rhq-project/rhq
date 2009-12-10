@@ -54,6 +54,19 @@ public class RepoSyncingTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = true)
+    public void testSyncResults() throws Exception {
+        // We have to commit because bean has new transaction inside it
+        getTransactionManager().commit();
+
+        boolean synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+        RepoSyncResults results = getSyncResults(repo.getId());
+        System.out.println("results : " + results.getResults());
+        // Testing that we merged all the results into the RepoSyncReport
+        assert (results.getResults().indexOf("MERGE COMPLETE.") > 0);
+        assert (results.getPercentComplete().equals(new Long(100)));
+    }
+
+    @Test(enabled = false)
     public void testSyncRepos() throws Exception {
         p1.setLongRunningSyncs(true);
 
@@ -65,7 +78,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         assert results == null;
 
         System.out.println("Starting sync: " + repo.getId());
-        // boolean synced = pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+        // 
 
         SyncerThread st = new SyncerThread();
         st.start();
@@ -95,6 +108,9 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
         assert (results.getStatus() == ContentSyncStatus.SUCCESS);
         assert (results.getResults() != null);
+
+        // Testing that we merged all the results into the RepoSyncReport
+        assert (results.getResults().indexOf("MERGE COMPLETE.") > 0);
 
         results = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(
             LookupUtil.getSubjectManager().getOverlord(), repo.getId());
@@ -135,6 +151,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         ContentSource deleteSrc = em.find(ContentSource.class, contentSource.getId());
+        // em.remove(deleteSrc.getContentSourceType());
         em.remove(deleteSrc);
 
         Query q = em.createNamedQuery(RepoDistribution.QUERY_FIND_BY_REPO_ID);

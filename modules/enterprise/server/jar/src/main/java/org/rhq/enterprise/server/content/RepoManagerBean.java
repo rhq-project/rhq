@@ -1014,7 +1014,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     // we want this in its own tx so other tx's can see it immediately, even if calling method is already in a tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public RepoSyncResults mergeRepoSyncResults(RepoSyncResults results) {
-        return entityManager.merge(results);
+        RepoSyncResults retval = entityManager.merge(results);
+        return retval;
     }
 
     public RepoSyncResults getRepoSyncResults(int resultsId) {

@@ -30,10 +30,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
@@ -74,14 +74,16 @@ public class DistributionSourceSynchronizer {
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public void synchronizeDistributionMetadata() throws Exception {
+    public RepoSyncResults synchronizeDistributionMetadata(RepoSyncResults syncResults) throws Exception {
         if (!(provider instanceof DistributionSource)) {
-            return;
+            return syncResults;
         }
 
         DistributionSource distributionSource = (DistributionSource) provider;
 
-        log.info("Synchronize Distributions: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]");
+        String msg = "Synchronize Distributions: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]";
+        log.info(msg);
+        syncResults.appendResults(msg);
 
         // Load existing distributions to send to source
         // --------------------------------------------
@@ -96,7 +98,7 @@ public class DistributionSourceSynchronizer {
         List<DistributionDetails> distDetails = new ArrayList<DistributionDetails>(dists.size());
         translateDomainToDto(dists, distDetails);
 
-        log.info("Synchronize Distributions: [" + source.getName() + "]: loaded existing list of size=[" + dists.size()
+        log.info("Synchronize Distributions: [" + repo.getName() + "]: loaded existing list of size=[" + dists.size()
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         // Ask source to do the sync
@@ -105,20 +107,26 @@ public class DistributionSourceSynchronizer {
 
         distributionSource.synchronizeDistribution(repo.getName(), distReport, distDetails);
 
-        log.info("Synchronize Distributions: [" + source.getName() + "]: got sync report from adapter=[" + distReport
+        log.info("Synchronize Distributions: [" + repo.getName() + "]: got sync report from adapter=[" + distReport
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
-        ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
-        contentSourceManager.mergeDistributionSyncReport(source, distReport, syncResults);
+        syncResults = contentSourceManager.mergeDistributionSyncReport(source, distReport, syncResults);
+        return syncResults;
     }
 
-    public void synchronizeDistributionBits() throws Exception {
+    public RepoSyncResults synchronizeDistributionBits(RepoSyncResults results) throws Exception {
         if (!(provider instanceof DistributionSource)) {
-            return;
+            return results;
         }
 
         Subject overlord = subjectManager.getOverlord();
+        results
+            .appendResults("Synchronize Distributions: [" + repo.getName() + " Starting Distribution bits download.");
+        results = repoManager.mergeRepoSyncResults(results);
         contentSourceManager.downloadDistributionBits(overlord, source);
+        results.appendResults("Synchronize Distributions: [" + repo.getName() + " finished bits download.");
+
+        return results;
     }
 
     private void translateDomainToDto(List<Distribution> dists, List<DistributionDetails> distDetails) {

@@ -82,6 +82,9 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
     @Column(name = "RESULTS", nullable = true)
     private String results;
 
+    @Column(name = "PERCENT_COMPLETE", nullable = true)
+    private Long percentComplete;
+
     protected RepoSyncResults() {
         this.startTime = System.currentTimeMillis();
         this.status = ContentSyncStatus.INPROGRESS;
@@ -155,14 +158,33 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
         this.results = results;
     }
 
+    public Long getPercentComplete() {
+        return percentComplete;
+    }
+
+    public void setPercentComplete(Long percentComplete) {
+        this.percentComplete = percentComplete;
+    }
+
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(this.getClass().getSimpleName() + ": ");
         str.append("start-time=[" + new Date(startTime));
         str.append("], end-time=[" + ((endTime != null) ? new Date(endTime) : "---"));
-        str.append("], status=[" + status);
+        str.append("], percentComplete=[" + status);
+        str.append("], status=[" + percentComplete);
         str.append("], repo=[" + repo);
         str.append("]");
         return str.toString();
+    }
+
+    /**
+     * Convienence method to append a string to the results of this RepoSyncResults.
+     * @param msg to append
+     */
+    public void appendResults(String msg) {
+        StringBuffer existing = new StringBuffer(this.getResults());
+        existing.append("\n");
+        existing.append(msg);
     }
 }

@@ -81,6 +81,7 @@ import org.rhq.core.domain.content.RepoAdvisory;
 import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoPackageVersion;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageVersionFile;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
@@ -916,8 +917,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults) {
+    public RepoSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -944,7 +945,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // don't mark it as successful yet, let the caller do that
             progress.append(new Date()).append(": ").append("MERGE COMPLETE.\n");
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
         } catch (Throwable t) {
             // ThrowableUtil will dump SQL nextException messages, too
             String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
@@ -958,9 +959,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo,
-        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults) {
+    public RepoSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -993,7 +993,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             progress.append(new Date()).append(": ").append("Adding");
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
             while (fromIndex < newPackageCount) {
                 if (toIndex > newPackageCount) {
@@ -1010,7 +1010,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             progress.append("...").append(addedCount).append('\n');
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
             //////////////////
             // UPDATE
@@ -1028,7 +1028,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // don't mark it as successful yet, let the caller do that
             progress.append(new Date()).append(": ").append("MERGE COMPLETE.\n");
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
         } catch (Throwable t) {
             // ThrowableUtil will dump SQL nextException messages, too
             String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
@@ -1194,13 +1194,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
+    public RepoSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
         PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress) {
+        RepoSyncResults syncResults, StringBuilder progress) {
 
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         Query q;
         int flushCount = 0; // used to know when we should flush the entity manager - for performance purposes
@@ -1243,23 +1243,23 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             if ((++removeCount % 200) == 0) {
                 progress.append("...").append(removeCount);
                 syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
             }
         }
 
         progress.append("...").append(removeCount).append('\n');
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         return syncResults;
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
+    public RepoSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress, int addCount) {
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress, int addCount) {
         Query q;
         int flushCount = 0; // used to know when we should flush the entity manager - for performance purposes
 
@@ -1457,7 +1457,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             if ((++addCount % 100) == 0) {
                 progress.append("...").append(addCount);
                 syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
             }
         }
 
@@ -1465,12 +1465,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource,
-        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public RepoSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress) {
         progress.append(new Date()).append(": ").append("Updating");
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         int flushCount = 0; // used to know when we should flush the entity manager - for performance purposes
         int updateCount = 0;
@@ -1531,24 +1531,24 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             if ((++updateCount % 200) == 0) {
                 progress.append("...").append(updateCount);
                 syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
             }
         }
 
         progress.append("...").append(updateCount).append('\n');
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         return syncResults;
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public RepoSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
+        DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress) {
 
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -1560,20 +1560,20 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             distManager.deleteDistributionFilesByDistId(overlord, doomedDist.getId());
             progress.append("Removed distribution & distribution files for: " + doomedDetails.getLabel());
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
         }
 
         progress.append("Finished Distribution removal...").append('\n');
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         return syncResults;
     }
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress) {
 
         DistributionManagerLocal distManager = LookupUtil.getDistributionManagerLocal();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
@@ -1604,7 +1604,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 progress.append("Caught exception when trying to add: " + detail.getLabel() + "\n");
                 progress.append("Error is: " + e.getMessage());
                 syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
                 log.error(e);
             }
         }

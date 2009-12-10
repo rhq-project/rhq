@@ -251,6 +251,7 @@ public class ContentProviderManager {
         progress.append(new Date()).append(": ");
         progress.append("Getting currently known list of content source packages...");
         RepoSyncResults results = new RepoSyncResults(repo);
+        results.setPercentComplete(new Long(0));
         results.setResults(progress.toString());
         results = repoManager.persistRepoSyncResults(results);
         log.debug("synchronizeRepo :: inProgress");
@@ -271,23 +272,28 @@ public class ContentProviderManager {
                 PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
                     provider);
                 log.debug("synchronizeRepo :: synchronizePackageMetadata");
+
                 results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEMETADATA);
-                packageSourceSynchronizer.synchronizePackageMetadata();
+                results = packageSourceSynchronizer.synchronizePackageMetadata(results);
+                results.setPercentComplete(new Long(10));
 
                 log.debug("synchronizeRepo :: synchronizePackageBits");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEBITS);
-                packageSourceSynchronizer.synchronizePackageBits();
+                results = packageSourceSynchronizer.synchronizePackageBits(results);
+                results.setPercentComplete(new Long(50));
 
                 DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
                     repo, source, provider);
 
                 log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROMETADATA);
-                distributionSourceSynchronizer.synchronizeDistributionMetadata();
+                results = distributionSourceSynchronizer.synchronizeDistributionMetadata(results);
+                results.setPercentComplete(new Long(75));
 
                 log.debug("synchronizeRepo :: synchronizeDistributionBits");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROBITS);
-                distributionSourceSynchronizer.synchronizeDistributionBits();
+                results = distributionSourceSynchronizer.synchronizeDistributionBits(results);
+                results.setPercentComplete(new Long(90));
 
                 log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.ADVISORYMETADATA);
@@ -296,6 +302,9 @@ public class ContentProviderManager {
 
                 // Update status to finished.
                 progress = new StringBuilder();
+                progress.append("\n");
+                progress.append(results.getResults());
+                progress.append("\n");
                 progress.append(new Date()).append(": ");
                 progress.append(" Repository [").append(repo.getName()).append("]");
                 progress.append('\n');
@@ -330,6 +339,7 @@ public class ContentProviderManager {
             } finally {
                 if (results != null) {
                     results.setEndTime(System.currentTimeMillis());
+                    results.setPercentComplete(new Long(100));
                     repoManager.mergeRepoSyncResults(results);
                     log.debug("synchronizeRepo :: merging results.");
                 }

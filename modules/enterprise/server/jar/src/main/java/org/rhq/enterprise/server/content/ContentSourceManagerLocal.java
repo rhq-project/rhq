@@ -36,6 +36,7 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -397,9 +398,8 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults);
+    RepoSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults);
 
     /**
      * After a sync has happened, this is responsible for persisting the results.
@@ -411,8 +411,8 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults);
+    RepoSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults);
 
     /**
      * After a sync has happened, this is responsible for persisting the results.
@@ -429,24 +429,24 @@ public interface ContentSourceManagerLocal {
 
     void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
-    ContentSourceSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
+    RepoSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
         PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+        RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
+    RepoSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress, int addCount);
+        RepoSyncResults syncResults, StringBuilder progress, int addCount);
 
-    ContentSourceSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
+    RepoSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
         Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+        RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
+        DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
+        DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress);
 
     ContentSourceSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
         ContentSourceSyncResults syncResults, StringBuilder progress);

@@ -34,16 +34,17 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.PackageVersionContentSourcePK;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
@@ -62,6 +63,7 @@ public class PackageSourceSynchronizer {
     private final Log log = LogFactory.getLog(this.getClass());
 
     private ContentSourceManagerLocal contentSourceManager;
+    private RepoManagerLocal repoManager;
     private SubjectManagerLocal subjectManager;
 
     private Repo repo;
@@ -75,11 +77,12 @@ public class PackageSourceSynchronizer {
 
         contentSourceManager = LookupUtil.getContentSourceManager();
         subjectManager = LookupUtil.getSubjectManager();
+        repoManager = LookupUtil.getRepoManagerLocal();
     }
 
-    public void synchronizePackageMetadata() throws Exception {
+    public RepoSyncResults synchronizePackageMetadata(RepoSyncResults syncResults) throws Exception {
         if (!(provider instanceof PackageSource)) {
-            return;
+            return syncResults;
         }
 
         PackageSource packageSource = (PackageSource) provider;
@@ -118,30 +121,37 @@ public class PackageSourceSynchronizer {
         // Merge in the results of the synchronization
         // --------------------------------------------
         start = System.currentTimeMillis();
-        ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
+        // RepoSyncResults syncResults = new RepoSyncResults(repo);
         syncResults = contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, syncResults);
 
         log.info("Synchronize Packages: [" + source.getName() + "]: merged sync report=("
             + (System.currentTimeMillis() - start) + ")ms");
+        return syncResults;
     }
 
-    public void synchronizePackageBits() throws Exception {
+    public RepoSyncResults synchronizePackageBits(RepoSyncResults syncResults) throws Exception {
 
         // Determine if the sync even needs to take place
         if (!(provider instanceof PackageSource)) {
-            return;
+            return syncResults;
         }
 
         if (source.getDownloadMode() == DownloadMode.NEVER) {
-            log.info("Download mode of NEVER for source [" + source.getName() + "], skipping "
-                + "package bits sync for repo [" + repo.getName() + "]");
-            return;
+            String msg = "Download mode of NEVER for source [" + source.getName() + "], skipping "
+                + "package bits sync for repo [" + repo.getName() + "]";
+            log.info(msg);
+            syncResults.appendResults(msg);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
+            return syncResults;
         }
 
         if (source.isLazyLoad()) {
-            log.info("Lazy load enabled for source [" + source.getName() + "], skipping "
-                + "package bits sync for repo [" + repo.getName() + "]");
-            return;
+            String msg = "Lazy load enabled for source [" + source.getName() + "], skipping "
+                + "package bits sync for repo [" + repo.getName() + "]";
+            log.info(msg);
+            syncResults.appendResults(msg);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
+            return syncResults;
         }
 
         long start;
@@ -156,8 +166,11 @@ public class PackageSourceSynchronizer {
 
         List<PackageVersionContentSource> packageVersionContentSources = contentSourceManager
             .getUnloadedPackageVersionsFromContentSourceInRepo(overlord, source.getId(), repo.getId(), pc);
-        log.info("Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName()
-            + "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms");
+        String msg = "Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName()
+            + "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms";
+        log.info(msg);
+        syncResults.appendResults(msg);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         // Download the bits for each unloaded package version. Abort the entire download if we
         // fail getting just one package.
@@ -167,10 +180,12 @@ public class PackageSourceSynchronizer {
             PackageVersionContentSourcePK pk = item.getPackageVersionContentSourcePK();
 
             try {
-                if (log.isDebugEnabled()) {
-                    log.debug("Downloading package version [" + pk.getPackageVersion() + "] located at ["
-                        + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
-                }
+                log.info("Downloading package version [" + pk.getPackageVersion() + "] located at ["
+                    + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
+
+                syncResults.appendResults("Downloading package version [" + pk.getPackageVersion() + "] located at ["
+                    + item.getLocation() + "]");
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
                 overlord = subjectManager.getOverlord();
                 contentSourceManager.downloadPackageBits(overlord, item);
@@ -185,6 +200,8 @@ public class PackageSourceSynchronizer {
 
         log.info("All package bits for content source [" + source.getName() + "] have been downloaded."
             + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
+
+        return syncResults;
 
     }
 

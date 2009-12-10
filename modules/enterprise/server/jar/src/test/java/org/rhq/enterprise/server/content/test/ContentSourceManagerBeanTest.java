@@ -50,6 +50,7 @@ import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.resource.ProductVersion;
 import org.rhq.core.domain.resource.Resource;
@@ -277,8 +278,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
             // merge the report!
-            ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
-            results = contentSourceManager.persistContentSourceSyncResults(results);
+            RepoSyncResults results = new RepoSyncResults(repo);
+            results = repoManager.persistRepoSyncResults(results);
             assert results != null;
 
             results = contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);
@@ -437,8 +438,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert inCS.size() == 0 : inCS;
 
             // need this to pass to merge
-            ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
-            results = contentSourceManager.persistContentSourceSyncResults(results);
+            RepoSyncResults results = new RepoSyncResults(repo);
+            results = repoManager.persistRepoSyncResults(results);
             assert results != null;
 
             // this report will add a mapping to PV->CS
@@ -568,8 +569,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert 0 == repoManager.getPackageVersionCountFromRepo(overlord, repoId);
 
             // need this to pass to merge
-            ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
-            results = contentSourceManager.persistContentSourceSyncResults(results);
+            RepoSyncResults results = new RepoSyncResults(repo);
+            results = repoManager.persistRepoSyncResults(results);
             assert results != null;
 
             // this report will add a mapping to PV->CS
@@ -882,8 +883,8 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous;
             previous = new HashMap<ContentProviderPackageDetailsKey, PackageVersionContentSource>();
 
-            ContentSourceSyncResults results = new ContentSourceSyncResults(contentSource);
-            results = contentSourceManager.persistContentSourceSyncResults(results);
+            RepoSyncResults results = new RepoSyncResults(repo);
+            results = repoManager.persistRepoSyncResults(results);
             assert results != null;
 
             contentSourceManager.mergePackageSyncReport(contentSource, repo, report, previous, results);

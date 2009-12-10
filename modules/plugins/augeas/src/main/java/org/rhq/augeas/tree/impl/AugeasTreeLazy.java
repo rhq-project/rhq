@@ -121,8 +121,11 @@ public class AugeasTreeLazy implements AugeasTree {
             return node;
         } catch (Exception e) {
             List<String> list = ag.match(fullPath);
-            if (!list.isEmpty())
-                return instantiateNode(fullPath);
+            if (!list.isEmpty()){
+                AugeasNode newNode = instantiateNode(fullPath);
+                nodeBuffer.addNode(newNode);
+                return newNode;
+            }
         }
         ag.set(fullPath, null);
         node = instantiateNode(fullPath);

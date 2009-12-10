@@ -122,4 +122,7 @@ public class ApacheAugeasNode extends AugeasNodeLazy implements AugeasNode {
         //else if this node is included from another file
         //and we would destroy that association here.
     }
+    public void setParentNode(AugeasNode node){
+    	this.parentNode = node;
+    }
 }

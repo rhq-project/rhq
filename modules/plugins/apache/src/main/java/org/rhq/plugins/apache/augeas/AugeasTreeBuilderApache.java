@@ -84,7 +84,9 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 	  	  List<AugeasNode> createdNodes = new ArrayList<AugeasNode>();
 	  	  
 	  	  for (String nodeName : nestedNodes){
-	  			  ApacheAugeasNode newNode = new ApacheAugeasNode(parentNode,tree,nodeName);
+	  		      ApacheAugeasNode newNode = (ApacheAugeasNode)tree.createNode(nodeName);
+	  		      newNode.setParentNode(parentNode);
+	  			  //ApacheAugeasNode newNode = new ApacheAugeasNode(parentNode,tree,nodeName);
 	  			  createdNodes.add(newNode);
 	  		  }
 	  	  
@@ -93,7 +95,8 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 	  	   	
       for (AugeasNode node : createdNodes){
     	    if (isNested(node.getLabel())){
-    	    	updateIncludes((ApacheAugeasNode)node,tree,fileName+File.separator+node.getLabel(),true);
+    	    	String labelName = node.getLabel()+((node.getSeq()!=0)? "["+String.valueOf(node.getSeq())+"]":"");
+    	    	updateIncludes((ApacheAugeasNode)node,tree,fileName+File.separator+labelName,false);
     	    }
             if (node.getLabel().equals("Include")){
             	String val = ag.get(node.getFullPath()+File.separator+"param");

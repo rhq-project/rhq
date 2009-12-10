@@ -21,12 +21,13 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -39,9 +40,9 @@ import org.rhq.core.domain.measurement.calltime.CallTimeData;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
@@ -188,41 +189,50 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         
         String serverName = null;
         int pipeIdx = resourceKey.indexOf('|');
-        int addrStartIdx = pipeIdx + 1;
         if (pipeIdx >= 0) {
             serverName = resourceKey.substring(0, pipeIdx);
         }
-        String[] addrs = resourceKey.substring(addrStartIdx).split(" ");
-
-        StringBuilder expr = new StringBuilder("<VirtualHost");
-        boolean hasParams = serverName != null || addrs.length > 0;
         
-        if (hasParams) {
-            expr.append("[");
-        }
+        String[] addrs = resourceKey.substring(pipeIdx+1).split(" ");
+        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
+        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
+        boolean updated;
         
-        if (serverName != null) {
-            expr.append("ServerName/param = \"").append(serverName).append("\""); 
-        }
-        
-        if (addrs.length > 0) {
-            String firstAddr = addrs[0];
-            if (serverName != null) {
-                expr.append(" and ");
+        for (AugeasNode node : nodes){
+        	List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName"+File.separator+"param");
+        	String tempServerName= null;
+        	
+            if (!(serverNameNodes.isEmpty())){
+            	tempServerName = serverNameNodes.get(0).getValue();
             }
-            
-            expr.append("param = \"").append(firstAddr).append("\"");
-            
-            for(int i = 1; i < addrs.length; ++i) {
-                expr.append(" and param = \"").append(addrs[i]).append("\"");
-            }
-        }
-        if (hasParams) {
-            expr.append("]");
+         
+            if (tempServerName==null & serverName==null){
+            	virtualHosts.add(node);
+            }else
+              if (tempServerName!=null & serverName !=null)
+            	if (tempServerName.equals(serverName))
+                 {
+            		updated = false;
+            		List<AugeasNode> params = node.getChildByLabel("param");
+            		for (AugeasNode nd : params){
+            		    updated = false;
+            			for (String adr : addrs)
+            			{
+            			 if (adr.equals(nd.getValue()))
+            				updated = true; 
+            			}
+            		if (!updated)
+            			break;
+            		
+            		}
+            		
+            		if (updated){
+            			virtualHosts.add(node);
+            		}
+               }
         }
         
-        List<AugeasNode> virtualHosts = tree.matchRelative(tree.getRootNode(), expr.toString());
-        
+               
         if (virtualHosts.size() == 0) {
             throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: " +  resourceKey);
         }

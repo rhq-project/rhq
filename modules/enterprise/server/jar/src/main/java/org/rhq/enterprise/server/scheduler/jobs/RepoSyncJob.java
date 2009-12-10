@@ -204,6 +204,6 @@ public class RepoSyncJob implements StatefulJob {
         Repo repoToSync = repoList.get(0);
 
         // This call executes all of the logic associated with synchronizing the given repo
-        repoManager.synchronizeRepos(overlord, new Integer[]{repoToSync.getId()});
+        repoManager.internalSynchronizeRepos(overlord, new Integer[]{repoToSync.getId()});
     }
 }

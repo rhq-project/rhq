@@ -966,6 +966,22 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return syncCount;
     }
 
+    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentProviderManager providerManager = pc.getAdapterManager();
+
+        int syncCount = 0;
+        for (Integer id : repoIds) {
+            boolean syncExecuted = providerManager.synchronizeRepo(id);
+
+            if (syncExecuted) {
+                syncCount++;
+            }
+        }
+
+        return syncCount;
+    }
+
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public RepoSyncResults persistRepoSyncResults(RepoSyncResults results) {

@@ -291,13 +291,23 @@ public interface RepoManagerLocal {
     PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc);
 
     /**
-     * Synchronize the content associated with the repoIds passed in.
+     * Schedules jobs to synchronize the content associated with the repoIds passed in.
      *
      * @param repoIds to synchronize; may not be <code>null</code>
      * @return count of the number of repositories synced.
      * @throws Exception if there is an error connecting with the plugin container
      */
     int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+
+    /**
+     * Performs the actual synchronization of the given repos.
+     *
+     * @param subject user performing the sync
+     * @param repoIds identifies all repos to be syncced
+     * @return number of repos successfully syncced
+     * @throws Exception if any errors occur
+     */
+    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
 
     /**
      * Creates a new sync results object. Note that this will return <code>null</code> if the given results object has a

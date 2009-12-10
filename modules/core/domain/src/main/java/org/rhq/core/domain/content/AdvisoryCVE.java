@@ -23,7 +23,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -74,9 +73,6 @@ public class AdvisoryCVE implements Serializable {
     @JoinColumn(name = "CVE_ID", referencedColumnName = "ID", nullable = false)
     private CVE cve;
 
-    @Column(name = "CTIME", nullable = false)
-    private long createdTime;
-
     @Column(name = "LAST_MODIFIED", nullable = true)
     private long lastModifiedDate;
 
@@ -91,10 +87,6 @@ public class AdvisoryCVE implements Serializable {
 
     public int getId() {
         return id;
-    }
-
-    public long getCreatedTime() {
-        return createdTime;
     }
 
     public Advisory getAdvisory() {
@@ -123,14 +115,12 @@ public class AdvisoryCVE implements Serializable {
 
     @PrePersist
     void onPersist() {
-        this.createdTime = System.currentTimeMillis();
         this.setLastModifiedDate(System.currentTimeMillis());
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("AdvisoryCVE: ");
-        str.append("ctime=[").append(new Date(this.createdTime)).append("]");
         str.append(", Advisory=[").append(this.advisory).append("]");
         str.append(", CVE=[").append(this.cve).append("]");
         return str.toString();

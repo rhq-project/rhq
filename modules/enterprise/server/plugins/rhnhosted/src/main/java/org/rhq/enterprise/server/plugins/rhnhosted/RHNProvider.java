@@ -35,6 +35,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
@@ -54,7 +57,7 @@ import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
  * @author pkilambi
  *
  */
-public class RHNProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource {
+public class RHNProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource, AdvisorySource {
 
     private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNActivator rhnObject;
@@ -218,6 +221,42 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
+    public void synchronizeAdvisory(String repoName, AdvisorySyncReport report,
+        Collection<AdvisoryDetails> existingAdvisory) throws Exception {
+
+        List<String> existingLabels = new ArrayList<String>();
+        for (AdvisoryDetails ad : existingAdvisory) {
+            existingLabels.add(ad.getAdvisory());
+        }
+        List<String> toSyncAdvs = new ArrayList<String>();
+        List<String> deletedAdvs = new ArrayList<String>(); //Existing advisories we want to remove.
+        deletedAdvs.addAll(existingLabels);
+
+        List<String> errataIds = helper.getChannelAdvisory(repoName);
+        List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName);
+        log.debug("Found " + advList.size() + " available errata");
+        for (AdvisoryDetails adv : advList) {
+            log.debug("Processing Advisory ::" + adv.getAdvisory());
+            deletedAdvs.remove(adv.getAdvisory());
+            if (!existingLabels.contains(adv.getAdvisory())) {
+                log.debug("New Advisory " + adv.getAdvisory() + ") detected" + " with bugs" + adv.getBugs()
+                    + "with cves" + adv.getCVEs() + "wiuth packages" + adv.getPkgs());
+                report.addAdvisory(adv);
+            }
+        }
+
+        for (String adv : deletedAdvs) {
+            for (AdvisoryDetails advd : existingAdvisory) {
+                if (advd.getAdvisory().compareToIgnoreCase(adv) == 0) {
+                    report.addDeletedAdvisory(advd);
+                }
+            }
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
         Collection<DistributionDetails> existingDistros) throws Exception {
 
@@ -316,4 +355,5 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
     }
+
 }

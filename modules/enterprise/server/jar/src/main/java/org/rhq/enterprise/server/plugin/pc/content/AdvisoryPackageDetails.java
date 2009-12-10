@@ -18,39 +18,77 @@
  */
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import org.rhq.core.domain.content.Advisory;
-import org.rhq.core.domain.content.Package;
-
-/**
- * @author Pradeep Kilambi
- */
 public class AdvisoryPackageDetails {
+    private static final long serialVersionUID = 1L;
+    private String name;
+    private String version;
+    private String arch;
+    private String rpmFilename;
 
-    private Advisory advisory;
-    private Package pkg;
-
-    public AdvisoryPackageDetails(Advisory advisoryIn, Package pkgIn) {
-        advisory = advisoryIn;
-        pkg = pkgIn;
+    public AdvisoryPackageDetails(String name, String version, String architectureName, String rpmname) {
+        this.name = name;
+        this.version = version;
+        this.arch = architectureName;
+        this.rpmFilename = rpmname;
     }
 
-    public Advisory getAdvisory() {
-        return advisory;
+    public String getRpmFilename() {
+        return rpmFilename;
     }
 
-    public void setAdvisory(Advisory advisory) {
-        this.advisory = advisory;
+    public void setRpmFilename(String rpmFilename) {
+        this.rpmFilename = rpmFilename;
     }
 
-    public Package getPkg() {
-        return pkg;
+    public String getName() {
+        return name;
     }
 
-    public void setPkg(Package pkg) {
-        this.pkg = pkg;
+    public void setName(String name) {
+        this.name = name;
     }
 
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getArch() {
+        return arch;
+    }
+
+    public void setArch(String arch) {
+        this.arch = arch;
+    }
+
+    @Override
     public String toString() {
-        return "Advisory = " + advisory + ", packages =" + getPkg();
+        return "AdvisoryPackageDetails[" + super.toString() + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!super.equals(obj)) {
+            return false;
+        }
+
+        if (!(obj instanceof AdvisoryPackageDetails)) {
+            return false;
+        }
+
+        return true;
     }
 }

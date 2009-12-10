@@ -46,6 +46,9 @@ public class AdvisoryDetails {
         setAdvisory(advisory);
         setAdvisory_type(advisory_type);
         setSynopsis(synopsis);
+        pkgs = new ArrayList<AdvisoryPackageDetails>();
+        cves = new ArrayList<AdvisoryCVEDetails>();
+        bugs = new ArrayList<AdvisoryBugDetails>();
     }
 
     public String getAdvisory() {
@@ -129,9 +132,6 @@ public class AdvisoryDetails {
     }
 
     public void addPkg(AdvisoryPackageDetails pkg) {
-        if (pkgs == null) {
-            pkgs = new ArrayList<AdvisoryPackageDetails>();
-        }
         pkgs.add(pkg);
     }
 
@@ -148,9 +148,6 @@ public class AdvisoryDetails {
     }
 
     public void addCVE(AdvisoryCVEDetails cve) {
-        if (cves == null) {
-            cves = new ArrayList<AdvisoryCVEDetails>();
-        }
         cves.add(cve);
     }
 
@@ -167,9 +164,6 @@ public class AdvisoryDetails {
     }
 
     public void addBug(AdvisoryBugDetails bug) {
-        if (bugs == null) {
-            bugs = new ArrayList<AdvisoryBugDetails>();
-        }
         bugs.add(bug);
     }
 

@@ -35,6 +35,7 @@ import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -68,7 +69,7 @@ public class AdvisorySourceSynchronizer {
     private ContentSource source;
     private ContentProvider provider;
     private PageControl pc = PageControl.getUnlimitedInstance();
-    private Subject overlord = subjectManager.getOverlord();
+    private Subject overlord;
 
     public AdvisorySourceSynchronizer(Repo repo, ContentSource source, ContentProvider provider) {
         this.repo = repo;
@@ -78,27 +79,29 @@ public class AdvisorySourceSynchronizer {
         repoManager = LookupUtil.getRepoManagerLocal();
         contentSourceManager = LookupUtil.getContentSourceManager();
         subjectManager = LookupUtil.getSubjectManager();
+        overlord = subjectManager.getOverlord();
     }
 
     public void synchronizeAdvisoryMetadata() throws Exception {
         if (!(provider instanceof AdvisorySource)) {
+            log.error(" Advisory Instance:" + provider);
             return;
         }
 
         AdvisorySource advisorySource = (AdvisorySource) provider;
 
-        log.info("Synchronize Advisory: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]");
+        log.error("Synchronize Advisory: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]");
 
         long start = System.currentTimeMillis();
 
         List<Advisory> advs = repoManager.findAssociatedAdvisory(overlord, repo.getId(), pc);
-        log.debug("Found " + advs.size() + " Advisory for repo " + repo.getId());
+        log.error("Found " + advs.size() + " Advisory for repo " + repo.getId());
 
         AdvisorySyncReport advReport = new AdvisorySyncReport(repo.getId());
         List<AdvisoryDetails> advDetails = new ArrayList<AdvisoryDetails>(advs.size());
         translateDomainToDto(advs, advDetails);
 
-        log.info("Synchronize Advisory: [" + source.getName() + "]: loaded existing list of size=[" + advs.size()
+        log.error("Synchronize Advisory: [" + source.getName() + "]: loaded existing list of size=[" + advs.size()
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         // Ask source to do the sync
@@ -107,8 +110,8 @@ public class AdvisorySourceSynchronizer {
 
         advisorySource.synchronizeAdvisory(repo.getName(), advReport, advDetails);
 
-        log.info("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport + "] ("
-            + (System.currentTimeMillis() - start) + ")ms");
+        log.error("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport
+            + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
         contentSourceManager.mergeAdvisorySyncReport(source, advReport, syncResults);
@@ -129,23 +132,25 @@ public class AdvisorySourceSynchronizer {
             detail.setUpdate_date(d.getUpdate_date());
 
             List<AdvisoryPackage> pkgs = advManager.findPackageByAdvisory(overlord, d.getId(), pc);
-
             for (AdvisoryPackage pkg : pkgs) {
-                AdvisoryPackageDetails apkg = new AdvisoryPackageDetails(pkg.getAdvisory(), pkg.getPkg());
+                PackageVersion pv = advManager.findPackageVersionByPkgId(overlord, pkg.getPkg().getFileName(), pc);
+                AdvisoryPackageDetails apkg = new AdvisoryPackageDetails(pv.getDisplayName(), pv.getVersion(), pv
+                    .getArchitecture().getName(), pv.getFileName());
                 detail.addPkg(apkg);
             }
 
             List<AdvisoryCVE> cves = advManager.getAdvisoryCVEByAdvId(overlord, d.getId(), pc);
-
             for (AdvisoryCVE cve : cves) {
-                AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve.getAdvisory(), cve.getCVE());
+                AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve.getCVE().getName());
                 detail.addCVE(acve);
             }
 
             List<AdvisoryBuglist> abugs = advManager.getAdvisoryBuglistByAdvId(overlord, d.getId());
-            for (AdvisoryBuglist abug : abugs) {
-                AdvisoryBugDetails abugdetail = new AdvisoryBugDetails(abug.getAdvisory(), abug.getBugid());
-                detail.addBug(abugdetail);
+            if (abugs != null && abugs.size() > 0) {
+                for (AdvisoryBuglist abug : abugs) {
+                    AdvisoryBugDetails abugdetail = new AdvisoryBugDetails(abug.getBugid());
+                    detail.addBug(abugdetail);
+                }
             }
             advDetails.add(detail);
         }

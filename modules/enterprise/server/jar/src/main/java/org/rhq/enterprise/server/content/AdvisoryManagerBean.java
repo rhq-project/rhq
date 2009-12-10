@@ -36,7 +36,7 @@ import org.rhq.core.domain.content.AdvisoryBuglist;
 import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.CVE;
-import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -88,7 +88,18 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, Package pkg) throws AdvisoryException {
+    public AdvisoryBuglist createAdvisoryBuglist(Subject user, Advisory advisory, String buginfo)
+        throws AdvisoryException {
+        log.debug("User [" + user + "] is creating AdvisoryCVE [" + advisory + "]");
+        AdvisoryBuglist advbug = new AdvisoryBuglist(advisory, buginfo);
+
+        entityManager.persist(advbug);
+        return advbug;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, PackageVersion pkg)
+        throws AdvisoryException {
         log.debug("User [" + user + "] is creating AdvisoryPackage [" + advisory + "]");
         AdvisoryPackage advpkg = new AdvisoryPackage(advisory, pkg);
 
@@ -215,6 +226,25 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     }
 
+    /**
+     * find list of Packages Versions associated to an advisory
+     * @param pkgId packageId
+     * @return list of PackageVersion objects
+     */
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PackageVersion findPackageVersionByPkgId(Subject subject, String rpmName, PageControl pc) {
+        Query query = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME);
+
+        query.setParameter("rpmName", rpmName);
+        PackageVersion results = (PackageVersion) query.getSingleResult();
+        if (results != null) {
+            return results;
+        } else {
+            return null;
+        }
+    }
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public long getPackageCountFromAdv(Subject subject, int advId) {
@@ -266,7 +296,7 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         List<AdvisoryBuglist> results = query.getResultList();
 
         if (results.size() > 0) {
-            return (List<AdvisoryBuglist>) results.get(0);
+            return results;
         } else {
             return null;
         }

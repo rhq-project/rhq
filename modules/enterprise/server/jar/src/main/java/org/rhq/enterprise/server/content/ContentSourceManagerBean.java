@@ -1090,36 +1090,50 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         for (AdvisoryDetails detail : newDetails) {
             try {
 
-                log.debug("Attempting to create new distribution based off of: " + detail);
-                //istributionType distType = advManager.getDistributionTypeByName(detail.getDistributionType());
+                log.debug("Attempting to create new advisory based off of: " + detail);
                 Advisory newAdv = advManager.createAdvisory(overlord, detail.getAdvisory(), detail.getAdvisory_type(),
-                    detail.getAdvisory_name());
-                log.debug("Created new distribution: " + newAdv);
+                    detail.getSynopsis());
                 Repo repo = repoManager.getRepo(overlord, report.getRepoId());
                 RepoAdvisory repoAdv = new RepoAdvisory(repo, newAdv);
                 log.debug("Created new mapping of RepoAdvisory repoId = " + repo.getId() + ", distId = "
                     + newAdv.getId());
+                entityManager.flush();
                 entityManager.persist(repoAdv);
                 // persist pkgs associated with an errata
                 List<AdvisoryPackageDetails> pkgs = detail.getPkgs();
+
+                Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_PACKAGEVERSION_BY_FILENAME);
                 for (AdvisoryPackageDetails pkg : pkgs) {
-                    AdvisoryPackage apkg = new AdvisoryPackage(pkg.getAdvisory(), pkg.getPkg());
-                    entityManager.persist(apkg);
-                    entityManager.flush();
+                    try {
+                        q.setParameter("rpmName", pkg.getRpmFilename());
+                        PackageVersion pExisting = (PackageVersion) q.getSingleResult();
+                        AdvisoryPackage apkg = new AdvisoryPackage(newAdv, pExisting);
+                        entityManager.persist(apkg);
+                        entityManager.flush();
+                    } catch (NoResultException nre) {
+                        log.info("Advisory has package thats not yet in the db [" + pkg.getRpmFilename()
+                            + "] - Processing rest");
+                    }
                 }
-                // persist cves associated with an errata
+                //persist cves associated with an errata
                 List<AdvisoryCVEDetails> cves = detail.getCVEs();
-                for (AdvisoryCVEDetails cve : cves) {
-                    AdvisoryCVE acve = new AdvisoryCVE(cve.getAdvisory(), cve.getCVE());
-                    entityManager.persist(acve);
-                    entityManager.flush();
+                log.debug("list of CVEs " + cves);
+                if (cves != null && cves.size() > 0) {
+                    for (AdvisoryCVEDetails cve : cves) {
+                        AdvisoryCVE acve = new AdvisoryCVE(newAdv, advManager.createCVE(overlord, cve.getName()));
+                        entityManager.persist(acve);
+                        entityManager.flush();
+                    }
                 }
 
                 List<AdvisoryBugDetails> abugs = detail.getBugs();
-                for (AdvisoryBugDetails abug : abugs) {
-                    AdvisoryBuglist abuglist = new AdvisoryBuglist(abug.getAdvisory(), abug.getBugs());
-                    entityManager.persist(abuglist);
-                    entityManager.flush();
+                log.debug("list of Bugs " + abugs);
+                if (abugs != null && abugs.size() > 0) {
+                    for (AdvisoryBugDetails abug : abugs) {
+                        AdvisoryBuglist abuglist = new AdvisoryBuglist(newAdv, abug.getBugInfo());
+                        entityManager.persist(abuglist);
+                        entityManager.flush();
+                    }
                 }
 
             } catch (AdvisoryException e) {

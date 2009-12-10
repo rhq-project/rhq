@@ -23,7 +23,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -31,6 +30,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
@@ -66,15 +66,12 @@ public class AdvisoryBuglist implements Serializable {
     @Id
     private int id;
 
-    //@ManyToOne
-    @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    @ManyToOne
+    @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false)
     private Advisory advisory;
 
     @Column(name = "BUG_ID", nullable = false)
     private String bugid;
-
-    @Column(name = "CTIME", nullable = false)
-    private long createdTime;
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
@@ -85,10 +82,6 @@ public class AdvisoryBuglist implements Serializable {
     public AdvisoryBuglist(Advisory adv, String bugid) {
         this.advisory = adv;
         this.bugid = bugid;
-    }
-
-    public long getCreatedTime() {
-        return createdTime;
     }
 
     public Advisory getAdvisory() {
@@ -117,13 +110,12 @@ public class AdvisoryBuglist implements Serializable {
 
     @PrePersist
     void onPersist() {
-        this.createdTime = System.currentTimeMillis();
+        this.lastModifiedDate = System.currentTimeMillis();
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("AdvisoryCVE: ");
-        str.append("ctime=[").append(new Date(this.createdTime)).append("]");
         str.append(", Advisory=[").append(this.advisory).append("]");
         str.append(", BUGID=[").append(this.bugid).append("]");
         return str.toString();

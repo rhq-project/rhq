@@ -1,33 +1,40 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import org.rhq.core.domain.content.Advisory;
-
 public class AdvisoryBugDetails {
-    private Advisory advisory;
-    private String bugs;
+    private String bugInfo;
 
-    public AdvisoryBugDetails(Advisory advisoryIn, String bugIn) {
-        advisory = advisoryIn;
-        bugs = bugIn;
+    public AdvisoryBugDetails(String bugIn) {
+        bugInfo = bugIn;
     }
 
-    public Advisory getAdvisory() {
-        return advisory;
-    }
-
-    public void setAdvisory(Advisory advisory) {
-        this.advisory = advisory;
-    }
-
-    public String getBugs() {
-        return bugs;
+    public String getBugInfo() {
+        return bugInfo;
     }
 
     public void setPkg(String bugsIn) {
-        this.bugs = bugsIn;
+        this.bugInfo = bugsIn;
     }
 
     public String toString() {
-        return "Advisory = " + advisory + ",bugs =" + getBugs();
+        return "BugInfo =" + getBugInfo();
     }
 }

@@ -31,7 +31,7 @@ import org.rhq.core.domain.content.AdvisoryBuglist;
 import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.CVE;
-import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -86,7 +86,7 @@ public interface AdvisoryManagerRemote {
      */
     AdvisoryPackage createAdvisoryPackage(@WebParam(name = "subject") Subject user, //
         @WebParam(name = "advisory") Advisory advisory, //
-        @WebParam(name = "pkg") Package pkg) throws AdvisoryException;
+        @WebParam(name = "pkg") PackageVersion pkg) throws AdvisoryException;
 
     /**
      * deletes specified cve object
@@ -130,6 +130,16 @@ public interface AdvisoryManagerRemote {
     @WebMethod
     List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject, //
         @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc);
+
+    /**
+     * find packages associated for a given package
+     * @param subject
+     * @param pkgId
+     * @param pc
+     * @return a list of packageversion objects
+     */
+    PackageVersion findPackageVersionByPkgId(@WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "rpmName") String rpmName, @WebParam(name = "pc") PageControl pc);
 
     /**
      * find CVEs associated to a given advisory

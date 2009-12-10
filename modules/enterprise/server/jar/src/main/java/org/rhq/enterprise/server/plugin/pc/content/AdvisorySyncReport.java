@@ -53,11 +53,11 @@ public class AdvisorySyncReport {
         return advs;
     }
 
-    public void addDistro(AdvisoryDetails advIn) {
+    public void addAdvisory(AdvisoryDetails advIn) {
         advs.add(advIn);
     }
 
-    public void addAdvisory(Collection<AdvisoryDetails> advsIn) {
+    public void addAdvisorys(Collection<AdvisoryDetails> advsIn) {
         advs.addAll(advsIn);
     }
 
@@ -69,7 +69,7 @@ public class AdvisorySyncReport {
         deletedadvs.add(advsIn);
     }
 
-    public void addDeletedAdvisory(Collection<AdvisoryDetails> advsIn) {
+    public void addDeletedAdvisorys(Collection<AdvisoryDetails> advsIn) {
         deletedadvs.addAll(advsIn);
     }
 }

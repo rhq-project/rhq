@@ -29,7 +29,7 @@ import org.rhq.core.domain.content.AdvisoryBuglist;
 import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.CVE;
-import org.rhq.core.domain.content.Package;
+import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -77,7 +77,7 @@ public interface AdvisoryManagerLocal {
      * @return AdvisoryPackage object
      * @throws AdvisoryException
      */
-    AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, Package pkg) throws AdvisoryException;
+    AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, PackageVersion pkg) throws AdvisoryException;
 
     /**
      * deletes specified cve object
@@ -115,6 +115,15 @@ public interface AdvisoryManagerLocal {
      * @return a list of package objects
      */
     PageList<AdvisoryPackage> findPackageByAdvisory(Subject subject, int advId, PageControl pc);
+
+    /**
+     * find packages associated for a given package
+     * @param subject
+     * @param pkgId
+     * @param pc
+     * @return a list of packageversion objects
+     */
+    PackageVersion findPackageVersionByPkgId(Subject subject, String rpmName, PageControl pc);
 
     /**
      * find CVEs associated to a given advisory

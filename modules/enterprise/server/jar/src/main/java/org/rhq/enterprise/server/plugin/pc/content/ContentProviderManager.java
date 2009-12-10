@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
+import org.rhq.enterprise.server.plugin.pc.content.sync.AdvisorySourceSynchronizer;
 import org.rhq.enterprise.server.plugin.pc.content.sync.DistributionSourceSynchronizer;
 import org.rhq.enterprise.server.plugin.pc.content.sync.PackageSourceSynchronizer;
 import org.rhq.enterprise.server.plugin.pc.content.sync.RepoSourceSynchronizer;
@@ -287,6 +288,11 @@ public class ContentProviderManager {
                 log.debug("synchronizeRepo :: synchronizeDistributionBits");
                 results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROBITS);
                 distributionSourceSynchronizer.synchronizeDistributionBits();
+
+                log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
+                results = updateSyncResults(results.getId(), ContentSyncStatus.ADVISORYMETADATA);
+                AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source, provider);
+                advisorySourcesync.synchronizeAdvisoryMetadata();
 
                 // Update status to finished.
                 progress = new StringBuilder();
@@ -579,6 +585,9 @@ public class ContentProviderManager {
         }
         if (adapter instanceof DistributionSource) {
             ifacesList.add(DistributionSource.class);
+        }
+        if (adapter instanceof AdvisorySource) {
+            ifacesList.add(AdvisorySource.class);
         }
 
         Class<?>[] ifaces = ifacesList.toArray(new Class<?>[ifacesList.size()]);

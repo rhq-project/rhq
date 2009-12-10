@@ -18,39 +18,26 @@
  */
 package org.rhq.enterprise.server.plugin.pc.content;
 
-import org.rhq.core.domain.content.Advisory;
-import org.rhq.core.domain.content.CVE;
-
 /**
  * @author Pradeep Kilambi
  */
 public class AdvisoryCVEDetails {
 
-    private Advisory advisory;
-    private CVE cve;
+    private String name;
 
-    public AdvisoryCVEDetails(Advisory advisoryIn, CVE cveIn) {
-        advisory = advisoryIn;
-        cve = cveIn;
+    public AdvisoryCVEDetails(String cveIn) {
+        name = cveIn;
     }
 
-    public Advisory getAdvisory() {
-        return advisory;
+    public String getName() {
+        return name;
     }
 
-    public void setAdvisory(Advisory advisory) {
-        this.advisory = advisory;
-    }
-
-    public CVE getCVE() {
-        return cve;
-    }
-
-    public void setCVE(CVE cveIn) {
-        this.cve = cveIn;
+    public void setName(String cveIn) {
+        this.name = cveIn;
     }
 
     public String toString() {
-        return "Advisory = " + advisory + ", cve =" + getCVE();
+        return "CVE =" + getName();
     }
 }

@@ -32,12 +32,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xmlrpc.XmlRpcException;
 
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryBugDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryCVEDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumBugType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
@@ -106,6 +112,71 @@ public class RHNHelper {
             }
         }
         return distros;
+    }
+
+    public List<AdvisoryDetails> getAdvisoryMetadata(List<String> advisoryList, String repoName)
+        throws XmlRpcException, IOException {
+        List<AdvisoryDetails> erratadetails = new ArrayList<AdvisoryDetails>();
+        List<RhnErratumType> errata = rhndata.getErrataMetadata(this.systemid, advisoryList);
+        for (RhnErratumType erratum : errata) {
+            log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
+            AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum.getRhnErratumAdvisoryType(),
+                erratum.getRhnErratumSynopsis());
+
+            String cvestr = erratum.getCveNames();
+            String[] cves = cvestr.split(" ");
+            log.debug("list of cves " + cvestr + cves.toString());
+
+            for (String cve : cves) {
+                if (log.isDebugEnabled()) {
+                    log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> CVEs<" + cve
+                        + ">");
+                }
+                AdvisoryCVEDetails acve = new AdvisoryCVEDetails(cve);
+                details.addCVE(acve);
+            }
+
+            List<RhnErratumBugType> ebugs = erratum.getRhnErratumBugs().getRhnErratumBug();
+
+            if (ebugs != null) {
+                for (RhnErratumBugType ebug : ebugs) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Bugs<" + ebug
+                            + ">");
+                    }
+                    AdvisoryBugDetails dbug = new AdvisoryBugDetails(ebug.getRhnErratumBugId());
+                    details.addBug(dbug);
+                }
+            }
+
+            String pkgs = erratum.getPackages();
+            String[] pkgIds = pkgs.split(" ");
+
+            try {
+                List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
+                List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
+                for (RhnPackageType pkgd : pkgdetails) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<"
+                            + pkgd + ">");
+                    }
+                    String name = pkgd.getName();
+                    String version = pkgd.getVersion();
+                    String arch = pkgd.getPackageArch();
+                    String release = pkgd.getRelease();
+                    String rpmname = constructRpmName(name, version, release, pkgd.getEpoch(), arch);
+                    AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
+                    apkgdetails.add(apkgd);
+                }
+                details.addPkgs(apkgdetails);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            erratadetails.add(details);
+        }
+        return erratadetails;
     }
 
     /**
@@ -208,6 +279,29 @@ public class RHNHelper {
         }
 
         return allPackages;
+    }
+
+    /**
+     * Get List of errataIds for Given Channels
+     * @param channelName channel name
+     * @return List of all errata ids associated to the channel
+     * @throws IOException  on io errors on systemid reads
+     * @throws XmlRpcException on xmlrpc faults
+     */
+    public List<String> getChannelAdvisory(String channelName) throws IOException, XmlRpcException {
+        log.debug("getChannelAdvisory(" + channelName + ")");
+        ArrayList<String> allAdvisory = new ArrayList();
+        List<RhnChannelType> channels = rhndata.getChannels(this.systemid, Arrays.asList(channelName));
+
+        for (RhnChannelType channel : channels) {
+            String errata = channel.getChannelErrata();
+            String[] errataIds = errata.split(" ");
+            if (errataIds.length > 1) {
+                allAdvisory.addAll(Arrays.asList(errataIds));
+            }
+        }
+
+        return allAdvisory;
     }
 
     /**

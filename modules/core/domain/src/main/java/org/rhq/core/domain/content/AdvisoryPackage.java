@@ -23,7 +23,6 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -72,11 +71,8 @@ public class AdvisoryPackage implements Serializable {
     private Advisory advisory;
 
     @ManyToOne
-    @JoinColumn(name = "PACKAGE_ID", referencedColumnName = "ID", nullable = false)
-    private Package pkg;
-
-    @Column(name = "CTIME", nullable = false)
-    private long createdTime;
+    @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
+    private PackageVersion pkg;
 
     @Column(name = "LAST_MODIFIED", nullable = true)
     private long lastModifiedDate;
@@ -84,13 +80,9 @@ public class AdvisoryPackage implements Serializable {
     protected AdvisoryPackage() {
     }
 
-    public AdvisoryPackage(Advisory adv, Package pkg) {
+    public AdvisoryPackage(Advisory adv, PackageVersion pkg) {
         this.advisory = adv;
         this.pkg = pkg;
-    }
-
-    public long getCreatedTime() {
-        return createdTime;
     }
 
     public Advisory getAdvisory() {
@@ -101,11 +93,11 @@ public class AdvisoryPackage implements Serializable {
         this.advisory = advisory;
     }
 
-    public Package getPkg() {
+    public PackageVersion getPkg() {
         return pkg;
     }
 
-    public void setPkg(Package pkg) {
+    public void setPkg(PackageVersion pkg) {
         this.pkg = pkg;
     }
 
@@ -119,13 +111,12 @@ public class AdvisoryPackage implements Serializable {
 
     @PrePersist
     void onPersist() {
-        this.createdTime = System.currentTimeMillis();
+        this.lastModifiedDate = System.currentTimeMillis();
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("AdvisoryPackage: ");
-        str.append("ctime=[").append(new Date(this.createdTime)).append("]");
         str.append(", Advisory=[").append(this.advisory).append("]");
         str.append(", Package=[").append(this.pkg).append("]");
         return str.toString();

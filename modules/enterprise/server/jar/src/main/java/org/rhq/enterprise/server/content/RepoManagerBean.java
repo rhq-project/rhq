@@ -33,6 +33,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
 
@@ -950,13 +951,15 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         int syncCount = 0;
 
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
-        ContentProviderManager providerManager = pc.getAdapterManager();
 
         for (Integer id : repoIds) {
-            boolean syncExecuted = providerManager.synchronizeRepo(id);
-
-            if (syncExecuted) {
+            try {
+                Repo repo = getRepo(subject, id);
+                pc.syncRepoNow(repo);
                 syncCount++;
+            }
+            catch (SchedulerException e) {
+                log.error("Error synchronizing repo with id [" + id + "]", e);
             }
         }
 

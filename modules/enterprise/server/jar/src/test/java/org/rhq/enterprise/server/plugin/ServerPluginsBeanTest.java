@@ -126,8 +126,14 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         List<ServerPlugin> plugins = this.serverPluginsBean.getServerPlugins();
         assert plugins.contains(p1) : plugins;
         assert plugins.contains(p2) : plugins;
-        assetLazyInitializationException(plugins.get(0));
-        assetLazyInitializationException(plugins.get(1));
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p1)));
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p2)));
+
+        plugins = this.serverPluginsBean.getAllServerPlugins();
+        assert plugins.contains(p1) : plugins;
+        assert plugins.contains(p2) : plugins;
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p1)));
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p2)));
 
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
@@ -136,8 +142,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert plugins.size() == 2 : plugins;
         assert plugins.contains(p1) : plugins;
         assert plugins.contains(p2) : plugins;
-        assetLazyInitializationException(plugins.get(0));
-        assetLazyInitializationException(plugins.get(1));
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p1)));
+        assetLazyInitializationException(plugins.get(plugins.indexOf(p2)));
     }
 
     public void testUpdatePlugins() throws Exception {
@@ -205,6 +211,8 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
 
     public void testUndeployPlugins() throws Exception {
 
+        int originalSize = this.serverPluginsBean.getAllServerPlugins().size();
+
         PluginStatusType status;
 
         PluginKey missingKey;
@@ -227,6 +235,9 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         status = this.serverPluginsBean.getServerPluginStatus(p2key);
         assert status == PluginStatusType.INSTALLED;
 
+        assert this.serverPluginsBean.getServerPlugins().size() == originalSize + 2;
+        assert this.serverPluginsBean.getAllServerPlugins().size() == originalSize + 2;
+
         List<Integer> ids = new ArrayList<Integer>(2);
         ids.add(p1.getId());
         ids.add(p2.getId());
@@ -245,6 +256,9 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         pluginKeys = this.serverPluginsBean.getServerPluginKeysByEnabled(true);
         assert !pluginKeys.contains(p1.getName()) : pluginKeys;
         assert !pluginKeys.contains(p2.getName()) : pluginKeys;
+
+        assert this.serverPluginsBean.getServerPlugins().size() == originalSize;
+        assert this.serverPluginsBean.getAllServerPlugins().size() == originalSize + 2;
     }
 
     public void testReRegisterPlugins() throws Exception {

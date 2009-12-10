@@ -83,9 +83,7 @@ public class ClassLoaderManager {
 
         this.pluginKeysUrls = new HashMap<PluginKey, URL>(plugins.size());
         for (Map.Entry<URL, ? extends ServerPluginDescriptorType> entry : plugins.entrySet()) {
-            ServerPluginType pluginType = new ServerPluginType(entry.getValue());
-            PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), entry.getValue().getName());
-            this.pluginKeysUrls.put(pluginKey, entry.getKey());
+            loadPlugin(entry.getKey(), entry.getValue());
         }
 
         return;
@@ -105,6 +103,37 @@ public class ClassLoaderManager {
             }
         }
         this.serverPluginClassLoaders.clear();
+        return;
+    }
+
+    /**
+     * Hot-deploys a plugin into this classloader manager.
+     * 
+     * @param pluginUrl location of the plugin jar file
+     * @param descriptor the plugin descriptor
+     */
+    public synchronized void loadPlugin(URL pluginUrl, ServerPluginDescriptorType descriptor) {
+        ServerPluginType pluginType = new ServerPluginType(descriptor);
+        PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), descriptor.getName());
+        this.pluginKeysUrls.put(pluginKey, pluginUrl);
+    }
+
+    /**
+     * Unloads the plugin identified with the current key from this classloader manager and destroys
+     * that plugin's classloader, if one existed.
+     * 
+     * @param pluginKey identifies the plugin to be unloaded
+     */
+    public synchronized void unloadPlugin(PluginKey pluginKey) {
+        this.pluginKeysUrls.remove(pluginKey);
+        ClassLoader unloadedCL = this.serverPluginClassLoaders.remove(pluginKey);
+        if (unloadedCL instanceof ServerPluginClassLoader) {
+            try {
+                ((ServerPluginClassLoader) unloadedCL).destroy();
+            } catch (Exception e) {
+                log.warn("Failed to destroy classloader [" + unloadedCL + "] for plugin [" + pluginKey + "]", e);
+            }
+        }
         return;
     }
 
@@ -216,6 +245,7 @@ public class ClassLoaderManager {
             }
         } else {
             // this is mainly to support tests
+            log.info("No jar URL, this should only happen in tests! If this is not a test, this is probably a bug");
             classLoader = parentClassLoader;
         }
 

@@ -29,6 +29,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
@@ -47,6 +48,25 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface ResourceManagerRemote {
+
+    /**
+     * Returns the availability of the resource with the specified id.
+     * This performs a live check - a resource will be considered UNKNOWN if the agent
+     * cannot be contacted for any reason.
+     *
+     * @param  subject The logged in user's subject.
+     * @param  resourceId the id of a {@link Resource} in inventory.
+     *
+     * @return the resource availability - note that if the encapsulated availability type is <code>null</code>,
+     *         the resource availability is UNKNOWN.
+     *
+     * @throws FetchException if the resource represented by the resourceId parameter does not exist, or if the
+     *                        passed subject does not have permission to view this resource.
+     */
+    @WebMethod
+    ResourceAvailability getLiveResourceAvailability( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 
     /**
      * Returns the Resource with the specified id.

@@ -29,7 +29,7 @@ import javax.persistence.NamedQuery;
 
 /**
  * An agent plugin.
- * 
+ *
  * This object contains information about the plugin jar itself (e.g. its name and MD5).
  * It may also contain the jar contents ({@link #getContent()}).
  */
@@ -46,7 +46,7 @@ import javax.persistence.NamedQuery;
     @NamedQuery(name = Plugin.QUERY_GET_NAMES_BY_ENABLED, query = "" //
         + " SELECT p.name " //
         + "   FROM Plugin AS p " //
-        + "  WHERE p.enabled = :enabled " // 
+        + "  WHERE p.enabled = :enabled " //
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
@@ -65,7 +65,7 @@ import javax.persistence.NamedQuery;
         + "        p.ampsVersion, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM Plugin AS p " //
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -85,7 +85,7 @@ import javax.persistence.NamedQuery;
         + "        p.ampsVersion, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM Plugin AS p " //
         + "  WHERE p.name=:name " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -106,7 +106,7 @@ import javax.persistence.NamedQuery;
         + "        p.ampsVersion, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM Plugin AS p " // 
+        + "   FROM Plugin AS p " //
         + "  WHERE p.name=:name "), //
 
     // finds all installed - ignores those plugins marked as deleted

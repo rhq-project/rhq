@@ -101,13 +101,12 @@
 
       <!--  other, possibly experimental plugins -->
       <module>augeas</module>
-      <module>apt</module>
       <module>cron</module>
       <module>script</module>
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
       <module>hosts</module>
-      <module>sudoers</module>      
+      <module>sudoers</module>
       <module>hudson</module>
       <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
       <module>mysql</module>

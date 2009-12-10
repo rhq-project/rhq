@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-irc"
+        displayName="Alert:IRC"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertIrc"
+        description="Alert sender plugin that sends alert notifications via IRC"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via Internet Relay Chat
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs -->
+    <serverplugin:plugin-component class="IrcAlertComponent" />
+
+    <!-- Global preferences -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="nick" type="string" default="rhq_alerts" />
+        <c:simple-property name="server" type="string" default="irc.freenode.net" />
+        <c:simple-property name="port" type="integer" default="6667" required="false" />
+        <c:simple-property name="initialChannels"
+                           type="string"
+                           description="A comma-delimited list of channels that the irc bot will initially join (even if no alerts have fired)."
+                           required="false" />
+        <c:simple-property name="cannedResponse"
+                           default="I am only here to notify you of RHQ alerts.  I cannot understand you."
+                           required="false"
+                           description="A predefined response to send to users who try to engage in conversation with the IRC bot." />
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>IRC</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>IrcSender</plugin-class>
+
+    <!-- User configuration per alert -->
+    <alert-configuration>
+        <c:simple-property name="channel"
+                           type="string"
+                           description="The IRC channel used for notifications (if left blank, the alert will be sent to all joined channels)."
+                           required="false" />
+    </alert-configuration>
+</alert-plugin>

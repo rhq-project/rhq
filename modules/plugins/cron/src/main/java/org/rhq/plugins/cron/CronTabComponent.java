@@ -59,8 +59,10 @@ public class CronTabComponent extends AugeasConfigurationComponent<CronComponent
     private String rootPath;
     
     public void start(ResourceContext<CronComponent> context) throws InvalidPluginConfigurationException, Exception {
-        crontabFile = new File(context.getResourceKey());
-        rootPath = AugeasNode.SEPARATOR + "files" + crontabFile.getAbsolutePath();
+        String augeasRootPath = context.getPluginConfiguration().getSimpleValue(AugeasConfigurationComponent.AUGEAS_ROOT_PATH_PROP, AugeasConfigurationComponent.DEFAULT_AUGEAS_ROOT_PATH);
+        
+        crontabFile = new File(augeasRootPath, context.getResourceKey());
+        rootPath = AugeasNode.SEPARATOR + "files" + context.getResourceKey();
         super.start(context);
     }
     

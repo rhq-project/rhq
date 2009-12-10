@@ -21,12 +21,13 @@ package org.rhq.enterprise.server.plugin.pc.alert;
 
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
  * Manages alert plugins.
- * 
+ *
  * @author John Mazzitelli
  */
 public class AlertServerPluginContainer extends AbstractTypeServerPluginContainer {
@@ -38,5 +39,31 @@ public class AlertServerPluginContainer extends AbstractTypeServerPluginContaine
     @Override
     public ServerPluginType getSupportedServerPluginType() {
         return new ServerPluginType(AlertPluginDescriptorType.class);
+    }
+
+    @Override
+    public ServerPluginManager getPluginManager() {
+        return super.getPluginManager();    // TODO: Customise this generated block
+    }
+
+    @Override
+    public void initialize() throws Exception {
+        super.initialize();    // TODO: Customise this generated block
+    }
+
+    @Override
+    public void start() {
+        super.start();    // TODO: Customise this generated block
+    }
+
+    @Override
+    public void shutdown() {
+        //getPluginManager().un
+        super.shutdown();    // TODO: Customise this generated block
+    }
+
+    @Override
+    protected ServerPluginManager createPluginManager() {
+        return new AlertSenderPluginManager(this);
     }
 }

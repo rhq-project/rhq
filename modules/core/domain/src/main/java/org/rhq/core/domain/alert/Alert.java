@@ -43,6 +43,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import org.rhq.core.domain.auth.Subject;
 
 /**
  * @author Joseph Marques
@@ -66,7 +67,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "   AND ( :priority = a.alertDefinition.priority OR :priority IS NULL ) "
         + "   AND res.id IN ( :resourceIds )"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE, //
-    query = "SELECT a " // 
+    query = "SELECT a " //
         + "    FROM Alert AS a "
         + "   WHERE a.alertDefinition.resource.id = :id "
         + "     AND (a.alertDefinition.id = :alertDefinitionId OR :alertDefinitionId IS NULL) "
@@ -138,16 +139,16 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "                                FROM AlertDefinition ad " //
         + "                               WHERE ad.resource.id IN ( :resourceIds ) )"),
     @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES_ADMIN, query = "" //
-        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" //
         + "        ( a, parent.id, parent.name ) " //
         + "     FROM Alert a " //
         + "     JOIN a.alertDefinition ad " //
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        /* 
+        /*
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
-         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
-         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the
+         * fetched association was not present in the select list"...even though it clearly is  ;/
          */
         //+ "     JOIN FETCH a.conditionLogs acl " //
         + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
@@ -155,21 +156,21 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //
-        + "                       JOIN aa.conditionLogs aacl " // 
+        + "                       JOIN aa.conditionLogs aacl " //
         + "                       JOIN aacl.condition ac " //
         + "                      WHERE ac.category = :category ) " //
         + "           OR :category IS NULL) "), //
     @NamedQuery(name = Alert.QUERY_FIND_ALL_COMPOSITES, query = "" //
-        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" // 
+        + "   SELECT new org.rhq.core.domain.alert.composite.AlertHistoryComposite" //
         + "        ( a, parent.id, parent.name ) " //
         + "     FROM Alert a " //
         + "     JOIN a.alertDefinition ad " //
         + "     JOIN ad.resource res " //
         + "LEFT JOIN res.parentResource parent " //
-        /* 
+        /*
          * as much as i want to (for efficiency of the query [namely roundtrips to the db]) i can't use fetching here
-         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the 
-         * fetched association was not present in the select list"...even though it clearly is  ;/ 
+         * because, when added, the query parser chokes with "query specified join fetching, but the owner of the
+         * fetched association was not present in the select list"...even though it clearly is  ;/
          */
         //+ "     JOIN FETCH a.conditionLogs acl " //
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
@@ -180,7 +181,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
         + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //
-        + "                       JOIN aa.conditionLogs aacl " // 
+        + "                       JOIN aa.conditionLogs aacl " //
         + "                       JOIN aacl.condition ac " //
         + "                      WHERE ac.category = :category ) " //
         + "           OR :category IS NULL) ") })
@@ -233,6 +234,7 @@ public class Alert implements Serializable {
     @OneToOne(mappedBy = "alert")
     private AlertNotificationLog alertNotificationLog;
 
+    @Deprecated
     @Column(name = "TRIGGERED_OPERATION", nullable = true)
     private String triggeredOperation;
 
@@ -246,6 +248,18 @@ public class Alert implements Serializable {
 
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
+
+
+
+
+    @Column(name ="ACK_TIME")
+    private long ackTime;
+
+    @JoinColumn(name = "ACK_BY_ID", referencedColumnName = "ID")
+    @ManyToOne
+    private Subject ackBy;
+
+
 
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
@@ -265,7 +279,7 @@ public class Alert implements Serializable {
         this.willRecover = alertDefinition.getWillRecover();
         // Do not load the collection side from a one-to-many, This is very slow to load all existing alerts
         // and unnecessary for creating the link
-        // alertDefinition.addAlert(this);        
+        // alertDefinition.addAlert(this);
         this.ctime = ctime;
         if (alertDefinition.getOperationDefinition() != null) {
             setTriggeredOperation(alertDefinition.getOperationDefinition().getDisplayName());
@@ -312,6 +326,22 @@ public class Alert implements Serializable {
 
     public void setTriggeredOperation(String triggeredOperation) {
         this.triggeredOperation = triggeredOperation;
+    }
+
+    public long getAckTime() {
+        return ackTime;
+    }
+
+    public void setAckTime(long ackTime) {
+        this.ackTime = ackTime;
+    }
+
+    public Subject getAckBy() {
+        return ackBy;
+    }
+
+    public void setAckBy(Subject ackBy) {
+        this.ackBy = ackBy;
     }
 
     public boolean getWillRecover() {

@@ -216,6 +216,9 @@ public class NativeSystemInfo implements SystemInfo {
 
         if (pids != null) {
             for (long pid : pids) {
+                if (log.isTraceEnabled()) {
+                    log.trace("Loading process info for pid " + pid + "...");
+                }
                 ProcessInfo info = new ProcessInfo(pid, sigar);
                 processes.add(info);
             }

@@ -16,17 +16,38 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * Interface to the methods that interact with the serve-side plugin infrastructure.
- * 
+ * Most of these methods will only return information on {@link PluginStatusType#INSTALLED}
+ * plugins; only when explicitly stated will a method return data on
+ * {@link PluginStatusType#DELETED} plugins, too.
+ *
  * @author John Mazzitelli
  */
 @Local
 public interface ServerPluginsLocal {
     /**
-     * Returns a list of all the server plugins in the database.
-     * 
-     * @return all plugins found in the DB
+     * Recycles the master plugin container, essentially shutting down all server plugins
+     * and then restarting them.
+     *
+     * @param subject the user asking to restart the master plugin container
+     */
+    void restartMasterPluginContainer(Subject subject);
+
+    /**
+     * Returns a list of all the installed server plugins in the database
+     *
+     * @return all installed server plugins found in the DB
      */
     List<ServerPlugin> getServerPlugins();
+
+    /**
+     * Returns a list of all the installed and deleted server plugins in the database.
+     * When a plugin is "undeployed", it still exists in the database, but is flagged
+     * as "deleted". This method returns those deleted plugins in addition to those plugins
+     * that are still installed.
+     *
+     * @return all installed and deleted server plugins found in the DB
+     */
+    List<ServerPlugin> getAllServerPlugins();
 
     /**
      * Returns a plugin with the given key.
@@ -40,9 +61,9 @@ public interface ServerPluginsLocal {
      * Methods in this object that return plugins normally do not include
      * the data from relationships with the plugin (for example, the
      * plugin configuration and scheduled jobs related to the plugin).
-     * 
+     *
      * Call this method to fill in that data that wasn't originally loaded.
-     * 
+     *
      * @param plugin
      * @return the same plugin, with the relationship data loaded
      * @throws NoResultException when no plugin with that name exists
@@ -51,15 +72,23 @@ public interface ServerPluginsLocal {
 
     /**
      * Get a list of plugins from their IDs.
-     * 
+     *
      * @param pluginIds the IDs of the plugins to load.
      * @return plugins matching the given IDs
      */
     List<ServerPlugin> getServerPluginsById(List<Integer> pluginIds);
 
     /**
+     * Get a list of both installed and deleted plugins from their IDs.
+     *
+     * @param pluginIds the IDs of the plugins to load.
+     * @return plugins matching the given IDs
+     */
+    List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds);
+
+    /**
      * Given a plugin key, returns the descriptor for that plugin.
-     * 
+     *
      * @param pluginKey
      * @return descriptor parsed from the file in the plugin jar
      * @throws Exception if the descriptor could not be retrieved or parsed for the given plugin
@@ -69,7 +98,7 @@ public interface ServerPluginsLocal {
     /**
      * Returns a list of plugin keys for only those server plugins whose
      * enabled flag is equal to the given parameter.
-     * 
+     *
      * @param enabled if <code>true</code>, return only the keys of plugins that are enabled;
      *                if <code>false</code>, return only the keys of plugins that are disabled.
      * @return list of plugin keys that match the enabled criteria
@@ -107,22 +136,33 @@ public interface ServerPluginsLocal {
     List<PluginKey> undeployServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
 
     /**
-     * Turns on or off the enabled flag in the database but does NOT restart the server plugin container.
-     * This has "requires new" semantics, so the results are committed immediately upon return.
-     * 
+     * Purges the undeployed plugins from the system so there is no record of them to have
+     * ever existed. This deletes all remnants of the plugin from the database.
+     *
      * @param subject user making the request
-     * @param pluginIds the plugins to be enabled
-     * @param enabled the value of the enabled flag for the plugins
-     * @throws if failed to update a plugin
+     * @param pluginIds the plugins to be purged
+     * @return the list of keys of plugins that were purged
+     * @throws Exception if failed to purge a plugin
      */
-    void setServerPluginEnabledFlag(Subject subject, List<Integer> pluginIds, boolean enabled) throws Exception;
+    List<PluginKey> purgeServerPlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    /**
+     * Turns on or off the enabled flag in the database but does NOT restart the server plugin.
+     * This has "requires new" semantics, so the results are committed immediately upon return.
+     *
+     * @param subject user making the request
+     * @param pluginId the plugin to be enabled
+     * @param enabled the value of the enabled flag for the plugin
+     * @throws if failed to update the plugin
+     */
+    void setServerPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
 
     /**
      * Sets the status flag in the database but does NOT restart the server plugin container.
      * If the status is {@link PluginStatusType#DELETED}, the enabled flag is also flipped to <code>false</code>.
      *
      * This has "requires new" semantics, so the results are committed immediately upon return.
-     * 
+     *
      * @param subject user making the request
      * @param pluginIds the plugins to be enabled
      * @param enabled the value of the enabled flag for the plugins
@@ -131,14 +171,17 @@ public interface ServerPluginsLocal {
     void setServerPluginStatus(Subject subject, List<Integer> pluginIds, PluginStatusType status) throws Exception;
 
     /**
-     * Registers the given plugin to the database. This does nothing with the master plugin container,
-     * all it does is ensure the database is up-to-date with this new plugin.
+     * Registers the given plugin to the database. This ensures the database is up-to-date with the
+     * new plugin details.
+     * 
+     * If the master plugin container is up, it will attempt to restart the plugin so the new
+     * changes are picked up.
      * 
      * @param subject the user that needs to have permissions to add a plugin to the system
      * @param plugin the plugin definition
      * @param pluginFile the actual plugin file itself
      * @return the plugin after being persisted
-     * @throws Exception if failed to fully register the plugin 
+     * @throws Exception if failed to fully register the plugin
      */
     ServerPlugin registerServerPlugin(Subject subject, ServerPlugin plugin, File pluginFile) throws Exception;
 
@@ -157,12 +200,12 @@ public interface ServerPluginsLocal {
     /**
      * Purges the server plugin from the database. This ensures that, after this method returns,
      * the given plugin will be unknown. The plugin can be installed again later.
-     * 
+     *
      * This has "requires new" semantics, so the results are committed immediately upon return.
      * This is really a supporting method for {@link #reRegisterServerPlugin(Subject, ServerPlugin, File)} - you'll
      * probably want to use that instead. Do not blindly purge server plugins using this method unless you
      * know what you are doing.
-     * 
+     *
      * @param subject user making the request
      * @param pluginKey the key of the server plugin to delete
      */
@@ -171,7 +214,7 @@ public interface ServerPluginsLocal {
     /**
      * Given the key of a server plugin, this will return the status of that plugin.
      * Use this to determine if a plugin has been deleted or not.
-     * 
+     *
      * @param pluginKey the key of the plugin whose status is to be returned.
      * @return the status of the plugin, to indicate if the plugin has been deleted or is installed.
      *         <code>null</code> indicates an unknown plugin.
@@ -180,8 +223,8 @@ public interface ServerPluginsLocal {
 
     /**
      * This will return a map containing all installed plugins that are both enabled and disabled.
-     * 
-     * @return keys of all enabled and disabled plugins, keyed on their types 
+     *
+     * @return keys of all enabled and disabled plugins, keyed on their types
      */
     Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType();
 }

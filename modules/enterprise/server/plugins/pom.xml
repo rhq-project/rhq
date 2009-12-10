@@ -1,44 +1,54 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.rhq</groupId>
-    <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
-  </parent>
-
-  <groupId>org.rhq</groupId>
-  <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-  <packaging>pom</packaging>
-
-  <name>RHQ Enterprise Server Plugins</name>
-  <description>RHQ enterprise server plugins parent POM</description>
-
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/</developerConnection>
-  </scm>
-
-  <properties>
-    <scm.module.path>modules/enterprise/server/plugins/</scm.module.path>
-  </properties>
-
-  <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
-  <dependencies>
-    <dependency>
+   <parent>
       <groupId>org.rhq</groupId>
-      <artifactId>rhq-enterprise-server</artifactId>
-      <version>${project.version}</version>
-      <type>ejb</type>
-    </dependency>
-  </dependencies>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
 
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
+   <packaging>pom</packaging>
+
+   <name>RHQ Enterprise Server Plugins</name>
+   <description>RHQ enterprise server plugins parent POM</description>
+
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/server/plugins/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/server/plugins/</scm.module.path>
+   </properties>
+
+   <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
+   <dependencies>
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+      </dependency>
+   </dependencies>
   <modules>
     <module>disk</module>
     <module>yum</module>
     <module>url</module>
     <module>rhnhosted</module>
+    <module>perspectives/core</module>    
+    <module>alert-email</module>
+    <module>alert-irc</module>
+    <module>alert-mobicents</module>
+    <module>alert-microblog</module>
+    <module>alert-roles</module>
+    <module>alert-snmp</module>
+    <module>validate-all-serverplugins</module>
   </modules>
 
 </project>

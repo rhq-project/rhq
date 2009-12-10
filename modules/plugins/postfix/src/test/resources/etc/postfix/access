@@ -1,0 +1,5 @@
+# SEE ALSO
+#        postmap(1), Postfix lookup table manager
+#        smtpd(8), SMTP server
+1.2.3	REJECT
+1.2.3.4	DISCARD Sorry Not allowed

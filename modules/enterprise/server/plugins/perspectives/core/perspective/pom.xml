@@ -18,7 +18,7 @@
    <description>A Perspective defining Core UI Elements</description>
 
    <properties>
-      <rhq.version>1.4.0.B01</rhq.version>
+      <rhq.version>${project.version}</rhq.version>
    </properties>
 
    <dependencies>
@@ -55,9 +55,9 @@
       -->
 
    </dependencies>
-   
+
    <profiles>
-   
+
       <profile>
          <id>dev</id>
 
@@ -112,7 +112,7 @@
             </plugins>
          </build>
       </profile>
-   
+
    </profiles>
 
 </project>

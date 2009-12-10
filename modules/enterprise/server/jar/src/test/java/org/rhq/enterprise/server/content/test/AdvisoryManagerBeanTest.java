@@ -138,7 +138,7 @@ public class AdvisoryManagerBeanTest extends AbstractEJB3Test {
         //AdvisoryPackage ap = new AdvisoryPackage(advobject, package1);
         //em.persist(ap);
 
-        AdvisoryPackage ap = advManager.createAdvisoryPackage(overlord, advobject, package1);
+        AdvisoryPackage ap = advManager.createAdvisoryPackage(overlord, advobject, package1.getVersions().get(0));
 
         PageList<AdvisoryPackage> pkglist = advManager.findPackageByAdvisory(overlord, id1, PageControl
             .getUnlimitedInstance());

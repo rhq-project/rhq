@@ -218,11 +218,13 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-aliases-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -232,21 +234,17 @@
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
-                           <artifactId>rhq-apt-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
                            <artifactId>rhq-augeas-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-cron-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -254,6 +252,7 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-grub-plugin</artifactId>
@@ -265,6 +264,7 @@
                            <artifactId>rhq-hosts-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -319,11 +319,13 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-postfix-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -331,11 +333,13 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+<!--
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-samba-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+-->
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -351,6 +355,13 @@
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
+                           <artifactId>rhq-twitter-plugin</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+<!--
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
                            <artifactId>rhq-sshd-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
@@ -359,6 +370,48 @@
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-sudoers-plugin</artifactId>
                            <version>${project.version}</version>
+                        </artifactItem>
+-->
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-jboss-as-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-jboss-as5-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-jboss-cache-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-hibernate-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-tomcat-plugin</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.jboss.on</groupId>
+                            <artifactId>jopr-rhq-server-plugin</artifactId>
+                            <version>${project.version}</version>
                         </artifactItem>
 
                         <!--
@@ -402,6 +455,30 @@
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-core-perspective</artifactId>
                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.rhq</groupId>
+                            <artifactId>alert-irc</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.rhq</groupId>
+                            <artifactId>alert-microblog</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.rhq</groupId>
+                            <artifactId>alert-mobicents</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                            <groupId>org.rhq</groupId>
+                            <artifactId>alert-snmp</artifactId>
+                            <version>${project.version}</version>
                         </artifactItem>
 
                      </artifactItems>

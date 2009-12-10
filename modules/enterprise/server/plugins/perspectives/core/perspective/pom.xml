@@ -17,17 +17,17 @@
    <name>RHQ Core Perspective</name>
    <description>A Perspective defining Core UI Elements</description>
 
-   <properties>
-      <rhq.version>${project.version}</rhq.version>
+<!--   <properties>
+      <rhq.version>${rhq.version}</rhq.version>
    </properties>
-
+-->
    <dependencies>
 
       <!-- Below are the core modules that are required dependencies of all server plugins -->
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope> <!-- provided by the server/plugin-container -->
       </dependency>
 

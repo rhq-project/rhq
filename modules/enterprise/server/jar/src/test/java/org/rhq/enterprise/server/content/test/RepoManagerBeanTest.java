@@ -131,7 +131,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert syncCount == 1;
     }
 
-    @Test(enabled = ENABLED)
+    @Test(enabled = false)
     public void testSyncStatus() throws Exception {
         Repo repo = new Repo("testSyncStatus");
         repoManager.createRepo(overlord, repo).getId();

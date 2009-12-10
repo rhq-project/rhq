@@ -1,7 +1,4 @@
-<project
-   xmlns="http://maven.apache.org/POM/4.0.0"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
@@ -116,8 +113,7 @@
                   <phase>generate-sources</phase>
                   <configuration>
                      <tasks>
-                        <mkdir
-                           dir="${earDirectory}/license" />
+                        <mkdir dir="${earDirectory}/license" />
                      </tasks>
                   </configuration>
                   <goals>
@@ -516,30 +512,19 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <mkdir
-                                 dir="${earDirectory}/license" />
-                              <copy
-                                 todir="${earDirectory}/license"
-                                 file="${basedir}/src/main/license/license.xml" />
-                              <property
-                                 name="deployment.dir"
-                                 location="${rhq.deploymentDir}" />
+                              <mkdir dir="${earDirectory}/license" />
+                              <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from
                                  target${file.separator}${project.build.finalName}${file.separator} to
                                  ${deployment.dir}${file.separator}...</echo>
-                              <copy
-                                 todir="${deployment.dir}"
-                                 verbose="${rhq.verbose}">
-                                 <fileset
-                                    dir="${basedir}/target/${project.build.finalName}" />
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="${basedir}/target/${project.build.finalName}" />
                               </copy>
-                              <property
-                                 name="deployment.descriptor.file"
-                                 location="${deployment.dir}/META-INF/application.xml" />
+                              <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/application.xml" />
                               <echo>*** Touching ${deployment.descriptor.file} to force redeployment of
                                  ${rhq.deploymentName}...</echo>
-                              <touch
-                                 file="${deployment.descriptor.file}" />
+                              <touch file="${deployment.descriptor.file}" />
                            </tasks>
                         </configuration>
                         <goals>
@@ -552,12 +537,9 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <unjar
-                                 src="${project.build.directory}/${project.build.finalName}.ear"
-                                 dest="${rhq.deploymentDir}">
+                              <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
                                  <patternset>
-                                    <include
-                                       name="META-INF/**" />
+                                    <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
                            </tasks>
@@ -572,12 +554,9 @@
                         <phase>clean</phase>
                         <configuration>
                            <tasks>
-                              <property
-                                 name="deployment.dir"
-                                 location="${rhq.deploymentDir}" />
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                              <delete
-                                 dir="${deployment.dir}" />
+                              <delete dir="${deployment.dir}" />
                            </tasks>
                         </configuration>
                         <goals>

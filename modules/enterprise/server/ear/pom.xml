@@ -380,7 +380,7 @@
 
                         <artifactItem>
                             <groupId>org.jboss.on</groupId>
-                            <artifactId>jopr-jboss-as5-plugin</artifactId>
+                            <artifactId>jopr-jboss-as-5-plugin</artifactId>
                             <version>${project.version}</version>
                         </artifactItem>
 

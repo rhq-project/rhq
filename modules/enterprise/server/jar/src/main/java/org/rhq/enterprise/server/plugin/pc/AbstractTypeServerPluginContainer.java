@@ -173,7 +173,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.unloadPlugin(pluginKey.getPluginName());
+            this.pluginManager.unloadPlugin(pluginKey.getPluginName(), false);
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
         }

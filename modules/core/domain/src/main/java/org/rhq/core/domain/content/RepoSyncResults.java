@@ -186,5 +186,6 @@ public class RepoSyncResults implements Serializable, ContentSyncResults {
         StringBuffer existing = new StringBuffer(this.getResults());
         existing.append("\n");
         existing.append(msg);
+        this.setResults(existing.toString());
     }
 }

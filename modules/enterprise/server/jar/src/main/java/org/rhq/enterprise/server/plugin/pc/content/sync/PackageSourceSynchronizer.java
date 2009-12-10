@@ -121,7 +121,6 @@ public class PackageSourceSynchronizer {
         // Merge in the results of the synchronization
         // --------------------------------------------
         start = System.currentTimeMillis();
-        // RepoSyncResults syncResults = new RepoSyncResults(repo);
         syncResults = contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, syncResults);
 
         log.info("Synchronize Packages: [" + source.getName() + "]: merged sync report=("

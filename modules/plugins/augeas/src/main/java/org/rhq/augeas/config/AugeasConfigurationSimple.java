@@ -27,10 +27,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.augeas.Augeas;
+
 import org.rhq.augeas.util.Glob;
 
 /**
- * 
+ * Basic implementation of the {@link AugeasConfiguration}.
+ *  
  * @author Filip Drabek
  *
  */
@@ -41,18 +44,40 @@ public class AugeasConfigurationSimple implements AugeasConfiguration {
     private String rootPath;
     private List<AugeasModuleConfig> modules;
 
+    /**
+     * Sets the path to the Augeas lenses directory.
+     * 
+     * @param loadPath
+     */
     public void setLoadPath(String loadPath) {
         this.loadPath = loadPath;
     }
 
+    /**
+     * Sets the Augeas load mode.
+     * 
+     * @see {@link Augeas#Augeas(int)}
+     * 
+     * @param mode
+     */
     public void setMode(int mode) {
         this.mode = mode;
     }
 
+    /**
+     * Sets the path to the file system root used by Augeas.
+     * 
+     * @param rootPath
+     */
     public void setRootPath(String rootPath) {
         this.rootPath = rootPath;
     }
 
+    /**
+     * Sets the modules to use.
+     * 
+     * @param modules
+     */
     public void setModules(List<AugeasModuleConfig> modules) {
         this.modules = modules;
     }
@@ -91,36 +116,44 @@ public class AugeasConfigurationSimple implements AugeasConfiguration {
         return null;
     }
 
-	public void loadFiles() {
-		  File root = new File(getRootPath());
+    /**
+     * Checks that all the files to be loaded, specified by the modules,
+     * exist.
+     * 
+     * @see AugeasConfiguration#loadFiles()
+     */
+    public void loadFiles() {
+        File root = new File(getRootPath());
 
-		  for (AugeasModuleConfig module : modules){
-	        List<String> includeGlobs = module.getIncludedGlobs();
+        for (AugeasModuleConfig module : modules) {
+            List<String> includeGlobs = module.getIncludedGlobs();
 
-	        if (includeGlobs.size() <= 0) {
-	            throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
-	        }
+            if (includeGlobs.size() <= 0) {
+                throw new IllegalStateException("Expecting at least once inclusion pattern for configuration files.");
+            }
 
-	        List<File> files = Glob.matchAll(root, includeGlobs);
+            List<File> files = Glob.matchAll(root, includeGlobs);
 
-	        if (module.getExcludedGlobs() != null) {
-	            List<String> excludeGlobs = module.getExcludedGlobs();
-	            Glob.excludeAll(files, excludeGlobs);
-	        }
+            if (module.getExcludedGlobs() != null) {
+                List<String> excludeGlobs = module.getExcludedGlobs();
+                Glob.excludeAll(files, excludeGlobs);
+            }
 
-	        for (File configFile : files) {
-	            if (!configFile.isAbsolute()) {
-	                throw new IllegalStateException("Configuration files inclusion patterns contain a non-absolute file.");
-	            }
-	            if (!configFile.exists()) {
-	                throw new IllegalStateException("Configuration files inclusion patterns refer to a non-existent file.");
-	            }
-	            if (configFile.isDirectory()) {
-	                throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
-	            }
-	            if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
-	                module.addConfigFile(configFile.getAbsolutePath());
-	        }
-		  }
-	}
+            for (File configFile : files) {
+                if (!configFile.isAbsolute()) {
+                    throw new IllegalStateException(
+                        "Configuration files inclusion patterns contain a non-absolute file.");
+                }
+                if (!configFile.exists()) {
+                    throw new IllegalStateException(
+                        "Configuration files inclusion patterns refer to a non-existent file.");
+                }
+                if (configFile.isDirectory()) {
+                    throw new IllegalStateException("Configuration files inclusion patterns refer to a directory.");
+                }
+                if (!module.getConfigFiles().contains(configFile.getAbsolutePath()))
+                    module.addConfigFile(configFile.getAbsolutePath());
+            }
+        }
+    }
 }

@@ -35,6 +35,8 @@ import org.rhq.rhqtransform.RhqAugeasMapping;
 
 
 /**
+ * Default implementation of the {@link RhqAugeasMapping} interface based on
+ * {@link AugeasToConfigurationSimple} and {@link ConfigurationToAugeasSimple}.
  * 
  * @author Filip Drabek
  *

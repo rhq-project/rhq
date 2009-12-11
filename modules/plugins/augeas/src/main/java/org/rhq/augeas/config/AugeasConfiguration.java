@@ -24,23 +24,46 @@ package org.rhq.augeas.config;
 
 import java.util.List;
 
+import net.augeas.Augeas;
+
 /**
+ * Represents the augeas configuration.
  * 
  * @author Filip Drabek
- *
  */
 public interface AugeasConfiguration {
 
+    /**
+     * @return the list of modules augeas should load
+     */
     public List<AugeasModuleConfig> getModules();
 
+    /**
+     * @return a module configuration by name
+     */
     public AugeasModuleConfig getModuleByName(String name);
 
+    /**
+     * @return The filesystem root path for augeas tree.
+     */
     public String getRootPath();
 
+    /**
+     * @return path to the augeas lenses directory
+     */
     public String getLoadPath();
 
+    /**
+     * @return augeas loading mode
+     * @see {@link Augeas#Augeas(int)}
+     */
     public int getMode();
     
+    /**
+     * Initializes the modules. This can check that all the included files
+     * exist or provide some additional runtime-determined configuration
+     * to the modules. 
+     */
     public void loadFiles();
     
 }

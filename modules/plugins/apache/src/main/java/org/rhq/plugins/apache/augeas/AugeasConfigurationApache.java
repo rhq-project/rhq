@@ -16,7 +16,7 @@ import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.plugins.apache.ApacheServerComponent;
 import org.rhq.rhqtransform.AugeasRhqException;
-import org.rhq.rhqtransform.impl.RhqConfig;
+import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
 /**
  * Represents the configuration of Augeas needed to parse Apache.
@@ -29,7 +29,7 @@ import org.rhq.rhqtransform.impl.RhqConfig;
  * 
  * @author Filip Drabek
  */
-public class AugeasConfigurationApache extends RhqConfig implements AugeasConfiguration {
+public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfiguration implements AugeasConfiguration {
 
     public static String INCLUDE_DIRECTIVE = "Include";
     private AugeasModuleConfig module;

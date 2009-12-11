@@ -52,7 +52,7 @@ import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
-import org.rhq.rhqtransform.impl.RhqConfig;
+import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
 /**
  * The discovery component for Apache 2.x servers.
@@ -121,7 +121,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     serverConfigFile);
                 pluginConfig.put(configFile);
             
-                PropertySimple inclusionGlobs = new PropertySimple(RhqConfig.INCLUDE_GLOBS_PROP, serverConfigFile);
+                PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
                 pluginConfig.put(inclusionGlobs);
             
                 String url = getUrl(pluginConfig);

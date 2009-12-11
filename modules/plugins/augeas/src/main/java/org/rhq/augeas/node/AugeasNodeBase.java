@@ -29,11 +29,14 @@ import java.util.List;
 import org.rhq.augeas.tree.AugeasTree;
 
 /**
+ * Base class to store the data of nodes.
+ * Inherited by {@link AugeasNodeLazy}, {@link AugeasNodeReal}
+ * and {@link AugeasRootNode}.
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasNodeParent {
+public abstract class AugeasNodeBase {
 
     protected String path;
     protected String label;
@@ -43,7 +46,7 @@ public class AugeasNodeParent {
     protected AugeasNode parentNode;
     protected List<AugeasNode> childNodes;
 
-    public AugeasNodeParent() {
+    protected AugeasNodeBase() {
         childNodes = new ArrayList<AugeasNode>();
     }
 

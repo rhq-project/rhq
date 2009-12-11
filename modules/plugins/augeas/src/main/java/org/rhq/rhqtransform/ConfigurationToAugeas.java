@@ -33,26 +33,78 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 
 /**
+ * Mapping from RHQ configuration to Augeas tree.
  * 
  * @author Filip Drabek
  *
  */
 public interface ConfigurationToAugeas {
 
+    /**
+     * Sets the tree the mapping should work with.
+     * 
+     * @param tree
+     */
     public void setTree(AugeasTree tree);
 
+    /**
+     * Updates the augeas tree with the data from the RHQ configuration
+     * 
+     * @param node the node to start updating the data from
+     * @param resourceConfigDef configuration definition of the configuration object
+     * @param resourceConfig the configuration object to read the data from
+     *  
+     * @throws AugeasRhqException
+     */
     public void updateResourceConfiguration(AugeasNode node, ConfigurationDefinition resourceConfigDef,
         Configuration resourceConfig) throws AugeasRhqException;
 
+    /**
+     * TODO this should be removed from the interface and made protected abstract in ConfigurationToAugeasSimple 
+     * 
+     * @param propDefMap
+     * @param prop
+     * @param mapNode
+     * @param seq
+     * @throws AugeasRhqException
+     */
     public void updateMap(PropertyDefinitionMap propDefMap, Property prop, AugeasNode mapNode, int seq)
         throws AugeasRhqException;
 
+    /**
+     * TODO this should be removed from the interface and made protected abstract in ConfigurationToAugeasSimple 
+     * 
+     * @param propDef
+     * @param prop
+     * @param listNode
+     * @param seq
+     * @throws AugeasRhqException
+     */
     public void updateList(PropertyDefinitionList propDef, Property prop, AugeasNode listNode, int seq)
         throws AugeasRhqException;
 
+    /**
+     * TODO this should be removed from the interface and made protected abstract in ConfigurationToAugeasSimple 
+     * 
+     * @param parentNode
+     * @param propDef
+     * @param prop
+     * @param seq
+     * @throws AugeasRhqException
+     */
     public void updateSimple(AugeasNode parentNode, PropertyDefinitionSimple propDef, Property prop, int seq)
         throws AugeasRhqException;
 
+    /**
+     * Performs updates in the tree based on the values in the single property (and its descendants).
+     * 
+     * @param propDef the property definition of the property we are applying to the tree 
+     * @param parentProp the parent property of the property we are dealing with
+     * @param parentNode the parent node under which we should apply the property
+     * @param seq the sequence number of the property we are applying inside the parentProp
+     * 
+     * @throws AugeasRhqException
+     */
     public void updateProperty(PropertyDefinition propDef, Property parentProp, AugeasNode parentNode, int seq)
         throws AugeasRhqException;
 }

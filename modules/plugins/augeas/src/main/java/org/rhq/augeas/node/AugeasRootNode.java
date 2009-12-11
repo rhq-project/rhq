@@ -30,11 +30,11 @@ import java.util.List;
 import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
- * 
+ * Represents the root node of the augeas tree.
  * @author Filip Drabek
  *
  */
-public class AugeasRootNode extends AugeasNodeParent implements AugeasNode {
+public class AugeasRootNode extends AugeasNodeBase implements AugeasNode {
 
     public AugeasRootNode(List<AugeasNode> nodes) {
         super();
@@ -86,12 +86,9 @@ public class AugeasRootNode extends AugeasNodeParent implements AugeasNode {
     }
 
     public void setPath(String path) throws AugeasTreeException {
-        // TODO Auto-generated method stub
-
     }
 
     public void updateFromParent() {
-        // TODO Auto-generated method stub
 
     }
 }

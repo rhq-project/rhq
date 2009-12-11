@@ -30,11 +30,12 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
+ * Implementation of the augeas node that loads all children eagerly.
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasNodeReal extends AugeasNodeParent implements AugeasNode {
+public class AugeasNodeReal extends AugeasNodeBase implements AugeasNode {
 
     public AugeasNodeReal() {
         super();

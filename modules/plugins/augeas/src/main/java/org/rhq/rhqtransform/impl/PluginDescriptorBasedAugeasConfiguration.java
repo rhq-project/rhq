@@ -42,18 +42,20 @@ import org.rhq.rhqtransform.AugeasRhqException;
 
 
 /**
+ * This class implements the augeas configuration interface by reading the settings
+ * from the plugin descriptor.
  * 
  * @author Filip Drabek
  * @author Ian Springer
  *
  */
 
-public class RhqConfig implements AugeasConfiguration {
+public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfiguration {
 
     public static final String INCLUDE_GLOBS_PROP = "configurationFilesInclusionPatterns";
     public static final String EXCLUDE_GLOBS_PROP = "configurationFilesExclusionPatterns";
     public static final String AUGEAS_MODULE_NAME_PROP = "augeasModuleName";
-    private static final String AUGEAS_LOAD_PATH = "augeasLoadPath";
+    public static final String AUGEAS_LOAD_PATH = "augeasLoadPath";
 
     public static final String DEFAULT_AUGEAS_ROOT_PATH = File.listRoots()[0].getPath();
     public static final String DEFAULT_AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
@@ -62,9 +64,17 @@ public class RhqConfig implements AugeasConfiguration {
     protected List<AugeasModuleConfig> modules;
     protected String loadPath;
 
-    public RhqConfig(Configuration configuration) throws AugeasRhqException {
-        List<String> includes = determineGlobs(configuration, INCLUDE_GLOBS_PROP);
-        List<String> excludes = determineGlobs(configuration, EXCLUDE_GLOBS_PROP);
+    /**
+     * Instantiates new augeas configuration based on the data in the provided
+     * plugin configuration.
+     * See the constants in this class for the expected properties.
+     * 
+     * @param pluginConfiguration
+     * @throws AugeasRhqException
+     */
+    public PluginDescriptorBasedAugeasConfiguration(Configuration pluginConfiguration) throws AugeasRhqException {
+        List<String> includes = determineGlobs(pluginConfiguration, INCLUDE_GLOBS_PROP);
+        List<String> excludes = determineGlobs(pluginConfiguration, EXCLUDE_GLOBS_PROP);
         modules = new ArrayList<AugeasModuleConfig>();
         if (includes.isEmpty())
             throw new AugeasRhqException("At least one Include glob must be defined.");
@@ -72,11 +82,11 @@ public class RhqConfig implements AugeasConfiguration {
         AugeasModuleConfig config = new AugeasModuleConfig();
         config.setIncludedGlobs(includes);
         config.setExcludedGlobs(excludes);
-        config.setLensPath(getAugeasModuleName(configuration) + ".lns");
-        config.setModuletName(getAugeasModuleName(configuration));
+        config.setLensPath(getAugeasModuleName(pluginConfiguration) + ".lns");
+        config.setModuletName(getAugeasModuleName(pluginConfiguration));
         modules.add(config);
 
-        loadPath = configuration.getSimpleValue(AUGEAS_LOAD_PATH, DEFAULT_AUGEAS_LOAD_PATH);
+        loadPath = pluginConfiguration.getSimpleValue(AUGEAS_LOAD_PATH, DEFAULT_AUGEAS_LOAD_PATH);
     }
 
     protected List<String> determineGlobs(Configuration configuration, String name) {

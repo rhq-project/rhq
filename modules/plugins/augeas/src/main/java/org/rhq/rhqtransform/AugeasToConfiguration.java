@@ -34,24 +34,80 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 
 /**
+ * Implementations of this interface provide mapping of Augeas data
+ * to the RHQ configuration.
  * 
  * @author Filip Drabek
  *
  */
 public interface AugeasToConfiguration {
 
+    /**
+     * Sets the Augeas tree that should be worked with.
+     * 
+     * @param tree
+     */
     public void setTree(AugeasTree tree);
 
+    /**
+     * Provides the mapper with name conversion from Augeas node names to RHQ
+     * configuration property names.
+     * 
+     * @param nameMap
+     */
     public void setNameMap(NameMap nameMap);
 
+    /**
+     * Loads the RHQ configuration instance from the Augeas tree.
+     *  
+     * @param startNode the node to start the mapping from
+     * @param resourceConfigDef the configuration definition to use
+     * @return the RHQ configuration with the values loaded from the Augeas tree 
+     * @throws AugeasRhqException
+     */
     public Configuration loadResourceConfiguration(AugeasNode startNode, ConfigurationDefinition resourceConfigDef)
         throws AugeasRhqException;
 
+    /**
+     * Loads a single property from given node.
+     * 
+     * @param propDef the definition of the property
+     * @param parentNode the parent node from which the property should be loaded.
+     * @return
+     * @throws AugeasRhqException
+     */
     public Property loadProperty(PropertyDefinition propDef, AugeasNode parentNode) throws AugeasRhqException;
 
-    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode node) throws AugeasRhqException;
+    /**
+     * TODO this should be removed from the interface and made protected abstract in AugeasToConfigurationSimple 
+     * Creates a simple property from the property definition.
+     * 
+     * @param propDefSimple the definition of the property
+     * @param parentNode the parent node where the property should be looked for
+     * @return
+     * @throws AugeasRhqException
+     */
+    public Property createPropertySimple(PropertyDefinitionSimple propDefSimple, AugeasNode parentNode) throws AugeasRhqException;
 
-    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode node) throws AugeasRhqException;
+    /**
+     * TODO this should be removed from the interface and made protected abstract in AugeasToConfigurationSimple 
+     * Creates a map property from the data in the parent node.
+     * 
+     * @param propDefMap the definition of the property map
+     * @param parentNode the parent node
+     * @return
+     * @throws AugeasRhqException
+     */
+    public PropertyMap createPropertyMap(PropertyDefinitionMap propDefMap, AugeasNode parentNode) throws AugeasRhqException;
 
-    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode node) throws AugeasRhqException;
+    /**
+     * TODO this should be removed from the interface and made protected abstract in AugeasToConfigurationSimple 
+     * Creates a property list from the data in the parent node.
+     * 
+     * @param propDefList
+     * @param parentNode
+     * @return
+     * @throws AugeasRhqException
+     */
+    public Property createPropertyList(PropertyDefinitionList propDefList, AugeasNode parentNode) throws AugeasRhqException;
 }

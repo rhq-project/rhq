@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+
+<!--===== Maven 2 user settings file for building the linux-config branch =====-->
+
+<!-- See: http://maven.apache.org/settings.html -->
+
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              http://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <!--
+    **************************** PROFILES ****************************
+  -->
+
+  <!--
+    See:
+    http://maven.apache.org/guides/introduction/introduction-to-profiles.html
+    and: http://docs.codehaus.org/display/MAVENUSER/Profiles
+  -->
+
+  <activeProfiles>
+    <activeProfile>test.linux-config</activeProfile>
+  </activeProfiles>
+
+  <profiles>
+    <profile>
+      <!--  Profile to use to point test runs at a different db -->
+      <id>test.linux-config</id>
+      <properties>
+        <rhq.test.ds.connection-url>jdbc:postgresql://127.0.0.1:5432/rhqlconf</rhq.test.ds.connection-url>
+        <DatabaseTest.nofail>true</DatabaseTest.nofail>
+
+        <!-- comm and agent config properties -->
+        <rhq.comm.test.connectorBindPort>11112</rhq.comm.test.connectorBindPort>
+        <rhq.comm.test.connector2BindPort>22223</rhq.comm.test.connector2BindPort>
+        <agent1.cfg.file>test-agent1-cfg-mvn.xml</agent1.cfg.file>
+        <agent2.cfg.file>test-agent2-cfg-mvn.xml</agent2.cfg.file>
+        <agent1.server.bind-port>55556</agent1.server.bind-port>
+        <agent2.server.bind-port>66667</agent2.server.bind-port>
+        <agent1.communications.connector.bind-port>33334</agent1.communications.connector.bind-port> 
+        <agent2.communications.connector.bind-port>44445</agent2.communications.connector.bind-port> 
+      </properties>
+    </profile>
+  </profiles>
+  
+  <pluginGroups>
+    <!--
+      This will allow you to invoke "org.rhq" Maven goals using the
+      "rhq" prefix
+    -->
+    <pluginGroup>org.rhq</pluginGroup>
+  </pluginGroups>
+</settings>

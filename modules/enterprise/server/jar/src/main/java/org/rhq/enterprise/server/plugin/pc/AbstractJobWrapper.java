@@ -33,6 +33,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.AbstractScheduleType;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * The superclass to the concurrent and stateful job wrappers.
@@ -189,6 +191,8 @@ abstract class AbstractJobWrapper implements Job {
             }
         } else {
             try {
+                ServerPluginDescriptorType descriptor = pluginEnv.getPluginDescriptor();
+                jobClass = ServerPluginDescriptorMetadataParser.getFullyQualifiedClassName(descriptor, jobClass);
                 pluginJobObject = pluginManager.instantiatePluginClass(pluginEnv, jobClass);
             } catch (Throwable t) {
                 // invalid class - we need to unschedule this, do not refire since it will never work

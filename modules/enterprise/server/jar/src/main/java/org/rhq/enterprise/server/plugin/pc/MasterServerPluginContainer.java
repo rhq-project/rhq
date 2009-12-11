@@ -21,7 +21,6 @@ package org.rhq.enterprise.server.plugin.pc;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -225,6 +224,7 @@ public class MasterServerPluginContainer {
         ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(pluginUrl);
         ServerPluginType pluginType = new ServerPluginType(descriptor);
         PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), descriptor.getName());
+        this.classLoaderManager.loadPlugin(pluginUrl, descriptor);
         ClassLoader classLoader = this.classLoaderManager.obtainServerPluginClassLoader(pluginKey);
         log.debug("Loading server plugin [" + pluginKey + "] from [" + pluginUrl + "] into its plugin container");
         try {

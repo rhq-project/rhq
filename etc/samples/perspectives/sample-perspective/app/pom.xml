@@ -9,14 +9,14 @@
   </parent>
 
   <groupId>org.rhq</groupId>
-  <artifactId>rhq-sample-perspective</artifactId>
+  <artifactId>rhq-sample-perspective-war</artifactId>
   <packaging>war</packaging>
 
-  <name>Sample RHQ Perspective War</name>
+  <name>RHQ Sample Perspective War</name>
 
   <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/perspectives/sample-perspective-war/</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/perspectives/sample-perspective-war/</developerConnection>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</developerConnection>
   </scm>
 
   <properties>
@@ -29,7 +29,7 @@
   </dependencies>
 
   <build>
-    <finalName>${project.artifactId}</finalName>
+    <finalName>rhq-sample-perspective</finalName>
 
     <plugins>
 

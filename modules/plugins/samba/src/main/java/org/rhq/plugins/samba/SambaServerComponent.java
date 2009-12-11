@@ -20,24 +20,35 @@ package org.rhq.plugins.samba;
 
 import net.augeas.Augeas;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.*;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.system.ProcessExecution;
+import org.rhq.core.system.ProcessExecutionResults;
+import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 
 /**
  * TODO
  */
 public class SambaServerComponent extends AugeasConfigurationComponent {
     static final String ENABLE_RECYCLING = "enableRecycleBin";
+    private ResourceContext resourceContext;
+
 
     public void start(ResourceContext resourceContext) throws Exception {
+        this.resourceContext = resourceContext;
         super.start(resourceContext);
     }
 
@@ -114,5 +125,44 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
             return "recycle".equals(augeas.get(node.getParent().getPath() + "/vfs\\ objects"));
         }
         return super.toPropertyValue(propDefSimple, augeas, node);
+    }
+
+    private ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput)
+        throws InvalidPluginConfigurationException {
+
+        SystemInfo sysInfo = this.resourceContext.getSystemInformation();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
+
+        return results;
+    }
+
+    protected ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
+        String args, long wait, boolean captureOutput) throws InvalidPluginConfigurationException {
+
+        ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
+        if (args != null) {
+            processExecution.setArguments(args.split(" "));
+        }
+        processExecution.setCaptureOutput(captureOutput);
+        processExecution.setWaitForCompletion(wait);
+        processExecution.setKillOnTimeout(true);
+
+        ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
+
+        return results;
+   }
+
+    private ProcessExecution getProcessExecutionInfo(Configuration pluginConfig)
+        throws InvalidPluginConfigurationException {
+
+        String executable = "authconfig";
+        String workingDir = "/usr/sbin";
+
+        ProcessExecution processExecution = new ProcessExecution(executable);
+        //processExecution.setEnvironmentVariables(envvars);
+        processExecution.setWorkingDirectory(workingDir);
+
+        return processExecution;
     }
 }

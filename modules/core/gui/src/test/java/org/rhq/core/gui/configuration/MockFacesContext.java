@@ -12,6 +12,8 @@ import javax.faces.context.ResponseStream;
 import javax.faces.context.ResponseWriter;
 import javax.faces.render.RenderKit;
 
+import com.sun.faces.renderkit.RenderKitImpl;
+
 public class MockFacesContext extends FacesContext {
 
     private ExternalContext externalContext;
@@ -26,13 +28,16 @@ public class MockFacesContext extends FacesContext {
     @Override
     public void addMessage(String clientId, FacesMessage message) {
         throw new RuntimeException("Function not implemented");
-
     }
+
+    MockApplication mockApp;
 
     @Override
     public Application getApplication() {
-        throw new RuntimeException("Function not implemented");
-
+        if (null == mockApp) {
+            mockApp = new MockApplication();
+        }
+        return mockApp;
     }
 
     @Override
@@ -65,11 +70,15 @@ public class MockFacesContext extends FacesContext {
 
     }
 
-    RenderKit mockRenderKit = new MockRenderKit();
+    RenderKit renderKit = new MockRenderKit();
 
     @Override
     public RenderKit getRenderKit() {
-        return mockRenderKit;
+        if (null == renderKit) {
+            renderKit = new RenderKitImpl();
+            renderKit.addRenderer("rhq", ConfigRenderer.class.getName(), new ConfigRenderer());
+        }
+        return renderKit;
     }
 
     @Override

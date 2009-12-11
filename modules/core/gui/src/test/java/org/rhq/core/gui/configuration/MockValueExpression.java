@@ -32,8 +32,7 @@ public class MockValueExpression extends ValueExpression {
 
     @Override
     public String getExpressionString() {
-        throw new RuntimeException("Function not implemented");
-
+        return "#{" + value.getClass().getSimpleName() + "}";
     }
 
     @Override

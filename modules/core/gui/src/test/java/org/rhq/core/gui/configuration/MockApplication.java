@@ -1,8 +1,10 @@
 package org.rhq.core.gui.configuration;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.faces.FacesException;
 import javax.faces.application.Application;
@@ -10,6 +12,11 @@ import javax.faces.application.NavigationHandler;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIParameter;
+import javax.faces.component.html.HtmlCommandLink;
+import javax.faces.component.html.HtmlOutputFormat;
+import javax.faces.component.html.HtmlOutputText;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.el.MethodBinding;
@@ -22,6 +29,8 @@ import javax.faces.validator.Validator;
 
 public class MockApplication extends Application {
 
+    Map<String, Class> componentTypeMap;
+
     @Override
     public void addComponent(String componentType, String componentClass) {
         throw new RuntimeException("Function not implemented");
@@ -29,13 +38,13 @@ public class MockApplication extends Application {
     }
 
     @Override
-    public void addConverter(String converterId, String converterClass) {
+    public void addConverter(Class targetClass, String converterClass) {
         throw new RuntimeException("Function not implemented");
 
     }
 
     @Override
-    public void addConverter(Class targetClass, String converterClass) {
+    public void addConverter(String converterId, String converterClass) {
         throw new RuntimeException("Function not implemented");
 
     }
@@ -48,7 +57,12 @@ public class MockApplication extends Application {
 
     @Override
     public UIComponent createComponent(String componentType) throws FacesException {
-        throw new RuntimeException("Function not implemented");
+        try {
+            return (UIComponent) getComponentTypeMap().get(componentType).newInstance();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new FacesException("can't create component " + componentType);
+        }
 
     }
 
@@ -60,13 +74,13 @@ public class MockApplication extends Application {
     }
 
     @Override
-    public Converter createConverter(String converterId) {
+    public Converter createConverter(Class targetClass) {
         throw new RuntimeException("Function not implemented");
 
     }
 
     @Override
-    public Converter createConverter(Class targetClass) {
+    public Converter createConverter(String converterId) {
         throw new RuntimeException("Function not implemented");
 
     }
@@ -93,6 +107,19 @@ public class MockApplication extends Application {
     public ActionListener getActionListener() {
         throw new RuntimeException("Function not implemented");
 
+    }
+
+    Map<String, Class> getComponentTypeMap() {
+        if (null == componentTypeMap) {
+
+            componentTypeMap = new HashMap<String, Class>();
+            componentTypeMap.put("javax.faces.HtmlOutputText", HtmlOutputText.class);
+            componentTypeMap.put("javax.faces.HtmlPanelGroup", HtmlPanelGroup.class);
+            componentTypeMap.put("javax.faces.Output", HtmlOutputFormat.class);
+            componentTypeMap.put("javax.faces.HtmlCommandLink", HtmlCommandLink.class);
+            componentTypeMap.put("javax.faces.Parameter", UIParameter.class);
+        }
+        return componentTypeMap;
     }
 
     @Override

@@ -133,7 +133,7 @@ public class MockExternalContext extends ExternalContext {
         return requestMap;
     }
 
-    Map<String, String> requestParameterMap = new HashMap<String, String>();
+    public Map<String, String> requestParameterMap = new HashMap<String, String>();
 
     @Override
     public Map<String, String> getRequestParameterMap() {

@@ -1,25 +1,25 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.gui.util;
 
 import java.util.ArrayList;
@@ -32,10 +32,10 @@ import java.util.UUID;
 import javax.el.ValueExpression;
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
-import javax.faces.component.UIForm;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.html.HtmlColumn;
 import javax.faces.component.html.HtmlCommandButton;
@@ -50,16 +50,17 @@ import javax.faces.component.html.HtmlOutputText;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.component.html.HtmlSeparator;
 import org.richfaces.component.html.HtmlSimpleTogglePanel;
 
- /**
- * A set of utility methods for working with JSF {@link UIComponent}s.
- *
- * @author Ian Springer
- */
+/**
+* A set of utility methods for working with JSF {@link UIComponent}s.
+*
+* @author Ian Springer
+*/
 public abstract class FacesComponentUtility {
     public static final String NO_STYLE_CLASS = null;
 
@@ -77,16 +78,31 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlPanelGroup addBlockPanel(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String styleClass) {
+    public static HtmlPanelGrid createPanelGrid(FacesComponentIdFactory idFactory, String styleClass) {
+        HtmlPanelGrid panel = createComponent(HtmlPanelGrid.class, idFactory);
+        panel.setStyleClass(styleClass);
+        return panel;
+    }
+
+    @NotNull
+    public static HtmlPanelGroup addBlockPanel(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String styleClass) {
         HtmlPanelGroup panel = createBlockPanel(idFactory, styleClass);
         parent.getChildren().add(panel);
         return panel;
     }
 
     @NotNull
-    public static HtmlPanelGroup addInlinePanel(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String styleClass) {
+    public static HtmlPanelGrid addPanelGrid(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String styleClass) {
+        HtmlPanelGrid panel = createPanelGrid(idFactory, styleClass);
+        parent.getChildren().add(panel);
+        return panel;
+    }
+
+    @NotNull
+    public static HtmlPanelGroup addInlinePanel(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String styleClass) {
         HtmlPanelGroup panel = createComponent(HtmlPanelGroup.class, idFactory);
         panel.setStyleClass(styleClass);
         parent.getChildren().add(panel);
@@ -94,8 +110,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlSimpleTogglePanel addSimpleTogglePanel(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String label) {
+    public static HtmlSimpleTogglePanel addSimpleTogglePanel(@NotNull UIComponent parent,
+        FacesComponentIdFactory idFactory, String label) {
         HtmlSimpleTogglePanel panel = createComponent(HtmlSimpleTogglePanel.class, idFactory);
         panel.setLabel(label);
 
@@ -106,16 +122,15 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlSeparator addSeparator(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory) {
+    public static HtmlSeparator addSeparator(@NotNull UIComponent parent, FacesComponentIdFactory idFactory) {
         HtmlSeparator separator = createComponent(HtmlSeparator.class, idFactory);
         parent.getChildren().add(separator);
         return separator;
     }
 
     @NotNull
-    public static HtmlOutputText addOutputText(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, CharSequence value, String styleClass) {
+    public static HtmlOutputText addOutputText(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        CharSequence value, String styleClass) {
         HtmlOutputText text = createComponent(HtmlOutputText.class, idFactory);
         text.setValue(value);
         text.setStyleClass(styleClass);
@@ -135,8 +150,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlColumn addColumn(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, CharSequence headerText, String headerStyle) {
+    public static HtmlColumn addColumn(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        CharSequence headerText, String headerStyle) {
         HtmlColumn column = createComponent(HtmlColumn.class, idFactory);
         HtmlOutputText header = new HtmlOutputText();
         header.setValue(headerText);
@@ -147,8 +162,7 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlOutputText addVerbatimText(@NotNull
-    UIComponent parent, CharSequence html) {
+    public static HtmlOutputText addVerbatimText(@NotNull UIComponent parent, CharSequence html) {
         HtmlOutputText outputText = createComponent(HtmlOutputText.class, null);
         outputText.setEscape(false);
         outputText.setValue(html);
@@ -163,10 +177,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static UIOutput addJavaScript(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, @Nullable
-    CharSequence src, @Nullable
-    CharSequence script) {
+    public static UIOutput addJavaScript(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        @Nullable CharSequence src, @Nullable CharSequence script) {
         UIOutput output = createComponent(UIOutput.class, idFactory);
         output.getAttributes().put("escape", Boolean.FALSE);
         StringBuilder value = new StringBuilder();
@@ -220,8 +232,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlOutputLabel addLabel(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, UIInput associatedInput, String value, String styleClass) {
+    public static HtmlOutputLabel addLabel(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        UIInput associatedInput, String value, String styleClass) {
         HtmlOutputLabel label = createComponent(HtmlOutputLabel.class, idFactory);
         label.setFor(associatedInput.getId());
         label.setValue(value);
@@ -231,8 +243,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlGraphicImage addGraphicImage(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String url, String alt) {
+    public static HtmlGraphicImage addGraphicImage(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String url, String alt) {
         HtmlGraphicImage image = FacesComponentUtility.createComponent(HtmlGraphicImage.class, idFactory);
         image.setUrl(url);
         image.setAlt(alt);
@@ -242,8 +254,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlOutputLink addOutputLink(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String value) {
+    public static HtmlOutputLink addOutputLink(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String value) {
         HtmlOutputLink link = FacesComponentUtility.createComponent(HtmlOutputLink.class, idFactory);
         link.setValue(value);
         parent.getChildren().add(link);
@@ -251,8 +263,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static UIParameter addParameter(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String name, String value) {
+    public static UIParameter addParameter(@NotNull UIComponent parent, FacesComponentIdFactory idFactory, String name,
+        String value) {
         UIParameter parameter = createComponent(UIParameter.class, idFactory);
         parameter.setName(name);
         parameter.setValue(value);
@@ -261,8 +273,7 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlForm addForm(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory) {
+    public static HtmlForm addForm(@NotNull UIComponent parent, FacesComponentIdFactory idFactory) {
         HtmlForm form = createComponent(HtmlForm.class, idFactory);
         form.setPrependId(false);
         parent.getChildren().add(form);
@@ -270,8 +281,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlCommandButton addCommandButton(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String value, String styleClass) {
+    public static HtmlCommandButton addCommandButton(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String value, String styleClass) {
         HtmlCommandButton button = createComponent(HtmlCommandButton.class, idFactory);
         button.setValue(value);
         button.setStyleClass(styleClass);
@@ -280,16 +291,15 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlCommandLink addCommandLink(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory) {
+    public static HtmlCommandLink addCommandLink(@NotNull UIComponent parent, FacesComponentIdFactory idFactory) {
         HtmlCommandLink link = FacesComponentUtility.createComponent(HtmlCommandLink.class, idFactory);
         parent.getChildren().add(link);
         return link;
     }
 
     @NotNull
-    public static HtmlMessage addMessage(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String associatedComponentId, String styleClass) {
+    public static HtmlMessage addMessage(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String associatedComponentId, String styleClass) {
         HtmlMessage message = FacesComponentUtility.createComponent(HtmlMessage.class, idFactory);
         message.setFor(associatedComponentId);
         message.setShowDetail(true);
@@ -302,8 +312,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlPanelGrid addPanelGrid(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, int columns, String styleClass) {
+    public static HtmlPanelGrid addPanelGrid(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        int columns, String styleClass) {
         HtmlPanelGrid panelGrid = FacesComponentUtility.createComponent(HtmlPanelGrid.class, idFactory);
         panelGrid.setColumns(columns);
         panelGrid.setStyleClass(styleClass);
@@ -312,8 +322,8 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static HtmlDataTable addDataTable(@NotNull
-    UIComponent parent, FacesComponentIdFactory idFactory, String styleClass) {
+    public static HtmlDataTable addDataTable(@NotNull UIComponent parent, FacesComponentIdFactory idFactory,
+        String styleClass) {
         HtmlDataTable dataTable = FacesComponentUtility.createComponent(HtmlDataTable.class, idFactory);
         dataTable.setStyleClass(styleClass);
         parent.getChildren().add(dataTable);
@@ -321,17 +331,13 @@ public abstract class FacesComponentUtility {
     }
 
     @Nullable
-    public static String getExpressionAttribute(@NotNull
-    UIComponent component, @NotNull
-    String attribName) {
+    public static String getExpressionAttribute(@NotNull UIComponent component, @NotNull String attribName) {
         return getExpressionAttribute(component, attribName, String.class);
     }
 
     @Nullable
-    public static <T> T getExpressionAttribute(@NotNull
-    UIComponent component, @NotNull
-    String attribName, @NotNull
-    Class<T> expectedType) {
+    public static <T> T getExpressionAttribute(@NotNull UIComponent component, @NotNull String attribName,
+        @NotNull Class<T> expectedType) {
         ValueExpression valueExpression = component.getValueExpression(attribName);
         T attribValue = (valueExpression != null) ? FacesExpressionUtility.getValue(valueExpression, expectedType)
             : null;
@@ -339,8 +345,7 @@ public abstract class FacesComponentUtility {
     }
 
     @NotNull
-    public static Map<String, String> getParameters(@NotNull
-    UIComponent component) {
+    public static Map<String, String> getParameters(@NotNull UIComponent component) {
         // Use a LinkedHashMap, so the order of the parameters is maintained.
         Map<String, String> params = new LinkedHashMap<String, String>();
         List<UIComponent> children = component.getChildren();
@@ -375,8 +380,8 @@ public abstract class FacesComponentUtility {
      * @return a {@link UIComponent} of the specified type
      */
     @SuppressWarnings("unchecked")
-    public static <T extends UIComponent> T createComponent(Class<T> componentClass, @Nullable
-    FacesComponentIdFactory idFactory) {
+    public static <T extends UIComponent> T createComponent(Class<T> componentClass,
+        @Nullable FacesComponentIdFactory idFactory) {
         Application application = FacesContext.getCurrentInstance().getApplication();
         String componentType = getComponentType(componentClass);
         T component = (T) application.createComponent(componentType);
@@ -500,25 +505,20 @@ public abstract class FacesComponentUtility {
      * @throws IllegalArgumentException if more than one UIForm is found in the component's ancestry
      */
     @Nullable
-     public static UIForm getEnclosingForm(UIComponent component)
-         throws IllegalArgumentException
-     {
-         UIForm ret = null;
-         while (component != null)
-         {
-             if (component instanceof UIForm)
-             {
-                 if (ret != null)
-                 {
-                     // Cannot have a doubly-nested form!
-                     throw new IllegalArgumentException();
-                 }
-                 ret = (UIForm) component;
-             }
-             component = component.getParent();
-         }
-         return ret;
-     }
+    public static UIForm getEnclosingForm(UIComponent component) throws IllegalArgumentException {
+        UIForm ret = null;
+        while (component != null) {
+            if (component instanceof UIForm) {
+                if (ret != null) {
+                    // Cannot have a doubly-nested form!
+                    throw new IllegalArgumentException();
+                }
+                ret = (UIForm) component;
+            }
+            component = component.getParent();
+        }
+        return ret;
+    }
 
     private static <T extends UIComponent> String getComponentType(Class<T> componentClass) {
         String componentType;
@@ -531,9 +531,8 @@ public abstract class FacesComponentUtility {
         return componentType;
     }
 
-     private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
-        public String createUniqueId()
-        {
+    private static class DefaultFacesComponentIdFactory implements FacesComponentIdFactory {
+        public String createUniqueId() {
             // NOTE: Our id's *must* begin with UIViewRoot.UNIQUE_ID_PREFIX ("j_id") to prevent HtmlOutputText
             //       components from being rendered as SPAN elements
             //       (see com.sun.faces.renderkit.html_basic.TextRenderer#getEndTextToRender()).

@@ -24,18 +24,19 @@ THIS TEXT WILL BE REMOVED.
 
    <ui:define name="content">
 
+
+ <style type="text/css">
+        td.raw-config-table {
+			vertical-align: top;        
+			valign: top;        
+        }
+</style>
+
+
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
 
-    	<h:outputText value="#{messages.youareviewingstructured}" />	  
-		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}" >
-		   <h:outputText value=" #{messages.switch2}" />
-           <h:outputLink value="view-raw.xhtml">
-	  			<f:param name="id" value="#{ResourceUIBean.id}" />
-				<h:outputText value=" #{messages.raw}" />
-			</h:outputLink>
-		</h:panelGroup>
 
       <h:outputText value=" #{messages.nopermissionedit}" rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -61,6 +62,7 @@ THIS TEXT WILL BE REMOVED.
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
                      nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>
+         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       </h:form>
 

@@ -5,10 +5,8 @@ import java.io.StringWriter;
 import java.util.HashMap;
 
 import javax.faces.FactoryFinder;
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.lifecycle.Lifecycle;
-import javax.faces.render.RenderKitFactory;
 
 import com.sun.faces.context.FacesContextImpl;
 
@@ -18,19 +16,21 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 
 public class ConfigRendererTest {
 
-    RenderKitFactory rkf;
     ConfigUIComponent configUIComponent;
     ConfigRenderer configRenderer;
     FacesContext facesContext;
-    ExternalContext externalContext;
+    MockExternalContext externalContext;
     AjaxContext ajaxContext;
     MockResponseWriter mockResponseWriter;
     Lifecycle lifecycle;
     ConfigurationDefinition configurationDefinition;
+    private Configuration configuration;
 
     @BeforeMethod
     protected void setUp() throws Exception {
@@ -55,10 +55,12 @@ public class ConfigRendererTest {
         ajaxContext = AjaxContext.getCurrentInstance(facesContext);
 
         configUIComponent.setId("ID");
-
-        configUIComponent.setValueExpression("configuration", new MockValueExpression(new Configuration()));
+        configuration = new Configuration();
+        configUIComponent.setValueExpression("configuration", new MockValueExpression(configuration));
         configUIComponent.setValueExpression("configurationDefinition",
             new MockValueExpression(buildConfigDefinition()));
+        configUIComponent.setRendererType(ConfigRenderer.class.getName());
+
     }
 
     private ConfigurationDefinition buildConfigDefinition() {
@@ -75,8 +77,29 @@ public class ConfigRendererTest {
 
     @Test
     public void testUIComponentEncode() throws IOException {
-        configUIComponent.setRendererType(ConfigRenderer.class.getName());
+        Property value;
+        value = new Property();
+        value.setName("test1");
+        value.setConfiguration(configuration);
+        value.setId(3);
+        configuration.getMap().put(value.getName(), value);
+
+        Assert.assertNotNull(configUIComponent.getConfigurationDefinition());
+        configUIComponent.getConfigurationDefinition().setConfigurationFormat(ConfigurationFormat.STRUCTURED_AND_RAW);
+
+        Assert.assertNotNull(configUIComponent.getConfigurationDefinition().getConfigurationFormat());
+        Assert.assertTrue(configUIComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported());
+        Assert.assertTrue(configUIComponent.getConfigurationDefinition().getConfigurationFormat()
+            .isStructuredSupported());
+
+        externalContext.requestParameterMap.put("showRaw", "true");
+
         configUIComponent.encodeAll(facesContext);
+
+        String s2 = mockResponseWriter.stringWriter.getBuffer().toString();
+
+        System.out.println(s2);
+
     }
 
     //@Test

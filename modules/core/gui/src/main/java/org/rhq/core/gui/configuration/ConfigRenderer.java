@@ -31,7 +31,9 @@ import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
+import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlForm;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -54,6 +56,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -117,6 +120,7 @@ public class ConfigRenderer extends Renderer {
                     .isFullyEditable(), true);
             }
         }
+
     }
 
     /**
@@ -195,12 +199,16 @@ public class ConfigRenderer extends Renderer {
         writer.writeText("\n", component, null);
         writer.endElement("div");
         writer.writeComment("********** End of " + component.getClass().getSimpleName() + " component **********");
+
+        component.getChildren().clear();
     }
 
     public void addChildComponents(AbstractConfigurationComponent configurationComponent) {
+
         if ((configurationComponent.getConfigurationDefinition() == null)
             || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration()
-                .getMap().isEmpty())) {
+                .getMap().isEmpty())
+            && !configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
             if (configurationComponent.getNullConfigurationDefinitionMessage() != null) {
                 String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock"
                     : configurationComponent.getNullConfigurationStyle();
@@ -244,20 +252,49 @@ public class ConfigRenderer extends Renderer {
         if (!configurationComponent.isReadOnly())
             addRequiredNotationsKey(configurationComponent);
 
-        if (configurationComponent.getListName() != null) {
-            if (configurationComponent.getListIndex() == null) {
-                // No index specified means we should add a new map to the list.
-                configurationComponent.setListIndex(addNewMap(configurationComponent));
+        Boolean shouldShowRawNow = configurationComponent.getShouldShowRaw();
+        addStructuredRawToggle(configurationComponent, shouldShowRawNow);
+        if (shouldShowRawNow) {
+            configurationComponent.getChildren().add(
+                new RawConfigUIComponent(configurationComponent.getConfiguration(), configurationComponent
+                    .getConfigurationDefinition(), configurationComponent));
+        } else {
+            if (configurationComponent.getListName() != null) {
+                if (configurationComponent.getListIndex() == null) {
+                    // No index specified means we should add a new map to the list.
+                    configurationComponent.setListIndex(addNewMap(configurationComponent));
+                }
+
+                addListMemberProperty(configurationComponent);
+            } else {
+                addConfiguration(configurationComponent);
             }
 
-            addListMemberProperty(configurationComponent);
-        } else {
-            addConfiguration(configurationComponent);
+            String id = getInitInputsJavaScriptComponentId(configurationComponent);
+            PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+                .isFullyEditable(), false);
         }
+    }
 
-        String id = getInitInputsJavaScriptComponentId(configurationComponent);
-        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-            .isFullyEditable(), false);
+    private void addStructuredRawToggle(AbstractConfigurationComponent configurationComponent, boolean showRaw) {
+        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().equals(
+            ConfigurationFormat.STRUCTURED_AND_RAW)) {
+
+            HtmlPanelGroup toRawLinkPanel = FacesComponentUtility.addBlockPanel(configurationComponent,
+                configurationComponent, UNGROUPED_PROPERTIES_STYLE_CLASS);
+
+            FacesComponentUtility.addOutputText(toRawLinkPanel, configurationComponent,
+                "internationalized Message goes here", UNGROUPED_PROPERTIES_STYLE_CLASS);
+
+            HtmlCommandLink commandLink = FacesComponentUtility.addCommandLink(toRawLinkPanel, configurationComponent);
+
+            UIOutput output = new UIOutput();
+            output.setValue(showRaw ? "Show Structured" : " Show Raw");
+            commandLink.getChildren().add(output);
+            //output.setParent(commandLink);
+            FacesComponentUtility.addParameter(commandLink, configurationComponent, "showRaw", Boolean
+                .toString(!showRaw));
+        }
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {

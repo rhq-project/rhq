@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
@@ -13,8 +14,9 @@
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
-	<classpathentry excluding="org/rhq/plugins/antlrconfig/" kind="src" path="modules/plugins/antlr-config/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/gui/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
@@ -104,7 +106,6 @@
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
@@ -204,5 +205,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-digester/commons-digester/1.8/commons-digester-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
+	<classpathentry kind="var" path="M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1.jar" sourcepath="/M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar" sourcepath="/M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar" sourcepath="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1-sources.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

@@ -286,7 +286,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    @Override
+    //@Override
     public int synchronizeRepos(Subject subject, Integer[] repoIds) {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
@@ -371,8 +371,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException {
         return configurationManager.updateStructuredOrRawConfiguration(subject, resourceId, newConfiguration,
             fromStructured);
     }

@@ -462,4 +462,44 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert repoManager.getRepo(overlord, repo3.getId()) != null;
         assert repoManager.getRepo(overlord, repo4.getId()) != null;
     }
+
+    @Test(enabled = ENABLED)
+    public void updateRepoWithProvider() throws Exception {
+        // See BZ 537216 for more details
+
+        // Setup
+        String newName = "newRepoName";
+        String oldName = "testRepo";
+
+        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+        types.add(contentSourceType);
+        contentSourceMetadataManager.registerTypes(types);
+
+        ContentSource source = new ContentSource("testSource1", contentSourceType);
+        source = contentSourceManager.simpleCreateContentSource(overlord, source);
+
+        Repo repo = new Repo(oldName);
+        repo.addContentSource(source);
+
+        repoManager.createRepo(overlord, repo);
+
+        // Test
+        repo.setName(newName);
+        repoManager.updateRepo(overlord, repo);
+
+        // Verify
+        RepoCriteria byName = new RepoCriteria();
+        byName.addFilterName(newName);
+        PageList<Repo> reposWithNewName = repoManager.findReposByCriteria(overlord, byName);
+
+        assert reposWithNewName.size() == 1;
+
+        byName = new RepoCriteria();
+        byName.addFilterName(oldName);
+        PageList<Repo> reposWithOldName = repoManager.findReposByCriteria(overlord, byName);
+
+        assert reposWithOldName.size() == 0;
+    }
 }

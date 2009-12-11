@@ -44,12 +44,6 @@
       <artifactId>rhq-container-lib</artifactId>
       <version>${project.version}</version>
     </dependency>
-
-    <dependency>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-sample-perspective</artifactId>
-      <version>${project.version}</version>
-    </dependency>
     
     <!-- 3rd Party Deps -->
 

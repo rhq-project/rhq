@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 
@@ -31,13 +32,23 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.State;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericPluginManager;
 import org.rhq.enterprise.server.plugin.pc.generic.TestGenericServerPluginService.TestGenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.TestLifecycleListener.LifecycleState;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
 
 @Test
 public class GenericServerPluginTest extends AbstractEJB3Test {
@@ -80,6 +91,68 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
         this.pluginService.stopMasterPluginContainer();
         assert pc.state == State.UNINITIALIZED;
         assert component.state == LifecycleState.UNINITIALIZED;
+    }
+
+    public void testGetInstalledPlugins() throws Exception {
+        File jar = createPluginJar("testSimpleGenericPlugin.jar", "serverplugins/simple-generic-serverplugin.xml");
+        ServerPluginType type = new ServerPluginType(GenericPluginDescriptorType.class);
+
+        ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(jar.toURI()
+            .toURL());
+
+        ServerPlugin plugin = new ServerPlugin(0, descriptor.getName(), jar.getName(), descriptor.getDisplayName(),
+            true, PluginStatusType.INSTALLED, descriptor.getDescription(), null, MessageDigestGenerator
+                .getDigestString(jar), descriptor.getVersion(), descriptor.getApiVersion(), null, null, type
+                .stringify(), System.currentTimeMillis(), System.currentTimeMillis());
+
+        ServerPluginsLocal serverPluginsLocal = LookupUtil.getServerPlugins();
+        Map<ServerPluginType, List<PluginKey>> original = serverPluginsLocal.getInstalledServerPluginsGroupedByType();
+        serverPluginsLocal.registerServerPlugin(LookupUtil.getSubjectManager().getOverlord(), plugin, jar);
+
+        try {
+            Map<ServerPluginType, List<PluginKey>> map = serverPluginsLocal.getInstalledServerPluginsGroupedByType();
+            List<PluginKey> pluginKeys = map.get(type);
+
+            if (original.containsKey(type)) {
+                assert map.size() == original.size();
+                assert pluginKeys.size() == original.get(type).size() + 1;
+            } else {
+                assert map.size() == original.size() + 1;
+                assert pluginKeys.size() == 1;
+            }
+            boolean got_it = false;
+            for (PluginKey pluginKey : pluginKeys) {
+                if (pluginKey.getPluginName().equals("TestSimpleGenericPlugin")) {
+                    got_it = true;
+                    break;
+                }
+            }
+            assert got_it == true;
+        } finally {
+            // make sure we clean this up, even on error
+            serverPluginsLocal.purgeServerPlugin(LookupUtil.getSubjectManager().getOverlord(), new PluginKey(plugin));
+        }
+
+        // test that purge really deleted it
+        Map<ServerPluginType, List<PluginKey>> map = serverPluginsLocal.getInstalledServerPluginsGroupedByType();
+        List<PluginKey> pluginKeys = map.get(type);
+
+        assert map.size() == original.size();
+        if (pluginKeys == null) {
+            assert !original.containsKey(type) : "we dont have any plugins of this type, neither should original";
+        } else {
+            assert pluginKeys.size() == original.get(type).size();
+            boolean got_it = false;
+            for (PluginKey pluginKey : pluginKeys) {
+                if (pluginKey.getPluginName().equals("TestSimpleGenericPlugin")) {
+                    got_it = true;
+                    break;
+                }
+            }
+            assert got_it == false : "we still have the plugin, but it should have been purged";
+        }
+
+        return;
     }
 
     private File createPluginJar(String jarName, String descriptorXmlFilename) throws Exception {

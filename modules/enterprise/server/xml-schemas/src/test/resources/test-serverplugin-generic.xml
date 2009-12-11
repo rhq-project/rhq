@@ -11,6 +11,8 @@
                         xmlns:c="urn:xmlns:rhq-configuration"
                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+    <serverplugin:help><![CDATA[help text with <em>XML</em>]]></serverplugin:help>
+
     <serverplugin:plugin-component class="generic.plugin.component" />
 
     <serverplugin:scheduled-jobs>

@@ -34,6 +34,8 @@ import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
  *
  */
 public class PostfixAccessDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PostfixAccessComponent> {
+    public static final String RESOURCE_KEY = "Access";
+
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<PostfixAccessComponent> discoveryContext) throws InvalidPluginConfigurationException,
         Exception {
@@ -42,7 +44,7 @@ public class PostfixAccessDiscoveryComponent extends AugeasConfigurationDiscover
         if (new File("/etc/postfix/access").exists()) {
             Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                "Access", "Access File", null, "Access", pluginConfig, null);
+                RESOURCE_KEY, "Access File", null, RESOURCE_KEY, pluginConfig, null);
             details.add(detail);
         }
         return details;

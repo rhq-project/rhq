@@ -161,5 +161,14 @@ public class ComparableVersionTest {
         assert ver2.compareTo(ver2) == 0;
         assert ver1.compareTo(ver2) > 0; // ver1 is after ver2!
         assert ver2.compareTo(ver1) < 0; // ver1 is after ver2!
+
+        ver1 = new ComparableVersion("4.0.0-SNAPSHOT");
+        ver2 = new ComparableVersion("4.0.0.CR2"); // CR is an alias for RC
+        assert !ver1.equals(ver2);
+        assert !ver2.equals(ver1);
+        assert ver1.compareTo(ver1) == 0;
+        assert ver2.compareTo(ver2) == 0;
+        assert ver1.compareTo(ver2) < 0;
+        assert ver2.compareTo(ver1) > 0;
     }
 }

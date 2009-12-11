@@ -250,7 +250,8 @@
       <pluginGroup>org.rhq</pluginGroup>
    </pluginGroups>
 
-   <!-- See: http://maven.apache.org/settings.html#Servers -->
+   <!-- See: http://maven.apache.org/settings.html#Servers
+        and: http://maven.apache.org/guides/mini/guide-wagon-providers.html -->
    <servers>
       <server>
          <id>jboss-snapshots</id>
@@ -258,6 +259,18 @@
               used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
          <username>YOUR_USERNAME</username>
          <password>YOUR_PASSWORD</password>
+         <configuration>            
+            <httpConfiguration>
+              <put>
+                <params>
+                  <param>
+                    <name>http.authentication.preemptive</name>
+                    <value>%b,true</value>
+                  </param>
+                </params>
+              </put>
+            </httpConfiguration>           
+         </configuration>                  
       </server>
    </servers>
 

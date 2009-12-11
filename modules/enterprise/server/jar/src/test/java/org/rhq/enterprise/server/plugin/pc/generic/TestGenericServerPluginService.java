@@ -25,6 +25,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainerConfiguration;
@@ -32,6 +38,8 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -86,6 +94,12 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
             } else {
                 return super.preloadAllPlugins();
             }
+        }
+
+        @Override
+        protected List<PluginKey> getDisabledPluginKeys() {
+            // in the real world, the db is checked for enable flag, here we say all plugins are enabled
+            return new ArrayList<PluginKey>();
         }
     }
 
@@ -162,10 +176,43 @@ public class TestGenericServerPluginService extends ServerPluginService implemen
         }
 
         @Override
+        protected ServerPlugin getPlugin(ServerPluginEnvironment env) {
+
+            try {
+                Configuration pluginConfig = null;
+                Configuration scheduledJobsConfig = null;
+                ConfigurationDefinition configDef;
+
+                ServerPluginDescriptorType pluginDescriptor = env.getPluginDescriptor();
+
+                configDef = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(pluginDescriptor);
+                if (configDef != null) {
+                    pluginConfig = configDef.getDefaultTemplate().createConfiguration();
+                }
+
+                configDef = ServerPluginDescriptorMetadataParser.getScheduledJobsDefinition(pluginDescriptor);
+                if (configDef != null) {
+                    scheduledJobsConfig = configDef.getDefaultTemplate().createConfiguration();
+                }
+
+                File pluginFile = new File(env.getPluginUrl().toURI());
+                ServerPlugin plugin = new ServerPlugin(0, env.getPluginKey().getPluginName(), pluginFile.getName(),
+                    pluginDescriptor.getDisplayName(), true, PluginStatusType.INSTALLED, pluginDescriptor
+                        .getDescription(), "", MessageDigestGenerator.getDigestString(pluginFile), pluginDescriptor
+                        .getVersion(), pluginDescriptor.getVersion(), pluginConfig, scheduledJobsConfig,
+                    new ServerPluginType(pluginDescriptor).stringify(), System.currentTimeMillis(), System
+                        .currentTimeMillis());
+                return plugin;
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
         protected ServerPluginComponent createServerPluginComponent(ServerPluginEnvironment environment)
             throws Exception {
             ServerPluginComponent component = super.createServerPluginComponent(environment);
-            components.put(environment.getPluginName(), component);
+            components.put(environment.getPluginKey().getPluginName(), component);
             return component;
         }
     }

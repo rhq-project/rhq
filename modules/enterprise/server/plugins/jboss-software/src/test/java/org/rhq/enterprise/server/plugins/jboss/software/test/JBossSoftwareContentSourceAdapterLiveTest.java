@@ -19,12 +19,14 @@
 package org.rhq.enterprise.server.plugins.jboss.software.test;
 
 import java.io.InputStream;
-import org.testng.annotations.Test;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
+import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter;
 
 /**
@@ -44,8 +46,8 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
 
     static {
         CONFIGURATION.put(new PropertySimple(
-                "url",
-                "https://support.redhat.com/jbossnetwork/restricted/feed/software.html?product=all&downloadType=all&flavor=rss&version=&jonVersion=2.0"));
+            "url",
+            "https://support.redhat.com/jbossnetwork/restricted/feed/software.html?product=all&downloadType=all&flavor=rss&version=&jonVersion=2.0"));
         CONFIGURATION.put(new PropertySimple("username", "-- ENTER USERNAME --"));
         CONFIGURATION.put(new PropertySimple("password", "-- ENTER PASSWORD --"));
         CONFIGURATION.put(new PropertySimple("active", "true"));
@@ -83,7 +85,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(report, null);
+        adapter.synchronizePackages(null, report, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -126,7 +128,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(report, null);
+        adapter.synchronizePackages(null, report, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -143,7 +145,7 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         // Test
         PackageSyncReport report = new PackageSyncReport();
 
-        adapter.synchronizePackages(report, null);
+        adapter.synchronizePackages(null, report, null);
 
         // Verify
         assert report.getNewPackages().size() > 0 : "No packages were parsed from the live feed";
@@ -164,8 +166,9 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         PackageSyncReport report = new PackageSyncReport();
 
         try {
-            adapter.synchronizePackages(report, null);
-        } catch (Exception e) {
+            adapter.synchronizePackages(null, report, null);
+        }
+        catch (Exception e) {
             assert e.getMessage().toLowerCase().contains("invalid login") :
                 "Error message does not properly indicate a failed login. Message: " + e.getMessage();
         }
@@ -185,8 +188,9 @@ public class JBossSoftwareContentSourceAdapterLiveTest {
         PackageSyncReport report = new PackageSyncReport();
 
         try {
-            adapter.synchronizePackages(report, null);
-        } catch (Exception e) {
+            adapter.synchronizePackages(null, report, null);
+        }
+        catch (Exception e) {
             assert e.getMessage().toLowerCase().contains("not find the feed") :
                 "Error message does not properly indicate an incorrect URL. Message: " + e.getMessage();
         }

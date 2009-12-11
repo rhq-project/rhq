@@ -42,7 +42,7 @@ public class ContentManagerHelper {
             }
 
             MasterServerPluginContainer master = mbean.getMasterPluginContainer();
-            pc = master.getPluginContainer(ContentServerPluginContainer.class);
+            pc = master.getPluginContainerByClass(ContentServerPluginContainer.class);
         } catch (IllegalStateException ise) {
             throw ise;
         } catch (Exception e) {

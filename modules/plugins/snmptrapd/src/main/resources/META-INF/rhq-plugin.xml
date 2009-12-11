@@ -10,7 +10,8 @@
 
    <server name="SnmpTrapd"
            discovery="SnmpTrapdDiscovery"
-           class="SnmpTrapdComponent">
+           class="SnmpTrapdComponent"
+           supportsManualAdd="true">
 
       <plugin-configuration>
          <c:simple-property name="port"

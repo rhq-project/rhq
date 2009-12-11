@@ -19,7 +19,7 @@ public class PerspectiveManagerHelper {
             }
 
             MasterServerPluginContainer master = mbean.getMasterPluginContainer();
-            pc = master.getPluginContainer(PerspectiveServerPluginContainer.class);
+            pc = master.getPluginContainerByClass(PerspectiveServerPluginContainer.class);
         } catch (IllegalStateException ise) {
             throw ise;
         } catch (Exception e) {

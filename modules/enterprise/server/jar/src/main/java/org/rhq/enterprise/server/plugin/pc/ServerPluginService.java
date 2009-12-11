@@ -25,9 +25,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.annotation.ejb.Management;
 import org.jboss.annotation.ejb.Service;
-import org.jboss.system.server.ServerConfig;
 
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * This is the singleton management service responsible for managing the lifecycle of the
@@ -118,6 +118,12 @@ public class ServerPluginService implements ServerPluginServiceManagement {
         return this.masterPluginContainer != null;
     }
 
+    public File getServerPluginsDirectory() {
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
+        File pluginDir = new File(serverHomeDir, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
+        return pluginDir;
+    }
+
     /**
      * This will create, configure and initialize the plugin container and return it.
      *
@@ -129,15 +135,13 @@ public class ServerPluginService implements ServerPluginServiceManagement {
     protected MasterServerPluginContainer createMasterPluginContainer() {
         MasterServerPluginContainer pc = new MasterServerPluginContainer();
 
-        String pluginDirStr = System.getProperty(ServerConfig.SERVER_HOME_DIR);
-        File pluginDir = new File(pluginDirStr, "deploy/" + RHQConstants.EAR_FILE_NAME + "/rhq-serverplugins");
+        File pluginDir = getServerPluginsDirectory();
 
-        String dataDirStr = System.getProperty(ServerConfig.SERVER_DATA_DIR);
-        File dataDir = new File(dataDirStr, "server-plugins");
+        File serverDataDir = LookupUtil.getCoreServer().getJBossServerDataDir();
+        File dataDir = new File(serverDataDir, "server-plugins");
         dataDir.mkdirs(); // make sure the data directory exists
 
-        String tmpDirStr = System.getProperty(ServerConfig.SERVER_TEMP_DIR);
-        File tmpDir = new File(tmpDirStr);
+        File tmpDir = LookupUtil.getCoreServer().getJBossServerTempDir();
 
         // TODO: determine what things to hide from our war classloader
         //StringBuilder defaultRegex = new StringBuilder();

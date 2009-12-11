@@ -81,8 +81,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
      * @see org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer#loadPlugin(org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment)
      */
     @Override
-    public synchronized void loadPlugin(ServerPluginEnvironment env) throws Exception {
-        super.loadPlugin(env);
+    public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
+        super.loadPlugin(env, enabled);
 
         // merge this perspective into any previously loaded perspective definitions 
         this.metadataManager.loadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
@@ -97,7 +97,7 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
                 }
             }
         } catch (Exception e) {
-            getLog().error("Failed to deploy " + env.getPluginName() + "#" + name, e);
+            getLog().error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);
         }
     }
 
@@ -174,7 +174,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
      * @see org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer#unloadPlugin(org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment)
      */
     @Override
-    public synchronized void unloadPlugin(ServerPluginEnvironment env) throws Exception {
+    public synchronized void unloadPlugin(String pluginName) throws Exception {
+        ServerPluginEnvironment env = getPluginEnvironment(pluginName);
         String name = null;
         try {
             JarFile plugin = new JarFile(env.getPluginUrl().getFile());
@@ -186,12 +187,12 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
             }
 
         } catch (Exception e) {
-            getLog().error("Failed to deploy " + env.getPluginName() + "#" + name, e);
+            getLog().error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);
         }
 
         this.metadataManager.unloadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
 
-        super.unloadPlugin(env);
+        super.unloadPlugin(pluginName);
     }
 
     private void undeployWar(File deployFile) {

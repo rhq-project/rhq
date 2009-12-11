@@ -355,7 +355,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         try {
             connection = getEmsConnection();
             if (null != connection) {
-                deployer = new TomcatApplicationDeployer(connection);
+                deployer = new TomcatApplicationDeployer(connection, getName());
             }
         } catch (Throwable e) {
             log

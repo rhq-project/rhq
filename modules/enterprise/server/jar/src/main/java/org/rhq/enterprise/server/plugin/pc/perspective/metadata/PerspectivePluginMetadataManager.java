@@ -55,20 +55,18 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
 public class PerspectivePluginMetadataManager {
     private final String CORE_PERSPECTIVE_NAME = "CorePerspective";
 
-    private static final String MENU_ITEM_TARGET_URL = "/rhq/common/perspective-main.xhtml?targetUrl=";
-    private static final String TAB_TARGET_URL = "/rhq/resource/perspective/index.xhtml?targetUrl=";
+    private static final String MENU_ITEM_TARGET_URL = "/rhq/perspective/main.xhtml?targetUrlKey=";
+    private static final String TAB_TARGET_URL = "/rhq/perspective/resource.xhtml?targetUrlKey=";
+
+    private static Map<Integer, String> keyUrlMap = new HashMap<Integer, String>();
 
     private Log log = LogFactory.getLog(PerspectivePluginMetadataManager.class);
-
-    //private static PerspectivePluginMetadataManager manager = new PerspectivePluginMetadataManager(); 
 
     private Map<String, PerspectivePluginDescriptorType> loadedPlugins = new HashMap<String, PerspectivePluginDescriptorType>();
 
     private boolean isStarted = false;
     private List<Tab> resourceTabs;
     private List<MenuItem> coreMenu;
-
-
 
     public PerspectivePluginMetadataManager() {
     }
@@ -133,37 +131,46 @@ public class PerspectivePluginMetadataManager {
         //printMenu(this.coreMenu, "");
     }
 
-    private void processPerspective(PerspectivePluginDescriptorType perspective) {                
+    private void processPerspective(PerspectivePluginDescriptorType perspective) {
         List<ApplicationType> applications = perspective.getApplication();
 
         // TODO: Process global tasks and resource tasks.
 
+        // Process MenuItem Extensions 
         for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
             resolveUrls(applications, rawMenuItem, MENU_ITEM_TARGET_URL);
             ActionType action = rawMenuItem.getAction();
             ExtensionPointType extensionPoint = rawMenuItem.getPosition().getExtensionPoint();
             if (ExtensionPointType.CORE_MENU == extensionPoint) {
-                if (ActionType.ADD == action) {
+                switch (action) {
+                case ADD:
                     menuAdd(this.coreMenu, rawMenuItem);
-                } else if (ActionType.REMOVE == action) {
+                    break;
+                case REMOVE:
                     menuRemove(this.coreMenu, rawMenuItem);
-                } else if (ActionType.REPLACE == action) {
+                    break;
+                case REPLACE:
                     menuReplace(this.coreMenu, rawMenuItem);
+                    break;
                 }
-            } else {
-                throw new IllegalArgumentException("Unknown Extension Point defined in menuItem ["
-                    + rawMenuItem.getName() + "] : " + extensionPoint);
             }
         }
 
+        // Process Tab Extensions
         for (TabType rawTab : perspective.getTab()) {
             resolveUrls(applications, rawTab, TAB_TARGET_URL);
             ActionType action = rawTab.getAction();
             switch (action) {
-                case ADD: addTab(rawTab); break;
-                case REMOVE: removeTab(rawTab); break;
-                case REPLACE: replaceTab(rawTab); break;
-            }            
+            case ADD:
+                addTab(rawTab);
+                break;
+            case REMOVE:
+                removeTab(rawTab);
+                break;
+            case REPLACE:
+                replaceTab(rawTab);
+                break;
+            }
         }
     }
 
@@ -177,22 +184,20 @@ public class PerspectivePluginMetadataManager {
         ApplicationType applicationType = getApplicationByName(applications, extension.getApplication());
 
         if (extension instanceof TaskType) {
-            TaskType task = (TaskType)extension;
+            TaskType task = (TaskType) extension;
             String resolvedUrl = resolveUrl(applicationType, task.getUrl(), targetUrl);
             task.setUrl(resolvedUrl);
-        }
-        else if (extension instanceof MenuItemType) {
-            MenuItemType menuItem = (MenuItemType)extension;
+        } else if (extension instanceof MenuItemType) {
+            MenuItemType menuItem = (MenuItemType) extension;
             String resolvedUrl = resolveUrl(applicationType, menuItem.getUrl(), targetUrl);
             menuItem.setUrl(resolvedUrl);
-        }
-        else if (extension instanceof TabType) {
-            TabType tab = (TabType)extension;
+        } else if (extension instanceof TabType) {
+            TabType tab = (TabType) extension;
             String resolvedUrl = resolveUrl(applicationType, tab.getUrl(), targetUrl);
             tab.setUrl(resolvedUrl);
         }
 
-        String resolvedIconUrl = resolveUrl(applicationType, extension.getIconUrl(), "");
+        String resolvedIconUrl = resolveUrl(applicationType, extension.getIconUrl(), null);
         extension.setIconUrl(resolvedIconUrl);
     }
 
@@ -200,7 +205,7 @@ public class PerspectivePluginMetadataManager {
         String result = url;
 
         if (null != url) {
-            if (isRelativeUrl(url)) {
+            if (isPerspectiveUrl(url)) {
                 if (null == applicationType) {
                     throw new IllegalArgumentException(
                         "Relative URL found without application. Add application attribute to fully resolve url '"
@@ -213,14 +218,35 @@ public class PerspectivePluginMetadataManager {
                     baseUrl += "/";
                     applicationType.setBaseUrl(baseUrl);
                 }
-                result = targetUrl + baseUrl + url;
+
+                result = baseUrl + url;
+
+                // if a targetUrl is supplied then it is assumed that the url will actually
+                // be passed as a parameter to a predefined perspective (xhtml) page. And then
+                // content will be rendered within that page.  We don't want to pass urls as request
+                // parameters (long, could contain characters that would need to be escaped, etc)
+                // so instead we'll now replace the actual url with a numeric key for short and
+                // safe param passing.  They key can then be used to get back the real url at runtime.
+                if (null != targetUrl) {
+                    String keyedUrl = baseUrl + url;
+                    int key = getUrlKey(keyedUrl);
+
+                    // return the targetUrl with the proper targetUrlKey param 
+                    result = targetUrl + key;
+                }
             }
         }
 
         return result;
     }
 
-    private boolean isRelativeUrl(String url) {
+    /**
+     * Determine whether the url is relative to a perspective application or whether the url is
+     * for the RHQ Portal War.
+     * @param url
+     * @return true for a relative url in a declared perspective application
+     */
+    private boolean isPerspectiveUrl(String url) {
         return (!(url.startsWith("/") || url.startsWith("http")));
     }
 
@@ -237,6 +263,36 @@ public class PerspectivePluginMetadataManager {
         }
 
         return result;
+    }
+
+    /**
+     * Return a unique key for the url.
+     * @param url
+     * @return
+     */
+    public synchronized int getUrlKey(String url) {
+        int key = url.hashCode();
+
+        // in the very unlikely case that we have multiple urls with the same hashcode, protect
+        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
+        String mapEntry = keyUrlMap.get(key);
+        while (!((null == mapEntry) || mapEntry.equals(url))) {
+            key *= 13;
+            mapEntry = keyUrlMap.get(key);
+        }
+
+        if (null == mapEntry) {
+            keyUrlMap.put(key, url);
+        }
+
+        return key;
+    }
+
+    /**
+     * Return the url for the given key.
+     */
+    public String getUrlViaKey(int key) {
+        return keyUrlMap.get(key);
     }
 
     // TODO: remove this debug code
@@ -404,8 +460,7 @@ public class PerspectivePluginMetadataManager {
             siblingTabs.set(index, new Tab(rawTab));
         } catch (IllegalArgumentException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Tab not found. Ignoring replacement and attempting add for " + rawTab.getName(),
-                    e);
+                log.debug("Tab not found. Ignoring replacement and attempting add for " + rawTab.getName(), e);
             }
             addTab(rawTab);
         }
@@ -420,8 +475,7 @@ public class PerspectivePluginMetadataManager {
             int index = getTabIndex(result, nameTokens[i]);
             if (index == -1) {
                 throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
-                    + "]. No parent tab found for : " + name
-                    + ". Make sure supporting tabs are defined for the tab.");
+                    + "]. No parent tab found for : " + name + ". Make sure supporting tabs are defined for the tab.");
             }
             Tab parentTab = result.get(index);
             result = parentTab.getChildren();
@@ -449,16 +503,12 @@ public class PerspectivePluginMetadataManager {
         return coreMenu;
     }
 
-    public List<Tab> getResourceTabs()
-    {
+    public List<Tab> getResourceTabs() {
         List<Tab> clone = new ArrayList<Tab>(this.resourceTabs.size());
         for (Tab resourceTab : this.resourceTabs) {
-            try
-            {
+            try {
                 clone.add(resourceTab.clone());
-            }
-            catch (CloneNotSupportedException e)
-            {
+            } catch (CloneNotSupportedException e) {
                 throw new IllegalStateException(e);
             }
         }

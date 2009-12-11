@@ -25,8 +25,6 @@ import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,7 +34,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -65,10 +62,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // The cache is cleaned anytime there is a new entry.
     static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
 
-    static private Map<Integer, String> urlMap = new HashMap<Integer, String>();
-
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
+    // @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    // private EntityManager entityManager;
 
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -118,12 +113,9 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     @NotNull
     public List<Tab> getResourceTabs(Subject subject, Resource resource) {
         List<Tab> resourceTabs;
-        try
-        {
+        try {
             resourceTabs = PerspectiveManagerHelper.getPluginMetadataManager().getResourceTabs();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
@@ -131,11 +123,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType().getId());
         for (Tab resourceTab : resourceTabs) {
             if (isActive(resourceTab, facets)) {
-                activeResourceTabs.add(resourceTab);                                
+                activeResourceTabs.add(resourceTab);
                 List<Tab> subtabs = resourceTab.getChildren();
                 List<Tab> activeSubtabs = new ArrayList<Tab>();
-                for (Tab subtab : subtabs)
-                {
+                for (Tab subtab : subtabs) {
                     if (isActive(subtab, facets)) {
                         activeSubtabs.add(subtab);
                     }
@@ -147,11 +138,11 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return activeResourceTabs;
     }
 
-    private boolean isActive(Tab resourceTab, ResourceFacets facets)
-    {
+    private boolean isActive(Tab resourceTab, ResourceFacets facets) {
         // TODO: Check global perm activators.
         // TODO: Check monitoring license activator.
-        List<ResourceActivatorSetType> currentResourceActivatorSets = resourceTab.getCurrentResourceOrGroupActivatorSets();
+        List<ResourceActivatorSetType> currentResourceActivatorSets = resourceTab
+            .getCurrentResourceOrGroupActivatorSets();
         if (currentResourceActivatorSets != null) {
             for (ResourceActivatorSetType currentResourceActivatorSet : currentResourceActivatorSets) {
                 List<ResourceActivatorType> resourceActivators = currentResourceActivatorSet.getResourceActivator();
@@ -189,36 +180,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             }
         }
         return true;
-    }
-
-    /**
-     * Return a unique key for the url.
-     * @param url
-     * @return
-     */
-    public synchronized int getUrlKey(String url) {
-        int key = url.hashCode();
-
-        // in the very unlikely case that we have multiple urls with the same hashcode, protect
-        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
-        String mapEntry = urlMap.get(key);
-        while (!((null == mapEntry) || mapEntry.equals(url))) {
-            key *= 13;
-            mapEntry = urlMap.get(key);
-        }
-
-        if (null == mapEntry) {
-            urlMap.put(key, url);
-        }
-
-        return key;
-    }
-
-    /**
-     * Return the url for the given key.
-     */
-    public String getUrlViaKey(int key) {
-        return urlMap.get(key);
     }
 
     // TODO: Is there any sort of listener approach we could use to clear an individual cache entry
@@ -346,6 +307,23 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
          */
         public void setCoreMenu(List<MenuItem> coreMenu) {
             this.coreMenu = coreMenu;
+        }
+    }
+
+    /**
+     * Given a targetUrlKey parameter value, as set in the extension, resolve that key into the targetUrl
+     * for the extension's content.
+     * 
+     * @param key, a valid key
+     * @return the target url
+     * 
+     */
+    public String getUrlViaKey(int key) throws PerspectiveException {
+
+        try {
+            return PerspectiveManagerHelper.getPluginMetadataManager().getUrlViaKey(key);
+        } catch (Exception e) {
+            throw new PerspectiveException("Failed to get Url for key: " + key, e);
         }
     }
 

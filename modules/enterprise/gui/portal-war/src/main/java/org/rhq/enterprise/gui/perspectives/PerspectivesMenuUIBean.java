@@ -54,24 +54,27 @@ public class PerspectivesMenuUIBean {
         return result;
     }
 
-    public String getUrlKey() {
-        String url = FacesContextUtility.getRequest().getParameter("url");
-        int key = perspectiveManager.getUrlKey(url);
-
-        return Integer.toString(key);
-    }
-
-    public String getKeyViaUrl(String url) {
-        int key = perspectiveManager.getUrlKey(url);
-
-        return Integer.toString(key);
-    }
-
+    /**
+     * Using the requires request parameter 'targetUrlKey', as set in the extension, resolve that key into
+     * the targetUrl for the extension's content.
+     * 
+     * @return null if 'targetUrlKey' param is invalid. 
+     */
     public String getUrlViaKey() {
-        String key = FacesContextUtility.getRequest().getParameter("key");
-        String url = (null == key) ? null : perspectiveManager.getUrlViaKey(Integer.valueOf(key));
+        String targetUrlKey = FacesContextUtility.getRequest().getParameter("targetUrlKey");
+        String result = null;
 
-        return url;
+        try {
+            result = perspectiveManager.getUrlViaKey(Integer.valueOf(targetUrlKey));
+        } catch (NumberFormatException e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "Required request parameter 'targetUrlKey' was not numeric: " + targetUrlKey, e);
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Could not get url for targetUrlKey: "
+                + targetUrlKey, e);
+        }
+
+        return result;
     }
 
 }

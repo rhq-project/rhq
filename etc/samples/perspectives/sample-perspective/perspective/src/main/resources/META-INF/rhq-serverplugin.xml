@@ -50,35 +50,35 @@
          placement="after" />
    </menuItem>
 
-   <!-- Add Custom menuItem to Core Menu -->
+   <!-- Add Sample menuItem to Core Menu -->
    <menuItem
-      name="custom"
-      displayName="Custom">
+      name="sample"
+      displayName="Sample">
       <position
          extensionPoint="coreMenu"
          name="help"
          placement="after" />
    </menuItem>
    <menuItem
-      name="custom.child1"
-      displayName="Child-1">
+      name="sample.child1"
+      displayName="New Group">
       <position
          extensionPoint="coreMenu"
-         name="custom"
+         name="sample"
          placement="start" />
    </menuItem>
    <menuItem
-      name="custom.child2"
-      displayName="Child-2"
+      name="sample.child2"
+      displayName="Sample Page"
       application="sample"
-      url="index.html">
+      url="mainpage.html">
       <position
          extensionPoint="coreMenu"
-         name="custom.child1"
+         name="sample.child1"
          placement="after" />
    </menuItem>
    <menuItem
-      name="custom.child1.newGroup"
+      name="sample.child1.newGroup"
       displayName="New Group"
       application="sample"
       url="/resource/group/Inventory.do?mode=new"
@@ -87,41 +87,48 @@
          <globalPermissionActivator
             permission="MANAGE_INVENTORY" />
       </globalPermissionActivatorSet>
-       <position
+      <position
          extensionPoint="coreMenu"
-         name="custom.child1"
+         name="sample.child1"
          placement="start" />
    </menuItem>
    <menuItem
-      name="custom.child1.newGroupDefinition"
+      name="sample.child1.newGroupDefinition"
       displayName="New Group Definition"
       application="sample"
       url="/rhq/definition/group/new.xhtml"
       iconUrl="images/create.png">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
+            permission="MANAGE_INVENTORY" />
+      </globalPermissionActivatorSet>
       <position
          extensionPoint="coreMenu"
-         name="custom.child1.newGroup"
+         name="sample.child1.newGroup"
          placement="after" />
    </menuItem>
 
-    <tab name="Custom" displayName="Custom" iconUrl="/images/icons/Favorite_16.png"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory"
-           placement="after" />
-    </tab>
+   <tab
+      name="sample"
+      displayName="Sample"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="tabpage.html">
+      <position
+         extensionPoint="coreMenu"
+         name="Inventory"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Reports" displayName="Reports"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Tables"
-           placement="after" />
-    </tab>
+   <tab
+      name="Monitor.Sample"
+      displayName="Sample"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         extensionPoint="coreMenu"
+         name="Monitor.Tables"
+         placement="after" />
+   </tab>
 
 </perspectivePlugin>

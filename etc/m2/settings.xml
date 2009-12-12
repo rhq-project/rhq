@@ -23,7 +23,7 @@
       <activeProfile>overrides</activeProfile>
 
       <!-- The 'dev' profile enables automatic copying of artifacts to a dev RHQ container. -->
-      <!--<activeProfile>dev</activeProfile>-->
+      <activeProfile>dev</activeProfile>
 
       <!-- The 'jdk6' profile can be used to build RHQ using JDK6. See the 'jdk6' profile block below. -->
       <!--<activeProfile>jdk6</activeProfile>-->
@@ -83,7 +83,7 @@
                   <enabled>false</enabled>
                </snapshots>
             </repository>
-
+<!--
             <repository>
                <id>jboss-snapshots</id>
                <name>JBoss Snapshot Repository</name>
@@ -92,7 +92,7 @@
                   <enabled>true</enabled>
                </snapshots>
             </repository>
-
+-->
             <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
             <!--
             <repository>
@@ -114,7 +114,7 @@
                   <enabled>false</enabled>
                </snapshots>
             </pluginRepository>
-
+<!--            
             <pluginRepository>
                <id>jboss-snapshots</id>
                <name>JBoss Snapshot Repository</name>
@@ -123,7 +123,7 @@
                   <enabled>true</enabled>
                </snapshots>
             </pluginRepository>
-
+-->
          </pluginRepositories>
 
       </profile>
@@ -250,7 +250,8 @@
       <pluginGroup>org.rhq</pluginGroup>
    </pluginGroups>
 
-   <!-- See: http://maven.apache.org/settings.html#Servers -->
+   <!-- See: http://maven.apache.org/settings.html#Servers
+        and: http://maven.apache.org/guides/mini/guide-wagon-providers.html -->
    <servers>
       <server>
          <id>jboss-snapshots</id>
@@ -258,6 +259,18 @@
               used by the release plugin to publish via WebDAV to the JBoss Snapshots repo. -->
          <username>YOUR_USERNAME</username>
          <password>YOUR_PASSWORD</password>
+         <configuration>            
+            <httpConfiguration>
+              <put>
+                <params>
+                  <param>
+                    <name>http.authentication.preemptive</name>
+                    <value>%b,true</value>
+                  </param>
+                </params>
+              </put>
+            </httpConfiguration>           
+         </configuration>                  
       </server>
    </servers>
 

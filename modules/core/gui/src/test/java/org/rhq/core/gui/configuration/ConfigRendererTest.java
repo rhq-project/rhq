@@ -17,6 +17,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 
@@ -83,6 +84,7 @@ public class ConfigRendererTest {
         value.setConfiguration(configuration);
         value.setId(3);
         configuration.getMap().put(value.getName(), value);
+        configuration.getRawConfigurations().add(buildMockRawConfig());
 
         Assert.assertNotNull(configUIComponent.getConfigurationDefinition());
         configUIComponent.getConfigurationDefinition().setConfigurationFormat(ConfigurationFormat.STRUCTURED_AND_RAW);
@@ -100,6 +102,13 @@ public class ConfigRendererTest {
 
         System.out.println(s2);
 
+    }
+
+    private RawConfiguration buildMockRawConfig() {
+        RawConfiguration raw = new RawConfiguration();
+
+        raw.setContents("a=1".getBytes());
+        return raw;
     }
 
     //@Test

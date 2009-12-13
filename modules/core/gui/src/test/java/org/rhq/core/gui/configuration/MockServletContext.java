@@ -34,7 +34,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
 import com.sun.faces.config.WebConfiguration;
-
 final class MockServletContext implements ServletContext {
     public void setAttribute(String arg0, Object arg1) {
         this.attributeMap.put(arg0, arg1);

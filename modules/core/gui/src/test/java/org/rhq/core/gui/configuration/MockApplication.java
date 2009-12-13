@@ -14,8 +14,10 @@ import javax.faces.application.ViewHandler;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandLink;
+import javax.faces.component.html.HtmlGraphicImage;
 import javax.faces.component.html.HtmlOutputFormat;
 import javax.faces.component.html.HtmlOutputText;
+import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
@@ -118,6 +120,8 @@ public class MockApplication extends Application {
             componentTypeMap.put("javax.faces.Output", HtmlOutputFormat.class);
             componentTypeMap.put("javax.faces.HtmlCommandLink", HtmlCommandLink.class);
             componentTypeMap.put("javax.faces.Parameter", UIParameter.class);
+            componentTypeMap.put("javax.faces.HtmlGraphicImage", HtmlGraphicImage.class);
+            componentTypeMap.put("javax.faces.HtmlPanelGrid", HtmlPanelGrid.class);
         }
         return componentTypeMap;
     }

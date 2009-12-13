@@ -3,6 +3,7 @@ package org.rhq.core.gui.configuration;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import javax.faces.context.ResponseStream;
 import javax.faces.context.ResponseWriter;
@@ -34,10 +35,26 @@ public class MockRenderKit extends RenderKit {
 
     }
 
+    HashSet<String> noRendererSet;
+
+    public HashSet<String> getNoRendererSet() {
+        if (null == noRendererSet) {
+            noRendererSet = new HashSet<String>();
+            noRendererSet.add("javax.faces.HtmlCommandLink");
+            noRendererSet.add("javax.faces.Form");
+            noRendererSet.add("javax.faces.Textarea");
+        }
+        return noRendererSet;
+    }
+
     HashMap<String, Class> rendererMap;
 
     @Override
     public Renderer getRenderer(String family, String rendererType) {
+
+        if (getNoRendererSet().contains(rendererType))
+            return null;
+
         try {
             if (null == rendererMap) {
                 rendererMap = new HashMap<String, Class>();
@@ -45,16 +62,17 @@ public class MockRenderKit extends RenderKit {
                 rendererMap.put("javax.faces.Format", OutputMessageRenderer.class);
                 rendererMap.put("javax.faces.Group", GroupRenderer.class);
                 rendererMap.put(ConfigRenderer.class.getName(), ConfigRenderer.class);
-                //HtmlCommandLink has no renderer.  It renders itself 
+                rendererMap.put("javax.faces.Link", com.sun.faces.renderkit.html_basic.CommandLinkRenderer.class);
+                rendererMap.put("javax.faces.Image", com.sun.faces.renderkit.html_basic.ImageRenderer.class);
+                rendererMap.put("javax.faces.Grid", com.sun.faces.renderkit.html_basic.GridRenderer.class);
+
             }
             Class c = rendererMap.get(rendererType);
             if (c == null) {
                 System.out.println("MockRenderKit request for unsupported type " + rendererType);
-                return null;
-            } else {
-
-                return (Renderer) c.newInstance();
             }
+            return (Renderer) c.newInstance();
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

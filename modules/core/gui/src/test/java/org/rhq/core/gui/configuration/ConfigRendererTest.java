@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.HashMap;
 
 import javax.faces.FactoryFinder;
+import javax.faces.component.UIForm;
 import javax.faces.context.FacesContext;
 import javax.faces.lifecycle.Lifecycle;
 
@@ -83,10 +84,17 @@ public class ConfigRendererTest {
         value.setName("test1");
         value.setConfiguration(configuration);
         value.setId(3);
+
         configuration.getMap().put(value.getName(), value);
         configuration.getRawConfigurations().add(buildMockRawConfig());
 
         Assert.assertNotNull(configUIComponent.getConfigurationDefinition());
+
+        UIForm form = new UIForm();
+        form.setId("form");
+        form.getChildren().add(configUIComponent);
+        configUIComponent.setParent(form);
+
         configUIComponent.getConfigurationDefinition().setConfigurationFormat(ConfigurationFormat.STRUCTURED_AND_RAW);
 
         Assert.assertNotNull(configUIComponent.getConfigurationDefinition().getConfigurationFormat());

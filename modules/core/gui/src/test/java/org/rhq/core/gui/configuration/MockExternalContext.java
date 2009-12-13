@@ -37,7 +37,8 @@ public class MockExternalContext extends ExternalContext {
 
     @Override
     public String encodeResourceURL(String url) {
-        throw new RuntimeException("Function not implemented");
+
+        return "encodedUrl:" + url;
 
     }
 
@@ -48,6 +49,7 @@ public class MockExternalContext extends ExternalContext {
         if (null == applicationMap) {
             applicationMap = new HashMap<String, Object>();
             applicationMap.put("com.sun.faces.ApplicationImpl", new ApplicationImpl());
+            applicationMap.put("com.sun.faces.sunJsfJs", "Javascript goes here".toCharArray());
         }
 
         return applicationMap;

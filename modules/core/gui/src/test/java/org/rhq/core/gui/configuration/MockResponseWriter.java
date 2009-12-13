@@ -31,7 +31,8 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void flush() throws IOException {
-        throw new RuntimeException("Function not implemented");
+
+        stringWriter.flush();
 
     }
 
@@ -43,8 +44,7 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public String getContentType() {
-        throw new RuntimeException("Function not implemented");
-
+        return "contenttype:";
     }
 
     @Override
@@ -55,7 +55,8 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void startElement(String name, UIComponent component) throws IOException {
-        stringWriter.write("startElement: " + name + ": componenet:" + component.getId() + "\n");
+        stringWriter.write("startElement: " + name + ": component:"
+            + (component != null ? component.getId() : "componenet is null") + "\n");
     }
 
     @Override
@@ -82,8 +83,7 @@ public class MockResponseWriter extends ResponseWriter {
 
     @Override
     public void writeURIAttribute(String name, Object value, String property) throws IOException {
-        throw new RuntimeException("Function not implemented");
-
+        stringWriter.write("attributename:" + name + ", value:" + value.toString() + ", property:" + property);
     }
 
     @Override

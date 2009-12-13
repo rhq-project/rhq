@@ -106,7 +106,8 @@ public class MockFacesContext extends FacesContext {
 
     @Override
     public UIViewRoot getViewRoot() {
-        throw new RuntimeException("Function not implemented");
+        return null;
+        //throw new RuntimeException("Function not implemented");
 
     }
 

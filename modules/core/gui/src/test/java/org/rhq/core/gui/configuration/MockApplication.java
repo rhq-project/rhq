@@ -198,9 +198,11 @@ public class MockApplication extends Application {
 
     }
 
+    MockViewHandler mockViewHandler = new MockViewHandler();
+
     @Override
     public ViewHandler getViewHandler() {
-        throw new RuntimeException("Function not implemented");
+        return mockViewHandler;
 
     }
 

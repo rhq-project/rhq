@@ -347,139 +347,139 @@ public class ServerPluginScanner {
      * @return a list of files that appear to be new or updated and should be deployed
      */
     private List<File> serverPluginScanDatabase() throws Exception {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-
         // these are plugins (name/path/md5/mtime) that have changed in the DB but are missing from the file system
         List<ServerPlugin> updatedPlugins = new ArrayList<ServerPlugin>();
 
         // the same list as above, only they are the files that are written to the filesystem and no longer missing
         List<File> updatedFiles = new ArrayList<File>();
 
-        try {
-            DataSource ds = LookupUtil.getDataSource();
-            conn = ds.getConnection();
+        // get all the plugins
+        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        List<ServerPlugin> installedPlugins = serverPluginsManager.getServerPlugins();
+        for (ServerPlugin installedPlugin : installedPlugins) {
+            String name = installedPlugin.getName();
+            String path = installedPlugin.getPath();
+            String md5 = installedPlugin.getMd5();
+            long mtime = installedPlugin.getMtime();
+            String version = installedPlugin.getVersion();
+            ServerPluginType pluginType = new ServerPluginType(installedPlugin.getType());
 
-            // get all the plugins
-            ps = conn.prepareStatement("SELECT NAME, PATH, MD5, MTIME, VERSION, PTYPE FROM " + ServerPlugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' ");
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                String name = rs.getString(1);
-                String path = rs.getString(2);
-                String md5 = rs.getString(3);
-                long mtime = rs.getLong(4);
-                String version = rs.getString(5);
-                ServerPluginType pluginType = new ServerPluginType(rs.getString(6));
+            // let's see if we have this logical plugin on the filesystem (it may or may not be under the same filename)
+            File expectedFile = new File(this.getServerPluginDir(), path);
+            File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
+            PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(expectedFile);
 
-                // let's see if we have this logical plugin on the filesystem (it may or may not be under the same filename)
-                File expectedFile = new File(this.getServerPluginDir(), path);
-                File currentFile = null; // will be non-null if we find that we have this plugin on the filesystem already
-                PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(expectedFile);
-
-                if (pluginWithDescriptor != null) {
-                    currentFile = expectedFile; // we have it where we are expected to have it
-                    if (!pluginWithDescriptor.plugin.getName().equals(name)
-                        || !pluginType.equals(pluginWithDescriptor.pluginType)) {
-                        // Happens if someone wrote a plugin of one type but later changed it to a different type (or changed names)
-                        log.warn("For some reason, the server plugin file [" + expectedFile + "] is plugin ["
-                            + pluginWithDescriptor.plugin.getName() + "] of type [" + pluginWithDescriptor.pluginType
-                            + "] but the database says it should be [" + name + "] of type [" + pluginType + "]");
-                    } else {
-                        log.debug("File system and db agree on server plugin location for [" + expectedFile + "]");
-                    }
+            if (pluginWithDescriptor != null) {
+                currentFile = expectedFile; // we have it where we are expected to have it
+                if (!pluginWithDescriptor.plugin.getName().equals(name)
+                    || !pluginType.equals(pluginWithDescriptor.pluginType)) {
+                    // Happens if someone wrote a plugin of one type but later changed it to a different type (or changed names)
+                    log.warn("For some reason, the server plugin file [" + expectedFile + "] is plugin ["
+                        + pluginWithDescriptor.plugin.getName() + "] of type [" + pluginWithDescriptor.pluginType
+                        + "] but the database says it should be [" + name + "] of type [" + pluginType + "]");
                 } else {
-                    // the plugin might still be on the file system but under a different filename, see if we can find it
-                    for (Map.Entry<File, PluginWithDescriptor> cacheEntry : this.serverPluginsOnFilesystem.entrySet()) {
-                        if (cacheEntry.getValue().plugin.getName().equals(name)
-                            && cacheEntry.getValue().pluginType.equals(pluginType)) {
-                            currentFile = cacheEntry.getKey();
-                            pluginWithDescriptor = cacheEntry.getValue();
-                            log.info("Filesystem has a server plugin [" + name + "] at the file [" + currentFile
-                                + "] which is different than where the DB thinks it should be [" + expectedFile + "]");
-                            break; // we found it, no need to continue the loop
-                        }
+                    log.debug("File system and db agree on server plugin location for [" + expectedFile + "]");
+                }
+            } else {
+                // the plugin might still be on the file system but under a different filename, see if we can find it
+                for (Map.Entry<File, PluginWithDescriptor> cacheEntry : this.serverPluginsOnFilesystem.entrySet()) {
+                    if (cacheEntry.getValue().plugin.getName().equals(name)
+                        && cacheEntry.getValue().pluginType.equals(pluginType)) {
+                        currentFile = cacheEntry.getKey();
+                        pluginWithDescriptor = cacheEntry.getValue();
+                        log.info("Filesystem has a server plugin [" + name + "] at the file [" + currentFile
+                            + "] which is different than where the DB thinks it should be [" + expectedFile + "]");
+                        break; // we found it, no need to continue the loop
                     }
                 }
+            }
 
-                if (pluginWithDescriptor != null && currentFile != null && currentFile.exists()) {
-                    ServerPlugin dbPlugin = new ServerPlugin(name, path);
-                    dbPlugin.setType(pluginType.stringify());
-                    dbPlugin.setMd5(md5);
-                    dbPlugin.setVersion(version);
-                    dbPlugin.setMtime(mtime);
+            if (pluginWithDescriptor != null && currentFile != null && currentFile.exists()) {
+                ServerPlugin dbPlugin = new ServerPlugin(name, path);
+                dbPlugin.setType(pluginType.stringify());
+                dbPlugin.setMd5(md5);
+                dbPlugin.setVersion(version);
+                dbPlugin.setMtime(mtime);
 
-                    ServerPlugin obsoletePlugin = ServerPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
-                        pluginWithDescriptor.plugin);
+                ServerPlugin obsoletePlugin = ServerPluginDescriptorUtil.determineObsoletePlugin(dbPlugin,
+                    pluginWithDescriptor.plugin);
 
-                    if (obsoletePlugin == pluginWithDescriptor.plugin) { // yes use == for reference equality!
-                        StringBuilder logMsg = new StringBuilder();
-                        logMsg.append("Found server plugin [").append(name);
-                        logMsg.append("] in the DB that is newer than the one on the filesystem: ");
-                        logMsg.append("DB path=[").append(path);
-                        logMsg.append("]; file path=[").append(currentFile.getName());
-                        logMsg.append("]; DB MD5=[").append(md5);
-                        logMsg.append("]; file MD5=[").append(pluginWithDescriptor.plugin.getMd5());
-                        logMsg.append("]; DB version=[").append(version);
-                        logMsg.append("]; file version=[").append(pluginWithDescriptor.plugin.getVersion());
-                        logMsg.append("]; DB timestamp=[").append(new Date(mtime));
-                        logMsg.append("]; file timestamp=[").append(new Date(pluginWithDescriptor.plugin.getMtime()));
-                        logMsg.append("]");
-                        log.info(logMsg.toString());
+                if (obsoletePlugin == pluginWithDescriptor.plugin) { // yes use == for reference equality!
+                    StringBuilder logMsg = new StringBuilder();
+                    logMsg.append("Found server plugin [").append(name);
+                    logMsg.append("] in the DB that is newer than the one on the filesystem: ");
+                    logMsg.append("DB path=[").append(path);
+                    logMsg.append("]; file path=[").append(currentFile.getName());
+                    logMsg.append("]; DB MD5=[").append(md5);
+                    logMsg.append("]; file MD5=[").append(pluginWithDescriptor.plugin.getMd5());
+                    logMsg.append("]; DB version=[").append(version);
+                    logMsg.append("]; file version=[").append(pluginWithDescriptor.plugin.getVersion());
+                    logMsg.append("]; DB timestamp=[").append(new Date(mtime));
+                    logMsg.append("]; file timestamp=[").append(new Date(pluginWithDescriptor.plugin.getMtime()));
+                    logMsg.append("]");
+                    log.info(logMsg.toString());
 
-                        updatedPlugins.add(dbPlugin);
+                    updatedPlugins.add(dbPlugin);
 
-                        if (currentFile.delete()) {
-                            log.info("Deleted the obsolete server plugin file to be updated: " + currentFile);
-                            this.serverPluginsOnFilesystem.remove(currentFile);
-                        } else {
-                            log.warn("Failed to delete the obsolete (to-be-updated) server plugin: " + currentFile);
-                        }
-                        currentFile = null;
-                    } else if (obsoletePlugin == null) {
-                        // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
-                        currentFile.setLastModified(mtime);
-                        pluginWithDescriptor.plugin.setMtime(mtime);
-                        pluginWithDescriptor.plugin.setVersion(version);
-                        pluginWithDescriptor.plugin.setMd5(md5);
+                    if (currentFile.delete()) {
+                        log.info("Deleted the obsolete server plugin file to be updated: " + currentFile);
+                        this.serverPluginsOnFilesystem.remove(currentFile);
                     } else {
-                        log.info("It appears that the server plugin [" + dbPlugin
-                            + "] in the database may be obsolete. If so, it will be updated later.");
+                        log.warn("Failed to delete the obsolete (to-be-updated) server plugin: " + currentFile);
                     }
+                    currentFile = null;
+                } else if (obsoletePlugin == null) {
+                    // the db is up-to-date, but update the cache so we don't check MD5 or parse the descriptor again
+                    currentFile.setLastModified(mtime);
+                    pluginWithDescriptor.plugin.setMtime(mtime);
+                    pluginWithDescriptor.plugin.setVersion(version);
+                    pluginWithDescriptor.plugin.setMd5(md5);
                 } else {
-                    log.info("Found server plugin in the DB that we do not yet have: " + name);
-                    ServerPlugin plugin = new ServerPlugin(name, path, md5);
-                    plugin.setType(pluginType.stringify());
-                    plugin.setMtime(mtime);
-                    plugin.setVersion(version);
-                    updatedPlugins.add(plugin);
-                    this.serverPluginsOnFilesystem.remove(expectedFile); // paranoia, make sure the cache doesn't have this
+                    log.info("It appears that the server plugin [" + dbPlugin
+                        + "] in the database may be obsolete. If so, it will be updated later.");
                 }
+            } else {
+                log.info("Found server plugin in the DB that we do not yet have: " + name);
+                ServerPlugin plugin = new ServerPlugin(name, path, md5);
+                plugin.setType(pluginType.stringify());
+                plugin.setMtime(mtime);
+                plugin.setVersion(version);
+                updatedPlugins.add(plugin);
+                this.serverPluginsOnFilesystem.remove(expectedFile); // paranoia, make sure the cache doesn't have this
             }
-            JDBCUtil.safeClose(ps, rs);
+        }
 
-            // write all our updated plugins to the file system
-            ps = conn.prepareStatement("SELECT CONTENT FROM " + ServerPlugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ? AND PTYPE = ?");
-            for (ServerPlugin plugin : updatedPlugins) {
-                File file = new File(this.getServerPluginDir(), plugin.getPath());
+        // write all our updated plugins to the file system
+        if (!updatedPlugins.isEmpty()) {
+            Connection conn = null;
+            PreparedStatement ps = null;
+            ResultSet rs = null;
 
-                ps.setString(1, plugin.getName());
-                ps.setString(2, plugin.getType());
-                rs = ps.executeQuery();
-                rs.next();
-                InputStream content = rs.getBinaryStream(1);
-                StreamUtil.copy(content, new FileOutputStream(file));
-                rs.close();
-                file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
-                updatedFiles.add(file);
+            try {
+                DataSource ds = LookupUtil.getDataSource();
+                conn = ds.getConnection();
 
-                // we are writing a new file to the filesystem, cache it since we know about it now
-                cacheFilesystemServerPluginJar(file, null);
+                ps = conn.prepareStatement("SELECT CONTENT FROM " + ServerPlugin.TABLE_NAME
+                    + " WHERE DEPLOYMENT = 'SERVER' AND STATUS = 'INSTALLED' AND NAME = ? AND PTYPE = ?");
+                for (ServerPlugin plugin : updatedPlugins) {
+                    File file = new File(this.getServerPluginDir(), plugin.getPath());
+
+                    ps.setString(1, plugin.getName());
+                    ps.setString(2, plugin.getType());
+                    rs = ps.executeQuery();
+                    rs.next();
+                    InputStream content = rs.getBinaryStream(1);
+                    StreamUtil.copy(content, new FileOutputStream(file));
+                    rs.close();
+                    file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
+                    updatedFiles.add(file);
+
+                    // we are writing a new file to the filesystem, cache it since we know about it now
+                    cacheFilesystemServerPluginJar(file, null);
+                }
+            } finally {
+                JDBCUtil.safeClose(conn, ps, rs);
             }
-        } finally {
-            JDBCUtil.safeClose(conn, ps, rs);
         }
 
         return updatedFiles;

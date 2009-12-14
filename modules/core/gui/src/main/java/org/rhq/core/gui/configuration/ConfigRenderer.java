@@ -32,6 +32,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
+import javax.faces.component.UIPanel;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlForm;
@@ -119,6 +120,19 @@ public class ConfigRenderer extends Renderer {
                 PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
                     .isFullyEditable(), true);
             }
+        }
+
+        Boolean readOnly = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("readOnly"));
+        Boolean save = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("save"));
+        configurationComponent.setReadOnly(readOnly);
+
+        if (component.getChildCount() == 0)
+            addChildComponents(configurationComponent);
+        for (UIComponent kid : configurationComponent.getChildren()) {
+            if (kid instanceof RawConfigUIComponent) {
+                kid.decode(facesContext);
+            }
+
         }
 
     }
@@ -249,31 +263,60 @@ public class ConfigRenderer extends Renderer {
             }
         }
 
-        if (!configurationComponent.isReadOnly())
-            addRequiredNotationsKey(configurationComponent);
-
         Boolean shouldShowRawNow = configurationComponent.getShouldShowRaw();
-        addStructuredRawToggle(configurationComponent, shouldShowRawNow);
+        //addStructuredRawToggle(configurationComponent, shouldShowRawNow);
         if (shouldShowRawNow) {
             configurationComponent.getChildren().add(
                 new RawConfigUIComponent(configurationComponent.getConfiguration(), configurationComponent
-                    .getConfigurationDefinition(), configurationComponent));
+                    .getConfigurationDefinition(), configurationComponent, configurationComponent.isReadOnly()));
         } else {
-            if (configurationComponent.getListName() != null) {
-                if (configurationComponent.getListIndex() == null) {
-                    // No index specified means we should add a new map to the list.
-                    configurationComponent.setListIndex(addNewMap(configurationComponent));
-                }
+            addStructuredConfig(configurationComponent);
+        }
+    }
 
-                addListMemberProperty(configurationComponent);
-            } else {
-                addConfiguration(configurationComponent);
+    private void addStructuredConfig(AbstractConfigurationComponent configurationComponent) {
+        UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
+            "summary-props-table");
+        if (configurationComponent.isReadOnly()) {
+            HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
+            FacesComponentUtility.addGraphicImage(editLink, configurationComponent, "/images/edit.png", "Edit");
+            FacesComponentUtility.addOutputText(editLink, configurationComponent, "Edit", "");
+            FacesComponentUtility.addParameter(editLink, configurationComponent, "readOnly", Boolean.toString(false));
+
+        } else {
+            HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
+            FacesComponentUtility.addGraphicImage(saveLink, configurationComponent, "/images/save.png", "Save");
+            FacesComponentUtility.addOutputText(saveLink, configurationComponent, "Save", "");
+            FacesComponentUtility.addParameter(saveLink, configurationComponent, "save", Boolean.toString(true));
+            FacesComponentUtility.addParameter(saveLink, configurationComponent, "readOnly", Boolean.toString(true));
+        }
+
+        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
+            HtmlCommandLink toRawLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
+            FacesComponentUtility.addGraphicImage(toRawLink, configurationComponent, "/images/raw.png", "showRaw");
+            FacesComponentUtility.addOutputText(toRawLink, configurationComponent, "showRaw", "");
+            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "showRaw", Boolean.TRUE.toString());
+            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "readOnly", Boolean
+                .toString(configurationComponent.isReadOnly()));
+        }
+
+        if (!configurationComponent.isReadOnly())
+            addRequiredNotationsKey(configurationComponent);
+
+        if (configurationComponent.getListName() != null) {
+            if (configurationComponent.getListIndex() == null) {
+                // No index specified means we should add a new map to the list.
+                configurationComponent.setListIndex(addNewMap(configurationComponent));
             }
 
-            String id = getInitInputsJavaScriptComponentId(configurationComponent);
-            PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-                .isFullyEditable(), false);
+            addListMemberProperty(configurationComponent);
+        } else {
+            addConfiguration(configurationComponent);
         }
+
+        String id = getInitInputsJavaScriptComponentId(configurationComponent);
+        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+            .isFullyEditable(), false);
     }
 
     private void addStructuredRawToggle(AbstractConfigurationComponent configurationComponent, boolean showRaw) {

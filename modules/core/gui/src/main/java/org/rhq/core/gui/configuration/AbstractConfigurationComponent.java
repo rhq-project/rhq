@@ -52,7 +52,7 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     private static final String READ_ONLY_ATTRIBUTE = "readOnly";
     private static final String FULLY_EDITABLE_ATTRIBUTE = "fullyEditable";
 
-    private Boolean readOnly;
+    private Boolean readOnly = true;
     private Boolean fullyEditable;
     private String listName;
     private Integer listIndex;
@@ -224,7 +224,8 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
 
     RawConfigUIComponent getRawConfigUIComponent() {
         if (null == rawConfigUIComponent) {
-            rawConfigUIComponent = new RawConfigUIComponent(getConfiguration(), getConfigurationDefinition(), this);
+            rawConfigUIComponent = new RawConfigUIComponent(getConfiguration(), getConfigurationDefinition(), this,
+                isReadOnly());
         }
         return rawConfigUIComponent;
     }

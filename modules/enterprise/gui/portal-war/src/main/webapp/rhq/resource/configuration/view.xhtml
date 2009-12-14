@@ -25,7 +25,7 @@ THIS TEXT WILL BE REMOVED.
    <ui:define name="content">
 
 
- <style type="text/css">
+<style type="text/css">
         td.raw-config-table {
 			vertical-align: top;        
 			valign: top;        
@@ -43,22 +43,10 @@ THIS TEXT WILL BE REMOVED.
       <h:form id="viewResourceConfigurationForm">
          <!--  TODO remove the id version -->
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-
-         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationUIBean.configuration != null and !ExistingResourceConfigurationUIBean.updateInProgress}">		          
-                      
-            <h:commandButton value="#{messages.editstructured}" action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and ExistingResourceConfigurationUIBean.structuredSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
-			<h:commandButton value="#{messages.editraw}" action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                             title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure and ExistingResourceConfigurationUIBean.rawSupported and !ExistingResourceConfigurationUIBean.updateInProgress}" />
-         </h:panelGrid>
          
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                      accessMapActionExpression="#{ExistingResourceConfigurationUIBean.accessMap}"
-                     readOnly="true"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
                      nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
                      prevalidate="true"/>

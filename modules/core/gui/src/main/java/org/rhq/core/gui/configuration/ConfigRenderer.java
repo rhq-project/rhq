@@ -88,7 +88,7 @@ public class ConfigRenderer extends Renderer {
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
     protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
 
-    private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
+    private static final Log LOG = LogFactory.getLog(ConfigRenderer.class);
     private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
 
     /**
@@ -264,7 +264,7 @@ public class ConfigRenderer extends Renderer {
         }
 
         Boolean shouldShowRawNow = configurationComponent.getShouldShowRaw();
-        //addStructuredRawToggle(configurationComponent, shouldShowRawNow);
+
         if (shouldShowRawNow) {
             configurationComponent.getChildren().add(
                 new RawConfigUIComponent(configurationComponent.getConfiguration(), configurationComponent
@@ -458,7 +458,7 @@ public class ConfigRenderer extends Renderer {
             + mapName + "'.");
     }
 
-    private void addRequiredNotationsKey(AbstractConfigurationComponent config) {
+    private static void addRequiredNotationsKey(AbstractConfigurationComponent config) {
         addDebug(config, true, ".addNotePanel()");
         HtmlPanelGroup footnotesPanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
         FacesComponentUtility.addOutputText(footnotesPanel, config, "*", REQUIRED_MARKER_TEXT_STYLE_CLASS);
@@ -573,11 +573,11 @@ public class ConfigRenderer extends Renderer {
      * @param start      true if this is the "START" comment, false if it is the "END" comment
      * @param methodName the name of the method this is calling from
      */
-    private void addDebug(UIComponent component, boolean start, String methodName) {
+    private static void addDebug(UIComponent component, boolean start, String methodName) {
         if (LOG.isDebugEnabled()) {
             StringBuilder msg = new StringBuilder("\n<!--");
             msg.append(start ? " START " : " END ");
-            msg.append(this.getClass().getSimpleName());
+            msg.append(ConfigRenderer.class.getSimpleName());
             msg.append(methodName);
             msg.append(" -->\n ");
             FacesComponentUtility.addVerbatimText(component, msg);

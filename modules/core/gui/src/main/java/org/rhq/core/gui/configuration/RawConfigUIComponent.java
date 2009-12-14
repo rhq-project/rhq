@@ -5,12 +5,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UIPanel;
+import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlInputTextarea;
+import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 
@@ -24,11 +27,13 @@ import org.rhq.core.gui.util.FacesContextUtility;
 public class RawConfigUIComponent extends UIComponentBase {
 
     private boolean readOnly;
+    private boolean showRaw;
 
     @Override
     public void decode(FacesContext context) {
         super.decode(context);
         setSelectedPath(FacesContextUtility.getOptionalRequestParameter("path"));
+        readOnly = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("readOnly"));
 
     }
 
@@ -82,6 +87,8 @@ public class RawConfigUIComponent extends UIComponentBase {
         return true;
     }
 
+    Vector<UIParameter> readOnlyParms = new Vector<UIParameter>();
+
     public RawConfigUIComponent(Configuration configuration, ConfigurationDefinition configurationDefinition,
         FacesComponentIdFactory componentIdFactory, boolean readOnly) {
 
@@ -91,7 +98,8 @@ public class RawConfigUIComponent extends UIComponentBase {
         this.readOnly = readOnly;
 
         UIPanel rawPanel = FacesComponentUtility.addBlockPanel(this, idFactory, "");
-        addToolbarIcons(rawPanel, configurationDefinition.getConfigurationFormat().isStructuredSupported());
+
+        addToolbar(configurationDefinition, rawPanel);
 
         HtmlPanelGrid grid = FacesComponentUtility.addPanelGrid(rawPanel, idFactory, "summary-props-table");
         grid.setParent(this);
@@ -130,6 +138,9 @@ public class RawConfigUIComponent extends UIComponentBase {
             FacesComponentUtility.addParameter(link, idFactory, "path", raw.getPath());
             FacesComponentUtility.addParameter(link, idFactory, "whichRaw", Integer.toString(rawCount++));
             FacesComponentUtility.addParameter(link, idFactory, "showRaw", Boolean.TRUE.toString());
+            readOnlyParms.add(FacesComponentUtility.addParameter(link, idFactory, "readOnly", Boolean
+                .toString(readOnly)));
+
         }
 
         UIPanel panelRight = FacesComponentUtility.addBlockPanel(grid, idFactory, "summary-props-table");
@@ -144,8 +155,8 @@ public class RawConfigUIComponent extends UIComponentBase {
         inputTextarea.setReadonly(readOnly);
     }
 
-    private void addToolbarIcons(UIPanel toolbarPanel, boolean supportsStructured) {
-
+    private void addToolbar(ConfigurationDefinition configurationDefinition, UIPanel parent) {
+        UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(parent, idFactory, "config-toolbar");
         if (readOnly) {
             HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
             FacesComponentUtility.addGraphicImage(editLink, idFactory, "/images/edit.png", "Edit");
@@ -157,24 +168,31 @@ public class RawConfigUIComponent extends UIComponentBase {
             FacesComponentUtility.addOutputText(saveLink, idFactory, "Save", "");
             FacesComponentUtility.addParameter(saveLink, idFactory, "showStructured", Boolean.FALSE.toString());
         }
-        HtmlCommandLink saveCommandLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
-        FacesComponentUtility.addGraphicImage(saveCommandLink, idFactory, "/images/viewfullscreen.png", "FullScreen");
-        FacesComponentUtility.addOutputText(saveCommandLink, idFactory, "Full Screen", "");
-
-        HtmlCommandLink uploadCommandLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
-        FacesComponentUtility.addGraphicImage(uploadCommandLink, idFactory, "/images/upload.png", "Upload");
-        FacesComponentUtility.addOutputText(uploadCommandLink, idFactory, "Upload", "");
-
-        HtmlCommandLink downloadCommandLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
-        FacesComponentUtility.addGraphicImage(downloadCommandLink, idFactory, "/images/download.png", "download");
-        FacesComponentUtility.addOutputText(downloadCommandLink, idFactory, "Download", "");
-
-        if (supportsStructured) {
+        {
+            HtmlCommandLink saveCommandLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
+            FacesComponentUtility.addGraphicImage(saveCommandLink, idFactory, "/images/viewfullscreen.png",
+                "FullScreen");
+            FacesComponentUtility.addOutputText(saveCommandLink, idFactory, "Full Screen", "");
+        }
+        if (!readOnly) {
+            HtmlOutputLink uploadLink = FacesComponentUtility.addOutputLink(toolbarPanel, idFactory, "upload.xhtml");
+            FacesComponentUtility.addGraphicImage(uploadLink, idFactory, "/images/upload.png", "Upload");
+            FacesComponentUtility.addOutputText(uploadLink, idFactory, "Upload", "");
+        }
+        {
+            HtmlOutputLink downloadLink = FacesComponentUtility
+                .addOutputLink(toolbarPanel, idFactory, "download.xhtml");
+            FacesComponentUtility.addGraphicImage(downloadLink, idFactory, "/images/download.png", "download");
+            FacesComponentUtility.addOutputText(downloadLink, idFactory, "Download", "");
+        }
+        if (configurationDefinition.getConfigurationFormat().isStructuredSupported()) {
             HtmlCommandLink toStructureLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
             FacesComponentUtility.addGraphicImage(toStructureLink, idFactory, "/images/structured.png",
                 "showStructured");
             FacesComponentUtility.addOutputText(toStructureLink, idFactory, "showStructured", "");
-            FacesComponentUtility.addParameter(toStructureLink, idFactory, "showStructured", Boolean.FALSE.toString());
+            FacesComponentUtility.addParameter(toStructureLink, idFactory, "showRaw", Boolean.FALSE.toString());
+            readOnlyParms.add(FacesComponentUtility.addParameter(toStructureLink, idFactory, "readOnly", Boolean
+                .toString(readOnly)));
         }
     }
 
@@ -183,6 +201,9 @@ public class RawConfigUIComponent extends UIComponentBase {
         // TODO Auto-generated method stub
         super.encodeBegin(context);
         inputTextarea.setValue(rawMap.get(getSelectedPath()).getContentString());
+        for (UIParameter param : readOnlyParms) {
+            param.setValue(Boolean.toString(readOnly));
+        }
 
     }
 }

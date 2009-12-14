@@ -55,44 +55,44 @@
   <!-- list is different because of the resource owner stuff -->
   <definition name=".page.title.events.list.platform"
       extends=".page.title">
-      <put name="linkUrl" 
+      <put name="linkUrl"
           value="/resource/platform/inventory/PlatformLinks.jsp"/>
     <put name="titleBgStyle" value="PageTitlePlatformBg"/>
     <put name="titleImg" value="title_platform.gif"/>
   </definition>
-  
+
   <definition name=".page.title.events.list.server"
       extends=".page.title">
-      <put name="linkUrl" 
+      <put name="linkUrl"
           value="/resource/server/inventory/ServerLinks.jsp"/>
     <put name="titleBgStyle" value="PageTitleServerBg"/>
     <put name="titleImg" value="title_server.gif"/>
   </definition>
-  
+
   <definition name=".page.title.events.list.service"
       extends=".page.title">
-      <put name="linkUrl" 
+      <put name="linkUrl"
           value="/resource/service/inventory/ServiceLinks.jsp"/>
       <put name="titleBgStyle" value="PageTitleServiceBg"/>
       <put name="titleImg" value="title_service.gif"/>
   </definition>
-  
+
   <definition name=".page.title.events.list.application"
       extends=".page.title">
-      <put name="linkUrl" 
+      <put name="linkUrl"
           value="/resource/application/inventory/ApplicationLinks.jsp"/>
       <put name="titleBgStyle" value="PageTitleApplicationBg"/>
     <put name="titleImg" value="title_application.gif"/>
   </definition>
-  
+
   <definition name=".page.title.events.list.group"
       extends=".page.title">
-      <put name="linkUrl" 
+      <put name="linkUrl"
           value="/resource/group/inventory/GroupLinks.jsp"/>
       <put name="titleBgStyle" value="PageTitleGroupBg"/>
       <put name="titleImg" value="title_group.gif"/>
   </definition>
-  
+
   <!-- view -->
   <definition name=".events.alert.view.nav"
         path="/resource/common/monitor/alerts/ViewAlertNavigation.jsp"/>
@@ -117,10 +117,6 @@
   <definition name=".events.alert.view.notifications.users"
         path="/resource/common/monitor/alerts/ViewAlertNotificationsUsers.jsp"
         controllerUrl="/alerts/ViewNotificationsUsers.do"/>
-
-  <definition name=".events.alert.view.notifications.snmp"
-        path="/resource/common/monitor/alerts/ViewAlertNotificationsOthers.jsp"
-        controllerUrl="/alerts/ViewNotificationsSnmp.do"/>
 
   <definition name=".events.alert.view.controlaction"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"
@@ -182,7 +178,7 @@
   <definition name=".events.config.conditions.condition.expression"
       path="/resource/common/monitor/alerts/config/DefinitionConditionExpression.jsp"/>
 
-<!-- 
+<!--
   <definition name=".events.config.conditions.condition.deletelink"
       path="/resource/common/monitor/alerts/config/DefinitionConditionDeleteLink.jsp"/>
 
@@ -232,10 +228,6 @@
         path="/resource/common/monitor/alerts/config/ListUsers.jsp"
         controllerUrl="/alerts/ViewNotificationsUsers.do"/>
 
-  <definition name=".events.config.view.notifications.snmp"
-        path="/resource/common/monitor/alerts/config/SnmpActionProps.jsp"
-        controllerUrl="/alerts/ViewNotificationsSnmp.do"/>
-
   <definition name=".events.config.view.controlactionbox"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlActionBox.jsp"
               controllerUrl="/alerts/ViewControlAction.do"/>
@@ -257,12 +249,8 @@
   <definition name=".events.config.view.roles"
       path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
       controllerUrl="/alerts/ViewDefinition.do"/>
-              
-  <definition name=".events.config.view.users"
-      path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
-      controllerUrl="/alerts/ViewDefinition.do"/>
 
-  <definition name=".events.config.view.snmp"
+  <definition name=".events.config.view.users"
       path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
       controllerUrl="/alerts/ViewDefinition.do"/>
 
@@ -270,19 +258,19 @@
   <definition name=".events.config.list"
         path="/resource/common/monitor/alerts/config/ListDefinitions.jsp"
         controllerUrl="/alerts/ListDefinitions.do"/>
-                                                     
+
   <definition name =".events.config.addusers"
         controllerUrl="/events/config/AddUsersFormPrepare.do"
         path="/resource/common/monitor/alerts/config/AddEventUsers.jsp"/>
-    
+
   <definition name =".events.config.addroles"
       controllerUrl="/events/config/AddRolesFormPrepare.do"
       path="/resource/common/monitor/alerts/config/AddEventRoles.jsp"/>
-    
+
   <definition name =".events.config.addothers"
       controllerUrl="/events/config/AddOthersFormPrepare.do"
       path="/resource/common/monitor/alerts/config/AddEventOthers.jsp"/>
-    
+
     <definition name=".tabs.resource.events"
             extends=".tabs.resource">
         <putList name="tabList">
@@ -318,7 +306,7 @@
         <put name="subSectionName" value="Monitor"/>
         <put name="subSelectedIndex" value="3"/>
     </definition>
-    
+
     <definition name=".tabs.resource.events.alerts"
         extends=".tabs.resource.events">
         <put name="selectedIndex" value="0"/>
@@ -339,7 +327,7 @@
         <put name="subSectionName" value="Monitor"/>
         <put name="subSelectedIndex" value="2"/>
     </definition>
-    
+
     <definition name=".tabs.resource.events.config.nocontrol"
         extends=".tabs.resource.nocontrol">
         <put name="selectedIndex" value="0"/>
@@ -360,7 +348,7 @@
         <put name="subSectionName" value="Monitor"/>
         <put name="subSelectedIndex" value="3"/>
     </definition>
-    
+
     <definition name=".tabs.resource.events.alerts.nocontrol"
         extends=".tabs.resource.nocontrol">
         <put name="selectedIndex" value="0"/>

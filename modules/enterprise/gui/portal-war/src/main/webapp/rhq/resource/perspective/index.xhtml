@@ -16,9 +16,9 @@ THIS TEXT WILL BE REMOVED.
    THIS TEXT WILL BE REMOVED AS WELL.
 
    <ui:param name="pageTitle"
-             value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Custom Perspective-Defined Tab"/>
+             value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Custom Perspective-Defined Page"/>
 
-   <ui:param name="selectedTabName" value="Custom"/>
+   <ui:param name="selectedTabName" value="#{param.tab}"/>
 
    <ui:define name="content">
 

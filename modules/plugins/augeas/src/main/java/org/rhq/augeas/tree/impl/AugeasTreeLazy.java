@@ -37,6 +37,7 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
+ * Lazy implementation of the augeas tree.
  * 
  * @author Filip Drabek
  *
@@ -58,10 +59,6 @@ public class AugeasTreeLazy implements AugeasTree {
         return new AugeasNodeLazy(fullPath, this);
     }
     
-    public void update() {
-
-    }
-
     public void save() {
         ag.save();
     }

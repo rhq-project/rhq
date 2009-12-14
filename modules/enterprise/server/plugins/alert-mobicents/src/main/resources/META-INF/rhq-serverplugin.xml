@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-mobicents"
+        displayName="Alert:Mobicents"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertMobicents"
+        description="Alert sender plugin that sends alert notifications via Mobicents (voice, sms, ..)"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send voice calls or SMS when alerts were triggered.
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+
+    <!-- Global preferences for all email alerts -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="mobicentsServerUrl" displayName="Mobicents server URL" type="longString"
+                           default="http://localhost:8080/mobicents"
+                description="Base URL of the Mobicents server"/>
+
+    </serverplugin:plugin-configuration>
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Mobicents</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>MobicentsSender</plugin-class>
+
+    <!-- What can a user configure when defining an alert -->
+    <alert-configuration>
+        <c:simple-property name="targetAddress" displayName="Address of the receiver" type="string"
+                description="Address of the receiver. This may e.g. be a telephone number"/>
+        <c:simple-property name="kind" displayName="Type of notification" type="string" default="Voice">
+            <c:property-options>
+                <c:option value="VOICE" name="Voice" default="true"/>
+                <c:option value="SMS" name="SMS"/>
+                <!--
+                <c:option value="MMS"/>
+                <c:option value="XMPP"/>
+                -->
+            </c:property-options>
+        </c:simple-property>
+    </alert-configuration>
+
+</alert-plugin>

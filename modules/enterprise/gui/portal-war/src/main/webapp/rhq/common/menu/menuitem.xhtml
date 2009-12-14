@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html
+   xmlns:h="http://java.sun.com/jsf/html"
+   xmlns:f="http://java.sun.com/jsf/core"
+   xmlns:c="http://java.sun.com/jstl/core"
+   xmlns:ui="http://java.sun.com/jsf/facelets"
+   xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+   xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+   xmlns:onf="http://jboss.org/on/function">
+
+<body>
+<f:view>
+
+Usage: The following parameters must be set in the calling page
+
+currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render 
+
+<ui:composition>
+
+      <c:if test="#{not currentMenuItem.item.isDebug or GlobalPermissionsUIBean.debugMode}">
+
+         <c:if test="#{currentMenuItem.item.position.addBreak}">
+            <rich:menuSeparator />
+         </c:if>
+
+         <c:choose>
+            <c:when test="#{currentMenuItem.item.feature eq null}">
+               <c:choose>
+                  <c:when test="#{currentMenuItem.item.newWindow}">
+                     <rich:menuItem
+                        submitMode="none"
+                        onclick="window.open('#{currentMenuItem.item.url}')"
+                        target="blank_"
+                        icon="#{currentMenuItem.item.iconUrl}"
+                        width="#{currentMenuItem.item.iconWidth}"
+                        height="#{currentMenuItem.item.iconHeight}">
+                        <h:outputText value="#{currentMenuItem.item.displayName}" />
+                     </rich:menuItem>
+                  </c:when>
+                  <c:otherwise>
+                     <rich:menuItem
+                        submitMode="none"
+                        onclick="window.location = '#{currentMenuItem.item.url}'"
+                        icon="#{currentMenuItem.item.iconUrl}"
+                        width="#{currentMenuItem.item.iconWidth}"
+                        height="#{currentMenuItem.item.iconHeight}">
+                        <h:outputText value="#{currentMenuItem.item.displayName}" />
+                     </rich:menuItem>
+                  </c:otherwise>
+               </c:choose>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'ABOUT_BOX'}">
+               <rich:menuItem
+                  submitMode="none"
+                  id="aboutLink"
+                  icon="#{currentMenuItem.item.iconUrl}">
+                  <h:outputText value="#{currentMenuItem.item.displayName}" />
+                  <rich:componentControl
+                     for="aboutPanel"
+                     attachTo="aboutLink"
+                     operation="show"
+                     event="onclick" />
+               </rich:menuItem>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_FAVORITES'}">
+               <rich:menuGroup
+                  value="#{currentMenuItem.item.displayName}"
+                  icon="#{currentMenuItem.item.iconUrl}">
+                  <c:forEach
+                     var="group"
+                     items="#{UserPreferencesUIBean.groupFavorites}">
+                     <rich:menuItem
+                        submitMode="none"
+                        icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
+                        onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
+                        <h:outputText value="#{group.name}" />
+                     </rich:menuItem>
+                  </c:forEach>
+               </rich:menuGroup>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_RECENTLY_VIEWED'}">
+               <rich:menuGroup
+                  value="#{currentMenuItem.item.displayName}"
+                  icon="#{currentMenuItem.item.iconUrl}">
+                  <c:forEach
+                     var="visit"
+                     items="#{UserPreferencesUIBean.recentVisits}">
+                     <c:if test="#{visit.kind == 'COMPATIBLE_GROUP' or visit.kind == 'MIXED_GROUP'}">
+                        <rich:menuItem
+                           submitMode="none"
+                           icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
+                           onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
+                           <h:outputText value="#{visit.name}" />
+                        </rich:menuItem>
+                     </c:if>
+                  </c:forEach>
+               </rich:menuGroup>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_SEARCH'}">
+               <rich:menuItem
+                  submitMode="none"
+                  disabled="true"
+                  iconDisabled="#{currentMenuItem.item.iconUrl}">
+                  <h:outputText
+                     value="#{currentMenuItem.item.displayName} "
+                     style="color: black;" />
+                  <h:panelGroup>
+                     <h:inputText
+                        id="selectedGroup"
+                        style="width: 250px;"
+                        immediate="true"
+                        onkeypress="return ignoreEnterKey(event);" />
+                     <rich:suggestionbox
+                        id="groupSelectBox"
+                        for="selectedGroup"
+                        tokens=",[]"
+                        ajaxSingle="true"
+                        immediate="true"
+                        suggestionAction="#{ResourceGroupSelectUIBean.autocomplete}"
+                        var="result"
+                        data="foo"
+                        fetchValue="#{result.groupQueryString}"
+                        nothingLabel="No matching groups found"
+                        style="background-color: #cccccc;"
+                        onselect="document.location.href='/rhq/group/inventory/view.xhtml?' + #{rich:element('selectedGroup')}.value"
+                        usingSuggestObjects="false"
+                        width="700"
+                        height="400">
+                        <h:column>
+                           <f:facet name="header">Avail</f:facet>
+                           <h:graphicImage
+                              value="/images/icons/availability_green_16.png"
+                              rendered="#{result.implicitUp > 0 and result.implicitDown == 0}" />
+                           <h:graphicImage
+                              value="/images/icons/availability_red_16.png"
+                              rendered="#{result.implicitUp == 0 and result.implicitDown > 0}" />
+                           <h:graphicImage
+                              value="/images/icons/availability_yellow_16.png"
+                              rendered="#{result.implicitUp > 0 and result.implicitDown > 0}" />
+                           <h:graphicImage
+                              value="/images/icons/availability_grey_16.png"
+                              rendered="#{result.implicitUp == 0 and result.implicitDown == 0}" />
+                        </h:column>
+                        <h:column>
+                           <f:facet name="header">Group</f:facet>
+                           <h:outputText value="#{result.resourceGroup.name}" />
+                        </h:column>
+                        <h:column>
+                           <f:facet name="header">Category</f:facet>
+                           <h:outputText
+                              value="#{result.category.name}"
+                              rendered="#{result.category.name == 'MIXED'}" />
+                           <h:outputText
+                              value="#{result.resourceGroup.resourceType.name}"
+                              rendered="#{result.category.name == 'COMPATIBLE'}" />
+                        </h:column>
+                     </rich:suggestionbox>
+                  </h:panelGroup>
+               </rich:menuItem>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_FAVORITES'}">
+               <rich:menuGroup
+                  value="#{currentMenuItem.item.displayName}"
+                  icon="#{currentMenuItem.item.iconUrl}">
+                  <c:forEach
+                     var="resource"
+                     items="#{UserPreferencesUIBean.resourceFavorites}">
+                     <rich:menuItem
+                        submitMode="none"
+                        icon="/images/icons/#{resource.resourceType.category}_up_16.png"
+                        onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{resource.id}'">
+                        <h:outputText value="#{resource.name}" />
+                     </rich:menuItem>
+                  </c:forEach>
+               </rich:menuGroup>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_RECENTLY_VIEWED'}">
+               <rich:menuGroup
+                  value="#{currentMenuItem.item.displayName}"
+                  icon="#{currentMenuItem.item.iconUrl}">
+                  <c:forEach
+                     var="visit"
+                     items="#{UserPreferencesUIBean.recentVisits}">
+                     <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
+                        <rich:menuItem
+                           submitMode="none"
+                           icon="/images/icons/#{visit.kind.displayName}_up_16.png"
+                           onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
+                           <h:outputText value="#{visit.name}" />
+                        </rich:menuItem>
+                     </c:if>
+                  </c:forEach>
+               </rich:menuGroup>
+            </c:when>
+            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_SEARCH'}">
+               <rich:menuItem
+                  submitMode="none"
+                  disabled="true"
+                  iconDisabled="#{currentMenuItem.item.iconUrl}">
+                  <h:outputText
+                     value="#{currentMenuItem.item.displayName} "
+                     style="color: black;" />
+                  <h:panelGroup>
+                     <h:inputText
+                        id="selectedResource"
+                        style="width: 250px;"
+                        immediate="true"
+                        onkeypress="return ignoreEnterKey(event);" />
+                     <rich:suggestionbox
+                        id="resourceSelectBox"
+                        for="selectedResource"
+                        tokens=",[]"
+                        ajaxSingle="true"
+                        immediate="true"
+                        suggestionAction="#{ResourceSelectUIBean.autocomplete}"
+                        var="result"
+                        data="foo"
+                        fetchValue="#{result.resource.id}"
+                        nothingLabel="No matching resources found"
+                        style="background-color: #cccccc;"
+                        onselect="document.location.href='#{onf:getDefaultResourceTabURL()}?id=' + #{rich:element('selectedResource')}.value"
+                        usingSuggestObjects="false"
+                        width="700"
+                        height="400">
+                        <h:column>
+                           <f:facet name="header">Avail</f:facet>
+                           <h:graphicImage
+                              value="/images/icons/availability_#{result.availability == 'UP' ? 'green' : 'red'}_16.png" />
+                        </h:column>
+                        <h:column>
+                           <f:facet name="header">Resource</f:facet>
+                           <h:outputText value="#{result.resource.name}" />
+                        </h:column>
+                        <h:column>
+                           <f:facet name="header">Parent</f:facet>
+                           <h:outputText value="#{result.parent.name}" />
+                        </h:column>
+                     </rich:suggestionbox>
+                  </h:panelGroup>
+               </rich:menuItem>
+            </c:when>
+         </c:choose>
+
+      </c:if>
+
+      <div style="clear: both;" />
+
+   </ui:composition>
+
+</f:view>
+</body>
+</html>

@@ -2,6 +2,10 @@
 <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
 <uri name="urn:xmlns:rhq-configuration" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-configuration.xsd"/>
 <uri name="urn:xmlns:rhq-plugin" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-plugin.xsd"/>
-<uri name="urn:xmlns:rhq-serverplugin.content" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-serverplugin-content.xsd"/>
-<uri name="urn:xmlns:rhq-perspective" uri="platform:/resource/rhq/modules/core/client-api/src/main/resources/rhq-perspective.xsd"/>
+<uri name="urn:xmlns:rhq-contentsource-packagedetails" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-contentsource-packagedetails.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-serverplugin.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin.generic" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-serverplugin-generic.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin.alert" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-serverplugin-alert.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin.content" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-serverplugin-content.xsd"/>
+<uri name="urn:xmlns:rhq-serverplugin.perspective" uri="platform:/resource/rhq/modules/enterprise/server/xml-schemas/src/main/resources/rhq-serverplugin-perspective.xsd"/>
 </catalog>

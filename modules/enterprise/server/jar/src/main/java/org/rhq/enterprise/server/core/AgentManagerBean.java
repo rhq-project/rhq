@@ -34,9 +34,6 @@ import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -47,8 +44,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.jboss.annotation.IgnoreDependency;
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
 
 import org.rhq.core.clientapi.server.core.AgentVersion;
 import org.rhq.core.domain.auth.Subject;
@@ -60,7 +55,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.MessageDigestGenerator;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
@@ -518,10 +512,7 @@ public class AgentManagerBean implements AgentManagerLocal {
 
     @ExcludeDefaultInterceptors
     public File getAgentDownloadDir() throws Exception {
-        MBeanServer mbs = MBeanServerLocator.locateJBoss();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File agentDownloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads/rhq-agent");
         if (!agentDownloadDir.exists()) {
             throw new FileNotFoundException("Missing agent downloads directory at [" + agentDownloadDir + "]");

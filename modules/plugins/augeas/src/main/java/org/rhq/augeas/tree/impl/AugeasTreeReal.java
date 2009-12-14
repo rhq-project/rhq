@@ -31,12 +31,12 @@ import net.augeas.Augeas;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.node.AugeasNodeReal;
-import org.rhq.augeas.node.AugeasRootNode;
 import org.rhq.augeas.tree.AugeasNodeBuffer;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
+ * Eager representation of the Augeas tree.
  * 
  * @author Filip Drabek
  *
@@ -45,20 +45,13 @@ public class AugeasTreeReal implements AugeasTree {
     private AugeasModuleConfig moduleConfig;
     private Augeas ag;
     private AugeasNode rootNode;
-    private AugeasNode rootConfigNode;
     private AugeasNodeBuffer nodeBuffer;
     private String[] errorNodes = { "pos", "line", "char", "lens", "message" };
-
-    private static String AUGEAS_DATA_PATH = File.separatorChar + "files";
 
     public AugeasTreeReal(Augeas ag, AugeasModuleConfig moduleConfig) {
         nodeBuffer = new AugeasNodeBuffer();
         this.moduleConfig = moduleConfig;
         this.ag = ag;
-    }
-
-    public void update() {
-
     }
 
     public void save() {

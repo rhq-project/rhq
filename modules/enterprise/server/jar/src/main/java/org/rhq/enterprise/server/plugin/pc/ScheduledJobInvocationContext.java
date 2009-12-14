@@ -31,17 +31,41 @@ import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 public class ScheduledJobInvocationContext {
     private final ScheduledJobDefinition jobDefinition;
     private final ServerPluginContext serverPluginContext;
+    private final ServerPluginComponent serverPluginComponent;
 
-    public ScheduledJobInvocationContext(ScheduledJobDefinition jobDefinition, ServerPluginContext pluginContext) {
+    public ScheduledJobInvocationContext(ScheduledJobDefinition jobDefinition, ServerPluginContext pluginContext,
+        ServerPluginComponent serverPluginComponent) {
         this.jobDefinition = jobDefinition;
         this.serverPluginContext = pluginContext;
+        this.serverPluginComponent = serverPluginComponent;
     }
 
+    /**
+     * The definition of the triggered job that owns this context object.
+     *  
+     * @return the triggered job's definition
+     */
     public ScheduledJobDefinition getJobDefinition() {
         return this.jobDefinition;
     }
 
+    /**
+     * General information for the job's plugin.
+     * 
+     * @return the triggered job's plugin context
+     */
     public ServerPluginContext getServerPluginContext() {
         return this.serverPluginContext;
+    }
+
+    /**
+     * If the job's plugin has a plugin component defined, this will return the instance of that component.
+     * This is helpful for stateless jobs to obtain information from the plugin component, which is stateful.
+     * 
+     * @return the plugin component instance from the triggered job's plugin, or <code>null</code> if
+     *         there is no plugin component for the plugin
+     */
+    public ServerPluginComponent getServerPluginComponent() {
+        return serverPluginComponent;
     }
 }

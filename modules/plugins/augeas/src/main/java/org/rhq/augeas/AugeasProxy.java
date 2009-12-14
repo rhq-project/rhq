@@ -33,12 +33,15 @@ import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
-import org.rhq.augeas.tree.impl.AugeasTreeLazy;
-import org.rhq.augeas.tree.impl.AugeasTreeReal;
 import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
-import org.rhq.augeas.util.Glob;
 
 /**
+ * This is the main entry point for interfacing with Augeas.
+ * 
+ * The proxy is supplied with {@link AugeasConfiguration} that configures
+ * what and how Augeas should load and optionally with an {@link AugeasTreeBuilder} which
+ * specifies how to build an in memory representation of the tree returned from Augeas
+ * itself (see {@link AugeasTree}).
  * 
  * @author Filip Drabek
  * @author Ian Springer
@@ -51,10 +54,14 @@ public class AugeasProxy {
     private List<String> modules;
     private AugeasTreeBuilder augeasTreeBuilder;
 
+    /**
+     * Instantiates new proxy with supplied configuration and
+     * {@link DefaultAugeasTreeBuilder} as the tree builder.
+     * 
+     * @param config the augeas configuration.
+     */
     public AugeasProxy(AugeasConfiguration config) {
-        this.config = config;
-        modules = new ArrayList<String>();
-        augeasTreeBuilder = new DefaultAugeasTreeBuilder();
+        this(config, new DefaultAugeasTreeBuilder());
     }
 
     public AugeasProxy(AugeasConfiguration config, AugeasTreeBuilder builder) {
@@ -63,12 +70,17 @@ public class AugeasProxy {
         modules = new ArrayList<String>();
     }
 
+    /**
+     * Initializes and loads the Augeas tree.
+     * 
+     * @throws AugeasTreeException
+     */
     public void load() throws AugeasTreeException {
         config.loadFiles();
-    	augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
+        augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
 
         for (AugeasModuleConfig module : config.getModules()) {
-          
+
             modules.add(module.getModuletName());
             augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
 
@@ -81,9 +93,19 @@ public class AugeasProxy {
         augeas.load();
     }
 
-    public AugeasTree getAugeasTree(String name, boolean lazy) throws AugeasTreeException {
-        if (!modules.contains(name))
-            throw new AugeasTreeException("Augeas Module " + name + " not found.");
+    /**
+     * Produces the Augeas tree by loading it from augeas (if {@link #load()} wasn't called already)
+     * and calling out to the tree builder to construct the tree.
+     * 
+     * @param moduleName the name of the Augeas module to use for loading
+     * @param lazy true if the tree is lazily initialized, false for eager initialization
+     * @return the tree
+     * @throws AugeasTreeException if the specified module wasn't configured or if there was some error loading 
+     * the tree.
+     */
+    public AugeasTree getAugeasTree(String moduleName, boolean lazy) throws AugeasTreeException {
+        if (!modules.contains(moduleName))
+            throw new AugeasTreeException("Augeas Module " + moduleName + " not found.");
 
         try {
             if (augeas == null)
@@ -96,7 +118,7 @@ public class AugeasProxy {
         AugeasModuleConfig module = null;
 
         for (AugeasModuleConfig conf : config.getModules()) {
-            if (conf.getModuletName().equals(name)) {
+            if (conf.getModuletName().equals(moduleName)) {
                 module = conf;
                 break;
             }
@@ -104,7 +126,7 @@ public class AugeasProxy {
         AugeasTree tree;
 
         try {
-            tree = augeasTreeBuilder.buildTree(this, config, name, lazy);
+            tree = augeasTreeBuilder.buildTree(this, config, moduleName, lazy);
         } catch (Exception e) {
             throw new AugeasTreeException(e.getMessage());
         }
@@ -112,6 +134,12 @@ public class AugeasProxy {
         return tree;
     }
 
+    /**
+     * A helper method to produce the string representation of the tree.
+     * 
+     * @param path
+     * @return
+     */
     public String printTree(String path) {
         StringBuilder builder = new StringBuilder();
         builder.append(path + "    " + augeas.get(path) + '\n');
@@ -123,6 +151,10 @@ public class AugeasProxy {
         return builder.toString();
     }
 
+    /**
+     * 
+     * @return the underlying Augeas API instance.
+     */
     public Augeas getAugeas() {
         return augeas;
     }

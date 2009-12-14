@@ -21,18 +21,18 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
-      <description>Visibility for the installed agent and server plugins</description>
-      <display-name>Installed Plugin</display-name>
-      <managed-bean-name>InstalledPluginUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <description>Maintains state of the tab views</description>
+      <display-name>Installed Plugins Session State</display-name>
+      <managed-bean-name>InstalledPluginsSessionUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.plugin.InstalledPluginsSessionUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
-    <managed-bean>
-        <description>Access to downloads information</description>
-        <managed-bean-name>DownloadsUIBean</managed-bean-name>
-        <managed-bean-class>org.rhq.enterprise.gui.admin.DownloadsUIBean</managed-bean-class>
-        <managed-bean-scope>request</managed-bean-scope>
-    </managed-bean>
+   <managed-bean>
+      <description>Access to downloads information</description>
+      <managed-bean-name>DownloadsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.admin.DownloadsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
 </faces-config>

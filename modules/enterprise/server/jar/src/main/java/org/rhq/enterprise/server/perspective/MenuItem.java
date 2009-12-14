@@ -28,6 +28,15 @@ public class MenuItem {
         this.children = children;
     }
 
+    public boolean isMenuGroup() {
+        return (null != this.children && this.children.size() > 0);
+    }
+
+    public boolean isGraphic() {
+        String displayName = this.item.getDisplayName();
+        return (null == displayName || "".equals(displayName.trim()));
+    }
+
     /**
      * @return the item
      */

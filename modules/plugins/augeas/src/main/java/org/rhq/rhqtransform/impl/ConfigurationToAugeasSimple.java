@@ -43,6 +43,8 @@ import org.rhq.rhqtransform.ConfigurationToAugeas;
 
 
 /**
+ * Basic implementation of updating the Augeas with data from RHQ configuration.
+ * The mapping is based on the RHQ property names.
  * 
  * @author Filip Drabek
  *

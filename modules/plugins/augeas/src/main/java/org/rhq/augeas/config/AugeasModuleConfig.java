@@ -26,7 +26,10 @@ package org.rhq.augeas.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rhq.augeas.AugeasProxy;
+
 /**
+ * Represents the configuration of an Augeas module to be used by the {@link AugeasProxy}.
  * 
  * @author Filip Drabek
  *

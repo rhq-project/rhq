@@ -5,10 +5,16 @@
                 description="A custom generic plugin."
                 package="org.custom"
                 version="1.0"
-                apiVersion="2.0" 
+                apiVersion="2.0"
+                disabledOnDiscovery="true"
                 xmlns="urn:xmlns:rhq-serverplugin.generic"
                 xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+       This is a sample plugin that has a plugin component which simply outputs messages during lifecycle changes.
+       It also demonstrates several jobs using different types of schedules.
+    ]]></serverplugin:help>
 
     <serverplugin:plugin-component class="MyLifecycleListener" />
 

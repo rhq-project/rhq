@@ -28,16 +28,36 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 
 /**
+ * An overarching interface above {@link AugeasToConfiguration} and {@link ConfigurationToAugeas}
+ * to provide an easy default access to the main functionality to the users.
+ * The main raison d'etre for this interface is to provide the ability to completely abstract out
+ * the dealing with Augeas from the classes that should only deal with RHQ configuration.
  * 
  * @author Filip Drabek
  *
  */
 public interface RhqAugeasMapping {
 
-    public void updateAugeas(AugeasProxy augeasComponent, Configuration config, ConfigurationDefinition configDef)
+    /**
+     * Updates the Augeas data from the RHQ configuration instance.
+     * 
+     * @param augeasProxy the acces to Augeas
+     * @param config the configuration to persist
+     * @param configDef the definition of the configuration
+     * @throws AugeasRhqException
+     */
+    public void updateAugeas(AugeasProxy augeasProxy, Configuration config, ConfigurationDefinition configDef)
         throws AugeasRhqException;
 
-    public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef)
+    /**
+     * Reads in the RHQ configuration from Augeas.
+     * 
+     * @param augeasProxy the access to Augeas
+     * @param configDef the configuration definition 
+     * @return the configuration created from the definition and the data in Augeas
+     * @throws AugeasRhqException
+     */
+    public Configuration updateConfiguration(AugeasProxy augeasProxy, ConfigurationDefinition configDef)
         throws AugeasRhqException;
 
 }

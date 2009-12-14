@@ -11,6 +11,13 @@ import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
 
+/**
+ * Default implementation of the tree builder.
+ * This just loads the data from Augeas and represents the returned data as the
+ * node tree without any modifications.
+ * 
+ * @author Filip Drabek
+ */
 public class DefaultAugeasTreeBuilder implements AugeasTreeBuilder {
     private static String AUGEAS_DATA_PATH = File.separatorChar + "files";
 

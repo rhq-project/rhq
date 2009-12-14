@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.plugin.pc;
 
 import java.net.URL;
 
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -29,7 +30,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
  */
 public class ServerPluginEnvironment {
     private final URL pluginUrl;
-    private final String pluginName;
+    private final PluginKey pluginKey;
     private final ClassLoader pluginClassLoader;
     private final ServerPluginDescriptorType pluginDescriptor;
 
@@ -47,11 +48,12 @@ public class ServerPluginEnvironment {
         this.pluginUrl = pluginUrl;
         this.pluginClassLoader = classLoader;
         this.pluginDescriptor = descriptor;
-        this.pluginName = this.pluginDescriptor.getName();
+        String pluginTypeStr = new ServerPluginType(descriptor).stringify();
+        this.pluginKey = PluginKey.createServerPluginKey(pluginTypeStr, this.pluginDescriptor.getName());
     }
 
-    public String getPluginName() {
-        return this.pluginName;
+    public PluginKey getPluginKey() {
+        return this.pluginKey;
     }
 
     public URL getPluginUrl() {
@@ -68,6 +70,6 @@ public class ServerPluginEnvironment {
 
     @Override
     public String toString() {
-        return this.pluginName + ": url=[" + this.pluginUrl + "]";
+        return this.pluginKey + ": url=[" + this.pluginUrl + "]";
     }
 }

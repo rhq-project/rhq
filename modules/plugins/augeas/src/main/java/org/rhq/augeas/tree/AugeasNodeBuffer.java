@@ -31,8 +31,10 @@ import java.util.Map;
 
 import org.rhq.augeas.node.AugeasNode;
 
-
 /**
+ * Stores a buffer of already loaded augeas nodes.
+ * This can be used in the {@link AugeasTree} implementations
+ * to check whether certain nodes have already been loaded.
  * 
  * @author Filip Drabek
  *

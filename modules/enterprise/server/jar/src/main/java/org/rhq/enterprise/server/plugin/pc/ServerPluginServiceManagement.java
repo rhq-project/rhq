@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.plugin.pc;
 
+import java.io.File;
+
 import javax.management.ObjectName;
 
 import org.rhq.core.util.ObjectNameFactory;
@@ -99,4 +101,10 @@ public interface ServerPluginServiceManagement {
      * @return <code>true</code> if the master plugin container has been started
      */
     boolean isMasterPluginContainerStarted();
+
+    /**
+     * Returns the directory where the server plugins are found.
+     * @return server plugins directory
+     */
+    File getServerPluginsDirectory();
 }

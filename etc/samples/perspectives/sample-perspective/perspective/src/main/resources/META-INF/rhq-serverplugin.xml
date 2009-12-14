@@ -11,4 +11,117 @@
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+
+   <!-- Declare supporting applications for this perspective -->
+   <application
+      name="sample"
+      baseUrl="/rhq-sample-perspective/" />
+
+   <!--  replace the coreMenu log with a new one -->
+   <menuItem
+      action="replace"
+      name="logo"
+      displayName=""
+      application="sample"
+      url="/"
+      iconUrl="images/jboss.png">
+      <position
+         extensionPoint="coreMenu"
+         placement="start" />
+   </menuItem>
+
+   <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
+   <menuItem
+      action="remove"
+      name="groups.newGroup"
+      displayName="New Group">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.groupDefinitions"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      action="remove"
+      name="groups.newGroupDefinition"
+      displayName="New Group Definition">
+      <position
+         extensionPoint="coreMenu"
+         name="groups.newGroup"
+         placement="after" />
+   </menuItem>
+
+   <!-- Add Custom menuItem to Core Menu -->
+   <menuItem
+      name="custom"
+      displayName="Custom">
+      <position
+         extensionPoint="coreMenu"
+         name="help"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="custom.child1"
+      displayName="Child-1">
+      <position
+         extensionPoint="coreMenu"
+         name="custom"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="custom.child2"
+      displayName="Child-2"
+      application="sample"
+      url="index.html">
+      <position
+         extensionPoint="coreMenu"
+         name="custom.child1"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="custom.child1.newGroup"
+      displayName="New Group"
+      application="sample"
+      url="/resource/group/Inventory.do?mode=new"
+      iconUrl="images/create.png">
+      <globalPermissionActivatorSet>
+         <globalPermissionActivator
+            permission="MANAGE_INVENTORY" />
+      </globalPermissionActivatorSet>
+       <position
+         extensionPoint="coreMenu"
+         name="custom.child1"
+         placement="start" />
+   </menuItem>
+   <menuItem
+      name="custom.child1.newGroupDefinition"
+      displayName="New Group Definition"
+      application="sample"
+      url="/rhq/definition/group/new.xhtml"
+      iconUrl="images/create.png">
+       <globalPermissionActivatorSet>
+          <globalPermissionActivator
+             permission="MANAGE_INVENTORY" />
+       </globalPermissionActivatorSet>
+      <position
+         extensionPoint="coreMenu"
+         name="custom.child1.newGroup"
+         placement="after" />
+   </menuItem>
+
+    <tab name="Custom" displayName="Custom" iconUrl="/images/icons/Favorite_16.png"
+         application="sample" url="index.html">
+        <position
+           extensionPoint="coreMenu"
+           name="Inventory"
+           placement="after" />
+    </tab>
+
+    <tab name="Monitor.Reports" displayName="Reports"
+         application="sample" url="index.html">
+        <position
+           extensionPoint="coreMenu"
+           name="Monitor.Tables"
+           placement="after" />
+    </tab>
+
 </perspectivePlugin>

@@ -78,6 +78,8 @@
         <column name="RECOVERY_ID" type="INTEGER" required="true"/>
         <!-- required, but 0 effectively means null -->
         <column name="WILL_RECOVER" required="true" default="false" type="BOOLEAN"/>
+        <column name="ACK_TIME" required="false" type="LONG"/>
+        <column name="ACK_BY_ID" required="false" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
         <index name="RHQ_ALERT_IDX_TIME" unique="false">
             <field ref="CTIME"/>
         </index>
@@ -127,6 +129,8 @@
         <column name="SNMP_HOST" size="100" type="VARCHAR2"/>
         <column name="SNMP_PORT" type="INTEGER"/>
         <column name="SNMP_OID" size="250" type="VARCHAR2"/>
+        <column name="ALERT_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
+        <column name="ALERT_SENDER_NAME" required="false" size="100" type="VARCHAR2" /> <!-- TODO make required = true -->
     </table>
 
 </dbsetup>

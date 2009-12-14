@@ -46,6 +46,7 @@ import org.rhq.rhqtransform.NameMap;
 
 
 /**
+ * Basic implementation of Augeas mapping to RHQ configuration based on property names.
  * 
  * @author Filip Drabek
  * @author Ian Springer

@@ -57,28 +57,10 @@
 </c:url>
 
 
-<c:url var="viewSnmpUrl" value="/alerts/Config.do">
-  <c:param name="mode" value="viewSnmp"/>
-  <c:choose>
-  <c:when test="${not empty Resource}">
-    <c:param name="id" value="${Resource.id}"/>
-  </c:when>
-  <c:when test="${not empty ResourceGroup}">
-    <c:param name="groupId" value="${ResourceGroup.id}"/>
-  </c:when>
-  <c:otherwise>
-    <c:param name="type" value="${ResourceType.id}"/>
-  </c:otherwise>
-  </c:choose>
-  <c:param name="ad" value="${alertDef.id}"/>
-</c:url>
-
-
 <tiles:insert definition=".events.config.view.notifications.tabs">
   <tiles:put name="viewRolesUrl" beanName="viewRolesUrl"/>
   <tiles:put name="viewUsersUrl" beanName="viewUsersUrl"/>
   <tiles:put name="viewOthersUrl" beanName="viewOthersUrl"/>
-  <tiles:put name="viewSnmpUrl" beanName="viewSnmpUrl"/>
 </tiles:insert>
 
 <%--
@@ -107,12 +89,6 @@
 <c:set var="formAction" value="/alerts/RemoveOthers"/>
 <c:set var="selfUrl" value="${viewOthersUrl}"/>
 <c:set var="addMode" value="addOthers"/>
-<c:set var="defaultSortColumn" value="0"/>
-</c:when>
-<c:when test="${param.mode == 'viewSnmp'}">
-<% notificationsTile = ".events.config.view.notifications.snmp"; %>
-<c:set var="formAction" value="/alerts/SetSnmpProps"/>
-<c:set var="selfUrl" value="${viewSnmpUrl}"/>
 <c:set var="defaultSortColumn" value="0"/>
 </c:when>
 <c:otherwise>

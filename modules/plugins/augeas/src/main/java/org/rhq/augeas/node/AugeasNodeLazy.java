@@ -32,17 +32,19 @@ import org.rhq.augeas.tree.AugeasTreeException;
 
 /**
  * 
+ * Implementation of the augeas node that loads the children lazily.
+ * 
  * @author Filip Drabek
  *
  */
-public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
+public class AugeasNodeLazy extends AugeasNodeBase implements AugeasNode {
 
-    public AugeasNodeLazy(String FullPath, AugeasTree ag) {
+    public AugeasNodeLazy(String fullPath, AugeasTree ag) {
         super();
 
         this.ag = ag;
-        this.path = FullPath.substring(0, FullPath.lastIndexOf(File.separatorChar) + 1);
-        String val = FullPath.substring(FullPath.lastIndexOf(File.separatorChar) + 1, FullPath.length());
+        this.path = fullPath.substring(0, fullPath.lastIndexOf(File.separatorChar) + 1);
+        String val = fullPath.substring(fullPath.lastIndexOf(File.separatorChar) + 1, fullPath.length());
 
         int firstB = val.indexOf("[");
         if (firstB != -1) {
@@ -50,20 +52,13 @@ public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
             label = val.substring(0, firstB);
         } else {
             seq = 0;
-            label = FullPath.substring(FullPath.lastIndexOf(File.separatorChar) + 1);
+            label = fullPath.substring(fullPath.lastIndexOf(File.separatorChar) + 1);
         }
     }
 
     public List<AugeasNode> getChildNodes() {
         List<AugeasNode> nodes = null;
-        try {
-
-            nodes = ag.match(getFullPath() + File.separatorChar + "*");
-
-        } catch (AugeasTreeException e) {
-            //TODO loggin
-            e.printStackTrace();
-        }
+        nodes = ag.match(getFullPath() + File.separatorChar + "*");
         return nodes;
     }
 
@@ -73,7 +68,7 @@ public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
             return ag.getRootNode();
         try {
             parentNode = ag.getNode(parentNodePath);
-        } catch (Exception e) {
+        } catch (AugeasTreeException e) {
             return null;
         }
 
@@ -110,7 +105,7 @@ public class AugeasNodeLazy extends AugeasNodeParent implements AugeasNode {
     }
 
     public void addChildNode(AugeasNode node) {
-        //TODO kontrola jestli sem patri
+        //TODO check if the node belongs here
         childNodes.add(node);
     }
 

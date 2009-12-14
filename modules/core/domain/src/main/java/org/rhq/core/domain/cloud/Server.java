@@ -69,6 +69,7 @@ import org.rhq.core.domain.resource.Agent;
         + "LEFT JOIN FETCH s.affinityGroup " //
         + "          WHERE s.name = :name"),
     @NamedQuery(name = Server.QUERY_FIND_ALL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE NOT s.operationMode = 'INSTALLED'"),
+    @NamedQuery(name = Server.QUERY_FIND_ALL_NORMAL_CLOUD_MEMBERS, query = "SELECT s FROM Server s WHERE s.operationMode = 'NORMAL'"),
     @NamedQuery(name = Server.QUERY_FIND_BY_AFFINITY_GROUP, query = "" //
         + "SELECT s " //
         + "  FROM Server s " //
@@ -104,8 +105,7 @@ public class Server implements Serializable {
     public static final String QUERY_FIND_WITHOUT_AFFINITY_GROUP = "Server.findWithoutAffinityGroup";
     public static final String QUERY_DELETE_BY_ID = "Server.deleteById";
     public static final String QUERY_UPDATE_SET_STALE_DOWN = "Server.updateSetStaleDown";
-
-    // HA queries
+    public static final String QUERY_FIND_ALL_NORMAL_CLOUD_MEMBERS = "Server.findAllNormalCloudMembers";
     public static final String QUERY_UPDATE_STATUS_BY_NAME = "Server.updateStatusByName";
 
     @Column(name = "ID", nullable = false)
@@ -237,7 +237,7 @@ public class Server implements Serializable {
     public enum OperationMode {
 
         DOWN("This server is down member of the HA server cloud"), //
-        INSTALLED("This server is newly installed but not yet fullyoperating"), //
+        INSTALLED("This server is newly installed but not yet fully operating"), //
         MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud"), //
         NORMAL("This server is a Normal Member of the HA server cloud");
 

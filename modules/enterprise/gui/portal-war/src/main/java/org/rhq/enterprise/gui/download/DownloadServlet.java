@@ -26,19 +26,12 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.management.MBeanServer;
-import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.jboss.mx.util.MBeanServerLocator;
-import org.jboss.system.server.ServerConfig;
-
 import org.rhq.core.domain.cloud.Server.OperationMode;
-import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -228,19 +221,12 @@ public class DownloadServlet extends HttpServlet {
     }
 
     private File getRootDownloadsDir() throws Exception {
-        MBeanServer mbs = getMBeanServer();
-        ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
-        Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
-        File serverHomeDir = ((ServerConfig) mbean).getServerHomeDir();
+        File serverHomeDir = LookupUtil.getCoreServer().getJBossServerHomeDir();
         File downloadDir = new File(serverHomeDir, "deploy/rhq.ear/rhq-downloads");
         if (!downloadDir.exists()) {
             throw new FileNotFoundException("Missing downloads directory at [" + downloadDir + "]");
         }
         return downloadDir;
-    }
-
-    private MBeanServer getMBeanServer() {
-        return MBeanServerLocator.locateJBoss();
     }
 
     private boolean isServerAcceptingRequests() {

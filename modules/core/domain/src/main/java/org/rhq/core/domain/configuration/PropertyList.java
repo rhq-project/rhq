@@ -68,7 +68,7 @@ public class PropertyList extends Property {
     @Cascade( { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.DELETE_ORPHAN })
     @OneToMany(mappedBy = "parentList", targetEntity = Property.class, fetch = FetchType.EAGER)
     //@IndexColumn(name = "list_index")  TODO GH: This seems broken
-    private List<Property> list;
+    private List<Property> list = new ArrayList<Property>();
 
     @Transient
     String memberPropertyName;
@@ -86,8 +86,8 @@ public class PropertyList extends Property {
         setName(name);
     }
 
-    protected PropertyList(PropertyList original) {
-        super(original);
+    protected PropertyList(PropertyList original, boolean keepId) {
+        super(original, keepId);
     }
 
     /**
@@ -212,11 +212,11 @@ public class PropertyList extends Property {
         return result;
     }
 
-    public PropertyList deepCopy() {
-        PropertyList copy = new PropertyList(this);
+    public PropertyList deepCopy(boolean keepId) {
+        PropertyList copy = new PropertyList(this, keepId);
 
         for (Property property : list) {
-            copy.add(property.deepCopy());
+            copy.add(property.deepCopy(false));
         }
 
         return copy;

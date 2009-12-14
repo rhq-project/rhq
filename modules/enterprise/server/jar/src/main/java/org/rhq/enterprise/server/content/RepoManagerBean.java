@@ -560,8 +560,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             // ask to synchronize the content source immediately (is this the right thing to do?)
             pc.syncProviderNow(cs);
         }
+    }
 
-        return;
+    public void simpleAddContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception {
+        Repo repo = entityManager.find(Repo.class, repoId);
+        if (repo == null) {
+            throw new Exception("There is no repo with an ID [" + repoId + "]");
+        }
+
+        for (int id : contentSourceIds) {
+            ContentSource cs = entityManager.find(ContentSource.class, id);
+            if (cs == null) {
+                throw new Exception("There is no content source with id [" + id + "]");
+            }
+
+            RepoContentSource ccsmapping = repo.addContentSource(cs);
+            entityManager.persist(ccsmapping);
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)

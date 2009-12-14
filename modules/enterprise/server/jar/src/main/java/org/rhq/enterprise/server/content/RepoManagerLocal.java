@@ -109,13 +109,13 @@ public interface RepoManagerLocal {
 
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
-     * 
+     *
      * There is a weight to the status since this returns the most 'relevant' status:
-     * 
+     *
      * 1) ContentSourceSyncStatus.FAILURE
      * 2) ContentSourceSyncStatus.INPROGRESS
      * 3) ContentSourceSyncStatus.SUCCESS
-     * 
+     *
 
      * @param subject caller
      * @param repoId to calc status for
@@ -126,6 +126,19 @@ public interface RepoManagerLocal {
     /**
      */
     void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
+
+    /**
+     * Associates content sources with the given repo. Unlike {@link #addContentSourcesToRepo(Subject, int, int[])},
+     * no further operations will be performed, such as any initial synchronization or initialization.
+     * <p/>
+     * This should only be used for test purposes.
+     *
+     * @param subject          may not be <code>null</code>
+     * @param repoId           must refer to a valid repo in the system
+     * @param contentSourceIds may not be <code>null</code>
+     * @throws Exception if there is an error making the association
+     */
+    void simpleAddContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
 
     /**
      */
@@ -256,7 +269,7 @@ public interface RepoManagerLocal {
     PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);
 
     /**
-     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl) 
+     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl)
      */
     PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria);
 

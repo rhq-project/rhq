@@ -481,9 +481,9 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         source = contentSourceManager.simpleCreateContentSource(overlord, source);
 
         Repo repo = new Repo(oldName);
-        repo.addContentSource(source);
+        repo = repoManager.createRepo(overlord, repo);
 
-        repoManager.createRepo(overlord, repo);
+        repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] {source.getId()});
 
         // Test
         repo.setName(newName);

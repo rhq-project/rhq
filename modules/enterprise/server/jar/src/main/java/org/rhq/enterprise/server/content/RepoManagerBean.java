@@ -304,6 +304,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             throw new RepoException("Repo name is required");
         }
 
+        // HHH-2864 - Leave this in until we move to hibernate > 3.2.r14201-2
+        getRepo(subject, repo.getId());
+
         // should we check non-null repo relationships and warn that we aren't changing them?
         log.debug("User [" + subject + "] is updating repo [" + repo + "]");
         repo = entityManager.merge(repo);

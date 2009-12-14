@@ -23,7 +23,18 @@ import javax.persistence.Table;
     @NamedQuery(name = Advisory.QUERY_FIND_ALL, query = "SELECT adv FROM Advisory adv"),
     @NamedQuery(name = Advisory.QUERY_FIND_BY_ADV, query = "SELECT adv " + "  FROM Advisory adv "
         + " WHERE adv.advisory = :advisory "),
-    @NamedQuery(name = Advisory.QUERY_DELETE_BY_ADV_ID, query = "DELETE Advisory adv WHERE adv.id = :advid") })
+    @NamedQuery(name = Advisory.QUERY_DELETE_BY_ADV_ID, query = "DELETE Advisory adv WHERE adv.id = :advid"),
+    @NamedQuery(name = Advisory.QUERY_FIND_BY_ADV_ID, query = "SELECT adv FROM Advisory adv WHERE adv.id = :id "),
+    @NamedQuery(name = Advisory.QUERY_FIND_COMPOSITE_BY_ID, query = "SELECT new org.rhq.core.domain.content.composite.AdvisoryDetailsComposite( "
+        + "          a, "
+        + "          a.advisory, "
+        + "          a.advisoryType,"
+        + "          a.topic,"
+        + "          a.synopsis,"
+        + "          a.description,"
+        + "          a.solution,"
+        + "          a.severity,"
+        + "          a.update_date" + "       ) " + "  FROM Advisory a WHERE a.id = :id ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
@@ -32,7 +43,8 @@ public class Advisory implements Serializable {
     public static final String QUERY_FIND_ALL = "Advisory.findAll";
     public static final String QUERY_FIND_BY_ADV = "Advisory.findByAdv";
     public static final String QUERY_DELETE_BY_ADV_ID = "Advisory.deleteByAdvId";
-
+    public static final String QUERY_FIND_COMPOSITE_BY_ID = "Advisory.queryFindCompositeByAdvId";
+    public static final String QUERY_FIND_BY_ADV_ID = "Advisory.queryFindByAdvId";
     // Attributes  --------------------------------------------
 
     @Column(name = "ID", nullable = false)

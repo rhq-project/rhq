@@ -1093,6 +1093,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 log.debug("Attempting to create new advisory based off of: " + detail);
                 Advisory newAdv = advManager.createAdvisory(overlord, detail.getAdvisory(), detail.getAdvisory_type(),
                     detail.getSynopsis());
+                newAdv.setAdvisory_name(detail.getAdvisory_name());
+                newAdv.setAdvisory_rel(detail.getAdvisory_rel());
+                newAdv.setDescription(detail.getDescription());
+                newAdv.setSolution(detail.getSolution());
+                newAdv.setIssue_date(detail.getIssue_date());
+                newAdv.setTopic(detail.getTopic());
+                entityManager.flush();
+                entityManager.persist(newAdv);
                 Repo repo = repoManager.getRepo(overlord, report.getRepoId());
                 RepoAdvisory repoAdv = new RepoAdvisory(repo, newAdv);
                 log.debug("Created new mapping of RepoAdvisory repoId = " + repo.getId() + ", distId = "

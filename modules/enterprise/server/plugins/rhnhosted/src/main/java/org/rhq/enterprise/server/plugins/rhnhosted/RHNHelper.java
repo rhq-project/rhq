@@ -122,7 +122,12 @@ public class RHNHelper {
             log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
             AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum.getRhnErratumAdvisoryType(),
                 erratum.getRhnErratumSynopsis());
-
+            details.setDescription(erratum.getRhnErratumDescription());
+            details.setSolution(erratum.getRhnErratumSolution());
+            details.setTopic(erratum.getRhnErratumTopic());
+            //details.setIssue_date(erratum.getRhnErratumIssueDate());
+            details.setAdvisory_name(erratum.getRhnErratumAdvisoryName());
+            details.setAdvisory_rel(erratum.getRhnErratumAdvisoryRel());
             String cvestr = erratum.getCveNames();
             String[] cves = cvestr.split(" ");
             log.debug("list of cves " + cvestr + cves.toString());

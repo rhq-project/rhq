@@ -634,7 +634,7 @@
                             value="#{repoAdvisoryDataModel}"
                             var="adv"
                             width="100%"
-                            columnsWidth="10%,20%,70%"
+                            columnsWidth="20%,20%,60%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -649,8 +649,12 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Advisory Label" />
                   </f:facet>
-                   <h:outputText value="#{adv.advisory}"/>
-
+                   <!--<h:outputText value="#{adv.advisory}"/>-->
+                   
+                   <h:outputLink value="advisoryInfo.xhtml">
+                     <f:param name="id" value="#{adv.id}"/>
+                     <h:outputText value="#{adv.advisory}" />
+                  </h:outputLink>
                </rich:column>
 
 

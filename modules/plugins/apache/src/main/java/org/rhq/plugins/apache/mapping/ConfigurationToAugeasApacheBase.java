@@ -13,7 +13,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.ConfigurationToAugeas;
-
+/**
+ * 
+ * @author Filip Drabek
+ *
+ */
 public abstract class ConfigurationToAugeasApacheBase implements ConfigurationToAugeas {
 
     protected AugeasTree tree;

@@ -11,7 +11,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.mapping.ConfigurationToAugeasApacheBase;
 import org.rhq.rhqtransform.AugeasRhqException;
-
+/**
+ * 
+ * @author Filip Drabek
+ *
+ */
 public class MappingToAugeasDirectiveToSimple extends ConfigurationToAugeasApacheBase{
 
 	

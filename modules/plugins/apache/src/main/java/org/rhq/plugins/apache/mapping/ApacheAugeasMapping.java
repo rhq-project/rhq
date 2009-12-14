@@ -10,7 +10,11 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.rhqtransform.RhqAugeasMapping;
-
+/**
+ * 
+ * @author Filip Drabek
+ *
+ */
 public class ApacheAugeasMapping implements RhqAugeasMapping {
 
 	private AugeasTree tree;

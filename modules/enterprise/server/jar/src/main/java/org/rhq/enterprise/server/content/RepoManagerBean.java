@@ -919,9 +919,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         ArrayList<Advisory> advs = new ArrayList();
         for (RepoAdvisory result : results) {
-            advs.add(result.getRepoAdvisoryPK().getAdvisory());
-
+            advs.add(result.getAdvisory());
         }
+        log.debug("list of Advisory : " + advs + " associated to the repo: " + repoid);
         long count = getAdvisoryCountFromRepo(subject, repoid);
 
         return new PageList<Advisory>(advs, (int) count, pc);
@@ -972,8 +972,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
                 Repo repo = getRepo(subject, id);
                 pc.syncRepoNow(repo);
                 syncCount++;
-            }
-            catch (SchedulerException e) {
+            } catch (SchedulerException e) {
                 log.error("Error synchronizing repo with id [" + id + "]", e);
             }
         }

@@ -613,6 +613,82 @@
 
          </rich:panel>
       </a4j:region>
+      </h:form>
+      
+      <h:form id="repoAdvisoryListForm">
+      <a4j:region id="advisoryList">
+         <input type="hidden" name="id" value="${param.id}"/>
+         <input type="hidden" name="mode" value="${param.mode}"/>
+         
+         <rich:panel>
+            <f:facet name="header">
+               <h:outputText value="Advisory Associated To This Repository"/>
+            </f:facet>
+
+            <h:panelGrid columns="1" width="100%">
+
+
+            <ui:param name="repoAdvisoryDataModel" value="#{RepoAdvisoryUIBean.dataModel}"/>
+            <rich:dataTable id="repoAdvisoryDataTable"
+                            rows="#{PageControl.RepoAdvisoryList.pageSize}"
+                            value="#{repoAdvisoryDataModel}"
+                            var="adv"
+                            width="100%"
+                            columnsWidth="10%,20%,70%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="RepoAdvisoryList" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Advisory Label" />
+                  </f:facet>
+                   <h:outputText value="#{adv.advisory}"/>
+
+               </rich:column>
+
+
+               <rich:column>
+                  <f:facet name="header">
+                        <h:outputText styleClass="headerText" value="Type" />
+                  </f:facet>
+                   <h:outputText value="#{adv.advisoryType}"/>
+
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Synopsis" />
+                  </f:facet>
+                   <h:outputText value="#{adv.synopsis}"/>
+
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <!-- colspan 5:4 for the debug 'id' column -->
+                     <rich:column colspan="#{param.debug ? 6 : 5}" width="100%">
+
+                        <ui:param name="paginationDataTableName" value="repoAdvisoryDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{repoAdvisoryDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.RepoAdvisoryList}"/>
+                        <ui:include src="../resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+
+         </rich:panel>
+      </a4j:region>
       </h:form>   
 
    </ui:define>

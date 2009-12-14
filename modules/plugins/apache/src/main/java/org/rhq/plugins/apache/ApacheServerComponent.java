@@ -56,9 +56,9 @@ import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
-import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
+import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
@@ -213,7 +213,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             available = false;
         }
 
-        return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;
+       return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {

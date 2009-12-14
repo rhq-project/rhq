@@ -151,10 +151,7 @@ public class IrcAlertComponent implements ServerPluginComponent {
         public void onMessage(String channel, String sender, String login,
                 String hostname, String message) {
 
-            if (!message.contains(nick))
-                return;
-
-            if (this.response != null) {
+            if (this.response != null && message.startsWith(nick)) {
                 if (channel != null && channel.length() > 0) {
                     sendMessage(channel, sender + ":  " + this.response);
                 } else {

@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.admin.plugin;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 import javax.faces.application.FacesMessage;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
@@ -104,6 +106,11 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
             ServerPluginsLocal serverPlugins = LookupUtil.getServerPlugins();
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             serverPlugins.updateServerPluginExceptContent(subject, getPlugin());
+
+            // rekick the updated plugin so that any config changes take effect
+            serverPlugins.disableServerPlugins(subject, getPluginIdList());
+            serverPlugins.enableServerPlugins(subject, getPluginIdList());
+
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");
         } catch (Exception e) {
             log.error("Error updating the plugin configurations.", e);
@@ -114,5 +121,16 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
         }
 
         return "success";
+    }
+
+    private List<Integer> getPluginIdList() {
+        List<Integer> idList = new ArrayList<Integer>(1);
+        ServerPlugin plugin = getPlugin();
+
+        if (plugin != null) {
+            idList.add(plugin.getId());
+        }
+
+        return idList;
     }
 }

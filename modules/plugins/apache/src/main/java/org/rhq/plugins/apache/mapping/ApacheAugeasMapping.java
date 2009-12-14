@@ -1,4 +1,4 @@
-package org.rhq.plugins.apache.augeas;
+package org.rhq.plugins.apache.mapping;
 
 import java.util.Collection;
 
@@ -28,8 +28,8 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
         for (PropertyDefinition propDef : propDefs) {
         	DirectiveMappingEnum mapping = ApacheDirectiveRegExpression.getMappingType(propDef.getName());
         	ConfigurationDefinition def = new ConfigurationDefinition("temp","");
-        	def.put(propDef);
-        	Configuration conf = mapping.execute(tree, node, def);
+        	 def.put(propDef);
+        	Configuration conf = mapping.mapToConfiguration(tree, node, def);
         	for (Property prop : conf.getProperties())
         	{
         		resourceConfig.put(prop);
@@ -44,6 +44,20 @@ public class ApacheAugeasMapping implements RhqAugeasMapping {
 
     public Configuration updateConfiguration(AugeasProxy augeasComponent, ConfigurationDefinition configDef) {
         return null;
+    }
+    
+    public void updateAugeas(AugeasNode node,Configuration config,ConfigurationDefinition configDef){
+    	  
+          Collection<PropertyDefinition> propDefs = configDef.getPropertyDefinitions().values();
+
+          for (PropertyDefinition propDef : propDefs) {
+          	DirectiveMappingEnum mapping = ApacheDirectiveRegExpression.getMappingType(propDef.getName());
+          	ConfigurationDefinition def = new ConfigurationDefinition("temp","");
+          	  def.put(propDef);
+          	Configuration configuration = new Configuration();
+          	  configuration.put(config.get(propDef.getName()));
+          	mapping.mapToAugeas(tree, node, config, def);
+          }
     }
 
 }

@@ -1,4 +1,4 @@
-package org.rhq.plugins.apache.augeas;
+package org.rhq.plugins.apache.mapping;
 
 import java.util.ArrayList;
 import java.util.HashMap;

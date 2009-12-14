@@ -49,7 +49,7 @@ import org.rhq.rhqtransform.ConfigurationToAugeas;
  */
 public class ConfigurationToAugeasSimple implements ConfigurationToAugeas {
 
-    private AugeasTree tree;
+    protected AugeasTree tree;
 
     public ConfigurationToAugeasSimple() {
 

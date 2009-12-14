@@ -36,7 +36,7 @@ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.plugins.apache.augeas.ApacheAugeasMapping;
+import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 
 /**
  * Component for configuring the &lt;Directory&gt; and underlying directives inside

@@ -12,7 +12,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.plugins.apache.ApacheServerComponent;
-import org.rhq.plugins.apache.augeas.ApacheDirectiveRegExpression;
+import org.rhq.plugins.apache.mapping.ApacheDirectiveRegExpression;
 import org.rhq.rhqtransform.AugeasRhqException;
 import org.rhq.rhqtransform.impl.AugeasToConfigurationSimple;
 

@@ -1943,12 +1943,12 @@
 
           <statement>
             INSERT INTO
-            RHQ_DISTRIBUTION_TYPE ( ID, NAME )
+            RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
             VALUES ( 1, 'kickstart', 'Linux kickstart distribution' )
           </statement>
           <statement>
             INSERT INTO
-            RHQ_DISTRIBUTION_TYPE ( ID, NAME )
+            RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
             VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
           </statement>
         </schema-directSQL>

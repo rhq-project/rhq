@@ -39,7 +39,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-@Scope(ScopeType.SESSION)
+@Scope(ScopeType.PAGE)
 @Name("editPluginConfigurationUIBean")
 public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUIBean implements Serializable {
 

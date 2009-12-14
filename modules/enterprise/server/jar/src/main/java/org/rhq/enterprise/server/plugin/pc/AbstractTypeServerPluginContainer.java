@@ -84,6 +84,32 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
+     * Determines if the given plugin is loaded in the plugin container.
+     * The plugin may be loaded but not enabled.
+     * 
+     * @param pluginKey
+     * 
+     * @return <code>true</code> if the plugin is loaded in this plugin container; <code>false</code> otherwise
+     */
+    public boolean isPluginLoaded(PluginKey pluginKey) {
+        return this.pluginManager.isPluginLoaded(pluginKey.getPluginName());
+    }
+
+    /**
+     * Determines if the given plugin is enabled in the plugin container.
+     * <code>true</code> implies the plugin is also loaded. If <code>false</code> is returned,
+     * it is either because the plugin is loaded but disabled, or the plugin is just
+     * not loaded. Use {@link #isPluginLoaded(PluginKey)} to know if the plugin is loaded or not.
+     * 
+     * @param pluginKey
+     * 
+     * @return <code>true</code> if the plugin is enabled in this plugin container; <code>false</code> otherwise
+     */
+    public boolean isPluginEnabled(PluginKey pluginKey) {
+        return this.pluginManager.isPluginEnabled(pluginKey.getPluginName());
+    }
+
+    /**
      * The initialize method that prepares the plugin container. This should get the plugin
      * container ready to accept plugins.
      *

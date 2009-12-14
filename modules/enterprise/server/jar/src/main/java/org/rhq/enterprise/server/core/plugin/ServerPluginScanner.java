@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,8 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
@@ -87,6 +90,8 @@ public class ServerPluginScanner {
      * This should be called after a call to {@link #serverPluginScan()} to register
      * plugins that were found in the scan.
      * 
+     * This will also check to see if previously registered plugins changed their state.
+     *
      * @throws Exception
      */
     void registerServerPlugins() throws Exception {
@@ -95,6 +100,52 @@ public class ServerPluginScanner {
             registerServerPlugin(file);
         }
         this.scanned.clear();
+
+        // we now have to see if the state of existing plugins have changed in the DB
+        ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
+        List<ServerPlugin> allPlugins = serverPluginsManager.getAllServerPlugins();
+        List<ServerPlugin> installedPlugins = new ArrayList<ServerPlugin>();
+        List<ServerPlugin> undeployedPlugins = new ArrayList<ServerPlugin>();
+        for (ServerPlugin allPlugin : allPlugins) {
+            if (allPlugin.getStatus() == PluginStatusType.INSTALLED) {
+                installedPlugins.add(allPlugin);
+            } else {
+                undeployedPlugins.add(allPlugin);
+            }
+        }
+
+        // first, have any plugins been undeployed since we last checked?
+        for (ServerPlugin undeployedPlugin : undeployedPlugins) {
+            File undeployedFile = new File(this.getServerPluginDir(), undeployedPlugin.getPath());
+            PluginWithDescriptor pluginWithDescriptor = this.serverPluginsOnFilesystem.get(undeployedFile);
+            if (pluginWithDescriptor != null) {
+                try {
+                    log.info("Plugin file [" + undeployedFile + "] has been undeployed. It will be deleted.");
+                    List<Integer> id = Arrays.asList(new Integer(undeployedPlugin.getId()));
+                    serverPluginsManager.undeployServerPlugins(LookupUtil.getSubjectManager().getOverlord(), id);
+                } finally {
+                    this.serverPluginsOnFilesystem.remove(undeployedFile);
+                }
+            }
+        }
+
+        // now see if any plugins changed state from enabled->disabled or vice versa
+        MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        if (master != null) {
+            for (ServerPlugin installedPlugin : installedPlugins) {
+                PluginKey key = PluginKey.createServerPluginKey(installedPlugin.getType(), installedPlugin.getName());
+                AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(key);
+                if (pc != null && pc.isPluginLoaded(key)) {
+                    boolean currentlyEnabled = pc.isPluginEnabled(key);
+                    if (installedPlugin.isEnabled() != currentlyEnabled) {
+                        log.info("Detected a change to plugin [" + key + "]. It will now be "
+                            + ((installedPlugin.isEnabled()) ? "[enabled]" : "[disabled]"));
+                        pc.reloadPlugin(key, installedPlugin.isEnabled());
+                    }
+                }
+            }
+        }
+
         return;
     }
 
@@ -231,7 +282,7 @@ public class ServerPluginScanner {
             for (File filesystemPluginFile : pluginJars) {
                 if (cachedPluginFile.equals(filesystemPluginFile)) {
                     existsOnFileSystem = true;
-                    continue; // our cached jar still exists on the file system
+                    break; // our cached jar still exists on the file system
                 }
             }
             if (!existsOnFileSystem) {
@@ -353,7 +404,7 @@ public class ServerPluginScanner {
         // the same list as above, only they are the files that are written to the filesystem and no longer missing
         List<File> updatedFiles = new ArrayList<File>();
 
-        // get all the plugins
+        // process all the installed plugins
         ServerPluginsLocal serverPluginsManager = LookupUtil.getServerPlugins();
         List<ServerPlugin> installedPlugins = serverPluginsManager.getServerPlugins();
         for (ServerPlugin installedPlugin : installedPlugins) {

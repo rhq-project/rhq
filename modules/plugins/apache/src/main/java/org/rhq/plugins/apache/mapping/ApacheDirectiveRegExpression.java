@@ -74,24 +74,24 @@ public class ApacheDirectiveRegExpression {
      * that needs "special treatment".
      * A directive can need multiple regexes to produce mappable values.
      */
-    private static Map<String, Pattern[]> directiveRegex;
+    private static final Map<String, Pattern[]> DIRECTIVE_REGEX;
     static {
-        directiveRegex = new HashMap<String, Pattern[]>();
-        directiveRegex.put("Alias",
+        DIRECTIVE_REGEX = new HashMap<String, Pattern[]>();
+        DIRECTIVE_REGEX.put("Alias",
             new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + WS + "(" + WORD + ")" + WS) });
-        directiveRegex.put("CustomLog", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + "(?:" + WS_MAN + "("
+        DIRECTIVE_REGEX.put("CustomLog", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + "(?:" + WS_MAN + "("
             + WORD + ")" + ")?" + WS) });
-        directiveRegex.put("ErrorDocument", new Pattern[] { Pattern.compile(WS + "(" + NUM + ")" + WS_MAN + "(" + WORD
+        DIRECTIVE_REGEX.put("ErrorDocument", new Pattern[] { Pattern.compile(WS + "(" + NUM + ")" + WS_MAN + "(" + WORD
             + ")" + WS) });
-        directiveRegex.put("Options", new Pattern[] { Pattern.compile("([+-])?" + "(" + WORD + ")" + WS) });
-        directiveRegex.put("Allow", new Pattern[] { Pattern.compile("from"),
+        DIRECTIVE_REGEX.put("Options", new Pattern[] { Pattern.compile("([+-])?" + "(" + WORD + ")" + WS) });
+        DIRECTIVE_REGEX.put("Allow", new Pattern[] { Pattern.compile("from"),
             Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
-        directiveRegex.put("Deny", new Pattern[] { Pattern.compile("from"),
+        DIRECTIVE_REGEX.put("Deny", new Pattern[] { Pattern.compile("from"),
             Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
-        directiveRegex.put("Listen", new Pattern[] { Pattern
+        DIRECTIVE_REGEX.put("Listen", new Pattern[] { Pattern
             .compile("(?:((?:\\[[a-zA-Z0-9:]+\\])|(?:[0-9\\.]+)):)?([0-9]+)(?:" + WS_MAN + "(" + WORD + "))?") });
-        directiveRegex.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
-        directiveRegex.put("AllowOverride", new Pattern[] { Pattern
+        DIRECTIVE_REGEX.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
+        DIRECTIVE_REGEX.put("AllowOverride", new Pattern[] { Pattern
             .compile("(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)") });
     }
 
@@ -121,13 +121,13 @@ public class ApacheDirectiveRegExpression {
             value.deleteCharAt(value.length() - 1);
         }
 
-        if (!directiveRegex.containsKey(nodeName)) {
+        if (!DIRECTIVE_REGEX.containsKey(nodeName)) {
             result.add(value.toString());
             return result;
         }
 
         //each regex is applied as long as it matches something
-        Pattern[] patterns = directiveRegex.get(nodeName);
+        Pattern[] patterns = DIRECTIVE_REGEX.get(nodeName);
 
         int startIndex = 0;
 

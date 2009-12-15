@@ -208,11 +208,18 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
                     destinationDirectory = getAgentPluginDir();
                 } catch (Exception e) {
                     try {
+                        log.debug("[" + file.getAbsolutePath() + "] is not an agent plugin jar (Cause: "
+                            + ThrowableUtil.getAllMessages(e) + "). Will see if its a server plugin jar");
+
                         ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
                         destinationDirectory = getServerPluginDir();
                     } catch (Exception e1) {
                         // skip it, doesn't look like a valid plugin jar
-                        log.warn("Does not look like [" + file.getAbsolutePath() + "] is a plugin jar - ignoring");
+                        File fixmeFile = new File(file.getAbsolutePath() + ".fixme");
+                        boolean renamed = file.renameTo(fixmeFile);
+                        log.warn("Does not look like [" + (renamed ? fixmeFile : file).getAbsolutePath()
+                            + "] is a plugin jar -(Cause: " + ThrowableUtil.getAllMessages(e)
+                            + "). It will be ignored. Please fix that file or remove it.");
                         continue;
                     }
                 }

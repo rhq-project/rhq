@@ -71,6 +71,20 @@ public class AugeasProxy {
     }
 
     /**
+     * @return the Augeas configuration of the proxy
+     */
+    public AugeasConfiguration getConfiguration() {
+        return config;
+    }
+
+    /**
+     * @return the tree builder used to build augeas trees
+     */
+    public AugeasTreeBuilder getTreeBuilder() {
+        return augeasTreeBuilder;
+    }
+
+    /**
      * Initializes and loads the Augeas tree.
      * 
      * @throws AugeasTreeException
@@ -115,14 +129,6 @@ public class AugeasProxy {
             throw new AugeasTreeException("Loading of augeas failed");
         }
 
-        AugeasModuleConfig module = null;
-
-        for (AugeasModuleConfig conf : config.getModules()) {
-            if (conf.getModuletName().equals(moduleName)) {
-                module = conf;
-                break;
-            }
-        }
         AugeasTree tree;
 
         try {

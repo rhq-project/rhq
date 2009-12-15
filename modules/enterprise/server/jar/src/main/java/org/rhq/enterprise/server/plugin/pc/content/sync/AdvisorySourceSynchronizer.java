@@ -34,9 +34,9 @@ import org.rhq.core.domain.content.AdvisoryBuglist;
 import org.rhq.core.domain.content.AdvisoryCVE;
 import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.plugin.pc.content.AdvisoryPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -82,10 +83,10 @@ public class AdvisorySourceSynchronizer {
         overlord = subjectManager.getOverlord();
     }
 
-    public void synchronizeAdvisoryMetadata() throws Exception {
+    public SyncTracker synchronizeAdvisoryMetadata(SyncTracker tracker) throws Exception {
         if (!(provider instanceof AdvisorySource)) {
             log.error(" Advisory Instance:" + provider);
-            return;
+            return tracker;
         }
 
         AdvisorySource advisorySource = (AdvisorySource) provider;
@@ -113,8 +114,10 @@ public class AdvisorySourceSynchronizer {
         log.error("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
-        ContentSourceSyncResults syncResults = new ContentSourceSyncResults(source);
-        contentSourceManager.mergeAdvisorySyncReport(source, advReport, syncResults);
+        RepoSyncResults syncResults = contentSourceManager.mergeAdvisorySyncReport(source, advReport, tracker
+            .getRepoSyncResults());
+        tracker.setRepoSyncResults(syncResults);
+        return tracker;
     }
 
     private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails) {

@@ -35,6 +35,7 @@ import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.util.progresswatch.ProgressWatcher;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
@@ -44,6 +45,7 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -74,7 +76,8 @@ public class DistributionSourceSynchronizer {
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public RepoSyncResults synchronizeDistributionMetadata(RepoSyncResults syncResults) throws Exception {
+    public RepoSyncResults synchronizeDistributionMetadata(RepoSyncResults syncResults, ProgressWatcher pw)
+        throws Exception {
         if (!(provider instanceof DistributionSource)) {
             return syncResults;
         }
@@ -114,19 +117,20 @@ public class DistributionSourceSynchronizer {
         return syncResults;
     }
 
-    public RepoSyncResults synchronizeDistributionBits(RepoSyncResults results) throws Exception {
+    public SyncTracker synchronizeDistributionBits(SyncTracker tracker) throws Exception {
         if (!(provider instanceof DistributionSource)) {
-            return results;
+            return tracker;
         }
 
         Subject overlord = subjectManager.getOverlord();
-        results
-            .appendResults("Synchronize Distributions: [" + repo.getName() + " Starting Distribution bits download.");
-        results = repoManager.mergeRepoSyncResults(results);
+        tracker.getRepoSyncResults().appendResults(
+            "Synchronize Distributions: [" + repo.getName() + " Starting Distribution bits download.");
+        tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
         contentSourceManager.downloadDistributionBits(overlord, source);
-        results.appendResults("Synchronize Distributions: [" + repo.getName() + " finished bits download.");
+        tracker.getRepoSyncResults().appendResults(
+            "Synchronize Distributions: [" + repo.getName() + " finished bits download.");
 
-        return results;
+        return tracker;
     }
 
     private void translateDomainToDto(List<Distribution> dists, List<DistributionDetails> distDetails) {

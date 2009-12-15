@@ -1042,8 +1042,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     // we really want NEVER, but support tests that might be in a tx
-    public ContentSourceSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
-        ContentSourceSyncResults syncResults) {
+    public RepoSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults) {
         try {
             StringBuilder progress = new StringBuilder();
             if (syncResults.getResults() != null) {
@@ -1066,7 +1066,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             // don't mark it as successful yet, let the caller do that
             progress.append(new Date()).append(": ").append("MERGE COMPLETE.\n");
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
         } catch (Throwable t) {
             // ThrowableUtil will dump SQL nextException messages, too
             String errorMsg = "Could not process sync report from [" + contentSource + "]. Cause: "
@@ -1080,8 +1080,8 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
-        ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public RepoSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress) {
 
         AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
@@ -1149,7 +1149,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 progress.append("Caught exception when trying to add: " + detail.getAdvisory() + "\n");
                 progress.append("Error is: " + e.getMessage());
                 syncResults.setResults(progress.toString());
-                syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+                syncResults = repoManager.mergeRepoSyncResults(syncResults);
                 log.error(e);
             }
         }
@@ -1157,12 +1157,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public ContentSourceSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource,
-        AdvisorySyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress) {
+    public RepoSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress) {
 
         progress.append(new Date()).append(": ").append("Removing");
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
@@ -1177,12 +1177,12 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             progress.append("Removed advisory & advisory cves for: " + advDetails.getAdvisory());
             syncResults.setResults(progress.toString());
-            syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+            syncResults = repoManager.mergeRepoSyncResults(syncResults);
         }
 
         progress.append("Finished Advisory removal...").append('\n');
         syncResults.setResults(progress.toString());
-        syncResults = contentSourceManager.mergeContentSourceSyncResults(syncResults);
+        syncResults = repoManager.mergeRepoSyncResults(syncResults);
 
         return syncResults;
     }

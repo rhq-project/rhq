@@ -424,8 +424,8 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
-        ContentSourceSyncResults syncResults);
+    RepoSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults);
 
     void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
@@ -448,11 +448,11 @@ public interface ContentSourceManagerLocal {
     RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
         DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource, AdvisorySyncReport report,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
 
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource

@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
@@ -354,6 +355,11 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      */
     public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
+    }
+
+    @Override
+    public SyncProgressWeight getSyncProgressWeight() {
+        return new SyncProgressWeight(10, 1, 0, 0, 0);
     }
 
 }

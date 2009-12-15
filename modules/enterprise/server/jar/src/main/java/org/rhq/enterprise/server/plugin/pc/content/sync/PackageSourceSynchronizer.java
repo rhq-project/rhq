@@ -50,6 +50,8 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -80,9 +82,9 @@ public class PackageSourceSynchronizer {
         repoManager = LookupUtil.getRepoManagerLocal();
     }
 
-    public RepoSyncResults synchronizePackageMetadata(RepoSyncResults syncResults) throws Exception {
+    public SyncTracker synchronizePackageMetadata(SyncTracker tracker) throws Exception {
         if (!(provider instanceof PackageSource)) {
-            return syncResults;
+            return tracker;
         }
 
         PackageSource packageSource = (PackageSource) provider;
@@ -114,43 +116,49 @@ public class PackageSourceSynchronizer {
 
         PackageSyncReport report = new PackageSyncReport();
         packageSource.synchronizePackages(repo.getName(), report, allDetails);
+        tracker.setPackageSyncCount(report.getNewPackages().size() + report.getUpdatedPackages().size());
 
         log.info("Synchronize Packages: [" + source.getName() + "]: got sync report from adapter=[" + report + "] ("
-            + (System.currentTimeMillis() - start) + ")ms");
+            + (System.currentTimeMillis() - start) + ")ms.  Have: " + tracker.getPackageSyncCount()
+            + " packages to sync");
 
         // Merge in the results of the synchronization
         // --------------------------------------------
         start = System.currentTimeMillis();
-        syncResults = contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap, syncResults);
-
+        RepoSyncResults syncResults = contentSourceManager.mergePackageSyncReport(source, repo, report, keyPVCSMap,
+            tracker.getRepoSyncResults());
+        tracker.setRepoSyncResults(syncResults);
         log.info("Synchronize Packages: [" + source.getName() + "]: merged sync report=("
             + (System.currentTimeMillis() - start) + ")ms");
-        return syncResults;
+        return tracker;
     }
 
-    public RepoSyncResults synchronizePackageBits(RepoSyncResults syncResults) throws Exception {
+    public SyncTracker synchronizePackageBits(SyncTracker tracker, ContentProvider provider) throws Exception {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
 
         // Determine if the sync even needs to take place
         if (!(provider instanceof PackageSource)) {
-            return syncResults;
+            return tracker;
         }
 
         if (source.getDownloadMode() == DownloadMode.NEVER) {
             String msg = "Download mode of NEVER for source [" + source.getName() + "], skipping "
                 + "package bits sync for repo [" + repo.getName() + "]";
             log.info(msg);
-            syncResults.appendResults(msg);
-            syncResults = repoManager.mergeRepoSyncResults(syncResults);
-            return syncResults;
+            tracker.getRepoSyncResults().appendResults(msg);
+            tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
+            tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            return tracker;
         }
 
         if (source.isLazyLoad()) {
             String msg = "Lazy load enabled for source [" + source.getName() + "], skipping "
                 + "package bits sync for repo [" + repo.getName() + "]";
             log.info(msg);
-            syncResults.appendResults(msg);
-            syncResults = repoManager.mergeRepoSyncResults(syncResults);
-            return syncResults;
+            tracker.getRepoSyncResults().appendResults(msg);
+            tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
+            tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            return tracker;
         }
 
         long start;
@@ -168,8 +176,8 @@ public class PackageSourceSynchronizer {
         String msg = "Synchronize Package Bits: [" + source.getName() + "], repo [" + repo.getName()
             + "]: loaded package list for sync (" + (System.currentTimeMillis() - start) + ")ms";
         log.info(msg);
-        syncResults.appendResults(msg);
-        syncResults = repoManager.mergeRepoSyncResults(syncResults);
+        tracker.getRepoSyncResults().appendResults(msg);
+        tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
 
         // Download the bits for each unloaded package version. Abort the entire download if we
         // fail getting just one package.
@@ -182,12 +190,15 @@ public class PackageSourceSynchronizer {
                 log.info("Downloading package version [" + pk.getPackageVersion() + "] located at ["
                     + item.getLocation() + "]" + "] from [" + pk.getContentSource() + "]...");
 
-                syncResults.appendResults("Downloading package version [" + pk.getPackageVersion() + "] located at ["
-                    + item.getLocation() + "]");
-                syncResults = repoManager.mergeRepoSyncResults(syncResults);
+                tracker.getRepoSyncResults().appendResults(
+                    "Downloading package version [" + pk.getPackageVersion() + "] located at [" + item.getLocation()
+                        + "]");
+                tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
 
                 overlord = subjectManager.getOverlord();
                 contentSourceManager.downloadPackageBits(overlord, item);
+                // Tick off each package as completed work 
+                tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * 1);
             } catch (Exception e) {
                 String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
                     + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation() + "]."
@@ -200,7 +211,7 @@ public class PackageSourceSynchronizer {
         log.info("All package bits for content source [" + source.getName() + "] have been downloaded."
             + "The downloads started at [" + new Date(start) + "] and ended at [" + new Date() + "]");
 
-        return syncResults;
+        return tracker;
 
     }
 

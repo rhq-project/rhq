@@ -43,14 +43,13 @@ import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.util.progresswatch.ProgressWatcher;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.content.metadata.ContentSourcePluginMetadataManager;
-import org.rhq.enterprise.server.plugin.pc.content.sync.AdvisorySourceSynchronizer;
-import org.rhq.enterprise.server.plugin.pc.content.sync.DistributionSourceSynchronizer;
 import org.rhq.enterprise.server.plugin.pc.content.sync.PackageSourceSynchronizer;
 import org.rhq.enterprise.server.plugin.pc.content.sync.RepoSourceSynchronizer;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -250,111 +249,152 @@ public class ContentProviderManager {
         progress.append('\n');
         progress.append(new Date()).append(": ");
         progress.append("Getting currently known list of content source packages...");
-        RepoSyncResults results = new RepoSyncResults(repo);
-        results.setPercentComplete(new Long(0));
-        results.setResults(progress.toString());
-        results = repoManager.persistRepoSyncResults(results);
+        SyncTracker tracker = new SyncTracker(new RepoSyncResults(repo), new ProgressWatcher());
+        tracker.setResults(progress.toString());
+        tracker.setRepoSyncResults(repoManager.persistRepoSyncResults(tracker.getRepoSyncResults()));
         log.debug("synchronizeRepo :: inProgress");
 
-        if (results == null) {
+        if (tracker.getRepoSyncResults() == null) {
             log.info("Repository [" + repo.getName()
                 + "] is already currently being synchronized, this sync request will be ignored");
             return false;
         }
 
+        // METADATA Loop
+        for (ContentSource source : repo.getContentSources()) {
+            try {
+                ContentProvider provider = getIsolatedContentProvider(source.getId());
+                SyncProgressWeight sw = provider.getSyncProgressWeight();
+                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
+                    provider);
+                log.debug("synchronizeRepo :: synchronizePackageMetadata");
+
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEMETADATA);
+                tracker = packageSourceSynchronizer.synchronizePackageMetadata(tracker);
+            } catch (Exception e) {
+                processSyncException(e, tracker, repo, source, repoManager);
+            }
+        }
+
+        // Setup ProgressWatcher
+        for (ContentSource source : repo.getContentSources()) {
+            ContentProvider provider = getIsolatedContentProvider(source.getId());
+            SyncProgressWeight sw = provider.getSyncProgressWeight();
+            tracker.getProgressWatcher().addWork(sw.getPackageMetadataWeight());
+            tracker.getProgressWatcher().addWork(sw.getAdvisoryWeight() * tracker.getPackageSyncCount());
+            tracker.getProgressWatcher().addWork(sw.getDistribtutionBitsWeight());
+            tracker.getProgressWatcher().addWork(sw.getDistribtutionMetadataWeight());
+            tracker.getProgressWatcher().addWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            tracker.getProgressWatcher().finishWork(sw.getPackageMetadataWeight());
+        }
+        tracker = updatePercentComplete(tracker, repoManager);
+
+        // PACKAGEBITS Loop
         // Synchronize every content provider associated with the repo
         for (ContentSource source : repo.getContentSources()) {
-
             // Don't let the entire sync fail if a single content source fails
             try {
                 ContentProvider provider = getIsolatedContentProvider(source.getId());
 
                 PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
                     provider);
-                log.debug("synchronizeRepo :: synchronizePackageMetadata");
-
-                results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEMETADATA);
-                results = packageSourceSynchronizer.synchronizePackageMetadata(results);
-                results.setPercentComplete(new Long(10));
-
                 log.debug("synchronizeRepo :: synchronizePackageBits");
-                results = updateSyncResults(results.getId(), ContentSyncStatus.PACKAGEBITS);
-                results = packageSourceSynchronizer.synchronizePackageBits(results);
-                results.setPercentComplete(new Long(50));
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
+                tracker = packageSourceSynchronizer.synchronizePackageBits(tracker, provider);
+                tracker = updatePercentComplete(tracker, repoManager);
+                // results.setPercentComplete(new Long(pw.getPercentComplete()));
 
-                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
+                /*DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
                     repo, source, provider);
 
                 log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
-                results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROMETADATA);
-                results = distributionSourceSynchronizer.synchronizeDistributionMetadata(results);
-                results.setPercentComplete(new Long(75));
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
+                tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
+                // results.setPercentComplete(new Long(pw.getPercentComplete()));
 
                 log.debug("synchronizeRepo :: synchronizeDistributionBits");
-                results = updateSyncResults(results.getId(), ContentSyncStatus.DISTROBITS);
-                results = distributionSourceSynchronizer.synchronizeDistributionBits(results);
-                results.setPercentComplete(new Long(90));
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
+                tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
+                // results.setPercentComplete(new Long(pw.getPercentComplete()));
 
                 log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
-                results = updateSyncResults(results.getId(), ContentSyncStatus.ADVISORYMETADATA);
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.ADVISORYMETADATA);
                 AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source, provider);
-                advisorySourcesync.synchronizeAdvisoryMetadata();
+                tracker = advisorySourcesync.synchronizeAdvisoryMetadata(tracker);
+                // results.setPercentComplete(new Long(pw.getPercentComplete()));
+                */
 
                 // Update status to finished.
                 progress = new StringBuilder();
                 progress.append("\n");
-                progress.append(results.getResults());
+                progress.append(tracker.getRepoSyncResults().getResults());
                 progress.append("\n");
                 progress.append(new Date()).append(": ");
                 progress.append(" Repository [").append(repo.getName()).append("]");
                 progress.append('\n');
                 progress.append(new Date()).append(": ");
                 progress.append("completed syncing.");
-                results = repoManager.getRepoSyncResults(results.getId());
-                results.setResults(progress.toString());
-                results.setStatus(ContentSyncStatus.SUCCESS);
+                tracker.setResults(progress.toString());
+                tracker.getRepoSyncResults().setStatus(ContentSyncStatus.SUCCESS);
                 log.debug("synchronizeRepo :: Success");
 
             } catch (Exception e) {
-                log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
-                    + "]. Synchronization for the repo will continue for other providers.", e);
-
-                // try to reload the results in case it was updated by the SLSB before the
-                // exception happened
-                RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(results.getId());
-                if (reloadedResults != null) {
-                    results = reloadedResults;
-                    if (results.getResults() != null) {
-                        progress = new StringBuilder(results.getResults());
-                    }
-                }
-
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                e.printStackTrace(new PrintStream(baos));
-                progress.append(new Date()).append(": ");
-                progress.append("SYNCHRONIZATION ERROR - STACK TRACE FOLLOWS:\n");
-                progress.append(baos.toString());
-                results.setResults(progress.toString());
-                results.setStatus(ContentSyncStatus.FAILURE);
-            } finally {
-                if (results != null) {
-                    results.setEndTime(System.currentTimeMillis());
-                    results.setPercentComplete(new Long(100));
-                    repoManager.mergeRepoSyncResults(results);
-                    log.debug("synchronizeRepo :: merging results.");
-                }
+                processSyncException(e, tracker, repo, source, repoManager);
             }
+        }
+        if (tracker.getRepoSyncResults() != null) {
+            // pw.stop();
+            tracker.getRepoSyncResults().setEndTime(System.currentTimeMillis());
+            // results.setPercentComplete(new Long(pw.getPercentComplete()));
+            repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults());
+            log.debug("synchronizeRepo :: merging results.");
         }
 
         return true;
     }
 
-    private RepoSyncResults updateSyncResults(int resultsId, ContentSyncStatus status) {
+    private SyncTracker updatePercentComplete(SyncTracker tracker, RepoManagerLocal repoManager) {
+        tracker.getRepoSyncResults().setPercentComplete(new Long(tracker.getProgressWatcher().getPercentComplete()));
+        tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
+        return tracker;
+    }
+
+    private SyncTracker processSyncException(Exception e, SyncTracker tracker, Repo repo, ContentSource source,
+        RepoManagerLocal repoManager) {
+
+        StringBuilder progress = new StringBuilder();
+        log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
+            + "]. Synchronization for the repo will continue for other providers.", e);
+
+        // try to reload the results in case it was updated by the SLSB before the
+        // exception happened
+        RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(tracker.getRepoSyncResults().getId());
+        if (reloadedResults != null) {
+            tracker.setRepoSyncResults(reloadedResults);
+            if (tracker.getRepoSyncResults().getResults() != null) {
+                progress = new StringBuilder(tracker.getRepoSyncResults().getResults());
+            }
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        e.printStackTrace(new PrintStream(baos));
+        progress.append(new Date()).append(": ");
+        progress.append("SYNCHRONIZATION ERROR - STACK TRACE FOLLOWS:\n");
+        progress.append(baos.toString());
+        tracker.setResults(progress.toString());
+        tracker.setStatus(ContentSyncStatus.FAILURE);
+        return tracker;
+
+    }
+
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) {
+        int resultsId = tracker.getRepoSyncResults().getId();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(resultsId);
         reloadedResults.setStatus(status);
         reloadedResults = repoManager.mergeRepoSyncResults(reloadedResults);
-        return reloadedResults;
+        tracker.setRepoSyncResults(reloadedResults);
+        return tracker;
     }
 
     /**

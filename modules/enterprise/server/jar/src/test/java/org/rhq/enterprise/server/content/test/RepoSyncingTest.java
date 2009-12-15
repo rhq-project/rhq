@@ -118,7 +118,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testSyncCount() throws Exception {
 
         Integer[] ids = { repo.getId() };

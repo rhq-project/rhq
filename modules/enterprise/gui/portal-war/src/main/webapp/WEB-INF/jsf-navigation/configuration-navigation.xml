@@ -23,6 +23,12 @@
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/resource/configuration/view-map.xhtml</to-view-id>
       </navigation-case>
+
+      <navigation-case>
+         <from-action>#{ExistingResourceConfigurationUIBean.switchTostructured}</from-action>
+         <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
       
    </navigation-rule>
 

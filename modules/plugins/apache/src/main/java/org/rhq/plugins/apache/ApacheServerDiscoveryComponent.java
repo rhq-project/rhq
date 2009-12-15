@@ -176,7 +176,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
     private boolean isSupportedVersion(String version) {
         // TODO: Compare against a version range defined in the plugin descriptor.
-        return (version != null) && version.startsWith("2.");
+        return (version != null) && (version.startsWith("1.3") || version.startsWith("2."));
     }
 
     private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<PlatformComponent> discoveryContext,

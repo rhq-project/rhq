@@ -36,6 +36,7 @@ import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
@@ -268,6 +269,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        if (!isConfigurationSupported()) {
+            throw new IllegalStateException("Configuration is supported only for Apache version 2 and up.");
+        }
+        
         try {
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
 
@@ -277,13 +282,17 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         } catch (Exception e) {
             log.error("Failed to load Apache configuration.", e);
             throw e;
-
         }
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        // TODO Auto-generated method stub
+        if (!isConfigurationSupported()) {
+            report.setErrorMessage("Configuration is supported only for Apache version 2 and up.");
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return;
+        }
         
+        //TODO implement the rest
     }
 
     public AugeasProxy getAugeasProxy() throws AugeasTreeException {
@@ -336,7 +345,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
      */
     @NotNull
     public File getServerRoot() {
-        String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
         return new File(serverRoot);
     }
 
@@ -547,5 +557,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
             PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
+    }
+    
+    private boolean isConfigurationSupported() {
+        String version = resourceContext.getVersion();
+        return version.startsWith("2.");
     }
 }

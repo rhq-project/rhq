@@ -53,6 +53,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     private Map<String,String> pluginClassByName = new HashMap<String, String>();
     private Map<String,ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
     private Map<String,AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
+    private Map<String,String> backinBeanByName = new HashMap<String, String>();
 
     public AlertSenderPluginManager(AbstractTypeServerPluginContainer pc) {
         super(pc);
@@ -124,6 +125,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             }
             try {
                 Class.forName(className,true,env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
+                backinBeanByName.put(shortName,className);
             }
             catch (Throwable t ) {
                 log.error("Backing bean " + className + " not found for plugin " + shortName);
@@ -152,6 +154,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         pluginClassByName.remove(shortName);
         senderInfoByName.remove(shortName);
         pluginEnvByName.remove(shortName);
+        backinBeanByName.remove(shortName);
     }
 
     /**
@@ -228,5 +231,26 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
     public AlertSenderInfo getAlertSenderInfo(String shortName) {
         return senderInfoByName.get(shortName);
+    }
+
+    public AlertBackingBean getBackingBeanForSender(String shortName) {
+        String name = backinBeanByName.get(shortName);
+        ServerPluginEnvironment env = pluginEnvByName.get(shortName);
+        Class clazz;
+        try {
+            clazz = Class.forName(name,true,env.getPluginClassLoader());
+        }
+        catch (Exception e) {
+            log.error("Can't load class " + name + ": " + e.getMessage());
+            return null;
+        }
+        AlertBackingBean bean = null ;
+        try {
+            bean = (AlertBackingBean) clazz.newInstance();
+        }
+        catch (Exception e) {
+            log.error("Can't instantiate " + name + ": " + e.getMessage());
+        }
+        return bean;
     }
 }

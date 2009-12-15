@@ -35,6 +35,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 /**
@@ -119,4 +120,11 @@ public interface AlertNotificationManagerLocal {
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
     void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications);
+
+    /**
+     * Return the backing bean for the AlertSender with the passed shortNama
+     * @param shortName name of a sender
+     * @return an initialized BackingBean or null in case of error
+     */
+    AlertBackingBean getBackingBeanForSender(String shortName);
 }

@@ -61,6 +61,7 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -484,6 +485,19 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         AlertSenderInfo info = pluginmanager.getAlertSenderInfo(shortName);
 
         return info;
+    }
+
+
+    /**
+     * Return the backing bean for the AlertSender with the passed shortNama
+     * @param shortName name of a sender
+     * @return an initialized BackingBean or null in case of error
+     */
+    public AlertBackingBean getBackingBeanForSender(String shortName) {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        AlertBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
+        return bean;
+
     }
 
     /**

@@ -101,11 +101,15 @@ public abstract class ServerPluginDescriptorUtil {
      * @param plugin2
      * @return a reference to the obsolete plugin (plugin1 or plugin2 reference will be returned)
      *         <code>null</code> is returned if they are the same (i.e. they have the same MD5)
-     * @throws IllegalArgumentException if the two plugins have different logical names
+     * @throws IllegalArgumentException if the two plugins have different logical names or different types
      */
     public static ServerPlugin determineObsoletePlugin(ServerPlugin plugin1, ServerPlugin plugin2) {
         if (!plugin1.getName().equals(plugin2.getName())) {
             throw new IllegalArgumentException("The two plugins don't have the same name:" + plugin1 + ":" + plugin2);
+        }
+
+        if (!plugin1.getType().equals(plugin2.getType())) {
+            throw new IllegalArgumentException("The two plugins don't have the same type:" + plugin1 + ":" + plugin2);
         }
 
         if (plugin1.getMd5().equals(plugin2.getMd5())) {

@@ -37,7 +37,7 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.augeas.helper.Glob;
+import org.rhq.augeas.util.Glob;
 
 /**
  * @author Ian Springer

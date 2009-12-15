@@ -21,7 +21,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
-package org.rhq.plugins.augeas.helper.test;
+package org.rhq.augeas.util.test;
 
 import static org.testng.Assert.assertEqualsNoOrder;
 
@@ -32,7 +32,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import org.rhq.plugins.augeas.helper.GlobFilter;
+import org.rhq.augeas.util.GlobFilter;
 
 /**
  * Tests for glob implementation.

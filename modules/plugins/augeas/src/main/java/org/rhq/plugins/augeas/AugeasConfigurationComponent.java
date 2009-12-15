@@ -61,7 +61,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.Glob;
+import org.rhq.augeas.util.Glob;
 
 /**
  * @author Ian Springer

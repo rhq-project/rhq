@@ -1867,12 +1867,34 @@
       </schemaSpec>
 
       <schemaSpec version="2.61">
-        <schema-directSQL>
+         <schema-directSQL>
+           <statement>
+             CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
+           </statement>
+         </schema-directSQL>
+         <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="ID" nullable="false" />
+         <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+         <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" nullable="false" />
+         <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+         <schema-directSQL>
+           <statement>
+             INSERT INTO
+             RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
+             VALUES ( 1, 'kickstart', 'Linux kickstart distribution' )
+           </statement>
+           <statement>
+             INSERT INTO
+             RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
+             VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
+           </statement>
+         </schema-directSQL>
+         
+         <schema-directSQL>
           <statement desc="Creating table RHQ_DISTRIBUTION">
             CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )
           </statement>
         </schema-directSQL>
-        <schema-addColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false" columnType="INTEGER"/>
+        <schema-addColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" columnType="INTEGER"/>
         <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false"/>         
         <schema-addColumn table="RHQ_DISTRIBUTION" column="LABEL" precision="64" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_DISTRIBUTION" column="LABEL" nullable="false" />
@@ -1885,19 +1907,20 @@
             CREATE UNIQUE INDEX RHQ_DISTRIBUTION_IDX ON RHQ_DISTRIBUTION ( LABEL, BASE_PATH )
           </statement>
         </schema-directSQL>         
-         <statement targetDBVendor="postgresql">
-           ALTER TABLE RHQ_DISTRIBUTION
-           ADD CONSTRAINT RHQ_DIST_TYPE_FKEY
-           FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
-           REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-         </statement>           
-         <statement targetDBVendor="oracle">
-           ALTER TABLE RHQ_DISTRIBUTION
-           ADD FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
-           REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-         </statement>
-
-         
+        <schema-directSQL>
+           <statement targetDBVendor="postgresql">
+             ALTER TABLE RHQ_DISTRIBUTION
+             ADD CONSTRAINT RHQ_DIST_TYPE_FKEY
+             FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
+             REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
+           </statement>           
+           <statement targetDBVendor="oracle">
+             ALTER TABLE RHQ_DISTRIBUTION
+             ADD FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
+             REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
+           </statement>
+         </schema-directSQL>         
+                  
          <schema-directSQL>
           <statement desc="Creating table RHQ_REPO_DISTRIBUTION">
             CREATE TABLE RHQ_REPO_DISTRIBUTION ( REPO_ID INTEGER )
@@ -1910,13 +1933,13 @@
         <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />
         <schema-directSQL>
           <statement>
-            ALTER TABLE RHQ_REPO_DISTRIBUTION
-            ADD CONSTRAINT RHQ_REPO_DIST_MAP_KEY
+            ALTER TABLE RHQ_REPO_DISTRIBUTION ADD CONSTRAINT RHQ_REPO_DIST_MAP_KEY
             PRIMARY KEY ( REPO_ID, DISTRIBUTION_ID )
           </statement>           
-          <statement targetDBVendor="postgresql">
+          
+           <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
-            ADD CONSTRAINT RHQ_DIST_REPO_ID_FKEY
+            ADD CONSTRAINT RHQ_REPO_DIST_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
           </statement>           
@@ -1924,55 +1947,19 @@
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
-          </statement>           
+          </statement>
+           
           <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
-            ADD CONSTRAINT RHQ_REPO_DIST_ID_FKEY
+            ADD CONSTRAINT RHQ_REPO_DIST_DIST_ID_FKEY
             FOREIGN KEY ( DISTRIBUTION_ID )
             REFERENCES RHQ_DISTRIBUTION ( ID )
-          </statement>           
+          </statement>                      
           <statement targetDBVendor="oracle">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD FOREIGN KEY ( DISTRIBUTION_ID )
             REFERENCES RHQ_DISTRIBUTION ( ID )
           </statement>           
-        </schema-directSQL>
-         
-        <schema-directSQL>
-          <statement>
-            CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
-          </statement>
-        </schema-directSQL>
-        <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="ID" nullable="false" />
-        <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
-        <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" nullable="false" />
-        <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
-        <schema-directSQL>
-          <statement>
-            INSERT INTO
-            RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
-            VALUES ( 1, 'kickstart', 'Linux kickstart distribution' )
-          </statement>
-          <statement>
-            INSERT INTO
-            RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
-            VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
-          </statement>
-        </schema-directSQL>
-
-        <schema-directSQL>
-          <statement targetDBVendor="oracle">
-            ALTER TABLE RHQ_DISTRIBUTION
-            ADD CONSTRAINT RHQ_DIST_FKEY
-            FOREIGN KEY ( DISTRIBUTION_TYPE_ID)
-            REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-          </statement>
-          <statement targetDBVendor="postgresql">
-            ALTER TABLE RHQ_DISTRIBUTION
-            ADD CONSTRAINT RHQ_DIST_FKEY
-            FOREIGN KEY ( DISTRIBUTION_TYPE_ID)
-            REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-          </statement>
         </schema-directSQL>
       </schemaSpec>
 
@@ -1993,6 +1980,16 @@
 
       <schemaSpec version="2.63">
           <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
+
+         <schema-directSQL>
+           <statement targetDBVendor="postgresql">
+             UPDATE RHQ_REPO SET IS_CANDIDATE = FALSE
+             </statement>
+           <statement targetDBVendor="oracle">
+             UPDATE RHQ_REPO SET IS_CANDIDATE = 0
+             </statement>
+         </schema-directSQL>             
+         
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
 
@@ -2092,12 +2089,7 @@
       </schemaSpec>
 
       <schemaSpec version="2.68">
-        <schema-createSequence name="RHQ_DISTRIBUTION_FILE_SEQ" initial="10001" />
-        <schema-directSQL>
-          <statement>
-            ALTER TABLE RHQ_DISTRIBUTION_FILE DROP CONSTRAINT RHQ_DISTRIBUTION_FILE_PKEY
-          </statement>
-        </schema-directSQL>
+        <schema-createSequence name="RHQ_DISTRIBUTION_FILE_ID_SEQ" initial="10001" />
 
         <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER" />
         <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />

@@ -945,8 +945,11 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
         List<RepoSyncResults> syncResults = found.getSyncResults();
         // Add the most recent sync results status
-        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
-            return syncResults.get(0).getStatus().toString();
+        int latestIndex = syncResults.size() - 1;
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
+            RepoSyncResults results = syncResults.get(latestIndex);
+            System.out.println("RESULTS ID: " + results.getId());
+            return results.getStatus().toString();
         } else {
             return ContentSyncStatus.NONE.toString();
         }
@@ -957,8 +960,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
         List<RepoSyncResults> syncResults = found.getSyncResults();
 
-        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
-            return syncResults.get(0);
+        int latestIndex = syncResults.size() - 1;
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
+            return syncResults.get(latestIndex);
         } else {
             return null;
         }

@@ -840,6 +840,9 @@ public class Repo implements Serializable, Taggable {
      * The list of sync results - order ENSURED by the incrementing ID of this object
      */
     public List<RepoSyncResults> getSyncResults() {
+        if (syncResults == null) {
+            return null;
+        }
 
         Comparator dc = new Comparator() {
             public int compare(Object arg0, Object arg1) {
@@ -852,7 +855,6 @@ public class Repo implements Serializable, Taggable {
                 return id1.compareTo(id2);
             }
         };
-
         Collections.sort(syncResults, dc);
 
         return syncResults;

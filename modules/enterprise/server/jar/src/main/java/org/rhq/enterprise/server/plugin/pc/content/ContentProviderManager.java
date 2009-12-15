@@ -335,7 +335,7 @@ public class ContentProviderManager {
                 progress.append(new Date()).append(": ");
                 progress.append("completed syncing.");
                 tracker.setResults(progress.toString());
-                tracker.getRepoSyncResults().setStatus(ContentSyncStatus.SUCCESS);
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.SUCCESS);
                 log.debug("synchronizeRepo :: Success");
 
             } catch (Exception e) {
@@ -388,12 +388,11 @@ public class ContentProviderManager {
     }
 
     private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) {
-        int resultsId = tracker.getRepoSyncResults().getId();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
-        RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(resultsId);
-        reloadedResults.setStatus(status);
-        reloadedResults = repoManager.mergeRepoSyncResults(reloadedResults);
-        tracker.setRepoSyncResults(reloadedResults);
+        RepoSyncResults results = tracker.getRepoSyncResults();
+        results.setStatus(status);
+        results = repoManager.mergeRepoSyncResults(results);
+        tracker.setRepoSyncResults(results);
         return tracker;
     }
 

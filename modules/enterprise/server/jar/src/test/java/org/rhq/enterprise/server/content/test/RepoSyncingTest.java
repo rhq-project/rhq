@@ -53,7 +53,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testSyncResults() throws Exception {
         // We have to commit because bean has new transaction inside it
         getTransactionManager().commit();
@@ -67,6 +67,28 @@ public class RepoSyncingTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = false)
+    public void testMultipleSyncResults() throws Exception {
+        getTransactionManager().commit();
+        // Sync 2x so we get multiple results
+        pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+        pluginService.getContentProviderManager().synchronizeRepo(repo.getId());
+
+        em.refresh(repo);
+
+        Query q = em.createNamedQuery(RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID);
+        q.setParameter("repoId", repo.getId());
+        List<RepoSyncResults> rlist = q.getResultList(); // will be ordered by start time descending
+        RepoSyncResults r1 = rlist.get(0);
+        RepoSyncResults r2 = rlist.get(1);
+        assert (r1.getId() > r2.getId());
+
+        rlist = repo.getSyncResults();
+        r1 = rlist.get(0);
+        r2 = rlist.get(1);
+        assert (r1.getId() > r2.getId());
+    }
+
+    @Test(enabled = true)
     public void testSyncRepos() throws Exception {
         p1.setLongRunningSyncs(true);
 

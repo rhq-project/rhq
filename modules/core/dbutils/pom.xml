@@ -22,7 +22,7 @@
 
   <properties>
     <scm.module.path>modules/core/dbutils/</scm.module.path>
-    <db.schema.version>2.69.3</db.schema.version>
+    <db.schema.version>2.70</db.schema.version>
   </properties>
 
   <dependencies>
@@ -48,14 +48,14 @@
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>com.h2database</groupId>
       <artifactId>h2</artifactId>
       <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       <scope>test</scope>
     </dependency>
-    
+
     <dependency>
       <groupId>net.sourceforge.jtds</groupId>
       <artifactId>jtds</artifactId>
@@ -67,6 +67,50 @@
 
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.codehaus.groovy.maven</groupId>
+        <artifactId>gmaven-plugin</artifactId>
+        <version>1.0</version>
+        <dependencies>
+          <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${postgresql.version}</version>
+          </dependency>
+        </dependencies>
+        <executions>
+          <execution>
+            <phase>test</phase>
+            <goals>
+              <goal>execute</goal>
+            </goals>
+            <configuration>
+              <source>
+                import org.postgresql.Driver
+                import groovy.sql.Sql
+
+                if (!project.properties.dbreset) {
+                  return
+                }
+ 
+                database = project.properties['rhq.test.ds.db-name']
+                project.properties.dbsetup = 'true'
+
+                sql = Sql.newInstance(
+                    "jdbc:postgresql://127.0.0.1:5432/postgres", 
+                    "postgres", 
+                    "postgres",
+                    "org.postgresql.Driver")
+
+                sql.execute("drop database if exists ${Sql.expand(database)};")
+                log.info("dropped database $database")
+                sql.execute("create database ${Sql.expand(database)} with owner rhqadmin;")
+                log.info("created database $database")
+              </source>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
 
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>

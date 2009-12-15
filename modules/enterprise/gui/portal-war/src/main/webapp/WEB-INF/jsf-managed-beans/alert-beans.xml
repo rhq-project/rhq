@@ -10,14 +10,14 @@
       <managed-bean-class>org.rhq.enterprise.gui.alert.ListAlertDefinitionsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   
+
      <!-- /rhq/resource/alert/listAlertHistory.xhtml -->
    <managed-bean>
       <managed-bean-name>ListAlertHistoryUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.alert.ListAlertHistoryUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   
+
      <!-- /rhq/admin/listAlertTemplates.xhtml -->
    <managed-bean>
       <managed-bean-name>ListAlertTemplatesUIBean</managed-bean-name>

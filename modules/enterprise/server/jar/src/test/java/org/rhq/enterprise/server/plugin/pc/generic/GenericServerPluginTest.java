@@ -129,7 +129,7 @@ public class GenericServerPluginTest extends AbstractEJB3Test {
             }
             assert got_it == true;
         } finally {
-            // make sure we clean this up, even on error 
+            // make sure we clean this up, even on error
             serverPluginsLocal.purgeServerPlugin(LookupUtil.getSubjectManager().getOverlord(), new PluginKey(plugin));
         }
 

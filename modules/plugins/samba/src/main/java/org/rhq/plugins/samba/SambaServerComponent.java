@@ -18,18 +18,24 @@
  */
 package org.rhq.plugins.samba;
 
+import net.augeas.Augeas;
+
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasNode;
 
 /**
  * TODO
  */
 public class SambaServerComponent extends AugeasConfigurationComponent {
+    static final String ENABLE_RECYCLING = "enableRecycleBin";
 
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
@@ -64,7 +70,8 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     @Override
     protected String getChildResourceConfigurationRootPath(ResourceType resourceType, Configuration resourceConfig) {
         if (resourceType.getName().equals(SambaShareComponent.RESOURCE_TYPE_NAME)) {
-            String targetName = resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
+            String targetName = resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP)
+                .getStringValue();
             return "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
         } else {
             throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
@@ -78,5 +85,34 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         } else {
             throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
         }
+    }
+
+    @Override
+    protected void setNodeFromPropertySimple(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
+        PropertySimple propSimple) {
+        if (ENABLE_RECYCLING.equals(propDefSimple.getName())) {
+            if (propSimple.getBooleanValue()) {
+                String path = node.getParent().getPath();
+                augeas.set(path + "/vfs\\ objects", "recycle");
+                augeas.set(path + "/recycle:repository", ".recycle");
+                augeas.set(path + "/recycle:keeptree", "yes");
+                augeas.set(path + "/recycle:versions", "yes");
+            } else {
+                String path = node.getParent().getPath();
+                augeas.remove(path + "/vfs\\ objects");
+                augeas.remove(path + "/recycle:repository");
+                augeas.remove(path + "/recycle:keeptree");
+                augeas.remove(path + "/recycle:versions");
+            }
+        } else {
+            super.setNodeFromPropertySimple(augeas, node, propDefSimple, propSimple);
+        }
+    }
+
+    protected Object toPropertyValue(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
+        if (ENABLE_RECYCLING.equals(propDefSimple.getName())) {
+            return "recycle".equals(augeas.get(node.getParent().getPath() + "/vfs\\ objects"));
+        }
+        return super.toPropertyValue(propDefSimple, augeas, node);
     }
 }

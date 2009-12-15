@@ -842,10 +842,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource.getResourceType().getResourceConfigurationDefinition() == null
-            || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
-            return new PageList<ResourceConfigurationUpdate>(pc);
-        }
 
         pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
 
@@ -1012,6 +1008,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException {
+
+        if (isStructuredAndRawSupported(resourceId)) {
+            throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that " +
+                "supports both structured and raw configuration using this method because there is insufficient " +
+                "information. You should instead call updateStructuredOrRawConfiguration() which requires you " +
+                "whether the structured or raw was updated.");
+        }
+
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
@@ -1064,7 +1068,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + configHistoryId + "'");
         }
 
-        updateResourceConfiguration(subject, resourceId, configuration);
+        if (isStructuredAndRawSupported(resourceId)) {
+            updateStructuredOrRawConfiguration(subject, resourceId, configuration, false);
+        }
+        else {
+            updateResourceConfiguration(subject, resourceId, configuration);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1905,7 +1914,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
-        boolean fromStructured) throws ResourceNotFoundException {
+        boolean fromStructured) {
+
+        if (!isStructuredAndRawSupported(resourceId)) {
+            throw new TranslationNotSupportedException("The translation operation is only supported for " +
+                "configurations that support both structured and raw.");
+        }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
 

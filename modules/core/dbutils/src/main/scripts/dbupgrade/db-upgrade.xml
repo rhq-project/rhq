@@ -2206,6 +2206,29 @@
         <!-- add the new column that indicates what type of plugin this is (e.g. alert, generic, content) - for server plugins only -->
         <schema-addColumn table="RHQ_PLUGIN" column="PTYPE" columnType="VARCHAR2" precision="200"/>
       </schemaSpec>
+        <schemaSpec version="2.70">
+            <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG" />
+            <schema-addColumn table="RHQ_ALERT" column="ACK_BY_ID" columnType="INTEGER" />
+            <schema-directSQL>
+                <statement>
+                    ALTER TABLE RHQ_ALERT
+                    ADD CONSTRAINT RHQ_ALERT_SUBJECT_ID_FKEY
+                    FOREIGN KEY (ACK_BY_ID)
+                    REFERENCES RHQ_SUBJECT(ID)
+                </statement>
+            </schema-directSQL>
+            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" columnType="VARCHAR2"/>
+            <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" columnType="INTEGER"/>
+            <schema-directSQL>
+                <statement>
+                    ALTER TABLE RHQ_ALERT_NOTIFICATION
+                    ADD CONSTRAINT RHQ_ALERT_CONFIG_ID_FKEY
+                    FOREIGN KEY (ALERT_CONFIG_ID)
+                    REFERENCES RHQ_CONFIG(ID)
+                </statement>
+            </schema-directSQL>
+
+         </schemaSpec>
 
     </dbupgrade>
   </target>

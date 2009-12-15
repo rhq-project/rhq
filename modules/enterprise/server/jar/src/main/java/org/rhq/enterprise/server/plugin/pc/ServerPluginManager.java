@@ -31,23 +31,23 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
  * Provides functionality to manage plugins for a plugin container. Plugin containers
  * can install their own plugin managers that are extensions to this class if they need to.
- * 
+ *
  * Most of the methods here are protected; they are meant for the plugin container's use only.
  * Usually, anything an external client needs will be done through a delegation method
  * found on the plugin container.
- * 
+ *
  * @author John Mazzitelli
  */
 //TODO: need a R/W lock to make this class thread safe
@@ -81,7 +81,7 @@ public class ServerPluginManager {
 
     /**
      * Creates a plugin manager for the given plugin container.
-     * 
+     *
      * @param pc the plugin manager's owning plugin container
      */
     public ServerPluginManager(AbstractTypeServerPluginContainer pc) {
@@ -94,7 +94,7 @@ public class ServerPluginManager {
 
     /**
      * Returns the plugin container that whose plugins are managed by this manager.
-     * 
+     *
      * @return the plugin container that owns this plugin manager
      */
     public AbstractTypeServerPluginContainer getParentPluginContainer() {
@@ -113,7 +113,7 @@ public class ServerPluginManager {
 
     /**
      * Given a plugin name, this returns that plugin's environment.
-     * 
+     *
      * <p>The plugin's name is defined in its plugin descriptor - specifically the XML root node's "name" attribute
      * (e.g. &ltserver-plugin name="thePluginName").</p>
      *
@@ -126,7 +126,7 @@ public class ServerPluginManager {
 
     /**
      * Initializes the plugin manager to prepare it to start loading plugins.
-     * 
+     *
      * @throws Exception if failed to initialize
      */
     protected void initialize() throws Exception {
@@ -164,14 +164,16 @@ public class ServerPluginManager {
      * @param enabled <code>true</code> if the plugin should be initialized; <code>false</code> if
      *        the plugin's existence should be noted but it should not be initialized or started
      *
-     * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid
+     * @throws Exception if the plugin manager cannot load the plugin or deems the plugin invalid.
+     *                   Typically, this method will not throw an exception unless enabled is
+     *                   <code>true</code> - loading a disabled plugin is trivial and should not
+     *                   fail or throw an exception.
      */
     protected void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         String pluginName = env.getPluginKey().getPluginName();
+        log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
 
         if (enabled) {
-            log.debug("Loading server plugin [" + pluginName + "] from: " + env.getPluginUrl());
-
             // tell the plugin we are loading it
             ServerPluginComponent component = createServerPluginComponent(env);
             if (component != null) {
@@ -182,7 +184,7 @@ public class ServerPluginManager {
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.initialize(context);
                 } catch (Throwable t) {
-                    throw new Exception("Plugin component failed to initialize plugin", t);
+                    throw new Exception("Plugin component failed to initialize server plugin", t);
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
                 }
@@ -216,6 +218,9 @@ public class ServerPluginManager {
                 log.debug("Starting plugin component for server plugin [" + pluginName + "]");
                 ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
                 try {
+                    if (env == null) {
+                        throw new Exception("Plugin [" + pluginName + "] was never loaded");
+                    }
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.start();
                 } catch (Throwable t) {
@@ -244,6 +249,9 @@ public class ServerPluginManager {
             log.debug("Stopping plugin component for server plugin [" + pluginName + "]");
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
             try {
+                if (env == null) {
+                    throw new Exception("Plugin [" + pluginName + "] was never loaded");
+                }
                 Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                 component.stop();
             } catch (Throwable t) {
@@ -257,8 +265,8 @@ public class ServerPluginManager {
 
     /**
      * Informs the plugin manager that a plugin with the given name is to be unloaded.
-     * Once this method returns, the plugin's components are should no longer be created or used.
-     *
+     * The component's shutdown method will be called.
+     * 
      * @param pluginName the name of the plugin to be unloaded
      *
      * @throws Exception if the plugin manager cannot unload the plugin
@@ -298,6 +306,38 @@ public class ServerPluginManager {
     }
 
     /**
+     * Informs the plugin manager that a plugin with the given name is to be unloaded.
+     * Once this method returns, the plugin's components should not be created or used.
+     *
+     * If <code>keepClassLoader</code> is <code>true</code>, this is the same as
+     * {@link #unloadPlugin(String)}.
+     *
+     * You want to keep the classloader if you are only temporarily unloading the plugin, and
+     * will load it back soon.
+     *
+     * Subclasses of this plugin manager class will normally not override this method; instead,
+     * they will typically want to override {@link #unloadPlugin(String)}.
+     *
+     * @param pluginName the name of the plugin to be unloaded
+     * @param keepClassLoader if <code>true</code> the classloader is not destroyed
+     * @throws Exception if the plugin manager cannot unload the plugin
+     */
+    protected void unloadPlugin(String pluginName, boolean keepClassLoader) throws Exception {
+        try {
+            unloadPlugin(pluginName);
+        } finally {
+            if (!keepClassLoader) {
+                String pluginType = getParentPluginContainer().getSupportedServerPluginType().stringify();
+                PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType, pluginName);
+                MasterServerPluginContainer master = this.parentPluginContainer.getMasterServerPluginContainer();
+                master.getClassLoaderManager().unloadPlugin(pluginKey);
+            }
+        }
+
+        return;
+    }
+
+    /**
      * This will reload a plugin allowing you to enable or disable it.
      * This will {@link #startPlugin(String) start the plugin component} if you enable it.
      * This will {@link #stopPlugin(String) stop the plugin component} if you disable it.
@@ -324,9 +364,16 @@ public class ServerPluginManager {
             throw new IllegalArgumentException("Server plugin [" + pluginName + "] was never loaded, cannot enable it");
         }
         stopPlugin(pluginName); // under normal circumstances, we should not need to do this, but just in case the plugin is somehow already started, stop it
-        unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
+        unloadPlugin(pluginName, true); // unloading it will clean up old data and force the plugin context to reload
         env = rebuildServerPluginEnvironment(env);
-        loadPlugin(env, true); // reload it in the enabled state
+        try {
+            // reload it in the enabled state.
+            loadPlugin(env, true);
+        } catch (Exception e) {
+            // we've already unloaded it - so even though we failed to enable it, we need to load it back, albeit disabled
+            loadPlugin(env, false);
+            throw e;
+        }
         startPlugin(pluginName); // since we are enabling the plugin, immediately start it
         return;
     }
@@ -338,10 +385,14 @@ public class ServerPluginManager {
             throw new IllegalArgumentException("Server plugin [" + pluginName + "] was never loaded, cannot disable it");
         }
         stopPlugin(pluginName);
-        unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
+        unloadPlugin(pluginName, true); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
         env = rebuildServerPluginEnvironment(env);
         loadPlugin(env, false); // re-load it in the disabled state
         return;
+    }
+
+    protected boolean isPluginLoaded(String pluginName) {
+        return this.loadedPlugins.containsKey(pluginName);
     }
 
     protected boolean isPluginEnabled(String pluginName) {
@@ -351,12 +402,12 @@ public class ServerPluginManager {
     /**
      * Returns the main plugin component instance that is responsible for initializing and managing
      * the plugin. This will return <code>null</code> if a plugin has not defined a plugin component.
-     * 
+     *
      * @param pluginName the name of the plugin whose plugin component is to be returned
-     * 
+     *
      * @return the plugin component instance that initialized and is managing a plugin. Will
-     *         return <code>null</code> if the plugin has not defined a plugin component. 
-     *         <code>null</code> is also returned if the plugin is not initialized yet. 
+     *         return <code>null</code> if the plugin has not defined a plugin component.
+     *         <code>null</code> is also returned if the plugin is not initialized yet.
      */
     protected ServerPluginComponent getServerPluginComponent(String pluginName) {
         return this.pluginComponentCache.get(pluginName);
@@ -380,20 +431,18 @@ public class ServerPluginManager {
         MasterServerPluginContainerConfiguration masterConfig = masterPC.getConfiguration();
         File dataDir = new File(masterConfig.getDataDirectory(), pluginName);
         File tmpDir = masterConfig.getTemporaryDirectory();
-
-        Configuration plugnConfig;
+        Configuration pluginConfig = null;
         List<ScheduledJobDefinition> schedules;
-
         try {
             ServerPlugin plugin = getPlugin(env);
-            plugnConfig = plugin.getPluginConfiguration();
+            pluginConfig = plugin.getPluginConfiguration();
             Configuration scheduledJobsConfig = plugin.getScheduledJobsConfiguration();
             schedules = ServerPluginDescriptorMetadataParser.getScheduledJobs(scheduledJobsConfig);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get plugin config/schedules from the database", e);
         }
 
-        context = new ServerPluginContext(env, dataDir, tmpDir, plugnConfig, schedules);
+        context = new ServerPluginContext(env, dataDir, tmpDir, pluginConfig, schedules);
         this.pluginContextCache.put(pluginName, context);
         return context;
     }
@@ -401,7 +450,7 @@ public class ServerPluginManager {
     /**
      * Given a plugin environment, this will rebuild a new one with up-to-date information.
      * This means the descriptor will be reparsed.
-     * 
+     *
      * @param env the original environment
      * @return the new environment that has been rebuild from the original but has newer data
      * @throws Exception if the environment could not be rebuilt - probably due to an invalid descriptor
@@ -418,7 +467,7 @@ public class ServerPluginManager {
     /**
      * Given a plugin environment, return its {@link ServerPlugin} representation, which should also include
      * the plugin configuration and scheduled jobs configuration.
-     * 
+     *
      * @param pluginEnv
      * @return the ServerPlugin object for the given plugin
      */
@@ -450,9 +499,10 @@ public class ServerPluginManager {
         String pluginName = environment.getPluginKey().getPluginName();
         ServerPluginComponent instance = null;
 
-        ServerPluginComponentType componentXml = environment.getPluginDescriptor().getPluginComponent();
-        if (componentXml != null) {
-            String className = componentXml.getClazz();
+        ServerPluginDescriptorType descriptor = environment.getPluginDescriptor();
+        String className = ServerPluginDescriptorMetadataParser.getPluginComponentClassName(descriptor);
+
+        if (className != null) {
             log.debug("Creating plugin component [" + className + "] for plugin [" + pluginName + "]");
             instance = (ServerPluginComponent) instantiatePluginClass(environment, className);
             log.debug("Plugin component created [" + instance.getClass() + "] for plugin [" + pluginName + "]");
@@ -464,7 +514,7 @@ public class ServerPluginManager {
     /**
      * Instantiates a class with the given name within the given environment's classloader using
      * the class' no-arg constructor.
-     * 
+     *
      * @param environment the environment that has the classloader where the class will be loaded
      * @param className the class to instantiate
      * @return the new object that is an instance of the given class
@@ -473,11 +523,6 @@ public class ServerPluginManager {
     protected Object instantiatePluginClass(ServerPluginEnvironment environment, String className) throws Exception {
 
         ClassLoader loader = environment.getPluginClassLoader();
-
-        String pkg = environment.getPluginDescriptor().getPackage();
-        if ((className.indexOf('.') == -1) && (pkg != null)) {
-            className = pkg + '.' + className;
-        }
 
         log.debug("Loading server plugin class [" + className + "]...");
 

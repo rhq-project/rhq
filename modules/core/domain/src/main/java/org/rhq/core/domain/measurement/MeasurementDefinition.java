@@ -75,6 +75,23 @@ import org.rhq.core.domain.resource.ResourceType;
 @Table(name = "RHQ_MEASUREMENT_DEF")
 public class MeasurementDefinition implements Serializable {
 
+    public static final String QUERY_NATIVE_UPDATE_DEFAULT_ON_BY_IDS = "" //
+        + "UPDATE RHQ_MEASUREMENT_DEF" //
+        + "   SET DEFAULT_ON = ?" //
+        + "   WHERE ID IN ( @@DEFINITION_IDS@@ )";
+    public static final String QUERY_NATIVE_UPDATE_DEFAULTS_BY_IDS = "" //
+        + "UPDATE RHQ_MEASUREMENT_DEF" //
+        + "   SET DEFAULT_ON = ?, DEFAULT_INTERVAL = ?" //
+        + "   WHERE ID IN ( @@DEFINITION_IDS@@ )";
+    public static final String QUERY_NATIVE_UPDATE_SCHEDULES_ENABLE_BY_IDS = "" //
+        + "UPDATE RHQ_MEASUREMENT_SCHED" //
+        + "   SET ENABLED = ?" //
+        + "   WHERE DEFINITION IN ( @@DEFINITION_IDS@@ )";
+    public static final String QUERY_NATIVE_UPDATE_SCHEDULES_BY_IDS = "" //
+        + "UPDATE RHQ_MEASUREMENT_SCHED" //
+        + "   SET ENABLED = ?, COLL_INTERVAL = ?" //
+        + "   WHERE DEFINITION IN ( @@DEFINITION_IDS@@ )";
+
     private static final long serialVersionUID = 1L;
 
     public static final String FIND_BY_RESOURCE_TYPE_DATA_TYPE_DISPLAY_TYPE = "MeasurementDefinition.findByResourceTypeDataTypeDisplayType";

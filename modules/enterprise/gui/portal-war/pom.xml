@@ -329,12 +329,6 @@
       </dependency>
 
       <dependency>
-         <groupId>org.snmp4j</groupId>
-         <artifactId>snmp4j</artifactId>
-         <version>1.7.1</version>
-      </dependency>
-
-      <dependency>
          <groupId>struts</groupId>
          <artifactId>struts</artifactId>
          <version>1.2.9</version>
@@ -548,7 +542,7 @@
          </build>
       </profile>
 
-      <!-- 
+      <!--
       <profile>
          <id>dist</id>
 

@@ -2004,6 +2004,36 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return getResourceById(subject, resourceId);
     }
 
+    public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
+        Resource res = getResourceById(subject, resourceId);
+        ResourceAvailability results = new ResourceAvailability(res, null);
+
+        try {
+            Agent agent = res.getAgent();
+            if (agent == null) {
+                throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
+            }
+
+            // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
+            AgentClient client = agentManager.getAgentClient(agent);
+            boolean agentPing = client.ping(5000L);
+            if (agentPing) {
+                // we can't serialize the resource due to the hibernate proxies (agent can't deserialize hibernate objs)
+                // but we know we only need the basics for the agent to collect availability, so create a bare resource object
+                Resource bareResource = new Resource(res.getResourceKey(), res.getName(), res.getResourceType());
+                bareResource.setId(res.getId());
+                bareResource.setUuid(res.getUuid());
+                Availability avail = client.getDiscoveryAgentService().getCurrentAvailability(bareResource);
+                if (avail != null) {
+                    results.setAvailabilityType(avail.getAvailabilityType());
+                }
+            }
+        } catch (Throwable ignore) {
+        }
+
+        return results;
+    }
+
     // lineage is a getXXX (not findXXX) because it logically returns a single object, but modeled as a list here
     public @XmlJavaTypeAdapter(value = ResourceListAdapter.class)
     List<Resource> findResourceLineage(Subject subject, int resourceId) {

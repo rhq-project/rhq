@@ -30,6 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 
 /**
  * @author Joseph Marques
@@ -79,6 +80,33 @@ public interface AlertManagerLocal {
 
     Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds);
 
+    /**
+     * Mark the matching alert as acknowledged by the user
+     * @param alertId Id of the alert to acknowledge
+     * @param user user who acknowledged the alert
+     */
+    void acknowledgeAlert(int alertId, Subject user);
+
+    /**
+     * Return the plugin manager that is managing alert sender plugins
+     * @return The alert sender plugin manager
+     */
+    AlertSenderPluginManager getAlertPluginManager();
+
+    /**
+     * Create a human readable description of the conditions that led to this alert.
+     * @param alert Alert to create human readable condition description
+     * @return human readable condition log
+     */
+    String prettyPrintAlertConditions(Alert alert);
+
+    /**
+     * Tells us if the definition of the passed alert will be disabled after this alert was fired
+     * @param alert alert to check
+     * @return true if the definition got disabled
+     */
+    boolean willDefinitionBeDisabled(Alert alert);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -86,4 +114,6 @@ public interface AlertManagerLocal {
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
+
+    String prettyPrintAlertURL(Alert alert);
 }

@@ -36,7 +36,7 @@ import org.rhq.core.domain.configuration.Configuration;
 
 /**
  * A server plugin.
- * 
+ *
  * This object contains information about the plugin jar itself (e.g. its name and MD5).
  * It may also contain the jar contents ({@link #getContent()}).
  */
@@ -56,7 +56,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.name) " //
         + "   FROM ServerPlugin AS p " //
-        + "  WHERE p.enabled = :enabled " // 
+        + "  WHERE p.enabled = :enabled " //
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query does not load the content blob, but loads everything else
@@ -78,14 +78,15 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
+    // gets plugins that are both installed and deleted
     // this query does not load the content blob, but loads everything else
-    @NamedQuery(name = ServerPlugin.QUERY_FIND_BY_NAME, query = "" //
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL_BY_IDS, query = "" //
         + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
         + "        p.id, " //
         + "        p.name, " //
@@ -106,6 +107,30 @@ import org.rhq.core.domain.configuration.Configuration;
         + "   FROM ServerPlugin AS p " // 
         + "        LEFT JOIN p.pluginConfiguration " // 
         + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "  WHERE p.id IN (:ids) "), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_BY_NAME, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.name=:name " //
         + "        AND p.status = 'INSTALLED' "), //
 
@@ -129,10 +154,34 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.type, " //
         + "        p.ctime, " //
         + "        p.mtime) " //
-        + "   FROM ServerPlugin AS p " // 
-        + "        LEFT JOIN p.pluginConfiguration " // 
-        + "        LEFT JOIN p.scheduledJobsConfiguration " // 
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "  WHERE p.name=:name "), //
+
+    // finds all installed AND deleted
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = ServerPlugin.QUERY_FIND_ALL, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.ServerPlugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.pluginConfiguration, " //
+        + "        p.scheduledJobsConfiguration, " //
+        + "        p.type, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.scheduledJobsConfiguration "),
 
     // finds all installed - ignores those plugins marked as deleted
     // this query does not load the content blob, but loads everything else
@@ -155,7 +204,7 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        p.ctime, " //
         + "        p.mtime) " //
         + "   FROM ServerPlugin AS p " //
-        + "        LEFT JOIN p.pluginConfiguration " // 
+        + "        LEFT JOIN p.pluginConfiguration " //
         + "        LEFT JOIN p.scheduledJobsConfiguration " //
         + "   WHERE p.status = 'INSTALLED' "), //
 
@@ -181,10 +230,10 @@ import org.rhq.core.domain.configuration.Configuration;
         + "        AND p.status = 'INSTALLED' "), //
 
     // this query is how you enable and disable plugins
-    @NamedQuery(name = ServerPlugin.UPDATE_PLUGINS_ENABLED_BY_IDS, query = "" //
+    @NamedQuery(name = ServerPlugin.UPDATE_PLUGIN_ENABLED_BY_ID, query = "" //
         + "UPDATE ServerPlugin p " //
         + "   SET p.enabled = :enabled " //
-        + " WHERE p.id IN (:ids)")
+        + " WHERE p.id = :id)")
 
 })
 @Entity
@@ -194,12 +243,14 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_GET_STATUS_BY_NAME = "ServerPlugin.queryGetStatusByName";
     public static final String QUERY_GET_KEYS_BY_ENABLED = "ServerPlugin.queryGetKeysByEnabled";
     public static final String QUERY_FIND_BY_IDS = "ServerPlugin.findByIds";
+    public static final String QUERY_FIND_ALL_BY_IDS = "ServerPlugin.findAllByIds";
     public static final String QUERY_FIND_BY_NAME = "ServerPlugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "ServerPlugin.findAnyByName";
+    public static final String QUERY_FIND_ALL = "ServerPlugin.findAll";
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
-    public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "ServerPlugin.updatePluginsEnabledByIds";
+    public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "ServerPlugin.updatePluginEnabledById";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
@@ -254,7 +305,7 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * If the plugin, itself, has configuration associated with it, this is that configuration.
-     * 
+     *
      * @return the configuration associated with the plugin itself
      */
     public Configuration getPluginConfiguration() {
@@ -267,7 +318,7 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * If the plugin has jobs associated with it, this is the configuration for those jobs.
-     * 
+     *
      * @return scheduled job configuration for jobs that the plugin defined.
      */
     public Configuration getScheduledJobsConfiguration() {
@@ -280,8 +331,8 @@ public class ServerPlugin extends AbstractPlugin {
 
     /**
      * Plugin type string.
-     * 
-     * @return plugin type 
+     *
+     * @return plugin type
      */
     public String getType() {
         return this.type;

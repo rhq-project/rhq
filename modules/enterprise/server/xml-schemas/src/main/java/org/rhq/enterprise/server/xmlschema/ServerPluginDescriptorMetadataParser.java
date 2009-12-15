@@ -35,8 +35,10 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -53,6 +55,58 @@ public class ServerPluginDescriptorMetadataParser {
     private static final String SCHEDULED_JOB_PROP_NAME_CONCURRENT = "concurrent";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE = "scheduleType";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER = "scheduleTrigger";
+
+    /**
+     * Returns the fully qualified class name of the plugin component.
+     * If the descriptor did not define a plugin component, this will return <code>null</code>.
+     * @param descriptor
+     *
+     * @return the name of the plugin component class, or <code>null</code> if not specified
+     */
+    public static String getPluginComponentClassName(ServerPluginDescriptorType descriptor) {
+
+        ServerPluginComponentType componentXml = descriptor.getPluginComponent();
+        if (componentXml == null) {
+            return null;
+        }
+
+        String className = componentXml.getClazz();
+        if (className == null) {
+            // this should never happen, the xml schema validation should have caught this earlier
+            throw new IllegalArgumentException("Missing plugin component classname for plugin " + descriptor.getName());
+        }
+
+        className = getFullyQualifiedClassName(descriptor, className);
+
+        return className;
+    }
+
+    /**
+     * Given a plugn descriptor that may or may not have defined a {@link ServerPluginDescriptorType#getPackage() package name},
+     * this converts the given class name to a fully qualified class name.
+     * 
+     * If the descriptor does not define a package name, this method does nothing and returns <code>className</code> unchanged.
+     * 
+     * If <code>className</code> contains at least one "." character, it is assumed to be already fully qualified and so it
+     * will be returned unchanged.
+     * 
+     * If <code>className</code> has no "." characters, and the descriptor defines a package name, that package name
+     * will prefix the given class name and will form the fully qualified class name that is returned.
+     * 
+     * @param descriptor a plugin descriptor that may or may not define a package name
+     * @param className a classname that may or may not be fully qualified
+     * @return the fully qualified class name or <code>null</code> if <code>className</code> is <code>null</code>
+     */
+    public static String getFullyQualifiedClassName(ServerPluginDescriptorType descriptor, String className) {
+
+        if (className != null) {
+            String pkg = (descriptor != null) ? descriptor.getPackage() : null;
+            if ((className.indexOf('.') == -1) && (pkg != null)) {
+                className = pkg + '.' + className;
+            }
+        }
+        return className;
+    }
 
     /**
      * Returns the global configuration definition for the plugin. This does not include any scheduled
@@ -170,6 +224,9 @@ public class ServerPluginDescriptorMetadataParser {
             }
 
             job = new ScheduledJobDefinition(jobId, enabled, className, methodName, scheduleType, callbackData);
+        } else if (!(mapDef instanceof PropertyDefinitionList)) {
+            // mapDef isn't even a list (which would have indicated its a valid list-of-maps of jobs) - so assume its invalid 
+            throw new Exception("Invalid scheduled job definition [" + mapDef.getName() + "]");
         }
 
         return job;

@@ -274,6 +274,9 @@ public class ServerPluginTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
+            Query query = em.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
+            int originalNumberOfPlugins = query.getResultList().size();
+
             String name = "ServerPluginTest-testPersist";
             String path = "/test/Persist";
             String displayName = "Server Plugin Test - testPersist";
@@ -328,7 +331,7 @@ public class ServerPluginTest extends AbstractEJB3Test {
             assert new String(plugin.getContent()).equals(new String(content));
 
             // test our queries that purposefully do not load in the content blob
-            Query query = em.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
+            query = em.createNamedQuery(ServerPlugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
             plugin = (ServerPlugin) query.getSingleResult();
             assert plugin != null;
@@ -396,7 +399,7 @@ public class ServerPluginTest extends AbstractEJB3Test {
 
             query = em.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED_KEYS);
             List<PluginKey> allKeys = query.getResultList();
-            assert allKeys.size() == 1;
+            assert allKeys.size() == originalNumberOfPlugins + 1;
             assert allKeys.contains(new PluginKey(plugin));
 
             query = em.createNamedQuery(ServerPlugin.QUERY_FIND_KEYS_BY_IDS);
@@ -423,7 +426,11 @@ public class ServerPluginTest extends AbstractEJB3Test {
 
             query = em.createNamedQuery(ServerPlugin.QUERY_FIND_ALL_INSTALLED);
             results = query.getResultList();
-            assert results.size() == 0;
+            assert results.size() == originalNumberOfPlugins;
+
+            query = em.createNamedQuery(ServerPlugin.QUERY_FIND_ALL);
+            results = query.getResultList();
+            assert results.size() == originalNumberOfPlugins + 1;
 
         } finally {
             getTransactionManager().rollback();

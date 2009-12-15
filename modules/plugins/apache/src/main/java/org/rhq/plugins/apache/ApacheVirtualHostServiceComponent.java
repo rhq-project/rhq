@@ -56,7 +56,8 @@ import org.rhq.plugins.www.util.WWWUtils;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet, ConfigurationFacet, DeleteResourceFacet {
+public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
+    ConfigurationFacet, DeleteResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String SNMP_WWW_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
@@ -82,10 +83,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             this.url = new URL(url);
             if (this.url.getPort() == 0) {
                 throw new InvalidPluginConfigurationException(
-                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
-                    "port this virtual host is listening on. NOTE: If the 'url' property was set this way " +
-                    "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
-                    "this virtual host in httpd.conf.");
+                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                        + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
+                        + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                        + "this virtual host in httpd.conf.");
             }
         } catch (MalformedURLException e) {
             throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
@@ -112,8 +113,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public Configuration loadResourceConfiguration() throws Exception {
         AugeasTree tree = getServerConfigurationTree();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-        
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+            .getResourceConfigurationDefinition();
+
         ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
         return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
     }
@@ -124,9 +126,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
     public void deleteResource() throws Exception {
         // TODO Auto-generated method stub
-        
+
     }
-    
+
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         int primaryIndex = pluginConfig.getSimple(SNMP_WWW_SERVICE_INDEX_CONFIG_PROP).getIntegerValue();
@@ -172,7 +174,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public AugeasTree getServerConfigurationTree() {
         return resourceContext.getParentResourceComponent().getAugeasTree();
     }
-    
+
     /**
      * Returns a node corresponding to this component in the Augeas tree.
      * 
@@ -182,65 +184,63 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      */
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
-        
+
         if (ApacheVirtualHostServiceDiscoveryComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
             return tree.getRootNode();
         }
-        
+
         String serverName = null;
         int pipeIdx = resourceKey.indexOf('|');
         if (pipeIdx >= 0) {
             serverName = resourceKey.substring(0, pipeIdx);
         }
-        
-        String[] addrs = resourceKey.substring(pipeIdx+1).split(" ");
+
+        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
         List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
         boolean updated;
-        
-        for (AugeasNode node : nodes){
-        	List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName"+File.separator+"param");
-        	String tempServerName= null;
-        	
-            if (!(serverNameNodes.isEmpty())){
-            	tempServerName = serverNameNodes.get(0).getValue();
+
+        for (AugeasNode node : nodes) {
+            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
+            String tempServerName = null;
+
+            if (!(serverNameNodes.isEmpty())) {
+                tempServerName = serverNameNodes.get(0).getValue();
             }
-         
-            if (tempServerName==null & serverName==null){
-            	virtualHosts.add(node);
-            }else
-              if (tempServerName!=null & serverName !=null)
-            	if (tempServerName.equals(serverName))
-                 {
-            		updated = false;
-            		List<AugeasNode> params = node.getChildByLabel("param");
-            		for (AugeasNode nd : params){
-            		    updated = false;
-            			for (String adr : addrs)
-            			{
-            			 if (adr.equals(nd.getValue()))
-            				updated = true; 
-            			}
-            		if (!updated)
-            			break;
-            		
-            		}
-            		
-            		if (updated){
-            			virtualHosts.add(node);
-            		}
-               }
+
+            if (tempServerName == null && serverName == null) {
+                virtualHosts.add(node);
+            } else if (tempServerName != null && serverName != null)
+                if (tempServerName.equals(serverName)) {
+                    updated = false;
+                    List<AugeasNode> params = node.getChildByLabel("param");
+                    for (AugeasNode nd : params) {
+                        updated = false;
+                        for (String adr : addrs) {
+                            if (adr.equals(nd.getValue()))
+                                updated = true;
+                        }
+                        if (!updated)
+                            break;
+
+                    }
+
+                    if (updated) {
+                        virtualHosts.add(node);
+                    }
+                }
         }
-        
-               
+
         if (virtualHosts.size() == 0) {
-            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: " +  resourceKey);
+            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
+                + resourceKey);
         }
-        
+
         if (virtualHosts.size() > 1) {
-            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: " + resourceKey);
+            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
+                + resourceKey);
         }
-        
+
         return virtualHosts.get(0);
     }
 
@@ -304,5 +304,5 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         oid = strBuf.toString();
         return oid;
     }
-    
+
 }

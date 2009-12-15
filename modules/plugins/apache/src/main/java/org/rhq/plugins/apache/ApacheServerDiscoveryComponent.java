@@ -315,9 +315,10 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     
     private static AugeasTree loadAugeas(Configuration pluginConfiguration) throws AugeasTreeException {
         AugeasConfigurationApache config = new AugeasConfigurationApache(pluginConfiguration);
+        String moduleName = config.getAugeasModuleName();
         AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
         AugeasProxy augeasProxy = new AugeasProxy(config, builder);
         augeasProxy.load();
-        return augeasProxy.getAugeasTree("Httpd", true);
+        return augeasProxy.getAugeasTree(moduleName, true);
     }    
 }

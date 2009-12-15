@@ -295,7 +295,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public AugeasTree getAugeasTree() throws AugeasTreeException {
-        return getAugeasProxy().getAugeasTree("Httpd", true);
+        AugeasProxy proxy = getAugeasProxy();
+        String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
+        
+        return proxy.getAugeasTree(module, true);
     }
     
     /**

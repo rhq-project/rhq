@@ -51,7 +51,7 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
  * 
  * @author Filip Drabek
  */
-public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfiguration implements AugeasConfiguration {
+public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfiguration {
 
     public static final String INCLUDE_DIRECTIVE = "Include";
     private static final String INCLUDE_FILES_PATTERN = "^[\t ]*Include[\t ]+(.*)$";
@@ -83,6 +83,10 @@ public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfig
         }
     }
 
+    public String getAugeasModuleName() {
+        return module.getModuletName();
+    }
+    
     public List<String> getIncludes(File file) {
         List<String> includeFiles = new ArrayList<String>();
 

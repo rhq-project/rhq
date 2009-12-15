@@ -125,7 +125,8 @@ public class RHNHelper {
             details.setDescription(erratum.getRhnErratumDescription());
             details.setSolution(erratum.getRhnErratumSolution());
             details.setTopic(erratum.getRhnErratumTopic());
-            //details.setIssue_date(erratum.getRhnErratumIssueDate());
+            details.setIssue_date(getLongForDate(erratum.getRhnErratumIssueDate()));
+            details.setUpdate_date(getLongForDate(erratum.getRhnErratumUpdateDate()));
             details.setAdvisory_name(erratum.getRhnErratumAdvisoryName());
             details.setAdvisory_rel(erratum.getRhnErratumAdvisoryRel());
             String cvestr = erratum.getCveNames();
@@ -458,6 +459,10 @@ public class RHNHelper {
         gzip.flush();
         gzip.close();
         return zipped.toByteArray();
+    }
+
+    private long getLongForDate(String dateIn) {
+        return Long.parseLong(dateIn);
     }
 
     /*

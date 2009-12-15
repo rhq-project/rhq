@@ -1098,6 +1098,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 newAdv.setDescription(detail.getDescription());
                 newAdv.setSolution(detail.getSolution());
                 newAdv.setIssue_date(detail.getIssue_date());
+                newAdv.setUpdate_date(detail.getUpdate_date());
                 newAdv.setTopic(detail.getTopic());
                 entityManager.flush();
                 entityManager.persist(newAdv);

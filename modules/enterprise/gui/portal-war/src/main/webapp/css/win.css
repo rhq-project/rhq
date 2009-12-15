@@ -2108,6 +2108,24 @@ ul.radio-group .unspecified {
     background: #ffffff;
 }
 
+.advisory-details-key-column {
+    width: 200px;
+    text-align: right;
+    vertical-align: top;
+}
+
+.advisory-details-value-column {
+    text-align: left;
+    vertical-align: top;
+}
+
+.advisory-details-even-row {
+    background: #f0f0f0;
+}
+
+.advisory-details-odd-row {
+    background: #ffffff;
+}
 /*--- Pagination ---------------------*/
 .on-pager-footer {
     background: #E5E5E5;

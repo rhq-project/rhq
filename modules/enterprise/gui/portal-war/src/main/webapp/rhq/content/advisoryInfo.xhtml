@@ -74,6 +74,18 @@
                   </td>
                </tr>
                <tr class="advisory-details-even-row">
+                  <td class="advisory-details-key-column"><b>Issue Date:</b></td>
+                  <td class="advisory-details-value-column">
+                     <h:outputText value="#{AdvisoryDetailsUIBean.advisoryDetailsComposite.issueDate}" />
+                  </td>
+               </tr>
+               <tr class="advisory-details-odd-row">
+                  <td class="advisory-details-key-column"><b>Update Date:</b></td>
+                  <td class="advisory-details-value-column">
+                     <h:outputText value="#{AdvisoryDetailsUIBean.advisoryDetailsComposite.updateDate}" />
+                  </td>
+               </tr>
+               <tr class="advisory-details-even-row">
                   <td class="advisory-details-key-column"><b>Synopsis:</b></td>
                   <td class="advisory-details-value-column">
                      <h:outputText value="#{item.advisory.synopsis}" />
@@ -96,7 +108,32 @@
                   <td class="advisory-details-value-column">
                      <h:outputText value="#{item.advisory.solution}" escape="false"/>
                   </td>
-               </tr>           
+               </tr>  
+                <tr class="advisory-details-even-row">
+                  <td class="advisory-details-key-column"><b>CVE:</b></td>
+                  <td class="advisory-details-value-column">
+                     <h:outputText value="#{AdvisoryDetailsUIBean.advisoryDetailsComposite.cve}" escape="false"/>
+                  </td>
+               </tr>
+               <tr class="advisory-details-odd-row">
+                   <td class="advisory-details-key-column"><b>Affected Packages:</b></td>
+                   <td class="advisory-details-value-column">
+                   <rich:dataTable value="#{AdvisoryDetailsUIBean.advisoryDetailsComposite.pkgs}" var="prop">
+                       <rich:column>
+                        <h:outputLink value="packageVersion.xhtml">
+                     		<f:param name="id" value="#{prop.id}"/>
+                     		<h:outputText value="#{prop.fileName}" />
+                  		</h:outputLink>
+               		  </rich:column>
+                   </rich:dataTable>
+                   </td>
+               </tr>
+                <tr class="advisory-details-even-row">
+                  <td class="advisory-details-key-column"><b>Relevant Bugs:</b></td>
+                  <td class="advisory-details-value-column">
+                     <h:outputText value="#{AdvisoryDetailsUIBean.advisoryDetailsComposite.bugid}" escape="false"/>
+                  </td>
+               </tr>       
             </table>
 
          </rich:panel>

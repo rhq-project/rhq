@@ -34,7 +34,11 @@ import javax.persistence.Table;
         + "          a.description,"
         + "          a.solution,"
         + "          a.severity,"
-        + "          a.update_date" + "       ) " + "  FROM Advisory a WHERE a.id = :id ") })
+        + "          a.update_date,"
+        + "          a.issue_date"
+        + "       ) "
+        + "  FROM Advisory a "
+        + "  WHERE a.id = :id ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_ID_SEQ")
 @Table(name = "RHQ_ADVISORY")
 public class Advisory implements Serializable {
@@ -91,13 +95,13 @@ public class Advisory implements Serializable {
     @Column(name = "LAST_MODIFIED", nullable = true)
     private long lastModifiedDate;
 
-    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<AdvisoryCVE> advisorycves;
 
-    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<AdvisoryPackage> advisorypkgs;
 
-    @OneToMany(mappedBy = "advisory", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<AdvisoryBuglist> advisorybugs;
 
     // Constructor ----------------------------------------

@@ -23,8 +23,17 @@
 package org.rhq.core.domain.content.composite;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Set;
 
 import org.rhq.core.domain.content.Advisory;
+import org.rhq.core.domain.content.AdvisoryBuglist;
+import org.rhq.core.domain.content.AdvisoryCVE;
+import org.rhq.core.domain.content.AdvisoryPackage;
+import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.util.StringUtils;
 
 /**
  * 
@@ -35,7 +44,7 @@ public class AdvisoryDetailsComposite implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private final Advisory Advisory;
+    private final Advisory advisory;
     private final String advisoryType;
     private final String advisoryName;
     private final String topic;
@@ -43,11 +52,15 @@ public class AdvisoryDetailsComposite implements Serializable {
     private final String description;
     private final String solution;
     private final String severity;
-    private final Long updateDate;
+    private final Date updateDate;
+    private final Date issueDate;
+    private final String cve;
+    private final List<PackageVersion> pkgs;
+    private String bugid;
 
     public AdvisoryDetailsComposite(Advisory advisory, String advisoryName, String advisoryType, String topic,
-        String synopsis, String description, String solution, String severity, Long updateDate) {
-        this.Advisory = advisory;
+        String synopsis, String description, String solution, String severity, Long updateDate, Long issueDate) {
+        this.advisory = advisory;
         this.advisoryName = advisoryName;
         this.advisoryType = advisoryType;
         this.topic = topic;
@@ -55,8 +68,30 @@ public class AdvisoryDetailsComposite implements Serializable {
         this.description = description;
         this.solution = solution;
         this.severity = severity;
-        this.updateDate = updateDate;
+        this.updateDate = new Date(updateDate.longValue() * 1000L);
+        this.issueDate = new Date(issueDate.longValue() * 1000L);
+        this.cve = getAdvisoryCVE();
+        this.pkgs = getAdvisoryPackages();
+        this.bugid = getBugid();
 
+    }
+
+    private List<PackageVersion> getAdvisoryPackages() {
+        List<PackageVersion> pkges = new ArrayList<PackageVersion>();
+        Set<AdvisoryPackage> apkgs = advisory.getAdvisorypkgs();
+        for (AdvisoryPackage apkg : apkgs) {
+            pkges.add(apkg.getPkg());
+        }
+        return pkges;
+    }
+
+    private String getAdvisoryCVE() {
+        List<String> cves = new ArrayList<String>();
+        Set<AdvisoryCVE> acves = advisory.getAdvisorycves();
+        for (AdvisoryCVE acve : acves) {
+            cves.add(acve.getCVE().getName());
+        }
+        return StringUtils.getListAsString(cves, " ");
     }
 
     public static long getSerialversionuid() {
@@ -64,7 +99,7 @@ public class AdvisoryDetailsComposite implements Serializable {
     }
 
     public Advisory getAdvisory() {
-        return Advisory;
+        return advisory;
     }
 
     public String getAdvisoryType() {
@@ -95,8 +130,29 @@ public class AdvisoryDetailsComposite implements Serializable {
         return severity;
     }
 
-    public Long getUpdateDate() {
+    public String getCve() {
+        return cve;
+    }
+
+    public List<PackageVersion> getPkgs() {
+        return pkgs;
+    }
+
+    public String getBugid() {
+        List<String> bugs = new ArrayList<String>();
+        Set<AdvisoryBuglist> abugs = advisory.getAdvisorybugs();
+        for (AdvisoryBuglist abug : abugs) {
+            bugs.add(abug.getBugid());
+        }
+        return StringUtils.getListAsString(bugs, " ");
+    }
+
+    public Date getUpdateDate() {
         return updateDate;
+    }
+
+    public Date getIssueDate() {
+        return issueDate;
     }
 
 }

@@ -48,8 +48,12 @@ public interface PerspectiveManagerLocal {
      */
     List<Tab> getResourceTabs(Subject subject, Resource resource);
 
-    public int getUrlKey(String url);
-
-    public String getUrlViaKey(int key);
-
+    /**
+     * Given a targetUrlKey parameter value, as set in the extension, resolve that key into the targetUrl
+     * for the extension's content.
+     * 
+     * @param key, a valid key
+     * @return the target url
+     */
+    public String getUrlViaKey(int key) throws PerspectiveException;
 }

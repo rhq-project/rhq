@@ -36,27 +36,26 @@ public class GlobFilter implements FileFilter {
 
     private String globPattern;
     private Pattern regexPattern;
-    
+
     public static final char[] WILDCARD_CHARS;
-    
+
     static {
         if (File.separatorChar == '\\') {
             WILDCARD_CHARS = new char[] { '*', '?' };
         } else {
-            WILDCARD_CHARS = new char[] { '*', '?', '[', ']'};
+            WILDCARD_CHARS = new char[] { '*', '?', '[', ']' };
         }
     }
-    
+
     public GlobFilter(String globPattern) {
         if (globPattern == null) {
             throw new IllegalArgumentException("The glob pattern cannot be null.");
         }
-        
+
         this.globPattern = globPattern;
         this.regexPattern = convert(globPattern);
     }
-    
-    
+
     public String getGlobPattern() {
         return globPattern;
     }
@@ -71,9 +70,13 @@ public class GlobFilter implements FileFilter {
     private static Pattern convert(String globPattern) {
         StringBuilder regexPattern = new StringBuilder("^");
         int i = 0;
+        //path starts require special handling only on UNIX platforms
+        boolean pathStart = File.separatorChar != '\\';
+        boolean inRangeSpec = false;
+        
         while (i < globPattern.length()) {
             switch (globPattern.charAt(i)) {
-            case '\\' :
+            case '\\':
                 if (File.separatorChar == '\\') {
                     //we're on windows, \ is a separator
                     regexPattern.append("\\\\");
@@ -85,28 +88,58 @@ public class GlobFilter implements FileFilter {
                     regexPattern.append("\\").append(globPattern.charAt(i + 1));
                     i += 1; //just skip the next character
                 }
+                pathStart = false;
                 break;
             case '*':
-                regexPattern.append(".*");
+                if (pathStart) {
+                    //on UNIX platforms, the "/*" doesn't match
+                    //the hidden files (i.e. the ones prefixed by dot
+                    regexPattern.append("($|[^\\.].*)");
+                } else if (inRangeSpec) {
+                    //* has no special meaning inside a range spec
+                    regexPattern.append("\\*");
+                } else {
+                    regexPattern.append(".*");
+                }
+                pathStart = false;
                 break;
             case '?':
-                regexPattern.append(".?");
+                if (inRangeSpec) {
+                    //? has no special meaning inside a range spec
+                    regexPattern.append("\\?");
+                } else {
+                    regexPattern.append(".");
+                }
+                pathStart = false;
                 break;
             case '.':
                 regexPattern.append("\\.");
+                pathStart = false;
                 break;
             case '/':
                 regexPattern.append("\\/");
+                if (File.separatorChar != '\\') {
+                    pathStart = true;
+                }
+                break;
+            case '[':
+                regexPattern.append("[");
+                inRangeSpec = true;
+                break;
+            case ']':
+                regexPattern.append(']');
+                inRangeSpec = false;
                 break;
             default:
                 regexPattern.append(globPattern.charAt(i));
+                pathStart = false;
                 break;
             }
             i++;
         }
-        
+
         regexPattern.append("$");
-        
+
         return Pattern.compile(regexPattern.toString());
     }
 }

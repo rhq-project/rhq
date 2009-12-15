@@ -1,3 +1,25 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2009 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.apache.augeas;
 
 import java.io.BufferedReader;
@@ -31,14 +53,15 @@ import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
  */
 public class AugeasConfigurationApache extends PluginDescriptorBasedAugeasConfiguration implements AugeasConfiguration {
 
-    public static String INCLUDE_DIRECTIVE = "Include";
-    private AugeasModuleConfig module;
-    private String INCLUDE_FILES_PATTERN = "^[\t ]*Include[\t ]+(.*)$";
-    private String SERVER_ROOT_PATTERN = "^[\t ]*ServerRoot[\t ]+[\"]?([^\"\n]*)[\"]?$";
+    public static final String INCLUDE_DIRECTIVE = "Include";
+    private static final String INCLUDE_FILES_PATTERN = "^[\t ]*Include[\t ]+(.*)$";
+    private static final String SERVER_ROOT_PATTERN = "^[\t ]*ServerRoot[\t ]+[\"]?([^\"\n]*)[\"]?$";
 
-    private Pattern includePattern = Pattern.compile(INCLUDE_FILES_PATTERN);
-    private Pattern serverRootPattern = Pattern.compile(SERVER_ROOT_PATTERN);
+    private final Pattern includePattern = Pattern.compile(INCLUDE_FILES_PATTERN);
+    private final Pattern serverRootPattern = Pattern.compile(SERVER_ROOT_PATTERN);
+
     private String serverRootPath;
+    private AugeasModuleConfig module;
 
     public String getServerRootPath() {
         return serverRootPath;

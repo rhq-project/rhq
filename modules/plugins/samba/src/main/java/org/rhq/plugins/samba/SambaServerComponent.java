@@ -40,6 +40,9 @@ import org.rhq.plugins.augeas.helper.AugeasNode;
  */
 public class SambaServerComponent extends AugeasConfigurationComponent {
     static final String ENABLE_RECYCLING = "enableRecycleBin";
+    static final String AUTHCONFIG_PATH = "/usr/bin/authconfig";
+    static final String NET_PATH = "/usr/bin/net";
+
     private ResourceContext resourceContext;
 
 
@@ -124,59 +127,61 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         return super.toPropertyValue(propDefSimple, augeas, node);
     }
 
-    private void updateSmbAds(ResourceContext resourceContext) {
-        StringBuilder args = new StringBuilder();
+    private void updateSmbAds(ResourceContext resourceContext) throws Exception {
+
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+        Configuration resourceConfig = loadResourceConfiguration();
 
         String realm = pluginConfig.getSimple("realm").getStringValue();
         String controller = pluginConfig.getSimple("controller").getStringValue();
-        String domain = pluginConfig.getSimple("domain").getStringValue();
+        String username = pluginConfig.getSimple("username").getStringValue();
+        String password = pluginConfig.getSimple("password").getStringValue();
+        String workgroup = resourceConfig.getSimple("workgroup").getStringValue();
 
-        args.append("--smbservers=\"" + controller + "\" ");
-        args.append("--smbrealm=\"" + realm + "\" ");
-        args.append("--enablewinbind --smbsecurity=\"ads\" ");
+        if (realm == null || controller == null || username == null || password == null || workgroup == null) {
+            // no point in doing anything
+            return;
+        }
 
-        args.append("--smbidmapuid=\"15000-20000\" --smbidmapgid=\"15000-20000\" ");
-        args.append("--winbindtemplateshell=\"/bin/bash\" ");
-        args.append("--update");
+        StringBuilder authArgs = new StringBuilder();
+        StringBuilder netArgs = new StringBuilder();
 
-        executeExecutable(args.toString(), 1000L, true);
+        //String workgroup = pluginConfig.getSimple("workgroup").getStringValue();
+
+        // AuthConfig arguments
+        authArgs.append("--smbservers=" + controller);
+        authArgs.append(" --smbrealm=" + realm);
+        authArgs.append(" --enablewinbind --smbsecurity=ads");
+        authArgs.append(" --smbidmapuid=15000-20000 --smbidmapgid=15000-20000");
+        authArgs.append(" --winbindtemplateshell=/bin/bash");
+        authArgs.append(" --update");
+
+        // Net join arguments
+        netArgs.append("join");
+        netArgs.append(" -w " + workgroup);
+        netArgs.append(" -S " + controller);
+        netArgs.append(" -U " + username + "%" + password);        
+
+        execute(AUTHCONFIG_PATH, authArgs.toString());
+        execute(NET_PATH, netArgs.toString());
     }
 
-    private ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput)
-        throws InvalidPluginConfigurationException {
+    private ProcessExecutionResults execute(String path, String args) throws InvalidPluginConfigurationException {
 
+        ProcessExecution processExecution = new ProcessExecution(path);
         SystemInfo sysInfo = this.resourceContext.getSystemInformation();
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        ProcessExecutionResults results = executeExecutable(sysInfo, pluginConfig, args, wait, captureOutput);
 
-        return results;
-    }
-
-    protected ProcessExecutionResults executeExecutable(SystemInfo sysInfo, Configuration pluginConfig,
-        String args, long wait, boolean captureOutput) throws InvalidPluginConfigurationException {
-
-        ProcessExecution processExecution = getProcessExecutionInfo(pluginConfig);
         if (args != null) {
             processExecution.setArguments(args.split(" "));
         }
-        processExecution.setCaptureOutput(captureOutput);
-        processExecution.setWaitForCompletion(wait);
+        
+        processExecution.setCaptureOutput(true);
+        processExecution.setWaitForCompletion(1000L);
         processExecution.setKillOnTimeout(true);
 
         ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
 
         return results;
    }
-
-    private ProcessExecution getProcessExecutionInfo(Configuration pluginConfig)
-        throws InvalidPluginConfigurationException {
-
-        String executable = "/usr/bin/authconfig";
-
-        ProcessExecution processExecution = new ProcessExecution(executable);
-
-        return processExecution;
-    }
 
 }

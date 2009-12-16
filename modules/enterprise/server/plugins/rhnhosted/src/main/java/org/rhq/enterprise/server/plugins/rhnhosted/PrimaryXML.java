@@ -233,7 +233,7 @@ public class PrimaryXML {
         //This value can not be empty and can not contain a "?".
         //It's value is ignored by the RHQ processing for yum.  
         //RHQ will append a series of request parameters to download the file.
-        String rpmName = RHNHelper.constructRpmName(pkg.getName(), pkg.getVersion(), pkg.getRelease(), pkg.getEpoch(),
+        String rpmName = RHNHelper.constructRpmDownloadName(pkg.getName(), pkg.getVersion(), pkg.getRelease(), pkg.getEpoch(),
             pkg.getPackageArch());
         location.setAttribute("href", rpmName);
         top.addContent(location);

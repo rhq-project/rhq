@@ -170,7 +170,7 @@ public class RHNHelper {
                     String version = pkgd.getVersion();
                     String arch = pkgd.getPackageArch();
                     String release = pkgd.getRelease();
-                    String rpmname = constructRpmName(name, version, release, pkgd.getEpoch(), arch);
+                    String rpmname = constructRpmDisplayName(name, version, release, arch);
                     AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
                     apkgdetails.add(apkgd);
                 }
@@ -240,8 +240,8 @@ public class RHNHelper {
         String name = p.getName();
         String version = p.getVersion();
         String arch = p.getPackageArch();
-        String rpmname = constructRpmName(name, version, p.getRelease(), p.getEpoch(), arch);
-
+        String downloadName = constructRpmDownloadName(name, version, p.getRelease(), p.getEpoch(), arch);
+        String displayName = constructRpmDisplayName(name, version, p.getRelease(), arch);
         ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
             "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
@@ -249,12 +249,12 @@ public class RHNHelper {
         pkg.setDisplayName(name);
         pkg.setShortDescription(p.getRhnPackageSummary());
         pkg.setLongDescription(p.getRhnPackageDescription());
-        pkg.setFileName(rpmname);
+        pkg.setFileName(displayName);
         pkg.setFileSize(new Long(p.getPackageSize()));
         pkg.setFileCreatedDate(new Long(p.getLastModified()));
         pkg.setLicenseName("license");
         pkg.setMD5(p.getMd5Sum());
-        pkg.setLocation(constructPackageUrl(channelName, rpmname));
+        pkg.setLocation(constructPackageUrl(channelName, downloadName));
 
         String metadata = PrimaryXML.createPackageXML(p);
         byte[] gzippedMetadata = gzip(metadata.getBytes());
@@ -445,10 +445,23 @@ public class RHNHelper {
      * @param arch    rpm package arch
      * @return an rpm package name string
      */
-    static public String constructRpmName(String name, String version, String release, String epoch, String arch) {
+    static public String constructRpmDownloadName(String name, String version, String release, String epoch, String arch) {
 
         String releaseepoch = release + ":" + epoch;
         return name + "-" + version + "-" + releaseepoch + "." + arch + ".rpm";
+    }
+
+    /**
+     * construct a legitimate rpm name to display
+     * @param name
+     * @param version
+     * @param release
+     * @param arch
+     * @return rpm name String
+     */
+    static public String constructRpmDisplayName(String name, String version, String release, String arch) {
+
+        return name + "-" + version + "-" + release + "." + arch + ".rpm";
     }
 
     private byte[] gzip(byte[] input) throws IOException {

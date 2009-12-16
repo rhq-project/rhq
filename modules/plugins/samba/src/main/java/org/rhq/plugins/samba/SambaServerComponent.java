@@ -34,10 +34,6 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 
 /**
  * TODO
@@ -50,6 +46,7 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     public void start(ResourceContext resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         super.start(resourceContext);
+        updateSmbAds(resourceContext);
     }
 
     public void stop() {
@@ -127,6 +124,25 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         return super.toPropertyValue(propDefSimple, augeas, node);
     }
 
+    private void updateSmbAds(ResourceContext resourceContext) {
+        StringBuilder args = new StringBuilder();
+        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
+
+        String realm = pluginConfig.getSimple("realm").getStringValue();
+        String controller = pluginConfig.getSimple("controller").getStringValue();
+        String domain = pluginConfig.getSimple("domain").getStringValue();
+
+        args.append("--smbservers=\"" + controller + "\" ");
+        args.append("--smbrealm=\"" + realm + "\" ");
+        args.append("--enablewinbind --smbsecurity=\"ads\" ");
+
+        args.append("--smbidmapuid=\"15000-20000\" --smbidmapgid=\"15000-20000\" ");
+        args.append("--winbindtemplateshell=\"/bin/bash\" ");
+        args.append("--update");
+
+        executeExecutable(args.toString(), 1000L, true);
+    }
+
     private ProcessExecutionResults executeExecutable(String args, long wait, boolean captureOutput)
         throws InvalidPluginConfigurationException {
 
@@ -156,13 +172,11 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     private ProcessExecution getProcessExecutionInfo(Configuration pluginConfig)
         throws InvalidPluginConfigurationException {
 
-        String executable = "authconfig";
-        String workingDir = "/usr/sbin";
+        String executable = "/usr/bin/authconfig";
 
         ProcessExecution processExecution = new ProcessExecution(executable);
-        //processExecution.setEnvironmentVariables(envvars);
-        processExecution.setWorkingDirectory(workingDir);
 
         return processExecution;
     }
+
 }

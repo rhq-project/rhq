@@ -24,9 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 import org.apache.commons.logging.Log;
-import org.w3c.dom.Element;
 
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
@@ -50,10 +48,10 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.CustomUi
 public class AlertSenderPluginManager extends ServerPluginManager {
 
     private final Log log = getLog();
-    private Map<String,String> pluginClassByName = new HashMap<String, String>();
-    private Map<String,ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
-    private Map<String,AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
-    private Map<String,String> backinBeanByName = new HashMap<String, String>();
+    private Map<String, String> pluginClassByName = new HashMap<String, String>();
+    private Map<String, ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
+    private Map<String, AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
+    private Map<String, String> backingBeanByName = new HashMap<String, String>();
 
     public AlertSenderPluginManager(AbstractTypeServerPluginContainer pc) {
         super(pc);
@@ -69,9 +67,9 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      * @throws Exception
      */
     @Override
-    public void loadPlugin(ServerPluginEnvironment env,boolean enable) throws Exception {
+    public void loadPlugin(ServerPluginEnvironment env, boolean enable) throws Exception {
         log.info("Start loading alert plugin " + env.getPluginKey().getPluginName());
-        super.loadPlugin(env,enable);
+        super.loadPlugin(env, enable);
 
         AlertPluginDescriptorType type = (AlertPluginDescriptorType) env.getPluginDescriptor();
 
@@ -80,14 +78,13 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             className = type.getPackage() + "." + className;
         }
         try {
-            Class.forName(className,false,env.getPluginClassLoader());
-        }
-        catch (Exception e) {
-            log.error("Can't find pluginClass " + className + ". Plugin " + env.getPluginKey().getPluginName() + " will be ignored");
+            Class.forName(className, false, env.getPluginClassLoader());
+        } catch (Exception e) {
+            log.error("Can't find pluginClass " + className + ". Plugin " + env.getPluginKey().getPluginName()
+                + " will be ignored");
             try {
                 unloadPlugin(env.getPluginKey().getPluginName());
-            }
-            catch (Throwable t) {
+            } catch (Throwable t) {
                 log.warn("  +--> unload failed too " + t.getMessage());
             }
             return;
@@ -95,7 +92,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
         // The short name is basically the key into the plugin
         String shortName = type.getShortName();
-        pluginClassByName.put(shortName,className);
+        pluginClassByName.put(shortName, className);
 
         //
         // Ok, we have a valid plugin class, so we can look for other things
@@ -105,15 +102,15 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         String uiSnippetPath;
         URL uiSnippetUrl = null;
         CustomUi customUI = type.getCustomUi();
-        if (customUI!=null) {
+        if (customUI != null) {
             uiSnippetPath = customUI.getUiSnippetName();
 
             try {
                 uiSnippetUrl = env.getPluginClassLoader().getResource(uiSnippetPath);
                 log.info("UI snipped for " + shortName + " is at " + uiSnippetUrl);
-            }
-            catch (Exception e) {
-                log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName + "Error is "+ e.getMessage());
+            } catch (Exception e) {
+                log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName
+                    + "Error is " + e.getMessage());
                 log.error("Plugin will be ignored");
                 return;
             }
@@ -124,10 +121,9 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                 className = type.getPackage() + "." + className;
             }
             try {
-                Class.forName(className,true,env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
-                backinBeanByName.put(shortName,className);
-            }
-            catch (Throwable t ) {
+                Class.forName(className, true, env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
+                backingBeanByName.put(shortName, className);
+            } catch (Throwable t) {
                 log.error("Backing bean " + className + " not found for plugin " + shortName);
             }
         }
@@ -136,16 +132,16 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         info.setUiSnippetUrl(uiSnippetUrl);
         senderInfoByName.put(shortName, info);
 
-        pluginEnvByName.put(shortName,env);
+        pluginEnvByName.put(shortName, env);
 
     }
 
     @Override
     protected void unloadPlugin(String pluginName) throws Exception {
-        log.info("Unloading plugin " + pluginName );
+        log.info("Unloading plugin " + pluginName);
         super.unloadPlugin(pluginName);
-        String shortName=null;
-        for (AlertSenderInfo info: senderInfoByName.values()) {
+        String shortName = null;
+        for (AlertSenderInfo info : senderInfoByName.values()) {
             if (info.getPluginName().equals(pluginName)) {
                 shortName = info.getShortName();
                 break;
@@ -154,7 +150,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         pluginClassByName.remove(shortName);
         senderInfoByName.remove(shortName);
         pluginEnvByName.remove(shortName);
-        backinBeanByName.remove(shortName);
+        backingBeanByName.remove(shortName);
     }
 
     /**
@@ -168,16 +164,15 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
         String senderName = notification.getSenderName();
         String className = pluginClassByName.get(senderName);
-        if (className==null) {
+        if (className == null) {
             log.error("getAlertSender: No pluginClass found for sender: " + senderName);
             return null;
         }
         ServerPluginEnvironment env = pluginEnvByName.get(senderName);
         Class clazz;
         try {
-            clazz = Class.forName(className,true,env.getPluginClassLoader());
-        }
-        catch (Exception e) {
+            clazz = Class.forName(className, true, env.getPluginClassLoader());
+        } catch (Exception e) {
             log.error(e); // TODO
             return null;
         }
@@ -186,10 +181,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         try {
             sender = (AlertSender) clazz.newInstance();
         } catch (InstantiationException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
             return null;
         } catch (IllegalAccessException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
+            e.printStackTrace(); // TODO: Customise this generated block
             return null;
         }
 
@@ -212,7 +207,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         plugin = pluginsMgr.getServerPluginRelationships(plugin);
 
         sender.preferences = plugin.getPluginConfiguration();
-        if (sender.preferences==null) {
+        if (sender.preferences == null) {
             sender.preferences = new Configuration(); // Safety measure
         }
 
@@ -234,21 +229,19 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     }
 
     public AlertBackingBean getBackingBeanForSender(String shortName) {
-        String name = backinBeanByName.get(shortName);
+        String name = backingBeanByName.get(shortName);
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
         Class clazz;
         try {
-            clazz = Class.forName(name,true,env.getPluginClassLoader());
-        }
-        catch (Exception e) {
+            clazz = Class.forName(name, true, env.getPluginClassLoader());
+        } catch (Exception e) {
             log.error("Can't load class " + name + ": " + e.getMessage());
             return null;
         }
-        AlertBackingBean bean = null ;
+        AlertBackingBean bean = null;
         try {
             bean = (AlertBackingBean) clazz.newInstance();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.error("Can't instantiate " + name + ": " + e.getMessage());
         }
         return bean;

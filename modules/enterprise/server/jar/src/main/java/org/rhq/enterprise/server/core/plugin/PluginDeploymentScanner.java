@@ -204,21 +204,25 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
             File destinationDirectory;
             if (file.getName().endsWith(".jar")) {
                 try {
-                    AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                    if (null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
+                        throw new NullPointerException("no xml descriptor found in jar");
+                    }
                     destinationDirectory = getAgentPluginDir();
                 } catch (Exception e) {
                     try {
                         log.debug("[" + file.getAbsolutePath() + "] is not an agent plugin jar (Cause: "
                             + ThrowableUtil.getAllMessages(e) + "). Will see if its a server plugin jar");
 
-                        ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                        if (null == ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
+                            throw new NullPointerException("no xml descriptor found in jar");
+                        }
                         destinationDirectory = getServerPluginDir();
                     } catch (Exception e1) {
                         // skip it, doesn't look like a valid plugin jar
                         File fixmeFile = new File(file.getAbsolutePath() + ".fixme");
                         boolean renamed = file.renameTo(fixmeFile);
                         log.warn("Does not look like [" + (renamed ? fixmeFile : file).getAbsolutePath()
-                            + "] is a plugin jar -(Cause: " + ThrowableUtil.getAllMessages(e)
+                            + "] is a plugin jar -(Cause: " + ThrowableUtil.getAllMessages(e1)
                             + "). It will be ignored. Please fix that file or remove it.");
                         continue;
                     }

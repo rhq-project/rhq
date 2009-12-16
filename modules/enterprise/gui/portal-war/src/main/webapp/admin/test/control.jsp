@@ -24,9 +24,9 @@
 <%@ page import="org.rhq.enterprise.server.system.SystemManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.auth.SubjectManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.support.SupportManagerLocal" %>
-<%@page import="org.rhq.enterprise.server.plugin.ServerPluginsLocal"%>
-<%@page import="org.rhq.core.domain.plugin.PluginKey"%>
-<%@page import="org.rhq.core.domain.plugin.PluginDeploymentType"%><html>
+<%@ page import="org.rhq.enterprise.server.plugin.ServerPluginsLocal"%>
+<%@ page import="org.rhq.core.domain.plugin.PluginKey"%>
+<%@ page import="org.rhq.core.domain.plugin.PluginDeploymentType"%><html>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="org.rhq.enterprise.server.scheduler.jobs.DataPurgeJob"%>
 

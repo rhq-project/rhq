@@ -123,6 +123,10 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
             return;
         }
 
+        if (!isPackageSource) {
+            return;
+        }
+
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the file system. Any leftover in the list
         // are packages that no longer exist on the file system and should be removed from the server inventory.

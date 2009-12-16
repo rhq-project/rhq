@@ -38,6 +38,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -158,7 +159,7 @@ public class InstalledPluginsUIBean {
 
         for (ServerPlugin selectedPlugin : allSelectedPlugins) {
             if (!selectedPlugin.isEnabled() && selectedPlugin.getStatus() == PluginStatusType.INSTALLED) {
-                selectedPluginNames.add(selectedPlugin.getName());
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
                 pluginsToEnable.add(selectedPlugin);
             }
         }
@@ -171,9 +172,30 @@ public class InstalledPluginsUIBean {
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.enableServerPlugins(subject, getIds(pluginsToEnable));
-            FacesContextUtility
-                .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+            List<PluginKey> enabled = serverPluginsBean.enableServerPlugins(subject, getIds(pluginsToEnable));
+            if (enabled.size() == pluginsToEnable.size()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: "
+                    + selectedPluginNames);
+            } else {
+                List<String> enabledPlugins = new ArrayList<String>();
+                List<String> failedPlugins = new ArrayList<String>();
+                for (ServerPlugin pluginToEnable : pluginsToEnable) {
+                    PluginKey key = PluginKey.createServerPluginKey(pluginToEnable.getType(), pluginToEnable.getName());
+                    if (enabled.contains(key)) {
+                        enabledPlugins.add(pluginToEnable.getDisplayName());
+                    } else {
+                        failedPlugins.add(pluginToEnable.getDisplayName());
+                    }
+                }
+                if (enabledPlugins.size() > 0) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: "
+                        + enabledPlugins);
+                }
+                if (failedPlugins.size() > 0) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable server plugins: "
+                        + failedPlugins);
+                }
+            }
         } catch (Exception e) {
             processException("Failed to enable server plugins", e);
         }
@@ -187,7 +209,7 @@ public class InstalledPluginsUIBean {
 
         for (ServerPlugin selectedPlugin : allSelectedPlugins) {
             if (selectedPlugin.isEnabled()) {
-                selectedPluginNames.add(selectedPlugin.getName());
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
                 pluginsToDisable.add(selectedPlugin);
             }
         }
@@ -215,7 +237,7 @@ public class InstalledPluginsUIBean {
         List<ServerPlugin> pluginsToUndeploy = new ArrayList<ServerPlugin>();
         for (ServerPlugin selectedPlugin : allSelectedPlugins) {
             if (selectedPlugin.getStatus() == PluginStatusType.INSTALLED) {
-                selectedPluginNames.add(selectedPlugin.getName());
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
                 pluginsToUndeploy.add(selectedPlugin);
             }
         }
@@ -242,7 +264,7 @@ public class InstalledPluginsUIBean {
         List<String> selectedPluginNames = new ArrayList<String>();
 
         for (ServerPlugin selectedPlugin : allSelectedPlugins) {
-            selectedPluginNames.add(selectedPlugin.getName());
+            selectedPluginNames.add(selectedPlugin.getDisplayName());
         }
 
         if (selectedPluginNames.isEmpty()) {

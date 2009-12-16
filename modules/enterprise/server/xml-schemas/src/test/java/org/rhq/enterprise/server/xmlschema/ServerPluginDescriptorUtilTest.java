@@ -44,6 +44,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginCo
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.generic.GenericPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 
 /**
  * Tests that we can parse server-side plugin descriptors.
@@ -152,6 +153,20 @@ public class ServerPluginDescriptorUtilTest {
         config = ServerPluginDescriptorMetadataParser.getPluginConfigurationDefinition(descriptor);
         assert config != null;
         assert config.getPropertyDefinitionSimple("alertprop1") != null;
+    }
+
+    public void testPerspectivePluginDescriptor() throws Exception {
+        String testXml = "test-serverplugin-perspective.xml";
+        ServerPluginDescriptorType data = parseTestXml(testXml);
+        assert data instanceof PerspectivePluginDescriptorType;
+        PerspectivePluginDescriptorType descriptor = (PerspectivePluginDescriptorType) data;
+
+        assert descriptor.getApiVersion().equals("1.0");
+        assert descriptor.getVersion().equals("1.0");
+        assert descriptor.getName().equals("SamplePerspective");
+        assert descriptor.getDisplayName().equals("Sample Perspective");
+        assert descriptor.getDescription().equals("A Sample Perspective Utilizing Every Extension Point and Filter");
+        assert descriptor.getPackage().equals("org.rhq.perspective.sample");
     }
 
     private ServerPluginDescriptorType parseTestXml(String testXml) throws Exception {

@@ -21,12 +21,14 @@ package org.rhq.enterprise.server.plugin.pc.perspective;
 
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 
 /**
- * Manages perspective plugins.
+ * Manages perspective server plugins.
  * 
+ * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
 public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginContainer {
@@ -39,4 +41,10 @@ public class PerspectiveServerPluginContainer extends AbstractTypeServerPluginCo
     public ServerPluginType getSupportedServerPluginType() {
         return new ServerPluginType(PerspectivePluginDescriptorType.class);
     }
+
+    @Override
+    protected ServerPluginManager createPluginManager() {
+        return new PerspectiveServerPluginManager(this);
+    }
+
 }

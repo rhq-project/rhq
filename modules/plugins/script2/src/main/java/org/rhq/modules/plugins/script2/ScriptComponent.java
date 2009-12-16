@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.Reader;
-import java.util.HashSet;
+import java.io.StringWriter;
 import java.util.Set;
 
 import javax.script.Invocable;
@@ -18,7 +18,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -32,17 +31,21 @@ import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
-
+/**
+ * Run the show for the script2 plugin.
+ *
+ * We eval() the script for each call to getAvailability and getValues , as
+ * otherwise we may see failures, when evaluated script was evaluated on
+ * a different thread than the execution of invokeFunction.
+ *
+ * @author Heiko W. Rupp
+ */
 public class ScriptComponent implements ResourceComponent, MeasurementFacet, OperationFacet
 {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    private static final int CHANGEME = 1; // TODO remove or change this
-
-    private String scriptName;
     ScriptEngine engine;
-    Object scriptObject;
-
+    private String theScript;
 
 
 
@@ -52,11 +55,10 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
      */
     public AvailabilityType getAvailability() {
 
-        Object ret = null;
-
         try {
+            engine.eval(theScript);
             Invocable inv = (Invocable) engine;
-            ret = inv.invokeFunction("avail");
+            Object ret = inv.invokeFunction("avail");
             if (ret instanceof Number) {
                 int tmp = ((Number)ret).intValue();
                 if (tmp>0)
@@ -78,7 +80,6 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
     public void start(ResourceContext context) throws InvalidPluginConfigurationException, Exception {
 
         Configuration conf = context.getPluginConfiguration();
-        // TODO add code to start the resource / connection to it
 
         String engineName = conf.getSimpleValue("language",null);
         if (engineName==null)
@@ -87,8 +88,8 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
         ScriptEngineManager seMgr = new ScriptEngineManager();
         engine = seMgr.getEngineByName(engineName);
 
-        scriptName = conf.getSimpleValue("scriptName",null);
-        if (scriptName==null)
+        String scriptName = conf.getSimpleValue("scriptName", null);
+        if (scriptName ==null)
             throw new InvalidPluginConfigurationException("No (valid) script name given");
 
         File dataDir = context.getDataDirectory();
@@ -96,15 +97,23 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
         if (!scriptFile.exists())
             throw new InvalidPluginConfigurationException("Script does not exist at " + scriptFile.getAbsolutePath());
 
+        Reader reader;
         try {
-            Reader reader = new BufferedReader(new FileReader(scriptFile));
-            engine.eval(reader);
-//            scriptObject = engine.get("new MyClass");
+            reader = new BufferedReader(new FileReader(scriptFile));
+            StringWriter writer = new StringWriter();
+            int tmp;
+            while ((tmp=reader.read())!=-1)
+                writer.write(tmp);
+
+            reader.close();
+            theScript = writer.toString();
+            writer.close();
+
+            engine.eval(theScript);
         }
         catch (ScriptException se) {
             throw new InvalidPluginConfigurationException(se.getMessage());
         }
-
     }
 
 
@@ -124,6 +133,15 @@ public class ScriptComponent implements ResourceComponent, MeasurementFacet, Ope
      *  @see org.rhq.core.pluginapi.measurement.MeasurementFacet#getValues(org.rhq.core.domain.measurement.MeasurementReport, java.util.Set)
      */
     public  void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+
+        try {
+            engine.eval(theScript);
+        }
+        catch (ScriptException se) {
+            log.debug(se.getMessage());
+            return;
+        }
+
 
          for (MeasurementScheduleRequest req : metrics) {
 

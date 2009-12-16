@@ -40,6 +40,8 @@ import org.rhq.core.domain.resource.composite.ResourcePermission;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
+import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -61,6 +63,7 @@ public class ResourceUIBean {
     private Resource parent;
     private ResourcePermission permissions;
     private ResourceFacets facets;
+    private List<Tab> tabs;
     private ResourceError invalidPluginConfigurationError;
     private ResourceAvailabilitySummary availabilitySummary;
     private AvailabilityType availabilityType;
@@ -69,6 +72,7 @@ public class ResourceUIBean {
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
+    private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     private String message;
 
@@ -96,6 +100,7 @@ public class ResourceUIBean {
             .getId());
         this.permissions = new ResourcePermission(resourcePerms);
         this.facets = this.resourceTypeManager.getResourceFacets(getResourceType().getId());
+        this.tabs = this.perspectiveManager.getResourceTabs(subject, this.resource);
 
         //parent can be viewed by user only if he is allowed to see it
         if (parent != null)
@@ -171,6 +176,10 @@ public class ResourceUIBean {
 
     public ResourceFacets getFacets() {
         return this.facets;
+    }
+
+    public List<Tab> getTabs() {
+        return this.tabs;
     }
 
     @Nullable

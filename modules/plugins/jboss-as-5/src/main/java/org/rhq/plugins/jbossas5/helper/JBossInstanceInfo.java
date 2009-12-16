@@ -37,8 +37,9 @@ import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.util.StringPropertyReplacer;
+
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.plugins.jbossas5.util.JBossConfigurationUtility;
 
 /**
@@ -149,6 +150,13 @@ public class JBossInstanceInfo {
 
             case 'P': // 'P' (--properties)
             {
+                // cwd can be null if native support is not able to determine CWD.
+                if (null == currentWorkingDir) {
+                    log.error("Could not determine CWD. Failed to parse argument to --properties option: "
+                        + options.getOptarg());
+                    break;
+                }
+
                 String arg = options.getOptarg();
                 URL url;
                 try {

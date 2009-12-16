@@ -1,0 +1,143 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>1.4.0-SNAPSHOT</version>
+  </parent>
+
+  <groupId>org.rhq</groupId>
+  <artifactId>rhq-sample-perspective-war</artifactId>
+  <packaging>war</packaging>
+
+  <name>RHQ Sample Perspective War</name>
+
+  <scm>
+    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</connection>
+    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/etc/samples/sample-perspective/app/</developerConnection>
+  </scm>
+
+  <properties>
+    <scm.module.path>modules/enterprise/gui/perspectives/sample-perspective-war/</scm.module.path>
+    <war.dir>${basedir}/target/${final.name}</war.dir>
+  </properties>
+
+  <dependencies>
+
+  </dependencies>
+
+  <build>
+    <finalName>rhq-sample-perspective</finalName>
+
+    <plugins>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+            <manifestEntries>
+              <Build-Number>${buildNumber}</Build-Number>
+            </manifestEntries>            
+          </archive>
+          <webResources>
+            <resource>
+              <filtering>true</filtering>
+              <directory>${basedir}/src/main/webapp</directory>
+              <includes>
+                <include>**/*.properties</include>
+              </includes>
+            </resource>
+          </webResources>
+        </configuration>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <profiles>
+
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy-classes</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                            <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
+                            <copy todir="${classes.dir}" failonerror="false" verbose="${rhq.verbose}">
+                               <fileset dir="target/classes" />
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/target/${project.build.finalName}" />
+                            </copy>
+                            <delete dir="${deployment.dir}.rej" /> <!-- need to remove any residual backups -->
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+  </profiles>
+
+</project>

@@ -84,6 +84,32 @@ public abstract class AbstractTypeServerPluginContainer {
     }
 
     /**
+     * Determines if the given plugin is loaded in the plugin container.
+     * The plugin may be loaded but not enabled.
+     * 
+     * @param pluginKey
+     * 
+     * @return <code>true</code> if the plugin is loaded in this plugin container; <code>false</code> otherwise
+     */
+    public boolean isPluginLoaded(PluginKey pluginKey) {
+        return this.pluginManager.isPluginLoaded(pluginKey.getPluginName());
+    }
+
+    /**
+     * Determines if the given plugin is enabled in the plugin container.
+     * <code>true</code> implies the plugin is also loaded. If <code>false</code> is returned,
+     * it is either because the plugin is loaded but disabled, or the plugin is just
+     * not loaded. Use {@link #isPluginLoaded(PluginKey)} to know if the plugin is loaded or not.
+     * 
+     * @param pluginKey
+     * 
+     * @return <code>true</code> if the plugin is enabled in this plugin container; <code>false</code> otherwise
+     */
+    public boolean isPluginEnabled(PluginKey pluginKey) {
+        return this.pluginManager.isPluginEnabled(pluginKey.getPluginName());
+    }
+
+    /**
      * The initialize method that prepares the plugin container. This should get the plugin
      * container ready to accept plugins.
      *
@@ -173,7 +199,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
-            this.pluginManager.unloadPlugin(pluginKey.getPluginName());
+            this.pluginManager.unloadPlugin(pluginKey.getPluginName(), false);
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
         }
@@ -282,8 +308,10 @@ public abstract class AbstractTypeServerPluginContainer {
         if (jobNames != null) {
             for (String jobName : jobNames) {
                 boolean deleted = scheduler.deleteJob(jobName, groupName);
-                if (!deleted) {
-                    log.warn("Plugin [" + pluginKey + "] failed to get its job [" + jobName + "] unscheduled!");
+                if (deleted) {
+                    log.info("Job [" + jobName + "] for plugin [" + pluginKey + "] has been unscheduled!");
+                } else {
+                    log.warn("Job [" + jobName + "] for plugin [" + pluginKey + "] failed to be unscheduled!");
                 }
             }
         }

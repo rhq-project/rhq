@@ -163,8 +163,13 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     public AlertSender getAlertSenderForNotification(AlertNotification notification) {
 
-        String className = pluginClassByName.get(notification.getSenderName());
-        ServerPluginEnvironment env = pluginEnvByName.get(notification.getSenderName());
+        String senderName = notification.getSenderName();
+        String className = pluginClassByName.get(senderName);
+        if (className==null) {
+            log.error("getAlertSender: No pluginClass found for sender: " + senderName);
+            return null;
+        }
+        ServerPluginEnvironment env = pluginEnvByName.get(senderName);
         Class clazz;
         try {
             clazz = Class.forName(className,true,env.getPluginClassLoader());
@@ -192,10 +197,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         ServerPluginContext ctx = getServerPluginContext(env);
         AlertNotificationManagerLocal mgr = LookupUtil.getAlertNotificationManager();
 
-
         sender.alertParameters = mgr.getAlertPropertiesConfiguration(notification);
-        if (sender.alertParameters == null)
+        if (sender.alertParameters == null) {
             sender.alertParameters = new Configuration(); // Safety measure
+        }
 
         ServerPluginsLocal pluginsMgr = LookupUtil.getServerPlugins();
 
@@ -204,8 +209,11 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         plugin = pluginsMgr.getServerPluginRelationships(plugin);
 
         sender.preferences = plugin.getPluginConfiguration();
-        if (sender.preferences==null)
+        if (sender.preferences==null) {
             sender.preferences = new Configuration(); // Safety measure
+        }
+
+        sender.pluginComponent = getServerPluginComponent(key.getPluginName());
 
         return sender;
     }

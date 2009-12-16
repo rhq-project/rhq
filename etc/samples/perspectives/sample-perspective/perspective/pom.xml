@@ -1,0 +1,159 @@
+<?xml version="1.0"?>
+
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-sample-perspective</artifactId>
+   <packaging>jar</packaging>
+
+   <name>RHQ Sample Perspective</name>
+   <description>A Sample Perspective showing extension points and filters</description>
+
+   <properties>
+      <rhq.version>1.4.0-SNAPSHOT</rhq.version>
+   </properties>
+
+   <dependencies>
+
+      <!-- Below are the apps packaged with this perspective plugin -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-sample-perspective-war</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope>
+         <type>war</type>
+      </dependency>
+
+      <!-- Below are the core modules that are required dependencies of all server plugins -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${rhq.version}</version>
+         <scope>provided</scope> <!-- provided by the server/plugin-container -->
+      </dependency>
+
+      <!-- uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog -->
+      <!-- all three are provided to your plugin by the server/plugin-container -->
+      <!--
+         <dependency> <groupId>log4j</groupId> <artifactId>log4j</artifactId> <version>1.2.14</version>
+         <scope>provided</scope> </dependency>
+      -->
+
+      <!--
+         <dependency> <groupId>commons-logging</groupId> <artifactId>commons-logging</artifactId> <version>1.1</version>
+         <scope>provided</scope> </dependency>
+      -->
+
+      <!--
+         <dependency> <groupId>i18nlog</groupId> <artifactId>i18nlog</artifactId> <version>1.0.9</version> </dependency>
+      -->
+
+      <!-- Define any third-party dependencies your plugin has here. -->
+      <!--
+         <dependency> <groupId>group-id-of-dependency-goes-here</groupId>
+         <artifactId>artifact-id-of-dependency-goes-here</artifactId> <version>version-of-dependency-goes-here</version>
+         </dependency>
+      -->
+
+   </dependencies>
+
+   <build>
+      <plugins>
+
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <version>1.1</version>
+            <executions>
+
+               <execution>
+                  <id>add-war</id>
+                  <phase>verify</phase>
+                  <configuration>
+                     <tasks>
+                        <property
+                           name="classes.dir"
+                           location="${rhq.deploymentDir}/WEB-INF/classes" />
+                        <jar
+                           update="yes"
+                           destfile="${basedir}/target/${project.artifactId}-${project.version}.jar"
+                           basedir="${basedir}/../app/target"
+                           includes="*.war" />
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
+      </plugins>
+   </build>
+   
+   <profiles>
+         <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-serverplugins</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>install</phase>
+                        <configuration>
+                          <tasks>                          
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <copy file="${basedir}/target/${project.build.finalName}.jar" toDir="${rhq.deploymentDir}" />  
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                   </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+   </profiles>
+
+</project>

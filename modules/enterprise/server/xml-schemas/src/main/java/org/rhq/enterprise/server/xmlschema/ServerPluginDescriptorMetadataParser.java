@@ -76,11 +76,35 @@ public class ServerPluginDescriptorMetadataParser {
             throw new IllegalArgumentException("Missing plugin component classname for plugin " + descriptor.getName());
         }
 
-        String pkg = descriptor.getPackage();
-        if ((className.indexOf('.') == -1) && (pkg != null)) {
-            className = pkg + '.' + className;
-        }
+        className = getFullyQualifiedClassName(descriptor, className);
 
+        return className;
+    }
+
+    /**
+     * Given a plugn descriptor that may or may not have defined a {@link ServerPluginDescriptorType#getPackage() package name},
+     * this converts the given class name to a fully qualified class name.
+     * 
+     * If the descriptor does not define a package name, this method does nothing and returns <code>className</code> unchanged.
+     * 
+     * If <code>className</code> contains at least one "." character, it is assumed to be already fully qualified and so it
+     * will be returned unchanged.
+     * 
+     * If <code>className</code> has no "." characters, and the descriptor defines a package name, that package name
+     * will prefix the given class name and will form the fully qualified class name that is returned.
+     * 
+     * @param descriptor a plugin descriptor that may or may not define a package name
+     * @param className a classname that may or may not be fully qualified
+     * @return the fully qualified class name or <code>null</code> if <code>className</code> is <code>null</code>
+     */
+    public static String getFullyQualifiedClassName(ServerPluginDescriptorType descriptor, String className) {
+
+        if (className != null) {
+            String pkg = (descriptor != null) ? descriptor.getPackage() : null;
+            if ((className.indexOf('.') == -1) && (pkg != null)) {
+                className = pkg + '.' + className;
+            }
+        }
         return className;
     }
 

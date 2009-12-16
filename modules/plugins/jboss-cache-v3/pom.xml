@@ -9,7 +9,7 @@
     </parent>
     
    <groupId>org.jboss.on</groupId>
-    <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
+   <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
    <packaging>jar</packaging>
 
    <name>RHQ JBossCache 3.x Plugin</name>
@@ -50,7 +50,7 @@
      <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-jmx-plugin</artifactId>
-         <version>${version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope>
      </dependency>
 
@@ -588,3 +588,4 @@
     </reporting>
  
 </project>
+

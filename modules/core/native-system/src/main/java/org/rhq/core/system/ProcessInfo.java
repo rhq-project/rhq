@@ -1,31 +1,31 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.system;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Collections;
-import java.io.File;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -178,24 +178,21 @@ public class ProcessInfo {
                 this.procCredName = sigar.getProcCredName(pid);
             } catch (Exception e) {
                 handleSigarCallException(e, "getProcCredName");
-            }            
+            }
         } catch (Exception e) {
             throw new SystemInfoException(e);
         }
         if (log.isDebugEnabled()) {
             long elapsedTime = System.currentTimeMillis() - startTime;
-            log.debug("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms." );
+            log.debug("Retrieval of process info for pid " + pid + " took " + elapsedTime + " ms.");
         }
     }
 
     public void destroy() throws SystemInfoException {
         if (this.sigar instanceof Sigar) {
-            try
-            {
-                ((Sigar)this.sigar).close();
-            }
-            catch (RuntimeException e)
-            {
+            try {
+                ((Sigar) this.sigar).close();
+            } catch (RuntimeException e) {
                 throw new SystemInfoException(e);
             }
         }
@@ -213,23 +210,27 @@ public class ProcessInfo {
                 // Only log permissions errors once per process.
                 String currentUserName = System.getProperty("user.name");
                 log
-                    .trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid
-                            + "] - call to " + methodName + "failed. "
-                            + "The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
-                            + currentUserName + ").");
+                    .trace("Unable to obtain all info for ["
+                        + procName
+                        + "] process with pid ["
+                        + this.pid
+                        + "] - call to "
+                        + methodName
+                        + "failed. "
+                        + "The process is most likely owned by a user other than the user that owns the RHQ plugin container's process ("
+                        + currentUserName + ").");
                 this.loggedPermissionsError = true;
             }
         } else if (e instanceof SigarNotImplementedException) {
             log.trace("Unable to obtain all info for [" + procName + "] process with pid [" + this.pid + "] - call to "
-                    + methodName + "failed. Cause: " + e);
+                + methodName + "failed. Cause: " + e);
         } else {
             log.debug("Unexpected error occurred while looking up info for [" + procName + "] process with pid ["
-                    + this.pid + "] - call to " + methodName + " failed. Did the process die? Cause: " + e);
+                + this.pid + "] - call to " + methodName + " failed. Did the process die? Cause: " + e);
         }
     }
 
-    private static boolean isWindows()
-    {
+    private static boolean isWindows() {
         return File.separatorChar == '\\';
     }
 
@@ -321,8 +322,7 @@ public class ProcessInfo {
      * @return the environment value
      */
     @Nullable
-    public String getEnvironmentVariable(@NotNull
-    String name) {
+    public String getEnvironmentVariable(@NotNull String name) {
         if (this.procEnv == null) {
             return null;
         }
@@ -369,18 +369,31 @@ public class ProcessInfo {
         return this.procCredName;
     }
 
+    /**
+     * @return null if process executable or cwd is unavailable. Otherwise the Cwd as returned from the
+     * process executable. 
+     * @throws SystemInfoException
+     */
     public String getCurrentWorkingDirectory() throws SystemInfoException {
-        return this.procExe.getCwd();
+        String result = null;
+
+        try {
+            if (null != this.procExe) {
+                result = this.procExe.getCwd();
+            }
+        } catch (Exception e) {
+            handleSigarCallException(e, "procExe.getCwd()");
+        }
+
+        return result;
     }
 
     public boolean isRunning() throws SystemInfoException {
         boolean running = false;
 
         if (this.procState != null) {
-            running = (
-                    this.procState.getState() == ProcState.RUN
-                    || this.procState.getState() == ProcState.SLEEP
-                    || this.procState.getState() == ProcState.IDLE);
+            running = (this.procState.getState() == ProcState.RUN || this.procState.getState() == ProcState.SLEEP || this.procState
+                .getState() == ProcState.IDLE);
 
         }
 

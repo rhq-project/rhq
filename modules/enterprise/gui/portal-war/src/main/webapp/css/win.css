@@ -2126,6 +2126,13 @@ ul.radio-group .unspecified {
 .advisory-details-odd-row {
     background: #ffffff;
 }
+
+.advisory-whitespace {
+ 	white-space: pre-wrap;
+ 	white-space: -moz-pre-wrap;
+ 	white-space: -o-pre-wrap;
+}
+
 /*--- Pagination ---------------------*/
 .on-pager-footer {
     background: #E5E5E5;

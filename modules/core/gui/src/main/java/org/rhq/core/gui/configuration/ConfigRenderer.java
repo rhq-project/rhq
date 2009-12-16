@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import javax.el.MethodExpression;
 import javax.el.ValueExpression;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
@@ -122,9 +123,12 @@ public class ConfigRenderer extends Renderer {
             }
         }
 
-        Boolean readOnly = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("readOnly"));
+        String readOnly = FacesContextUtility.getOptionalRequestParameter("readOnly");
+        if (null != readOnly) {
+            configurationComponent.setReadOnly(Boolean.valueOf(readOnly));
+        }
+
         Boolean save = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("save"));
-        configurationComponent.setReadOnly(readOnly);
 
         if (component.getChildCount() == 0)
             addChildComponents(configurationComponent);
@@ -178,6 +182,9 @@ public class ConfigRenderer extends Renderer {
         // Only create the child components the first time around (i.e. once per JSF lifecycle).
         if (component.getChildCount() == 0)
             addChildComponents(configurationComponent);
+        if (configurationComponent.getToolbar() != null) {
+            configurationComponent.getToolbar().setRendered(configurationComponent.getShowToolbar());
+        }
     }
 
     private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent) {
@@ -275,29 +282,39 @@ public class ConfigRenderer extends Renderer {
     }
 
     private void addStructuredConfig(AbstractConfigurationComponent configurationComponent) {
-        UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
-            "summary-props-table");
-        if (configurationComponent.isReadOnly()) {
-            HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(editLink, configurationComponent, "/images/edit.png", "Edit");
-            FacesComponentUtility.addOutputText(editLink, configurationComponent, "Edit", "");
-            FacesComponentUtility.addParameter(editLink, configurationComponent, "readOnly", Boolean.toString(false));
+        {
+            UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
+                "summary-props-table");
+            if (configurationComponent.isReadOnly()) {
+                HtmlOutputLink editLink = FacesComponentUtility.addOutputLink(toolbarPanel, configurationComponent,
+                    "edit.xhtml");
+                FacesComponentUtility.addGraphicImage(editLink, configurationComponent, "/images/edit.png", "Edit");
+                FacesComponentUtility.addOutputText(editLink, configurationComponent, "Edit", "");
+                FacesComponentUtility.addParameter(editLink, configurationComponent, "readOnly", Boolean
+                    .toString(false));
+                FacesComponentUtility.addParameter(editLink, configurationComponent, "id", FacesContextUtility
+                    .getRequiredRequestParameter("id"));
+            } else {
+                HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
+                FacesComponentUtility.addGraphicImage(saveLink, configurationComponent, "/images/save.png", "Save");
+                FacesComponentUtility.addOutputText(saveLink, configurationComponent, "Save", "");
+                FacesComponentUtility.addParameter(saveLink, configurationComponent, "save", Boolean.toString(true));
+                FacesComponentUtility
+                    .addParameter(saveLink, configurationComponent, "readOnly", Boolean.toString(true));
 
-        } else {
-            HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(saveLink, configurationComponent, "/images/save.png", "Save");
-            FacesComponentUtility.addOutputText(saveLink, configurationComponent, "Save", "");
-            FacesComponentUtility.addParameter(saveLink, configurationComponent, "save", Boolean.toString(true));
-            FacesComponentUtility.addParameter(saveLink, configurationComponent, "readOnly", Boolean.toString(true));
-        }
+                saveLink.setActionExpression(getSaveActionExpression());
 
-        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
-            HtmlCommandLink toRawLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(toRawLink, configurationComponent, "/images/raw.png", "showRaw");
-            FacesComponentUtility.addOutputText(toRawLink, configurationComponent, "showRaw", "");
-            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "showRaw", Boolean.TRUE.toString());
-            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "readOnly", Boolean
-                .toString(configurationComponent.isReadOnly()));
+            }
+            if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
+                HtmlCommandLink toRawLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
+                FacesComponentUtility.addGraphicImage(toRawLink, configurationComponent, "/images/raw.png", "showRaw");
+                FacesComponentUtility.addOutputText(toRawLink, configurationComponent, "showRaw", "");
+                FacesComponentUtility.addParameter(toRawLink, configurationComponent, "showRaw", Boolean.TRUE
+                    .toString());
+                FacesComponentUtility.addParameter(toRawLink, configurationComponent, "readOnly", Boolean
+                    .toString(configurationComponent.isReadOnly()));
+            }
+            configurationComponent.setToolbar(toolbarPanel);
         }
 
         if (!configurationComponent.isReadOnly())
@@ -317,6 +334,13 @@ public class ConfigRenderer extends Renderer {
         String id = getInitInputsJavaScriptComponentId(configurationComponent);
         PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
             .isFullyEditable(), false);
+    }
+
+    private MethodExpression getSaveActionExpression() {
+
+        MethodExpression actionExpression = null;
+
+        return actionExpression;
     }
 
     private void addStructuredRawToggle(AbstractConfigurationComponent configurationComponent, boolean showRaw) {

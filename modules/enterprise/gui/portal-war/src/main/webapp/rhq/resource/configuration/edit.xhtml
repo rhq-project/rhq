@@ -49,7 +49,10 @@ THIS TEXT WILL BE REMOVED.
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
                      nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
-                     prevalidate="true"/>
+                     prevalidate="true"
+                     showToolbar="true"
+                     readOnly="false"
+                     />
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell" rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
             <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"

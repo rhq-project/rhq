@@ -138,8 +138,8 @@ public class RawConfigUIComponent extends UIComponentBase {
             FacesComponentUtility.addParameter(link, idFactory, "path", raw.getPath());
             FacesComponentUtility.addParameter(link, idFactory, "whichRaw", Integer.toString(rawCount++));
             FacesComponentUtility.addParameter(link, idFactory, "showRaw", Boolean.TRUE.toString());
-            readOnlyParms.add(FacesComponentUtility.addParameter(link, idFactory, "readOnly", Boolean
-                .toString(readOnly)));
+            readOnlyParms.add(FacesComponentUtility.addParameter(link, idFactory,
+                AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE, Boolean.toString(readOnly)));
 
         }
 
@@ -155,24 +155,32 @@ public class RawConfigUIComponent extends UIComponentBase {
         inputTextarea.setReadonly(readOnly);
     }
 
+    private HtmlOutputLink fullscreenLink;
+    private UIParameter fullScreenResourceIdParam;
+
     private void addToolbar(ConfigurationDefinition configurationDefinition, UIPanel parent) {
         UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(parent, idFactory, "config-toolbar");
         if (readOnly) {
             HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
             FacesComponentUtility.addGraphicImage(editLink, idFactory, "/images/edit.png", "Edit");
             FacesComponentUtility.addOutputText(editLink, idFactory, "Edit", "");
-            FacesComponentUtility.addParameter(editLink, idFactory, "showStructured", Boolean.FALSE.toString());
+            FacesComponentUtility.addParameter(editLink, idFactory, "showRaw", Boolean.TRUE.toString());
+            FacesComponentUtility.addParameter(editLink, idFactory, AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE,
+                Boolean.FALSE.toString());
         } else {
             HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
             FacesComponentUtility.addGraphicImage(saveLink, idFactory, "/images/save.png", "Save");
             FacesComponentUtility.addOutputText(saveLink, idFactory, "Save", "");
-            FacesComponentUtility.addParameter(saveLink, idFactory, "showStructured", Boolean.FALSE.toString());
+            FacesComponentUtility.addParameter(saveLink, idFactory, "showRaw", Boolean.FALSE.toString());
+            FacesComponentUtility.addParameter(saveLink, idFactory, AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE,
+                Boolean.TRUE.toString());
         }
         {
-            HtmlCommandLink saveCommandLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
-            FacesComponentUtility.addGraphicImage(saveCommandLink, idFactory, "/images/viewfullscreen.png",
-                "FullScreen");
-            FacesComponentUtility.addOutputText(saveCommandLink, idFactory, "Full Screen", "");
+            fullscreenLink = FacesComponentUtility.addOutputLink(toolbarPanel, idFactory, "view-full.xhtml");
+            FacesComponentUtility
+                .addGraphicImage(fullscreenLink, idFactory, "/images/viewfullscreen.png", "FullScreen");
+            FacesComponentUtility.addOutputText(fullscreenLink, idFactory, "Full Screen", "");
+            fullScreenResourceIdParam = FacesComponentUtility.addParameter(fullscreenLink, idFactory, "id", "");
         }
         if (!readOnly) {
             HtmlOutputLink uploadLink = FacesComponentUtility.addOutputLink(toolbarPanel, idFactory, "upload.xhtml");
@@ -200,9 +208,22 @@ public class RawConfigUIComponent extends UIComponentBase {
     public void encodeBegin(FacesContext context) throws IOException {
         // TODO Auto-generated method stub
         super.encodeBegin(context);
+
         inputTextarea.setValue(rawMap.get(getSelectedPath()).getContentString());
         for (UIParameter param : readOnlyParms) {
             param.setValue(Boolean.toString(readOnly));
+        }
+
+        String resourceId = FacesContextUtility.getOptionalRequestParameter("id");
+
+        if (null == resourceId) {
+            if (fullscreenLink != null) {
+                fullscreenLink.setRendered(false);
+            }
+        } else {
+            if (fullScreenResourceIdParam != null) {
+                fullScreenResourceIdParam.setValue(resourceId);
+            }
         }
 
     }

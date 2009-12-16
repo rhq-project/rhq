@@ -47,12 +47,14 @@ THIS TEXT WILL BE REMOVED.
          <!--  TODO remove the id version -->
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
          
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                     accessMapActionExpression="#{ExistingResourceConfigurationUIBean.accessMap}"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
-                     prevalidate="true"/>
+         <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+                     configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                     accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
+                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
+                     nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
+					 readOnly="true"
+					 showToolbar="true"
+				     prevalidate="true"/>
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       </h:form>

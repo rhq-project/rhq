@@ -35,7 +35,6 @@ import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.util.progresswatch.ProgressWatcher;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
@@ -76,17 +75,16 @@ public class DistributionSourceSynchronizer {
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public RepoSyncResults synchronizeDistributionMetadata(RepoSyncResults syncResults, ProgressWatcher pw)
-        throws Exception {
+    public SyncTracker synchronizeDistributionMetadata(SyncTracker tracker) throws Exception {
         if (!(provider instanceof DistributionSource)) {
-            return syncResults;
+            return tracker;
         }
 
         DistributionSource distributionSource = (DistributionSource) provider;
 
         String msg = "Synchronize Distributions: [" + source.getName() + "]: syncing repo [" + repo.getName() + "]";
         log.info(msg);
-        syncResults.appendResults(msg);
+        tracker.getRepoSyncResults().appendResults(msg);
 
         // Load existing distributions to send to source
         // --------------------------------------------
@@ -113,8 +111,11 @@ public class DistributionSourceSynchronizer {
         log.info("Synchronize Distributions: [" + repo.getName() + "]: got sync report from adapter=[" + distReport
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
-        syncResults = contentSourceManager.mergeDistributionSyncReport(source, distReport, syncResults);
-        return syncResults;
+        RepoSyncResults syncResults = contentSourceManager.mergeDistributionSyncReport(source, distReport, tracker
+            .getRepoSyncResults());
+        tracker.setRepoSyncResults(syncResults);
+        tracker.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getDistribtutionBitsWeight());
+        return tracker;
     }
 
     public SyncTracker synchronizeDistributionBits(SyncTracker tracker) throws Exception {
@@ -129,6 +130,7 @@ public class DistributionSourceSynchronizer {
         contentSourceManager.downloadDistributionBits(overlord, source);
         tracker.getRepoSyncResults().appendResults(
             "Synchronize Distributions: [" + repo.getName() + " finished bits download.");
+        tracker.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getDistribtutionBitsWeight());
 
         return tracker;
     }

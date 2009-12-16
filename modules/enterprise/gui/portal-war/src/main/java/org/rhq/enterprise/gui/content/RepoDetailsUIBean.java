@@ -51,13 +51,23 @@ public class RepoDetailsUIBean {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
-
     }
 
     public RepoSyncResults getSyncResults() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         return LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+    }
+
+    public String getPercentComplete() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        RepoSyncResults r = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+        if (r != null && r.getPercentComplete() != null) {
+            return r.getPercentComplete().toString();
+        } else {
+            return "0";
+        }
     }
 
     public String sync() {

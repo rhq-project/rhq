@@ -197,8 +197,12 @@ public class PackageSourceSynchronizer {
 
                 overlord = subjectManager.getOverlord();
                 contentSourceManager.downloadPackageBits(overlord, item);
+
                 // Tick off each package as completed work 
                 tracker.getProgressWatcher().finishWork(sw.getPackageBitsWeight() * 1);
+                tracker.getRepoSyncResults().setPercentComplete(
+                    new Long(tracker.getProgressWatcher().getPercentComplete()));
+                tracker.setRepoSyncResults(repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults()));
             } catch (Exception e) {
                 String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
                     + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation() + "]."

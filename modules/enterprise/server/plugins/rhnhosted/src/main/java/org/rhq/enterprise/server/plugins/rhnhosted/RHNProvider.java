@@ -359,7 +359,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
 
     @Override
     public SyncProgressWeight getSyncProgressWeight() {
-        return new SyncProgressWeight(10, 1, 0, 0, 0);
+        return new SyncProgressWeight(10, 1, 0, 0, 1);
     }
 
 }

@@ -90,6 +90,16 @@
                   </td>
                </tr>
                <tr>
+                  <td align="right"><b>Syncronization Complete:</b></td>
+                  <td align="left">
+                     <rich:progressBar value="#{RepoDetailsUIBean.percentComplete}"
+                         label="#{RepoDetailsUIBean.percentComplete} %" interval="1000"
+                         minValue="0" maxValue="100">
+                     </rich:progressBar >
+                     DEBUG: <h:outputText value="#{RepoDetailsUIBean.percentComplete}"/>
+                  </td>
+               </tr>
+               <tr>
                   <td align="right"><b>Syncronization Results:</b></td>
                   <td align="left">
                      <h:outputLink rendered="#{RepoDetailsUIBean.syncResults.results ne null}"

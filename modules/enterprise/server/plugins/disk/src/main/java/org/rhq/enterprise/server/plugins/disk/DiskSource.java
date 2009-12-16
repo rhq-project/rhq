@@ -30,6 +30,7 @@ import java.util.Map;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.ContentFileInfo;
 import org.rhq.core.util.file.ContentFileInfoFactory;
@@ -38,6 +39,9 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 
 /**
  * This is the most basic <i>reference</i> implementation of a content source. It provides primative package
@@ -47,7 +51,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
  * @author jortel
  * @author John Mazzitelli
  */
-public class DiskSource implements ContentProvider, PackageSource {
+public class DiskSource implements ContentProvider, PackageSource, RepoSource {
 
     /**
      * The root path (directory) from which to synchronize content.
@@ -64,6 +68,99 @@ public class DiskSource implements ContentProvider, PackageSource {
      * which files match to which package types.
      */
     private Map<String, SupportedPackageType> supportedPackageTypes;
+
+    /**
+     * Configuration for this instance of the plugin.
+     */
+    private Configuration configuration;
+
+    /**
+     * Indicates if the repo source functionality of this instance is enabled or disabled.
+     */
+    private boolean isRepoSource;
+
+    /**
+     * Indicates if the package source functionality of this instance is enabled or disabled.
+     */
+    private boolean isPackageSource;
+
+    public void initialize(Configuration configuration) throws Exception {
+        this.configuration = configuration;
+
+        isPackageSource = ((PropertySimple) configuration.get("packageSourceEnabled")).getBooleanValue();
+        isRepoSource = ((PropertySimple) configuration.get("repoSourceEnabled")).getBooleanValue();
+
+        initializePackageTypes();
+        String pathString = configuration.getSimpleValue("rootDirectory", null);
+        setRootDirectory(new File(pathString));
+        testConnection();
+    }
+
+    public void shutdown() {
+        this.rootDirectory = null;
+        this.rootDirectoryAbsolutePath = null;
+        this.supportedPackageTypes = null;
+    }
+
+    public RepoImportReport importRepos() throws Exception {
+        RepoImportReport report = new RepoImportReport();
+
+        if (!isRepoSource) {
+            return report;
+        }
+
+        File directory = getRootDirectory();
+        generateRepoDetails(report, directory, null);
+
+        return report;
+    }
+
+    public void synchronizePackages(String repoName, PackageSyncReport report,
+                                    Collection<ContentProviderPackageDetails> existingPackages)
+        throws Exception {
+
+        if (!isPackageSource) {
+            return;
+        }
+
+        // put all existing packages in a "to be deleted" list. As we sync, we will remove
+        // packages from this list that still exist on the file system. Any leftover in the list
+        // are packages that no longer exist on the file system and should be removed from the server inventory.
+        List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
+        deletedPackages.addAll(existingPackages);
+
+        // sync now
+        long before = System.currentTimeMillis();
+        syncPackages(report, repoName, deletedPackages, getRootDirectory());
+        long elapsed = System.currentTimeMillis() - before;
+
+        // if there are packages that weren't found on the file system, tell server to remove them from inventory
+        for (ContentProviderPackageDetails p : deletedPackages) {
+            report.addDeletePackage(p);
+        }
+
+        report.setSummary("Synchronized [" + getRootDirectory() + "]. Elapsed time=[" + elapsed + "] ms");
+    }
+
+    public void testConnection() throws Exception {
+        File root = getRootDirectory();
+
+        if (!root.exists()) {
+            throw new Exception("Disk source [" + root + "] does not exist");
+        }
+
+        if (!root.canRead()) {
+            throw new Exception("Not permitted to read disk source [" + root + "] ");
+        }
+
+        if (!root.isDirectory()) {
+            throw new Exception("Disk source [" + root + "] is not a directory");
+        }
+    }
+
+    public InputStream getInputStream(String location) throws Exception {
+        return new FileInputStream(new File(getRootDirectory(), location));
+    }
 
     protected File getRootDirectory() {
         return this.rootDirectory;
@@ -82,104 +179,50 @@ public class DiskSource implements ContentProvider, PackageSource {
         this.supportedPackageTypes = supportedPackageTypes;
     }
 
-    public void initialize(Configuration configuration) throws Exception {
-        initializePackageTypes(configuration);
-        String pathString = configuration.getSimpleValue("rootDirectory", null);
-        setRootDirectory(new File(pathString));
-        testConnection();
-    }
-
-    public void shutdown() {
-        this.rootDirectory = null;
-        this.rootDirectoryAbsolutePath = null;
-        this.supportedPackageTypes = null;
-    }
-
-    public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
-
-        // put all existing packages in a "to be deleted" list. As we sync, we will remove
-        // packages from this list that still exist on the file system. Any leftover in the list
-        // are packages that no longer exist on the file system and should be removed from the server inventory.
-        List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
-        deletedPackages.addAll(existingPackages);
-
-        // sync now
-        long before = System.currentTimeMillis();
-        syncPackages(report, deletedPackages, getRootDirectory());
-        long elapsed = System.currentTimeMillis() - before;
-
-        // if there are packages that weren't found on the file system, tell server to remove them from inventory
-        for (ContentProviderPackageDetails p : deletedPackages) {
-            report.addDeletePackage(p);
-        }
-
-        report.setSummary("Synchronized [" + getRootDirectory() + "]. Elapsed time=[" + elapsed + "] ms");
-
-        return;
-    }
-
-    public void testConnection() throws Exception {
-        File root = getRootDirectory();
-
-        if (!root.exists()) {
-            throw new Exception("Disk source [" + root + "] does not exist");
-        }
-
-        if (!root.canRead()) {
-            throw new Exception("Not permitted to read disk source [" + root + "] ");
-        }
-
-        if (!root.isDirectory()) {
-            throw new Exception("Disk source [" + root + "] is not a directory");
-        }
-
-        return; // good
-    }
-
-    public InputStream getInputStream(String location) throws Exception {
-        return new FileInputStream(new File(getRootDirectory(), location));
-    }
-
     /**
      * Recursive function that drills down into subdirectories and builds up the report
      * of packages for all files found. As files are found, their associated packages
      * are removed from <code>packages</code> if they exist - leaving only packages
      * remaining that do not exist on the file system.
-     * 
+     *
      * @param report the report that we are building up
      * @param packages existing packages not yet found on the file system but exist in server inventory
      * @param directory the directory (and its subdirectories) to scan
      * @throws Exception if the sync fails
      */
-    protected void syncPackages(PackageSyncReport report, List<ContentProviderPackageDetails> packages, File directory)
+    protected void syncPackages(PackageSyncReport report, String repoName,
+                                List<ContentProviderPackageDetails> packages, File directory)
         throws Exception {
 
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
-                // process the directory recursively
-                syncPackages(report, packages, file);
-            } else {
-                // process the file
-                ContentProviderPackageDetails details = createPackage(file);
-                if (details != null) {
-                    ContentProviderPackageDetails existing = findPackage(packages, details);
-                    if (existing == null) {
-                        report.addNewPackage(details);
-                    } else {
-                        packages.remove(existing); // it still exists, remove it from our list
-                        if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
-                            report.addUpdatedPackage(details);
+
+                if (file.getName().equals(repoName)) {
+
+                    for (File filePackage : file.listFiles()) {
+                        ContentProviderPackageDetails details = createPackage(filePackage);
+                        if (details != null) {
+                            ContentProviderPackageDetails existing = findPackage(packages, details);
+                            if (existing == null) {
+                                report.addNewPackage(details);
+                            } else {
+                                packages.remove(existing); // it still exists, remove it from our list
+                                if (details.getFileCreatedDate().compareTo(existing.getFileCreatedDate()) > 0) {
+                                    report.addUpdatedPackage(details);
+                                }
+                            }
+                        } else {
+                            // file does not match any filter and is therefore an unknown type - ignore it
                         }
                     }
-                } else {
-                    // file does not match any filter and is therefore an unknown type - ignore it
+
+                    break;
                 }
+
+                // Otherwise, keep searching recursively for a directory with the same name
+                syncPackages(report, repoName, packages, file);
             }
         }
-
-        return;
     }
 
     protected ContentProviderPackageDetails createPackage(File file) throws Exception {
@@ -238,16 +281,16 @@ public class DiskSource implements ContentProvider, PackageSource {
         return relativePath;
     }
 
-    protected void initializePackageTypes(Configuration config) {
+    protected void initializePackageTypes() {
 
         Map<String, SupportedPackageType> supportedPackageTypes = new HashMap<String, SupportedPackageType>();
 
-        /* TODO: THE UI CURRENTLY DOES NOT SUPPORT ADDING/EDITING LIST OF MAPS, SO WE CAN ONLY SUPPORT ONE PACKAGE TYPE 
+        /* TODO: THE UI CURRENTLY DOES NOT SUPPORT ADDING/EDITING LIST OF MAPS, SO WE CAN ONLY SUPPORT ONE PACKAGE TYPE
          * SO FOR NOW, JUST SUPPORT A FLAT SET OF SIMPLE PROPS - WE WILL RE-ENABLE THIS CODE LATER */
         if (false) {
             // All of these properties must exist, any nulls should trigger runtime exceptions which is what we want
-            // because if the configuration is bad, this content source should not initialize. 
-            List<Property> packageTypesList = config.getList("packageTypes").getList();
+            // because if the configuration is bad, this content source should not initialize.
+            List<Property> packageTypesList = configuration.getList("packageTypes").getList();
             for (Property property : packageTypesList) {
                 PropertyMap pkgType = (PropertyMap) property;
                 SupportedPackageType supportedPackageType = new SupportedPackageType();
@@ -262,11 +305,11 @@ public class DiskSource implements ContentProvider, PackageSource {
         } else {
             /* THIS CODE IS THE FLAT SET OF PROPS - USE UNTIL WE CAN EDIT MAPS AT WHICH TIME DELETE THIS ELSE CLAUSE */
             SupportedPackageType supportedPackageType = new SupportedPackageType();
-            supportedPackageType.packageTypeName = config.getSimpleValue("packageTypeName", null);
-            supportedPackageType.architectureName = config.getSimpleValue("architectureName", null);
-            supportedPackageType.resourceTypeName = config.getSimpleValue("resourceTypeName", null);
-            supportedPackageType.resourceTypePluginName = config.getSimpleValue("resourceTypePluginName", null);
-            String filenameFilter = config.getSimpleValue("filenameFilter", null);
+            supportedPackageType.packageTypeName = configuration.getSimpleValue("packageTypeName", null);
+            supportedPackageType.architectureName = configuration.getSimpleValue("architectureName", null);
+            supportedPackageType.resourceTypeName = configuration.getSimpleValue("resourceTypeName", null);
+            supportedPackageType.resourceTypePluginName = configuration.getSimpleValue("resourceTypePluginName", null);
+            String filenameFilter = configuration.getSimpleValue("filenameFilter", null);
             supportedPackageTypes.put(filenameFilter, supportedPackageType);
         }
 
@@ -282,6 +325,22 @@ public class DiskSource implements ContentProvider, PackageSource {
             }
         }
         return null; // the file doesn't match any known types for this content source
+    }
+
+    protected void generateRepoDetails(RepoImportReport report, File base, String parentName) {
+
+        for (File file : base.listFiles()) {
+
+            if (file.isDirectory()) {
+
+                // Add this as a new repo
+                RepoDetails repo = new RepoDetails(file.getName(), parentName);
+                report.addRepo(repo);
+
+                // Check to see if there are any child repos
+                generateRepoDetails(report, file, repo.getName());
+            }
+        }
     }
 
     protected class SupportedPackageType {

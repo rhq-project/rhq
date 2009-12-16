@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -264,8 +265,8 @@ public class ServerPluginManager {
 
     /**
      * Informs the plugin manager that a plugin with the given name is to be unloaded.
-     * Once this method returns, the plugin's components are should no longer be created or used.
-     *
+     * The component's shutdown method will be called.
+     * 
      * @param pluginName the name of the plugin to be unloaded
      *
      * @throws Exception if the plugin manager cannot unload the plugin
@@ -305,6 +306,38 @@ public class ServerPluginManager {
     }
 
     /**
+     * Informs the plugin manager that a plugin with the given name is to be unloaded.
+     * Once this method returns, the plugin's components should not be created or used.
+     *
+     * If <code>keepClassLoader</code> is <code>true</code>, this is the same as
+     * {@link #unloadPlugin(String)}.
+     *
+     * You want to keep the classloader if you are only temporarily unloading the plugin, and
+     * will load it back soon.
+     *
+     * Subclasses of this plugin manager class will normally not override this method; instead,
+     * they will typically want to override {@link #unloadPlugin(String)}.
+     *
+     * @param pluginName the name of the plugin to be unloaded
+     * @param keepClassLoader if <code>true</code> the classloader is not destroyed
+     * @throws Exception if the plugin manager cannot unload the plugin
+     */
+    protected void unloadPlugin(String pluginName, boolean keepClassLoader) throws Exception {
+        try {
+            unloadPlugin(pluginName);
+        } finally {
+            if (!keepClassLoader) {
+                String pluginType = getParentPluginContainer().getSupportedServerPluginType().stringify();
+                PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType, pluginName);
+                MasterServerPluginContainer master = this.parentPluginContainer.getMasterServerPluginContainer();
+                master.getClassLoaderManager().unloadPlugin(pluginKey);
+            }
+        }
+
+        return;
+    }
+
+    /**
      * This will reload a plugin allowing you to enable or disable it.
      * This will {@link #startPlugin(String) start the plugin component} if you enable it.
      * This will {@link #stopPlugin(String) stop the plugin component} if you disable it.
@@ -331,7 +364,7 @@ public class ServerPluginManager {
             throw new IllegalArgumentException("Server plugin [" + pluginName + "] was never loaded, cannot enable it");
         }
         stopPlugin(pluginName); // under normal circumstances, we should not need to do this, but just in case the plugin is somehow already started, stop it
-        unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
+        unloadPlugin(pluginName, true); // unloading it will clean up old data and force the plugin context to reload
         env = rebuildServerPluginEnvironment(env);
         try {
             // reload it in the enabled state.
@@ -352,7 +385,7 @@ public class ServerPluginManager {
             throw new IllegalArgumentException("Server plugin [" + pluginName + "] was never loaded, cannot disable it");
         }
         stopPlugin(pluginName);
-        unloadPlugin(pluginName); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
+        unloadPlugin(pluginName, true); // unloading it will clean up old data and force the plugin context to reload if we later re-enable it
         env = rebuildServerPluginEnvironment(env);
         loadPlugin(env, false); // re-load it in the disabled state
         return;
@@ -501,10 +534,10 @@ public class ServerPluginManager {
             throw new Exception("Could not instantiate plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (IllegalAccessException e) {
-            throw new Exception("Could not access plugin class " + className + "] from plugin environment ["
+            throw new Exception("Could not access plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (ClassNotFoundException e) {
-            throw new Exception("Could not find plugin class " + className + "] from plugin environment ["
+            throw new Exception("Could not find plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (NullPointerException npe) {
             throw new Exception("Plugin class was 'null' in plugin environment [" + environment + "]", npe);

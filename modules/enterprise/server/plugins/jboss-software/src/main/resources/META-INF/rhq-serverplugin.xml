@@ -7,8 +7,8 @@
                 xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="JBossASPatchSource"
-                      displayName="JBoss AS Patch Content Source"
-                      description="This content source retrieves packages from the JBoss CSP RSS feed."
+                      displayName="JBoss AS Patch Content Provider"
+                      description="This content provider retrieves packages from the JBoss CSP RSS feed."
                       lazyLoad="true"
                       apiClass="org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter">
 

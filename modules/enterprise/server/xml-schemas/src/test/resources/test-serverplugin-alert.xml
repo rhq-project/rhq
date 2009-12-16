@@ -18,4 +18,8 @@
         <c:simple-property name="alertprop1" />
     </serverplugin:plugin-configuration>
 
+    <short-name>Test</short-name>
+
+    <plugin-class>MyClass</plugin-class>
+
 </alert-plugin>

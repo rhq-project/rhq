@@ -21,7 +21,9 @@
    <description>A Perspective defining Core UI Elements</description>
 
    <properties>
-      <rhq.version>1.4.0-SNAPSHOT</rhq.version>
+<!--
+      <rhq.version>${project.version}</rhq.version>
+-->
    </properties>
 
    <dependencies>
@@ -30,7 +32,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
-         <version>${rhq.version}</version>
+         <version>${project.version}</version>
          <scope>provided</scope> <!-- provided by the server/plugin-container -->
       </dependency>
 
@@ -58,9 +60,9 @@
       -->
 
    </dependencies>
-   
+
    <profiles>
-   
+
       <profile>
          <id>dev</id>
 
@@ -115,7 +117,7 @@
             </plugins>
          </build>
       </profile>
-   
+
    </profiles>
 
 </project>

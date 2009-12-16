@@ -777,7 +777,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @return human readable condition log
      */
     public String prettyPrintAlertConditions(Alert alert) {
-        entityManager.refresh(alert);
         return prettyPrintAlertConditions(alert.getConditionLogs());
     }
 

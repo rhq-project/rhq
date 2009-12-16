@@ -84,23 +84,33 @@
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>Syncronization Status:</b></td>
+                  <td align="right"><b>Synchronization Status:</b></td>
                   <td align="left">
-                     <h:outputText value="#{RepoDetailsUIBean.syncStatus}"/>
+	                  <a4j:region>
+					       <a4j:poll id="poll" interval="1000"
+					           reRender="syncStatus" />
+				           <h:outputText id="syncStatus"
+				                value="#{RepoDetailsUIBean.syncStatus}" />           
+  				     </a4j:region>
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>Syncronization Complete:</b></td>
+                  <td align="right"><b>Synchronization Complete:</b></td>
                   <td align="left">
                      <rich:progressBar value="#{RepoDetailsUIBean.percentComplete}"
                          label="#{RepoDetailsUIBean.percentComplete} %" interval="1000"
-                         minValue="0" maxValue="100">
+                         minValue="-1" maxValue="99">
+						    <f:facet name="complete">
+						        <h:outputText value="Synching Complete"/>
+						    </f:facet>
+						    <f:facet name="initial">
+						        <h:outputText value="Synching Not Started"/>
+						    </f:facet>
                      </rich:progressBar >
-                     DEBUG: <h:outputText value="#{RepoDetailsUIBean.percentComplete}"/>
                   </td>
                </tr>
                <tr>
-                  <td align="right"><b>Syncronization Results:</b></td>
+                  <td align="right"><b>Synchronization Results:</b></td>
                   <td align="left">
                      <h:outputLink rendered="#{RepoDetailsUIBean.syncResults.results ne null}"
                                 value="#" id="resultsLink">

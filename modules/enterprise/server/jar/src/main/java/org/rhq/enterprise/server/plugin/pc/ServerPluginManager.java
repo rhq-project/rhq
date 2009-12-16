@@ -534,10 +534,10 @@ public class ServerPluginManager {
             throw new Exception("Could not instantiate plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (IllegalAccessException e) {
-            throw new Exception("Could not access plugin class " + className + "] from plugin environment ["
+            throw new Exception("Could not access plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (ClassNotFoundException e) {
-            throw new Exception("Could not find plugin class " + className + "] from plugin environment ["
+            throw new Exception("Could not find plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
         } catch (NullPointerException npe) {
             throw new Exception("Plugin class was 'null' in plugin environment [" + environment + "]", npe);

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugins.alertMicroblog;
 
+import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 
@@ -61,8 +62,8 @@ public class MicroblogSender extends AlertSender {
 
         SenderResult result ;
         try {
-            twitter.updateStatus(b.toString());
-            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + baseUrl + " as user " + user);
+            Status status = twitter.updateStatus(b.toString());
+            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + baseUrl + " as user " + user + " id: " + status.getId());
         } catch (TwitterException e) {
             log.warn("Notification via Microblog failed: ", e);
             result = new SenderResult(ResultState.FAILURE,"Sending failed :" + e.getMessage());

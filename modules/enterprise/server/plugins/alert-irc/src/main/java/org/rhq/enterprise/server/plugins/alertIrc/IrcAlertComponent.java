@@ -23,9 +23,11 @@
 package org.rhq.enterprise.server.plugins.alertIrc;
 
 import java.util.Arrays;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jibble.pircbot.PircBot;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
@@ -88,8 +90,13 @@ public class IrcAlertComponent implements ServerPluginComponent {
     }
 
     public void shutdown() {
-        this.ircBot.dispose();
-        this.ircBot = null;
+        try {
+            this.ircBot.dispose();
+        } catch (Exception e) {
+            log.warn("Failed to dispose of the IRC bot object: " + e.getMessage());
+        } finally {
+            this.ircBot = null;
+        }
     }
 
     /**
@@ -116,7 +123,7 @@ public class IrcAlertComponent implements ServerPluginComponent {
                 this.ircBot.joinChannel(channel);
             }
 
-            return new String[]{channel};
+            return new String[] { channel };
         } else {
             return this.ircBot.getChannels();
         }
@@ -148,13 +155,9 @@ public class IrcAlertComponent implements ServerPluginComponent {
          * @param message
          */
         @Override
-        public void onMessage(String channel, String sender, String login,
-                String hostname, String message) {
+        public void onMessage(String channel, String sender, String login, String hostname, String message) {
 
-            if (!message.contains(nick))
-                return;
-
-            if (this.response != null) {
+            if (this.response != null && message.startsWith(nick)) {
                 if (channel != null && channel.length() > 0) {
                     sendMessage(channel, sender + ":  " + this.response);
                 } else {

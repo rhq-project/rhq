@@ -150,6 +150,7 @@ public class MobicentsSender extends AlertSender {
             code = conn.getResponseCode();
         } catch (Exception e) {
             log.warn("Notification via VoIP failed: " + e);
+            return new SenderResult(ResultState.FAILURE,"Sending failed " + e.getMessage());
         }
         finally {
             if (conn!=null)

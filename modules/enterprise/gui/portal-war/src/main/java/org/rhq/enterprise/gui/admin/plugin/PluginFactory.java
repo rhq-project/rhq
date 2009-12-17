@@ -47,7 +47,7 @@ public class PluginFactory {
     @RequestParameter("pluginType")
     private String pluginType;
 
-    @Factory(value = "plugin", autoCreate = true)
+    @Factory(value = "plugin", autoCreate = true, scope = ScopeType.EVENT)
     public AbstractPlugin lookupPlugin() {
         if (this.deployment == PluginDeploymentType.AGENT) {
             return LookupUtil.getResourceMetadataManager().getPlugin(this.name);

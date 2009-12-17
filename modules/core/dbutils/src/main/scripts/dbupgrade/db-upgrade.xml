@@ -1888,39 +1888,39 @@
              VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
            </statement>
          </schema-directSQL>
-         
+
          <schema-directSQL>
           <statement desc="Creating table RHQ_DISTRIBUTION">
             CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )
           </statement>
         </schema-directSQL>
         <schema-addColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" columnType="INTEGER"/>
-        <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false"/>         
+        <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false"/>
         <schema-addColumn table="RHQ_DISTRIBUTION" column="LABEL" precision="64" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_DISTRIBUTION" column="LABEL" nullable="false" />
         <schema-addColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" precision="256" columnType="VARCHAR2" />
         <schema-alterColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" nullable="false" />
         <schema-addColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG" />
-        <schema-alterColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />        
+        <schema-alterColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />
          <schema-directSQL>
           <statement>
             CREATE UNIQUE INDEX RHQ_DISTRIBUTION_IDX ON RHQ_DISTRIBUTION ( LABEL, BASE_PATH )
           </statement>
-        </schema-directSQL>         
+        </schema-directSQL>
         <schema-directSQL>
            <statement targetDBVendor="postgresql">
              ALTER TABLE RHQ_DISTRIBUTION
              ADD CONSTRAINT RHQ_DIST_TYPE_FKEY
              FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
              REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-           </statement>           
+           </statement>
            <statement targetDBVendor="oracle">
              ALTER TABLE RHQ_DISTRIBUTION
              ADD FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
              REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
            </statement>
-         </schema-directSQL>         
-                  
+         </schema-directSQL>
+
          <schema-directSQL>
           <statement desc="Creating table RHQ_REPO_DISTRIBUTION">
             CREATE TABLE RHQ_REPO_DISTRIBUTION ( REPO_ID INTEGER )
@@ -1935,31 +1935,31 @@
           <statement>
             ALTER TABLE RHQ_REPO_DISTRIBUTION ADD CONSTRAINT RHQ_REPO_DIST_MAP_KEY
             PRIMARY KEY ( REPO_ID, DISTRIBUTION_ID )
-          </statement>           
-          
+          </statement>
+
            <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD CONSTRAINT RHQ_REPO_DIST_REPO_ID_FKEY
             FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
-          </statement>           
+          </statement>
           <statement targetDBVendor="oracle">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD FOREIGN KEY ( REPO_ID )
             REFERENCES RHQ_REPO ( ID )
           </statement>
-           
+
           <statement targetDBVendor="postgresql">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD CONSTRAINT RHQ_REPO_DIST_DIST_ID_FKEY
             FOREIGN KEY ( DISTRIBUTION_ID )
             REFERENCES RHQ_DISTRIBUTION ( ID )
-          </statement>                      
+          </statement>
           <statement targetDBVendor="oracle">
             ALTER TABLE RHQ_REPO_DISTRIBUTION
             ADD FOREIGN KEY ( DISTRIBUTION_ID )
             REFERENCES RHQ_DISTRIBUTION ( ID )
-          </statement>           
+          </statement>
         </schema-directSQL>
       </schemaSpec>
 
@@ -1988,8 +1988,8 @@
            <statement targetDBVendor="oracle">
              UPDATE RHQ_REPO SET IS_CANDIDATE = 0
              </statement>
-         </schema-directSQL>             
-         
+         </schema-directSQL>
+
           <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
       </schemaSpec>
 
@@ -2199,6 +2199,14 @@
         </schema-directSQL>
         <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" columnType="VARCHAR2"/>
         <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" columnType="VARCHAR2"/>
+      </schemaSpec>
+
+      <schemaSpec version="2.70.2">
+          <schema-directSQL>
+            <statement>
+                DELETE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY LIKE "SNMP_%"
+            </statement>
+          </schema-directSQL>
       </schemaSpec>
 
     </dbupgrade>

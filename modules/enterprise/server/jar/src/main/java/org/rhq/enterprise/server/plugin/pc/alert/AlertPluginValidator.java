@@ -42,10 +42,10 @@ public class AlertPluginValidator implements ServerPluginValidator {
             className = type.getPackage() + "." + className;
         }
         try {
-            Class.forName(className,false,env.getPluginClassLoader());
+            Class.forName(className, false, env.getPluginClassLoader());
         }
         catch (Exception e) {
-            log.error("Can't find pluginClass " + className + " for plugin " + env.getPluginKey().getPluginName() );
+            log.error("Can't find pluginClass " + className + " for plugin " + env.getPluginKey().getPluginName());
             return false;
         }
 
@@ -58,17 +58,17 @@ public class AlertPluginValidator implements ServerPluginValidator {
         //
 
         String uiSnippetPath;
-        URL uiSnippetUrl = null;
         CustomUi customUI = type.getCustomUi();
-        if (customUI!=null) {
+        if (customUI != null) {
             uiSnippetPath = customUI.getUiSnippetName();
 
             try {
-                uiSnippetUrl = env.getPluginClassLoader().getResource(uiSnippetPath);
+                URL uiSnippetUrl = env.getPluginClassLoader().getResource(uiSnippetPath);
                 log.info("UI snipped for " + shortName + " is at " + uiSnippetUrl);
             }
             catch (Exception e) {
-                log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName + "Error is "+ e.getMessage());
+                log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName +
+                        "Error is " + e.getMessage());
                 return false;
             }
 
@@ -78,9 +78,9 @@ public class AlertPluginValidator implements ServerPluginValidator {
                 className = type.getPackage() + "." + className;
             }
             try {
-                Class.forName(className,true,env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
+                Class.forName(className, true, env.getPluginClassLoader());
             }
-            catch (Throwable t ) {
+            catch (Throwable t) {
                 log.error("Backing bean " + className + " not found for plugin " + shortName);
                 return false;
             }

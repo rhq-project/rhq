@@ -850,6 +850,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return subjectManager.getSubjectByName(username);
     }
 
+    public Subject getSubjectBySessionId(int sessionId) throws Exception {
+        return subjectManager.getSubjectBySessionId(sessionId);
+    }
+
     public Subject login(String username, String password) throws LoginException {
         return subjectManager.login(username, password);
     }

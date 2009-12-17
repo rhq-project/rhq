@@ -891,7 +891,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc) {
-
+        pc.setPrimarySort("rkt.id", PageOrdering.ASC);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoDistribution.QUERY_FIND_BY_REPO_ID,
             pc);
 
@@ -913,7 +913,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc) {
-
+        pc.setPrimarySort("rkt.id", PageOrdering.ASC);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID, pc);
 
         query.setParameter("repoId", repoid);
@@ -948,7 +948,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         int latestIndex = syncResults.size() - 1;
         if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
             RepoSyncResults results = syncResults.get(latestIndex);
-            System.out.println("RESULTS ID: " + results.getId());
             return results.getStatus().toString();
         } else {
             return ContentSyncStatus.NONE.toString();

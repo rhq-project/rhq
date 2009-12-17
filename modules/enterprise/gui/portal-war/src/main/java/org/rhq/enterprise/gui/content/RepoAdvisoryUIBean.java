@@ -66,7 +66,7 @@ public class RepoAdvisoryUIBean extends PagedDataTableUIBean {
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
             PageList<Advisory> results = manager.findAssociatedAdvisory(subject, id, pc);
-            log.error("Resulsts for advisory" + results);
+            log.debug("Resulsts for advisory" + results);
             return results;
         }
     }

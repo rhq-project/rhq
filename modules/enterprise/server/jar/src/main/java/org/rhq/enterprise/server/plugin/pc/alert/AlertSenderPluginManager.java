@@ -30,6 +30,7 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
@@ -68,24 +69,21 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      */
     @Override
     public void loadPlugin(ServerPluginEnvironment env, boolean enable) throws Exception {
-        log.info("Start loading alert plugin " + env.getPluginKey().getPluginName());
+        log.debug("Start loading alert plugin " + env.getPluginKey().getPluginName());
         super.loadPlugin(env, enable);
 
         AlertPluginDescriptorType type = (AlertPluginDescriptorType) env.getPluginDescriptor();
 
         String className = type.getPluginClass();
-        if (!className.contains(".")) {
-            className = type.getPackage() + "." + className;
-        }
         try {
-            Class.forName(className, false, env.getPluginClassLoader());
+            loadPluginClass(env, className, false);
         } catch (Exception e) {
-            log.error("Can't find pluginClass " + className + ". Plugin " + env.getPluginKey().getPluginName()
-                + " will be ignored");
+            log.error("Can't find pluginClass [" + className + "]. Plugin [" + env.getPluginKey().getPluginName()
+                + "] will be ignored. Cause: " + ThrowableUtil.getAllMessages(e));
             try {
                 unloadPlugin(env.getPluginKey().getPluginName());
             } catch (Throwable t) {
-                log.warn("  +--> unload failed too " + t.getMessage());
+                log.warn("  +--> unload failed too. Cause: " + ThrowableUtil.getAllMessages(t));
             }
             return;
         }
@@ -107,7 +105,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
             try {
                 uiSnippetUrl = env.getPluginClassLoader().getResource(uiSnippetPath);
-                log.info("UI snipped for " + shortName + " is at " + uiSnippetUrl);
+                log.info("Alert plugin UI snipped for [" + shortName + "] is at: " + uiSnippetUrl);
             } catch (Exception e) {
                 log.error("No valid ui snippet provided, but <custom-ui> given for sender plugin " + shortName
                     + "Error is " + e.getMessage());
@@ -121,10 +119,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                 className = type.getPackage() + "." + className;
             }
             try {
-                Class.forName(className, true, env.getPluginClassLoader()); // TODO how make this available to Seam and the Web-CL ?
+                loadPluginClass(env, className, true); // TODO how make this available to Seam and the Web-CL ?
                 backingBeanByName.put(shortName, className);
             } catch (Throwable t) {
-                log.error("Backing bean " + className + " not found for plugin " + shortName);
+                log.error("Backing bean [" + className + "] not found for plugin [" + shortName + ']');
             }
         }
 
@@ -169,9 +167,9 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             return null;
         }
         ServerPluginEnvironment env = pluginEnvByName.get(senderName);
-        Class clazz;
+        Class<?> clazz;
         try {
-            clazz = Class.forName(className, true, env.getPluginClassLoader());
+            clazz = loadPluginClass(env, className, true);
         } catch (Exception e) {
             log.error(e); // TODO
             return null;
@@ -231,9 +229,9 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     public AlertBackingBean getBackingBeanForSender(String shortName) {
         String name = backingBeanByName.get(shortName);
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
-        Class clazz;
+        Class<?> clazz;
         try {
-            clazz = Class.forName(name, true, env.getPluginClassLoader());
+            clazz = loadPluginClass(env, name, true);
         } catch (Exception e) {
             log.error("Can't load class " + name + ": " + e.getMessage());
             return null;

@@ -184,7 +184,7 @@ public class ServerPluginManager {
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.initialize(context);
                 } catch (Throwable t) {
-                    throw new Exception("Plugin component failed to initialize server plugin", t);
+                    throw new Exception("Plugin component failed to initialize server plugin [" + pluginName + "]", t);
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
                 }
@@ -284,13 +284,13 @@ public class ServerPluginManager {
             // tell the plugin we are unloading it
             ServerPluginComponent component = this.pluginComponentCache.get(pluginName);
             if (component != null) {
-                log.debug("Shutting down plugin componentfor server plugin [" + pluginName + "]");
+                log.debug("Shutting down plugin component for server plugin [" + pluginName + "]");
                 ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
                 try {
                     Thread.currentThread().setContextClassLoader(env.getPluginClassLoader());
                     component.shutdown();
                 } catch (Throwable t) {
-                    throw new Exception("Plugin plugin componentfailed to initialize plugin", t);
+                    throw new Exception("Plugin component failed to shutdown server plugin [" + pluginName + "]", t);
                 } finally {
                     Thread.currentThread().setContextClassLoader(originalContextClassLoader);
                     this.pluginComponentCache.remove(pluginName);
@@ -512,6 +512,38 @@ public class ServerPluginManager {
     }
 
     /**
+     * Loads a class with the given name within the given environment's classloader.
+     * The class will only be initialized if <code>initialize</code> is <code>true</code>.
+     *
+     * @param environment the environment that has the classloader where the class will be loaded
+     * @param className the class to load
+     * @param initialize whether the class must be initialized
+     * @return the new class that has been loaded
+     * @throws Exception if failed to load the class
+     */
+    protected Class<?> loadPluginClass(ServerPluginEnvironment environment, String className, boolean initialize)
+        throws Exception {
+
+        ClassLoader loader = environment.getPluginClassLoader();
+
+        ServerPluginDescriptorType descriptor = environment.getPluginDescriptor();
+        className = ServerPluginDescriptorMetadataParser.getFullyQualifiedClassName(descriptor, className);
+
+        log.debug("Loading server plugin class [" + className + "]...");
+
+        try {
+            Class<?> clazz = Class.forName(className, initialize, loader);
+            log.debug("Loaded server plugin class [" + clazz + "]. initialized=[" + initialize + ']');
+            return clazz;
+        } catch (ClassNotFoundException e) {
+            throw new Exception("Could not find plugin class [" + className + "] from plugin environment ["
+                + environment + "]", e);
+        } catch (NullPointerException npe) {
+            throw new Exception("Plugin class was 'null' in plugin environment [" + environment + "]", npe);
+        }
+    }
+
+    /**
      * Instantiates a class with the given name within the given environment's classloader using
      * the class' no-arg constructor.
      *
@@ -521,14 +553,9 @@ public class ServerPluginManager {
      * @throws Exception if failed to instantiate the class
      */
     protected Object instantiatePluginClass(ServerPluginEnvironment environment, String className) throws Exception {
-
-        ClassLoader loader = environment.getPluginClassLoader();
-
-        log.debug("Loading server plugin class [" + className + "]...");
-
         try {
-            Class<?> clazz = Class.forName(className, true, loader);
-            log.debug("Loaded server plugin class [" + clazz + "].");
+            Class<?> clazz = loadPluginClass(environment, className, true);
+            log.debug("Instantiating server plugin class [" + clazz + "]");
             return clazz.newInstance();
         } catch (InstantiationException e) {
             throw new Exception("Could not instantiate plugin class [" + className + "] from plugin environment ["
@@ -536,11 +563,6 @@ public class ServerPluginManager {
         } catch (IllegalAccessException e) {
             throw new Exception("Could not access plugin class [" + className + "] from plugin environment ["
                 + environment + "]", e);
-        } catch (ClassNotFoundException e) {
-            throw new Exception("Could not find plugin class [" + className + "] from plugin environment ["
-                + environment + "]", e);
-        } catch (NullPointerException npe) {
-            throw new Exception("Plugin class was 'null' in plugin environment [" + environment + "]", npe);
         }
     }
 }

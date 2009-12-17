@@ -19,8 +19,6 @@
 package org.rhq.enterprise.server.content.test;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -36,13 +34,11 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceType;
-import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
-import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -104,39 +100,6 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         assert repos.size() == (origsize + 10);
 
-    }
-
-    @Test(enabled = ENABLED)
-    public void testSyncStatus() throws Exception {
-        Repo repo = new Repo("testSyncStatus");
-        repo = repoManager.createRepo(overlord, repo);
-
-        Calendar cal = Calendar.getInstance();
-
-        for (int i = 0; i < 10; i++) {
-            cal.roll(Calendar.DATE, false);
-            RepoSyncResults results = new RepoSyncResults(repo);
-            if (i % 2 == 0 && i != 0) {
-                System.out.println("Setting failed: i: [" + i + "]");
-                results.setStatus(ContentSyncStatus.FAILURE);
-            } else {
-                results.setStatus(ContentSyncStatus.SUCCESS);
-            }
-
-            results.setEndTime(cal.getTimeInMillis());
-            System.out.println("EndTime: " + new Date(results.getEndTime().longValue()));
-            repo.addSyncResult(results);
-        }
-
-        // Add one with no end time.  This is to test NPE during sorting
-        RepoSyncResults results = new RepoSyncResults(repo);
-        results.setStartTime(cal.getTimeInMillis());
-        repo.addSyncResult(results);
-
-        // Check sync status
-        repo.getSyncResults();
-        String status = repoManager.calculateSyncStatus(overlord, repo.getId());
-        assert status.equals(ContentSyncStatus.SUCCESS.toString());
     }
 
     @Test(enabled = ENABLED)
@@ -483,7 +446,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         Repo repo = new Repo(oldName);
         repo = repoManager.createRepo(overlord, repo);
 
-        repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] {source.getId()});
+        repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] { source.getId() });
 
         // Test
         repo.setName(newName);

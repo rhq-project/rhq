@@ -19,15 +19,20 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -47,6 +52,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -60,8 +67,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     ConfigurationFacet, DeleteResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String SNMP_WWW_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
     public static final String URL_CONFIG_PROP = "url";
+    public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
 
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
@@ -74,6 +81,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     private ResourceContext<ApacheServerComponent> resourceContext;
     private URL url;
     private ResponseTimeLogParser logParser;
+
+    private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
+    private int snmpWwwServiceIndex = -1;
 
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
@@ -130,8 +140,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        int primaryIndex = pluginConfig.getSimple(SNMP_WWW_SERVICE_INDEX_CONFIG_PROP).getIntegerValue();
+        int primaryIndex = getWwwServiceIndex();
+
+        //bail out quickly if there's no SNMP support
+        if (primaryIndex < 0)
+            return;
+
         log.debug("Collecting metrics for VirtualHost service #" + primaryIndex + "...");
         SNMPSession snmpSession = this.resourceContext.getParentResourceComponent().getSNMPSession();
 
@@ -185,7 +199,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public AugeasNode getNode(AugeasTree tree) {
         String resourceKey = resourceContext.getResourceKey();
 
-        if (ApacheVirtualHostServiceDiscoveryComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
             return tree.getRootNode();
         }
 
@@ -305,4 +319,92 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return oid;
     }
 
+    /**
+     * @return the index of the virtual host that identifies it in SNMP
+     * @throws Exception on SNMP error
+     */
+    private int getWwwServiceIndex() throws Exception {
+        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
+        if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
+            snmpWwwServiceIndex = -1;
+            
+            //configuration has changed. re-read the service index of this virtual host
+
+            //we have to scan the SNMP to find the entry corresponding to this vhost.
+            SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
+
+            List<SNMPValue> names;
+            List<SNMPValue> ports;
+
+            names = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
+            ports = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
+            Iterator<SNMPValue> namesIterator = names.iterator();
+            Iterator<SNMPValue> portsIterator = ports.iterator();
+
+            //figure out the servername and addresses of this virtual host
+            //from the resource key.
+            String vhostServerName = null;
+            String[] vhostAddressStrings = null;
+            String key = resourceContext.getResourceKey();
+            int pipeIdx = key.indexOf('|');
+            if (pipeIdx >= 0) {
+                vhostServerName = key.substring(0, pipeIdx);
+            }
+            vhostAddressStrings = key.substring(pipeIdx + 1).split(" ");
+
+            AugeasTree configTree = resourceContext.getParentResourceComponent().getAugeasTree();
+
+            //convert the vhost addresses into fully qualified ip/port addresses
+            List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
+                vhostAddressStrings.length);
+
+            if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+                vhostAddresses = Collections.singletonList(HttpdAddressUtility.getMainServerSampleAddress(configTree));
+            } else {               
+                for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                    vhostAddresses.add(HttpdAddressUtility.getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
+                        vhostServerName));
+                }
+            }
+            
+            while (namesIterator.hasNext()) {
+                SNMPValue nameValue = namesIterator.next();
+                SNMPValue portValue = portsIterator.next();
+
+                String snmpHost = nameValue.toString();
+                String fullPort = portValue.toString();
+
+                int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+                if (snmpPort == 0) snmpPort = 80;
+                
+                if (containsAddress(vhostAddresses, new HttpdAddressUtility.Address(snmpHost, snmpPort))) {
+                    String nameOID = nameValue.getOID();
+                    snmpWwwServiceIndex = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
+                    
+                    break;
+                }
+            }
+        }
+        lastConfigurationTimeStamp = currentTimestamp;
+        return snmpWwwServiceIndex;
+    }
+
+    private boolean containsAddress(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
+        if (addresses.contains(addressToCheck)) {
+            return true;
+        }
+        
+        //try to get the IP of the address to check
+        InetAddress[] ipAddresses = InetAddress.getAllByName(addressToCheck.host);
+        
+        for(InetAddress ip : ipAddresses) {
+            HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
+            
+            if (addresses.contains(newCheck)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
 }

@@ -49,6 +49,26 @@ public class HttpdAddressUtility {
             this.host = host;
             this.port = port;
         }
+        
+        @Override
+        public int hashCode() {
+            int hash = port;
+            if (host != null) hash *= host.hashCode();
+            return hash;
+        }
+        
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof Address)) return false;
+            
+            Address o = (Address)other;
+            
+            if (this.host == null) {
+                return o.host == null && this.port == o.port;
+            } else {
+                return this.host.equals(o.host) && this.port == o.port;
+            }
+        }
     }    
     
     /**

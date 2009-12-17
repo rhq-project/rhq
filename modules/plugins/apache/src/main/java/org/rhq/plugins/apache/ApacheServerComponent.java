@@ -61,6 +61,7 @@ import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
@@ -75,7 +76,8 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  * @author Ian Springer
  * @author Lukas Krejci
  */
-public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet, ConfigurationFacet {
+public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
+    ConfigurationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -94,7 +96,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
 
     public static final String AUXILIARY_INDEX_PROP = "_index";
-    
+
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
 
     public static final String DEFAULT_EXECUTABLE_PATH = "bin" + File.separator
@@ -105,7 +107,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
 
     private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
 
-    private static final String[] CONTROL_SCRIPT_PATHS = {"bin/apachectl", "sbin/apachectl", "bin/apachectl2", "sbin/apachectl2" };
+    private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
+        "sbin/apachectl2" };
 
     private ResourceContext<PlatformComponent> resourceContext;
     private EventContext eventContext;
@@ -214,7 +217,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             available = false;
         }
 
-       return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
@@ -272,9 +275,10 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (!isConfigurationSupported()) {
             throw new IllegalStateException("Configuration is supported only for Apache version 2 and up.");
         }
-        
+
         try {
-            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
 
             AugeasTree tree = getAugeasTree();
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
@@ -291,7 +295,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             return;
         }
-        
+
         //TODO implement the rest
     }
 
@@ -432,12 +436,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                 }
                 if (!found) {
                     String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath!=null) {
+                    if (executablePath != null) {
                         // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
                         int i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         for (String path : CONTROL_SCRIPT_PATHS) {
                             controlScriptFile = new File(executablePath, path);
                             if (controlScriptFile.exists()) {
@@ -459,6 +463,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return controlScriptFile;
     }
 
+    @NotNull
+    public ConfigurationTimestamp getConfigurationTimestamp() {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration()); 
+        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -558,7 +568,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
-    
+
     private boolean isConfigurationSupported() {
         String version = resourceContext.getVersion();
         return version.startsWith("2.");

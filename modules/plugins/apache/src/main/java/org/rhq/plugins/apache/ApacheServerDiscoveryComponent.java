@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.rhq.augeas.AugeasProxy;
+import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.core.domain.configuration.Configuration;
@@ -44,14 +45,11 @@ import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
 import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.platform.PlatformComponent;
-import org.rhq.plugins.www.snmp.SNMPClient;
-import org.rhq.plugins.www.snmp.SNMPException;
-import org.rhq.plugins.www.snmp.SNMPSession;
-import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
 /**
@@ -124,10 +122,19 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
                 pluginConfig.put(inclusionGlobs);
             
-                String url = getUrl(pluginConfig);
+                //now check if the httpd.conf doesn't redefine the ServerRoot
+                AugeasTree serverConfig = loadAugeas(pluginConfig);
+                
+                List<AugeasNode> serverRoots = serverConfig.matchRelative(serverConfig.getRootNode(), "ServerRoot/param");
+                if (!serverRoots.isEmpty()) {
+                    serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValue());
+                    serverRootProp.setValue(serverRoot);
+                }
+                
+                String url = getUrl(pluginConfig, serverConfig);
                 Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
                 pluginConfig.put(urlProp);
-
+                
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
                     binaryInfo));
             }
@@ -202,8 +209,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      *
      * @throws Exception
      */
-    private static String getUrl(Configuration pluginConfig) throws Exception {
-        Address addr = HttpdAddressUtility.getMainServerSampleAddress(loadAugeas(pluginConfig));
+    private static String getUrl(Configuration pluginConfig, AugeasTree serverConfig) throws Exception {
+        Address addr = HttpdAddressUtility.getMainServerSampleAddress(serverConfig);
         return "http://" + addr.host + ":" + addr.port + "/";
     }
 

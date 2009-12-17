@@ -43,8 +43,6 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
-    public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
-    
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 
@@ -58,7 +56,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue());
         mainServerPluginConfig.put(mainServerUrl);
         
-        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, MAIN_SERVER_RESOURCE_KEY, "Main Server",
+        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server",
             null, null, mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
 

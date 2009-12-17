@@ -148,7 +148,7 @@ public class AugeasProxy {
      */
     public String printTree(String path) {
         StringBuilder builder = new StringBuilder();
-        builder.append(path + "    " + augeas.get(path) + '\n');
+        builder.append(path).append("    ").append(augeas.get(path)).append('\n');
         List<String> list = augeas.match(path + File.separatorChar + "*");
         for (String tempStr : list) {
             builder.append(printTree(tempStr));

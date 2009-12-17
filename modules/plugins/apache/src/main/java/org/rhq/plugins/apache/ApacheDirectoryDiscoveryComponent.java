@@ -36,6 +36,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
 /**
  * Discovery component for Apache discovery directives.
@@ -82,18 +83,11 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             pluginConfiguration.put(new PropertySimple("regexp", isRegexp));
             
             String resourceKey = directoryParam + "|" + idx;
-            String resourceName = unescape(directoryParam);
+            String resourceName = AugeasNodeValueUtil.unescape(directoryParam);
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
                 pluginConfiguration, null));
         }
         return discoveredResources;
-    }
-
-    private String unescape(String quoted) {
-        if (quoted.startsWith("\"")) {
-            return quoted.substring(1, quoted.length() - 1).replaceAll("\\\"", "\"");
-        }
-        return quoted;
     }
 }

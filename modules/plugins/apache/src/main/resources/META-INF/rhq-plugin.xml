@@ -452,8 +452,6 @@
          <plugin-configuration>
             <c:simple-property name="url" displayName="URL"
                                description="the http or https URL that will be used to check availability for this virtual host"/>
-            <c:simple-property name="snmpWwwServiceIndex" displayName="SNMP WWW Service Index" type="integer" readOnly="true"
-                               description="the row index for this virtual host in the MIB table of WWW services (i.e. virtual hosts)"/>
             <c:group name="ResponseTime">
                <c:simple-property name="responseTimeLogFile" required="false"
                                   description="the full path to the log file containing response-time stats for this virtual host"/>

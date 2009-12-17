@@ -190,7 +190,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
         for (Integer sessionId : cache.keySet()) {
             try {
-                subject = subjectManager.getSessionSubject(sessionId);
+                subject = subjectManager.getSubjectBySessionId(sessionId);
                 if (null == subject) {
                     log.debug("Removing perspective cache entry for session " + sessionId);
                     cache.remove(sessionId);

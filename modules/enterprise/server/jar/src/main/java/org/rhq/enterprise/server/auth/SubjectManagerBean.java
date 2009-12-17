@@ -550,9 +550,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     }
 
     /**
-     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSessionSubject(int)
+     * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#getSubjectBySessionId(int)
      */
-    public Subject getSessionSubject(int sessionId) throws Exception {
+    public Subject getSubjectBySessionId(int sessionId) throws Exception {
         Subject subject = sessionManager.getSubject(sessionId);
         return subject;
     }

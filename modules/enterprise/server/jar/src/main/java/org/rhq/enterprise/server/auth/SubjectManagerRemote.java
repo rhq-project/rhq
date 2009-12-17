@@ -102,10 +102,27 @@ public interface SubjectManagerRemote {
      * @param  username the name of the subject to look for
      *
      * @return the subject that was found or <code>null</code> if not found
+     * 
+     * @deprecated This method should be avoided as it may be removed in
+     * a future release.  Given that multiple sessions may exist for a
+     * single user the result of this call is non-deterministic.
      */
     @WebMethod
     Subject getSubjectByName( //
         @WebParam(name = "username") String username);
+
+    /**
+     * Looks up the existing of a subject by the given sessionId.
+     *
+     * @param sessionId The sessionId of the desired Subject.
+     *
+     * @return The Subject that was found
+     * 
+     * @throws Exception if the sessionId is not valid
+     */
+    @WebMethod
+    Subject getSubjectBySessionId( //
+        @WebParam(name = "sessionId") int sessionId) throws Exception;
 
     /**
      * Logs a user into the system. This will authenticate the given user with the given password. If the user was

@@ -150,17 +150,6 @@ public interface SubjectManagerLocal {
     void deleteUsers(Subject subject, int[] subjectIds);
 
     /**
-     * Returns the actual {@link Subject} for the given session.
-     *
-     * @param  sessionId
-     *
-     * @return the {@link Subject} representation of the user that is logged in with that session ID
-     *
-     * @throws Exception if the subject could not be retreived for some reason
-     */
-    Subject getSessionSubject(int sessionId) throws Exception;
-
-    /**
      * Determines if the given session ID is valid and it is associated with the given user.
      *
      * @param  session
@@ -241,6 +230,11 @@ public interface SubjectManagerLocal {
      * @see {@link SubjectManagerRemote#getSubjectByName(String)}
      */
     Subject getSubjectByName(String username);
+
+    /**
+     * @see {@link SubjectManagerRemote#getSubjectBySessionId(int)}
+     */
+    Subject getSubjectBySessionId(int sessionId) throws Exception;
 
     /**
      * @see SubjectManagerRemote#isLoggedIn(String)

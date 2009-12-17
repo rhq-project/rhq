@@ -43,23 +43,28 @@ public class AlertServerPluginContainer extends AbstractTypeServerPluginContaine
 
     @Override
     public ServerPluginManager getPluginManager() {
-        return super.getPluginManager();    // TODO: Customise this generated block
+        return super.getPluginManager(); // TODO: Customise this generated block
     }
 
     @Override
     public void initialize() throws Exception {
-        super.initialize();    // TODO: Customise this generated block
+        super.initialize(); // TODO: Customise this generated block
     }
 
     @Override
     public void start() {
-        super.start();    // TODO: Customise this generated block
+        super.start(); // TODO: Customise this generated block
+    }
+
+    @Override
+    public synchronized void stop() {
+        super.stop(); // TODO: Customise this generated block
     }
 
     @Override
     public void shutdown() {
         //getPluginManager().un
-        super.shutdown();    // TODO: Customise this generated block
+        super.shutdown(); // TODO: Customise this generated block
     }
 
     @Override

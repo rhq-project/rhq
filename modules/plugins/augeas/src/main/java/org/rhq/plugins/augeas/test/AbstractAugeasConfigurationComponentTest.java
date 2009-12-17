@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -98,12 +99,15 @@ public abstract class AbstractAugeasConfigurationComponentTest {
             System.out.println("Plugin container started with the following plugins: " + pluginNames);
 
             System.out.println("Updating Augeas root in default plugin config...");
-            ResourceType resourceType = getResourceType();
-            ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
-            ConfigurationTemplate defaultPluginConfigTemplate = pluginConfigDef.getDefaultTemplate();
-            Configuration defaultPluginConfig = defaultPluginConfigTemplate.getConfiguration();
-            tweakDefaultPluginConfig(defaultPluginConfig);
-            resetConfigFiles(defaultPluginConfig);
+            boolean deleteRoot = true;
+            for (ResourceType resourceType : getResourceTypes(getPluginName())) {
+                ConfigurationDefinition pluginConfigDef = resourceType.getPluginConfigurationDefinition();
+                ConfigurationTemplate defaultPluginConfigTemplate = pluginConfigDef.getDefaultTemplate();
+                Configuration defaultPluginConfig = defaultPluginConfigTemplate.getConfiguration();
+                tweakDefaultPluginConfig(defaultPluginConfig);
+                resetConfigFiles(defaultPluginConfig, deleteRoot);
+                deleteRoot = false;
+            }
 
             InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
             System.out.println("Executing server discovery scan...");
@@ -118,19 +122,25 @@ public abstract class AbstractAugeasConfigurationComponentTest {
 
     @AfterMethod(groups = TEST_GROUP)
     public void resetConfigFiles() throws IOException {
-        resetConfigFiles(getResource().getPluginConfiguration());
+        boolean deleteRoot = true;
+        for (Resource res : getResources()) {
+            resetConfigFiles(res.getPluginConfiguration(), deleteRoot);
+            deleteRoot = false;
+        }
+
     }
 
     @Test(groups = TEST_GROUP)
     public void testResourceConfigLoad() throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-        Resource resource = getResource();
         Configuration resourceConfig;
         try {
-            resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-            Configuration expectedResourceConfig = getExpectedResourceConfig();
-            assert resourceConfig.equals(expectedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
-                + expectedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+            for (Resource resource : getResources()) {
+                resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                Configuration expectedResourceConfig = getExpectedResourceConfig();
+                assert resourceConfig.equals(expectedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                    + expectedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+            }
         } catch (PluginContainerException e) {
             if (isResourceConfigSupported()) {
                 throw e;
@@ -141,19 +151,20 @@ public abstract class AbstractAugeasConfigurationComponentTest {
     @Test(groups = TEST_GROUP)
     public void testResourceConfigUpdate() throws Exception {
         ConfigurationManager configurationManager = PluginContainer.getInstance().getConfigurationManager();
-        Resource resource = getResource();
-        Configuration updatedResourceConfig = getUpdatedResourceConfig();
-        ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(0, updatedResourceConfig, resource
-            .getId());
-        configurationManager.updateResourceConfiguration(updateRequest);
+        for (Resource resource : getResources()) {
+            Configuration updatedResourceConfig = getUpdatedResourceConfig();
+            ConfigurationUpdateRequest updateRequest = new ConfigurationUpdateRequest(0, updatedResourceConfig,
+                resource.getId());
+            configurationManager.updateResourceConfiguration(updateRequest);
 
-        if (isResourceConfigSupported()) {
-            // Give the component and the managed resource some time to properly persist the update.
-            Thread.sleep(500);
+            if (isResourceConfigSupported()) {
+                // Give the component and the managed resource some time to properly persist the update.
+                Thread.sleep(500);
 
-            Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
-            assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
-                + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+                Configuration resourceConfig = configurationManager.loadResourceConfiguration(resource.getId());
+                assert resourceConfig.equals(updatedResourceConfig) : "Unexpected Resource configuration - \nExpected:\n\t"
+                    + updatedResourceConfig.toString(true) + "\nActual:\n\t" + resourceConfig.toString(true);
+            }
         }
     }
 
@@ -197,6 +208,18 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         return pcConfig;
     }
 
+    protected static Set<ResourceType> getResourceTypes(String pluginName) {
+        Set<ResourceType> ret = new HashSet<ResourceType>();
+        PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
+        PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
+        for (ResourceType res : pluginMetadataManager.getAllTypes()) {
+            if (pluginName.equals(res.getPlugin())) {
+                ret.add(res);
+            }
+        }
+        return ret;
+    }
+
     protected static ResourceType getResourceType(String resourceTypeName, String pluginName) {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginMetadataManager pluginMetadataManager = pluginManager.getMetadataManager();
@@ -207,22 +230,18 @@ public abstract class AbstractAugeasConfigurationComponentTest {
         return getResourceType(getResourceTypeName(), getPluginName());
     }
 
-    protected Resource getResource() {
+    protected Set<Resource> getResources() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceType resourceType = getResourceType();
         Set<Resource> resources = inventoryManager.getResourcesWithType(resourceType);
-        if (resources.isEmpty()) {
-            return null;
-        }
-        if (resources.size() > 1) {
-            throw new IllegalStateException("Found more than one " + resourceType.getName()
-                + " Resource - expected there to be exactly one - resources: " + resources);
-        }
-        return resources.iterator().next();
+        return resources;
     }
 
-    protected void resetConfigFiles(Configuration pluginConfig) throws IOException {
-        deleteAugeasRootDir();
+    protected void resetConfigFiles(Configuration pluginConfig, boolean deleteRoot) throws IOException {
+        if (deleteRoot) {
+            deleteAugeasRootDir();
+        }
+
         AUGEAS_ROOT.mkdirs();
         String includes = pluginConfig.getSimpleValue(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, null);
         if (includes != null) {

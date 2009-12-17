@@ -32,39 +32,52 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.augeas.AugeasProxy;
+import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
+import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
+import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.plugins.www.util.WWWUtils;
+import org.rhq.rhqtransform.AugeasRHQComponent;
 
 /**
- * The resource component for Apache 1.3/2.x servers.
+ * The resource component for Apache 2.x servers.
  *
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class ApacheServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
+    ConfigurationFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -82,6 +95,8 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY = "errorLogMinimumSeverity";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
 
+    public static final String AUXILIARY_INDEX_PROP = "_index";
+
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
 
     public static final String DEFAULT_EXECUTABLE_PATH = "bin" + File.separator
@@ -92,9 +107,10 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
 
-    private static final String[] CONTROL_SCRIPT_PATHS = {"bin/apachectl", "sbin/apachectl", "bin/apachectl2", "sbin/apachectl2" };
+    private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
+        "sbin/apachectl2" };
 
-    private ResourceContext resourceContext;
+    private ResourceContext<PlatformComponent> resourceContext;
     private EventContext eventContext;
     private SNMPClient snmpClient;
     private URL url;
@@ -106,7 +122,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
      */
     private ApacheServerOperationsDelegate operationsDelegate;
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<PlatformComponent> resourceContext) throws Exception {
         log.info("Initializing server component for server [" + resourceContext.getResourceKey() + "]...");
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
@@ -249,15 +265,55 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return (mibName.equals("wwwServiceStartTime"));
     }
 
-    public void startOperationFacet(OperationContext context) {
-    }
-
     @Nullable
     public OperationResult invokeOperation(@NotNull String name, @NotNull Configuration params) throws Exception {
         log.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
         return this.operationsDelegate.invokeOperation(name, params);
     }
 
+    public Configuration loadResourceConfiguration() throws Exception {
+        if (!isConfigurationSupported()) {
+            throw new IllegalStateException("Configuration is supported only for Apache version 2 and up.");
+        }
+
+        try {
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+
+            AugeasTree tree = getAugeasTree();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
+        } catch (Exception e) {
+            log.error("Failed to load Apache configuration.", e);
+            throw e;
+        }
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        if (!isConfigurationSupported()) {
+            report.setErrorMessage("Configuration is supported only for Apache version 2 and up.");
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return;
+        }
+
+        //TODO implement the rest
+    }
+
+    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());
+        AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
+        AugeasProxy augeasProxy = new AugeasProxy(config, builder);
+        augeasProxy.load();
+        return augeasProxy;
+    }
+
+    public AugeasTree getAugeasTree() throws AugeasTreeException {
+        AugeasProxy proxy = getAugeasProxy();
+        String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
+        
+        return proxy.getAugeasTree(module, true);
+    }
+    
     /**
      * Returns an SNMP session that can be used to communicate with this server's SNMP agent.
      *
@@ -313,7 +369,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         if (executablePath != null) {
             executableFile = resolvePathRelativeToServerRoot(executablePath);
         } else {
-            String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
+            String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
@@ -369,7 +425,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
             {
                 boolean found = false;
                 // First try server root as base
-                String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
+                String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
 
                 for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
@@ -380,12 +436,12 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
                 }
                 if (!found) {
                     String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath!=null) {
+                    if (executablePath != null) {
                         // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
                         int i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         for (String path : CONTROL_SCRIPT_PATHS) {
                             controlScriptFile = new File(executablePath, path);
                             if (controlScriptFile.exists()) {
@@ -407,6 +463,12 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return controlScriptFile;
     }
 
+    @NotNull
+    public ConfigurationTimestamp getConfigurationTimestamp() {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration()); 
+        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -445,6 +507,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return resolvePathRelativeToServerRoot(this.resourceContext.getPluginConfiguration(), path);
     }
 
+    //TODO this needs to go...
     @NotNull
     static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull String path) {
         File file = new File(path);
@@ -504,5 +567,10 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
             PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
+    }
+
+    private boolean isConfigurationSupported() {
+        String version = resourceContext.getVersion();
+        return version.startsWith("2.");
     }
 }

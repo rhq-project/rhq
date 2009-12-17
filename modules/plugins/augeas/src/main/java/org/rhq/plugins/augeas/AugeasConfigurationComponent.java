@@ -61,7 +61,7 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.Glob;
+import org.rhq.augeas.util.Glob;
 
 /**
  * @author Ian Springer
@@ -89,7 +89,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
-    
+
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
@@ -112,7 +112,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public void stop() {
-        this.augeas.close();
+        if (this.augeas!=null)
+            this.augeas.close();
     }
 
     public AvailabilityType getAvailability() {

@@ -18,113 +18,100 @@
  */
 package org.rhq.plugins.apache;
 
-import java.io.File;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.www.snmp.SNMPException;
-import org.rhq.plugins.www.snmp.SNMPSession;
-import org.rhq.plugins.www.snmp.SNMPValue;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 
 /**
- * @author Ian Springer
+ * Discovers VirtualHosts under the Apache server by reading them out from Augeas tree constructed
+ * in the parent component.
+ * 
+ * @author Lukas Krejci
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
-    private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
 
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    /**
-     * Discovers the VirtualHosts that are deployed on the specified Apache server and creates and returns corresponding
-     * JON services.
-     *
-     * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
-     */
-    public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<ApacheServerComponent> discoveryContext) throws Exception {
-        SNMPSession snmpSession = discoveryContext.getParentResourceComponent().getSNMPSession();
-
-        List<SNMPValue> nameValues;
-        List<SNMPValue> portValues;
-        SNMPValue descValue;
-
-        try {
-            nameValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
-        } catch (SNMPException e) {
-            throw new Exception(
-                "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_NAME + ": " + e.getMessage(), e);
-        }
-
-        try {
-            portValues = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
-        } catch (SNMPException e) {
-            throw new Exception(
-                "Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": " + e.getMessage(), e);
-        }
-
-        try {
-            // Just get the first one - they are all the same.
-            descValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_DESC);
-        } catch (SNMPException e) {
-            throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_DESC + ": " + e.getMessage(),
-                e);
-        }
-
-        ApacheServerComponent parentApacheComponent = discoveryContext.getParentResourceComponent();
-        File configPath = parentApacheComponent.getServerRoot();
-        File logsDir = new File(configPath, "logs");
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
+        throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
-        for (int i = 0; i < nameValues.size(); i++) {
-            SNMPValue nameValue = nameValues.get(i);
-            String host = nameValue.toString();
-            SNMPValue portValue = portValues.get(i);
-            String fullPort = portValue.toString();
 
-            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-            // and XXXXX is the actual port number
-            String port = fullPort.substring(fullPort.lastIndexOf(".") + 1);
-            String key = host + ":" + port;
-            String name = "Virtual Host " + key;
-            String version = null; // virtualhosts don't have versions.
-            String desc = descValue.toString();
-            DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext
-                .getResourceType(), key, name, version, desc, null, null);
+        //first define the root server as one virtual host
+        ResourceType resourceType = context.getResourceType();
 
-            // Init the plugin config...
-            Configuration pluginConfig = resourceDetails.getPluginConfiguration();
+        Configuration mainServerPluginConfig = new Configuration();
+        PropertySimple mainServerUrl = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, 
+            context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue());
+        mainServerPluginConfig.put(mainServerUrl);
+        
+        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server",
+            null, null, mainServerPluginConfig, null);
+        discoveredResources.add(mainServer);
 
-            // The VirtualHost ResourceComponent will need the wwwService index to construct SNMP OIDs for metrics.
-            String nameOID = nameValue.getOID();
-            String wwwServiceIndex = nameOID.substring(nameOID.lastIndexOf(".") + 1);
+        //read the virtual hosts from augeas
+        AugeasTree ag = context.getParentResourceComponent().getAugeasTree();
 
-            Property wwwServiceIndexProp = new PropertySimple(
-                ApacheVirtualHostServiceComponent.SNMP_WWW_SERVICE_INDEX_CONFIG_PROP, wwwServiceIndex);
-            pluginConfig.put(wwwServiceIndexProp);
+        List<AugeasNode> virtualHosts = ag.matchRelative(ag.getRootNode(), "<VirtualHost");
 
-            String url = "http://" + host + ":" + port + "/";
-            Property urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
-            pluginConfig.put(urlProp);
-
-            String rtLogFileName = host + port + RT_LOG_FILE_NAME_SUFFIX;
-            File rtLogFile = new File(logsDir, rtLogFileName);
-            pluginConfig.put(new PropertySimple(ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP,
-                rtLogFile));
-
-            log.debug("Plugin config: " + pluginConfig);
-
-            discoveredResources.add(resourceDetails);
+        for (AugeasNode node : virtualHosts) {
+            List<AugeasNode> hosts = ag.matchRelative(node, "param");
+            String firstAddress = hosts.get(0).getValue();
+            
+            List<AugeasNode> serverNames = ag.matchRelative(node, "ServerName/param");
+            String serverName = null;
+            if (serverNames.size() > 0) {
+                serverName = serverNames.get(0).getValue();
+            }
+            
+            StringBuilder keyBuilder = new StringBuilder();
+            if (serverName != null) {
+                keyBuilder.append(serverName).append("|");
+            }
+            keyBuilder.append(firstAddress);
+            
+            Iterator<AugeasNode> it = hosts.iterator();
+            it.next();
+            
+            while (it.hasNext()) {
+                keyBuilder.append(" ").append(it.next().getValue());
+            }
+            
+            String resourceKey = keyBuilder.toString();
+            
+            Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
+            String url = "http://" + address.host + ":" + address.port + "/";
+            
+            Configuration pluginConfiguration = new Configuration();
+            PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
+            pluginConfiguration.put(urlProp);
+            
+            String resourceName = "VirtualHost ";
+            if (serverName != null) {
+                resourceName += serverName + ":" + address.port;
+            } else {
+                resourceName += resourceKey;
+            }
+            
+            //TODO there is no simple way how to determine the RT log file. The server can listen on multiple
+            //ports and vhost can be configured to listen on all of them. Also the server can listen on multiple
+            //IPs and virtual host can also listen on all of them. Thus the host_port_rt.log is rather non-deterministic.
+            
+            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
+                null, pluginConfiguration, null));
         }
 
         return discoveredResources;
-    }
+    }    
 }

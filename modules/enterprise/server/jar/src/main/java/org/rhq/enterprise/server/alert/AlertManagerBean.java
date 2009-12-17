@@ -671,7 +671,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             if (result.getEmails()!=null && !result.getEmails().isEmpty())
                                 emailAddresses.addAll(result.getEmails());
                         }
-                        // TODO log result
+                        // TODO log result - especially handle the deferred_email case
                         log.info(result);
                     }
                     catch (Throwable t) {

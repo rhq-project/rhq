@@ -15,26 +15,6 @@
         This alert sender plugin is used to send emails when alerts were triggered.
     </serverplugin:help>
 
-    <!-- startup & tear down listener, + scheduled jobs
-    <serverplugin:plugin-component class="Foo" />
-    -->
-
-
-    <!-- Global preferences for all email alerts -->
-    <serverplugin:plugin-configuration>
-        <c:simple-property name="mailserver" displayName="Mail server address" type="longString"
-                description="Address of the mail server to use (if not the default RHQ one )"
-                required="false"/>
-        <c:simple-property name="senderEmail" displayName="Email of sender" type="string"
-                description="Email of the account from which alert emails should come from"
-                required="false"/>
-        <c:simple-property name="needsLogin" displayName="Needs credentials?"
-                description="Mark this field if the server needs credentials to send email and give them below" type="boolean"
-                default="false"/>
-        <c:simple-property name="user" type="string" required="false"/>
-        <c:simple-property name="password" type="password" required="false"/>
-
-    </serverplugin:plugin-configuration>
 
     <!-- How does this sender show up in drop downs etc -->
     <short-name>Email</short-name>

@@ -986,6 +986,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return syncCount;
     }
 
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
         ContentProviderManager providerManager = pc.getAdapterManager();

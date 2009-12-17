@@ -117,8 +117,7 @@ public class AdvisorySourceSynchronizer {
         RepoSyncResults syncResults = contentSourceManager.mergeAdvisorySyncReport(source, advReport, tracker
             .getRepoSyncResults());
         tracker.setRepoSyncResults(syncResults);
-        tracker.getProgressWatcher().finishWork(
-            provider.getSyncProgressWeight().getAdvisoryWeight() * tracker.getPackageSyncCount());
+        tracker.finishAdvisoryMetadataWork(provider);
         return tracker;
     }
 

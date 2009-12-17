@@ -45,6 +45,30 @@ public class SyncTracker {
         this.progressWatcher.start();
     }
 
+    public void addAdvisoryMetadataWork(ContentProvider provider) {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
+        if (this.getPackageSyncCount() == 0) {
+            this.getProgressWatcher().addWork(sw.getAdvisoryWeight() * 10);
+        } else {
+            this.getProgressWatcher().addWork(sw.getAdvisoryWeight() * this.getPackageSyncCount());
+        }
+
+    }
+
+    public void finishAdvisoryMetadataWork(ContentProvider provider) {
+        if (this.getPackageSyncCount() == 0) {
+            this.getProgressWatcher().finishWork(provider.getSyncProgressWeight().getAdvisoryWeight() * 10);
+        } else {
+            this.getProgressWatcher().finishWork(
+                provider.getSyncProgressWeight().getAdvisoryWeight() * this.getPackageSyncCount());
+        }
+    }
+
+    public void addPackageBitsWork(ContentProvider provider) {
+        SyncProgressWeight sw = provider.getSyncProgressWeight();
+        this.getProgressWatcher().addWork(sw.getPackageBitsWeight() * this.getPackageSyncCount());
+    }
+
     /**
      * @return the repoSyncResults
      */

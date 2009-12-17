@@ -283,10 +283,10 @@ public class ContentProviderManager {
             ContentProvider provider = getIsolatedContentProvider(source.getId());
             SyncProgressWeight sw = provider.getSyncProgressWeight();
             tracker.getProgressWatcher().addWork(sw.getPackageMetadataWeight());
-            tracker.getProgressWatcher().addWork(sw.getAdvisoryWeight() * tracker.getPackageSyncCount());
+            tracker.addAdvisoryMetadataWork(provider);
             tracker.getProgressWatcher().addWork(sw.getDistribtutionBitsWeight());
             tracker.getProgressWatcher().addWork(sw.getDistribtutionMetadataWeight());
-            tracker.getProgressWatcher().addWork(sw.getPackageBitsWeight() * tracker.getPackageSyncCount());
+            tracker.addPackageBitsWork(provider);
             tracker.getProgressWatcher().finishWork(sw.getPackageMetadataWeight());
         }
         tracker = updatePercentComplete(tracker, repoManager);

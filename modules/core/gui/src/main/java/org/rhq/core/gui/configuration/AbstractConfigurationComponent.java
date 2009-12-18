@@ -24,7 +24,6 @@ package org.rhq.core.gui.configuration;
 
 import java.util.UUID;
 
-import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 
@@ -50,30 +49,18 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     private static final String NULL_CONFIGURATION_STYLE_ATTRIBUTE = "nullConfigurationStyle";
     private static final String LIST_NAME_ATTRIBUTE = "listName";
     private static final String LIST_INDEX_ATTRIBUTE = "listIndex";
-    public static final String READ_ONLY_ATTRIBUTE = "readOnly";
-    public static final String SHOW_TOOLBAR_ATTRIBUTE = "readOnly";
+    private static final String READ_ONLY_ATTRIBUTE = "readOnly";
     private static final String FULLY_EDITABLE_ATTRIBUTE = "fullyEditable";
 
-    private Boolean showToolbar;
-    private Boolean readOnly;
+    private Boolean readOnly = true;
     private Boolean fullyEditable;
     private String listName;
     private Integer listIndex;
-
-    public UIComponent getToolbar() {
-        return toolbar;
-    }
-
-    public void setToolbar(UIComponent toolbar) {
-        this.toolbar = toolbar;
-    }
-
     private String nullConfigurationDefinitionMessage;
     private String nullConfigurationMessage;
     private String nullConfigurationStyle;
     private boolean prevalidate;
     private boolean isGroup;
-    private UIComponent toolbar;
 
     public String getFamily() {
         return COMPONENT_FAMILY;
@@ -104,21 +91,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
 
     public void setReadOnly(boolean readOnly) {
         this.readOnly = readOnly;
-    }
-
-    public Boolean getShowToolbar() {
-        if (this.showToolbar == null) {
-            this.showToolbar = FacesComponentUtility
-                .getExpressionAttribute(this, SHOW_TOOLBAR_ATTRIBUTE, Boolean.class);
-        }
-        if (this.showToolbar == null) {
-            this.showToolbar = false;
-        }
-        return showToolbar;
-    }
-
-    public void setShowToolbar(Boolean showToolbar) {
-        this.showToolbar = showToolbar;
     }
 
     public boolean isFullyEditable() {
@@ -218,7 +190,7 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     @Override
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[8];
+            this.stateValues = new Object[7];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
@@ -228,7 +200,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.stateValues[4] = this.listIndex;
         this.stateValues[5] = this.prevalidate;
         this.stateValues[6] = this.isGroup;
-        this.stateValues[7] = this.getShowToolbar();
         return this.stateValues;
     }
 
@@ -242,7 +213,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.listIndex = (Integer) this.stateValues[4];
         this.prevalidate = (Boolean) this.stateValues[5];
         this.isGroup = (Boolean) this.stateValues[6];
-        this.showToolbar = (Boolean) this.stateValues[7];
     }
 
     public boolean getShouldShowRaw() {

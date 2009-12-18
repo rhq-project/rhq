@@ -14,7 +14,7 @@
 <ui:param name="pageTitle" value="TODO Internationalize this"/>
 
 <ui:define name="breadcrumbs" >
-<h:outputLink value="view.xhtml"  action="navigateToUpload" >
+<h:outputLink value="view-raw.xhtml"  action="navigateToUpload" >
 	<h:outputText value=" Back " />
 	<f:param name="id" value="#{ResourceUIBean.id}" />
 </h:outputLink>
@@ -25,19 +25,9 @@
 
 <h:form id="editResourceConfigurationForm" >
 <input type="hidden" name="id" value="#{ResourceUIBean.id}" />
-
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                     accessMapActionExpression="#{ExistingResourceConfigurationUIBean.accessMap}"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
-					 readOnly="true"
-					 showToolbar="true"
-                     prevalidate="true"
-                     showRaw="true"
-                     fullscreen="true" />
-
-
+<div>
+<pre><h:outputText  value="#{ExistingResourceConfigurationUIBean.currentContents}" /></pre>
+</div>
 </h:form>
 </ui:define>
 

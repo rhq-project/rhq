@@ -51,27 +51,32 @@
             base="serverplugin:ServerPluginDescriptorType">
             <xs:sequence>
                <xs:element
-                  ref="perspective:application"
+                  name="application"
+                  type="perspective:ApplicationType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  ref="perspective:globalTask"
+                  name="globalTask"
+                  type="perspective:GlobalTaskType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  ref="perspective:resourceTask"
+                  name="resourceTask"
+                  type="perspective:ResourceTaskType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  ref="perspective:menuItem"
+                  name="menuItem"
+                  type="perspective:MenuItemType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  ref="perspective:tab"
+                  name="tab"
+                  type="perspective:TabType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
@@ -83,6 +88,11 @@
    <xs:element
       name="application"
       type="perspective:ApplicationType">
+
+   </xs:element>
+
+   <xs:complexType
+      name="ApplicationType">
       <xs:annotation>
          <xs:documentation>Declares a web application referenced by an extension in the perspective. It is assumed that
             the application will be deployed by the perspective or will be externally available. Extension urls can be
@@ -91,15 +101,7 @@
             baseUrl of the declared application (required in this case). specify an application will resolve url's
             relatively to the root application (It is assumed that the root application (rhq-portal.war)
          </xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="PerspectiveApplicationElement" />
-         </xs:appinfo>
       </xs:annotation>
-   </xs:element>
-
-   <xs:complexType
-      name="ApplicationType">
       <xs:attribute
          name="name"
          type="perspective:NameType"
@@ -120,59 +122,19 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:element
-      name="globalTask"
-      type="perspective:TaskType">
-      <xs:annotation>
-         <xs:documentation>Add a Global Task extension.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="GlobalTaskElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-   <xs:element
-      name="resourceTask"
-      type="perspective:ResourceTaskType">
-      <xs:annotation>
-         <xs:documentation>Add a Resource Task extension.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="ResourceTaskElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
    <xs:complexType name="ExtensionType" abstract="true">
       <xs:sequence>
           <xs:element
-             ref="perspective:description"
+             name="description"
+             type="perspective:DescriptionType"
              minOccurs="0"
              maxOccurs="1">
              <xs:annotation>
-                <xs:documentation>Verbose description for the extension. Displayed via a tooltip in the GUI.
+                <xs:documentation>An optional verbose description for the extension - may be displayed via a tooltip or
+                    some other means in the GUI.
                 </xs:documentation>
              </xs:annotation>
           </xs:element>
-            <xs:element
-               ref="perspective:globalPermissionActivatorSet"
-               minOccurs="0"
-               maxOccurs="unbounded">
-               <xs:annotation>
-                  <xs:documentation>Activate the extension only if the user has the required global permissions.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:element>
-          <xs:element
-               ref="perspective:monitoringLicenseActivator"
-               minOccurs="0"
-               maxOccurs="1">
-               <xs:annotation>
-                  <xs:documentation>Activate the extension only if a monitoring license is installed.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:element>
        </xs:sequence>
 
        <xs:attribute
@@ -210,7 +172,20 @@
              <xs:documentation>The application servicing the URLs for this extension. Default is root (rhq-portal.war).
              </xs:documentation>
           </xs:annotation>
-       </xs:attribute>       
+       </xs:attribute>
+       <xs:attribute
+          name="action"
+          type="perspective:ActionType"
+          use="optional"
+          default="add">
+          <xs:annotation>
+             <xs:documentation>Add the extension or remove an extension with the given name and position that was
+                 defined by the Core perspective. For removal, all but the name attribute are ignored. The
+                 default is add. Note, a Remove followed by an Add can be used to replace an extension from the
+                 Core perspective.
+             </xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
        <xs:anyAttribute/>
    </xs:complexType>
 
@@ -218,29 +193,6 @@
       name="TaskType">
       <xs:complexContent>
          <xs:extension base="perspective:ExtensionType">
-             <xs:sequence>
-                 <xs:element
-                    ref="perspective:inventoriedResourceActivatorSet"
-                    minOccurs="0"
-                    maxOccurs="unbounded">
-                    <xs:annotation>
-                       <xs:documentation>Activate the extension only if the user has resources of the specified type in
-                          inventory. Activated only if the user has the required permissions. At least one resource activator
-                          required for resource task extensions. Activated for resources only if specified trait conditions are
-                          also met.</xs:documentation>
-                    </xs:annotation>
-                 </xs:element>
-                <xs:element
-                   ref="perspective:extensionPoint"
-                   minOccurs="0"
-                   maxOccurs="unbounded">
-                   <xs:annotation>
-                      <xs:documentation>Limit task to the designated task pane extension points. Otherwise, all.
-                      </xs:documentation>
-                   </xs:annotation>
-                </xs:element>
-             </xs:sequence>
-
              <xs:attribute
                 name="url"
                 type="xs:anyURI"
@@ -255,7 +207,7 @@
                 type="xs:string"
                 use="optional">
                 <xs:annotation>
-                   <xs:documentation>The display category for the task extension (optional). Tasks with the same category will
+                   <xs:documentation>The display category for this task (optional). Tasks with the same category will
                       be grouped together in the task pane.</xs:documentation>
                 </xs:annotation>
              </xs:attribute>
@@ -269,61 +221,63 @@
           <xs:extension base="perspective:TaskType">
               <xs:sequence>
                   <xs:element
-                     ref="perspective:currentResourceOrGroupActivatorSet"
-                     minOccurs="0"
-                     maxOccurs="unbounded"/>
+                       name="activators"
+                       type="perspective:ResourceActivatorsType"
+                       minOccurs="0"
+                       maxOccurs="1">
+                       <xs:annotation>
+                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                          order for this resource task to be displayed for a particular Resource or Group page request.
+                          </xs:documentation>
+                       </xs:annotation>
+                    </xs:element>
               </xs:sequence>
           </xs:extension>
        </xs:complexContent>
     </xs:complexType>
 
-   <xs:element
-      name="extensionPoint"
-      type="perspective:ExtensionPointType">
-   </xs:element>
-
-   <xs:element
-      name="description"
-      type="perspective:DescriptionType">
-   </xs:element>
-
-   <xs:element
-      name="menuItem"
-      type="perspective:MenuItemType">
-      <xs:annotation>
-         <xs:documentation>Add, Replace or Remove a menuItem extension for an existing menu extension point.
-         </xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="PerspectiveMenuItemElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
+    <xs:complexType
+       name="GlobalTaskType">
+       <xs:complexContent>
+          <xs:extension base="perspective:TaskType">
+              <xs:sequence>
+                  <xs:element
+                       name="activators"
+                       type="perspective:GlobalActivatorsType"
+                       minOccurs="0"
+                       maxOccurs="1">
+                       <xs:annotation>
+                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                          order for this global task to be displayed for a particular page request.</xs:documentation>
+                       </xs:annotation>
+                    </xs:element>
+              </xs:sequence>
+          </xs:extension>
+       </xs:complexContent>
+    </xs:complexType>
 
    <xs:complexType
       name="MenuItemType">
        <xs:complexContent>
           <xs:extension base="perspective:ExtensionType">
               <xs:sequence>
-                  <xs:element
-                     ref="perspective:inventoriedResourceActivatorSet"
-                     minOccurs="0"
-                     maxOccurs="unbounded">
-                     <xs:annotation>
-                        <xs:documentation>Activate the extension only if there is at least one Resource in inventory that
-                           satisfies the specified conditions. Conditions include the Resource's type or facet, the current
-                           user's permissions for the Resource, or a Resource trait with a certain value.
-                        </xs:documentation>
-                     </xs:annotation>
-                  </xs:element>
                  <xs:element
-                    ref="perspective:position"
-                    minOccurs="1"
-                    maxOccurs="1">
+                    name="position"
+                    type="perspective:PositionType">
                     <xs:annotation>
-                       <xs:documentation>Required positioning element for the menuItem extension.</xs:documentation>
+                       <xs:documentation>Specifies the position of the menu item.</xs:documentation>
                     </xs:annotation>
                  </xs:element>
+                  <xs:element
+                       name="activators"
+                       type="perspective:GlobalActivatorsType"
+                       minOccurs="0"
+                       maxOccurs="1">
+                       <xs:annotation>
+                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                          order for this menu item to be displayed for a particular page request.</xs:documentation>
+                       </xs:annotation>
+                    </xs:element>
               </xs:sequence>
 
               <xs:attribute
@@ -336,21 +290,11 @@
                  </xs:annotation>
               </xs:attribute>
               <xs:attribute
-                 name="action"
-                 type="perspective:ActionType"
-                 use="optional"
-                 default="add">
-                 <xs:annotation>
-                    <xs:documentation>Add, Replace or Remove the menuItem extension. For removal all but the name attribute are
-                       ignored. Default is add.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-              <xs:attribute
                  name="feature"
                  type="perspective:MenuItemFeatureType"
                  use="optional">
                  <xs:annotation>
-                    <xs:documentation>Certain menuItem extensions utilize special built-in rendering features.
+                    <xs:documentation>A special built-in rendering feature that should be applied when rendering this menu item.
                     </xs:documentation>
                  </xs:annotation>
               </xs:attribute>
@@ -360,52 +304,46 @@
                  use="optional"
                  default="false">
                  <xs:annotation>
-                    <xs:documentation>If true the url should be directed to a new window. Otherwise the content should be
+                    <xs:documentation>If true, the URL should be directed to a new window. Otherwise the content should be
                        presented in the current page body.</xs:documentation>
                  </xs:annotation>
               </xs:attribute>
               <xs:attribute
-                 name="isDebug"
+                 name="addBreak"
                  type="xs:boolean"
                  use="optional"
                  default="false">
                  <xs:annotation>
-                    <xs:documentation>If true render this menuItem in debug mode only.</xs:documentation>
+                    <xs:documentation>If true, generate a break prior to this menu item.</xs:documentation>
                  </xs:annotation>
               </xs:attribute>
           </xs:extension>
        </xs:complexContent>
    </xs:complexType>
 
-   <xs:element
-      name="tab"
-      type="perspective:TabType">
-      <xs:annotation>
-         <xs:documentation>
-            Add, Replace or Remove a resourceTab extension for a ResourceTab extension point.
-         </xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="TabElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
    <xs:complexType
       name="TabType">
        <xs:complexContent>
           <xs:extension base="perspective:ExtensionType">
               <xs:sequence>
-                  <xs:element
-                     ref="perspective:currentResourceOrGroupActivatorSet"
-                     minOccurs="0"
-                     maxOccurs="unbounded"/>
                  <xs:element
-                    ref="perspective:position">
+                    name="position"
+                    type="perspective:PositionType">
                     <xs:annotation>
-                       <xs:documentation>Required positioning element for the tab.</xs:documentation>
+                       <xs:documentation>Specifies the position of the tab.</xs:documentation>
                     </xs:annotation>
                  </xs:element>
+                  <xs:element
+                       name="activators"
+                       type="perspective:ResourceActivatorsType"
+                       minOccurs="0"
+                       maxOccurs="1">
+                       <xs:annotation>
+                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                          order for this resource task to be displayed for a particular Resource or Group page request.
+                          </xs:documentation>
+                       </xs:annotation>
+                    </xs:element>
               </xs:sequence>
 
               <xs:attribute
@@ -417,423 +355,272 @@
                     </xs:documentation>
                  </xs:annotation>
               </xs:attribute>
-              <xs:attribute
-                 name="action"
-                 type="perspective:ActionType"
-                 use="optional"
-                 default="add">
-                 <xs:annotation>
-                    <xs:documentation>Add, Replace or Remove the tab extension. For removal, all but the name attribute are
-                       ignored. Default is add.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
           </xs:extension>
        </xs:complexContent>
    </xs:complexType>
 
-   <xs:element
-      name="globalPermissionActivatorSet"
-      type="perspective:GlobalPermissionActivatorSetType">
-      <xs:annotation>
-         <xs:documentation>One or more global permission conditions that must be satisfied in order for the extension to be
-            active.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="GlobalPermissionActivatorSetElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
 
-    <xs:element
-       name="resourcePermissionActivatorSet"
-       type="perspective:ResourcePermissionActivatorSetType">
-       <xs:annotation>
-          <xs:documentation>One or more Resource permission conditions that must be satisfied in order for the extension to be
-             active.</xs:documentation>
-          <xs:appinfo>
-             <jaxb:class
-                name="ResourcePermissionActivatorSetElement" />
-          </xs:appinfo>
-       </xs:annotation>
-    </xs:element>
 
-   <xs:element
-      name="traitActivatorSet"
-      type="perspective:TraitActivatorSetType">
-      <xs:annotation>
-         <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
-            active.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="TraitActivatorSetElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-   <xs:element
-      name="inventoriedResourceActivatorSet"
-      type="perspective:ResourceActivatorSetType">
-      <xs:annotation>
-         <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
-            active.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="InventoriedResourceActivatorSetElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-    <xs:element
-       name="currentResourceOrGroupActivatorSet"
-       type="perspective:ResourceActivatorSetType">
-       <xs:annotation>
-          <xs:documentation>One or more inventory conditions that must be satisfied in order for the extension to be
-             active.</xs:documentation>
-          <xs:appinfo>
-             <jaxb:class
-                name="CurrentResourceOrGroupActivatorSetElement" />
-          </xs:appinfo>
-       </xs:annotation>
-    </xs:element>
-
-   <xs:element
-      name="facetActivatorSet"
-      type="perspective:FacetActivatorSetType">
-      <xs:annotation>
-         <xs:documentation>One or more ResourceType facets that the current Resource or Compatible Group must implement
-             in order for the extension to be active.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="FacetActivatorSetElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-   <xs:complexType
-       name="FacetActivatorSetType">
-       <xs:sequence>
-          <xs:element
-             ref="perspective:facetActivator"
-             minOccurs="0"
-             maxOccurs="unbounded"/>
-       </xs:sequence>
-       <xs:attribute
-          name="any"
-          type="xs:boolean"
-          use="optional"
-          default="false">
-          <xs:annotation>
-             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-                activators must be satisfied. Default is false.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-   </xs:complexType>
-
-   <xs:complexType
-      name="GlobalPermissionActivatorSetType">
+    <!-- =========================================== Activators ============================================= -->
+    <xs:complexType name="CommonActivatorsType">
       <xs:sequence>
-         <xs:element
-            ref="perspective:globalPermissionActivator"
-            minOccurs="0"
-            maxOccurs="unbounded">
-         </xs:element>
-      </xs:sequence>
-      <xs:attribute
-         name="any"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-               activators must be satisfied. Default is false.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
-    <xs:complexType
-       name="ResourcePermissionActivatorSetType">
-       <xs:sequence>
           <xs:element
-             ref="perspective:resourcePermissionActivator"
-             minOccurs="0"
-             maxOccurs="unbounded">
+                  name="debugMode"
+                  type="perspective:DebugModeActivatorType"
+                  minOccurs="0"
+                  maxOccurs="1">
           </xs:element>
-       </xs:sequence>
-       <xs:attribute
-          name="any"
-          type="xs:boolean"
-          use="optional"
-          default="false">
-          <xs:annotation>
-             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-                activators must be satisfied. Default is false.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
+          <xs:element
+                  name="licenseFeature"
+                  type="perspective:LicenseFeatureActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+          </xs:element>
+          <xs:element
+                  name="globalPermission"
+                  type="perspective:GlobalPermissionActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+          </xs:element>
+          <xs:element
+                  name="superuser"
+                  type="perspective:SuperuserActivatorType"
+                  minOccurs="0"
+                  maxOccurs="1">
+          </xs:element>
+      </xs:sequence>
     </xs:complexType>
 
-   <xs:complexType
-      name="TraitActivatorSetType">
-      <xs:sequence>
-         <xs:element
-            ref="perspective:traitActivator"
-            minOccurs="0"
-            maxOccurs="unbounded">
-         </xs:element>
-      </xs:sequence>
-      <xs:attribute
-         name="any"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-               activators must be satisfied. Default is false.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-   </xs:complexType>
-
-    <xs:complexType
-       name="ResourceActivatorSetType">
-       <xs:sequence>
-          <xs:element
-             ref="perspective:resourceActivator"
-             minOccurs="0"
-             maxOccurs="unbounded">
-          </xs:element>
-       </xs:sequence>
-       <xs:attribute
-          name="any"
-          type="xs:boolean"
-          use="optional"
-          default="false">
-          <xs:annotation>
-             <xs:documentation>If true extension activation passes if any individual activator is satisfied. If false all
-                activators must be satisfied. Default is false.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
+    <xs:complexType name="GlobalActivatorsType">
+       <xs:complexContent>
+          <xs:extension base="perspective:CommonActivatorsType">
+               <xs:sequence>
+                    <xs:element
+                            name="inventory"
+                            type="perspective:InventoryActivatorType"
+                            minOccurs="0"
+                            maxOccurs="unbounded">
+                    </xs:element>
+               </xs:sequence>
+          </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
-   <xs:element
-      name="globalPermissionActivator"
-      type="perspective:GlobalPermissionActivatorType">
-      <xs:annotation>
-         <xs:documentation>An activator specifying a global permission condition that must be satisfied in order for the
-            extension to be active.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
+    <xs:complexType name="ResourceActivatorsType">
+       <xs:complexContent>
+          <xs:extension base="perspective:CommonActivatorsType">
+               <xs:choice>
+                   <xs:sequence>
+                       <xs:element
+                                name="facet"
+                                type="perspective:FacetActivatorType"
+                                minOccurs="1"
+                                maxOccurs="unbounded">
+                        </xs:element>
+                        <xs:element
+                                name="resourcePermission"
+                                type="perspective:ResourcePermissionActivatorType"
+                                minOccurs="0"
+                                maxOccurs="unbounded">
+                        </xs:element>
+                        <xs:element
+                             name="trait"
+                             type="perspective:TraitActivatorType"
+                             minOccurs="0"
+                             maxOccurs="unbounded">
+                        </xs:element>
+                   </xs:sequence>
+                   <xs:element
+                             name="resourceType"
+                             type="perspective:InventoryActivatorType"
+                             minOccurs="0"
+                             maxOccurs="unbounded">
+                   </xs:element>
+               </xs:choice>
+          </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
-    <xs:element
-       name="resourcePermissionActivator"
-       type="perspective:ResourcePermissionActivatorType">
-       <xs:annotation>
-          <xs:documentation>An activator specifying a resource permission condition that must be satisfied in order for
-             the extension to be active.</xs:documentation>
-       </xs:annotation>
-    </xs:element>
+    <xs:complexType name="ActivatorType"/>
 
-    <xs:element
-       name="facetActivator"
-       type="perspective:FacetActivatorType">
-       <xs:annotation>
-          <xs:documentation>An activator specifying a facet that must be implemented by the current Resource or
-              Compatible Group in order for the extension to be active.</xs:documentation>
-       </xs:annotation>
-    </xs:element>
+    <!-- Global Activators -->
+    <xs:complexType
+       name="LicenseFeatureActivatorType">
+        <xs:annotation>
+           <xs:documentation>A certain license feature (e.g. monitoring) must be active in order to activate the extension.
+           </xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+                <xs:attribute
+                   name="name"
+                   type="perspective:LicenseFeatureType"
+                   use="required">
+                   <xs:annotation>
+                      <xs:documentation>The type of license that must be installed to activate the extension point.
+                      </xs:documentation>
+                   </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType
+       name="DebugModeActivatorType">
+        <xs:annotation>
+           <xs:documentation>Debug mode must be enabled in the GUI in order to activate the extension.
+           </xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <!-- Subject Activators -->
+    <xs:complexType
+       name="GlobalPermissionActivatorType">
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+                <xs:attribute
+                   name="name"
+                   type="perspective:GlobalPermissionType"
+                   use="required">
+                   <xs:annotation>
+                      <xs:documentation>The required Global permission.</xs:documentation>
+                   </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType
+       name="InventoryActivatorType">
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+                <xs:sequence>
+                  <xs:element
+                     name="resource"
+                     type="perspective:ResourceType"
+                     minOccurs="1"
+                     maxOccurs="unbounded">
+                  </xs:element>
+               </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType
+       name="SuperuserActivatorType">
+        <xs:annotation>
+           <xs:documentation>Debug mode must be enabled in the GUI in order to activate the extension.
+           </xs:documentation>
+        </xs:annotation>
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
 
     <xs:complexType
        name="FacetActivatorType">
-       <xs:attribute
-          name="facet"
-          type="perspective:FacetType"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>The required facet.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-    </xs:complexType>
-
-    <xs:complexType
-       name="GlobalPermissionActivatorType">
-       <xs:attribute
-          name="permission"
-          type="perspective:GlobalPermissionType"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>The required Global permission.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+                <xs:attribute
+                   name="name"
+                   type="perspective:FacetType"
+                   use="required">
+                   <xs:annotation>
+                      <xs:documentation>The facet name.</xs:documentation>
+                   </xs:annotation>
+                </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
    <xs:complexType
       name="ResourcePermissionActivatorType">
-      <xs:attribute
-         name="permission"
-         type="perspective:ResourcePermissionType"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The required Resource permission.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
+       <xs:complexContent>
+           <xs:extension base="perspective:ActivatorType">
+               <xs:attribute
+                  name="name"
+                  type="perspective:ResourcePermissionType"
+                  use="required">
+                  <xs:annotation>
+                     <xs:documentation>The Resource permission name.</xs:documentation>
+                  </xs:annotation>
+               </xs:attribute>
+           </xs:extension>
+       </xs:complexContent>
    </xs:complexType>
-
-   <xs:element
-      name="traitActivator"
-      type="perspective:TraitActivatorType">
-      <xs:annotation>
-         <xs:documentation>An activator specifying a resource trait conditions that must be satisfied in order for the
-            extension to be active.</xs:documentation>
-      </xs:annotation>
-   </xs:element>
 
    <xs:complexType
       name="TraitActivatorType">
-      <xs:attribute
-         name="trait"
-         type="xs:string"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The trait being tested for activation.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="value"
-         type="xs:string"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The value of the trait. By default, a case insensitive 'contains' test.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="isEquals"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true perform equality test. If false (default) perform a contains test.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="isCaseSensitive"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true perform a case sensitive test. If false (default) test is case insensitive.
-            </xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
+      <xs:complexContent>
+           <xs:extension base="perspective:ActivatorType">
+               <xs:attribute
+                 name="name"
+                 type="xs:string"
+                 use="required">
+                 <xs:annotation>
+                    <xs:documentation>The name of the trait being tested for activation.</xs:documentation>
+                 </xs:annotation>
+              </xs:attribute>
+              <xs:attribute
+                 name="value"
+                 type="xs:string"
+                 use="required">
+                 <xs:annotation>
+                    <xs:documentation>A Java-style regular expression for the value of the trait.</xs:documentation>
+                 </xs:annotation>
+              </xs:attribute>
+           </xs:extension>
+       </xs:complexContent>
    </xs:complexType>
 
-   <xs:element
-      name="resourceActivator"
-      type="perspective:ResourceActivatorType">
-      <xs:annotation>
-         <xs:documentation>A Resource with this ResourceType must be in inventory in order for the
-            extension to be active.</xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="ResourceActivatorElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
-
-    <xs:element
-       name="resourceTypeActivator"
-       type="perspective:ResourceTypeActivatorType">
-       <xs:annotation>
-          <xs:documentation>The Resource or Compatible Group must be of this ResourceType
-              in order for the extension to be active.</xs:documentation>
-          <xs:appinfo>
-             <jaxb:class
-                name="ResourceTypeActivatorElement" />
-          </xs:appinfo>
-       </xs:annotation>
-    </xs:element>
-
-    <xs:element
-       name="monitoringLicenseActivator"
-       type="perspective:MonitoringLicenseActivatorType">
-       <xs:annotation>
-          <xs:documentation>The user must have a license that includes monitoring in order
-              for the extension to be active.</xs:documentation>
-          <xs:appinfo>
-             <jaxb:class
-                name="MonitoringLicenseActivatorElement" />
-          </xs:appinfo>
-       </xs:annotation>
-    </xs:element>
-
-   <xs:complexType
-      name="ResourceActivatorType">
-      <xs:sequence>
-         <xs:choice>
-             <xs:element ref="perspective:resourceTypeActivator">
-             </xs:element>
-             <xs:element ref="perspective:facetActivatorSet">
-             </xs:element>
-         </xs:choice>
-         <xs:element
-            ref="perspective:resourcePermissionActivatorSet"
-            minOccurs="0"
-            maxOccurs="unbounded">
-         </xs:element>
-         <xs:element
-            ref="perspective:traitActivatorSet"
-            minOccurs="0"
-            maxOccurs="unbounded">
-         </xs:element>
-      </xs:sequence>
-   </xs:complexType>
+   <!-- =========================================== Helper Types ============================================= -->
 
     <xs:complexType
-       name="ResourceTypeActivatorType">
-       <xs:attribute
-          name="plugin"
-          type="xs:string"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>Plugin for the specified resource type.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:attribute
-          name="resourceType"
-          type="xs:string"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>Resource Type that must be in inventory to activate the extension point.
-             </xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
+        name="ResourceType">
+        <xs:complexContent>
+            <xs:extension base="perspective:ActivatorType">
+                <xs:sequence>
+                  <xs:element
+                     name="permission"
+                     type="perspective:ResourcePermissionActivatorType"
+                     minOccurs="0"
+                     maxOccurs="unbounded">
+                  </xs:element>
+                  <xs:element
+                     name="trait"
+                     type="perspective:TraitActivatorType"
+                     minOccurs="0"
+                     maxOccurs="unbounded">
+                  </xs:element>
+                </xs:sequence>
+               <xs:attribute
+                  name="plugin"
+                  type="xs:string"
+                  use="required">
+                  <xs:annotation>
+                     <xs:documentation>Plugin for the specified resource type.</xs:documentation>
+                  </xs:annotation>
+               </xs:attribute>
+               <xs:attribute
+                  name="type"
+                  type="xs:string"
+                  use="required">
+                  <xs:annotation>
+                     <xs:documentation>Resource Type that must be in inventory to activate the extension point.
+                     </xs:documentation>
+                  </xs:annotation>
+               </xs:attribute>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
-
-    <xs:complexType
-       name="MonitoringLicenseActivatorType">
-    </xs:complexType>
-
-   <xs:element
-      name="position"
-      type="perspective:PositionType">
-      <xs:annotation>
-         <xs:documentation>Specifies positioning for an extension. Often relative to an existing extension.
-         </xs:documentation>
-         <xs:appinfo>
-            <jaxb:class
-               name="PerspectivePositionElement" />
-         </xs:appinfo>
-      </xs:annotation>
-   </xs:element>
 
    <xs:complexType
       name="PositionType">
-      <xs:attribute
-         name="extensionPoint"
-         type="perspective:ExtensionPointType"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The extension point for which the extension is being positioned.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
       <xs:attribute
          name="name"
          type="perspective:NameType"
@@ -848,33 +635,14 @@
          type="perspective:PlacementType"
          use="required">
       </xs:attribute>
-      <xs:attribute
-         name="location"
-         type="perspective:LocationType"
-         use="optional">
-         <xs:annotation>
-            <xs:documentation>Default is left.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="addBreak"
-         type="xs:boolean"
-         use="optional"
-         default="false">
-         <xs:annotation>
-            <xs:documentation>If true generate a break prior to this extension. Typically used for menuItem extensions,
-               ignored when breaks are nonsensical.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
    </xs:complexType>
 
    <xs:simpleType
       name="ActionType">
       <xs:annotation>
          <xs:documentation>
-            Add : Add new
-            Remove : Removes existing
-            Replace : Replace existing
+            Add : Add new extension
+            Remove : Remove an extension that was defined by the Core perspective
          </xs:documentation>
       </xs:annotation>
       <xs:restriction
@@ -883,8 +651,6 @@
             value="add"></xs:enumeration>
          <xs:enumeration
             value="remove"></xs:enumeration>
-         <xs:enumeration
-            value="replace"></xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
 
@@ -898,40 +664,11 @@
    </xs:simpleType>
 
    <xs:simpleType
-      name="ExtensionPointType">
-      <xs:restriction
-         base="xs:string">
-         <xs:enumeration
-            value="coreMenu"></xs:enumeration>
-      </xs:restriction>
-   </xs:simpleType>
-
-   <xs:simpleType
       name="DescriptionType">
       <xs:restriction
          base="xs:string">
          <xs:maxLength
             value="2000" />
-      </xs:restriction>
-   </xs:simpleType>
-
-   <xs:simpleType
-      name="LocationType">
-      <xs:annotation>
-         <xs:documentation>Suggests a screen location for an extension.</xs:documentation>
-      </xs:annotation>
-      <xs:restriction
-         base="xs:string">
-         <xs:enumeration
-            value="bottom"></xs:enumeration>
-         <xs:enumeration
-            value="center"></xs:enumeration>
-         <xs:enumeration
-            value="left"></xs:enumeration>
-         <xs:enumeration
-            value="right"></xs:enumeration>
-         <xs:enumeration
-            value="top"></xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
 
@@ -971,9 +708,6 @@
       name="GlobalPermissionType">
       <xs:restriction
          base="xs:string">
-         <xs:enumeration
-            value="SUPERUSER"></xs:enumeration>
-
          <xs:enumeration
             value="MANAGE_INVENTORY"></xs:enumeration>
          <xs:enumeration
@@ -1022,7 +756,7 @@
                   <xs:documentation>The Resource type defines one or more events.</xs:documentation>
                </xs:annotation>
            </xs:enumeration>
-           <xs:enumeration value="pluginConfiguration" >
+           <xs:enumeration value="plugin_configuration" >
                <xs:annotation>
                   <xs:documentation>The Resource type defines one or more plugin configuration (aka connection) properties.</xs:documentation>
                </xs:annotation>
@@ -1042,7 +776,7 @@
                   <xs:documentation>The Resource type defines one or more packages.</xs:documentation>
                </xs:annotation>
            </xs:enumeration>
-           <xs:enumeration value="callTime" >
+           <xs:enumeration value="call_time" >
                <xs:annotation>
                   <xs:documentation>The Resource type defines one or more call-time metrics.</xs:documentation>
                </xs:annotation>
@@ -1062,10 +796,22 @@
          <xs:enumeration
             value="after"></xs:enumeration>
          <xs:enumeration
-            value="start"></xs:enumeration>
+            value="firstChild"></xs:enumeration>
          <xs:enumeration
-            value="end"></xs:enumeration>
+            value="lastChild"></xs:enumeration>
       </xs:restriction>
    </xs:simpleType>
+
+    <xs:simpleType
+       name="LicenseFeatureType">
+       <xs:annotation>
+          <xs:documentation>A license type.</xs:documentation>
+       </xs:annotation>
+       <xs:restriction
+          base="xs:string">
+          <xs:enumeration
+             value="monitoring"></xs:enumeration>
+       </xs:restriction>
+    </xs:simpleType>
 
 </xs:schema>

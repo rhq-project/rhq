@@ -23,6 +23,7 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.perspective.PerspectiveException;
@@ -35,8 +36,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *  for menu.xhtml.
  * 
  * @author Simeon Pinder
+ * @author Jay Shaughnessy  
+ *
  */
 public class PerspectivesMenuUIBean {
+
     PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     public List<org.rhq.enterprise.server.perspective.MenuItem> getCoreMenu() {
@@ -53,17 +57,18 @@ public class PerspectivesMenuUIBean {
     }
 
     /**
-     * Using the requires request parameter 'targetUrlKey', as set in the extension, resolve that key into
+     * Using the required request parameter 'targetUrlKey', as set in the extension, resolve that key into
      * the targetUrl for the extension's content.
      * 
      * @return null if 'targetUrlKey' param is invalid. 
      */
     public String getUrlViaKey() {
-        String targetUrlKey = FacesContextUtility.getRequest().getParameter("targetUrlKey");
+        String targetUrlKey = FacesContextUtility.getRequiredRequestParameter("targetUrlKey");
         String result = null;
 
         try {
             result = perspectiveManager.getUrlViaKey(Integer.valueOf(targetUrlKey));
+            result = addContextParams(result);
         } catch (NumberFormatException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
                 "Required request parameter 'targetUrlKey' was not numeric: " + targetUrlKey, e);
@@ -74,4 +79,30 @@ public class PerspectivesMenuUIBean {
 
         return result;
     }
+
+    private String addContextParams(String url) {
+        StringBuilder sb = new StringBuilder(url);
+        Server server = LookupUtil.getServerManager().getServer();
+        String host = server.getAddress();
+        String port = String.valueOf(server.getPort());
+        String sessionId = String.valueOf(EnterpriseFacesContextUtility.getSubject().getSessionId());
+        String resourceId = FacesContextUtility.getOptionalRequestParameter("id", "-1");
+
+        addContextParam(sb, "rhqServerHost", host, url.contains("?") ? "&" : "?");
+        addContextParam(sb, "rhqServerPort", port, "&");
+        addContextParam(sb, "rhqSessionId", sessionId, "&");
+        if (!"-1".equals(resourceId)) {
+            addContextParam(sb, "rhqResourceId", resourceId, "&");
+        }
+
+        return sb.toString();
+    }
+
+    private void addContextParam(StringBuilder sb, String name, String value, String separator) {
+        sb.append(separator);
+        sb.append(name);
+        sb.append("=");
+        sb.append(value);
+    }
+
 }

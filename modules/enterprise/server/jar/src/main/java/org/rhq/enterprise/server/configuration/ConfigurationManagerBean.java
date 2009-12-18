@@ -842,9 +842,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
-        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
-        if ((configDef == null || configDef.getPropertyDefinitions().isEmpty())
-            && configDef.getConfigurationFormat() == ConfigurationFormat.STRUCTURED) {
+        if (resource.getResourceType().getResourceConfigurationDefinition() == null
+            || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
             return new PageList<ResourceConfigurationUpdate>(pc);
         }
 

@@ -108,7 +108,7 @@
    </menuItem>
 
    <tab
-      name="sample"
+      name="Sample"
       displayName="Sample"
       iconUrl="/images/icons/Favorite_16.png"
       application="sample"
@@ -120,8 +120,8 @@
 
    <!-- a subtab that will only be displayed for Network Adapter Resources -->
    <tab
-      name="Summary.IP Addresses"
-      displayName="IP Addresses"
+      name="Summary.SampleNetAdapt"
+      displayName="Sample-NetAdapt"
       iconUrl="/images/icons/Favorite_16.png"
       application="sample"
       url="subtabpage.html">

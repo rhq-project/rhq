@@ -56,28 +56,6 @@
       </table>
     </td>
 
-    <td nowrap>
-      <table width="100%" border="0" cellspacing="0" cellpadding="0">
-        <tr>
-          <c:choose>
-          <c:when test="${param.mode == 'viewOthers'}">
-            <td valign="top" width="15"><html:img page="/images/miniTabs_left_on.gif" width="11" height="19" alt="" border="0"/></td>
-            <td class="MiniTabOn" nowrap><fmt:message key="monitoring.events.MiniTabs.OR"/></td>
-            <td valign="top" width="17"><html:img page="/images/miniTabs_right_on.gif" width="11" height="19" alt="" border="0"/></td>
-          </c:when>
-          <c:otherwise>
-            <td valign="top" width="15"><html:img page="/images/miniTabs_left_off.gif" width="11" height="19" alt="" border="0"/></td>
-            <td class="MiniTabOff" nowrap><html:link
-              href="${viewOthersUrl}"><fmt:message
-              key="monitoring.events.MiniTabs.OR"/></html:link>
-            </td>
-            <td valign="top" width="17"><html:img page="/images/miniTabs_right_off.gif" width="11" height="19" alt="" border="0"/></td>
-          </c:otherwise>
-          </c:choose>
-        </tr>
-      </table>
-    </td>
-
     <td width="100%" class="MiniTabEmpty"><html:img
       page="/images/spacer.gif" width="1" height="1" alt=""
       border="0"/>

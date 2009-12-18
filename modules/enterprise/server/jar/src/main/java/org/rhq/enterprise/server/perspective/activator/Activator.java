@@ -27,6 +27,7 @@ import org.rhq.enterprise.server.perspective.activator.context.ActivationContext
  * @author Ian Springer
  */
 public interface Activator<C extends ActivationContext> extends Serializable {
-    ActivationContextScope getScope(); 
+    ActivationContextScope getScope();
+
     boolean matches(C context);
 }

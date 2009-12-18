@@ -208,7 +208,7 @@ public class PerspectivePluginMetadataManager {
                 // content will be rendered within that page.  We don't want to pass urls as request
                 // parameters (long, could contain characters that would need to be escaped, etc)
                 // so instead we'll now replace the actual url with a numeric key for short and
-                // safe param passing.  They key can then be used to get back the real url at runtime.
+                // safe param passing.  The key can then be used to get back the real url at runtime.
                 if (null != targetUrl) {
                     String keyedUrl = baseUrl + url;
                     int key = getUrlKey(keyedUrl);
@@ -415,7 +415,8 @@ public class PerspectivePluginMetadataManager {
             int index = getTabIndex(result, nameTokens[i]);
             if (index == -1) {
                 throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
-                    + "]. No parent tab found for tab [" + name + "]. Make sure supporting tabs are defined for the tab.");
+                    + "]. No parent tab found for tab [" + name
+                    + "]. Make sure supporting tabs are defined for the tab.");
             }
             Tab parentTab = result.get(index);
             result = parentTab.getChildren();

@@ -25,6 +25,8 @@ import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationC
  * @author Ian Springer
  */
 public abstract class AbstractGlobalActivator implements Activator<GlobalActivationContext> {
+    private static final long serialVersionUID = 1L;
+
     public ActivationContextScope getScope() {
         return ActivationContextScope.GLOBAL;
     }

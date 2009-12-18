@@ -25,5 +25,6 @@ package org.rhq.enterprise.server.perspective.activator.context;
  * @author Ian Springer
  */
 public interface ActivationContext {
+
     ActivationContextScope getScope();
 }

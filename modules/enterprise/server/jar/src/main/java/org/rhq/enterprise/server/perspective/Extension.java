@@ -41,6 +41,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Su
  *
  * @author Ian Springer
  */
+@SuppressWarnings("unchecked")
 public abstract class Extension {
     private String perspectiveName;
     private String name;
@@ -121,27 +122,28 @@ public abstract class Extension {
     }
 
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
-        Extension extension = (Extension)o;
+        Extension extension = (Extension) o;
 
-        if (!name.equals(extension.name)) return false;
+        if (!name.equals(extension.name))
+            return false;
 
         return true;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return name.hashCode();
     }
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[name=" + this.name + ", displayName=" + this.displayName + ", url=" + this.url + ", iconUrl="
-            + this.iconUrl + "]";
+        return this.getClass().getSimpleName() + "[name=" + this.name + ", displayName=" + this.displayName + ", url="
+            + this.url + ", iconUrl=" + this.iconUrl + "]";
     }
 }

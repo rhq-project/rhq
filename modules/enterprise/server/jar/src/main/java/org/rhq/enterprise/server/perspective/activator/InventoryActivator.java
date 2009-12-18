@@ -25,7 +25,7 @@ import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationC
 /**
  * @author Ian Springer
  */
-public class InventoryActivator extends AbstractSubjectActivator {
+public class InventoryActivator extends AbstractGlobalActivator {
     static final long serialVersionUID = 1L;
 
     private List<ResourceConditionSet> resourceConditionSets;
@@ -42,7 +42,7 @@ public class InventoryActivator extends AbstractSubjectActivator {
      */
     public boolean matches(GlobalActivationContext context) {
         for (ResourceConditionSet resourceConditionSet : this.resourceConditionSets) {
-           // TODO: Query DB to see if condition set matches one or more inventoried Resources.
+            // TODO: Query DB to see if condition set matches one or more inventoried Resources.
         }
         return false;
     }

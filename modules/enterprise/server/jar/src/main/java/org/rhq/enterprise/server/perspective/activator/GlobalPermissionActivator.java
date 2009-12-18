@@ -24,7 +24,7 @@ import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationC
 /**
  * @author Ian Springer
  */
-public class GlobalPermissionActivator extends AbstractSubjectActivator {
+public class GlobalPermissionActivator extends AbstractGlobalActivator {
     static final long serialVersionUID = 1L;
 
     private Permission permission;

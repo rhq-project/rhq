@@ -25,6 +25,8 @@ import org.rhq.enterprise.server.perspective.activator.context.ActivationContext
  * @author Ian Springer
  */
 public abstract class AbstractResourceOrGroupActivator implements Activator<AbstractResourceOrGroupActivationContext> {
+    private static final long serialVersionUID = 1L;
+
     public ActivationContextScope getScope() {
         return ActivationContextScope.RESOURCE_OR_GROUP;
     }

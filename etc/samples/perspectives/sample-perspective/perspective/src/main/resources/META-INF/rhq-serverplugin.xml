@@ -11,7 +11,6 @@
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-
    <!-- Declare supporting applications for this perspective -->
    <application
       name="sample"
@@ -19,33 +18,40 @@
 
    <!--  replace the coreMenu log with a new one -->
    <menuItem
-      action="replace"
+      action="remove"
       name="logo"
       displayName=""
       application="sample"
       url="/"
       iconUrl="images/jboss.png">
       <position
-         extensionPoint="coreMenu"
-         placement="start" />
+         placement="firstChild" />
    </menuItem>
-
+   <menuItem
+      action="add"
+      name="logo"
+      displayName=""
+      application="sample"
+      url="/"
+      iconUrl="images/jboss.png">
+      <position
+         placement="firstChild" />
+   </menuItem>
+   
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
    <menuItem
       action="remove"
       name="groups.newGroup"
       displayName="New Group">
       <position
-         extensionPoint="coreMenu"
          name="groups.groupDefinitions"
          placement="after" />
    </menuItem>
-   <menuItem
+   <menuItem      
       action="remove"
       name="groups.newGroupDefinition"
       displayName="New Group Definition">
       <position
-         extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
    </menuItem>
@@ -55,7 +61,6 @@
       name="sample"
       displayName="Sample">
       <position
-         extensionPoint="coreMenu"
          name="help"
          placement="after" />
    </menuItem>
@@ -63,9 +68,8 @@
       name="sample.child1"
       displayName="New Group">
       <position
-         extensionPoint="coreMenu"
          name="sample"
-         placement="start" />
+         placement="firstChild" />
    </menuItem>
    <menuItem
       name="sample.child2"
@@ -73,7 +77,6 @@
       application="sample"
       url="mainpage.html">
       <position
-         extensionPoint="coreMenu"
          name="sample.child1"
          placement="after" />
    </menuItem>
@@ -83,14 +86,12 @@
       application="sample"
       url="/resource/group/Inventory.do?mode=new"
       iconUrl="images/create.png">
-      <globalPermissionActivatorSet>
-         <globalPermissionActivator
-            permission="MANAGE_INVENTORY" />
-      </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="sample.child1"
-         placement="start" />
+         placement="firstChild" />
+       <activators>
+          <globalPermission name="MANAGE_INVENTORY" />
+       </activators>
    </menuItem>
    <menuItem
       name="sample.child1.newGroupDefinition"
@@ -98,14 +99,12 @@
       application="sample"
       url="/rhq/definition/group/new.xhtml"
       iconUrl="images/create.png">
-      <globalPermissionActivatorSet>
-         <globalPermissionActivator
-            permission="MANAGE_INVENTORY" />
-      </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="sample.child1.newGroup"
          placement="after" />
+       <activators>
+          <globalPermission name="MANAGE_INVENTORY" />
+       </activators>
    </menuItem>
 
    <tab
@@ -115,18 +114,35 @@
       application="sample"
       url="tabpage.html">
       <position
-         extensionPoint="coreMenu"
          name="Inventory"
          placement="after" />
    </tab>
 
+   <!-- a subtab that will only be displayed for Network Adapter Resources -->
+   <tab
+      name="Summary.IP Addresses"
+      displayName="IP Addresses"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Summary.Timeline"
+         placement="after" />
+      <activators>
+          <resourceType>
+              <resource
+                  plugin="Platforms"
+                  type="Network Adapter"/>
+          </resourceType>
+      </activators>
+   </tab>
+   
    <tab
       name="Monitor.Sample"
       displayName="Sample"
       application="sample"
       url="subtabpage.html">
       <position
-         extensionPoint="coreMenu"
          name="Monitor.Tables"
          placement="after" />
    </tab>

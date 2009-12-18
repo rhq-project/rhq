@@ -35,10 +35,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *  for menu.xhtml.
  * 
  * @author Simeon Pinder
- *
  */
 public class PerspectivesMenuUIBean {
-
     PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     public List<org.rhq.enterprise.server.perspective.MenuItem> getCoreMenu() {
@@ -46,7 +44,7 @@ public class PerspectivesMenuUIBean {
         List<org.rhq.enterprise.server.perspective.MenuItem> result = null;
 
         try {
-            result = perspectiveManager.getCoreMenu(subject);
+            result = perspectiveManager.getMenu(subject);
         } catch (PerspectiveException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to get core menu.", e);
         }
@@ -76,5 +74,4 @@ public class PerspectivesMenuUIBean {
 
         return result;
     }
-
 }

@@ -18,150 +18,142 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.NotNull;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.ResourceTypeFacet;
+import org.rhq.enterprise.server.perspective.activator.FacetActivator;
+import org.rhq.enterprise.server.perspective.activator.ResourceConditionSet;
+import org.rhq.enterprise.server.perspective.activator.ResourcePermissionActivator;
+import org.rhq.enterprise.server.perspective.activator.ResourceTypeActivator;
+import org.rhq.enterprise.server.perspective.activator.TraitActivator;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.FacetActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.InventoryActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorsType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourcePermissionActivatorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TabType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TraitActivatorType;
 
 /**
  * A tab in the Resource or Group view.
  *  
  * @author Ian Springer
  */
-public class Tab implements Serializable, Cloneable
-{
+public class Tab extends Extension implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private List<Tab> children;
-    private String qualifiedName;
     private String name;
-    private String displayName;
+    private String qualifiedName;
     private String url;
-    private String iconUrl;
-    transient private List<ResourceActivatorSetType> currentResourceOrGroupActivatorSet;
+    private List<Tab> children;
 
-    public Tab(TabType tab)
-    {
-        this.qualifiedName = tab.getName();
-        int lastDotIndex = this.qualifiedName.lastIndexOf(".");
-        this.name = this.qualifiedName.substring(lastDotIndex + 1);
-        this.displayName = tab.getDisplayName();
-        this.url = tab.getUrl();
-        if (tab.getApplication() != null) {
+    public Tab(TabType rawTab, String perspectiveName) {
+        super(rawTab, perspectiveName, rawTab.getUrl());
+        this.name = getSimpleName(rawTab.getName());
+        this.qualifiedName = rawTab.getName();
+        this.url = rawTab.getUrl();
+        if (rawTab.getApplication() != null) {
             this.url += "&tab=" + this.qualifiedName;
         }
-        this.iconUrl = tab.getIconUrl();
-        this.currentResourceOrGroupActivatorSet = (tab.getCurrentResourceOrGroupActivatorSet() != null) ?
-                tab.getCurrentResourceOrGroupActivatorSet() : Collections.<ResourceActivatorSetType>emptyList();
         this.children = new ArrayList<Tab>();
+        initActivators(rawTab.getActivators());
     }
 
     @NotNull
-    public List<Tab> getChildren()
-    {
+    public List<Tab> getChildren() {
         return children;
     }
 
-    public void setChildren(List<Tab> children)
-    {
+    public void setChildren(List<Tab> children) {
         this.children = (children != null) ? children : new ArrayList<Tab>();
     }
 
-    public String getQualifiedName()
-    {
+    public String getQualifiedName() {
         return qualifiedName;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public String getDisplayName()
-    {
-        return displayName;
-    }
-
-    public String getUrl()
-    {
+    public String getUrl() {
         return url;
     }
 
-    public String getIconUrl()
-    {
-        return iconUrl;
+    private static String getSimpleName(String qualifiedName) {
+        int lastDotIndex = qualifiedName.lastIndexOf(".");
+        return qualifiedName.substring(lastDotIndex + 1);
     }
 
-    @NotNull
-    public List<ResourceActivatorSetType> getCurrentResourceOrGroupActivatorSets()
-    {
-        return currentResourceOrGroupActivatorSet;
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Tab tab = (Tab)o;
-
-        if (!name.equals(tab.name)) return false;
-
-        return true;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public String toString() {        
-        return this.getClass().getSimpleName() + "[name=" + this.name + ", displayName=" + this.displayName + ", url=" + this.url + ", iconUrl="
-            + this.iconUrl + "]";
-    }
-    
-    @Override
-    public Tab clone() throws CloneNotSupportedException {
-        Object obj = null;
-        try {
-            // Write the object out to a byte array
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            out.writeObject(this);
-            out.flush();
-            out.close();
-
-            // Make an input stream from the byte array and read
-            // a copy of the object back in.
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            obj = in.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void initActivators(ResourceActivatorsType rawActivators) {
+        if (rawActivators == null) {
+            return;
         }
 
-        Tab tab = (Tab)obj;
-        if (tab != null) {
-            tab.currentResourceOrGroupActivatorSet = this.currentResourceOrGroupActivatorSet;
-            List<Tab> subtabs = tab.getChildren();
-            if (subtabs != null) {
-                for (int i = 0, subtabsSize = subtabs.size(); i < subtabsSize; i++)
-                {
-                    Tab subtab = subtabs.get(i);
-                    subtab.currentResourceOrGroupActivatorSet = this.children.get(i).currentResourceOrGroupActivatorSet;
+        // Let our super class init the "common" activators.
+        initCommonActivators(rawActivators);
+
+        List<FacetActivatorType> rawFacetActivators = rawActivators.getFacet();
+        for (FacetActivatorType rawFacetActivator : rawFacetActivators) {
+            String rawName = rawFacetActivator.getName().toString();
+            FacetActivator facetActivator = new FacetActivator(ResourceTypeFacet.valueOf(rawName.toUpperCase(Locale.US)));
+            getActivators().add(facetActivator);
+        }
+
+        List<ResourcePermissionActivatorType> rawResourcePermissionActivators = rawActivators.getResourcePermission();
+        for (ResourcePermissionActivatorType rawResourcePermissionActivator : rawResourcePermissionActivators) {
+            String rawName = rawResourcePermissionActivator.getName().toString();
+            Permission permission = Permission.valueOf(rawName.toUpperCase(Locale.US));
+            ResourcePermissionActivator resourcePermissionActivator = new ResourcePermissionActivator(permission);
+            getActivators().add(resourcePermissionActivator);
+        }
+
+        List<TraitActivatorType> rawTraitActivators = rawActivators.getTrait();
+        for (TraitActivatorType rawTraitActivator : rawTraitActivators) {
+            String name = rawTraitActivator.getName();
+            String value = rawTraitActivator.getValue();
+            TraitActivator traitActivator = new TraitActivator(name, Pattern.compile(value));
+            getActivators().add(traitActivator);
+        }
+
+        List<InventoryActivatorType> rawInventoryActivators = rawActivators.getResourceType();
+        for (InventoryActivatorType rawInventoryActivator : rawInventoryActivators) {
+            List<ResourceType> rawResourceConditions = rawInventoryActivator.getResource();
+            List<ResourceConditionSet> resourceConditionSets =
+                    new ArrayList<ResourceConditionSet>(rawResourceConditions.size());
+            for (ResourceType rawResourceCondition : rawResourceConditions) {
+                List<ResourcePermissionActivatorType> rawPermissions = rawResourceCondition.getPermission();
+                EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
+                for (ResourcePermissionActivatorType rawPermission : rawPermissions) {
+                    String rawName = rawPermission.getName().toString();
+                    Permission permission = Permission.valueOf(rawName.toUpperCase(Locale.US));
+                    permissions.add(permission);
                 }
+
+                List<TraitActivatorType> rawTraits = rawResourceCondition.getTrait();
+                Map<String, Pattern> traits = new HashMap();
+                for (TraitActivatorType rawTraitActivator : rawTraits) {
+                    String name = rawTraitActivator.getName();
+                    String value = rawTraitActivator.getValue();
+                    traits.put(name, Pattern.compile(value));
+                }
+
+                ResourceConditionSet resourceConditionSet = new ResourceConditionSet(
+                        rawResourceCondition.getPlugin(), rawResourceCondition.getType(),
+                        permissions, traits);
+                resourceConditionSets.add(resourceConditionSet);
             }
+            ResourceTypeActivator resourceTypeActivator = new ResourceTypeActivator(resourceConditionSets);
+            getActivators().add(resourceTypeActivator);
         }
-        return tab;
     }
 }

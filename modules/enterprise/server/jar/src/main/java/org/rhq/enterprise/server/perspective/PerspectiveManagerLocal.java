@@ -37,7 +37,7 @@ public interface PerspectiveManagerLocal {
      * @param subject
      * @return
      */
-    List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException;
+    List<MenuItem> getMenu(Subject subject) throws PerspectiveException;
 
     /**
      * Returns the list of tabs that should be displayed for the specified user for the specified Resource.

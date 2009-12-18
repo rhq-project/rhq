@@ -9,8 +9,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class PerspectiveManagerHelper {
 
-    public static PerspectiveServerPluginContainer getPluginContainer() throws Exception {
-        PerspectiveServerPluginContainer pc = null;
+    public static PerspectiveServerPluginContainer getPluginContainer() {
+        PerspectiveServerPluginContainer pc;
 
         try {
             ServerPluginServiceManagement mbean = LookupUtil.getServerPluginService();
@@ -23,17 +23,17 @@ public class PerspectiveManagerHelper {
         } catch (IllegalStateException ise) {
             throw ise;
         } catch (Exception e) {
-            throw new Exception("Cannot obtain the Perspective plugin container", e);
+            throw new IllegalStateException("Cannot obtain the Perspective plugin container!", e);
         }
 
         if (pc == null) {
-            throw new Exception("Perspective plugin container is null!");
+            throw new IllegalStateException("Perspective plugin container is null!");
         }
 
         return pc;
     }
 
-    public static PerspectivePluginMetadataManager getPluginMetadataManager() throws Exception {
+    public static PerspectivePluginMetadataManager getPluginMetadataManager() {
         PerspectiveServerPluginManager manager = (PerspectiveServerPluginManager) getPluginContainer()
             .getPluginManager();
         return manager.getMetadataManager();

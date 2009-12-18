@@ -27,12 +27,12 @@
                var="menuItem"
                items="#{PerspectivesMenuUIBean.coreMenu}">
 
-               <c:if test="#{not menuItem.item.isDebug or GlobalPermissionsUIBean.debugMode}">
+               <c:if test="#{not menuItem.debugMode or GlobalPermissionsUIBean.debugMode}">
 
                   <rich:dropDownMenu rendered="${menuItem.menuGroup}">
                      <f:facet name="label">
                         <h:panelGroup>
-                           <h:outputText value="#{menuItem.item.displayName}" />
+                           <h:outputText value="#{menuItem.displayName}" />
                         </h:panelGroup>
                      </f:facet>
 
@@ -42,7 +42,7 @@
 
                         <rich:menuGroup
                            rendered="#{childMenuItem.menuGroup}"
-                           value="#{childMenuItem.item.displayName}">
+                           value="#{childMenuItem.displayName}">
                            <c:forEach
                               var="grandchildMenuItem"
                               items="#{childMenuItem.children}">
@@ -67,8 +67,8 @@
 
                   <h:outputLink
                      rendered="#{menuItem.graphic}"
-                     value="#{menuItem.item.url}">
-                     <h:graphicImage value="#{menuItem.item.iconUrl}" />
+                     value="#{menuItem.url}">
+                     <h:graphicImage value="#{menuItem.iconUrl}" />
                   </h:outputLink>
 
                   <c:if test="#{not menuItem.menuGroup and not menuItem.graphic}">

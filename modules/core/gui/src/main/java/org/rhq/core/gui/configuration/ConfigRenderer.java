@@ -26,16 +26,12 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import javax.el.MethodExpression;
 import javax.el.ValueExpression;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
-import javax.faces.component.UIOutput;
-import javax.faces.component.UIPanel;
 import javax.faces.component.UIParameter;
-import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlForm;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -51,18 +47,15 @@ import org.ajax4jsf.context.AjaxContext;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.richfaces.component.html.HtmlModalPanel;
-import org.richfaces.component.html.HtmlSimpleTogglePanel;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.gui.RequestParameterNameConstants;
 import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
@@ -184,7 +177,9 @@ public class ConfigRenderer extends Renderer {
             addChildComponents(configurationComponent);
         if (configurationComponent.getToolbar() != null) {
             configurationComponent.getToolbar().setRendered(configurationComponent.getShowToolbar());
+
         }
+
     }
 
     private boolean isAjaxRefresh(AbstractConfigurationComponent configurationComponent) {
@@ -270,113 +265,20 @@ public class ConfigRenderer extends Renderer {
             }
         }
 
+        configurationComponent.rawConfigUIComponent = new RawConfigUIComponent(configurationComponent
+            .getConfiguration(), configurationComponent.getConfigurationDefinition(), configurationComponent,
+            configurationComponent.isReadOnly());
+
+        configurationComponent.getChildren().add(configurationComponent.rawConfigUIComponent);
+
+        configurationComponent.structuredConfig = new StructuredConfigUIComponent(configurationComponent);
+
+        configurationComponent.getChildren().add(configurationComponent.structuredConfig);
+
         Boolean shouldShowRawNow = configurationComponent.getShouldShowRaw();
 
-        if (shouldShowRawNow) {
-            configurationComponent.getChildren().add(
-                new RawConfigUIComponent(configurationComponent.getConfiguration(), configurationComponent
-                    .getConfigurationDefinition(), configurationComponent, configurationComponent.isReadOnly()));
-        } else {
-            addStructuredConfig(configurationComponent);
-        }
-    }
-
-    private void addStructuredConfig(AbstractConfigurationComponent configurationComponent) {
-        {
-            UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
-                "summary-props-table");
-            if (configurationComponent.isReadOnly()) {
-                HtmlOutputLink editLink = FacesComponentUtility.addOutputLink(toolbarPanel, configurationComponent,
-                    "edit.xhtml");
-                FacesComponentUtility.addGraphicImage(editLink, configurationComponent, "/images/edit.png", "Edit");
-                FacesComponentUtility.addOutputText(editLink, configurationComponent, "Edit", "");
-                FacesComponentUtility.addParameter(editLink, configurationComponent, "readOnly", Boolean
-                    .toString(false));
-                FacesComponentUtility.addParameter(editLink, configurationComponent, "id", FacesContextUtility
-                    .getRequiredRequestParameter("id"));
-            } else {
-                HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-                FacesComponentUtility.addGraphicImage(saveLink, configurationComponent, "/images/save.png", "Save");
-                FacesComponentUtility.addOutputText(saveLink, configurationComponent, "Save", "");
-                FacesComponentUtility.addParameter(saveLink, configurationComponent, "save", Boolean.toString(true));
-                FacesComponentUtility
-                    .addParameter(saveLink, configurationComponent, "readOnly", Boolean.toString(true));
-
-                saveLink.setActionExpression(getSaveActionExpression());
-
-            }
-            if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
-                HtmlCommandLink toRawLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-                FacesComponentUtility.addGraphicImage(toRawLink, configurationComponent, "/images/raw.png", "showRaw");
-                FacesComponentUtility.addOutputText(toRawLink, configurationComponent, "showRaw", "");
-                FacesComponentUtility.addParameter(toRawLink, configurationComponent, "showRaw", Boolean.TRUE
-                    .toString());
-                FacesComponentUtility.addParameter(toRawLink, configurationComponent, "readOnly", Boolean
-                    .toString(configurationComponent.isReadOnly()));
-            }
-            configurationComponent.setToolbar(toolbarPanel);
-        }
-
-        if (!configurationComponent.isReadOnly())
-            addRequiredNotationsKey(configurationComponent);
-
-        if (configurationComponent.getListName() != null) {
-            if (configurationComponent.getListIndex() == null) {
-                // No index specified means we should add a new map to the list.
-                configurationComponent.setListIndex(addNewMap(configurationComponent));
-            }
-
-            addListMemberProperty(configurationComponent);
-        } else {
-            addConfiguration(configurationComponent);
-        }
-
-        String id = getInitInputsJavaScriptComponentId(configurationComponent);
-        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-            .isFullyEditable(), false);
-    }
-
-    private MethodExpression getSaveActionExpression() {
-
-        MethodExpression actionExpression = null;
-
-        return actionExpression;
-    }
-
-    private void addStructuredRawToggle(AbstractConfigurationComponent configurationComponent, boolean showRaw) {
-        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().equals(
-            ConfigurationFormat.STRUCTURED_AND_RAW)) {
-
-            HtmlPanelGroup toRawLinkPanel = FacesComponentUtility.addBlockPanel(configurationComponent,
-                configurationComponent, UNGROUPED_PROPERTIES_STYLE_CLASS);
-
-            FacesComponentUtility.addOutputText(toRawLinkPanel, configurationComponent,
-                "internationalized Message goes here", UNGROUPED_PROPERTIES_STYLE_CLASS);
-
-            HtmlCommandLink commandLink = FacesComponentUtility.addCommandLink(toRawLinkPanel, configurationComponent);
-
-            UIOutput output = new UIOutput();
-            output.setValue(showRaw ? "Show Structured" : " Show Raw");
-            commandLink.getChildren().add(output);
-            //output.setParent(commandLink);
-            FacesComponentUtility.addParameter(commandLink, configurationComponent, "showRaw", Boolean
-                .toString(!showRaw));
-        }
-    }
-
-    private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {
-        // Update member Configurations if this is a group config.
-        if (configurationComponent instanceof ConfigurationSetComponent) {
-            ConfigurationSetComponent configurationSetComponent = ((ConfigurationSetComponent) configurationComponent);
-            configurationSetComponent.getConfigurationSet().applyGroupConfiguration();
-        }
-
-        // Now add a new component to the JSF component tree.
-        AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new MapInListUIComponentTreeFactory(
-            configurationComponent, configurationComponent.getListName(), configurationComponent.getListIndex());
-        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(configurationComponent,
-            configurationComponent, UNGROUPED_PROPERTIES_STYLE_CLASS);
-        propertiesPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
+        configurationComponent.rawConfigUIComponent.setRendered(shouldShowRawNow);
+        configurationComponent.structuredConfig.setRendered(!shouldShowRawNow);
     }
 
     private void deleteListMemberProperty(AbstractConfigurationComponent configurationComponent) {
@@ -482,83 +384,6 @@ public class ConfigRenderer extends Renderer {
             + mapName + "'.");
     }
 
-    private static void addRequiredNotationsKey(AbstractConfigurationComponent config) {
-        addDebug(config, true, ".addNotePanel()");
-        HtmlPanelGroup footnotesPanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
-        FacesComponentUtility.addOutputText(footnotesPanel, config, "*", REQUIRED_MARKER_TEXT_STYLE_CLASS);
-        FacesComponentUtility.addOutputText(footnotesPanel, config, " denotes a required field.",
-            FacesComponentUtility.NO_STYLE_CLASS);
-        if (config.isGroup()) {
-            HtmlPanelGroup overridePanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
-            FacesComponentUtility.addOutputText(overridePanel, config,
-                "note: if override is not checked, that property will not be altered on any group members",
-                FacesComponentUtility.NO_STYLE_CLASS);
-        }
-
-        addDebug(config, false, ".addNotePanel()");
-    }
-
-    private void addConfiguration(AbstractConfigurationComponent config) {
-        addNonGroupedProperties(config);
-        addGroupedProperties(config);
-    }
-
-    private void addNonGroupedProperties(AbstractConfigurationComponent config) {
-        addDebug(config, true, ".addNonGroupedProperties()");
-        HtmlPanelGroup propertiesPanel = FacesComponentUtility.addBlockPanel(config, config,
-            UNGROUPED_PROPERTIES_STYLE_CLASS);
-        AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new GroupUIComponentTreeFactory(
-            config, GroupUIComponentTreeFactory.NO_GROUP);
-        propertiesPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
-        addDebug(config, false, ".addNonGroupedProperties()");
-    }
-
-    private void addGroupedProperties(AbstractConfigurationComponent config) {
-        addDebug(config, true, ".addGroupedProperties()");
-        List<PropertyGroupDefinition> groups = config.getConfigurationDefinition().getGroupDefinitions();
-        for (PropertyGroupDefinition group : groups) {
-            HtmlSimpleTogglePanel groupPanel = addGroupPanel(config, group);
-            AbstractPropertyBagUIComponentTreeFactory propertyListUIComponentTreeFactory = new GroupUIComponentTreeFactory(
-                config, group.getName());
-            groupPanel.getChildren().add(propertyListUIComponentTreeFactory.createUIComponentTree(null));
-        }
-
-        addDebug(config, false, ".addGroupedProperties()");
-    }
-
-    private HtmlSimpleTogglePanel addGroupPanel(AbstractConfigurationComponent config, PropertyGroupDefinition group) {
-        addDebug(config, true, ".addGroupPanel()");
-        HtmlSimpleTogglePanel groupPanel = FacesComponentUtility.addSimpleTogglePanel(config, config, null);
-        // TODO: On AJAX requests, set "opened" attribute to its previous state.
-        groupPanel.setOpened(!group.isDefaultHidden());
-        groupPanel.setHeaderClass(PROPERTY_GROUP_HEADER_STYLE_CLASS);
-        groupPanel.setBodyClass(PROPERTY_GROUP_BODY_STYLE_CLASS);
-
-        // Custom header that includes the name and description
-        HtmlPanelGroup headerPanel = FacesComponentUtility.createBlockPanel(config, null);
-        FacesComponentUtility.addOutputText(headerPanel, config, group.getDisplayName(), null);
-        FacesComponentUtility
-            .addOutputText(headerPanel, config, group.getDescription(), "group-description-text-panel");
-        groupPanel.getFacets().put("header", headerPanel);
-
-        // custom "close" widget
-        HtmlPanelGroup closePanel = FacesComponentUtility.createBlockPanel(config, null);
-        closePanel.setStyle("text-align: right; font-weight: normal; font-size: 0.8em; whitespace: nowrap;");
-        FacesComponentUtility.addGraphicImage(closePanel, config, "/images/ico_trigger_wht_collapse.gif", "collapse");
-        FacesComponentUtility.addOutputText(closePanel, config, " Collapse", null);
-        groupPanel.getFacets().put("closeMarker", closePanel);
-
-        // custom "open" widget
-        HtmlPanelGroup openPanel = FacesComponentUtility.createBlockPanel(config, null);
-        openPanel.setStyle("text-align: right; font-weight: normal; font-size: 0.8em; whitespace: nowrap;");
-        FacesComponentUtility.addGraphicImage(openPanel, config, "/images/ico_trigger_wht_expand.gif", "expand");
-        FacesComponentUtility.addOutputText(openPanel, config, " Expand", null);
-        groupPanel.getFacets().put("openMarker", openPanel);
-        addDebug(config, true, ".addGroupPanel()");
-
-        return groupPanel;
-    }
-
     private void validateAttributes(AbstractConfigurationComponent configurationComponent) {
         // TODO: Add back attribute validation - remember config and configSet components require different attributes.
         /*if (configurationComponent.getValueExpression("configurationDefinition") == null) {
@@ -572,7 +397,7 @@ public class ConfigRenderer extends Renderer {
         }*/
     }
 
-    private int addNewMap(AbstractConfigurationComponent config) {
+    static int addNewMap(AbstractConfigurationComponent config) {
         String listName = config.getListName();
         PropertyDefinitionMap mapDefinition = (PropertyDefinitionMap) config.getConfigurationDefinition()
             .getPropertyDefinitionList(listName).getMemberDefinition();
@@ -597,7 +422,7 @@ public class ConfigRenderer extends Renderer {
      * @param start      true if this is the "START" comment, false if it is the "END" comment
      * @param methodName the name of the method this is calling from
      */
-    private static void addDebug(UIComponent component, boolean start, String methodName) {
+    static void addDebug(UIComponent component, boolean start, String methodName) {
         if (LOG.isDebugEnabled()) {
             StringBuilder msg = new StringBuilder("\n<!--");
             msg.append(start ? " START " : " END ");
@@ -608,7 +433,7 @@ public class ConfigRenderer extends Renderer {
         }
     }
 
-    private String getInitInputsJavaScriptComponentId(AbstractConfigurationComponent configUIComponent) {
+    static String getInitInputsJavaScriptComponentId(AbstractConfigurationComponent configUIComponent) {
         return configUIComponent.getId() + INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX;
     }
 

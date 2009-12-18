@@ -54,6 +54,30 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
+    Boolean showRawConfig;
+
+    public Boolean getShowRawConfig() {
+        if (null == showRawConfig) {
+            showRawConfig = this.getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.RAW);
+        }
+
+        return showRawConfig;
+    }
+
+    public void setShowRawConfig(Boolean showRawConfig) {
+        this.showRawConfig = showRawConfig;
+    }
+
+    public Boolean getShowRawButton() {
+        return !getShowRawConfig();
+        //&& getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.STRUCTURED_AND_RAW);
+    }
+
+    public Boolean getShowStructuredButton() {
+        return getShowRawConfig();
+        //&& getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.STRUCTURED_AND_RAW);
+    }
+
     private String selectedPath;
     private TreeMap<String, RawConfiguration> raws;
     private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
@@ -72,15 +96,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editRawConfiguration() {
-        return SUCCESS_OUTCOME;
-    }
-
-    public String switchToRaw() {
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
-        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        this.configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
-            resourceId, getConfiguration(), true);
-
         return SUCCESS_OUTCOME;
     }
 
@@ -343,41 +358,53 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
      * But is kept as a target for the "action" value 
      */
     public String upload() {
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
     }
 
-    public String switchToraw() {
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+    public String switchToRaw() {
 
-        setConfiguration(configuration);
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
-        }
-        current = null;
-        setConfiguration(configuration);
+        try {
+            Configuration configuration;
+            configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+                EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
 
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
-    }
-
-    public String switchTostructured() {
-
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
-
-        for (Property property : configuration.getAllProperties().values()) {
-            property.setConfiguration(configuration);
-        }
-
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
             setConfiguration(configuration);
-        }
-        current = null;
-        setConfiguration(configuration);
+            for (RawConfiguration raw : configuration.getRawConfigurations()) {
+                getRaws().put(raw.getPath(), raw);
+            }
+            current = null;
+            setConfiguration(configuration);
 
-//        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
-        return SUCCESS_OUTCOME;
+            setShowRawConfig(true);
+
+            return "edit.xhtml?showRaw=\"true\"&id=" + getResourceId();
+        } catch (Exception e) {
+            return "overview.xhtml";
+        }
+    }
+
+    public String switchToStructured() {
+        try {
+            Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+                EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+
+            for (Property property : configuration.getAllProperties().values()) {
+                property.setConfiguration(configuration);
+            }
+
+            for (RawConfiguration raw : configuration.getRawConfigurations()) {
+                getRaws().put(raw.getPath(), raw);
+                setConfiguration(configuration);
+            }
+            current = null;
+            setConfiguration(configuration);
+            setShowRawConfig(false);
+
+            return "edit.xhtml?id=" + getResourceId();
+        } catch (Exception e) {
+            return "overview.xhtml";
+        }
+
     }
 
     void populateRaws() {

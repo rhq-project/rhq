@@ -17,6 +17,14 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>RawTestConfigurationUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.test.RawTestConfigurationUIBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+
+
+   <managed-bean>
       <managed-bean-name>AddNewOpenMapMemberPropertyToTestConfigurationUIBean</managed-bean-name>
       <managed-bean-class>
          org.rhq.enterprise.gui.configuration.test.EditTestConfigurationAddNewOpenMapMemberPropertyUIBean

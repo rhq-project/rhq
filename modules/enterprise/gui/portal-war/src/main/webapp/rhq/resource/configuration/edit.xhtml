@@ -31,19 +31,47 @@ THIS TEXT WILL BE REMOVED.
 
       <h:form id="editResourceConfigurationForm" onsubmit="prepareInputsForSubmission(this)" rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
 
+        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+               	
+      	<h:panelGroup>
+        <h:commandLink action="#{ExistingResourceConfigurationUIBean.updateConfiguration}">
+			<h:graphicImage value="Save" url="/images/save.png" />
+			<h:outputText value="Save Junk" />
+			<f:param name="showRaw" value="true"/>
+        </h:commandLink>        
 
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         
-         <h:outputText value="#{messages.youareviewingstructured}" />
-	  
-		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}" >
-		   <h:outputText value=" #{messages.switch2}" />
-           <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToraw}"  >
-             <f:param name="conversationId" value="#{conversation.id}"/>
-             <f:param name="id" value="#{ResourceUIBean.id}"/>
-             <h:outputText value=" files mode"/>
-           </h:commandLink>
-		</h:panelGroup>
+        <h:commandLink rendered="#{ExistingResourceConfigurationUIBean.showRawButton}"  action="#{ExistingResourceConfigurationUIBean.switchToRaw}" >
+			<h:graphicImage value="Raw" url="/images/raw.png" />
+			<h:outputText value="Raw " />
+        </h:commandLink>        
+
+        <h:commandLink rendered="#{ExistingResourceConfigurationUIBean.showStructuredButton}"  action="#{ExistingResourceConfigurationUIBean.switchToStructured}">
+			<h:graphicImage value="Structured" url="/images/structured.png" />
+			<h:outputText value="Structured " />
+			<f:param name="showRaw" value="false"/>
+        </h:commandLink>        
+
+        <h:outputLink value="fullscreen.xhtml">
+			<h:graphicImage value="Full Screen" url="/images/viewfullscreen.png" />
+			<h:outputText value="Full Screen" />
+			<f:param name="showRaw" value="true"/>
+        </h:outputLink>        
+
+        <h:outputLink value="download.xhtml">
+			<h:graphicImage value="Download" url="/images/download.png" />
+			<h:outputText value="Download " />
+			<f:param name="showRaw" value="false"/>
+        </h:outputLink> 
+
+        <h:outputLink value="upload.xhtml" rendered="#{!showReadOnly}">
+			<h:graphicImage value="Upload" url="/images/upload.png" />
+			<h:outputText value="Upload " />
+			<f:param name="showRaw" value="false"/>
+        </h:outputLink>        
+
+
+        </h:panelGroup>
+      	
 		  
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
@@ -52,6 +80,7 @@ THIS TEXT WILL BE REMOVED.
                      prevalidate="true"
                      showToolbar="true"
                      readOnly="false"
+                     action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
                      />
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell" rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">

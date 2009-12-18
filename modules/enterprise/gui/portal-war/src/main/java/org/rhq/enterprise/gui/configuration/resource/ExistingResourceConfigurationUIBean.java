@@ -417,8 +417,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         current = null;
         setConfiguration(configuration);
 
-//        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
-        return SUCCESS_OUTCOME;
+        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
     }
 
     void populateRaws() {

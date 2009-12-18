@@ -842,10 +842,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource.getResourceType().getResourceConfigurationDefinition() == null
-            || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
-            return new PageList<ResourceConfigurationUpdate>(pc);
-        }
 
         pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
 

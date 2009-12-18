@@ -18,4 +18,3 @@ dev-container
 dev-agent
 antlr-generated/
 *.tokens
-test-output/*

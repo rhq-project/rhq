@@ -138,14 +138,6 @@
             </exclusions>
         </dependency>
 
-
-	 <dependency>
-          <groupId>javax.faces</groupId>
-          <artifactId>jsf-impl</artifactId>
-          <scope>provided</scope> 
-      </dependency>
-
-
    </dependencies>
 
    <repositories>

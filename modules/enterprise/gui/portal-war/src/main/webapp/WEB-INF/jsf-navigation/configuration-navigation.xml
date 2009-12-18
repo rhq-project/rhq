@@ -6,6 +6,7 @@
 
    <navigation-rule>
 
+
       <navigation-case>
          <from-action>#{ExistingResourceConfigurationUIBean.editConfiguration}</from-action>
          <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
@@ -31,6 +32,13 @@
       
    </navigation-rule>
 
+   <navigation-rule>
+      <from-view-id>/rhq/resource/configuration/edit-raw-full.xhtml</from-view-id>
+      <navigation-case>
+          <from-action> #{RawConfigCollection.update}</from-action>
+      	  <to-view-id>/rhq/resource/configuration/edit-raw.xhtml?id=#{param.id}</to-view-id>
+      </navigation-case>
+   </navigation-rule>
 
    <navigation-rule>
 
@@ -42,7 +50,8 @@
          <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-                   
+            
+       
    </navigation-rule>
 
 

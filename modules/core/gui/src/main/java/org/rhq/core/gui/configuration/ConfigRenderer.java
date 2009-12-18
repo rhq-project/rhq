@@ -31,10 +31,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
-import javax.faces.component.UIOutput;
-import javax.faces.component.UIPanel;
 import javax.faces.component.UIParameter;
-import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlForm;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
@@ -57,7 +54,6 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -88,7 +84,7 @@ public class ConfigRenderer extends Renderer {
     protected static final String GROUP_DESCRIPTION_PANEL_STYLE_CLASS = "group-description-panel";
     protected static final String GROUP_DESCRIPTION_TEXT_PANEL_STYLE_CLASS = "group-description-text-panel";
 
-    private static final Log LOG = LogFactory.getLog(ConfigRenderer.class);
+    private final Log LOG = LogFactory.getLog(ConfigRenderer.class);
     private static final String INIT_INPUTS_JAVA_SCRIPT_COMPONENT_ID_SUFFIX = "-initInputsJavaScript";
 
     /**
@@ -121,20 +117,6 @@ public class ConfigRenderer extends Renderer {
                     .isFullyEditable(), true);
             }
         }
-
-        Boolean readOnly = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("readOnly"));
-        Boolean save = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("save"));
-        configurationComponent.setReadOnly(readOnly);
-
-        if (component.getChildCount() == 0)
-            addChildComponents(configurationComponent);
-        for (UIComponent kid : configurationComponent.getChildren()) {
-            if (kid instanceof RawConfigUIComponent) {
-                kid.decode(facesContext);
-            }
-
-        }
-
     }
 
     /**
@@ -213,16 +195,12 @@ public class ConfigRenderer extends Renderer {
         writer.writeText("\n", component, null);
         writer.endElement("div");
         writer.writeComment("********** End of " + component.getClass().getSimpleName() + " component **********");
-
-        component.getChildren().clear();
     }
 
     public void addChildComponents(AbstractConfigurationComponent configurationComponent) {
-
         if ((configurationComponent.getConfigurationDefinition() == null)
             || ((configurationComponent.getConfiguration() != null) && configurationComponent.getConfiguration()
-                .getMap().isEmpty())
-            && !configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
+                .getMap().isEmpty())) {
             if (configurationComponent.getNullConfigurationDefinitionMessage() != null) {
                 String styleClass = (configurationComponent.getNullConfigurationStyle() == null) ? "ErrorBlock"
                     : configurationComponent.getNullConfigurationStyle();
@@ -263,43 +241,6 @@ public class ConfigRenderer extends Renderer {
             }
         }
 
-        Boolean shouldShowRawNow = configurationComponent.getShouldShowRaw();
-
-        if (shouldShowRawNow) {
-            configurationComponent.getChildren().add(
-                new RawConfigUIComponent(configurationComponent.getConfiguration(), configurationComponent
-                    .getConfigurationDefinition(), configurationComponent, configurationComponent.isReadOnly()));
-        } else {
-            addStructuredConfig(configurationComponent);
-        }
-    }
-
-    private void addStructuredConfig(AbstractConfigurationComponent configurationComponent) {
-        UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(configurationComponent, configurationComponent,
-            "summary-props-table");
-        if (configurationComponent.isReadOnly()) {
-            HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(editLink, configurationComponent, "/images/edit.png", "Edit");
-            FacesComponentUtility.addOutputText(editLink, configurationComponent, "Edit", "");
-            FacesComponentUtility.addParameter(editLink, configurationComponent, "readOnly", Boolean.toString(false));
-
-        } else {
-            HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(saveLink, configurationComponent, "/images/save.png", "Save");
-            FacesComponentUtility.addOutputText(saveLink, configurationComponent, "Save", "");
-            FacesComponentUtility.addParameter(saveLink, configurationComponent, "save", Boolean.toString(true));
-            FacesComponentUtility.addParameter(saveLink, configurationComponent, "readOnly", Boolean.toString(true));
-        }
-
-        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().isRawSupported()) {
-            HtmlCommandLink toRawLink = FacesComponentUtility.addCommandLink(toolbarPanel, configurationComponent);
-            FacesComponentUtility.addGraphicImage(toRawLink, configurationComponent, "/images/raw.png", "showRaw");
-            FacesComponentUtility.addOutputText(toRawLink, configurationComponent, "showRaw", "");
-            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "showRaw", Boolean.TRUE.toString());
-            FacesComponentUtility.addParameter(toRawLink, configurationComponent, "readOnly", Boolean
-                .toString(configurationComponent.isReadOnly()));
-        }
-
         if (!configurationComponent.isReadOnly())
             addRequiredNotationsKey(configurationComponent);
 
@@ -317,27 +258,6 @@ public class ConfigRenderer extends Renderer {
         String id = getInitInputsJavaScriptComponentId(configurationComponent);
         PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
             .isFullyEditable(), false);
-    }
-
-    private void addStructuredRawToggle(AbstractConfigurationComponent configurationComponent, boolean showRaw) {
-        if (configurationComponent.getConfigurationDefinition().getConfigurationFormat().equals(
-            ConfigurationFormat.STRUCTURED_AND_RAW)) {
-
-            HtmlPanelGroup toRawLinkPanel = FacesComponentUtility.addBlockPanel(configurationComponent,
-                configurationComponent, UNGROUPED_PROPERTIES_STYLE_CLASS);
-
-            FacesComponentUtility.addOutputText(toRawLinkPanel, configurationComponent,
-                "internationalized Message goes here", UNGROUPED_PROPERTIES_STYLE_CLASS);
-
-            HtmlCommandLink commandLink = FacesComponentUtility.addCommandLink(toRawLinkPanel, configurationComponent);
-
-            UIOutput output = new UIOutput();
-            output.setValue(showRaw ? "Show Structured" : " Show Raw");
-            commandLink.getChildren().add(output);
-            //output.setParent(commandLink);
-            FacesComponentUtility.addParameter(commandLink, configurationComponent, "showRaw", Boolean
-                .toString(!showRaw));
-        }
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {
@@ -458,7 +378,7 @@ public class ConfigRenderer extends Renderer {
             + mapName + "'.");
     }
 
-    private static void addRequiredNotationsKey(AbstractConfigurationComponent config) {
+    private void addRequiredNotationsKey(AbstractConfigurationComponent config) {
         addDebug(config, true, ".addNotePanel()");
         HtmlPanelGroup footnotesPanel = FacesComponentUtility.addBlockPanel(config, config, NOTE_PANEL_STYLE_CLASS);
         FacesComponentUtility.addOutputText(footnotesPanel, config, "*", REQUIRED_MARKER_TEXT_STYLE_CLASS);
@@ -573,11 +493,11 @@ public class ConfigRenderer extends Renderer {
      * @param start      true if this is the "START" comment, false if it is the "END" comment
      * @param methodName the name of the method this is calling from
      */
-    private static void addDebug(UIComponent component, boolean start, String methodName) {
+    private void addDebug(UIComponent component, boolean start, String methodName) {
         if (LOG.isDebugEnabled()) {
             StringBuilder msg = new StringBuilder("\n<!--");
             msg.append(start ? " START " : " END ");
-            msg.append(ConfigRenderer.class.getSimpleName());
+            msg.append(this.getClass().getSimpleName());
             msg.append(methodName);
             msg.append(" -->\n ");
             FacesComponentUtility.addVerbatimText(component, msg);

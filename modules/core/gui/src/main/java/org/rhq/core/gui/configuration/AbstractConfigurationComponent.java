@@ -29,11 +29,9 @@ import javax.faces.context.FacesContext;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
 import org.rhq.core.gui.util.FacesComponentUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
 
 /**
  * An abstract base class for the {@link ConfigUIComponent} and the {@link ConfigurationSetComponent} JSF component
@@ -52,7 +50,7 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     private static final String READ_ONLY_ATTRIBUTE = "readOnly";
     private static final String FULLY_EDITABLE_ATTRIBUTE = "fullyEditable";
 
-    private Boolean readOnly = true;
+    private Boolean readOnly;
     private Boolean fullyEditable;
     private String listName;
     private Integer listIndex;
@@ -213,21 +211,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.listIndex = (Integer) this.stateValues[4];
         this.prevalidate = (Boolean) this.stateValues[5];
         this.isGroup = (Boolean) this.stateValues[6];
-    }
-
-    public boolean getShouldShowRaw() {
-        return Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("showRaw", String.class, "unset"))
-            || (this.getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.RAW));
-    }
-
-    RawConfigUIComponent rawConfigUIComponent;
-
-    RawConfigUIComponent getRawConfigUIComponent() {
-        if (null == rawConfigUIComponent) {
-            rawConfigUIComponent = new RawConfigUIComponent(getConfiguration(), getConfigurationDefinition(), this,
-                isReadOnly());
-        }
-        return rawConfigUIComponent;
     }
 
 }

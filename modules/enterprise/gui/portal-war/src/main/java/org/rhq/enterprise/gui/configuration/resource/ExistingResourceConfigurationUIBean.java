@@ -51,20 +51,16 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Ian Springer
  */
+//@ Name(value = "ExistingResourceConfigurationUIBean")
+//@ Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
-
-    private String selectedPath;
-    private TreeMap<String, RawConfiguration> raws;
-    private TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
-    private RawConfiguration current = null;
 
     // =========== actions ===========
 
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
-
     }
 
     public String editConfiguration() {
@@ -85,9 +81,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String updateConfiguration() {
-
-        modified = null;
-
         return updateConfiguration(true);
 
     }
@@ -101,9 +94,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
 
-        AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
-            .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
-                getMergedConfiguration(), fromStructured);
+        AbstractResourceConfigurationUpdate updateRequest =
+            this.configurationManager.updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(),
+                resourceId, getMergedConfiguration(), fromStructured);
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:
@@ -190,6 +183,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     private Configuration getMergedConfiguration() {
         for (RawConfiguration raw : getModified().values()) {
             getRaws().put(raw.getPath(), raw);
+            log.error("Just merged in raw path =[" + raw.getPath() + "]");
+            log.error("                   file =[" + new String(raw.getContents()) + "]");
+
         }
         getConfiguration().getRawConfigurations().clear();
         getConfiguration().getRawConfigurations().addAll(getRaws().values());
@@ -203,6 +199,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void fileUploadListener(UploadEvent event) throws Exception {
         File uploadFile;
+        log.error("fileUploadListener called");
         uploadFile = event.getUploadItem().getFile();
         if (uploadFile != null) {
             log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
@@ -226,6 +223,27 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public int getConfigId() {
         return getConfiguration().getId();
     }
+
+    /*
+        public Configuration getConfiguration() {
+            if (null == configuration) {
+
+                Subject subject = EnterpriseFacesContextUtility.getSubject();
+                int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+                AbstractResourceConfigurationUpdate configurationUpdate = LookupUtil.getConfigurationManager()
+                    .getLatestResourceConfigurationUpdate(subject, resourceId);
+                Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
+                if (configuration != null) {
+                    //ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
+                }
+
+                return configuration;
+
+            }
+            return configuration;
+        
+        }
+    */
 
     private ConfigurationFormat getConfigurationFormat() {
         return getConfigurationDefinition().getConfigurationFormat();
@@ -315,10 +333,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void setCurrentContents(String updated) {
 
-        String original = getCurrent().getContentString();
+        String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
-            current.setContentString(updated);
+            current.setContents(updated.getBytes());
             //TODO update other values like MD5
             getModified().put(current.getPath(), current);
         }
@@ -340,6 +358,14 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     /**
      * This is a no-op, since the upload work was done by upload file
+     * But is kept as a target for the "save" icon from the full screen page
+     */
+    public String update() {
+        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+    }
+
+    /**
+     * This is a no-op, since the upload work was done by upload file
      * But is kept as a target for the "action" value 
      */
     public String upload() {
@@ -347,8 +373,12 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToraw() {
+        log.error("switch2raw called");
+        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+        log.error("switch2raw post merge");
+        dumpProperties(getConfiguration(), log);
 
         setConfiguration(configuration);
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
@@ -360,10 +390,21 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    public String switchTostructured() {
+    void dumpProperties(Configuration conf, Log log) {
+        for (String key : conf.getAllProperties().keySet()) {
+            log.error("property=" + conf.getAllProperties().get(key));
+        }
+    }
 
+    public String switchTostructured() {
+        log.error("switch2structured called");
+
+        dumpProperties(getConfiguration(), log);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+        log.error("switch2structured post merge");
+
+        dumpProperties(configuration, log);
 
         for (Property property : configuration.getAllProperties().values()) {
             property.setConfiguration(configuration);
@@ -401,5 +442,13 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
         return raws;
     }
+
+    /**
+     * 
+     */
+    String selectedPath;
+    private TreeMap<String, RawConfiguration> raws;
+    TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
+    RawConfiguration current = null;
 
 }

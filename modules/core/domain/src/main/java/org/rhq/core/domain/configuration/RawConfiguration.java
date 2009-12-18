@@ -23,7 +23,7 @@
 
 package org.rhq.core.domain.configuration;
 
-import java.io.Serializable;
+import org.rhq.core.util.MessageDigestGenerator;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -36,8 +36,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.rhq.core.util.MessageDigestGenerator;
+import java.io.Serializable;
 
 /**
  * Resources support structured configuration as well as raw configuration which is represented by this class. A raw
@@ -121,14 +120,6 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     public void setContents(byte[] newContents) {
         this.contents = copy(newContents);
         updateSha256();
-    }
-
-    public String getContentString() {
-        return new String(getContents());
-    }
-
-    public void setContentString(String newValue) {
-        setContents(newValue.getBytes());
     }
 
     private byte[] copy(byte[] original) {
@@ -215,7 +206,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
                 if (this.path == null && that.path == null) {
                     return true;
                 }
-                if ((this.path != null && that.path != null) && this.path.equals(that.path)) {
+                if ((this.path !=null && that.path != null) && this.path.equals(that.path)) {
                     return true;
                 }
             }
@@ -239,9 +230,14 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
     @Override
     public String toString() {
-        return new StringBuilder().append(getClass().getSimpleName()).append("[id=").append(id).append(", path=")
-            .append(path).append(", sha256=").append(sha256).append(", configuration=").append(configuration).append(
-                "]").toString();
+        return new StringBuilder()
+            .append(getClass().getSimpleName())
+            .append("[id=").append(id)
+            .append(", path=").append(path)
+            .append(", sha256=").append(sha256)
+            .append(", configuration=").append(configuration)
+            .append("]")
+            .toString();
     }
 
     public RawConfiguration deepCopy(boolean keepId) {
@@ -251,7 +247,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         }
 
         copy.path = this.path;
-
+        
         if (this.contents != null) {
             copy.setContents(this.getContents());
         }
@@ -260,3 +256,4 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     }
 
 }
+

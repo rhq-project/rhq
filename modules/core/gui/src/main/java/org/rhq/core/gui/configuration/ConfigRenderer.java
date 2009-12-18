@@ -250,14 +250,15 @@ public class ConfigRenderer extends Renderer {
                 configurationComponent.setListIndex(addNewMap(configurationComponent));
             }
 
-            addListMemberProperty(configurationComponent);
-        } else {
-            addConfiguration(configurationComponent);
-        }
+                addListMemberProperty(configurationComponent);
+            } else {
+                addConfiguration(configurationComponent);
+            }
 
-        String id = getInitInputsJavaScriptComponentId(configurationComponent);
-        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-            .isFullyEditable(), false);
+            String id = getInitInputsJavaScriptComponentId(configurationComponent);
+            PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+                .isFullyEditable(), false);
+        }
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {

@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.enterprise.server.perspective.activator.FacetActivator;
@@ -48,7 +49,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Tr
  *  
  * @author Ian Springer
  */
-public class Tab extends Extension implements Serializable {
+public class Tab extends Extension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     private String name;
@@ -105,7 +106,8 @@ public class Tab extends Extension implements Serializable {
         List<FacetActivatorType> rawFacetActivators = rawActivators.getFacet();
         for (FacetActivatorType rawFacetActivator : rawFacetActivators) {
             String rawName = rawFacetActivator.getName().toString();
-            FacetActivator facetActivator = new FacetActivator(ResourceTypeFacet.valueOf(rawName.toUpperCase(Locale.US)));
+            FacetActivator facetActivator = new FacetActivator(ResourceTypeFacet
+                .valueOf(rawName.toUpperCase(Locale.US)));
             getActivators().add(facetActivator);
         }
 
@@ -128,8 +130,8 @@ public class Tab extends Extension implements Serializable {
         List<InventoryActivatorType> rawInventoryActivators = rawActivators.getResourceType();
         for (InventoryActivatorType rawInventoryActivator : rawInventoryActivators) {
             List<ResourceType> rawResourceConditions = rawInventoryActivator.getResource();
-            List<ResourceConditionSet> resourceConditionSets =
-                    new ArrayList<ResourceConditionSet>(rawResourceConditions.size());
+            List<ResourceConditionSet> resourceConditionSets = new ArrayList<ResourceConditionSet>(
+                rawResourceConditions.size());
             for (ResourceType rawResourceCondition : rawResourceConditions) {
                 List<ResourcePermissionActivatorType> rawPermissions = rawResourceCondition.getPermission();
                 EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
@@ -140,20 +142,29 @@ public class Tab extends Extension implements Serializable {
                 }
 
                 List<TraitActivatorType> rawTraits = rawResourceCondition.getTrait();
-                Map<String, Pattern> traits = new HashMap();
+                Map<String, Pattern> traits = new HashMap<String, Pattern>();
                 for (TraitActivatorType rawTraitActivator : rawTraits) {
                     String name = rawTraitActivator.getName();
                     String value = rawTraitActivator.getValue();
                     traits.put(name, Pattern.compile(value));
                 }
 
-                ResourceConditionSet resourceConditionSet = new ResourceConditionSet(
-                        rawResourceCondition.getPlugin(), rawResourceCondition.getType(),
-                        permissions, traits);
+                ResourceConditionSet resourceConditionSet = new ResourceConditionSet(rawResourceCondition.getPlugin(),
+                    rawResourceCondition.getType(), permissions, traits);
                 resourceConditionSets.add(resourceConditionSet);
             }
             ResourceTypeActivator resourceTypeActivator = new ResourceTypeActivator(resourceConditionSets);
             getActivators().add(resourceTypeActivator);
         }
     }
+
+    /**
+     * Note that this will clone the children list but not the child Tab objects themselves.
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
 }

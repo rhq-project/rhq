@@ -34,13 +34,11 @@ import org.jetbrains.annotations.NotNull;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.perspective.activator.Activator;
 import org.rhq.enterprise.server.perspective.activator.context.ActivationContext;
 import org.rhq.enterprise.server.perspective.activator.context.ActivationContextScope;
 import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationContext;
 import org.rhq.enterprise.server.perspective.activator.context.ResourceActivationContext;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -61,14 +59,14 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     // private EntityManager entityManager;
 
-    @EJB
-    private AuthorizationManagerLocal authorizationManager;
+    // @EJB
+    // private AuthorizationManagerLocal authorizationManager;
+
+    // @EJB
+    // private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
-
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
 
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
@@ -95,43 +93,58 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     }
 
     /**
-     * Recursively applies activators, based on the specified contexts, to a menu, and returns a filtered copy of the
-     * menu. The copy contains new List objects with references to the same MenuItem objects from the original menu.
+     * Recursively applies activators, based on the specified contexts, to a menu, and returns a
+     * filtered, deep copy of the menu. The supplied <menu> is unmodified.
      */
-    private List<MenuItem> applyActivatorsToMenu(GlobalActivationContext context, EnumSet<ActivationContextScope> scopes,
-                                                 List<MenuItem> menu) {
+    private List<MenuItem> applyActivatorsToMenu(ActivationContext context, EnumSet<ActivationContextScope> scopes,
+        List<MenuItem> menu) {
+
         List<MenuItem> filteredMenu = new ArrayList<MenuItem>();
         for (MenuItem menuItem : menu) {
-            if (applyActivators(context, scopes, menuItem)) {
+            if (isActive(context, scopes, menuItem)) {
+                MenuItem clone = null;
+                try {
+                    clone = (MenuItem) menuItem.clone();
+                } catch (CloneNotSupportedException e) {
+                    log.error("Invalid Clone - This should not happen: " + e);
+                }
+
                 filteredMenu.add(menuItem);
                 // Recurse...
-                List<MenuItem> filteredChildren = applyActivatorsToMenu(context, scopes, menuItem.getChildren()); // recurse
-                menuItem.setChildren(filteredChildren);
+                List<MenuItem> filteredChildren = applyActivatorsToMenu(context, scopes, clone.getChildren());
+                clone.setChildren(filteredChildren);
             }
         }
         return filteredMenu;
     }
 
     /**
-     * Recursively applies activators, based on the specified contexts, to a list of tabs, and returns a filtered copy of the
-     * list. The copy contains new List objects with references to the same Tab objects from the original list.
+     * Recursively applies activators, based on the specified contexts, to a list of tabs, and returns a
+     * filtered, deep copy of the list. The supplied <tabs> are unmodified.
      */
     private List<Tab> applyActivatorsToTabs(ActivationContext context, EnumSet<ActivationContextScope> scopes,
-                                       List<Tab> tabs) {
+        List<Tab> tabs) {
+
         List<Tab> filteredTabs = new ArrayList<Tab>();
         for (Tab tab : tabs) {
-            if (applyActivators(context, scopes, tab)) {
-                filteredTabs.add(tab);
+            if (isActive(context, scopes, tab)) {
+                Tab clone = null;
+                try {
+                    clone = (Tab) tab.clone();
+                } catch (CloneNotSupportedException e) {
+                    log.error("Invalid Clone - This should not happen: " + e);
+                }
+                filteredTabs.add(clone);
                 // Recurse...
-                List<Tab> filteredChildren = applyActivatorsToTabs(context, scopes, tab.getChildren());
-                tab.setChildren(filteredChildren);
+                List<Tab> filteredChildren = applyActivatorsToTabs(context, scopes, clone.getChildren());
+                clone.setChildren(filteredChildren);
             }
         }
         return filteredTabs;
     }
 
-    private boolean applyActivators(ActivationContext context, EnumSet<ActivationContextScope> scopes,
-                                    Extension extension) {
+    @SuppressWarnings("unchecked")
+    private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
         List<Activator> activators = extension.getActivators();
         for (Activator activator : activators) {
             if (scopes.contains(activator.getScope()) && !activator.matches(context)) {

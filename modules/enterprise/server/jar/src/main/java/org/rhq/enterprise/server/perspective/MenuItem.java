@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalActivatorsType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.InventoryActivatorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemFeatureType;
@@ -36,7 +37,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Tr
 /**
  * An item in the RHQ GUI's menu.
  */
-public class MenuItem extends Extension implements Serializable {
+public class MenuItem extends Extension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     private MenuItemFeatureType feature;
@@ -97,7 +98,7 @@ public class MenuItem extends Extension implements Serializable {
             List<ResourceType> rawResourceConditions = rawInventoryActivator.getResource();
             for (ResourceType rawResourceCondition : rawResourceConditions) {
                 List<TraitActivatorType> rawTraitActivators = rawResourceCondition.getTrait();
-                Map<String, Pattern> traits = new HashMap();
+                Map<String, Pattern> traits = new HashMap<String, Pattern>();
                 for (TraitActivatorType rawTraitActivator : rawTraitActivators) {
                     String name = rawTraitActivator.getName();
                     String value = rawTraitActivator.getValue();
@@ -108,4 +109,14 @@ public class MenuItem extends Extension implements Serializable {
             }
         }
     }
+
+    /**
+     * Note that this will clone the children list but not the child MenuItem objects themselves.
+     * @see java.lang.Object#clone()
+     */
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
 }

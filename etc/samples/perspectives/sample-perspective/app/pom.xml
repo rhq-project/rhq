@@ -26,6 +26,13 @@
 
   <dependencies>
 
+      <!-- This will pull in all the jars we need for making remote calls to the RHQ Server. -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-remoting-client-api</artifactId>
+         <version>${project.version}</version>                  
+      </dependency>
+      
   </dependencies>
 
   <build>

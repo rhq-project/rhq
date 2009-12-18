@@ -12,7 +12,7 @@
     <fileSet>      
       <directory>${basedir}/target/${artifactId}-${version}</directory>
       <outputDirectory>/</outputDirectory>
-      <includes>	
+      <includes>
         <include>**/*</include>
       </includes>            
       <excludes>

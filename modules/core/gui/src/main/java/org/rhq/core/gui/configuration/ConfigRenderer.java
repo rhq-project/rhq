@@ -249,16 +249,14 @@ public class ConfigRenderer extends Renderer {
                 // No index specified means we should add a new map to the list.
                 configurationComponent.setListIndex(addNewMap(configurationComponent));
             }
-
-                addListMemberProperty(configurationComponent);
-            } else {
-                addConfiguration(configurationComponent);
-            }
-
-            String id = getInitInputsJavaScriptComponentId(configurationComponent);
-            PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
-                .isFullyEditable(), false);
+            addListMemberProperty(configurationComponent);
+        } else {
+            addConfiguration(configurationComponent);
         }
+
+        String id = getInitInputsJavaScriptComponentId(configurationComponent);
+        PropertyRenderingUtility.addInitInputsJavaScript(configurationComponent, id, configurationComponent
+            .isFullyEditable(), false);
     }
 
     private void addListMemberProperty(AbstractConfigurationComponent configurationComponent) {

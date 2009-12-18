@@ -9,26 +9,18 @@
       xmlns:a4j="https://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-    <h:outputText value="Hello New Facelet roles world: #{ListNotificationsUIBean.selectedSender}"/>
-
-
-
-    <br/>
-    <h:outputText value="#{GenericAlertStuffUIBean.theString}">
-        <f:param name="sender" value="Roles"/>
-    </h:outputText>
-
-    <p/>
-    Select a user:<br/>
-    <h:selectOneMenu id="mySenderList" value="#{GenericAlertStuffUIBean.theValue}">
-        <f:selectItems value="#{GenericAlertStuffUIBean.theMap}"/>
-    </h:selectOneMenu>
-
-    <h:commandButton
-        id="roles_submit"
-        value="Add them"
-        type="submit"
-        action="#{GenericAlertStuffUIBean.submitForm}"
-            />
-
+    <body>
+        <p/>
+        Select the roles to add:<br/>
+        <h:selectManyMenu id="mySenderList" value="#{GenericAlertStuffUIBean.theValue}">
+            <f:selectItems value="#{GenericAlertStuffUIBean.theMap}"/>
+        </h:selectManyMenu>
+        <br/>
+        <h:commandButton
+            id="roles_submit"
+            value="Add them"
+            type="submit"
+            action="#{GenericAlertStuffUIBean.submitForm}"
+                />
+    </body>
 </html>

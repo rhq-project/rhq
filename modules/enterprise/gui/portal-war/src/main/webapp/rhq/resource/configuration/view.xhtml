@@ -41,56 +41,20 @@ THIS TEXT WILL BE REMOVED.
       </h:panelGroup>
 
 
+      <h:outputText value=" #{messages.nopermissionedit}" rendered="#{!ResourceUIBean.permissions.configure}"/>
+
       <h:form id="viewResourceConfigurationForm">
          <!--  TODO remove the id version -->
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-   
-         <ui:include src="/WEB-INF/fragments/config-view-toolbar.xhtml" />
-	     
-	         <h:panelGroup>
-        <h:outputLink value="edit.xhtml">
-			<h:graphicImage value="Edit" url="/images/edit.png" />
-			<h:outputText value="Edit " />
-			<f:param name="showRaw" value="#{showRawConfig}"/>
-			<f:param name="id" value="#{ResourceUIBean.id}"/>			
-        </h:outputLink>        
-        
-        <h:commandLink rendered="#{ExistingResourceConfigurationViewUIBean.showRawButton}">
-			<h:graphicImage value="Raw" url="/images/raw.png" />
-			<h:outputText value="Raw " />
-			<f:param name="showRaw" value="true"/>
-        </h:commandLink>        
-
-        <h:commandLink  rendered="#{ExistingResourceConfigurationViewUIBean.showStructuredButton}">
-			<h:graphicImage value="Structured" url="/images/structured.png" />
-			<h:outputText value="Structured " />
-			<f:param name="showRaw" value="false"/>
-        </h:commandLink>        
-
-        <h:commandLink rendered="#{showRawConfig}">
-			<h:graphicImage value="Full Screen" url="/images/viewfullscreen.png" />
-			<h:outputText value="Full Screen" />
-			<f:param name="showRaw" value="true"/>
-        </h:commandLink>        
-        
-        <h:outputLink value="download.xhtml" rendered="#{showRawConfig}">
-			<h:graphicImage value="Download" url="/images/download.png" />
-			<h:outputText value="Download " />
-        </h:outputLink> 
-
-        </h:panelGroup>
-	     
-	     
-	     
-	     
+         
          <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
                      accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
                      nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
 					 readOnly="true"
-				     prevalidate="true"
-				     />
+					 showToolbar="true"
+				     prevalidate="true"/>
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       </h:form>

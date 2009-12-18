@@ -34,7 +34,7 @@ public class RawConfigUIComponent extends UIComponentBase {
         super.decode(context);
         setSelectedPath(FacesContextUtility.getOptionalRequestParameter("path"));
         readOnly = Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("readOnly"));
-        this.inputTextarea.decode(context);
+
     }
 
     @Override
@@ -99,7 +99,7 @@ public class RawConfigUIComponent extends UIComponentBase {
 
         UIPanel rawPanel = FacesComponentUtility.addBlockPanel(this, idFactory, "");
 
-        //addToolbar(configurationDefinition, rawPanel);
+        addToolbar(configurationDefinition, rawPanel);
 
         HtmlPanelGrid grid = FacesComponentUtility.addPanelGrid(rawPanel, idFactory, "summary-props-table");
         grid.setParent(this);
@@ -122,14 +122,6 @@ public class RawConfigUIComponent extends UIComponentBase {
             configPathList.add(raw.getPath());
             rawMap.put(raw.getPath(), raw);
         }
-
-        if (rawMap.isEmpty()) {
-            RawConfiguration raw = new RawConfiguration();
-            raw.setContentString("");
-            raw.setPath("");
-            rawMap.put("", raw);
-        }
-
         Collections.sort(configPathList);
         String oldDirname = "";
         for (String s : configPathList) {
@@ -148,11 +140,12 @@ public class RawConfigUIComponent extends UIComponentBase {
             FacesComponentUtility.addParameter(link, idFactory, "showRaw", Boolean.TRUE.toString());
             readOnlyParms.add(FacesComponentUtility.addParameter(link, idFactory,
                 AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE, Boolean.toString(readOnly)));
+
         }
 
         UIPanel panelRight = FacesComponentUtility.addBlockPanel(grid, idFactory, "summary-props-table");
 
-        editPanel = FacesComponentUtility.addBlockPanel(panelRight, idFactory, "summary-props-table");
+        UIPanel editPanel = FacesComponentUtility.addBlockPanel(panelRight, idFactory, "summary-props-table");
         inputTextarea = new HtmlInputTextarea();
         editPanel.getChildren().add(inputTextarea);
         inputTextarea.setParent(editPanel);
@@ -164,8 +157,52 @@ public class RawConfigUIComponent extends UIComponentBase {
 
     private HtmlOutputLink fullscreenLink;
     private UIParameter fullScreenResourceIdParam;
-    public HtmlCommandLink saveLink;
-    private UIPanel editPanel;
+
+    private void addToolbar(ConfigurationDefinition configurationDefinition, UIPanel parent) {
+        UIPanel toolbarPanel = FacesComponentUtility.addBlockPanel(parent, idFactory, "config-toolbar");
+        if (readOnly) {
+            HtmlCommandLink editLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
+            FacesComponentUtility.addGraphicImage(editLink, idFactory, "/images/edit.png", "Edit");
+            FacesComponentUtility.addOutputText(editLink, idFactory, "Edit", "");
+            FacesComponentUtility.addParameter(editLink, idFactory, "showRaw", Boolean.TRUE.toString());
+            FacesComponentUtility.addParameter(editLink, idFactory, AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE,
+                Boolean.FALSE.toString());
+        } else {
+            HtmlCommandLink saveLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
+            FacesComponentUtility.addGraphicImage(saveLink, idFactory, "/images/save.png", "Save");
+            FacesComponentUtility.addOutputText(saveLink, idFactory, "Save", "");
+            FacesComponentUtility.addParameter(saveLink, idFactory, "showRaw", Boolean.FALSE.toString());
+            FacesComponentUtility.addParameter(saveLink, idFactory, AbstractConfigurationComponent.READ_ONLY_ATTRIBUTE,
+                Boolean.TRUE.toString());
+        }
+        {
+            fullscreenLink = FacesComponentUtility.addOutputLink(toolbarPanel, idFactory, "view-full.xhtml");
+            FacesComponentUtility
+                .addGraphicImage(fullscreenLink, idFactory, "/images/viewfullscreen.png", "FullScreen");
+            FacesComponentUtility.addOutputText(fullscreenLink, idFactory, "Full Screen", "");
+            fullScreenResourceIdParam = FacesComponentUtility.addParameter(fullscreenLink, idFactory, "id", "");
+        }
+        if (!readOnly) {
+            HtmlOutputLink uploadLink = FacesComponentUtility.addOutputLink(toolbarPanel, idFactory, "upload.xhtml");
+            FacesComponentUtility.addGraphicImage(uploadLink, idFactory, "/images/upload.png", "Upload");
+            FacesComponentUtility.addOutputText(uploadLink, idFactory, "Upload", "");
+        }
+        {
+            HtmlOutputLink downloadLink = FacesComponentUtility
+                .addOutputLink(toolbarPanel, idFactory, "download.xhtml");
+            FacesComponentUtility.addGraphicImage(downloadLink, idFactory, "/images/download.png", "download");
+            FacesComponentUtility.addOutputText(downloadLink, idFactory, "Download", "");
+        }
+        if (configurationDefinition.getConfigurationFormat().isStructuredSupported()) {
+            HtmlCommandLink toStructureLink = FacesComponentUtility.addCommandLink(toolbarPanel, idFactory);
+            FacesComponentUtility.addGraphicImage(toStructureLink, idFactory, "/images/structured.png",
+                "showStructured");
+            FacesComponentUtility.addOutputText(toStructureLink, idFactory, "showStructured", "");
+            FacesComponentUtility.addParameter(toStructureLink, idFactory, "showRaw", Boolean.FALSE.toString());
+            readOnlyParms.add(FacesComponentUtility.addParameter(toStructureLink, idFactory, "readOnly", Boolean
+                .toString(readOnly)));
+        }
+    }
 
     @Override
     public void encodeBegin(FacesContext context) throws IOException {

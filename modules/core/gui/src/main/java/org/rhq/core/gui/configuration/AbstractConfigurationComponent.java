@@ -24,7 +24,6 @@ package org.rhq.core.gui.configuration;
 
 import java.util.UUID;
 
-import javax.el.ValueExpression;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
@@ -60,7 +59,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     private Boolean fullyEditable;
     private String listName;
     private Integer listIndex;
-    RawConfigUIComponent rawConfigUIComponent;
 
     public UIComponent getToolbar() {
         return toolbar;
@@ -88,16 +86,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
     public abstract String getConfigurationDefinitionExpressionString();
 
     public abstract String getConfigurationExpressionString();
-
-    private ValueExpression saveValueExpression;
-
-    public ValueExpression getSaveValueExpression() {
-        return saveValueExpression;
-    }
-
-    public void setSaveValueExpression(ValueExpression saveValueExpression) {
-        this.saveValueExpression = saveValueExpression;
-    }
 
     public String createUniqueId() {
         return UNIQUE_ID_PREFIX + UUID.randomUUID();
@@ -227,12 +215,10 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
 
     private Object[] stateValues;
 
-    public StructuredConfigUIComponent structuredConfig;
-
     @Override
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[12];
+            this.stateValues = new Object[8];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
@@ -243,12 +229,6 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.stateValues[5] = this.prevalidate;
         this.stateValues[6] = this.isGroup;
         this.stateValues[7] = this.getShowToolbar();
-        if (rawConfigUIComponent != null) {
-            this.stateValues[8] = this.rawConfigUIComponent;
-            this.stateValues[9] = structuredConfig;
-            this.stateValues[10] = this.rawConfigUIComponent.saveState(facesContext);
-            this.stateValues[11] = this.structuredConfig.saveState(facesContext);
-        }
         return this.stateValues;
     }
 
@@ -263,33 +243,20 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.prevalidate = (Boolean) this.stateValues[5];
         this.isGroup = (Boolean) this.stateValues[6];
         this.showToolbar = (Boolean) this.stateValues[7];
-
-        this.rawConfigUIComponent = (RawConfigUIComponent) this.stateValues[8];
-        this.structuredConfig = (StructuredConfigUIComponent) this.stateValues[9];
-
-        if (this.rawConfigUIComponent != null) {
-            this.rawConfigUIComponent.restoreState(facesContext, this.stateValues[10]);
-        }
-        if (this.structuredConfig != null) {
-            this.structuredConfig.restoreState(facesContext, this.stateValues[11]);
-        }
-
-        //getChildren().add(structuredConfig);
-        //getChildren().add(rawConfigUIComponent);
-
     }
 
     public boolean getShouldShowRaw() {
         return Boolean.valueOf(FacesContextUtility.getOptionalRequestParameter("showRaw", String.class, "unset"))
-            && (!this.getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.STRUCTURED));
+            || (this.getConfigurationDefinition().getConfigurationFormat().equals(ConfigurationFormat.RAW));
     }
+
+    RawConfigUIComponent rawConfigUIComponent;
 
     RawConfigUIComponent getRawConfigUIComponent() {
         if (null == rawConfigUIComponent) {
             rawConfigUIComponent = new RawConfigUIComponent(getConfiguration(), getConfigurationDefinition(), this,
                 isReadOnly());
         }
-
         return rawConfigUIComponent;
     }
 

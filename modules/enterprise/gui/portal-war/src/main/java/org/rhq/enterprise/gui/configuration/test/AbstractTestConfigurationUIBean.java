@@ -24,7 +24,6 @@ import java.util.UUID;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -37,8 +36,7 @@ import org.rhq.enterprise.gui.common.Outcomes;
  * @author Ian Springer
  */
 public abstract class AbstractTestConfigurationUIBean {
-    public static final String[] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY", "AAA", "AAA", "ZZZ", "ZZZ", "YYY",
-        "BBB" };
+    public static final String [] LABELS = new String[] { "AAA", "ZZZ", "BBB", "YYY","AAA", "AAA", "ZZZ", "ZZZ", "YYY", "BBB"};
 
     public static final int GROUP_SIZE = 100;
 
@@ -47,7 +45,8 @@ public abstract class AbstractTestConfigurationUIBean {
     private List<Property> properties;
     private ConfigurationSet configurationSet;
 
-    protected AbstractTestConfigurationUIBean() {
+    protected AbstractTestConfigurationUIBean()
+    {
         this.configurationDefinition = TestConfigurationFactory.createConfigurationDefinition();
         this.configuration = TestConfigurationFactory.createConfiguration();
         List<ConfigurationSetMember> members = new ArrayList(GROUP_SIZE);
@@ -59,8 +58,8 @@ public abstract class AbstractTestConfigurationUIBean {
             configuration.getSimple("Boolean").setStringValue(String.valueOf(i % 2 == 0));
             if (i == 0)
                 configuration.getMap("OpenMapOfSimples").put(new PropertySimple("PROCESSOR_CORES", "4"));
-            ConfigurationSetMember memberInfo = new ConfigurationSetMember(LABELS[GROUP_SIZE % LABELS.length],
-                configuration);
+            ConfigurationSetMember memberInfo =
+                    new ConfigurationSetMember(LABELS[GROUP_SIZE % LABELS.length], configuration);
             members.add(memberInfo);
         }
         this.configurationSet = new ConfigurationSet(this.configurationDefinition, members);
@@ -77,7 +76,8 @@ public abstract class AbstractTestConfigurationUIBean {
         return this.configurationDefinition;
     }
 
-    public void setConfigurationDefinition(@NotNull ConfigurationDefinition configurationDefinition) {
+    public void setConfigurationDefinition(@NotNull
+    ConfigurationDefinition configurationDefinition) {
         this.configurationDefinition = configurationDefinition;
     }
 
@@ -86,24 +86,24 @@ public abstract class AbstractTestConfigurationUIBean {
         return this.configuration;
     }
 
-    public void setConfiguration(@NotNull Configuration configuration) {
+    public void setConfiguration(@NotNull
+    Configuration configuration) {
         this.configuration = configuration;
     }
 
-    public ConfigurationSet getConfigurationSet() {
+    public ConfigurationSet getConfigurationSet()
+    {
         return configurationSet;
     }
 
-    public void setConfigurationSet(ConfigurationSet configurationSet) {
+    public void setConfigurationSet(ConfigurationSet configurationSet)
+    {
         this.configurationSet = configurationSet;
     }
 
-    public List<Property> getProperties() {
+    public List<Property> getProperties()
+    {
         return this.properties;
-    }
-
-    public void setProperties(@NotNull List<Property> properties) {
-        this.properties = properties;
     }
 
     public String getNullConfigurationDefinitionMessage() {

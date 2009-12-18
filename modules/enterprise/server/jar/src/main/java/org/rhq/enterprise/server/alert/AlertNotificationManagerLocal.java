@@ -22,7 +22,6 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
@@ -36,6 +35,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 /**
@@ -96,7 +96,7 @@ public interface AlertNotificationManagerLocal {
      * @param senderName shortName of the {@link AlertSender}
      * @param configuration Properties for this alert sender.
      */
-    void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration);
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration);
 
     /**
      * Return notifications for a certain alertDefinitionId
@@ -110,6 +110,13 @@ public interface AlertNotificationManagerLocal {
      *
      */
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
+
+    /**
+     * Persist changes to the passed {@link AlertNotification}
+     *
+     * @param notification
+     */
+    void updateAlertNotification(AlertNotification notification);
 
     AlertSenderInfo getAlertInfoForSender(String shortName);
 

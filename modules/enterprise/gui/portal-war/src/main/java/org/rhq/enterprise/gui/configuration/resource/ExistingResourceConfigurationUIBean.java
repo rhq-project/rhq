@@ -311,11 +311,17 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public boolean isRawSupported() {
-        return getConfigurationFormat().isRawSupported();
+//        return getConfigurationFormat().isRawSupported();
+        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.RAW;            
     }
 
     public boolean isStructuredSupported() {
-        return getConfigurationFormat().isStructuredSupported();
+//        return getConfigurationFormat().isStructuredSupported();
+        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED;
+    }
+
+    public boolean isStructuredAndRawSupported() {
+        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW;        
     }
 
     void nullify() {

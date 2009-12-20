@@ -33,9 +33,9 @@
 	}
 </script>
 	<a4j:form id="editResourceConfigurationForm">
-			
-	<h:outputText value="#{messages.youareviewingraw}" />
-	<h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredSupported}">
+
+    <h:outputText value="#{messages.youareviewingraw}" />
+	<h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
 		<h:outputText value=" #{messages.switch2}" />
     	<h:commandLink  action="#{ExistingResourceConfigurationUIBean.switchTostructured}">
 			<f:param name="conversationId" value="#{conversation.id}"/>

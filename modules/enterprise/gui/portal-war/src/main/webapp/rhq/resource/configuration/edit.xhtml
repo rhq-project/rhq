@@ -30,7 +30,7 @@ THIS TEXT WILL BE REMOVED.
          
          <h:outputText value="#{messages.youareviewingstructured}" />
 	  
-		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}" >
+		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredAndRawSupported}" >
 		   <h:outputText value=" #{messages.switch2}" />
            <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToraw}"  >
              <f:param name="conversationId" value="#{conversation.id}"/>
@@ -58,7 +58,6 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
-
    </ui:define>
 
 </ui:composition>

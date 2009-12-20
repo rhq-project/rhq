@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -64,7 +64,6 @@ import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -145,7 +144,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         int added = 0;
         for (String emailAddress : emails) {
@@ -208,7 +207,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Role> roles = roleManager.findRolesByIds(roleIds, PageControl.getUnlimitedInstance());
 
@@ -290,7 +289,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Subject> subjects = subjectManager.findSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
 
@@ -396,8 +395,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
 
         Set<Integer> notificationIdSet = new HashSet<Integer>(Arrays.asList(notificationIds));
-        List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition
-            .getAlertNotifications());
+        List<AlertNotification> notifications = alertDefinition.getAlertNotifications();
         List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>();
 
         int removed = 0;
@@ -507,12 +505,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param senderName shortName of the {@link AlertSender}
      * @param configuration Properties for this alert sender.
      */
-    public void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
+    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
         if (definition==null) {
             LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
-            return;
+            return null;
         }
 
         entityManager.persist(configuration);
@@ -522,6 +520,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);
 
+        return notif;
     }
 
     /**
@@ -541,15 +540,23 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
             return new ArrayList<AlertNotification>();
         }
-        Set<AlertNotification> notifs = definition.getAlertNotifications();
-        List<AlertNotification> result = new ArrayList<AlertNotification>();
-        for (AlertNotification notif : notifs) {
-            if (notif.getSenderName()!=null) {
-                notif.getConfiguration().getProperties().size(); // Eager load
-                result.add(notif);
-            }
+        
+        List<AlertNotification> notifications = definition.getAlertNotifications();
+        for (AlertNotification notification : notifications) {
+            notification.getConfiguration().getProperties().size();  // eager load
         }
-        return result;
+
+        return notifications;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void updateAlertNotification(AlertNotification notification) {
+        notification = entityManager.merge(notification);
+
+        entityManager.persist(notification);
+        entityManager.flush();
     }
 
     /**

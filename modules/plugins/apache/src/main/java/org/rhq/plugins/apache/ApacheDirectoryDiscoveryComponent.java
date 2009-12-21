@@ -80,7 +80,7 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
                 isRegexp = false;
             }
             
-            pluginConfiguration.put(new PropertySimple("regexp", isRegexp));
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, isRegexp));
             
             String resourceKey = directoryParam + "|" + idx;
             String resourceName = AugeasNodeValueUtil.unescape(directoryParam);

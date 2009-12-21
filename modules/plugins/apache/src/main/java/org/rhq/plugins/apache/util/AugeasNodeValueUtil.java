@@ -34,6 +34,14 @@ public class AugeasNodeValueUtil {
         
     }
     
+    /**
+     * If the string is enclosed in double or single quotes, the
+     * value inside the quotes is returned with all the escaped characters
+     * unescaped.
+     * 
+     * @param value
+     * @return
+     */
     public static String unescape(String value) {
         if (value == null) return value;
         if (value.startsWith("\"")) {
@@ -41,6 +49,23 @@ public class AugeasNodeValueUtil {
         } else if (value.startsWith("'")) {
             return value.substring(1, value.length() - 1).replaceAll("\\'", "'");
         }
+        return value;
+    }
+    
+    /**
+     * If the supplied value contains single or double quotes, the returned
+     * string is enclosed in quotes and the original qoutes "inside" are escaped.
+     * 
+     * @param value
+     * @return
+     */
+    public static String escape(String value) {
+        if (value.indexOf('"') >= 0) {
+            return "\"" + value.replaceAll("\"", "\\\"") + "\"";
+        } else if (value.indexOf('\'') >= 0) {
+            return "'" + value.replaceAll("'", "\\'") + "'";
+        }
+        
         return value;
     }
 }

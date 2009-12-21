@@ -672,7 +672,7 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
-         
+<!--          
          <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
@@ -705,13 +705,12 @@
                 &DefaultType;
                 &DirectoryIndex;
                 &ErrorDocuments;
-                <!-- &Options;  Options are ignored in <Location> -->
                 &UseCanonicalName;
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
+ -->
       </service>
-
       <service name="Mod JK" description="Management of mod_jk"
                discovery="ModJKDiscoveryComponent"
                class="ModJKComponent"

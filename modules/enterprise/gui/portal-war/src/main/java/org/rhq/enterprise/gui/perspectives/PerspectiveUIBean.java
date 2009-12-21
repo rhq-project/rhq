@@ -39,7 +39,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jay Shaughnessy  
  *
  */
-public class PerspectivesMenuUIBean {
+public class PerspectiveUIBean {
 
     PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
@@ -85,11 +85,14 @@ public class PerspectivesMenuUIBean {
         Server server = LookupUtil.getServerManager().getServer();
         String host = server.getAddress();
         String port = String.valueOf(server.getPort());
-        String sessionId = String.valueOf(EnterpriseFacesContextUtility.getSubject().getSessionId());
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String username = subject.getName();
+        String sessionId = String.valueOf(subject.getSessionId());
         String resourceId = FacesContextUtility.getOptionalRequestParameter("id", "-1");
 
         addContextParam(sb, "rhqServerHost", host, url.contains("?") ? "&" : "?");
         addContextParam(sb, "rhqServerPort", port, "&");
+        addContextParam(sb, "rhqUsername", username, "&");
         addContextParam(sb, "rhqSessionId", sessionId, "&");
         if (!"-1".equals(resourceId)) {
             addContextParam(sb, "rhqResourceId", resourceId, "&");

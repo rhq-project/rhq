@@ -131,7 +131,24 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        AugeasTree tree=null;
+        try {
+        tree = getServerConfigurationTree();
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+        AugeasNode virtHostNode = getNode(tree);
+        mapping.updateAugeas(virtHostNode,report.getConfiguration(), resourceConfigDef);
+        tree.save();
+        
         report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        log.info("Apache configuration was updated");
+        }catch(Exception e){
+                if (tree!=null)
+                    log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
+                else
+                    log.error("Augeas failed to save configuration",e);
+           report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+        }
     }
 
     public void deleteResource() throws Exception {

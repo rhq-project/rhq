@@ -37,7 +37,7 @@ import org.rhq.augeas.node.AugeasNode;
  * It just supplies a list of "param" nodes each containing a value for one
  * parameter of a directive (how we wish it could be otherwise and the lens be more sophisticated).
  * <p>
- * In order to extract the useful information from these that we can use for mapping the
+ * In order to extract the useful information from this that we can use for mapping these
  * params to RHQ configuration properties, we define a series of regular expressions
  * that are designed to work with a space concatenated list of params supplied by Augeas.
  * <p>
@@ -62,10 +62,11 @@ public class ApacheDirectiveRegExpression {
         MAPPING_TYPE.put("Deny", DirectiveMapping.PARAM_PER_MAP);
         MAPPING_TYPE.put("CustomLog", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
         MAPPING_TYPE.put("AllowOverride", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
+        MAPPING_TYPE.put("DirectoryIndex", DirectiveMapping.PARAM_PER_MAP);
     }
 
-    private static String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
-    private static String WS = "[ \t]*";
+    private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
+    private static final String WS = "[ \t]*";
     private static final String WS_MAN = "[ \t]+";
     private static final String NUM = "[0-9]+";
 
@@ -93,8 +94,24 @@ public class ApacheDirectiveRegExpression {
         DIRECTIVE_REGEX.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
         DIRECTIVE_REGEX.put("AllowOverride", new Pattern[] { Pattern
             .compile("(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)") });
+        DIRECTIVE_REGEX.put("DirectoryIndex", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS) });
     }
 
+    
+    private static final Map<String, Pattern[]> DIRECTIVEREGEX_TO_AUGEAS;
+    static {
+            DIRECTIVEREGEX_TO_AUGEAS = new HashMap<String, Pattern[]>();
+            DIRECTIVEREGEX_TO_AUGEAS.put("Options", new Pattern[] { Pattern.compile("([+-]?" + WORD + ")" + WS) });
+            DIRECTIVEREGEX_TO_AUGEAS.put("Allow", new Pattern[] { Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
+            DIRECTIVEREGEX_TO_AUGEAS.put("Deny", new Pattern[] { Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
+            DIRECTIVEREGEX_TO_AUGEAS.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
+            DIRECTIVEREGEX_TO_AUGEAS.put("DirectoryIndex", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS) });
+            DIRECTIVEREGEX_TO_AUGEAS.put("Alias",
+                new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + WS + "(" + WORD + ")" + WS) });
+            DIRECTIVEREGEX_TO_AUGEAS.put("Listen", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS)});
+            DIRECTIVEREGEX_TO_AUGEAS.put("ErrorDocument", new Pattern[] { Pattern.compile(WS + "(" + NUM + ")" + WS_MAN + "(" + WORD
+                + ")" + WS) });
+    }
     /**
      * Parses the parameters of the supplied node and returns a list
      * of strings, each containing a value for a simple property
@@ -146,6 +163,47 @@ public class ApacheDirectiveRegExpression {
 
         return result;
     }
+    
+    public static List<String> createParams(String params,String name){
+            List<String> nodeParams = new ArrayList<String>();
+            
+        if (!DIRECTIVEREGEX_TO_AUGEAS.containsKey(name)) {
+                nodeParams.add(params);
+            return nodeParams;
+        }
+        
+        if (name.equals("Allow") | name.equals("Deny")){
+                nodeParams.add("from");
+        }
+        //each regex is applied as long as it matches something
+        Pattern[] patterns = DIRECTIVEREGEX_TO_AUGEAS.get(name);
+
+        int startIndex = 0;
+
+        while (startIndex < params.length())
+
+            for (Pattern pattern : patterns) {
+                Matcher m = pattern.matcher(params);
+                while (m.find(startIndex)) {
+                    for (int i = 1; i <= m.groupCount(); i++) {
+                        String val = m.group(i);
+                        if (val!=null)
+                           nodeParams.add(val);
+                    }
+                    startIndex = m.end();
+                }
+            }
+
+        if (name.equals("Listen"))
+                if (nodeParams.size()>1){
+                        String value = nodeParams.get(0);
+                        value = value+":"+nodeParams.get(1);
+                        nodeParams.set(0, value);
+                        nodeParams.remove(1);
+                }
+        
+        return nodeParams;
+    }
 
     /**
      * The properties in the resource configuration share a couple of common
@@ -156,7 +214,7 @@ public class ApacheDirectiveRegExpression {
      * @return the mapping type that can be used to perform the mapping to the property.
      */
     public static DirectiveMapping getMappingType(String directiveName) {
-        DirectiveMapping map = MAPPING_TYPE.get(directiveName);
+    	DirectiveMapping map = MAPPING_TYPE.get(directiveName);
         if (map == null)
             map = DirectiveMapping.SIMPLE_PROP;
 

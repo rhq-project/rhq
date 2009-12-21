@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
@@ -290,14 +289,25 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        if (!isConfigurationSupported()) {
-            report.setErrorMessage("Configuration is supported only for Apache version 2 and up.");
-            report.setStatus(ConfigurationUpdateStatus.FAILURE);
-            return;
-        }
+        AugeasTree tree=null;
+        try {
+        tree = getAugeasTree();
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+       ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
 
-        //TODO implement the rest
-    }
+       mapping.updateAugeas(tree.getRootNode(),report.getConfiguration(), resourceConfigDef);
+       tree.save();
+       
+       report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+       log.info("Apache configuration was updated");
+        }catch(Exception e){
+                 if (tree!=null)
+                   log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
+               else
+                   log.error("Augeas failed to save configuration",e);
+          report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+        }
+   }
 
     public AugeasProxy getAugeasProxy() throws AugeasTreeException {
         AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());

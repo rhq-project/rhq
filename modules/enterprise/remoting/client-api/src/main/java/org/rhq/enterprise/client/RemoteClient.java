@@ -28,14 +28,15 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.client.RemoteClientProxy;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
-import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
@@ -122,6 +123,7 @@ public class RemoteClient {
     private final String host;
     private final int port;
     private boolean loggedIn;
+    private boolean connected;
     private Map<String, Object> managers;
     private Subject subject;
     private Client remotingClient;
@@ -163,7 +165,7 @@ public class RemoteClient {
 
     /**
      * Connects to the remote server and logs in with the given credentials.
-     * After successfully executing this, {@link #isConnected()} will be <code>true</code>
+     * After successfully executing this, {@link #isLoggedIn()} will be <code>true</code>
      * and {@link #getSubject()} will return the subject that this method returns.
      * 
      * @param user
@@ -176,7 +178,7 @@ public class RemoteClient {
     public Subject login(String user, String password) throws Exception {
 
         logout();
-        connect();
+        doConnect();
 
         this.subject = getSubjectManagerRemote().login(user, password);
         this.loggedIn = true;
@@ -200,10 +202,48 @@ public class RemoteClient {
             // just keep going so we can disconnect this client
         }
 
-        disconnect();
+        doDisconnect();
 
         this.subject = null;
         this.loggedIn = false;
+    }
+
+    /**
+     * Connects to the remote server but does not establish a user session. This can be used
+     * with the limited API that does not require a Subject.
+     * 
+     * After successfully executing this, {@link #isConnected()} will be <code>true</code>
+     * and {@link #getSubject()} will return the subject that this method returns.
+     * 
+     * @param user
+     * @param password
+     *
+     * @return the logged in user
+     *
+     * @throws Exception if failed to connect to the server or log in
+     */
+    public void connect() throws Exception {
+        if (this.loggedIn) {
+            String name = (null == this.subject) ? "" : this.subject.getName();
+            throw new IllegalStateException("User " + name + " must log out before connection can be established.");
+        }
+
+        doDisconnect();
+        doConnect();
+        this.connected = true;
+    }
+
+    /**
+     * Disconnect from the server.
+     */
+    public void disconnect() {
+        if (this.loggedIn) {
+            String name = (null == this.subject) ? "" : this.subject.getName();
+            throw new IllegalStateException("User " + name + " is logged in. Call logout() instead of disconnect().");
+        }
+
+        doDisconnect();
+        this.connected = false;
     }
 
     /**
@@ -214,6 +254,16 @@ public class RemoteClient {
      */
     public boolean isLoggedIn() {
         return this.loggedIn;
+    }
+
+    /**
+     * Returns <code>true</code> if and only if this client successfully connected
+     * to the remote server.
+     * 
+     * @return if the user was able to connect and log into the server
+     */
+    public boolean isConnected() {
+        return this.connected;
     }
 
     /**
@@ -390,7 +440,7 @@ public class RemoteClient {
         return this.remotingClient;
     }
 
-    private void disconnect() {
+    private void doDisconnect() {
         try {
             if (this.remotingClient != null && this.remotingClient.isConnected()) {
                 this.remotingClient.disconnect();
@@ -402,7 +452,7 @@ public class RemoteClient {
         }
     }
 
-    private void connect() throws Exception {
+    private void doConnect() throws Exception {
         String locatorURI = getTransport() + "://" + this.host + ":" + this.port
             + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
         InvokerLocator locator = new InvokerLocator(locatorURI);

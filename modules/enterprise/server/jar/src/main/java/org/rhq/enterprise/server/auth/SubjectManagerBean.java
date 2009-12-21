@@ -554,6 +554,20 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public Subject getSubjectBySessionId(int sessionId) throws Exception {
         Subject subject = sessionManager.getSubject(sessionId);
+
+        return subject;
+    }
+
+    /**
+     * Adds more security in the remote api call by requiring matching username
+     */
+    public Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception {
+        Subject subject = getSubjectBySessionId(sessionId);
+
+        if (!username.equals(subject.getName())) {
+            throw new SessionNotFoundException();
+        }
+
         return subject;
     }
 

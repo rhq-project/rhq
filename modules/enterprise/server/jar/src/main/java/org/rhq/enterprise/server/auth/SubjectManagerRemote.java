@@ -112,8 +112,9 @@ public interface SubjectManagerRemote {
         @WebParam(name = "username") String username);
 
     /**
-     * Looks up the existing of a subject by the given sessionId.
+     * Looks up the Subject for a current RHQ session by username and sessionId.
      *
+     * @param username The name of the user.
      * @param sessionId The sessionId of the desired Subject.
      *
      * @return The Subject that was found
@@ -121,7 +122,8 @@ public interface SubjectManagerRemote {
      * @throws Exception if the sessionId is not valid
      */
     @WebMethod
-    Subject getSubjectBySessionId( //
+    Subject getSubjectByNameAndSessionId( //
+        @WebParam(name = "username") String username, //        
         @WebParam(name = "sessionId") int sessionId) throws Exception;
 
     /**

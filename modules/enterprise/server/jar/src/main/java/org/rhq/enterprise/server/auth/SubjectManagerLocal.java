@@ -195,6 +195,12 @@ public interface SubjectManagerLocal {
 
     void logout(int sessionId);
 
+    Subject getSubjectById(int id);
+
+    Subject getSubjectBySessionId(int sessionId) throws Exception;
+
+    boolean isLoggedIn(String username);
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
@@ -222,11 +228,6 @@ public interface SubjectManagerLocal {
     void deleteSubjects(Subject subject, int[] subjectIds);
 
     /**
-     * #see {@link SubjectManagerRemote#getSubjectById(Subject, int)}
-     */
-    Subject getSubjectById(int id);
-
-    /**
      * @see {@link SubjectManagerRemote#getSubjectByName(String)}
      */
     Subject getSubjectByName(String username);
@@ -234,24 +235,26 @@ public interface SubjectManagerLocal {
     /**
      * @see {@link SubjectManagerRemote#getSubjectBySessionId(int)}
      */
-    Subject getSubjectBySessionId(int sessionId) throws Exception;
-
-    /**
-     * @see SubjectManagerRemote#isLoggedIn(String)
-     */
-    boolean isLoggedIn(String username);
+    Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception;
 
     /**
      * @see SubjectManagerRemote#login(String, String)
      */
     Subject login(String username, String password) throws LoginException;
 
+    /**
+     * @see SubjectManagerRemote#logout(Subject)
+     */
     void logout(Subject subject);
 
     /**
-     * @see 
+     * @see SubjectManagerRemote#findSubjectsByCriteria(Subject, Subject)
      */
     Subject updateSubject(Subject subject, Subject subjectToModify);
 
+    /**
+     * @see SubjectManagerRemote#findSubjectsByCriteria(Subject, SubjectCriteria)
+     */
     PageList<Subject> findSubjectsByCriteria(Subject subject, SubjectCriteria criteria);
+
 }

@@ -100,8 +100,13 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
 
     public void deleteResource() throws Exception {
-        // TODO Auto-generated method stub
+        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
+        AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
+        AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
         
+        AugeasNode myNode = getNode(virtualHostNode);
+        tree.removeNode(myNode, true);
+        tree.save();
     }
 
     /**

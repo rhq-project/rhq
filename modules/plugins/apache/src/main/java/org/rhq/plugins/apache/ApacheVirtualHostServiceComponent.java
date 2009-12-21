@@ -152,8 +152,12 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void deleteResource() throws Exception {
-        // TODO Auto-generated method stub
+        AugeasTree tree = getServerConfigurationTree();
+        
+        AugeasNode myNode = getNode(getServerConfigurationTree());
 
+        tree.removeNode(myNode, true);
+        tree.save();
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {

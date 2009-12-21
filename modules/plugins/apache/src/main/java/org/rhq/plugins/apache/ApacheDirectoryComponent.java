@@ -25,9 +25,12 @@ package org.rhq.plugins.apache;
 
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -45,7 +48,8 @@ import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
  * @author Lukas Krejci
  */
 public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtualHostServiceComponent>, ConfigurationFacet, DeleteResourceFacet {
-
+	 
+	private final Log log = LogFactory.getLog(this.getClass());
     public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
 
     ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
@@ -72,8 +76,28 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        // TODO Auto-generated method stub
-    }
+        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
+        
+       AugeasTree tree=null;
+         try {
+       tree = parentVirtualHost.getServerConfigurationTree();
+         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
+       ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+       AugeasNode directoryNode = getNode(tree.getRootNode());
+       mapping.updateAugeas(directoryNode,report.getConfiguration(), resourceConfigDef);
+       tree.save();
+       
+       report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+       log.info("Apache configuration was updated");
+         }catch(Exception e){
+              if (tree!=null)
+                   log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
+              else
+                   log.error("Augeas failed to save configuration",e);
+          report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+         }
+   }
+
 
     public void deleteResource() throws Exception {
         // TODO Auto-generated method stub

@@ -420,14 +420,6 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        &DocumentRoot;
-        &DirectoryIndex;
-        &DefaultType;
-        &AddDefaultCharset;
-        &Aliases;
-        &ErrorDocuments;
-        &ServerAdmin;
-        &Timeout;
         <c:simple-property name="NameVirtualHost" required="false">
             <c:description>
                 A required directive if you want to configure name-based virtual hosts.
@@ -437,9 +429,7 @@
                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
             </c:description>
         </c:simple-property>
-        &Options;
-        &UseCanonicalName;
-        &UseCanonicalPhysicalPort;        
+        &Timeout;
         <c:group name="Logging">
             &ErrorLog;
             &CustomLogs;

@@ -8,10 +8,19 @@
 <div style="padding: 10px; background-color: #FF66CC; height: 1000px;">
    <h4>It's always good to see something from another perspective.</h4>
        
-   <p>This should be in the resource tab page of the RHQ GUI.  The
-      tabs, subtabs and rest of the GUI should still be displayed.
-      This would have been invoked from a tab.
+   <p>You should have arrived at this page by clicking on a Resource
+      tab defined by the sample perspective.
       The pink portion of this page is an IFRAME whose content was
       loaded from rhq-sample-perspective.war, a WAR deployed to the
-      RHQ Server, as a sibling of rhq.ear.</p>
+      RHQ Server, as a sibling of rhq.ear. The main page is still
+      loaded </p>
+
+    <h3>Resource Info</h3>
+
+    <p>Here's some info about the current Resource:</p>
+
+    <h:pan
+    <b>Type: #{SampleUIBean.randomResource.resourceType.name}
+    Name: #{SampleUIBean.randomResource.name}
+    Id: #{SampleUIBean.randomResource.id}
 </div>

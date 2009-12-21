@@ -81,6 +81,15 @@
          placement="after" />
    </menuItem>
    <menuItem
+       name="sample.child3"
+       displayName="Random Resource"
+       application="sample"
+       url="randomResource.seam">
+       <position
+          name="sample.child2"
+          placement="after" />
+   </menuItem>
+   <menuItem
       name="sample.child1.newGroup"
       displayName="New Group"
       application="sample"
@@ -112,7 +121,7 @@
       displayName="Sample"
       iconUrl="/images/icons/Favorite_16.png"
       application="sample"
-      url="tabpage.html">
+      url="currentResource.seam">
       <position
          name="Inventory"
          placement="after" />

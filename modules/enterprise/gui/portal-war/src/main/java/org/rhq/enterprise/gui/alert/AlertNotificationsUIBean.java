@@ -25,6 +25,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Name;
@@ -143,7 +145,7 @@ public class AlertNotificationsUIBean {
     }
 
     public Map<String, String> getAllAlertSenders() {
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new TreeMap<String, String>();
 
         for (String sender : this.alertNotificationManager.listAllAlertSenders()) {
             result.put(sender, sender);

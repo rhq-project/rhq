@@ -109,7 +109,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
                     log.error("Invalid Clone - This should not happen: " + e);
                 }
 
-                filteredMenu.add(menuItem);
+                filteredMenu.add(clone);
                 // Recurse...
                 List<MenuItem> filteredChildren = applyActivatorsToMenu(context, scopes, clone.getChildren());
                 clone.setChildren(filteredChildren);

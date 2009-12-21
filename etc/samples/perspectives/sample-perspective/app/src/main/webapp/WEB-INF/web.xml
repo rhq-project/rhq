@@ -56,7 +56,17 @@
       <servlet-name>Faces Servlet</servlet-name>
       <url-pattern>*.seam</url-pattern>
    </servlet-mapping>
-     
+
+   <servlet-mapping>
+      <servlet-name>Faces Servlet</servlet-name>
+      <url-pattern>*.xhtml</url-pattern>
+   </servlet-mapping>     
+
+   <mime-mapping> 
+      <extension>jsf</extension> 
+      <mime-type>text/html</mime-type> 
+   </mime-mapping>
+
    <!-- the suffix for files containing JSF content (default is ".jsp") -->
    <context-param>
       <param-name>javax.faces.DEFAULT_SUFFIX</param-name>

@@ -99,6 +99,13 @@
          <artifactId>richfaces-ui</artifactId>
          <version>${richfaces.version}</version>
       </dependency>
+       
+      <dependency>
+          <groupId>javax.faces</groupId>
+          <artifactId>jsf-api</artifactId>
+          <version>1.2_13</version>
+          <scope>provided</scope>
+      </dependency>
             
   </dependencies>
 

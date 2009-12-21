@@ -422,6 +422,11 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
             ServerPlugin obsolete = ServerPluginDescriptorUtil.determineObsoletePlugin(plugin, existingPlugin);
             if (obsolete == existingPlugin) { // yes use == for reference equality
+
+                // in order to keep the same configuration that the old plugin had, let's set the new plugin's config objects
+                // TODO: what happens if the plugin's metadata changes? we should clean the old config of old properties.
+                plugin.setPluginConfiguration(existingPlugin.getPluginConfiguration());
+                plugin.setScheduledJobsConfiguration(existingPlugin.getScheduledJobsConfiguration());
                 newOrUpdated = true;
             }
             plugin.setId(existingPlugin.getId());

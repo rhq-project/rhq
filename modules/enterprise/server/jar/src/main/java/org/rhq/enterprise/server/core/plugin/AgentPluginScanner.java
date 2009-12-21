@@ -154,7 +154,7 @@ public class AgentPluginScanner {
             for (File filesystemPluginFile : pluginJars) {
                 if (cachedPluginFile.equals(filesystemPluginFile)) {
                     existsOnFileSystem = true;
-                    continue; // our cached jar still exists on the file system
+                    break; // our cached jar still exists on the file system
                 }
             }
             if (!existsOnFileSystem) {

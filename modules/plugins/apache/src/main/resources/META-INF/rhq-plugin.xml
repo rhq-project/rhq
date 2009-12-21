@@ -420,15 +420,20 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        <c:simple-property name="NameVirtualHost" required="false">
+        <c:list-property name="NameVirtualHost" required="false">
             <c:description>
                 A required directive if you want to configure name-based virtual hosts.
                 Although the value can be hostname it is recommended that you always use an IP address.
                 IPv6 addresses must be enclosed in square brackets.
                 To receive requests on all interfaces, you can set the value to *.
                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
+                The address may be optionally followed by the port specification to further limit the directive effect.                
             </c:description>
-        </c:simple-property>
+            <c:map-property name="NameVirtualHost">
+                <c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>
+                <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            </c:map-property>
+        </c:list-property>
         &Timeout;
         <c:group name="Logging">
             &ErrorLog;

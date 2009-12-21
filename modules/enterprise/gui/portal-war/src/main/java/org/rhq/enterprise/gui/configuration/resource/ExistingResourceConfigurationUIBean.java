@@ -393,7 +393,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         current = null;
         setConfiguration(configuration);
 
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+        return SUCCESS_OUTCOME;
     }
 
     void dumpProperties(Configuration conf, Log log) {
@@ -423,7 +423,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         current = null;
         setConfiguration(configuration);
 
-//        return "/rhq/resource/configuration/edit.xhtml?currentResourceId=" + getResourceId();
         return SUCCESS_OUTCOME;
     }
 

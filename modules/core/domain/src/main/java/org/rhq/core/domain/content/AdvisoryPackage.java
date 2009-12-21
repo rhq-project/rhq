@@ -47,7 +47,9 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = AdvisoryPackage.FIND_PACKAGES_BY_ADV_ID, query = "SELECT ap FROM AdvisoryPackage AS ap "
         + "WHERE ap.advisory.id = :advId"),
-    @NamedQuery(name = AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID, query = "DELETE AdvisoryPackage ap WHERE ap.advisory.id = :advId") })
+    @NamedQuery(name = AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID, query = "DELETE AdvisoryPackage ap WHERE ap.advisory.id = :advId"),
+    @NamedQuery(name = AdvisoryPackage.FIND_ADVISORY_PACKAGE, query = "SELECT ap FROM AdvisoryPackage AS ap "
+        + "WHERE ap.advisory.id = :advId AND ap.pkg.id = :pkgVerId") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_PACKAGE_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_PACKAGE")
 public class AdvisoryPackage implements Serializable {
@@ -55,6 +57,7 @@ public class AdvisoryPackage implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String FIND_PACKAGES_BY_ADV_ID = "AdvisoryPackage.findPackagesByAdvId";
     public static final String DELETE_PACKAGES_BY_ADV_ID = "AdvisoryPackage.deletePackagesByAdvId";
+    public static final String FIND_ADVISORY_PACKAGE = "AdvisoryPackage.findAdvisoryPackage";
 
     /*
      * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the

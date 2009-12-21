@@ -155,4 +155,21 @@ public interface AdvisoryManagerLocal {
      * @param advId
      */
     void deleteAdvisoryPackage(Subject user, int advId);
+
+    /**
+     *  find AdvisoryPackage object for given advId and packageVersion id
+     * @param overlord
+     * @param advId 
+     * @param pkgVerId
+     */
+    AdvisoryPackage findAdvisoryPackage(Subject overlord, int advId, int pkgVerId);
+
+    /**
+     * find AdvisoryBuglist object for given advId and buginfo
+     * @param subject
+     * @param advId
+     * @param buginfo
+     * @return
+     */
+    AdvisoryBuglist getAdvisoryBuglist(Subject subject, int advId, String buginfo);
 }

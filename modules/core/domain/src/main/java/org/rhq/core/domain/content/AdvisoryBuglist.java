@@ -47,15 +47,17 @@ import javax.persistence.Table;
 @NamedQueries( {
     @NamedQuery(name = AdvisoryBuglist.FIND_BUGS_BY_ADV_ID, query = "SELECT ab FROM AdvisoryBuglist AS ab "
         + "WHERE ab.advisory.id = :advId"),
-    @NamedQuery(name = AdvisoryBuglist.DELETE_BY_ADV_ID, query = "DELETE AdvisoryBuglist ab WHERE ab.advisory.id = :advId") })
+    @NamedQuery(name = AdvisoryBuglist.DELETE_BY_ADV_ID, query = "DELETE AdvisoryBuglist ab WHERE ab.advisory.id = :advId"),
+    @NamedQuery(name = AdvisoryBuglist.FIND_ADVISORY_BUGLIST, query = "SELECT ab FROM AdvisoryBuglist AS ab "
+        + "WHERE ab.advisory.id = :advId AND ab.bugid = :buginfo") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ADVISORY_BUGLIST_ID_SEQ")
 @Table(name = "RHQ_ADVISORY_BUGLIST")
 public class AdvisoryBuglist implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    public static final String FIND_BUGS_BY_ADV_ID = "AdvisoryCVE.findBugsByAveId";
-    public static final String DELETE_BY_ADV_ID = "AdvisoryCVE.deleteByAdvId";
-
+    public static final String FIND_BUGS_BY_ADV_ID = "AdvisoryBuglist.findBugsByAveId";
+    public static final String DELETE_BY_ADV_ID = "AdvisoryBuglist.deleteByAdvId";
+    public static final String FIND_ADVISORY_BUGLIST = "AdvisoryBuglist.findAdvBuginfo";
     /*
      * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the

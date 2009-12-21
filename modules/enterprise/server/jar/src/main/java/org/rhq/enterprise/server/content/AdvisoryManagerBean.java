@@ -23,6 +23,7 @@ import java.util.List;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -227,6 +228,25 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
     }
 
     /**
+     * @param advId advisoryId
+     * @return an advisorypackage object if exists else null
+     */
+    public AdvisoryPackage findAdvisoryPackage(Subject subject, int advId, int pkgVerId) {
+        Query query = entityManager.createNamedQuery(AdvisoryPackage.FIND_ADVISORY_PACKAGE);
+        log.error("Advisory ID: " + advId + " PackageVerId: " + pkgVerId);
+        query.setParameter("advId", advId);
+        query.setParameter("pkgVerId", pkgVerId);
+        try {
+            AdvisoryPackage result = (AdvisoryPackage) query.getSingleResult();
+            return result;
+        } catch (NoResultException nre) {
+            //Object not found, return null for new creation
+            return null;
+        }
+
+    }
+
+    /**
      * find list of Packages Versions associated to an advisory
      * @param pkgId packageId
      * @return list of PackageVersion objects
@@ -298,6 +318,29 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         if (results.size() > 0) {
             return results;
         } else {
+            return null;
+        }
+
+    }
+
+    /**
+     * Returns a Advisorybuglist object if exists else null
+     * @param advId
+     * @param buginfo
+     * @return A AdvisoryBuglist objects
+     */
+    @SuppressWarnings("unchecked")
+    public AdvisoryBuglist getAdvisoryBuglist(Subject subject, int advId, String buginfo) {
+        Query query = entityManager.createNamedQuery(AdvisoryBuglist.FIND_ADVISORY_BUGLIST);
+
+        query.setParameter("advId", advId);
+        query.setParameter("buginfo", buginfo);
+
+        try {
+            AdvisoryBuglist result = (AdvisoryBuglist) query.getSingleResult();
+            return result;
+        } catch (NoResultException nre) {
+            //Object not found, return null for new creation
             return null;
         }
 

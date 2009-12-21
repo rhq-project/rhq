@@ -1089,19 +1089,23 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         List<AdvisoryDetails> newDetails = report.getAdvisory();
         for (AdvisoryDetails detail : newDetails) {
             try {
+                Advisory newAdv = advManager.getAdvisoryByName(detail.getAdvisory());
+                if (newAdv == null) {
+                    // Advisory does not exist, create a new one
+                    log.debug("Attempting to create new advisory based off of: " + detail);
+                    newAdv = advManager.createAdvisory(overlord, detail.getAdvisory(), detail.getAdvisory_type(),
+                        detail.getSynopsis());
+                    newAdv.setAdvisory_name(detail.getAdvisory_name());
+                    newAdv.setAdvisory_rel(detail.getAdvisory_rel());
+                    newAdv.setDescription(detail.getDescription());
+                    newAdv.setSolution(detail.getSolution());
+                    newAdv.setIssue_date(detail.getIssue_date());
+                    newAdv.setUpdate_date(detail.getUpdate_date());
+                    newAdv.setTopic(detail.getTopic());
+                    entityManager.flush();
+                    entityManager.persist(newAdv);
+                }
 
-                log.debug("Attempting to create new advisory based off of: " + detail);
-                Advisory newAdv = advManager.createAdvisory(overlord, detail.getAdvisory(), detail.getAdvisory_type(),
-                    detail.getSynopsis());
-                newAdv.setAdvisory_name(detail.getAdvisory_name());
-                newAdv.setAdvisory_rel(detail.getAdvisory_rel());
-                newAdv.setDescription(detail.getDescription());
-                newAdv.setSolution(detail.getSolution());
-                newAdv.setIssue_date(detail.getIssue_date());
-                newAdv.setUpdate_date(detail.getUpdate_date());
-                newAdv.setTopic(detail.getTopic());
-                entityManager.flush();
-                entityManager.persist(newAdv);
                 Repo repo = repoManager.getRepo(overlord, report.getRepoId());
                 RepoAdvisory repoAdv = new RepoAdvisory(repo, newAdv);
                 log.debug("Created new mapping of RepoAdvisory repoId = " + repo.getId() + ", distId = "
@@ -1116,9 +1120,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     try {
                         q.setParameter("rpmName", pkg.getRpmFilename());
                         PackageVersion pExisting = (PackageVersion) q.getSingleResult();
-                        AdvisoryPackage apkg = new AdvisoryPackage(newAdv, pExisting);
-                        entityManager.persist(apkg);
-                        entityManager.flush();
+                        AdvisoryPackage apkg = advManager.findAdvisoryPackage(overlord, newAdv.getId(), pExisting
+                            .getId());
+                        if (apkg == null) {
+                            apkg = new AdvisoryPackage(newAdv, pExisting);
+                            entityManager.persist(apkg);
+                            entityManager.flush();
+                        }
                     } catch (NoResultException nre) {
                         log.info("Advisory has package thats not yet in the db [" + pkg.getRpmFilename()
                             + "] - Processing rest");
@@ -1139,9 +1147,13 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                 log.debug("list of Bugs " + abugs);
                 if (abugs != null && abugs.size() > 0) {
                     for (AdvisoryBugDetails abug : abugs) {
-                        AdvisoryBuglist abuglist = new AdvisoryBuglist(newAdv, abug.getBugInfo());
-                        entityManager.persist(abuglist);
-                        entityManager.flush();
+                        AdvisoryBuglist abuglist = advManager.getAdvisoryBuglist(overlord, newAdv.getId(), abug
+                            .getBugInfo());
+                        if (abuglist == null) {
+                            abuglist = new AdvisoryBuglist(newAdv, abug.getBugInfo());
+                            entityManager.persist(abuglist);
+                            entityManager.flush();
+                        }
                     }
                 }
 

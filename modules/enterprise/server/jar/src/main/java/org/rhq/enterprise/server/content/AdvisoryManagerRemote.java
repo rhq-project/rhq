@@ -176,6 +176,30 @@ public interface AdvisoryManagerRemote {
      * @param user
      * @param advId
      */
+    @WebMethod
     void deleteAdvisoryPackage(@WebParam(name = "subject") Subject user, //
         @WebParam(name = "advId") int advId);
+
+    /**
+     *  find AdvisoryPackage object for given advId and packageVersion id
+     * @param overlord
+     * @param advId 
+     * @param pkgVerId
+     */
+    @WebMethod
+    AdvisoryPackage findAdvisoryPackage(@WebParam(name = "subject") Subject overlord, //
+        @WebParam(name = "advId") int advId, //
+        @WebParam(name = "pkgVerId") int pkgVerId);
+
+    /**
+     * find AdvisoryBuglist object for given advId and buginfo
+     * @param subject
+     * @param advId
+     * @param buginfo
+     * @return
+     */
+    @WebMethod
+    AdvisoryBuglist getAdvisoryBuglist(@WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "advId") int advId, //
+        @WebParam(name = "buginfo") String buginfo);
 }

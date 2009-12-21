@@ -1,0 +1,55 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich">
+<ui:remove>
+    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
+  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
+  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
+  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
+  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
+</ui:remove>
+
+    <head>        
+        <title>
+            Meet Your Soul-Resource!
+        </title>
+    </head>
+    
+    <body bgcolor="#DDF">
+
+    <f:view contentType="text/html; charset=UTF-8">
+
+    <h1>Meet Your Soul-Resource!</h1>
+
+    <p>
+    This page uses a Seam component which connects to the RHQ Server running on 127.0.0.1:7080 and
+    utilizes the RHQ remote API to obtain a Resource from that Server's inventory that has been
+    matched to you based on 29 dimensions of compatibility for lasting and fulfilling relationships.
+    </p>
+
+    <rich:panel>
+        <f:facet name="header">
+            This is a RichFaces panel component.
+        </f:facet>
+
+        <h3>And the lucky Resource is...</h3>
+
+        <h2>a #{SampleUIBean.randomResource.resourceType.name} named '#{SampleUIBean.randomResource.name}'
+        with id #{SampleUIBean.randomResource.id}</h2>
+
+        <a href="javascript:location.reload(true)">
+        #{SampleUIBean.randomResource.resourceType.name}s are not my ResourceType - find me another one.
+        </a>
+    </rich:panel>
+            
+    </f:view>
+
+    </body>
+
+</html>

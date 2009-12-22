@@ -663,13 +663,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     continue;
 
                 AlertSender sender = getAlertSender(alertNotification);
-                if (sender!=null) {
+                if (sender != null) {
                     try {
                         SenderResult result = sender.send(alert);
                         if (result == null) {
-                            log.warn("- !! -- sender " + alertNotification.getSenderName() + " did not return a SenderResult. Please fix this -- !! - ");
-                        } else if (result.getState() == ResultState.SUCCESS) {
-                            if (result.getEmails()!=null && !result.getEmails().isEmpty())
+                            log.warn("- !! -- sender " + alertNotification.getSenderName() +
+                                    " did not return a SenderResult. Please fix this -- !! - ");
+                        } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
+                            if (result.getEmails() != null && !result.getEmails().isEmpty())
                                 emailAddresses.addAll(result.getEmails());
                         }
                         // TODO log result - especially handle the deferred_email case

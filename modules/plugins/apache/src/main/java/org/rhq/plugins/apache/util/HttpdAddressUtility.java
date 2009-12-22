@@ -143,7 +143,14 @@ public class HttpdAddressUtility {
         }
         
         if (serverName != null) {
-            addr.host = serverName.replaceAll("\\*", "replaced-wildcard");
+            int colonIdx = serverName.indexOf(':');
+            if (colonIdx >= 0) {
+                addr.host = serverName.substring(0, colonIdx);
+                addr.port = Integer.parseInt(serverName.substring(colonIdx + 1));
+            } else {
+                addr.host = serverName;
+            }
+            addr.host = addr.host.replaceAll("\\*", "replaced-wildcard");
         }
         
         return addr;

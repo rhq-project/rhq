@@ -274,6 +274,23 @@
                                              default="/usr/share/augeas/lenses"/>
           
           </c:group>
+          <c:group name="Virtual Hosts">
+            <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement"
+                               description="How should the new virtual host definitions be put in the configuration"
+                               default="vhost-per-file">
+                <c:property-options>
+                    <c:option value="single-file" name="In the main configuration file"/>
+                    <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+                <c:description>
+                    If the new virtual hosts should be created in standalone files, this mask determines where
+                    to create those files. The '*' in the path is replaced by the name of the virtual host.
+                    If the path is relative, it is considered relative to server root.
+                </c:description>                   
+            </c:simple-property>
+          </c:group>
          <c:group name="errorLog">
               <!-- TODO this is now part of the resource configuration... -->
               <c:simple-property name="errorLogFilePath" type="file" required="false"

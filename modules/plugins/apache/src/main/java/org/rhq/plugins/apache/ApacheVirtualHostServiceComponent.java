@@ -80,6 +80,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
+    public static final String SERVER_NAME_CONFIG_PROP = "ServerName";
+    
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
@@ -91,6 +93,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
     private int snmpWwwServiceIndex = -1;
 
+    public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
+    
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -164,10 +168,15 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         
         AugeasTree tree = getServerConfigurationTree();
         
-        AugeasNode myNode = getNode(getServerConfigurationTree());
-
-        tree.removeNode(myNode, true);
-        tree.save();
+        try {
+            AugeasNode myNode = getNode(getServerConfigurationTree());
+    
+            tree.removeNode(myNode, true);
+            tree.save();
+        } catch (IllegalStateException e) {
+            //this means we couldn't find the augeas node for this vhost.
+            //that error can be safely ignored in this situation.
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {

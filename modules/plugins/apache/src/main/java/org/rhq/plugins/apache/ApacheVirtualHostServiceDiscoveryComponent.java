@@ -99,7 +99,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             String resourceName = "VirtualHost ";
             if (serverName != null) {
-                resourceName += serverName + ":" + address.port;
+                resourceName += address.host + ":" + address.port;
             } else {
                 resourceName += resourceKey;
             }

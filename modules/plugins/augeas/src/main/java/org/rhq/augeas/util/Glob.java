@@ -40,11 +40,37 @@ public class Glob {
         
     }
     
+    /**
+     * Checks whether the provided string is a wildcard glob pattern.
+     * 
+     * @param globPattern
+     * @return
+     */
     public static boolean isWildcard(String globPattern) {
         for(char specialChar : GlobFilter.WILDCARD_CHARS) {
             if (globPattern.indexOf(specialChar) >= 0) return true;
         }
         return false;
+    }
+    
+    /**
+     * Checks if the file matches the glob pattern with given path as a root of the filesystem.
+     * 
+     * If the glob pattern denotes an absolute path, it is understood to be under the supplied
+     * fs root.
+     * 
+     * @param rootPath
+     * @param globPattern
+     * @param file
+     * @return
+     */
+    public static boolean matches(File rootPath, String globPattern, File file) {
+        String rootPortion = rootPortion(globPattern);
+        globPattern = globPattern.substring(rootPortion.length());
+        
+        globPattern = new File(rootPath, globPattern).getAbsolutePath();
+        
+        return new GlobFilter(globPattern).accept(file);
     }
     
     /**

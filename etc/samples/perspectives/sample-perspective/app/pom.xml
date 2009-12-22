@@ -101,10 +101,10 @@
       </dependency>
        
       <dependency>
-          <groupId>javax.faces</groupId>
-          <artifactId>jsf-api</artifactId>
-          <version>1.2_13</version>
-          <scope>provided</scope>
+         <groupId>javax.faces</groupId>
+         <artifactId>jsf-api</artifactId>
+         <version>1.2_13</version>
+         <scope>provided</scope>
       </dependency>
             
   </dependencies>
@@ -153,6 +153,7 @@
 
   <profiles>
 
+  <!--
       <profile>
          <id>dev</id>
 
@@ -198,7 +199,7 @@
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/target/${project.build.finalName}" />
                             </copy>
-                            <delete dir="${deployment.dir}.rej" /> <!-- need to remove any residual backups -->
+                            <delete dir="${deployment.dir}.rej" />
                           </tasks>
                         </configuration>
                         <goals>
@@ -227,7 +228,7 @@
             </plugins>
          </build>
       </profile>
-
+-->
   </profiles>
   
 </project>

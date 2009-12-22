@@ -11,6 +11,8 @@
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
+
+   
    <!-- Declare supporting applications for this perspective -->
    <application
       name="sample"
@@ -87,6 +89,15 @@
        url="randomResource.seam">
        <position
           name="sample.child2"
+          placement="after" />
+   </menuItem>
+   <menuItem
+       name="sample.child4"
+       displayName="Create EJB3 Admin User"
+       application="sample"
+       url="wizard.seam">
+       <position
+          name="sample.child3"
           placement="after" />
    </menuItem>
    <menuItem

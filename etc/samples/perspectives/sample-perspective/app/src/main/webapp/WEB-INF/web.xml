@@ -80,6 +80,10 @@
    </context-param>
     -->
 
+    
+    
+    
+    
    <!-- see http://www.jroller.com/page/mert?entry=state_saving_method_client_side for an explanation of the below param -->
    <context-param>
       <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
@@ -109,5 +113,6 @@
     <welcome-file-list>
        <welcome-file>index.html</welcome-file>
     </welcome-file-list>
+    
 
 </web-app>

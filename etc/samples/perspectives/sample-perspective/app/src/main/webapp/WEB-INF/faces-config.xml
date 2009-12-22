@@ -10,11 +10,6 @@
       <managed-bean-class>org.rhq.enterprise.gui.perspectives.PerspectivesMenuUIBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
-   <managed-bean>
-      <managed-bean-name>WizardBean</managed-bean-name>
-      <managed-bean-class>org.rhq.sample.perspective.WizardBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-   </managed-bean>
    
 <!--     
    <navigation-rule>

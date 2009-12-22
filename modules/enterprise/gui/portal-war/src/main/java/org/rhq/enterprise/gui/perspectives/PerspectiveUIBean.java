@@ -30,6 +30,10 @@ import org.rhq.enterprise.server.perspective.PerspectiveException;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
+
 /**
  *  Bean dynamically provides menu information used by menu.xhtml.  This bean should be viewed 
  *  concurrently with menu.xhtml and it's designed to provide static or dynamic menu content 
@@ -39,6 +43,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Jay Shaughnessy  
  *
  */
+@Name("PerspectiveUIBean")
+@Scope(ScopeType.PAGE)
 public class PerspectiveUIBean {
 
     PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();

@@ -42,7 +42,7 @@
                     The log entry format is documented fully in the Apache documentation http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats.
                 </c:description>
             </c:simple-property>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -177,7 +177,7 @@
                     <c:option value="SymLinksIfOwnerMatch"/>
                 </c:property-options>
             </c:simple-property>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -202,7 +202,7 @@
         </c:description>
         <c:map-property name="Allow">
             <c:simple-property name="host"/>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index"  required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>                
@@ -214,7 +214,7 @@
         </c:description>
         <c:map-property name="Deny">
             <c:simple-property name="host"/>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -642,7 +642,7 @@
             <c:list-property name="ServerAlias">
                 <c:map-property name="ServerAlias">
                     <c:simple-property name="hostname"/>
-                    <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                    <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                 </c:map-property>
             </c:list-property>
             &ServerAdmin;
@@ -682,7 +682,7 @@
                       <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
                       <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
                       <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
-                      <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                   </c:map-property>
                 </c:list-property>
                 &AddDefaultCharset;
@@ -694,8 +694,8 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
-<!--          
-         <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
+         
+   <!--     <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
@@ -732,6 +732,7 @@
             </resource-configuration>
          </service>
  -->
+
       </service>
       <service name="Mod JK" description="Management of mod_jk"
                discovery="ModJKDiscoveryComponent"

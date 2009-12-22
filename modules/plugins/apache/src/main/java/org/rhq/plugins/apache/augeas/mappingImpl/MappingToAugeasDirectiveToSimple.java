@@ -62,7 +62,7 @@ public class MappingToAugeasDirectiveToSimple extends ConfigurationToAugeasApach
                 List<AugeasNode> nodes = tree.matchRelative(parentNode, propName);
                 try {
                 //NODE WAS DELETED IN CONFIGURATION
-            if (propertyValue == null)
+            if (propertyValue == null || propertyValue.equals(""))
                {
                     for (AugeasNode nod : nodes)
                             nod.remove(false);

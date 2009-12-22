@@ -105,16 +105,16 @@ public class ApacheDirectiveRegExpression {
             DIRECTIVEREGEX_TO_AUGEAS.put("Options", new Pattern[] { Pattern.compile("([+-]?" + WORD + ")" + WS) });
             DIRECTIVEREGEX_TO_AUGEAS.put("Allow", new Pattern[] { Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
             DIRECTIVEREGEX_TO_AUGEAS.put("Deny", new Pattern[] { Pattern.compile("(?:" + WS_MAN + "(" + WORD + "))") });
-            DIRECTIVEREGEX_TO_AUGEAS.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
-            DIRECTIVEREGEX_TO_AUGEAS.put("DirectoryIndex", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS) });
+            DIRECTIVEREGEX_TO_AUGEAS.put("ServerAlias", new Pattern[] { Pattern.compile(WS_MAN + "(" + WORD + ")") });
+            DIRECTIVEREGEX_TO_AUGEAS.put("DirectoryIndex", new Pattern[] { Pattern.compile(WS_MAN+ "(" + WORD + ")" + WS_MAN) });
             DIRECTIVEREGEX_TO_AUGEAS.put("Alias",
-                new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + WS + "(" + WORD + ")" + WS) });
-            DIRECTIVEREGEX_TO_AUGEAS.put("CustomLog", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")" + "(?:" + WS_MAN + "("
+                new Pattern[] { Pattern.compile(WS_MAN + "(" + WORD + ")" + WS_MAN + "(" + WORD + ")" + WS) });
+            DIRECTIVEREGEX_TO_AUGEAS.put("CustomLog", new Pattern[] { Pattern.compile(WS_MAN + "(" + WORD + ")" + "(?:" + WS_MAN + "("
                     + WORD + ")" + ")?" + WS) });
             DIRECTIVEREGEX_TO_AUGEAS.put("AllowOverride", new Pattern[] { Pattern
                     .compile(WS+"(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)") });
-            DIRECTIVEREGEX_TO_AUGEAS.put("Listen", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS)});
-            DIRECTIVEREGEX_TO_AUGEAS.put("ErrorDocument", new Pattern[] { Pattern.compile(WS + "(" + NUM + ")" + WS_MAN + "(" + WORD
+            DIRECTIVEREGEX_TO_AUGEAS.put("Listen", new Pattern[] { Pattern.compile(WS_MAN+ "(" + WORD + ")" + WS)});
+            DIRECTIVEREGEX_TO_AUGEAS.put("ErrorDocument", new Pattern[] { Pattern.compile(WS_MAN + "(" + NUM + ")" + WS_MAN + "(" + WORD
                 + ")" + WS) });
             
     }

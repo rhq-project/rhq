@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -64,6 +65,7 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
 
     private String authorizationJoinFragment;
+    private String authorizationPermsFragment;
     private int authorizationSubjectId;
 
     private String alias;
@@ -123,6 +125,11 @@ public final class CriteriaQueryGenerator {
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
+        setAuthorizationResourceFragment(type, fragment, subjectId, null);
+    }
+
+    public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId,
+        List<Permission> perms) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
@@ -151,6 +158,13 @@ public final class CriteriaQueryGenerator {
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
+        }
+
+        this.authorizationPermsFragment = "";
+        if (!(null == perms || perms.isEmpty())) {
+            for (Permission perm : perms) {
+                this.authorizationPermsFragment = NL + "AND " + perm + " IN authRole.permissions";
+            }
         }
     }
 
@@ -234,6 +248,7 @@ public final class CriteriaQueryGenerator {
                 results.append(NL).append(" AND ");
             }
             results.append("authSubject.id = " + authorizationSubjectId + " ");
+            results.append(this.authorizationPermsFragment + " ");
         }
 
         if (countQuery == false) {

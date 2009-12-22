@@ -6,14 +6,9 @@
 
    <!-- /rhq/common/menu/menu.xhtml -->
    <managed-bean>
-      <managed-bean-name>PerspectivesMenuUIBean</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.perspectives.PerspectivesMenuUIBean</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-   </managed-bean>
-   <managed-bean>
-      <managed-bean-name>ExtensionPoints</managed-bean-name>
-      <managed-bean-class>org.rhq.enterprise.gui.perspectives.ExtensionPoints</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
+      <managed-bean-name>PerspectiveUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.perspectives.PerspectiveUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>     
    </managed-bean>
         
 </faces-config>

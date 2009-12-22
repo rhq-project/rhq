@@ -19,6 +19,14 @@
                 vertical-align: top;
                 padding: 10px;
             }
+
+            .col2 {
+                width: 100%;
+            }
+
+            #senderName {
+                display: none;
+            }
         </style>
     </ui:define>
 
@@ -57,28 +65,30 @@
                         <input type="hidden" name="id" value="${param.id}"/>
                         <input type="hidden" name="ad" value="${param.ad}"/>
 
-                            <rich:orderingList value="#{alertNotificationsUIBean.alertNotifications}"
-                                               var="alertSender"
-                                               selection="#{alertNotificationsUIBean.selectedNotifications}"
-                                               activeItem="#{alertNotificationsUIBean.activeNotification}"
-                                               converter="#{alertNotificationsUIBean.notificationConverter}"
-                                               listWidth="250">
-                                <rich:column>
-                                    <f:facet name="header">
-                                        <h:outputText value="Alert Sender (Select to Edit)" />
-                                    </f:facet>
-                                    <h:outputText value="#{alertSender.senderName}" />
-                                </rich:column>
+                        <rich:orderingList value="#{alertNotificationsUIBean.alertNotifications}"
+                                           var="alertSender"
+                                           selection="#{alertNotificationsUIBean.selectedNotifications}"
+                                           activeItem="#{alertNotificationsUIBean.activeNotification}"
+                                           converter="#{alertNotificationsUIBean.notificationConverter}"
+                                           listWidth="250">
+                            <rich:column>
+                                <f:facet name="header">
+                                    <h:outputText value="Alert Sender (Select to Edit)" />
+                                </f:facet>
+                                <h:outputText value="#{alertSender.senderName}" />
+                            </rich:column>
 
-                                <a4j:support event="onclick"
-                                             ignoreDupResponses="true"
-                                             requestDelay="25"
-                                             reRender="alertConfig" />
-                                <a4j:support event="onkeyup"
-                                             ignoreDupResponses="true"
-                                             requestDelay="150"
-                                             reRender="alertConfig" />
-                            </rich:orderingList>
+                            <a4j:support event="onclick"
+                                         ignoreDupResponses="true"
+                                         requestDelay="25"
+                                         reRender="alertConfig,senderName"
+                                         oncomplete="updateCustomContent();" />
+                            <a4j:support event="onkeyup"
+                                         ignoreDupResponses="true"
+                                         requestDelay="150"
+                                         reRender="alertConfig,senderName"
+                                         oncomplete="updateCustomContent();" />
+                        </rich:orderingList>
                     </h:form>
 
                     <h:form id="alertActionButtons">
@@ -92,23 +102,28 @@
                     </h:form>
                 </h:panelGroup>
 
-                <h:form id="alertConfig">
-                    <input type="hidden" name="id" value="${param.id}"/>
-                    <input type="hidden" name="ad" value="${param.ad}"/>
+                <h:panelGroup>
+                    <h:form id="alertConfig">
+                        <input type="hidden" name="id" value="${param.id}"/>
+                        <input type="hidden" name="ad" value="${param.ad}"/>
 
-                    <rich:panel rendered="#{not empty alertNotificationsUIBean.activeNotification.configuration.map}">
-                        <f:facet name="header">
-                            <h:outputText value="#{alertNotificationsUIBean.activeNotification.senderName} Configuration"/>
-                        </f:facet>
-                        <onc:config configurationDefinition="#{alertNotificationsUIBean.activeConfigDefinition}"
-                                    configuration="#{alertNotificationsUIBean.activeNotification.configuration}" />
+                        <rich:panel rendered="#{not empty alertNotificationsUIBean.activeNotification.configuration.map}">
+                            <f:facet name="header">
+                                <h:outputText value="#{alertNotificationsUIBean.activeNotification.senderName} Configuration"/>
+                            </f:facet>
+                            <onc:config configurationDefinition="#{alertNotificationsUIBean.activeConfigDefinition}"
+                                        configuration="#{alertNotificationsUIBean.activeNotification.configuration}" />
 
-                        <h:commandButton id="saveConfigButton"
-                                 value="SAVE"
-                                 action="#{alertNotificationsUIBean.saveConfiguration}"
-                                 styleClass="buttonmed"/>
-                    </rich:panel>
-                </h:form>
+                            <h:commandButton id="saveConfigButton"
+                                     value="SAVE"
+                                     action="#{alertNotificationsUIBean.saveConfiguration}"
+                                     styleClass="buttonmed"/>
+                        </rich:panel>
+                    </h:form>
+
+                    <!-- Custom plugin UI -->
+                    <div id="customContentArea"></div>
+                </h:panelGroup>
             </h:panelGrid>
         </rich:panel>
 
@@ -139,6 +154,24 @@
             <f:param name="id" value="#{param.id}"/>
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>
+
+        <h:outputText id="senderName"
+                      value="#{alertNotificationsUIBean.activeNotification.senderName}" />
+        <script>
+            function updateCustomContent() {
+                var sender = $('senderName').innerHTML;
+                new Ajax.Updater('customContentArea',
+                                 'customContent.xhtml',
+                                 { method: 'get',
+                                   parameters: {'senderName': sender}
+                                 });
+            }
+
+            Event.observe(window, 'load', function() {
+                updateCustomContent();
+            });
+        </script>
     </ui:define>
 </ui:composition>
+
 </html>

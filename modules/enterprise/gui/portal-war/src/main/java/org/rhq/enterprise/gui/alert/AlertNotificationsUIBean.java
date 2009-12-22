@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.alert;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -130,7 +129,7 @@ public class AlertNotificationsUIBean {
     }
 
     // Sets the initial state of the bean given the requrest parameters, this allows
-    // us to maintain the selected item across requrests.
+    // us to maintain the selected item across requests.
     private void selectActiveNotification() {
         if (this.notificationId != null) {
             for (AlertNotification notification : this.alertNotifications) {
@@ -155,10 +154,9 @@ public class AlertNotificationsUIBean {
     }
 
     public String addAlertSender() {
-        AlertNotificationManagerLocal notificationManager = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Configuration newSenderConfig = null;
-        ConfigurationDefinition configDefinition = notificationManager.getConfigurationDefinitionForSender(selectedNewSender);
+        ConfigurationDefinition configDefinition = this.alertNotificationManager.getConfigurationDefinitionForSender(selectedNewSender);
 
         if (configDefinition != null) {
             newSenderConfig = configDefinition.getDefaultTemplate().createConfiguration();
@@ -166,7 +164,7 @@ public class AlertNotificationsUIBean {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = notificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newSenderConfig);
+        this.activeNotification = this.alertNotificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newSenderConfig);
 
         return SUCCESS_OUTCOME;
     }

@@ -94,5 +94,17 @@
         </navigation-case>
 
     </navigation-rule>
+
+    <navigation-rule>
+        <from-view-id>/rhq/resource/alert/notif/customContent.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>OK</from-outcome>
+            <to-view-id>/rhq/resource/alert/notif/listAlertSender.xhtml?id=#{param.id}&amp;ad=#{param.ad}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
    
 </faces-config>

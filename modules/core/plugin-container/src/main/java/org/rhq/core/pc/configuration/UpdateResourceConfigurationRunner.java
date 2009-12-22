@@ -1,26 +1,28 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.pc.configuration;
+
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.*;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -29,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -51,6 +52,8 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
      */
     private ConfigurationUpdateRequest request;
 
+    private ConfigManagement configMgmt;
+
     /**
      * The resource component's facet that will perform the actual re-configuration of the resource.
      */
@@ -67,12 +70,38 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
      */
     private ConfigurationServerService configurationServerService;
 
+    private ConfigurationUtilityService configUtilService = new ConfigurationUtilityServiceImpl();
+
     public UpdateResourceConfigurationRunner(ConfigurationServerService configurationServerService, ResourceType type,
-        ConfigurationFacet facet, ConfigurationUpdateRequest request) {
+        ConfigManagement configMgmt, ConfigurationUpdateRequest request) {
         this.configurationServerService = configurationServerService; // may be null
         this.resourceType = type;
-        this.configurationFacet = facet;
+        this.configMgmt = configMgmt;
         this.request = request;
+    }
+
+    ConfigurationUpdateRequest getRequest() {
+        return request;
+    }
+
+    ConfigManagement getConfigMgmt() {
+        return configMgmt;
+    }
+
+    ResourceType getResourceType() {
+        return resourceType;
+    }
+
+    ConfigurationServerService getConfigurationServerService() {
+        return configurationServerService;
+    }
+
+    ConfigurationUtilityService getConfigUtilService() {
+        return configUtilService;
+    }
+
+    void setConfigUtilService(ConfigurationUtilityService service) {
+        configUtilService = service;
     }
 
     public void run() {
@@ -86,22 +115,23 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
     public ConfigurationUpdateResponse call() throws Exception {
         ConfigurationUpdateResponse response;
         int requestId = request.getConfigurationUpdateId();
-        ConfigurationUpdateReport report = new ConfigurationUpdateReport(request.getConfiguration());
         try {
-            configurationFacet.updateResourceConfiguration(report);
-
-            response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), report.getStatus(), report
-                .getErrorMessage());
-
-            if (response.getStatus() == ConfigurationUpdateStatus.INPROGRESS) {
+            response = new ConfigurationUpdateResponse(requestId, request.getConfiguration(), SUCCESS, null);
+            try {
+                configMgmt.executeUpdate(request.getResourceId(), request.getConfiguration());
+            } catch (UpdateInProgressException e) {
+                response.setStatus(INPROGRESS);
                 response.setErrorMessage("Configuration facet did not indicate success or failure - assuming failure.");
+            } catch (ConfigurationUpdateException e) {
+                response.setStatus(FAILURE);
+                response.setErrorMessage(e.getMessage());
             }
 
             ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
 
             // Normalize and validate the config.
-            ConfigurationUtility.normalizeConfiguration(response.getConfiguration(), configurationDefinition);
-            List<String> errorMessages = ConfigurationUtility.validateConfiguration(response.getConfiguration(),
+            configUtilService.normalizeConfiguration(response.getConfiguration(), configurationDefinition);
+            List<String> errorMessages = configUtilService.validateConfiguration(response.getConfiguration(),
                 configurationDefinition);
             for (String errorMessage : errorMessages) {
                 log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
@@ -117,7 +147,7 @@ public class UpdateResourceConfigurationRunner implements Runnable, Callable<Con
         } catch (Throwable t) {
             log.error("Plugin Error: Exception thrown while updating Resource configuration for "
                     + resourceType.getName() + " Resource with id [" + request.getResourceId() + "].", t);
-            response = new ConfigurationUpdateResponse(requestId, report.getConfiguration(), t);            
+            response = new ConfigurationUpdateResponse(requestId, request.getConfiguration(), t);            
         }
 
         if (this.configurationServerService != null) {

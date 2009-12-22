@@ -26,9 +26,11 @@ import javax.faces.context.FacesContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -111,5 +113,19 @@ public abstract class AbstractConfigurationUIBean {
 
     public void clearConfiguration() {
         this.configurationMap.remove(getConfigurationKey());
+    }
+
+    public boolean isUpdateInProgress() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        return this.configurationManager.isResourceConfigurationUpdateInProgress(subject, resourceId);
+    }
+
+    public String getNullConfigurationDefinitionMessage() {
+        return "This resource does not expose a configuration.";
+    }
+
+    public String getNullConfigurationMessage() {
+        return "This resource's configuration has not yet been initialized.";
     }
 }

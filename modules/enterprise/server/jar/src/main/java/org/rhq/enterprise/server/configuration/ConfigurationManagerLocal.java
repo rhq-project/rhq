@@ -96,6 +96,9 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
+    
+    Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
+            boolean fromStructured) throws Exception;
 
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
@@ -425,6 +428,9 @@ public interface ConfigurationManagerLocal {
     @Nullable
     ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId);
 
+    ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
+        boolean fromStructured);
+
     boolean isResourceConfigurationUpdateInProgress(Subject subject, int resourceId);
 
     boolean isGroupResourceConfigurationUpdateInProgress(Subject subject, int groupId);
@@ -465,6 +471,10 @@ public interface ConfigurationManagerLocal {
     ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
+    ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration, boolean fromStructured)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
     /**
@@ -475,5 +485,8 @@ public interface ConfigurationManagerLocal {
     Collection<RawConfiguration> findRawConfigurationsByConfigurationId(int configId);
 
     RawConfiguration findRawConfigurationById(int rawConfigId);
+
+    Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
 }

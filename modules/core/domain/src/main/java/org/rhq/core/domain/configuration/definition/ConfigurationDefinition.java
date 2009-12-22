@@ -35,6 +35,8 @@ import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -92,12 +94,16 @@ public class ConfigurationDefinition implements Serializable {
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @OrderBy
-    private Map<String, PropertyDefinition> propertyDefinitions;
+    private Map<String, PropertyDefinition> propertyDefinitions = new LinkedHashMap<String, PropertyDefinition>();
 
     @MapKey(name = "name")
     @OneToMany(mappedBy = "configurationDefinition", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @OrderBy
-    private Map<String, ConfigurationTemplate> templates;
+    private Map<String, ConfigurationTemplate> templates = new LinkedHashMap<String, ConfigurationTemplate>();
+
+    @Column(name = "config_format")
+    @Enumerated(EnumType.STRING)
+    private ConfigurationFormat configurationFormat;
 
     protected ConfigurationDefinition() {
         // JPA use only
@@ -131,6 +137,25 @@ public class ConfigurationDefinition implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     * This property is currently used only for resource configuration which may support structured config, raw
+     * config, both, or neither. For an older plugin that was implemented prior to raw config support, this would be
+     * <code>null</code>.
+     * 
+     * @return The configuration format which may be structured, raw, or both. <code>null</code> indicates an older
+     * plugin that was developed prior to raw configuration being supported.
+     */
+    public ConfigurationFormat getConfigurationFormat() {
+        if (null == configurationFormat) {
+            configurationFormat = ConfigurationFormat.STRUCTURED;
+        }
+        return configurationFormat;
+    }
+
+    public void setConfigurationFormat(ConfigurationFormat configurationFormat) {
+        this.configurationFormat = configurationFormat;
     }
 
     /**

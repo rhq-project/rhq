@@ -118,7 +118,8 @@ public class ResourceTreeStateAdvisor implements TreeStateAdvisor {
                             || (path.startsWith("/rhq/resource/events") && !facets.isEvent())) {
                             // This resource doesn't support those facets
                             path = fallbackPath;
-                        } else if (path.startsWith("/rhq/resource/configuration/edit.xhtml")
+                        } else if ((path.startsWith("/rhq/resource/configuration/edit.xhtml") ||
+                            path.startsWith("/rhq/resource/configuration/edit-raw.xhtml")) 
                             && facets.isConfiguration()) {
                             path = "/rhq/resource/configuration/view.xhtml";
                         } else if (!path.startsWith("/rhq/resource/content/view.xhtml")

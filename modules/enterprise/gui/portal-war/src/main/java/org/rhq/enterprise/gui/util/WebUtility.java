@@ -49,7 +49,10 @@ public abstract class WebUtility {
     private static final Log LOG = LogFactory.getLog(WebUtility.class.getName());
 
     public static Integer getResourceId(ServletRequest request) {
-        String resourceIdString = request.getParameter(ParamConstants.RESOURCE_ID_PARAM);
+        String resourceIdString = request.getParameter(ParamConstants.CURRENT_RESOURCE_ID_PARAM);
+        if (resourceIdString == null || resourceIdString.equals("")) {
+            resourceIdString = request.getParameter(ParamConstants.RESOURCE_ID_PARAM);
+        }
         Integer resourceId = null;
         if (resourceIdString != null && !resourceIdString.equals("")) {
             resourceId = Integer.parseInt(resourceIdString);

@@ -26,10 +26,13 @@ import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
 
 import org.rhq.core.pc.plugin.PluginFinder;
 import org.rhq.core.pc.plugin.RootPluginClassLoader;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
+import org.rhq.core.domain.plugin.Plugin;
 
 /**
  * Configuration properties for the plugin container and all its internal managers.
@@ -122,6 +125,11 @@ public class PluginContainerConfiguration {
      * Contains all remote POJO services that the server exposes to the plugin container.
      */
     private ServerServices serverServices = null;
+
+    /**
+     * The plugins that reside on the server which are sent down to the agent.
+     */
+    private Set<Plugin> pluginsOnServer = new HashSet<Plugin>();
 
     /**
      * This is our hash map that contains the actual properties. We use a map (as opposed to individual data member
@@ -702,6 +710,14 @@ public class PluginContainerConfiguration {
      */
     public void setServerServices(ServerServices serverServices) {
         this.serverServices = serverServices;
+    }
+
+    public Set<Plugin> getPluginsOnServer() {
+        return pluginsOnServer;
+    }
+
+    public void setPluginsOnServer(Set<Plugin> plugins) {
+        pluginsOnServer = plugins;
     }
 
     /**

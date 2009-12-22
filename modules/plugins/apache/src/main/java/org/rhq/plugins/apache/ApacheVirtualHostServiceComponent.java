@@ -304,20 +304,25 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
         List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
         List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
-        boolean updated;
+        boolean updated = false;
 
         for (AugeasNode node : nodes) {
+        	updated = false;
             List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
             String tempServerName = null;
 
             if (!(serverNameNodes.isEmpty())) {
                 tempServerName = serverNameNodes.get(0).getValue();
             }
+                if (tempServerName == null & serverName == null)
+                	updated = true;
+                if (tempServerName != null & serverName != null)
+                	if (tempServerName.equals(serverName)){
+                		updated = true;
+                	}
+                
 
-            if (tempServerName == null && serverName == null) {
-                virtualHosts.add(node);
-            } else if (tempServerName != null && serverName != null)
-                if (tempServerName.equals(serverName)) {
+               if (updated){ 
                     updated = false;
                     List<AugeasNode> params = node.getChildByLabel("param");
                     for (AugeasNode nd : params) {
@@ -328,15 +333,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                         }
                         if (!updated)
                             break;
+                      }
 
-                    }
-
-                    if (updated) {
-                        virtualHosts.add(node);
-                    }
+                    if (updated) 
+                        virtualHosts.add(node);                    
                 }
-        }
-
+           }
+       
         if (virtualHosts.size() == 0) {
             throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
                 + resourceKey);

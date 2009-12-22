@@ -129,7 +129,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                       PropertyMap propMap = (PropertyMap)prop;
                       PropertySimple propSim = ((PropertySimple)propMap.get("_index"));
                       int value;
-                      if (propSim ==null)
+                      if (propSim ==null | propSim.getIntegerValue() == null)
                         value = 0;
                               else
                         value = propSim.getIntegerValue().intValue();

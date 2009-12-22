@@ -22,6 +22,7 @@
  */
 package org.rhq.plugins.apache.augeas.mappingImpl;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.augeas.node.AugeasNode;
@@ -77,9 +78,9 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                  PropertyDefinition memberPropDef = ((PropertyDefinitionList) propDef).getMemberDefinition();
                  
                  int i=0;
-                 sort(property);
+                 List<PropertyMap> propertyMap = sort(property);
                  
-                 for (Property pr : property.getList()){
+                 for (Property pr : propertyMap){
                          updateProperty(memberPropDef, pr, nodes.get(i), i);
                          i=i+1;
                  }
@@ -124,10 +125,10 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                 
         }
         
-        private void sort(PropertyList list){
+ /*       private void sort(PropertyList list){
             List<Property> propList = list.getList(); 
                 
-            int min = 0;
+            int min = -1;
             int minIndex = 0;
             int index = 0;
             Integer value = 0;
@@ -138,7 +139,9 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                   PropertyMap map = (PropertyMap)propList.get(index);
                   PropertySimple simple = (PropertySimple) map.get("_index");
                   value = simple.getIntegerValue();
-                  
+                  if (value==null){
+                	  value = 0;
+                  }
                   if (value.intValue() < min){
                           propList.set(index, propList.get(minIndex));
                           propList.set(minIndex, map);
@@ -150,6 +153,36 @@ public class MappingToAugeasDirectivePerMapIndex extends ConfigurationToAugeasAp
                     }
             }
                 
-        }
+        }*/
+        private List<PropertyMap> sort(PropertyList list){
+            List<PropertyMap> map = new ArrayList<PropertyMap>();
+            
+            int next = Integer.MAX_VALUE;
+            int min=0;
+            int count = 0;
+               
+            while(count<list.getList().size()){
+               for (Property prop : list.getList()){
+                  PropertyMap propMap = (PropertyMap)prop;
+                  PropertySimple propSim = ((PropertySimple)propMap.get("_index"));
+                  int value;
+                  if (propSim ==null | propSim.getIntegerValue() == null)
+                    value = 0;
+                          else
+                    value = propSim.getIntegerValue().intValue();
+                  
+                  if (value == min){
+                         map.add(propMap);
+                     count = count + 1;
+                  }
+                  if (value > min & value<next){
+                         next = value;
+                  }
+                }
+               min = next;
+               next = Integer.MAX_VALUE;
+            }
+            return map;
+    }
 
 }

@@ -33,7 +33,7 @@ public class ResourcePermissionActivator extends AbstractResourceOrGroupActivato
         this.permission = permission;
     }
 
-    public boolean matches(AbstractResourceOrGroupActivationContext context) {
+    public boolean isActive(AbstractResourceOrGroupActivationContext context) {
         return context.hasResourcePermission(this.permission);
     }
 }

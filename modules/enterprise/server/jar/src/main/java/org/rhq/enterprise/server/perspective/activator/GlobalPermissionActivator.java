@@ -33,7 +33,7 @@ public class GlobalPermissionActivator extends AbstractGlobalActivator {
         this.permission = permission;
     }
 
-    public boolean matches(GlobalActivationContext context) {
+    public boolean isActive(GlobalActivationContext context) {
         return context.isSuperuser() || context.hasGlobalPermission(this.permission);
     }
 }

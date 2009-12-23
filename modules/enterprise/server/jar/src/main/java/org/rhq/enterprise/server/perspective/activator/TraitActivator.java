@@ -51,7 +51,7 @@ public class TraitActivator extends AbstractResourceOrGroupActivator {
         this.value = value;
     }
 
-    public boolean matches(AbstractResourceOrGroupActivationContext context) {
+    public boolean isActive(AbstractResourceOrGroupActivationContext context) {
         if (context instanceof ResourceActivationContext) {
             ResourceActivationContext resourceContext = (ResourceActivationContext)context;
             Resource resource = resourceContext.getResource();

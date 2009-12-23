@@ -42,7 +42,7 @@ public class ResourceTypeActivator extends AbstractResourceOrGroupActivator {
      * @param context
      * @return
      */
-    public boolean matches(AbstractResourceOrGroupActivationContext context) {
+    public boolean isActive(AbstractResourceOrGroupActivationContext context) {
         for (ResourceConditionSet resourceConditionSet : this.resourceConditionSets) {
             if (context.getResourceType().getPlugin().equals(resourceConditionSet.getPluginName()) &&
                 context.getResourceType().getName().equals(resourceConditionSet.getResourceTypeName())) {

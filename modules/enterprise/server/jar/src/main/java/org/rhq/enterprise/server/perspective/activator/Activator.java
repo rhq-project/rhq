@@ -29,5 +29,9 @@ import org.rhq.enterprise.server.perspective.activator.context.ActivationContext
 public interface Activator<C extends ActivationContext> extends Serializable {
     ActivationContextScope getScope();
 
-    boolean matches(C context);
+    /**
+     * @param context The context information required to process the activation conditions.
+     * @return true if all of the activation cnditions for this Activator have been met. Otherwise, false.
+     */
+    boolean isActive(C context);
 }

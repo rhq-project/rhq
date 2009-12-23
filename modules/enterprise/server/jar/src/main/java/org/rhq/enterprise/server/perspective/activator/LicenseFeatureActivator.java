@@ -34,7 +34,7 @@ public class LicenseFeatureActivator extends AbstractGlobalActivator {
         this.licenseFeature = licenseFeature;
     }
 
-    public boolean matches(GlobalActivationContext context) {
+    public boolean isActive(GlobalActivationContext context) {
         return context.getLicenseFeatures().contains(this.licenseFeature);
     }
 }

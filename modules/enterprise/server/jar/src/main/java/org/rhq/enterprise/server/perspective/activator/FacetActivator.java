@@ -33,7 +33,7 @@ public class FacetActivator extends AbstractResourceOrGroupActivator {
         this.facet = facet;
     }
 
-    public boolean matches(AbstractResourceOrGroupActivationContext context) {
+    public boolean isActive(AbstractResourceOrGroupActivationContext context) {
         return context.getFacets().contains(this.facet);
     }
 }

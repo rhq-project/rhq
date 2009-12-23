@@ -28,7 +28,7 @@ import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationC
 public class SuperuserActivator extends AbstractGlobalActivator {
     static final long serialVersionUID = 1L;
 
-    public boolean matches(GlobalActivationContext context) {
+    public boolean isActive(GlobalActivationContext context) {
         return context.isSuperuser();
     }
 }

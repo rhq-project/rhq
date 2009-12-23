@@ -20,7 +20,9 @@ package org.rhq.enterprise.server.perspective.activator;
 
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.rhq.core.domain.authz.Permission;
@@ -29,7 +31,7 @@ import org.rhq.core.domain.authz.Permission;
  * An immutable set of conditions pertaining to a Resource:
  *
  * 1) the ResourceType the Resource must have (required)
- * 2) a set of Resource permissions the Resource must possess (optional)
+ * 2) a set of Resource permissions a user must possess on the Resource (optional)
  * 3) a set of traits with specific current values the Resource must possess (optional)
  *
  * @author Ian Springer
@@ -41,13 +43,23 @@ public class ResourceConditionSet {
     private String resourceTypeName;
     private EnumSet<Permission> permissions;
     private Map<String, Pattern> traits;
+    private Map<String, Matcher> traitMatchers;
 
     public ResourceConditionSet(String pluginName, String resourceTypeName, EnumSet<Permission> permissions,
-                                Map<String, Pattern> traits) {
+        Map<String, Pattern> traits) {
         this.pluginName = pluginName;
         this.resourceTypeName = resourceTypeName;
         this.permissions = permissions != null ? permissions : EnumSet.noneOf(Permission.class);
-        this.traits = traits != null ? traits : Collections.<String, Pattern>emptyMap();
+        if (null != traits) {
+            this.traits = traits;
+            this.traitMatchers = new HashMap<String, Matcher>(traits.size());
+            for (String trait : traits.keySet()) {
+                traitMatchers.put(trait, traits.get(trait).matcher(""));
+            }
+        } else {
+            this.traits = Collections.<String, Pattern> emptyMap();
+            this.traitMatchers = Collections.<String, Matcher> emptyMap();
+        }
     }
 
     public String getPluginName() {
@@ -65,4 +77,9 @@ public class ResourceConditionSet {
     public Map<String, Pattern> getTraits() {
         return traits;
     }
+
+    public Map<String, Matcher> getTraitMatchers() {
+        return traitMatchers;
+    }
+
 }

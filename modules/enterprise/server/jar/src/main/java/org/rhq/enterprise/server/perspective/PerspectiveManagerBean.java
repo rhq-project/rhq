@@ -139,7 +139,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
         List<Activator> activators = extension.getActivators();
         for (Activator activator : activators) {
-            if (scopes.contains(activator.getScope()) && !activator.matches(context)) {
+            if (scopes.contains(activator.getScope()) && !activator.isActive(context)) {
                 return false;
             }
         }

@@ -19,8 +19,19 @@
 package org.rhq.enterprise.server.perspective.activator;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationContext;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Ian Springer
@@ -41,9 +52,44 @@ public class InventoryActivator extends AbstractGlobalActivator {
      * @return
      */
     public boolean matches(GlobalActivationContext context) {
-        for (ResourceConditionSet resourceConditionSet : this.resourceConditionSets) {
-            // TODO: Query DB to see if condition set matches one or more inventoried Resources.
+        ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+
+        for (ResourceConditionSet rcs : this.resourceConditionSets) {
+            ResourceCriteria criteria = new ResourceCriteria();
+
+            criteria.addFilterPluginName(rcs.getPluginName());
+            criteria.addFilterResourceTypeName(rcs.getResourceTypeName());
+            Set<Permission> requiredPermissions = rcs.getPermissions();
+            if (!((null == requiredPermissions) || requiredPermissions.isEmpty())) {
+                Permission[] arr = requiredPermissions.toArray(new Permission[requiredPermissions.size()]);
+                criteria.addRequiredPermissions(arr);
+            }
+
+            PageList<Resource> resources = resourceManager.findResourcesByCriteria(context.getSubject(), criteria);
+            if (!((null == resources) || resources.isEmpty())) {
+                // TODO this could be a map or String:Matcher which may be more efficient, not sure if Pattern caches the matcher
+                Map<String, Pattern> traitPatterns = rcs.getTraits();
+                if (!((null == traitPatterns) || traitPatterns.isEmpty())) {
+                    MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
+                    for (Resource resource : resources) {
+                        List<MeasurementDataTrait> traits = measurementDataManager.findCurrentTraitsForResource(context.getSubject(), resource.getId(),
+                            null);
+                        for( MeasurementDataTrait trait : traits )
+                        {
+                            Pattern traitPattern = traitPatterns.get(trait.getName());
+                            if ( null != traitPattern ) {
+                                if ( traitPattern.matches(regex, input))
+                            }
+                        }
+                        // TODO Traits
+                    }
+                }
+                else {
+                    return true;
+                }
+            }
         }
+
         return false;
     }
 }

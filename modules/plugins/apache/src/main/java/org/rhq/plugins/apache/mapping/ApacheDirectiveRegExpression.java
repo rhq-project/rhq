@@ -63,6 +63,7 @@ public class ApacheDirectiveRegExpression {
         MAPPING_TYPE.put("CustomLog", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
         MAPPING_TYPE.put("AllowOverride", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
         MAPPING_TYPE.put("DirectoryIndex", DirectiveMapping.PARAM_PER_MAP);
+        MAPPING_TYPE.put("NameVirtualHost", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
     }
 
     private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";

@@ -63,7 +63,8 @@ public class PerspectivePluginMetadataManager {
 
     private Map<String, PerspectivePluginDescriptorType> loadedPlugins = new HashMap<String, PerspectivePluginDescriptorType>();
 
-    private boolean isStarted = false;
+    private boolean isStarted;
+    private long lastModifiedTime;
     private List<Tab> resourceTabs;
     private List<MenuItem> menu;
 
@@ -97,6 +98,16 @@ public class PerspectivePluginMetadataManager {
         processNonCorePerspectives();
 
         this.isStarted = true;
+        this.lastModifiedTime = System.currentTimeMillis();
+    }
+
+    public synchronized void stop() {
+        if (!isStarted) {
+            return;
+        }
+        this.menu = null;
+        this.resourceTabs = null;
+        this.isStarted = false;
     }
 
     private void processCorePerspective() {
@@ -112,9 +123,9 @@ public class PerspectivePluginMetadataManager {
     }
 
     private void processNonCorePerspectives() {
-        for (String key : loadedPlugins.keySet()) {
+        for (String key : this.loadedPlugins.keySet()) {
             if (!CORE_PERSPECTIVE_NAME.equals(key)) {
-                processPerspective(loadedPlugins.get(key));
+                processPerspective(this.loadedPlugins.get(key));
             }
         }
 
@@ -452,5 +463,13 @@ public class PerspectivePluginMetadataManager {
      */
     public List<Tab> getResourceTabs() {
         return this.resourceTabs;
+    }
+
+    public synchronized boolean isStarted() {
+        return this.isStarted;
+    }
+
+    public long getLastModifiedTime() {
+        return this.lastModifiedTime;
     }
 }

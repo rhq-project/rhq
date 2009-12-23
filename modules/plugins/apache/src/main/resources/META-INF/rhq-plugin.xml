@@ -274,6 +274,23 @@
                                              default="/usr/share/augeas/lenses"/>
           
           </c:group>
+          <c:group name="Virtual Hosts">
+            <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement"
+                               description="How should the new virtual host definitions be put in the configuration"
+                               default="vhost-per-file">
+                <c:property-options>
+                    <c:option value="single-file" name="In the main configuration file"/>
+                    <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+                <c:description>
+                    If the new virtual hosts should be created in standalone files, this mask determines where
+                    to create those files. The '*' in the path is replaced by the name of the virtual host.
+                    If the path is relative, it is considered relative to server root.
+                </c:description>                   
+            </c:simple-property>
+          </c:group>
          <c:group name="errorLog">
               <!-- TODO this is now part of the resource configuration... -->
               <c:simple-property name="errorLogFilePath" type="file" required="false"
@@ -420,26 +437,21 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        &DocumentRoot;
-        &DirectoryIndex;
-        &DefaultType;
-        &AddDefaultCharset;
-        &Aliases;
-        &ErrorDocuments;
-        &ServerAdmin;
-        &Timeout;
-        <c:simple-property name="NameVirtualHost" required="false">
+        <c:list-property name="NameVirtualHost" required="false">
             <c:description>
                 A required directive if you want to configure name-based virtual hosts.
                 Although the value can be hostname it is recommended that you always use an IP address.
                 IPv6 addresses must be enclosed in square brackets.
                 To receive requests on all interfaces, you can set the value to *.
                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
+                The address may be optionally followed by the port specification to further limit the directive effect.                
             </c:description>
-        </c:simple-property>
-        &Options;
-        &UseCanonicalName;
-        &UseCanonicalPhysicalPort;        
+            <c:map-property name="NameVirtualHost">
+                <c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>
+                <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            </c:map-property>
+        </c:list-property>
+        &Timeout;
         <c:group name="Logging">
             &ErrorLog;
             &CustomLogs;
@@ -682,7 +694,7 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
-         
+<!--          
          <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
@@ -715,13 +727,12 @@
                 &DefaultType;
                 &DirectoryIndex;
                 &ErrorDocuments;
-                <!-- &Options;  Options are ignored in <Location> -->
                 &UseCanonicalName;
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
+ -->
       </service>
-
       <service name="Mod JK" description="Management of mod_jk"
                discovery="ModJKDiscoveryComponent"
                class="ModJKComponent"

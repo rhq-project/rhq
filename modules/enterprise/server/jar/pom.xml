@@ -355,6 +355,11 @@
          <scope>test</scope>
       </dependency>
 
+       <dependency>
+          <groupId>${groupId}</groupId>
+          <artifactId>test-utils</artifactId>
+          <version>${version}</version>
+       </dependency>
    </dependencies>
 
    <build>

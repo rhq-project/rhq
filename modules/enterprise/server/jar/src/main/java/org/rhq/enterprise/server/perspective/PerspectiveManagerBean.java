@@ -39,6 +39,7 @@ import org.rhq.enterprise.server.perspective.activator.context.ActivationContext
 import org.rhq.enterprise.server.perspective.activator.context.ActivationContextScope;
 import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationContext;
 import org.rhq.enterprise.server.perspective.activator.context.ResourceActivationContext;
+import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePluginMetadataManager;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -55,15 +56,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // based on username, it's not quite appropriate.
     // The cache is cleaned anytime there is a new entry.
     static final private Map<Integer, CacheEntry> CACHE = new HashMap<Integer, CacheEntry>();
-
-    // @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    // private EntityManager entityManager;
-
-    // @EJB
-    // private AuthorizationManagerLocal authorizationManager;
-
-    // @EJB
-    // private ResourceTypeManagerLocal resourceTypeManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -157,23 +149,29 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     private CacheEntry getCacheEntry(Subject subject) {
         Integer sessionId = subject.getSessionId();
         CacheEntry cacheEntry = CACHE.get(sessionId);
-        if (cacheEntry == null) {
-            // Take this opportunity to clean the cache.
+        long metadataLastModifiedTime = getPluginMetadataManager().getLastModifiedTime();
+        if (cacheEntry == null ||
+            cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
+            // Take this opportunity to clean expired sessions from the cache.
             cleanCache();
 
             GlobalActivationContext context = new GlobalActivationContext(subject);
             EnumSet<ActivationContextScope> scopes = EnumSet.of(ActivationContextScope.GLOBAL);
 
-            List<MenuItem> baseMenu = PerspectiveManagerHelper.getPluginMetadataManager().getMenu();
+            List<MenuItem> baseMenu = getPluginMetadataManager().getMenu();
             List<MenuItem> filteredMenu = applyActivatorsToMenu(context, scopes, baseMenu);
 
-            List<Tab> baseTabs = PerspectiveManagerHelper.getPluginMetadataManager().getResourceTabs();
+            List<Tab> baseTabs = getPluginMetadataManager().getResourceTabs();
             List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, baseTabs);
 
-            cacheEntry = new CacheEntry(filteredMenu, filteredTabs);
+            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs);
             CACHE.put(sessionId, cacheEntry);
         }
         return cacheEntry;
+    }
+
+    private PerspectivePluginMetadataManager getPluginMetadataManager() {
+        return PerspectiveManagerHelper.getPluginMetadataManager();
     }
 
     // TODO: Is there any sort of listener approach we could use to clear an individual cache entry
@@ -209,6 +207,8 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     }
 
     private static class CacheEntry {
+        private long metadataLastModifiedTime;
+
         // This is a copy of the base menu that has had all global-scoped activators already applied to it.
         // We cache it because the variables used by the global activators do not change very often.
         private List<MenuItem> menu;
@@ -217,9 +217,14 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         // We cache it because the variables used by the global activators do not change very often.
         private List<Tab> tabs;
 
-        public CacheEntry(List<MenuItem> menu, List<Tab> tabs) {
+        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs) {
+            this.metadataLastModifiedTime = metadataLastModifiedTime;
             this.menu = menu;
             this.tabs = tabs;
+        }
+
+        public long getMetadataLastModifiedTime() {
+            return metadataLastModifiedTime;
         }
 
         public List<MenuItem> getMenu() {
@@ -241,7 +246,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
      */
     public String getUrlViaKey(int key) throws PerspectiveException {
         try {
-            return PerspectiveManagerHelper.getPluginMetadataManager().getUrlViaKey(key);
+            return getPluginMetadataManager().getUrlViaKey(key);
         } catch (Exception e) {
             throw new PerspectiveException("Failed to get URL for key: " + key, e);
         }

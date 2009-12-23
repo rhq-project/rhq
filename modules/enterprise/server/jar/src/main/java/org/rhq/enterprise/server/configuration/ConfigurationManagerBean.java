@@ -20,12 +20,12 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Collections;
-import java.util.Collection;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -48,6 +48,8 @@ import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
@@ -57,10 +59,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.group.AbstractGroupConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
@@ -292,8 +295,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return result;
     }
 
-    @Nullable
-    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId,
+        boolean fromStructured) {
         log.debug("Getting current resource configuration for resource [" + resourceId + "]");
 
         Resource resource;
@@ -340,7 +343,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         // ask the agent to get us the live, most up-to-date configuration for the resource,
         // then compare it to make sure what we think is the latest configuration is really the latest
-        Configuration liveConfig = getLiveResourceConfiguration(resource, true);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, true, fromStructured);
 
         if (liveConfig != null) {
             Configuration currentConfig = (current != null) ? current.getConfiguration() : null;
@@ -371,6 +374,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return current;
     }
 
+    @Nullable
+    public ResourceConfigurationUpdate getLatestResourceConfigurationUpdate(Subject subject, int resourceId) {
+        return getLatestResourceConfigurationUpdate(subject, resourceId, true);
+    }
+
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
         Configuration liveConfig) throws ConfigurationUpdateStillInProgressException {
         /*
@@ -383,7 +391,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         ResourceConfigurationUpdate update = this.configurationManager.persistNewResourceConfigurationUpdateHistory(
             this.subjectManager.getOverlord(), resource.getId(), liveConfig, ConfigurationUpdateStatus.SUCCESS, null,
             false);
-        resource.setResourceConfiguration(liveConfig.deepCopy(false));
+        //resource.setResourceConfiguration(liveConfig.deepCopy(false));
+        resource.setResourceConfiguration(liveConfig.deepCopyWithoutProxies());
         return update;
     }
 
@@ -690,6 +699,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception {
+        return getLiveResourceConfiguration(subject, resourceId, pingAgentFirst, true);
+    }
+
+    public Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
+        boolean fromStructured) throws Exception {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
         if (resource == null) {
@@ -702,7 +716,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         // ask the agent to get us the live, most up-to-date configuration for the resource
-        Configuration liveConfig = getLiveResourceConfiguration(resource, pingAgentFirst);
+        Configuration liveConfig = getLiveResourceConfiguration(resource, pingAgentFirst, fromStructured);
 
         return liveConfig;
     }
@@ -828,10 +842,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);
-        if (resource.getResourceType().getResourceConfigurationDefinition() == null
-            || resource.getResourceType().getResourceConfigurationDefinition().getPropertyDefinitions().isEmpty()) {
-            return new PageList<ResourceConfigurationUpdate>(pc);
-        }
 
         pc.initDefaultOrderingField("cu.id", PageOrdering.DESC);
 
@@ -967,35 +977,69 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return;
     }
 
+    public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration, boolean fromStructured)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+
+        Configuration configToUpdate = newConfiguration;
+
+        if (isStructuredAndRawSupported(resourceId)) {
+            configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration,
+            fromStructured);
+        }
+
+        ResourceConfigurationUpdate newUpdate =
+            configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, configToUpdate,
+                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
+
+        executeResourceConfigurationUpdate(newUpdate, fromStructured);
+
+        return newUpdate;
+    }
+
+    private boolean isStructuredAndRawSupported(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
+
+        return ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat();
+    }
+
     @Nullable
     public ResourceConfigurationUpdate updateResourceConfiguration(Subject subject, int resourceId,
         @XmlJavaTypeAdapter(ConfigurationAdapter.class) Configuration newConfiguration)
         throws ResourceNotFoundException {
+
+        if (isStructuredAndRawSupported(resourceId)) {
+            throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that " +
+                "supports both structured and raw configuration using this method because there is insufficient " +
+                "information. You should instead call updateStructuredOrRawConfiguration() which requires you " +
+                "whether the structured or raw was updated.");
+        }
+
         // must do this in a separate transaction so it is committed prior to sending the agent request
         // (consider synchronizing to avoid the condition where someone calls this method twice quickly
         // in two different txs which would put two updates in INPROGRESS and cause havoc)
         ResourceConfigurationUpdate newUpdate;
-
         // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
         // this can return null if newConfiguration is not actually different.
         newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId,
             newConfiguration, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
 
-        executeResourceConfigurationUpdate(newUpdate);
+        executeResourceConfigurationUpdate(newUpdate, true);
 
         return newUpdate;
     }
 
     public void executeResourceConfigurationUpdate(int updateId) {
         ResourceConfigurationUpdate update = getResourceConfigurationUpdate(subjectManager.getOverlord(), updateId);
-        executeResourceConfigurationUpdate(update);
+        executeResourceConfigurationUpdate(update, true);
     }
 
     /**
      * Tells the Agent to asynchonously update a managed resource's configuration as per the specified
      * <code>ResourceConfigurationUpdate</code>.
      */
-    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update) {
+    private void executeResourceConfigurationUpdate(ResourceConfigurationUpdate update, boolean fromStructured) {
         try {
             AgentClient agentClient = agentManager.getAgentClient(update.getResource().getAgent());
             ConfigurationUpdateRequest request = new ConfigurationUpdateRequest(update.getId(), update
@@ -1024,7 +1068,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 + configHistoryId + "'");
         }
 
-        updateResourceConfiguration(subject, resourceId, configuration);
+        if (isStructuredAndRawSupported(resourceId)) {
+            updateStructuredOrRawConfiguration(subject, resourceId, configuration, false);
+        }
+        else {
+            updateResourceConfiguration(subject, resourceId, configuration);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -1085,7 +1134,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             return null;
         }
 
-        Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+        //Configuration zeroedConfiguration = newConfiguration.deepCopy(false);
+        Configuration zeroedConfiguration = newConfiguration.deepCopyWithoutProxies();
 
         // create our new update request and assign it to our resource - its status will initially be "in progress"
         ResourceConfigurationUpdate newUpdateRequest = new ResourceConfigurationUpdate(resource, zeroedConfiguration,
@@ -1307,7 +1357,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      *
      * @return the resource's live configuration or <code>null</code> if it could not be retrieved from the agent
      */
-    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst) {
+    private Configuration getLiveResourceConfiguration(Resource resource, boolean pingAgentFirst, boolean fromStructured) {
         Configuration liveConfig = null;
 
         try {
@@ -1862,4 +1912,36 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     public RawConfiguration findRawConfigurationById(int rawConfigId) {
         return entityManager.find(RawConfiguration.class, rawConfigId);
     }
+
+    public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) {
+
+        if (!isStructuredAndRawSupported(resourceId)) {
+            throw new TranslationNotSupportedException("The translation operation is only supported for " +
+                "configurations that support both structured and raw.");
+        }
+
+        Resource resource = entityManager.find(Resource.class, resourceId);
+
+        if (resource == null) {
+            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+        }
+
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+
+        try {
+            Agent agent = resource.getAgent();
+            AgentClient agentClient = this.agentManager.getAgentClient(agent);
+            ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
+
+            return configService.merge(configuration, resourceId, fromStructured);
+        } catch (PluginContainerException e) {
+            log.error("An error occurred while trying to translate the configuration.", e);
+            return null;
+        }
+    }
+
 }

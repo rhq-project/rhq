@@ -30,6 +30,10 @@
             <h:outputText value="Server Settings"/>
         </h:outputLink>
         &gt;
+        <h:outputLink value="plugin-list.xhtml" >
+            ${msg["manage-plugins.installed-plugins.breadcrumb"]}
+        </h:outputLink>
+        &gt;
         <h:outputLink value="plugin-config.xhtml">
             <h:outputText value="Server Plugins Configuration"/>
         </h:outputLink>
@@ -76,6 +80,36 @@
                 </rich:panel>
 
                 <h:panelGroup id="pluginConfig">
+                    <rich:panel id="detailsLink" 
+                                style="background: #EEEEEE;"
+                                rendered="#{pluginConfigUIBean.plugin != null}" >
+                        <h:outputText value="See the " />
+                        <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                            <h:outputText value="'#{pluginConfigUIBean.plugin.displayName}' details page"/>
+                        </h:outputLink>
+                        <h:outputText value=" for more plugin information." />
+                    </rich:panel>
+
+                    <rich:panel id="noConfigMessage" 
+                                style="background: #EEEEEE;"
+                                rendered="#{not pluginConfigUIBean.editable and pluginConfigUIBean.plugin != null}" >
+                        <h:outputText escape="true" value="Plugin '#{pluginConfigUIBean.plugin.displayName}' has no configuration." />
+                    </rich:panel>
+
+                    <rich:panel id="pluginButtonsTopPanel" rendered="#{pluginConfigUIBean.editable}"> 
+                        <h:panelGroup id="pluginButtonsTop">
+                            <h:outputLink value="/rhq/admin/plugin/plugin-edit.xhtml" styleClass="buttonmed">
+                                <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                                <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                                <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                                <h:outputText value="EDIT"/>
+                            </h:outputLink>
+                        </h:panelGroup>
+                    </rich:panel>
+
                     <rich:panel rendered="#{pluginConfigUIBean.plugin.pluginConfiguration != null}">
                         <f:facet name="header">
                             <h:outputText value="Plugin Configuration"/>
@@ -94,30 +128,17 @@
                                     readOnly="true" />
                     </rich:panel>
 
-                    <rich:panel id="noConfigMessage" 
-                                rendered="#{not pluginConfigUIBean.editable and pluginConfigUIBean.plugin != null}"
-                                style="background: #EEEEEE;">
-                        <h:outputText escape="true" value="#{pluginConfigUIBean.plugin.displayName} has no configuration. " />
-                        <br />
-                        <br />
-                        <h:outputText value="See the " />
-                        <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
-                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
-                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
-                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
-                            <h:outputText value="#{pluginConfigUIBean.plugin.displayName} details page"/>
-                        </h:outputLink>
-                        <h:outputText value=" for more plugin information." />
+                    <rich:panel id="pluginButtonsBottomPanel" rendered="#{pluginConfigUIBean.editable}">
+                        <h:panelGroup id="pluginButtonsBottom">
+                            <h:outputLink value="/rhq/admin/plugin/plugin-edit.xhtml" styleClass="buttonmed">
+                                <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
+                                <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
+                                <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
+                                <h:outputText value="EDIT"/>
+                            </h:outputLink>
+                        </h:panelGroup>
                     </rich:panel>
 
-                    <h:panelGroup id="pluginButtons" rendered="#{pluginConfigUIBean.editable}">
-                        <h:outputLink value="/rhq/admin/plugin/plugin-edit.xhtml" styleClass="buttonmed">
-                            <f:param name="plugin" value="#{pluginConfigUIBean.plugin.name}"/>
-                            <f:param name="deployment" value="#{pluginConfigUIBean.plugin.deployment}"/>
-                            <f:param name="pluginType" value="#{pluginConfigUIBean.plugin.type}"/>
-                            <h:outputText value="EDIT"/>
-                        </h:outputLink>
-                    </h:panelGroup>
                 </h:panelGroup>
             </h:panelGrid>
         </h:form>

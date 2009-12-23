@@ -31,6 +31,8 @@ import org.rhq.augeas.AugeasProxy;
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
+import org.rhq.augeas.util.Glob;
+import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -134,6 +136,9 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 String url = getUrl(pluginConfig, serverConfig);
                 Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
                 pluginConfig.put(urlProp);
+                
+                //now try to detect where to put the new files if vhost-per-file option is selected
+                pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, scanForGlobInclude(serverConfig)));
                 
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
                     binaryInfo));
@@ -327,5 +332,33 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         AugeasProxy augeasProxy = new AugeasProxy(config, builder);
         augeasProxy.load();
         return augeasProxy.getAugeasTree(moduleName, true);
-    }    
+    } 
+    
+    public static String scanForGlobInclude(AugeasTree tree) {
+        List<AugeasNode> includes = tree.match("//Include/param");
+        for (AugeasNode n : includes) {
+            String include = n.getValue();
+            if (Glob.isWildcard(include)) {
+                //we only take the '*.something' into account here
+                //so that we have a useful mask to base the file names on.
+                
+                //the only special glob character allowed is *.
+                for(char specialChar : GlobFilter.WILDCARD_CHARS) {
+                    if (specialChar == '*') {
+                        if (include.indexOf(specialChar) != include.lastIndexOf(specialChar)) {
+                            //more than 1 star... that's too much
+                            break;
+                        }
+                        //we found what we're looking for...
+                        return include;
+                    }
+                    if (include.indexOf(specialChar) >= 0) {
+                        break;
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
 }

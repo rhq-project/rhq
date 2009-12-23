@@ -51,7 +51,8 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 	 
 	private final Log log = LogFactory.getLog(this.getClass());
     public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
-
+    public static final String REGEXP_PROP = "regexp";
+    
     ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
     
     public void start(ResourceContext<ApacheVirtualHostServiceComponent> context) throws InvalidPluginConfigurationException, Exception {
@@ -100,8 +101,13 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
 
     public void deleteResource() throws Exception {
-        // TODO Auto-generated method stub
+        ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
+        AugeasTree tree = parentVirtualHost.getServerConfigurationTree();
+        AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
         
+        AugeasNode myNode = getNode(virtualHostNode);
+        tree.removeNode(myNode, true);
+        tree.save();
     }
 
     /**

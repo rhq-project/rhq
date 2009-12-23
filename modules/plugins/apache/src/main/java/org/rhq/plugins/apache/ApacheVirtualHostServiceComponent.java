@@ -37,13 +37,18 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -52,6 +57,7 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
 import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 import org.rhq.plugins.apache.util.ConfigurationTimestamp;
 import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.www.snmp.SNMPException;
@@ -64,7 +70,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  * @author Lukas Krejci
  */
 public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
-    ConfigurationFacet, DeleteResourceFacet {
+    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String URL_CONFIG_PROP = "url";
@@ -74,6 +80,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
+    public static final String SERVER_NAME_CONFIG_PROP = "ServerName";
+    
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
@@ -85,6 +93,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
     private int snmpWwwServiceIndex = -1;
 
+    public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
+    
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -152,8 +162,21 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void deleteResource() throws Exception {
-        // TODO Auto-generated method stub
-
+        if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
+            throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
+        }
+        
+        AugeasTree tree = getServerConfigurationTree();
+        
+        try {
+            AugeasNode myNode = getNode(getServerConfigurationTree());
+    
+            tree.removeNode(myNode, true);
+            tree.save();
+        } catch (IllegalStateException e) {
+            //this means we couldn't find the augeas node for this vhost.
+            //that error can be safely ignored in this situation.
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
@@ -202,6 +225,58 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             + this.resourceContext.getResourceKey() + ".");
     }
 
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        ResourceType resourceType = report.getResourceType();
+        
+        if (resourceType.equals(getDirectoryResourceType())) {
+            Configuration resourceConfiguration = report.getResourceConfiguration();
+            Configuration pluginConfiguration = report.getPluginConfiguration();
+        
+            String directoryName = report.getUserSpecifiedResourceName();
+            
+            //fill in the plugin configuration
+            
+            //get the directive index
+            AugeasTree tree = getServerConfigurationTree();
+            AugeasNode myNode = getNode(tree);
+            List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
+            int seq = 0;
+            for (AugeasNode n : directories) {
+                if (n.getSeq() > seq) {
+                    seq = n.getSeq();
+                }
+            }
+            seq++;
+            
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
+            //we don't support this yet... need to figure out how...
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
+
+            //set the resource key and name
+            String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
+            report.setResourceKey(dirNameToSet + "|" + seq); 
+            report.setResourceName(directoryName);
+            
+            //now actually create the data in augeas
+            try {
+                ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+                AugeasNode directoryNode = tree.createNode(myNode, "<Directory", null, seq);
+                tree.createNode(directoryNode, "param", dirNameToSet, 0);
+                mapping.updateAugeas(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
+                tree.save();
+                
+                report.setStatus(CreateResourceStatus.SUCCESS);
+            } catch (Exception e) {
+                report.setException(e);
+                report.setStatus(CreateResourceStatus.FAILURE);
+            }
+        } else {
+            report.setErrorMessage("Unable to create resources of type " + resourceType.getName());
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        return report;
+    }
+    
     public AugeasTree getServerConfigurationTree() {
         return resourceContext.getParentResourceComponent().getAugeasTree();
     }
@@ -423,5 +498,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         }
         
         return false;
+    }
+    
+    private ResourceType getDirectoryResourceType() {
+        return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
     }
 }

@@ -1,209 +1,405 @@
-<a4j:region renderRegionOnly="true" selfRendered="true"
-	xmlns="http://www.w3.org/1999/xhtml"
-	xmlns:h="http://java.sun.com/jsf/html"
-	xmlns:c="http://java.sun.com/jstl/core"
-	xmlns:f="http://java.sun.com/jsf/core"
-	xmlns:onf="http://jboss.org/on/function"
-	xmlns:ui="http://java.sun.com/jsf/facelets"
-	xmlns:rich="http://richfaces.ajax4jsf.org/rich"
-	xmlns:a4j="http://richfaces.org/a4j">
-  <a4j:region id="page">
-   <table border="1">
-    <tr><th width="90"></th><th width="80%"></th></tr>
-	<tr>
-	<td>
-	  <table border="1" style="border-style:solid; border-width:1px;">
-	    <tr><td><rich:spacer height="50"/></td></tr>
-	     <c:forEach var="step"
-          items="#{WizardBean.allSteps}">
-            <c:choose>
-             <c:when test="#{WizardBean.currentStep eq step}">
-                <tr bgcolor="#C0C0C0"><td><b>Step: #{step}</b></td></tr>
-             </c:when>
-			 <c:otherwise>
-			    <tr><td><b>Step: #{step}</b></td></tr>
-			 </c:otherwise>             
-            </c:choose>
-            <tr><td><rich:separator height="1" lineType="solid"/></td></tr>
-		    <tr><td><rich:spacer height="15"/></td></tr>
-		    <tr><td><rich:separator height="1" lineType="solid"/></td></tr>
-         </c:forEach>
-         <tr><td><rich:spacer height="50"/></td></tr>
-	  </table>
-	</td>
-	<td><h:form id="submit" action="null">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
-		<h:outputText id="title" valueRef="#{WizardBean.title}"></h:outputText>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich">
+<ui:remove>
+    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
+  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
+  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
+  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
+  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
+</ui:remove>
 
-        <ui:remove>Display welcome to wizard and ask first questions.</ui:remove>
-        <ui:remove>In c:choose, define c:when statements for each step.</ui:remove>
-        
-        <c:choose>
-         <ui:remove>------------------------------------------------------------------</ui:remove>        
-         <c:when test="${WizardBean.currentStep == 'One'}">
-			  <h:outputText id="message"><b>The JBoss Operator Account Wizard:</b><br/></h:outputText>
-			  <h:outputText id="message2">The wizard will walk you through creation
-			  of a JBoss Operator user account with associated groups and roles.<br/></h:outputText>
-			  <rich:spacer height="100"/>
-			  (to group RHQ resources for JBoss) <br/>
-		     <table><tr><th>New Group</th><th>Values</th></tr>	  
-			  <tr><td>* Name:</td><td>
-			  <h:inputText id="groupName" value="#{WizardBean.groupName}" required="true">
-			    <f:validateLength minimum="1"/>
-			  </h:inputText></td></tr>
-			  <tr><td>Description:</td><td>
-			  <h:inputText id="groupDescription" value="#{WizardBean.groupDescription}"></h:inputText></td></tr>              
-			  <tr><td>Location:</td>
-			  <td><h:inputText id="location" value="#{WizardBean.groupLocation}"></h:inputText></td></tr>              
-			  <tr><td>Type:</td>
-			  <td><h:selectOneMenu id="groupType" value="#{WizardBean.groupType}">
-			     <f:selectItem id="Mixed" itemLabel="Mixed" itemValue="Mixed" />
-			     <f:selectItem id="Compatible" itemLabel="Compatible" itemValue="Compatible" />
-			  </h:selectOneMenu></td>
-			  </tr>
-			  <tr><td>Make group recursive:</td>
-			  <td><h:selectBooleanCheckbox id="isRecursive" value="#{WizardBean.recursive}" /></td></tr>
-			 </table>
-			  <br/> 
-			  <h:message for="groupName" errorStyle="color:blue"/>             
-         </c:when>
-         
-         <ui:remove>------------------------------------------------------------------</ui:remove>
-         <c:when test="${WizardBean.currentStep == 'Two'}">
-			  <h:outputText id="message">Role Configuration:<br/></h:outputText>
-			  <rich:spacer height="100"/>
-			  (Role defines permissions for RHQ resources for JBoss)
-		     <table><tr><th>New Role</th><th>Values</th></tr>	  
-			  <tr><td>* Name:</td><td>
-			  <h:inputText id="roleName" value="#{WizardBean.roleName}">
-			    <f:validateLength minimum="1"/>
-			  </h:inputText></td></tr>
-			  <tr><td>Description:</td><td>
-			  <h:inputText id="roleDescription" value="#{WizardBean.roleDescription}">
-			     <f:validateLength maximum="101"/>
-			  </h:inputText></td></tr>
-			  <tr><td><b>Manage Security:</b></td><td>
-			      <h:selectBooleanCheckbox id="manageSecurity" value="#{WizardBean.manageSecurityEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Manage Inventory:</b></td><td>
-			      <h:selectBooleanCheckbox id="manageInventory" value="#{WizardBean.manageInventoryEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Manage RHQ Settings:</b></td><td>
-			      <h:selectBooleanCheckbox id="manageRhqServerSettings" value="#{WizardBean.administerRhqServerSettingsEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Modify :</b></td><td>
-			      <h:selectBooleanCheckbox id="modifyEnabled" value="#{WizardBean.modifyEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Delete :</b></td><td>
-			      <h:selectBooleanCheckbox id="deleteEnabled" value="#{WizardBean.deleteEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Create Children:</b></td><td>
-			      <h:selectBooleanCheckbox id="createChildEnabled" value="#{WizardBean.createChildrenEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Alert:</b></td><td>
-			      <h:selectBooleanCheckbox id="alertEnabled" value="#{WizardBean.alertEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Measure:</b></td><td>
-			      <h:selectBooleanCheckbox id="measureEnabled" value="#{WizardBean.measureEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Content:</b></td><td>
-			      <h:selectBooleanCheckbox id="contentEnabled" value="#{WizardBean.contentEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Control:</b></td><td>
-			      <h:selectBooleanCheckbox id="controlEnabled" value="#{WizardBean.controlEnabled}" /></td>
-			  </tr>
-			  <tr><td><b>Configure:</b></td><td>
-			      <h:selectBooleanCheckbox id="configureEnabled" value="#{WizardBean.configureEnabled}" /></td>
-			  </tr>
-			  
-			 </table>                            
-			<br/>
-			<h:message for="roleName" errorStyle="color:blue" />              
-         </c:when>
-         
-         <ui:remove>------------------------------------------------------------------</ui:remove>
-         <c:when test="${WizardBean.currentStep == 'Three'}">
-			  <h:outputText id="message"><b>New User Account Details</b><br/></h:outputText>
-			  <h:outputText id="message2">The following actions will occur:<br/></h:outputText>
-			  <rich:spacer height="100"/>
-			  (new User account details) <br/>
-		     <table><tr><th>New User</th><th>Values</th></tr>	  
-			  <tr><td>* First Name:</td><td>
-			  <h:inputText id="firstName" value="#{WizardBean.firstName}" required="true">
-			    <f:validateLength minimum="1"/>
-			  </h:inputText></td></tr>
-			  <tr><td>Last Name:</td><td>
-			  <h:inputText id="lastName" value="#{WizardBean.lastName}"></h:inputText></td></tr>              
-			  <tr><td>* User Name:</td><td>
-			  <h:inputText id="newUserName" value="#{WizardBean.newUserName}">
-			    <f:validateLength minimum="6"/>
-			  </h:inputText></td></tr>
-			  			  <tr><td>Enter New Password:</td>
-			     <td><h:inputSecret id="password" value="#{WizardBean.password}">
-  					<f:validateLength minimum="3" maximum="16" />
-				  </h:inputSecret></td>
-			  </tr>              
-			  <tr><td>Confirm New Password:</td>
-			     <td><h:inputSecret id="password2" value="#{WizardBean.password2}">
-  					<f:validateLength minimum="3" maximum="16" />
-				  </h:inputSecret></td>
-			  </tr>                            
-			  <tr><td>Phone:</td>
-			  <td><h:inputText id="phone" value="#{WizardBean.phone}"></h:inputText></td></tr>
-  			  <tr><td>Email:</td>
-			  <td><h:inputText id="email" value="#{WizardBean.email}"></h:inputText></td></tr>              
-			  <tr><td>Department:</td>
-			  <td><h:inputText id="department" value="#{WizardBean.department}"></h:inputText></td></tr>              
-			                
-			  <tr><td>Enable this account:</td>
-			  <td><h:selectBooleanCheckbox id="isEnableLogin" value="#{WizardBean.enableLogin}" /></td></tr>
-			 </table>
-			  
-			  <h:message for="firstName" errorStyle="color:blue"/>
-			  <h:message for="newUserName" errorStyle="color:blue"/>
-			  <h:message for="password" errorStyle="color:blue"/>
-			  <h:message for="password2" errorStyle="color:blue"/>             
-			  <br/> 
-         </c:when>
-         
-         <ui:remove>------------------------------------------------------------------</ui:remove>
-         <c:when test="${WizardBean.currentStep == 'Confirm'}">
-			  <h:outputText id="message">You're almost done.<br/></h:outputText>
-			  <h:outputText id="message2">The following will occur when click 'Next':<br/></h:outputText>
-			  <rich:spacer height="100"/>
-			  <h:outputText >1) A new Group, '#{WizardBean.groupName}' will be created to group Jboss resources.<br/></h:outputText>
-			  <h:outputText >2) A new Role, '#{WizardBean.roleName}' will be created defining resource access rights.<br/></h:outputText>
-			  <h:outputText >3) The user '#{WizardBean.newUserName}' will be created with attached role and group from steps 1 and 2. :<br/></h:outputText>
-         </c:when>
-         
-         <c:when test="${WizardBean.currentStep == 'Complete'}">
-			  <h:outputText id="message">The user '#{WizardBean.newUserName}' has been successfully created and the account is active.<br/></h:outputText>
-			  <rich:spacer height="100"/>
-         </c:when>
-         
-         <ui:remove>------------------------------------------------------------------</ui:remove>
-         <c:otherwise>
-           <b>NO CONDIDTIONS MATCHED: Contact system administrator.</b>
-         </c:otherwise>
-		</c:choose>
+    <head>
+        <title>
+           BOO!!!
+        </title>
+    </head>
 
-		<ui:remove>------------------------------------------------------------------</ui:remove>
-		<br/><br/>
-        <h:commandButton id="previous" value="Back" disabled="#{WizardBean.currentStep eq WizardBean.start}" 
-        	rerender="page"  
-        	action="#{WizardBean.processReverse}">
-        </h:commandButton>        
-        <h:commandButton id="next" value="Next" rerender="page" 
-            disabled="#{WizardBean.currentStep eq WizardBean.end}"  
-            action="#{WizardBean.processActions}">
-        </h:commandButton>
-        
-        <ui:remove>Remove line below after debug complete</ui:remove>
-         
-        <h:outputText>#{WizardBean.currentStep}</h:outputText>
-        <br/><br/>
-        <h:outputText>* Required field</h:outputText>
-	</h:form></td></tr>
-   </table>
-  </a4j:region>	
-</a4j:region>
+    <body bgcolor="#DDF">
+
+    <f:view contentType="text/html; charset=UTF-8">
+
+    <table border="1">
+        <tr>
+            <td width="200">
+                <table border="1" style="border-top-style: solid; border-top-width:1px;">
+                    <tr>
+                        <td>
+                            <rich:spacer height="50"/>
+                        </td>
+                    </tr>
+                    <c:forEach var="step"
+                               items="#{WizardBean.allSteps}">
+                        <c:choose>
+                            <c:when test="#{WizardBean.currentStep eq step}">
+                                <tr bgcolor="#C0C0C0" style="margin: 12px">
+                                    <td><b>Step: #{step}</b></td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td style="margin: 12px"><b>Step: #{step}</b></td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                        <!--
+                        <tr>
+                            <td>
+                                <rich:separator height="1" lineType="solid"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <rich:spacer height="15"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <rich:separator height="1" lineType="solid"/>
+                            </td>
+                        </tr>
+                    -->
+                    </c:forEach>                                        
+                </table>
+            </td>
+            <td style="overflow-y: auto;">
+                <h:form id="submit" action="null">
+
+                    <h:outputText id="title" valueRef="#{WizardBean.title}"></h:outputText>
+
+                    <ui:remove>Display welcome to wizard and ask first questions.</ui:remove>
+                    <ui:remove>In c:choose, define c:when statements for each step.</ui:remove>
+
+                    <c:choose>
+                        <ui:remove>------------------------------------------------------------------</ui:remove>
+                        <c:when test="${WizardBean.currentStep == 'One'}">
+                            <h:outputText id="message"><b>The JBoss Operator Account Wizard:</b><br/></h:outputText>
+                            <h:outputText id="message2">The wizard will walk you through creation
+                                of a JBoss Operator user account with associated groups and roles.<br/></h:outputText>
+                            <rich:spacer height="100"/>
+                            (to group RHQ resources for JBoss) <br/>
+                            <table>
+                                <tr>
+                                    <th>New Group</th>
+                                    <th>Values</th>
+                                </tr>
+                                <tr>
+                                    <td>* Name:</td>
+                                    <td>
+                                        <h:inputText id="groupName" value="#{WizardBean.groupName}" required="true">
+                                            <f:validateLength minimum="1"/>
+                                        </h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Description:</td>
+                                    <td>
+                                        <h:inputText id="groupDescription"
+                                                     value="#{WizardBean.groupDescription}"></h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Location:</td>
+                                    <td>
+                                        <h:inputText id="location" value="#{WizardBean.groupLocation}"></h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Type:</td>
+                                    <td>
+                                        <h:selectOneMenu id="groupType" value="#{WizardBean.groupType}">
+                                            <f:selectItem id="Mixed" itemLabel="Mixed" itemValue="Mixed"/>
+                                            <f:selectItem id="Compatible" itemLabel="Compatible"
+                                                          itemValue="Compatible"/>
+                                        </h:selectOneMenu>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Make group recursive:</td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="isRecursive" value="#{WizardBean.recursive}"/>
+                                    </td>
+                                </tr>
+                            </table>
+                            <br/>
+                            <h:message for="groupName" errorStyle="color:blue"/>
+                        </c:when>
+
+                        <ui:remove>------------------------------------------------------------------</ui:remove>
+                        <c:when test="${WizardBean.currentStep == 'Two'}">
+                            <h:outputText id="message">Role Configuration:<br/></h:outputText>
+                            <rich:spacer height="100"/>
+                            (Role defines permissions for RHQ resources for JBoss)
+                            <table>
+                                <tr>
+                                    <th>New Role</th>
+                                    <th>Values</th>
+                                </tr>
+                                <tr>
+                                    <td>* Name:</td>
+                                    <td>
+                                        <h:inputText id="roleName" value="#{WizardBean.roleName}" required="true">
+                                            <f:validateLength maximum="100"/>
+                                        </h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Description:</td>
+                                    <td>
+                                        <h:inputText id="roleDescription" value="#{WizardBean.roleDescription}">
+                                            <f:validateLength maximum="100"/>
+                                        </h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Manage Security:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="manageSecurity"
+                                                                 value="#{WizardBean.manageSecurityEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Manage Inventory:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="manageInventory"
+                                                                 value="#{WizardBean.manageInventoryEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Manage RHQ Settings:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="manageRhqServerSettings"
+                                                                 value="#{WizardBean.administerRhqServerSettingsEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Modify :</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="modifyEnabled"
+                                                                 value="#{WizardBean.modifyEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Delete :</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="deleteEnabled"
+                                                                 value="#{WizardBean.deleteEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Create Children:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="createChildEnabled"
+                                                                 value="#{WizardBean.createChildrenEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Alert:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="alertEnabled" value="#{WizardBean.alertEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Measure:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="measureEnabled"
+                                                                 value="#{WizardBean.measureEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Content:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="contentEnabled"
+                                                                 value="#{WizardBean.contentEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Control:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="controlEnabled"
+                                                                 value="#{WizardBean.controlEnabled}"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><b>Configure:</b></td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="configureEnabled"
+                                                                 value="#{WizardBean.configureEnabled}"/>
+                                    </td>
+                                </tr>
+
+                            </table>
+                            <br/>
+                            <h:message for="roleName" errorStyle="color:blue"/>
+                        </c:when>
+
+                        <ui:remove>------------------------------------------------------------------</ui:remove>
+                        <c:when test="${WizardBean.currentStep == 'Three'}">
+                            <h:outputText id="message"><b>New User Account Details</b><br/></h:outputText>
+                            <h:outputText id="message2">The following actions will occur:<br/></h:outputText>
+                            <rich:spacer height="100"/>
+                            (new User account details) <br/>
+                            <table>
+                                <tr>
+                                    <th>New User</th>
+                                    <th>Values</th>
+                                </tr>
+                                <tr>
+                                    <td>* First Name:</td>
+                                    <td>
+                                        <h:inputText id="firstName" value="#{WizardBean.firstName}" required="true">
+                                            <f:validateLength minimum="1"/>
+                                        </h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Last Name:</td>
+                                    <td>
+                                        <h:inputText id="lastName" value="#{WizardBean.lastName}"></h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>* User Name:</td>
+                                    <td>
+                                        <h:inputText id="newUserName" value="#{WizardBean.newUserName}">
+                                            <f:validateLength minimum="6"/>
+                                        </h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Enter New Password:</td>
+                                    <td>
+                                        <h:inputSecret id="password" value="#{WizardBean.password}">
+                                            <f:validateLength minimum="3" maximum="16"/>
+                                        </h:inputSecret>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Confirm New Password:</td>
+                                    <td>
+                                        <h:inputSecret id="password2" value="#{WizardBean.password2}">
+                                            <f:validateLength minimum="3" maximum="16"/>
+                                        </h:inputSecret>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Phone:</td>
+                                    <td>
+                                        <h:inputText id="phone" value="#{WizardBean.phone}"></h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Email:</td>
+                                    <td>
+                                        <h:inputText id="email" value="#{WizardBean.email}"></h:inputText>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Department:</td>
+                                    <td>
+                                        <h:inputText id="department" value="#{WizardBean.department}"></h:inputText>
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td>Enable this account:</td>
+                                    <td>
+                                        <h:selectBooleanCheckbox id="isEnableLogin" value="#{WizardBean.enableLogin}"/>
+                                    </td>
+                                </tr>
+                            </table>
+
+                            <h:message for="firstName" errorStyle="color:blue"/>
+                            <h:message for="newUserName" errorStyle="color:blue"/>
+                            <h:message for="password" errorStyle="color:blue"/>
+                            <h:message for="password2" errorStyle="color:blue"/>
+                            <br/>
+                        </c:when>
+
+                        <ui:remove>------------------------------------------------------------------</ui:remove>
+                        <c:when test="${WizardBean.currentStep == 'Confirm'}">
+                            <h:outputText id="message">You're almost done.<br/></h:outputText>
+                            <h:outputText id="message2">The following will occur when click 'Next':<br/></h:outputText>
+                            <rich:spacer height="100"/>
+                            <h:outputText>1) A new Group, '#{WizardBean.groupName}' will be created to group Jboss
+                                resources.<br/></h:outputText>
+                            <h:outputText>2) A new Role, '#{WizardBean.roleName}' will be created defining resource
+                                access rights.<br/></h:outputText>
+                            <h:outputText>3) The user '#{WizardBean.newUserName}' will be created with attached role and
+                                group from steps 1 and 2. :<br/></h:outputText>
+                        </c:when>
+
+                        <c:when test="${WizardBean.currentStep == 'Complete'}">
+                            <h:panelGroup layout="block">The user '#{WizardBean.newUserName}' has been successfully
+                                created and the account is active. This user has permissions for all EJB3
+                                Session beans in inventory, displayed below.</h:panelGroup>
+
+                            <rich:spacer height="100"/>
+
+                            <rich:dataTable
+                                onRowMouseOver="this.style.backgroundColor='#F1F1F1'"
+                                onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'"
+                                cellpadding="0" cellspacing="0"
+                                width="700" border="0" var="resource" value="#{WizardBean.resources}">
+
+                                <rich:column>
+                                    <f:facet name="header">
+                                        <h:outputText value="Id" />
+                                    </f:facet>
+                                    <h:outputText value="#{resource.id}" />
+                                </rich:column>
+
+                                <rich:column>
+                                    <f:facet name="header">
+                                        <h:outputText value="Name" />
+                                    </f:facet>
+                                    <h:outputText value="#{resource.name}" />
+                                </rich:column>
+
+                                <rich:column>
+                                    <f:facet name="header">
+                                        <h:outputText value="Description" />
+                                    </f:facet>
+                                    <h:outputText value="#{resource.description}" />
+                                </rich:column>
+
+                            </rich:dataTable>
+                        </c:when>
+
+                        <ui:remove>------------------------------------------------------------------</ui:remove>
+                        <c:otherwise>
+                            <b>NO CONDIDTIONS MATCHED: Contact system administrator.</b>
+                        </c:otherwise>
+                    </c:choose>
+
+                    <ui:remove>------------------------------------------------------------------</ui:remove>
+                    <br/><br/>
+                    <h:commandButton id="previous" value="Back" disabled="#{WizardBean.currentStep eq WizardBean.start}"
+                                     action="#{WizardBean.processReverse}">
+                    </h:commandButton>
+                    <h:commandButton id="next" value="Next"
+                                     disabled="#{WizardBean.currentStep eq WizardBean.end}"
+                                     action="#{WizardBean.processActions}">
+                    </h:commandButton>
+
+                    <ui:remove>Remove line below after debug complete</ui:remove>
+
+                    <h:outputText>#{WizardBean.currentStep}</h:outputText>
+                    <br/><br/>
+                    <h:outputText>* Required field</h:outputText>
+                </h:form>
+            </td>
+        </tr>
+    </table>
+    </f:view>
+
+    </body>
+
+</html>

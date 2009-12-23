@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Byteman"
+        displayName="Byteman"
+        description="Provides a client to a byteman instrumented JVM"
+        package="org.rhq.plugins.byteman"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="Byteman Agent"
+            discovery="BytemanDiscoveryComponent"
+            class="BytemanComponent"
+            supportsManualAdd="true"
+            classLoader="instance"
+            description="A Byteman agent that is listening for incoming requests to perform byte-code manipulation">
+
+        <plugin-configuration>
+            <c:simple-property name="listenerHost" type="string" required="true" default="127.0.0.1"
+                               description="The IP or hostname that the Byteman agent listener has bound to"/>
+            <c:simple-property name="listenerPort" type="integer" required="true" default="9091"
+                               description="The port that the Byteman agent listener is listening for commands on">
+                <c:constraint>
+                    <c:integer-constraint minimum="1" maximum="65535"/>
+                </c:constraint>
+            </c:simple-property>
+            <c:simple-property name="bytemanClientJar" type="file" required="true"
+                               description="The full path to the Byteman jar file that contains the Byteman submit client"/>
+        </plugin-configuration>
+
+        <process-scan name="bytemanAgent" query="process|basename|match=java.*,arg|*|match=-javaagent:.*byteman.*jar.*"/>
+
+        <operation name="getRule" description="Retrieves the content of a given rule">
+            <parameters>
+                <c:simple-property name="ruleName" description="The name of the rule to get" type="string" required="true"/>
+            </parameters>
+            <results>
+                <c:simple-property name="ruleDefinition" type="longString" />
+            </results>
+        </operation>       
+
+        <metric property="totalNumberOfRules"
+                description="The total number of rules currently deployed in the Byteman agent"
+                category="utilization"
+                displayType="summary"
+                defaultOn="true" />
+   </server>
+
+</plugin>

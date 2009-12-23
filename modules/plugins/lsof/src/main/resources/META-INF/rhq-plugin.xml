@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="lsof"
+        displayName="LSOF Network Resource Detector"
+        description="Detects resources out in the network using lsof technology"
+        package="org.rhq.plugins.lsof"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="script" useClasses="true" />
+
+   <server name="LSOF Utility" discovery="LsofDiscoveryComponent" class="LsofComponent"
+           supportsManualAdd="true"
+           description="The lsof tool to be used to detect network resources">
+
+      <plugin-configuration>
+         <c:simple-property name="executablePath" required="false"
+                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
+      </plugin-configuration>
+
+   </server>
+
+</plugin>

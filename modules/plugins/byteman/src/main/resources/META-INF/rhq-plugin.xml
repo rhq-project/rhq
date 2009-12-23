@@ -2,7 +2,7 @@
 
 <plugin name="Byteman"
         displayName="Byteman"
-        description="Provides a client to a byteman instrumented JVM"
+        description="Provides a client to a Byteman instrumented JVM"
         package="org.rhq.plugins.byteman"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
@@ -36,6 +36,32 @@
             </parameters>
             <results>
                 <c:simple-property name="ruleDefinition" type="longString" />
+            </results>
+        </operation>       
+
+        <operation name="getClientVersion" description="Reports the version of the Byteman client that is being used by this plugin">
+            <results>
+                <c:simple-property name="version" description="The version of the Byteman client"/>
+            </results>
+        </operation>       
+
+        <operation name="addJarsToSystemClasspath"
+                   description="Adds jars to the Byteman agent's system classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
+            <parameters>
+                <c:simple-property name="jarPaths" description="Comma-separated list of paths pointing to the jar files." required="true" />
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
+            </results>
+        </operation>       
+
+        <operation name="addJarsToBootClasspath"
+                   description="Adds jars to the Byteman agent's boot classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
+            <parameters>
+                <c:simple-property name="jarPaths" description="Comma-separated list of paths pointing to the jar files." required="true" />
+            </parameters>
+            <results>
+                <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
             </results>
         </operation>       
 

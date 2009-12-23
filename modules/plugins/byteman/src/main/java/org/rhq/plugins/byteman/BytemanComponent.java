@@ -19,6 +19,7 @@
 package org.rhq.plugins.byteman;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,6 +131,8 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
 
         try {
             if ("getRule".equals(name)) {
+                //
+                // getRule == retrieves the rule definition for a given rule
                 String ruleName = configuration.getSimpleValue("ruleName", null);
                 if (ruleName == null || ruleName.length() == 0) {
                     throw new Exception("Did not specify the name of the rule to get");
@@ -146,6 +149,43 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
                     }
                 }
                 throw new Exception("No rule was found with the name [" + ruleName + "]");
+            } else if ("getClientVersion".equals(name)) {
+                //
+                // getClientVersion == return the version string of the client this plugin is using
+                String clientVersion = client.getClientVersion();
+                Configuration resultConfig = result.getComplexResults();
+                resultConfig.put(new PropertySimple("version", (clientVersion == null) ? "<unknown>" : clientVersion));
+                return result;
+            } else if ("addJarsToSystemClasspath".equals(name)) {
+                //
+                // addJarsToSystemClasspath == adds a jar to the remote byteman agent's system classpath 
+                String jarPaths = configuration.getSimpleValue("jarPaths", null);
+                if (jarPaths == null || jarPaths.length() == 0) {
+                    throw new Exception("Did not specify any jars to add");
+                }
+                String[] jarPathsArr = jarPaths.split(",");
+                List<String> jarPathList = new ArrayList<String>();
+                for (String jarPathString : jarPathsArr) {
+                    jarPathList.add(jarPathString);
+                }
+                String response = client.addJarsToSystemClassloader(jarPathList);
+                result.setSimpleResult(response);
+                return result;
+            } else if ("addJarsToBootClasspath".equals(name)) {
+                //
+                // addJarsToBootClasspath == adds a jar to the remote byteman agent's boot classpath 
+                String jarPaths = configuration.getSimpleValue("jarPaths", null);
+                if (jarPaths == null || jarPaths.length() == 0) {
+                    throw new Exception("Did not specify any jars to add");
+                }
+                String[] jarPathsArr = jarPaths.split(",");
+                List<String> jarPathList = new ArrayList<String>();
+                for (String jarPathString : jarPathsArr) {
+                    jarPathList.add(jarPathString);
+                }
+                String response = client.addJarsToBootClassloader(jarPathList);
+                result.setSimpleResult(response);
+                return result;
             } else {
                 throw new UnsupportedOperationException(name);
             }
@@ -255,7 +295,7 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
     public void deleteResource() {
     }
 
-    protected Submit getBytemanClient() {
+    public Submit getBytemanClient() {
         if (this.bytemanClient == null) {
             Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
 

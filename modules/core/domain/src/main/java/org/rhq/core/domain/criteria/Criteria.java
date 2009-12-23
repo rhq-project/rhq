@@ -246,15 +246,12 @@ public abstract class Criteria implements Serializable {
         return requiredPermissions;
     }
 
+    /**
+     * @param requiredPermissions the permissions required by the user on any applicable objects.
+     * Typically resource permissions needed by the user on returned resources or resource related data.
+     */
     public void addRequiredPermissions(Permission... requiredPermissions) {
         this.requiredPermissions = Arrays.asList(requiredPermissions);
-    }
-
-    /**
-     * @param permissions the permissions to set
-     */
-    public void setRequiredPermissions(List<Permission> requiredPermissions) {
-        this.requiredPermissions = requiredPermissions;
     }
 
     public PageControl getPageControl() {

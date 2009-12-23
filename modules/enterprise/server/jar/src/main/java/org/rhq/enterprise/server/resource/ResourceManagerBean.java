@@ -2079,7 +2079,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
-                subject.getId(), criteria.getRequiredPermissions());
+                subject.getId());
         }
 
         CriteriaQueryRunner<Resource> queryRunner = new CriteriaQueryRunner(criteria, generator, entityManager);

@@ -125,11 +125,6 @@ public final class CriteriaQueryGenerator {
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId) {
-        setAuthorizationResourceFragment(type, fragment, subjectId, null);
-    }
-
-    public void setAuthorizationResourceFragment(AuthorizationTokenType type, String fragment, int subjectId,
-        List<Permission> perms) {
         this.authorizationSubjectId = subjectId;
         if (type == AuthorizationTokenType.RESOURCE) {
             if (fragment == null) {
@@ -160,11 +155,20 @@ public final class CriteriaQueryGenerator {
                 + " does not yet support generating queries for '" + type + "' token types");
         }
 
-        this.authorizationPermsFragment = "";
-        if (!(null == perms || perms.isEmpty())) {
-            for (Permission perm : perms) {
-                this.authorizationPermsFragment = NL + "AND " + perm + " IN authRole.permissions";
-            }
+        // If the query results are narrowed by requiredParams generate the fragment now. It's done
+        // here for two reasons. First, it seems to make sense to apply this only when an authFragment is
+        // being used.  Second, because ond day the query may be less brute force and may modify or
+        // leverage the joinFragment above.  But, after extensive trying a more elegant
+        // query could not be constructed due to Hibernate limitations. So, for now, here it is...
+        List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+        if (!(null == requiredPerms || requiredPerms.isEmpty())) {
+            this.authorizationPermsFragment = "" //
+                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
+                + "      FROM Subject innerSubject" + NL //
+                + "      JOIN innerSubject.roles r" + NL //
+                + "      JOIN r.permissions p" + NL //
+                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
@@ -248,7 +252,9 @@ public final class CriteriaQueryGenerator {
                 results.append(NL).append(" AND ");
             }
             results.append("authSubject.id = " + authorizationSubjectId + " ");
-            results.append(this.authorizationPermsFragment + " ");
+            if (null != this.authorizationPermsFragment) {
+                results.append(this.authorizationPermsFragment + " ");
+            }
         }
 
         if (countQuery == false) {
@@ -285,7 +291,7 @@ public final class CriteriaQueryGenerator {
         }
         results.append(NL);
 
-        LOG.debug(results);
+        LOG.info(results);
         return results.toString();
     }
 
@@ -378,6 +384,11 @@ public final class CriteriaQueryGenerator {
             }
             LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
             query.setParameter(critField.getKey(), value);
+        }
+        if (null != this.authorizationPermsFragment) {
+            List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+            query.setParameter("requiredPerms", requiredPerms);
+            query.setParameter("requiredPermsSize", (long) requiredPerms.size());
         }
     }
 

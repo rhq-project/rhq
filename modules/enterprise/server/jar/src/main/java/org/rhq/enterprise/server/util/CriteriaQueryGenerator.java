@@ -291,7 +291,7 @@ public final class CriteriaQueryGenerator {
         }
         results.append(NL);
 
-        LOG.info(results);
+        LOG.debug(results);
         return results.toString();
     }
 

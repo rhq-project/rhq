@@ -48,7 +48,7 @@
         <operation name="addJarsToSystemClasspath"
                    description="Adds jars to the Byteman agent's system classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
             <parameters>
-                <c:simple-property name="jarPaths" description="Comma-separated list of paths pointing to the jar files." required="true" />
+                <c:simple-property name="jarPathnames" description="Comma-separated list of pathnames pointing to the jar files." required="true" />
             </parameters>
             <results>
                 <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
@@ -58,10 +58,26 @@
         <operation name="addJarsToBootClasspath"
                    description="Adds jars to the Byteman agent's boot classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
             <parameters>
-                <c:simple-property name="jarPaths" description="Comma-separated list of paths pointing to the jar files." required="true" />
+                <c:simple-property name="jarPathnames" description="Comma-separated list of pathnames pointing to the jar files." required="true" />
             </parameters>
             <results>
                 <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
+            </results>
+        </operation>       
+
+        <operation name="getAddedClasspathJars"
+                   description="Gets the list of all jars that were added to both the boot and system classpaths of the Byteman agent.">
+            <results>
+                <c:list-property name="additionalBootClasspathJars" description="Jars that were added to the boot classpath">
+                   <c:map-property name="additionalBootClasspathJar" description="A jar that was added to the boot classpath">
+                      <c:simple-property name="jarPathname" />
+                   </c:map-property>
+                </c:list-property>
+                <c:list-property name="additionalSystemClasspathJars" description="Jars that were added to the system classpath">
+                   <c:map-property name="additionalSystemClasspathJar" description="A jar that was added to the system classpath">
+                      <c:simple-property name="jarPathname" />
+                   </c:map-property>
+                </c:list-property>
             </results>
         </operation>       
 

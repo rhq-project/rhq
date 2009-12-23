@@ -31,6 +31,8 @@ import org.jboss.byteman.agent.submit.Submit;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
@@ -159,7 +161,7 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
             } else if ("addJarsToSystemClasspath".equals(name)) {
                 //
                 // addJarsToSystemClasspath == adds a jar to the remote byteman agent's system classpath 
-                String jarPaths = configuration.getSimpleValue("jarPaths", null);
+                String jarPaths = configuration.getSimpleValue("jarPathnames", null);
                 if (jarPaths == null || jarPaths.length() == 0) {
                     throw new Exception("Did not specify any jars to add");
                 }
@@ -174,7 +176,7 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
             } else if ("addJarsToBootClasspath".equals(name)) {
                 //
                 // addJarsToBootClasspath == adds a jar to the remote byteman agent's boot classpath 
-                String jarPaths = configuration.getSimpleValue("jarPaths", null);
+                String jarPaths = configuration.getSimpleValue("jarPathnames", null);
                 if (jarPaths == null || jarPaths.length() == 0) {
                     throw new Exception("Did not specify any jars to add");
                 }
@@ -185,6 +187,35 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
                 }
                 String response = client.addJarsToBootClassloader(jarPathList);
                 result.setSimpleResult(response);
+                return result;
+            } else if ("getAddedClasspathJars".equals(name)) {
+                //
+                // getAddedClasspathJars == gets all jars that were added to the byteman agent's boot and system classpaths 
+                Configuration resultConfig = result.getComplexResults();
+                List<String> jars;
+
+                jars = client.getLoadedBootClassloaderJars();
+                if (jars != null && !jars.isEmpty()) {
+                    PropertyList list = new PropertyList("additionalBootClasspathJars");
+                    for (String jar : jars) {
+                        PropertyMap map = new PropertyMap("additionalBootClasspathJar");
+                        map.put(new PropertySimple("jarPathname", jar));
+                        list.add(map);
+                    }
+                    resultConfig.put(list);
+                }
+
+                jars = client.getLoadedSystemClassloaderJars();
+                if (jars != null && !jars.isEmpty()) {
+                    PropertyList list = new PropertyList("additionalSystemClasspathJars");
+                    for (String jar : jars) {
+                        PropertyMap map = new PropertyMap("additionalSystemClasspathJar");
+                        map.put(new PropertySimple("jarPathname", jar));
+                        list.add(map);
+                    }
+                    resultConfig.put(list);
+                }
+
                 return result;
             } else {
                 throw new UnsupportedOperationException(name);

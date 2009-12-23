@@ -12,7 +12,7 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
-   
+
    <!-- Declare supporting applications for this perspective -->
    <application
       name="sample"
@@ -39,7 +39,7 @@
       <position
          placement="firstChild" />
    </menuItem>
-   
+
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
    <menuItem
       action="remove"
@@ -49,7 +49,7 @@
          name="groups.groupDefinitions"
          placement="after" />
    </menuItem>
-   <menuItem      
+   <menuItem
       action="remove"
       name="groups.newGroupDefinition"
       displayName="New Group Definition">
@@ -83,22 +83,60 @@
          placement="after" />
    </menuItem>
    <menuItem
-       name="sample.child3"
-       displayName="Random Resource"
-       application="sample"
-       url="randomResource.seam">
-       <position
-          name="sample.child2"
-          placement="after" />
+      name="sample.child3"
+      displayName="Random Resource"
+      application="sample"
+      url="randomResource.seam">
+      <position
+         name="sample.child2"
+         placement="after" />
    </menuItem>
    <menuItem
-       name="sample.child4"
-       displayName="Create EJB3 Admin User"
-       application="sample"
-       url="wizard.seam">
-       <position
-          name="sample.child3"
-          placement="after" />
+      name="sample.child4"
+      displayName="Create EJB3 Admin User"
+      application="sample"
+      url="wizard.seam">
+      <position
+         name="sample.child3"
+         placement="after" />
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+         <globalPermission
+            name="MANAGE_SECURITY" />
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server" />
+         </inventory>
+      </activators>
+   </menuItem>
+   <menuItem
+      name="sample.child5"
+      displayName="Config and Restart AS"
+      application="sample"
+      url="mainpage.html">
+      <position
+         name="sample.child4"
+         placement="after" />
+      <activators>
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server">
+               <permission
+                  name="CONTROL" />
+               <permission
+                  name="CONFIGURE" />
+               <trait
+                  name="Version Name"
+                  value="Trinity" />
+               <trait
+                  name="Build Date"
+                  value="20\d\d" />
+            </resource>
+         </inventory>
+      </activators>
    </menuItem>
    <menuItem
       name="sample.child1.newGroup"
@@ -109,9 +147,10 @@
       <position
          name="sample.child1"
          placement="firstChild" />
-       <activators>
-          <globalPermission name="MANAGE_INVENTORY" />
-       </activators>
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+      </activators>
    </menuItem>
    <menuItem
       name="sample.child1.newGroupDefinition"
@@ -122,9 +161,10 @@
       <position
          name="sample.child1.newGroup"
          placement="after" />
-       <activators>
-          <globalPermission name="MANAGE_INVENTORY" />
-       </activators>
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+      </activators>
    </menuItem>
 
    <tab
@@ -149,14 +189,14 @@
          name="Summary.Timeline"
          placement="after" />
       <activators>
-          <resourceType>
-              <resource
-                  plugin="Platforms"
-                  type="Network Adapter"/>
-          </resourceType>
+         <resourceType>
+            <resource
+               plugin="Platforms"
+               type="Network Adapter" />
+         </resourceType>
       </activators>
    </tab>
-   
+
    <tab
       name="Monitor.Sample"
       displayName="Sample"

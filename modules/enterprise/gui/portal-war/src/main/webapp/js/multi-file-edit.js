@@ -46,7 +46,7 @@ function MultiFileEdit(){
 		this.isDirty = 0; 
 		for (i=0; i < this.archive.length ;i++)
 		{
-			document.getElementById("dirty-span-"+i).firstChild.data = "O ";
+			document.getElementById("dirty-span-"+i).style.visibility="hidden";
 		}
 	}
 
@@ -62,14 +62,14 @@ function MultiFileEdit(){
 		this.isDirty = 1;
 		this.archive[this.currentIndex].contents = textarea.value ;	
 		this.archive[this.currentIndex].dirty = 1;
-		document.getElementById("dirty-span-"+this.currentIndex).firstChild.data = "X ";
+		document.getElementById("dirty-span-"+this.currentIndex).style.visibility="visible";
 	}	
 
 	this.generateLinks = function(){
 		var i=0;
 		var style =0;
 		var divclass = "";
-		document.write("<table><th><td>Configuration File Paths</td><td></td></th>");	
+		document.write("<table BORDER=0 RULES=NONE FRAME=BOX><th><td>Configuration File Paths</td><td></td></th>");	
 		for (i=0; i < multiFileEdit.archive.length ;i++){
 						
 			if (i == 0){
@@ -84,7 +84,7 @@ function MultiFileEdit(){
 			
 			document.write("<tr id='file-row-"+i+"'class='"+ divclass +"'>");
 			document.write("<td>");
-			document.write("<span id='dirty-span-"+i+"'>O </span>");
+			document.write("<span id='dirty-span-"+i+"' style=\"visibility:hidden;\" > * </span>");
 			document.write("</td><td>");
 			document.write("<a href=\"#\"  onclick='multiFileEdit.setTextAreaValue("+i+")' >"+ multiFileEdit.archive[i].path);
 			document.write("</a>");	
@@ -111,6 +111,7 @@ function MultiFileEdit(){
 		document.write("background-color:white;");
 		document.write("}");
 		
+		
 		document.write("</style>");
 		document.write("<table class='multi-edit-table' border='0' cellpadding='0' >");
 		document.write("<tbody>");
@@ -120,10 +121,10 @@ function MultiFileEdit(){
 		document.write("</td>");
 		document.write("<td>");
 		document.write("<div><span id='current-path-span'>Current File Name Goes here</span>  ..................");
-		document.write("<a href=\"#\"><img src='images/download.png'/> Download</a>");
+		document.write("<a href=\"#\"><img src='/images/download.png'/> Download</a>");
 		document.write("<a href=\"#\"  ");
 		document.write("onclick=\"multiFileEdit.fullscreen()\"> "); 
-		document.write("<img src='images/fullscreen.png'/> Full Screen</a>")
+		document.write("<img src='/images/fullscreen.png'/> Full Screen</a>")
 		document.write("</div>");
 		document.write("<textarea id='textarea' "); 
 		if (this.disabled){
@@ -143,36 +144,32 @@ function MultiFileEdit(){
 	}	
 	
 	this.fullscreen= function()
-	{	
+	{
+
+		
 	  var generator=window.open('','full screen','width=1024,height=768,left=0,top=100,screenX=0,screenY=0');
 	  generator.document.write('<html><head><title>Popup</title>');
-	  generator.document.write('<link rel="stylesheet" href="style.css">');
-	  
+	  generator.document.write('<link rel="stylesheet" href="style.css">');	  
 	  generator.document.write('<script language="JavaScript" type="text/javascript" src="multi-file-edit.js"></script>');
-	  
-	  generator.document.write('</head><body>');
-	  
+	  generator.document.write('</head><body>');	  
 	  generator.document.write("<form id='full-screen-edit-form'>");
-	  generator.document.write("<div><span id='current-path-span'>Current File Name Goes here</span> ");
+	  generator.document.write("<div><span id='current-path-span'>" +multiFileEdit.archive[this.currentIndex].path+"</span> ");
 	  generator.document.write("<a href=\"javascript:self.close();\">Close</a>..................");		
 	  generator.document.write("</div>");
 	  generator.document.write("<textarea id='textarea'  onkeyup='update_parent();' ");
-	  
 	  if (this.disabled){
 	     generator.document.write("disabled ");
-	   }
-	  
+	   }			  
 	  generator.document.write("cols='200' rows='45'>");
+	  generator.document.write(multiFileEdit.archive[this.currentIndex].contents);
 	  generator.document.write("</textarea>");						
-	  generator.document.write("</form>");
-	 	  
+	  generator.document.write("</form>");	 	  
 	  generator.document.write('</body></html>');
 	  
-	  generator.document.getElementById("current-path-span").firstChild.data = multiFileEdit.archive[this.currentIndex].path;
-	  generator.document.getElementById("full-screen-edit-form").textarea.value = multiFileEdit.archive[this.currentIndex].contents;
 	  generator.document.getElementById("full-screen-edit-form").textarea.focus();
-	  	  
+	  
 	  generator.document.close();
+	  	  
 
 	}
 		

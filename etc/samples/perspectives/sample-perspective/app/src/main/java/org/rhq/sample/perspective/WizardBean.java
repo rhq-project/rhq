@@ -1,9 +1,8 @@
 package org.rhq.sample.perspective;
 
-import java.util.Iterator;
-
-import javax.faces.application.FacesMessage;
-import javax.faces.context.FacesContext;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -17,10 +16,6 @@ import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
-
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Name;
-import org.jboss.seam.annotations.Scope;
 
 /**
  * When creating Groups, Roles and the Users controlled by them, the following order seems to work with the least pain
@@ -43,17 +38,14 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
     // Fields
     private static String NOT_YET_SET = "";
-    private String title = "Creating a New JBoss Operator account...";
+    private String title = "Creating a New EJB3 Administrator account...";
     private String titleNote = "";
 
     //----------------- Defines Wizard Steps ---------------------------------//
 
     enum Step {
-        One("Enter New Group Info"),
-        Two("Enter New Role Info"),
-        Three("Enter New User Info"),
-        Confirm("Create Group+Role+User"),
-        Complete("Done");
+        One("Enter New Group Info"), Two("Enter New Role Info"), Three("Enter New User Info"), Confirm(
+            "Create Group+Role+User"), Complete("Done");
 
         private String displayName;
 
@@ -97,25 +89,24 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     //// STEP 2: Create appropriate Role
     private String roleName = NOT_YET_SET; //REQUIRED
     private String roleDescription = "";
-    private String roleDescriptoinNote = "Limit desciption to 100 characters.";
 
     /////GLOBAL Permissions
     private boolean manageSecurityEnabled = false;
     private String manageSecurityNote = "**(users/roles) --This permission "
-            + "implicitly grants (and explicitly forces selection of) all other permissions";
+        + "implicitly grants (and explicitly forces selection of) all other permissions";
     private boolean manageInventoryEnabled = false;
     private String manageInventoryNote = "(resources/groups)";
     private boolean administerRhqServerSettingsEnabled = false;
 
     /////RESOURCE Permissions
-    private boolean modifyEnabled = false;
-    private boolean deleteEnabled = false;
-    private boolean createChildrenEnabled = false;
-    private boolean alertEnabled = false;
-    private boolean measureEnabled = false;
-    private boolean contentEnabled = false;
-    private boolean controlEnabled = false;
-    private boolean configureEnabled = false;
+    private boolean modifyEnabled = true;
+    private boolean deleteEnabled = true;
+    private boolean createChildrenEnabled = true;
+    private boolean alertEnabled = true;
+    private boolean measureEnabled = true;
+    private boolean contentEnabled = true;
+    private boolean controlEnabled = true;
+    private boolean configureEnabled = true;
     private String step2Note = "By choosing 'Next' a new Role will be created and persisted to the database.";
 
     //// STEP 3: Create appropriate user
@@ -142,130 +133,122 @@ public class WizardBean extends AbstractPerspectiveUIBean {
         return;
     }
 
-
     //----------------------------    The JSF event processor for all steps.---------------------
 
     public String processActions() throws Exception {
-        //Debug only: remove after:
-        Iterator<FacesMessage> messages = FacesContext.getCurrentInstance().getMessages();
-        if (messages.hasNext()) {
-            while (messages.hasNext()) {
-                FacesMessage msg = messages.next();
-                System.out.println("---------MESG:" + msg.getDetail() + ":S:" + msg.getSummary());
-            }
-        }
 
         String stepCompleted = "(incomplete)";
 
+        //retrieve remote client references
         RemoteClient remoteClient = getRemoteClient();
         Subject subject = getSubject();
 
         switch (this.currentStep) {
-            case One: //create Group for visibility
-                ResourceGroup rg = new ResourceGroup(groupName);
-                rg.setDescription(groupDescription);
-                rg.setLocation(groupLocation);
-                rg.setRecursive(isRecursive);
-                //TODO: figure out how to make these calls correctly.
-                String groupDefinition = "Compatible";
-                //                                      rg.getGroupCategory()
-                //                                      rg.
-                //                                      groupManager.createResourceGroup(subject, rg);
-                resourceGroup = rg;
-                stepCompleted = this.currentStep.name();
-                setCurrentStep(Step.Two);
-                break;
-            case Two: //create Role for permissions
-                Role role = new Role(roleName);
-                role.setDescription(roleDescription);
-                if (manageSecurityEnabled) {
-                    role.addPermission(Permission.MANAGE_SECURITY);
-                }
-                if (manageInventoryEnabled) {
-                    role.addPermission(Permission.MANAGE_INVENTORY);
-                }
-                if (administerRhqServerSettingsEnabled) {
-                    role.addPermission(Permission.MANAGE_SETTINGS);
-                }
-                if (modifyEnabled) {
-                    role.addPermission(Permission.MODIFY_RESOURCE);
-                }
-                if (deleteEnabled) {
-                    role.addPermission(Permission.DELETE_RESOURCE);
-                }
-                if (createChildrenEnabled) {
-                    role.addPermission(Permission.CREATE_CHILD_RESOURCES);
-                }
-                if (alertEnabled) {
-                    role.addPermission(Permission.MANAGE_ALERTS);
-                }
-                if (measureEnabled) {
-                    role.addPermission(Permission.MANAGE_MEASUREMENTS);
-                }
-                if (contentEnabled) {
-                    role.addPermission(Permission.MANAGE_CONTENT);
-                }
-                if (controlEnabled) {
-                    role.addPermission(Permission.CONTROL);
-                }
-                if (configureEnabled) {
-                    role.addPermission(Permission.CONFIGURE);
-                }
-                this.role = role;
+        case One: //create Group for visibility
+            ResourceGroup rg = new ResourceGroup(groupName);
+            rg.setDescription(groupDescription);
+            rg.setLocation(groupLocation);
+            rg.setRecursive(isRecursive);
+            //TODO: figure out how to make these calls correctly.
+            String groupDefinition = "Compatible";
+            //                                      rg.getGroupCategory()
+            //                                      rg.
+            //                                      groupManager.createResourceGroup(subject, rg);
+            resourceGroup = rg;
+            stepCompleted = this.currentStep.name();
+            setCurrentStep(Step.Two);
+            break;
+        case Two: //create Role for permissions
+            Role role = new Role(roleName);
+            role.setDescription(roleDescription);
+            if (manageSecurityEnabled) {
+                role.addPermission(Permission.MANAGE_SECURITY);
+            }
+            if (manageInventoryEnabled) {
+                role.addPermission(Permission.MANAGE_INVENTORY);
+            }
+            if (administerRhqServerSettingsEnabled) {
+                role.addPermission(Permission.MANAGE_SETTINGS);
+            }
+            if (modifyEnabled) {
+                role.addPermission(Permission.MODIFY_RESOURCE);
+            }
+            if (deleteEnabled) {
+                role.addPermission(Permission.DELETE_RESOURCE);
+            }
+            if (createChildrenEnabled) {
+                role.addPermission(Permission.CREATE_CHILD_RESOURCES);
+            }
+            if (alertEnabled) {
+                role.addPermission(Permission.MANAGE_ALERTS);
+            }
+            if (measureEnabled) {
+                role.addPermission(Permission.MANAGE_MEASUREMENTS);
+            }
+            if (contentEnabled) {
+                role.addPermission(Permission.MANAGE_CONTENT);
+            }
+            if (controlEnabled) {
+                role.addPermission(Permission.CONTROL);
+            }
+            if (configureEnabled) {
+                role.addPermission(Permission.CONFIGURE);
+            }
+            this.role = role;
 
-                stepCompleted = this.currentStep.name();
-                setCurrentStep(Step.Three);
-                break;
-            case Three: //create User and attach previous two
-                newSubject = new Subject();
-                newSubject.setDepartment(department);
-                newSubject.setEmailAddress(email);
-                newSubject.setFirstName(firstName);
-                newSubject.setFirstName(lastName);
-                newSubject.setName(newUserName);
-                newSubject.setPhoneNumber(phone);
+            stepCompleted = this.currentStep.name();
+            setCurrentStep(Step.Three);
+            break;
+        case Three: //create User and attach previous two
+            newSubject = new Subject();
+            newSubject.setDepartment(department);
+            newSubject.setEmailAddress(email);
+            newSubject.setFirstName(firstName);
+            newSubject.setFirstName(lastName);
+            newSubject.setName(newUserName);
+            newSubject.setPhoneNumber(phone);
 
-                stepCompleted = this.currentStep.name();
-                setCurrentStep(Step.Confirm);
-                break;
-            case Confirm: //create User and attach previous two
-                //do check for no null values
-                //commit group created
+            stepCompleted = this.currentStep.name();
+            setCurrentStep(Step.Confirm);
+            break;
+        case Confirm: //create User and attach previous two
+            //do check for no null values
+            //commit group created
 
-                ResourceGroupManagerRemote groupManager = remoteClient.getResourceGroupManagerRemote();
-                this.resourceGroup = groupManager.createResourceGroup(subject, this.resourceGroup);
-                //commit Role created
+            ResourceGroupManagerRemote groupManager = remoteClient.getResourceGroupManagerRemote();
+            this.resourceGroup = groupManager.createResourceGroup(subject, this.resourceGroup);
+            //commit Role created
 
-                ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
-                ResourceCriteria criteria = new ResourceCriteria();
-                criteria.addFilterResourceTypeName("EJB3 Session Bean");
+            ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterResourceTypeName("EJB3 Session Bean");
 
-                this.resources = resourceManager.findResourcesByCriteria(subject, criteria);
-                int[] resourceIds = new int[resources.size()];
-                for (int i = 0; i < resources.size(); i++) {
-                    resourceIds[i] = resources.get(i).getId();
-                }
-                groupManager.addResourcesToGroup(subject, this.resourceGroup.getId(), resourceIds);
+            this.resources = resourceManager.findResourcesByCriteria(subject, criteria);
+            int[] resourceIds = new int[resources.size()];
+            for (int i = 0; i < resources.size(); i++) {
+                resourceIds[i] = resources.get(i).getId();
+            }
+            groupManager.addResourcesToGroup(subject, this.resourceGroup.getId(), resourceIds);
 
-                RoleManagerRemote roleManager = remoteClient.getRoleManagerRemote();
-                this.role = roleManager.createRole(subject, this.role);
+            RoleManagerRemote roleManager = remoteClient.getRoleManagerRemote();
+            this.role = roleManager.createRole(subject, this.role);
 
-                //commit User previously created
-                SubjectManagerRemote subjectManager = remoteClient.getSubjectManagerRemote();
-                this.newSubject = subjectManager.createSubject(subject, this.newSubject);
+            //commit User previously created
+            SubjectManagerRemote subjectManager = remoteClient.getSubjectManagerRemote();
+            this.newSubject = subjectManager.createSubject(subject, this.newSubject);
 
-                roleManager.addRolesToSubject(subject, this.newSubject.getId(), new int[] {this.role.getId()});
+            roleManager.addRolesToSubject(subject, this.newSubject.getId(), new int[] { this.role.getId() });
 
-                roleManager.addRolesToResourceGroup(subject, this.resourceGroup.getId(), new int[] {this.role.getId()});
+            roleManager.addRolesToResourceGroup(subject, this.resourceGroup.getId(), new int[] { this.role.getId() });
 
-                //null out all reference and reset Screens all to !completed
-                remoteClient.disconnect();
-                stepCompleted = this.currentStep.name();
-                setCurrentStep(Step.Complete);
-                break;
-            default:
-                System.out.println("Unrecognized screen condition. No processing is being done.");
-                break;
+            //null out all reference and reset Screens all to !completed
+            remoteClient.disconnect();
+            stepCompleted = this.currentStep.name();
+            setCurrentStep(Step.Complete);
+            break;
+        default:
+            System.out.println("Unrecognized screen condition. No processing is being done.");
+            break;
         }
 
         return stepCompleted;
@@ -289,6 +272,15 @@ public class WizardBean extends AbstractPerspectiveUIBean {
             }
         }
         return this.currentStep.name();
+    }
+
+    /** Reinitializes the process and resets all variables.*/
+    public void cancel() {
+        //null out variables and reset
+        currentStep = Step.One;
+        resourceGroup = null;
+        role = null;
+        newSubject = null;
     }
 
     public Step[] getAllSteps() {
@@ -406,14 +398,6 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
     public void setRoleDescription(String roleDescription) {
         this.roleDescription = roleDescription;
-    }
-
-    public String getRoleDescriptoinNote() {
-        return roleDescriptoinNote;
-    }
-
-    public void setRoleDescriptoinNote(String roleDescriptoinNote) {
-        this.roleDescriptoinNote = roleDescriptoinNote;
     }
 
     public boolean isManageSecurityEnabled() {

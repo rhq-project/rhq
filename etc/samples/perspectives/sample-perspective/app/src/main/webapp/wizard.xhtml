@@ -18,18 +18,21 @@
 
     <head>
         <title>
-           BOO!!!
+           EJB Administrator Wizard
         </title>
     </head>
 
-    <body bgcolor="#DDF">
+    <body bgcolor="#FAFFCC">
 
     <f:view contentType="text/html; charset=UTF-8">
 
-    <table border="1">
+    <table cellpadding="2">
         <tr>
-            <td width="200">
-                <table border="1" style="border-top-style: solid; border-top-width:1px;">
+            <td width="200" height="650" style="vertical-align:top;">
+              <rich:panel style="width:200px;background-color:#FAFFCC;height:650px">
+               <f:facet name="header">Steps:</f:facet>
+                <table style="border-style: solid;">
+                <!-- <table border="1" style="border-top-style: solid; border-top-width:1px;">-->
                     <tr>
                         <td>
                             <rich:spacer height="50"/>
@@ -37,39 +40,27 @@
                     </tr>
                     <c:forEach var="step"
                                items="#{WizardBean.allSteps}">
+                        <tr><td><rich:spacer height="1"/></td></tr>
                         <c:choose>
                             <c:when test="#{WizardBean.currentStep eq step}">
-                                <tr bgcolor="#C0C0C0" style="margin: 12px">
-                                    <td><b>Step: #{step}</b></td>
+                                <tr bgcolor="#D5DBBD">
+                                    <td style="border-style: solid;">
+                                    <b style="font-size: 20px">Step: #{step}</b></td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
                                 <tr>
-                                    <td style="margin: 12px"><b>Step: #{step}</b></td>
+                                    <td style="border-style: solid;">
+                                    <b style="font-size: 20px">Step: #{step}</b></td>
                                 </tr>
                             </c:otherwise>
                         </c:choose>
-                        <!--
-                        <tr>
-                            <td>
-                                <rich:separator height="1" lineType="solid"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <rich:spacer height="15"/>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <rich:separator height="1" lineType="solid"/>
-                            </td>
-                        </tr>
-                    -->
-                    </c:forEach>                                        
+                    </c:forEach>
+                    <tr><td><rich:spacer height="50"/></td></tr>                                        
                 </table>
+              </rich:panel>
             </td>
-            <td style="overflow-y: auto;">
+            <td style="overflow-y: auto;vertical-align:top;" width="600" height="650">
                 <h:form id="submit" action="null">
 
                     <h:outputText id="title" valueRef="#{WizardBean.title}"></h:outputText>
@@ -77,14 +68,16 @@
                     <ui:remove>Display welcome to wizard and ask first questions.</ui:remove>
                     <ui:remove>In c:choose, define c:when statements for each step.</ui:remove>
 
+					<rich:panel style="width:600px;background-color:#FAFFCC;height:650px">
+                       <f:facet name="header">The EJB Administrator Account Wizard:</f:facet>
+                    
                     <c:choose>
                         <ui:remove>------------------------------------------------------------------</ui:remove>
                         <c:when test="${WizardBean.currentStep == 'One'}">
-                            <h:outputText id="message"><b>The JBoss Operator Account Wizard:</b><br/></h:outputText>
                             <h:outputText id="message2">The wizard will walk you through creation
-                                of a JBoss Operator user account with associated groups and roles.<br/></h:outputText>
+                                of a EJB Administrator user account with associated groups and roles.<br/></h:outputText>
                             <rich:spacer height="100"/>
-                            (to group RHQ resources for JBoss) <br/>
+                            (to group RHQ EJB resources) <br/>
                             <table>
                                 <tr>
                                     <th>New Group</th>
@@ -94,7 +87,7 @@
                                     <td>* Name:</td>
                                     <td>
                                         <h:inputText id="groupName" value="#{WizardBean.groupName}" required="true">
-                                            <f:validateLength minimum="1"/>
+                                            <f:validateLength minimum="1" maximum="100"/>
                                         </h:inputText>
                                     </td>
                                 </tr>
@@ -136,7 +129,7 @@
                         <c:when test="${WizardBean.currentStep == 'Two'}">
                             <h:outputText id="message">Role Configuration:<br/></h:outputText>
                             <rich:spacer height="100"/>
-                            (Role defines permissions for RHQ resources for JBoss)
+                            (Role defines permissions for RHQ EJB3 resources)
                             <table>
                                 <tr>
                                     <th>New Role</th>
@@ -274,17 +267,17 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Enter New Password:</td>
+                                    <td>* Enter New Password:</td>
                                     <td>
-                                        <h:inputSecret id="password" value="#{WizardBean.password}">
+                                        <h:inputSecret id="password" value="#{WizardBean.password}" required="true">
                                             <f:validateLength minimum="3" maximum="16"/>
                                         </h:inputSecret>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Confirm New Password:</td>
+                                    <td>* Confirm New Password:</td>
                                     <td>
-                                        <h:inputSecret id="password2" value="#{WizardBean.password2}">
+                                        <h:inputSecret id="password2" value="#{WizardBean.password2}" required="true">
                                             <f:validateLength minimum="3" maximum="16"/>
                                         </h:inputSecret>
                                     </td>
@@ -315,11 +308,12 @@
                                     </td>
                                 </tr>
                             </table>
-
-                            <h:message for="firstName" errorStyle="color:blue"/>
-                            <h:message for="newUserName" errorStyle="color:blue"/>
-                            <h:message for="password" errorStyle="color:blue"/>
-                            <h:message for="password2" errorStyle="color:blue"/>
+                            
+							<br/>
+                            <h:message for="firstName" errorStyle="color:blue"/><br/>
+                            <h:message for="newUserName" errorStyle="color:blue"/><br/>
+                            <h:message for="password" errorStyle="color:blue"/><br/>
+                            <h:message for="password2" errorStyle="color:blue"/><br/>
                             <br/>
                         </c:when>
 
@@ -327,49 +321,59 @@
                         <c:when test="${WizardBean.currentStep == 'Confirm'}">
                             <h:outputText id="message">You're almost done.<br/></h:outputText>
                             <h:outputText id="message2">The following will occur when click 'Next':<br/></h:outputText>
-                            <rich:spacer height="100"/>
-                            <h:outputText>1) A new Group, '#{WizardBean.groupName}' will be created to group Jboss
+                            <rich:spacer height="50"/>
+                            <h:outputText>1) A new Group, '<b>#{WizardBean.groupName}</b>' will be created to group RHQ EJB3
                                 resources.<br/></h:outputText>
-                            <h:outputText>2) A new Role, '#{WizardBean.roleName}' will be created defining resource
+                            <h:outputText>2) A new Role, '<b>#{WizardBean.roleName}</b>' will be created defining resource
                                 access rights.<br/></h:outputText>
-                            <h:outputText>3) The user '#{WizardBean.newUserName}' will be created with attached role and
-                                group from steps 1 and 2. :<br/></h:outputText>
+                            <h:outputText>3) The user '<b>#{WizardBean.newUserName}</b>' will be created with attached role and
+                                group from steps 1 and 2.<br/></h:outputText>
+                            <br/>
+						    <h:outputText >Hit the 'Cancel' button below if you would like to abort this operation. 
+						    </h:outputText><br/>
                         </c:when>
 
                         <c:when test="${WizardBean.currentStep == 'Complete'}">
-                            <h:panelGroup layout="block">The user '#{WizardBean.newUserName}' has been successfully
-                                created and the account is active. This user has permissions for all EJB3
-                                Session beans in inventory, displayed below.</h:panelGroup>
+                            <rich:panel style="width:500px">
+                                <f:facet name="header">Sucess</f:facet>
+                                The user '<b>#{WizardBean.newUserName}</b>' has been successfully
+                                created, activated and associated with new role '<b>#{WizardBean.roleName}'</b> and new group 
+                                '<b>#{WizardBean.groupName}</b>'. This user has permissions for all EJB3
+                                Session beans in inventory, displayed below.
+                            </rich:panel>
 
-                            <rich:spacer height="100"/>
+                            <rich:spacer height="50"/>
 
                             <rich:dataTable
                                 onRowMouseOver="this.style.backgroundColor='#F1F1F1'"
                                 onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'"
-                                cellpadding="0" cellspacing="0"
-                                width="700" border="0" var="resource" value="#{WizardBean.resources}">
+                                cellpadding="0" cellspacing="0" rows="15"
+                                width="500" border="0" var="resource" value="#{WizardBean.resources}">
 
-                                <rich:column>
+                                <rich:column sortBy="#{resource.id}">
                                     <f:facet name="header">
                                         <h:outputText value="Id" />
                                     </f:facet>
                                     <h:outputText value="#{resource.id}" />
                                 </rich:column>
 
-                                <rich:column>
+                                <rich:column sortBy="#{resource.name}">
                                     <f:facet name="header">
                                         <h:outputText value="Name" />
                                     </f:facet>
                                     <h:outputText value="#{resource.name}" />
                                 </rich:column>
 
-                                <rich:column>
+                                <rich:column sortBy="#{resource.description}">
                                     <f:facet name="header">
                                         <h:outputText value="Description" />
                                     </f:facet>
                                     <h:outputText value="#{resource.description}" />
                                 </rich:column>
 
+								<f:facet name="footer">
+									<rich:datascroller selectedStyle="font-weight:bold"/>
+								</f:facet>
                             </rich:dataTable>
                         </c:when>
 
@@ -381,19 +385,26 @@
 
                     <ui:remove>------------------------------------------------------------------</ui:remove>
                     <br/><br/>
-                    <h:commandButton id="previous" value="Back" disabled="#{WizardBean.currentStep eq WizardBean.start}"
+                    <h:commandButton id="cancel" value="Cancel" rendered="#{WizardBean.currentStep != 'Complete'}" 
+			            disabled="#{WizardBean.currentStep eq WizardBean.end}" immediate="true" 
+			            action="#{WizardBean.cancel}">
+			        </h:commandButton> 
+					<rich:spacer width="100"/>
+                    
+                    <h:commandButton id="previous" value="Back" 
+                    	disabled="#{WizardBean.currentStep eq WizardBean.start or WizardBean.currentStep == 'Complete'}"
+                    	rendered="#{WizardBean.currentStep != 'Complete'}" immediate="true"
                                      action="#{WizardBean.processReverse}">
                     </h:commandButton>
-                    <h:commandButton id="next" value="Next"
+                    <h:commandButton id="next" value="Next" rendered="#{WizardBean.currentStep != 'Complete'}"
                                      disabled="#{WizardBean.currentStep eq WizardBean.end}"
                                      action="#{WizardBean.processActions}">
                     </h:commandButton>
 
-                    <ui:remove>Remove line below after debug complete</ui:remove>
-
-                    <h:outputText>#{WizardBean.currentStep}</h:outputText>
                     <br/><br/>
-                    <h:outputText>* Required field</h:outputText>
+                    <h:outputText rendered="#{WizardBean.currentStep != 'Confirm' and WizardBean.currentStep != 'Complete' }">
+        			* Required field</h:outputText>
+				  </rich:panel>
                 </h:form>
             </td>
         </tr>

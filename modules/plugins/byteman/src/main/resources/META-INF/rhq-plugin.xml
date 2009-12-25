@@ -46,7 +46,7 @@
         </operation>       
 
         <operation name="addJarsToSystemClasspath"
-                   description="Adds jars to the Byteman agent's system classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
+                   description="Adds jars to the Byteman agent's system classpath. Use this if the jar files already exist at the given locations on the remote Byteman agent machine and are accessible to the Byteman agent.">
             <parameters>
                 <c:simple-property name="jarPathnames" description="Comma-separated list of pathnames pointing to the jar files." required="true" />
             </parameters>
@@ -56,7 +56,7 @@
         </operation>       
 
         <operation name="addJarsToBootClasspath"
-                   description="Adds jars to the Byteman agent's boot classpath. Use this if the jar files already exist at the given locations and are accessible to the Byteman agent.">
+                   description="Adds jars to the Byteman agent's boot classpath. Use this if the jar files already exist at the given locations on the remote Byteman agent machine  and are accessible to the Byteman agent.">
             <parameters>
                 <c:simple-property name="jarPathnames" description="Comma-separated list of pathnames pointing to the jar files." required="true" />
             </parameters>
@@ -66,7 +66,7 @@
         </operation>       
 
         <operation name="getAddedClasspathJars"
-                   description="Gets the list of all jars that were added to both the boot and system classpaths of the Byteman agent.">
+                   description="Gets the names of all jars that were added to both the boot and system classpaths of the Byteman agent. This will return the names of all jars added to the Byteman agent via 1) the Byteman command line client, 2) one of the 'add' operations provided by this RHQ plugin or 3) through the bootJar/systemJar content managed by this RHQ plugin.">
             <results>
                 <c:list-property name="additionalBootClasspathJars" description="Jars that were added to the boot classpath">
                    <c:map-property name="additionalBootClasspathJar" description="A jar that was added to the boot classpath">
@@ -81,11 +81,52 @@
             </results>
         </operation>       
 
-        <metric property="totalNumberOfRules"
-                description="The total number of rules currently deployed in the Byteman agent"
+        <metric property="totalNumberOfScripts"
+                description="The total number of scripts currently deployed in the Byteman agent. Scripts contain one or more rules."
                 category="utilization"
                 displayType="summary"
                 defaultOn="true" />
+
+        <metric property="totalNumberOfRules"
+                description="The total number of individual rules currently deployed in the Byteman agent"
+                category="utilization"
+                displayType="summary"
+                defaultOn="true" />
+
+        <metric property="totalNumberOfBootJars"
+                description="The total number of jar files that have been added to the Byteman agent's boot classpath"
+                category="utilization"
+                displayType="summary"
+                defaultOn="true" />
+
+        <metric property="totalNumberOfSystemJars"
+                description="The total number of jar files that have been added to the Byteman agent's system classpath"
+                category="utilization"
+                displayType="summary"
+                defaultOn="true" />
+
+        <!--
+        bootJar/systemJar content allow users to push jar content to the RHQ agent machine and manage that content.
+        Pushing these jars will implicitly add them to the Byteman agent and will keep the Byteman agent up to date
+        (in other words, the RHQ agent will periodically check to ensure these jars are added to the Byteman agent classpaths).
+        -->
+        <content name="bootJar" category="deployable" description="A jar file that is added to the Byteman agent's boot classpath"/>
+        <content name="systemJar" category="deployable" description="A jar file that is added to the Byteman agent's system classpath"/>
+
+        <service name="Byteman Script"
+                 discovery="BytemanScriptDiscoveryComponent"
+                 class="BytemanScriptComponent"
+                 createDeletePolicy="both"
+                 creationDataType="content"
+                 description="A Byteman script that contains rules to be injected in the JVM">
+        
+            <content name="bytemanScript" isCreationType="true" category="deployable" description="A script file that contains rules to be injected into the JVM"/>
+            
+            <service name="Byteman Rule"
+                     discovery="BytemanRuleDiscoveryComponent"
+                     class="BytemanRuleComponent">
+            </service>
+        </service>
    </server>
 
 </plugin>

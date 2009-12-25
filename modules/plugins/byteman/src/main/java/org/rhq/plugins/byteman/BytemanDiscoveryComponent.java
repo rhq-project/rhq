@@ -1,21 +1,3 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.rhq.plugins.byteman;
 
 import java.io.BufferedReader;
@@ -52,7 +34,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author John Mazzitelli
  */
-public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet, ClassLoaderFacet {
+public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<BytemanComponent>,
+    ManualAddFacet<BytemanComponent>, ClassLoaderFacet<BytemanComponent> {
     private final Log log = LogFactory.getLog(BytemanDiscoveryComponent.class);
 
     public static final String DEFAULT_BYTEMAN_ADDRESS = "127.0.0.1";
@@ -65,7 +48,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, Ma
     private static final String DEFAULT_DESCRIPTION = "Byteman agent that is able to perform byte-code manipulation within its JVM";
     private static final String DEFAULT_NAME = "Byteman";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanComponent> context) {
         log.info("Discovering byteman agents");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
@@ -151,7 +134,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, Ma
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
-        ResourceDiscoveryContext context) throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<BytemanComponent> context) throws InvalidPluginConfigurationException {
 
         // verify the plugin config for correctness
         String address = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_PROP_ADDRESS, null);
@@ -193,8 +176,8 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         return details;
     }
 
-    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext context, DiscoveredResourceDetails details)
-        throws Exception {
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext<BytemanComponent> context,
+        DiscoveredResourceDetails details) throws Exception {
 
         PropertySimple clientJarProperty = details.getPluginConfiguration().getSimple(PLUGIN_CONFIG_PROP_CLIENT_JAR);
         if (clientJarProperty == null || clientJarProperty.getStringValue() == null) {
@@ -246,17 +229,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, Ma
             }
         } catch (Throwable t) {
             // for some reason, failed to communicate with the remote agent, read version from jar manifest
-            try {
-                JarFile jarFile = new JarFile(jarPath);
-                try {
-                    Manifest manifest = jarFile.getManifest();
-                    version = manifest.getMainAttributes().getValue("Implementation-Version");
-                } finally {
-                    jarFile.close();
-                }
-            } catch (Throwable t1) {
-                // jar file doesn't have a manifest?
-            }
+            version = getJarAttribute(jarPath, "Implementation-Version", null);
         } finally {
             if (commSocket != null) {
                 try {
@@ -271,5 +244,33 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent, Ma
         }
 
         return version;
+    }
+
+    /**
+     * Static utility method that can extract a main attribute value from a given jar file's manifest.
+     * 
+     * @param jarPath location of the jar file
+     * @param attributeName name of the main attribute to retrieve
+     * @param defaultValue if the manifest doesn't have the attribute or the manifest itself doesn't exist, this is returned
+     * @return the value of the attribute
+     */
+    public static String getJarAttribute(String jarPath, String attributeName, String defaultValue) {
+        String attributeValue = null;
+        try {
+            JarFile jarFile = new JarFile(jarPath);
+            try {
+                Manifest manifest = jarFile.getManifest();
+                attributeValue = manifest.getMainAttributes().getValue(attributeName);
+            } finally {
+                jarFile.close();
+            }
+        } catch (Throwable t1) {
+            // jar file doesn't have a manifest?
+        }
+
+        if (attributeValue == null) {
+            attributeValue = defaultValue;
+        }
+        return attributeValue;
     }
 }

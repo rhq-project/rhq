@@ -1,25 +1,13 @@
-/*
- * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
- * All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation version 2 of the License.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- */
 package org.rhq.plugins.byteman;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,87 +18,170 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.byteman.agent.submit.Submit;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
- * Component that represents the main Byteman agent listening for requests.
+ * Component that represents the remote Byteman agent listening for requests.
+ * 
+ * A note about adding boot/system classpath jars and the content this component supports related to that feature.
+ * There are operations this component supports to add jars to the byteman classpath. Those operations tell the
+ * byteman agent to add jars, but those jars must already exist and be accessible for the byteman agent to do so.
+ * This component will not manage the jars added via the operations. If, however, a user pushes jar content
+ * from the RHQ server to this plugin via the content facet, those jars will be managed by this component as they
+ * are added to the byteman agent.
  * 
  * @author John Mazzitelli
  */
-public class BytemanComponent implements ResourceComponent, MeasurementFacet, OperationFacet, ConfigurationFacet,
-    ContentFacet, DeleteResourceFacet, CreateChildResourceFacet {
+public class BytemanComponent implements ResourceComponent<BytemanComponent>, MeasurementFacet, OperationFacet,
+    ContentFacet, CreateChildResourceFacet {
+
+    private static final String PKG_TYPE_NAME_BOOT_JAR = "bootJar";
+    private static final String PKG_TYPE_NAME_SYSTEM_JAR = "systemJar";
+
     private final Log log = LogFactory.getLog(BytemanComponent.class);
 
-    private Configuration resourceConfiguration;
-    private ResourceContext resourceContext;
+    private ResourceContext<BytemanComponent> resourceContext;
     private Submit bytemanClient;
+    private File bootJarsDataDir; // where managed boot jars will be persisted
+    private File systemJarsDataDir; // where managed system jars will be persisted
+    private File scriptsDataDir; // where managed scripts will be persisted
+    private Map<String, String> allKnownScripts; // cached copy of currently known scripts
 
-    public void start(ResourceContext context) {
+    /**
+     * Start the management component. This will immediately attempt to add previously
+     * deployed classpath jars, if it is found that the remote Byteman agent no longer
+     * has those jars in its classpath.
+     * 
+     * @see ResourceComponent#start(ResourceContext)
+     */
+    public void start(ResourceContext<BytemanComponent> context) {
         this.resourceContext = context;
-        getBytemanClient(); // creates its
+        this.bootJarsDataDir = getResourceDataDirectory("boot");
+        this.systemJarsDataDir = getResourceDataDirectory("system");
+        this.scriptsDataDir = getResourceDataDirectory("script");
+
+        getBytemanClient(); // creates its client now
+
+        // now that we are starting to manage the byteman agent, make sure the managed classpath jars are added
+        try {
+            addDeployedClasspathJars();
+        } catch (Throwable t) {
+            log.warn("Failed to add managed classpath jars to the byteman agent - is it up?", t);
+        }
+
+        getAvailability(); // forces the scripts cache to load
+
+        return;
     }
 
+    /**
+     * Called when the resource component will no longer manage the remote Byteman agent.
+     * This method will clean up the resource component.
+     * 
+     * @see ResourceComponent#stop()
+     */
     public void stop() {
         this.bytemanClient = null;
+        this.allKnownScripts = null;
     }
 
+    /**
+     * Determines if the Byteman agent is up by asking it for the current list of all scripts and their rules.
+     * 
+     * @see AvailabilityFacet#getAvailability()
+     */
     public AvailabilityType getAvailability() {
         try {
-            getBytemanClient().getAgentVersion();
+            this.allKnownScripts = getBytemanClient().getAllScripts();
             return AvailabilityType.UP;
         } catch (Exception e) {
+            this.allKnownScripts = null;
             return AvailabilityType.DOWN;
         }
     }
 
     /**
-     * The plugin container will call this method when your resource component has been scheduled to collect some
-     * measurements now. It is within this method that you actually talk to the managed resource and collect the
-     * measurement data that is has emitted.
+     * The plugin container will call this method when metrics are to be collected.
      *
      * @see MeasurementFacet#getValues(MeasurementReport, Set)
      */
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests) {
         Submit client = getBytemanClient();
 
+        // a cache so we don't ask the byteman agent more than once for this while we are in here
+        // we don't rely on this.allKnownScripts because we want the latest-n-greatest value for our metrics
+        Map<String, String> allScripts = null;
+
         for (MeasurementScheduleRequest request : requests) {
             String name = request.getName();
 
             try {
-                if (name.equals("totalNumberOfRules")) {
+                if (name.equals("totalNumberOfScripts")) {
                     int total = 0;
-                    Map<String, String> allScripts = client.getAllScripts();
+                    if (allScripts == null) {
+                        allScripts = client.getAllScripts();
+                    }
+                    if (allScripts != null) {
+                        total += allScripts.size();
+                    }
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                } else if (name.equals("totalNumberOfRules")) {
+                    int total = 0;
+                    if (allScripts == null) {
+                        allScripts = client.getAllScripts();
+                    }
                     if (allScripts != null) {
                         for (String script : allScripts.values()) {
                             total += client.splitAllRulesFromScript(script).size();
                         }
                     }
                     report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                } else if (name.equals("totalNumberOfBootJars")) {
+                    int total = 0;
+                    List<String> loadedJars = client.getLoadedBootClassloaderJars();
+                    if (loadedJars != null) {
+                        total = loadedJars.size();
+                    }
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                } else if (name.equals("totalNumberOfSystemJars")) {
+                    int total = 0;
+                    List<String> loadedJars = client.getLoadedSystemClassloaderJars();
+                    if (loadedJars != null) {
+                        total = loadedJars.size();
+                    }
+                    report.addData(new MeasurementDataNumeric(request, Double.valueOf((double) total)));
+                } else {
+                    throw new Exception("cannot collect unknown metric");
                 }
             } catch (Exception e) {
                 log.error("Failed to obtain measurement [" + name + "]. Cause: " + e);
@@ -121,8 +192,8 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
     }
 
     /**
-     * The plugin container will call this method when it wants to invoke an operation on your managed resource. Your
-     * plugin will connect to the managed resource and invoke the analogous operation in your own custom way.
+     * The plugin container will call this method when it wants to invoke an operation on
+     * the Byteman agent.
      *
      * @see OperationFacet#invokeOperation(String, Configuration)
      */
@@ -227,57 +298,113 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
     }
 
     /**
-     * The plugin container will call this method and it needs to obtain the current configuration of the managed
-     * resource. Your plugin will obtain the managed resource's configuration in your own custom way and populate the
-     * returned Configuration object with the managed resource's configuration property values.
-     *
-     * @see ConfigurationFacet#loadResourceConfiguration()
-     */
-    public Configuration loadResourceConfiguration() {
-        // here we simulate the loading of the managed resource's configuration
-
-        if (resourceConfiguration == null) {
-            // for this example, we will create a simple dummy configuration to start with.
-            // note that it is empty, so we're assuming there are no required configs in the plugin descriptor.
-            resourceConfiguration = new Configuration();
-        }
-
-        Configuration config = resourceConfiguration;
-
-        return config;
-    }
-
-    /**
-     * The plugin container will call this method when it has a new configuration for your managed resource. Your plugin
-     * will re-configure the managed resource in your own custom way, setting its configuration based on the new values
-     * of the given configuration.
-     *
-     * @see ConfigurationFacet#updateResourceConfiguration(ConfigurationUpdateReport)
-     */
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        // this simulates the plugin taking the new configuration and reconfiguring the managed resource
-        resourceConfiguration = report.getConfiguration().deepCopy();
-
-        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-    }
-
-    /**
-     * When this is called, the plugin is responsible for scanning its managed resource and look for content that need
-     * to be managed for that resource. This method should only discover packages of the given package type.
+     * Detects the different content for the Byteman agent. This will only discover
+     * content that was previously deployed by the RHQ content facet mechanism. In other words,
+     * content already deployed in the Byteman agent, or deployed by some other non-RHQ means,
+     * will not be detected.
      *
      * @see ContentFacet#discoverDeployedPackages(PackageType)
      */
     public Set<ResourcePackageDetails> discoverDeployedPackages(PackageType type) {
-        return null;
+        Set<ResourcePackageDetails> details = new HashSet<ResourcePackageDetails>();
+        String typeName = type.getName();
+        try {
+            File[] discoveredFiles = null; // will only be non-null if 1 or more jars are discovered
+            File dataDir;
+
+            if (PKG_TYPE_NAME_BOOT_JAR.equals(typeName)) {
+                dataDir = this.bootJarsDataDir;
+            } else if (PKG_TYPE_NAME_SYSTEM_JAR.equals(typeName)) {
+                dataDir = this.systemJarsDataDir;
+            } else {
+                throw new UnsupportedOperationException("Can only deploy boot/system jars");
+            }
+
+            File[] files = dataDir.listFiles();
+            if (files != null && files.length > 0) {
+                discoveredFiles = files;
+            }
+
+            if (discoveredFiles != null) {
+                for (File file : discoveredFiles) {
+                    String fullPath = file.getAbsolutePath();
+                    String shortName = file.getName();
+                    String version = BytemanDiscoveryComponent.getJarAttribute(fullPath, "Implementation-Version", "0");
+                    PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
+                    ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
+                    detail.setDisplayName(shortName);
+                    detail.setFileCreatedDate(file.lastModified());
+                    detail.setFileName(shortName);
+                    detail.setFileSize(file.length());
+                    detail.setMD5(MessageDigestGenerator.getDigestString(file));
+
+                    details.add(detail);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to perform discovery for packages of type [" + typeName + "]", e);
+        }
+        return details;
     }
 
     /**
-     * The plugin container calls this method when new packages need to be deployed/installed on resources.
+     * Deploys boot and system classpath jars to the Byteman agent.
      *
      * @see ContentFacet#deployPackages(Set, ContentServices)
      */
     public DeployPackagesResponse deployPackages(Set<ResourcePackageDetails> packages, ContentServices contentServices) {
-        return null;
+        Submit client = getBytemanClient();
+        DeployPackagesResponse response = new DeployPackagesResponse();
+        DeployIndividualPackageResponse individualResponse;
+
+        for (ResourcePackageDetails detail : packages) {
+            PackageDetailsKey packageKey = detail.getKey();
+            String packageType = detail.getPackageTypeName();
+
+            individualResponse = new DeployIndividualPackageResponse(packageKey);
+            response.addPackageResponse(individualResponse);
+
+            try {
+                Boolean isBootJar = null; // null if not a classpath jar (this is for the future; today, it will always get set)
+                // if necessary, create the data directory where the file should be deployed
+                if (PKG_TYPE_NAME_BOOT_JAR.equals(packageType)) {
+                    this.bootJarsDataDir.mkdirs();
+                    isBootJar = Boolean.TRUE;
+                } else if (PKG_TYPE_NAME_SYSTEM_JAR.equals(packageType)) {
+                    this.systemJarsDataDir.mkdirs();
+                    isBootJar = Boolean.FALSE;
+                } else {
+                    throw new UnsupportedOperationException("Cannot deploy package of type [" + packageType + "]");
+                }
+
+                // download the package to our data directory
+                File newFile = getPackageFile(detail);
+                FileOutputStream fos = new FileOutputStream(newFile);
+                try {
+                    ContentContext contentContext = this.resourceContext.getContentContext();
+                    contentServices.downloadPackageBits(contentContext, packageKey, fos, true);
+                } finally {
+                    fos.close();
+                }
+
+                // tell the byteman agent to add it to the proper classloader
+                if (isBootJar != null) {
+                    if (isBootJar.booleanValue()) {
+                        client.addJarsToBootClassloader(Arrays.asList(newFile.getAbsolutePath()));
+                    } else {
+                        client.addJarsToSystemClassloader(Arrays.asList(newFile.getAbsolutePath()));
+                    }
+                }
+
+                // everything is OK
+                individualResponse.setResult(ContentResponseResult.SUCCESS);
+            } catch (Exception e) {
+                individualResponse.setErrorMessageFromThrowable(e);
+                individualResponse.setResult(ContentResponseResult.FAILURE);
+            }
+        }
+
+        return response;
     }
 
     /**
@@ -287,57 +414,229 @@ public class BytemanComponent implements ResourceComponent, MeasurementFacet, Op
      * @see ContentFacet#retrievePackageBits(ResourcePackageDetails)
      */
     public InputStream retrievePackageBits(ResourcePackageDetails packageDetails) {
-        return null;
+        try {
+            File file = getPackageFile(packageDetails);
+            return new FileInputStream(file);
+        } catch (Exception e) {
+            log.error("Cannot retrieve content for package [" + packageDetails + "]");
+            throw new RuntimeException(e);
+        }
     }
 
     /**
-     * This is the method that is used when the component has to create the installation steps and their results.
-     *
-     * @see ContentFacet#generateInstallationSteps(ResourcePackageDetails)
+     * Essentially a no-op - there are no installation steps associated with Byteman content.
      */
     public List<DeployPackageStep> generateInstallationSteps(ResourcePackageDetails packageDetails) {
-        return null;
+        return new ArrayList<DeployPackageStep>(0);
     }
 
     /**
-     * This is called when the actual content of packages should be deleted from the managed resource.
+     * Removes the packages, if they are managed by this component. Note that the Byteman agent does not
+     * support runtime removal of jars from its classpaths, so the Byteman agent will retain classpath
+     * jars in its memory until the VM is restarted, even if this component was asked to remove
+     * classpath jars.
      *
      * @see ContentFacet#removePackages(Set)
      */
     public RemovePackagesResponse removePackages(Set<ResourcePackageDetails> packages) {
-        return null;
+        RemovePackagesResponse response = new RemovePackagesResponse();
+        RemoveIndividualPackageResponse individualResponse;
+
+        for (ResourcePackageDetails detail : packages) {
+            individualResponse = new RemoveIndividualPackageResponse(detail.getKey());
+            response.addPackageResponse(individualResponse);
+            try {
+                File packageFile = getPackageFile(detail);
+                if (packageFile.delete()) {
+                    individualResponse.setResult(ContentResponseResult.SUCCESS);
+                } else {
+                    individualResponse.setErrorMessage("Failed to delete [" + packageFile.getAbsolutePath() + "]");
+                    individualResponse.setResult(ContentResponseResult.FAILURE);
+                }
+            } catch (Exception e) {
+                individualResponse.setErrorMessageFromThrowable(e);
+                individualResponse.setResult(ContentResponseResult.FAILURE);
+            }
+        }
+
+        return response;
     }
 
     /**
-     * When called, the plugin container is asking the plugin to create a new managed resource. The new resource's
-     * details need to be added to the given report.
+     * Creates a new script by deploying the script file to the Byteman agent.
      *
      * @see CreateChildResourceFacet#createResource(CreateResourceReport)
      */
     public CreateResourceReport createResource(CreateResourceReport report) {
-        return null;
+        try {
+            this.scriptsDataDir.mkdirs();
+
+            // determine where to store the file when we download it
+            ResourcePackageDetails newDetails = report.getPackageDetails();
+            String newName = report.getUserSpecifiedResourceName();
+            File newFile = new File(this.scriptsDataDir, newName);
+            String newFileAbsolutePath = newFile.getAbsolutePath();
+
+            // download the file from the server
+            ContentContext contentContext = this.resourceContext.getContentContext();
+            ContentServices contentServices = contentContext.getContentServices();
+            ResourceType newChildResourceType = report.getResourceType();
+            FileOutputStream fos = new FileOutputStream(newFile);
+            BufferedOutputStream outputStream = new BufferedOutputStream(fos);
+            try {
+                contentServices.downloadPackageBitsForChildResource(contentContext, newChildResourceType.getName(),
+                    newDetails.getKey(), outputStream);
+            } finally {
+                outputStream.close();
+            }
+
+            // we know where we put the file, fill in the details
+            newDetails.setDisplayName(newName);
+            newDetails.setFileName(newFileAbsolutePath);
+            newDetails.setFileSize(newFile.length());
+            newDetails.setInstallationTimestamp(newFile.lastModified());
+            newDetails.setMD5(MessageDigestGenerator.getDigestString(newFile));
+
+            // complete the report
+            report.setResourceKey(newFileAbsolutePath);
+            report.setResourceName(newFileAbsolutePath);
+            report.setStatus(CreateResourceStatus.SUCCESS);
+        } catch (Throwable t) {
+            log.error("Failed to create child resource [" + report + "]", t);
+            report.setException(t);
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        return report;
     }
 
     /**
-     * When called, the plugin container is asking the plugin to delete a managed resource.
-     *
-     * @see DeleteResourceFacet#deleteResource()
+     * Returns a client that can be used to talk to the remote Byteman agent.
+     * 
+     * @return client object
      */
-    public void deleteResource() {
-    }
-
     public Submit getBytemanClient() {
         if (this.bytemanClient == null) {
-            Configuration pluginConfiguration = this.resourceContext.getPluginConfiguration();
+            Configuration pc = this.resourceContext.getPluginConfiguration();
 
             // get the address/port from the plugin config - defaults will be null to force NPEs which is OK, because nulls are error conditions
-            String address = pluginConfiguration.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_ADDRESS,
-                null);
-            String port = pluginConfiguration.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_PORT, null);
+            String address = pc.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_ADDRESS, null);
+            String port = pc.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_PORT, null);
 
             this.bytemanClient = new Submit(address, Integer.valueOf(port).intValue());
         }
 
         return this.bytemanClient;
+    }
+
+    /**
+     * Returns a cached copy of all known scripts since the last availability check was made.
+     * Use this if you do not need the most up-to-date list, which helps avoid making unnecessary
+     * calls to the remote Byteman agent. If you need the most up-to-date data, call the agent
+     * using {@link #getBytemanClient() the client}.
+     * 
+     * @return the last known set of scripts that were loaded in the remote Byteman agent. <code>null</code>
+     *         if a problem occurred attempting to get the scripts
+     */
+    public Map<String, String> getAllKnownScripts() {
+        // if we already have a non-null value, use it as-is; otherwise, try to get it now
+        if (this.allKnownScripts == null) {
+            try {
+                this.allKnownScripts = getBytemanClient().getAllScripts();
+            } catch (Exception ignore) {
+            }
+        }
+        return this.allKnownScripts;
+    }
+
+    /**
+     * Returns the component's data directory that is used to persist managed content.
+     * <code>suffix</code> is the last part of the file path, essentially providing a specific
+     * location for different kinds of content for the component.
+     *  
+     * @param suffix identifies a specific location under a general data directory for this component.
+     * @return data directory that can be used to persist data for this component
+     */
+    public File getResourceDataDirectory(String suffix) {
+        File pluginDataDir = this.resourceContext.getDataDirectory();
+        File resourceDataDir = new File(pluginDataDir, this.resourceContext.getResourceKey().replace(":", "-"));
+        if (suffix != null) {
+            resourceDataDir = new File(resourceDataDir, suffix);
+        }
+        return resourceDataDir;
+    }
+
+    /**
+     * Given a package details, this will attempt to find that package's file.
+     * The details "file name" is examined first to figure out where the file is supposed to be.
+     * Only if that isn't set will the details general "name" be used as the file name.
+     * If the "file name" (or "name") is not absolute, it will be assumed to be in one
+     * of the subdirectories under this component's data directory, based on the package type name.
+     * 
+     * @param packageDetails details describing the file
+     * @return the file that corresponds to the details object - this file may or may not exist;
+     *         existence is not a requirement for this method to return a valid File object
+     *
+     * @throws Exception if the file could not be determined
+     */
+    public File getPackageFile(ResourcePackageDetails packageDetails) throws Exception {
+        String path = packageDetails.getFileName();
+        if (path == null) {
+            path = packageDetails.getName(); // if no filename was given, assume the package name is the path
+        }
+
+        File file = new File(path);
+        if (!file.isAbsolute()) {
+            String typeName = packageDetails.getPackageTypeName();
+            if (PKG_TYPE_NAME_BOOT_JAR.equals(typeName)) {
+                file = new File(this.bootJarsDataDir, path);
+            } else if (PKG_TYPE_NAME_SYSTEM_JAR.equals(typeName)) {
+                file = new File(this.systemJarsDataDir, path);
+            } else if (BytemanScriptComponent.PKG_TYPE_NAME_SCRIPT.equals(typeName)) {
+                file = new File(this.scriptsDataDir, path);
+            } else {
+                throw new Exception("Invalid package type - cannot get package file");
+            }
+        }
+        return file;
+    }
+
+    /**
+     * Goes through all jars that were deployed via RHQ and ensures they are still deployed, adding
+     * them if need be.
+     * 
+     * @throws Exception
+     */
+    private void addDeployedClasspathJars() throws Exception {
+        Submit client = getBytemanClient();
+        List<String> paths = new ArrayList<String>();
+
+        // do the boot jars first
+        File dataDir = this.bootJarsDataDir;
+        File[] files = dataDir.listFiles();
+        if (files != null && files.length > 0) {
+            List<String> loadedJars = client.getLoadedBootClassloaderJars();
+            for (File file : files) {
+                if (!loadedJars.contains(file.getAbsolutePath())) {
+                    paths.add(file.getAbsolutePath());
+                }
+            }
+            client.addJarsToBootClassloader(paths);
+        }
+
+        // now do the system jars
+        paths.clear();
+        dataDir = this.systemJarsDataDir;
+        files = dataDir.listFiles();
+        if (files != null && files.length > 0) {
+            List<String> loadedJars = client.getLoadedSystemClassloaderJars();
+            for (File file : files) {
+                if (!loadedJars.contains(file.getAbsolutePath())) {
+                    paths.add(file.getAbsolutePath());
+                }
+            }
+            client.addJarsToSystemClassloader(paths);
+        }
+
+        return;
     }
 }

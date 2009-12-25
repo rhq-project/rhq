@@ -9,8 +9,8 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
     <server name="Byteman Agent"
-            discovery="BytemanDiscoveryComponent"
-            class="BytemanComponent"
+            discovery="BytemanAgentDiscoveryComponent"
+            class="BytemanAgentComponent"
             supportsManualAdd="true"
             classLoader="instance"
             description="A Byteman agent that is listening for incoming requests to perform byte-code manipulation">
@@ -80,6 +80,13 @@
                 </c:list-property>
             </results>
         </operation>       
+
+        <metric property="TRAIT-clientVersion"
+                displayName="Client Version"
+                description="The version of the client used by this plugin to talk to the Byteman agent."
+                category="utilization"
+                dataType="trait"
+                defaultOn="true" />
 
         <metric property="totalNumberOfScripts"
                 description="The total number of scripts currently deployed in the Byteman agent. Scripts contain one or more rules."

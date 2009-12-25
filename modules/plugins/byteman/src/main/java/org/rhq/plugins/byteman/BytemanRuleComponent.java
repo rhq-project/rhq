@@ -5,6 +5,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.jboss.byteman.agent.submit.Submit;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -29,12 +31,16 @@ public class BytemanRuleComponent implements ResourceComponent<BytemanScriptComp
 
     public AvailabilityType getAvailability() {
         try {
+            String ourKey = this.resourceContext.getResourceKey();
+            Submit client = this.resourceContext.getParentResourceComponent().getBytemanClient();
             List<String> rules = this.resourceContext.getParentResourceComponent().getRules();
-            if (rules.contains(this.resourceContext.getResourceKey())) {
-                return AvailabilityType.UP;
-            } else {
-                return AvailabilityType.DOWN;
+            for (String rule : rules) {
+                String ruleName = client.determineRuleName(rule);
+                if (ruleName.equals(ourKey)) {
+                    return AvailabilityType.UP;
+                }
             }
+            return AvailabilityType.DOWN;
         } catch (Exception e) {
             return AvailabilityType.DOWN;
         }

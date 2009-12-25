@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
@@ -146,7 +147,10 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             String name = request.getName();
 
             try {
-                if (name.equals("totalNumberOfScripts")) {
+                if (name.equals("TRAIT-clientVersion")) {
+                    String clientVersion = client.getClientVersion();
+                    report.addData(new MeasurementDataTrait(request, clientVersion));
+                } else if (name.equals("totalNumberOfScripts")) {
                     int total = 0;
                     if (allScripts == null) {
                         allScripts = client.getAllScripts();
@@ -475,6 +479,12 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             // determine where to store the file when we download it
             ResourcePackageDetails newDetails = report.getPackageDetails();
             String newName = report.getUserSpecifiedResourceName();
+            if (newName == null) {
+                newName = newDetails.getName();
+                if (newName == null) {
+                    throw new NullPointerException("was not given a name for the new script");
+                }
+            }
             File newFile = new File(this.scriptsDataDir, newName);
             String newFileAbsolutePath = newFile.getAbsolutePath();
 
@@ -490,6 +500,9 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             } finally {
                 outputStream.close();
             }
+
+            // deploy the scripts rules in byteman agent
+            getBytemanClient().addRulesFromFiles(Arrays.asList(newFileAbsolutePath));
 
             // we know where we put the file, fill in the details
             newDetails.setDisplayName(newName);

@@ -62,8 +62,8 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * 
  * @author John Mazzitelli
  */
-public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComponent>, MeasurementFacet, OperationFacet,
-    ContentFacet, CreateChildResourceFacet {
+public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComponent>, MeasurementFacet,
+    OperationFacet, ContentFacet, CreateChildResourceFacet {
 
     private static final String PKG_TYPE_NAME_BOOT_JAR = "bootJar";
     private static final String PKG_TYPE_NAME_SYSTEM_JAR = "systemJar";
@@ -329,7 +329,8 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 for (File file : discoveredFiles) {
                     String fullPath = file.getAbsolutePath();
                     String shortName = file.getName();
-                    String version = BytemanDiscoveryComponent.getJarAttribute(fullPath, "Implementation-Version", "0");
+                    String version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath, "Implementation-Version",
+                        "0");
                     PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
                     ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
                     detail.setDisplayName(shortName);
@@ -519,8 +520,8 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             Configuration pc = this.resourceContext.getPluginConfiguration();
 
             // get the address/port from the plugin config - defaults will be null to force NPEs which is OK, because nulls are error conditions
-            String address = pc.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_ADDRESS, null);
-            String port = pc.getSimpleValue(BytemanDiscoveryComponent.PLUGIN_CONFIG_PROP_PORT, null);
+            String address = pc.getSimpleValue(BytemanAgentDiscoveryComponent.PLUGIN_CONFIG_PROP_ADDRESS, null);
+            String port = pc.getSimpleValue(BytemanAgentDiscoveryComponent.PLUGIN_CONFIG_PROP_PORT, null);
 
             this.bytemanClient = new Submit(address, Integer.valueOf(port).intValue());
         }

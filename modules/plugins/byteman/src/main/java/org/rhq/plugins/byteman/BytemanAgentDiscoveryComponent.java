@@ -34,9 +34,9 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author John Mazzitelli
  */
-public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<BytemanAgentComponent>,
+public class BytemanAgentDiscoveryComponent implements ResourceDiscoveryComponent<BytemanAgentComponent>,
     ManualAddFacet<BytemanAgentComponent>, ClassLoaderFacet<BytemanAgentComponent> {
-    private final Log log = LogFactory.getLog(BytemanDiscoveryComponent.class);
+    private final Log log = LogFactory.getLog(BytemanAgentDiscoveryComponent.class);
 
     public static final String DEFAULT_BYTEMAN_ADDRESS = "127.0.0.1";
     public static final String DEFAULT_BYTEMAN_PORT = "9091";

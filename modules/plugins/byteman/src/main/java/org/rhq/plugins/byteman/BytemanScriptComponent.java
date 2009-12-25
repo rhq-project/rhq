@@ -19,18 +19,18 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  * 
  * @author John Mazzitelli
  */
-public class BytemanScriptComponent implements ResourceComponent<BytemanComponent>, DeleteResourceFacet {
+public class BytemanScriptComponent implements ResourceComponent<BytemanAgentComponent>, DeleteResourceFacet {
 
-    // protected scope so BytemanComponent can see it
+    // protected scope so BytemanAgentComponent can see it
     static final String PKG_TYPE_NAME_SCRIPT = "bytemanScript";
 
     private final Log log = LogFactory.getLog(BytemanScriptComponent.class);
 
-    private ResourceContext<BytemanComponent> resourceContext;
+    private ResourceContext<BytemanAgentComponent> resourceContext;
     private String scriptContent; // cached content of the script that this component is managing
     private List<String> rules; // cached data for all individual rules found in the script content
 
-    public void start(ResourceContext<BytemanComponent> context) {
+    public void start(ResourceContext<BytemanAgentComponent> context) {
         this.resourceContext = context;
         getAvailability(); // forces the scripts/rules caches to load
     }

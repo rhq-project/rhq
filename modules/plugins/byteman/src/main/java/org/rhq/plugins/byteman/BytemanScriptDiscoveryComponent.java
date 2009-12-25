@@ -8,9 +8,9 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
-public class BytemanScriptDiscoveryComponent implements ResourceDiscoveryComponent<BytemanComponent> {
+public class BytemanScriptDiscoveryComponent implements ResourceDiscoveryComponent<BytemanAgentComponent> {
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanComponent> context)
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanAgentComponent> context)
         throws Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();

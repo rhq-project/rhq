@@ -62,15 +62,15 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * 
  * @author John Mazzitelli
  */
-public class BytemanComponent implements ResourceComponent<BytemanComponent>, MeasurementFacet, OperationFacet,
+public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComponent>, MeasurementFacet, OperationFacet,
     ContentFacet, CreateChildResourceFacet {
 
     private static final String PKG_TYPE_NAME_BOOT_JAR = "bootJar";
     private static final String PKG_TYPE_NAME_SYSTEM_JAR = "systemJar";
 
-    private final Log log = LogFactory.getLog(BytemanComponent.class);
+    private final Log log = LogFactory.getLog(BytemanAgentComponent.class);
 
-    private ResourceContext<BytemanComponent> resourceContext;
+    private ResourceContext<BytemanAgentComponent> resourceContext;
     private Submit bytemanClient;
     private File bootJarsDataDir; // where managed boot jars will be persisted
     private File systemJarsDataDir; // where managed system jars will be persisted
@@ -84,7 +84,7 @@ public class BytemanComponent implements ResourceComponent<BytemanComponent>, Me
      * 
      * @see ResourceComponent#start(ResourceContext)
      */
-    public void start(ResourceContext<BytemanComponent> context) {
+    public void start(ResourceContext<BytemanAgentComponent> context) {
         this.resourceContext = context;
         this.bootJarsDataDir = getResourceDataDirectory("boot");
         this.systemJarsDataDir = getResourceDataDirectory("system");

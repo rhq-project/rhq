@@ -34,8 +34,8 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
  *
  * @author John Mazzitelli
  */
-public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<BytemanComponent>,
-    ManualAddFacet<BytemanComponent>, ClassLoaderFacet<BytemanComponent> {
+public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<BytemanAgentComponent>,
+    ManualAddFacet<BytemanAgentComponent>, ClassLoaderFacet<BytemanAgentComponent> {
     private final Log log = LogFactory.getLog(BytemanDiscoveryComponent.class);
 
     public static final String DEFAULT_BYTEMAN_ADDRESS = "127.0.0.1";
@@ -48,7 +48,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<Byt
     private static final String DEFAULT_DESCRIPTION = "Byteman agent that is able to perform byte-code manipulation within its JVM";
     private static final String DEFAULT_NAME = "Byteman";
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanComponent> context) {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanAgentComponent> context) {
         log.info("Discovering byteman agents");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
@@ -134,7 +134,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<Byt
     }
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
-        ResourceDiscoveryContext<BytemanComponent> context) throws InvalidPluginConfigurationException {
+        ResourceDiscoveryContext<BytemanAgentComponent> context) throws InvalidPluginConfigurationException {
 
         // verify the plugin config for correctness
         String address = pluginConfiguration.getSimpleValue(PLUGIN_CONFIG_PROP_ADDRESS, null);
@@ -176,7 +176,7 @@ public class BytemanDiscoveryComponent implements ResourceDiscoveryComponent<Byt
         return details;
     }
 
-    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext<BytemanComponent> context,
+    public List<URL> getAdditionalClasspathUrls(ResourceDiscoveryContext<BytemanAgentComponent> context,
         DiscoveredResourceDetails details) throws Exception {
 
         PropertySimple clientJarProperty = details.getPluginConfiguration().getSimple(PLUGIN_CONFIG_PROP_CLIENT_JAR);

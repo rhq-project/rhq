@@ -1,6 +1,7 @@
 package org.rhq.plugins.byteman;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -15,6 +16,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Component that represents a script that is deployed in a Byteman agent.
@@ -35,32 +37,6 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
     public void start(ResourceContext<BytemanAgentComponent> context) {
         this.resourceContext = context;
         getAvailability(); // forces the scripts/rules caches to load
-
-        // add the script back to the byteman agent if necessary (must do this after the call to getAvailability)
-        try {
-            addDeployedScript();
-        } catch (Throwable t) {
-            log.warn("Failed to add managed script to the byteman agent - is it up?", t);
-        }
-
-        return;
-    }
-
-    protected void addDeployedScript() throws Exception {
-        // If the script content is null, that means the Byteman agent does not have our script loaded anymore.
-        // In this case, force the Byteman agent to reload our managed script. Note that we only force a
-        // reload of our script if it was explicitly created via our parent's create child resource facet.
-        // If this script was loaded by some other non-RHQ means, we do not attempt to reload it, we'll just
-        // show its availability as DOWN and expect the user to correct the situation manually.
-        if (this.scriptContent == null) {
-            File scriptsDataDir = this.resourceContext.getParentResourceComponent().getScriptsDataDirectory();
-            File scriptFile = new File(this.resourceContext.getResourceKey());
-            File scriptParentDir = scriptFile.getParentFile();
-            if (scriptParentDir != null && scriptsDataDir.getAbsolutePath().equals(scriptParentDir.getAbsolutePath())) {
-                getBytemanClient().addRulesFromFiles(Arrays.asList(scriptFile.getAbsolutePath()));
-            }
-        }
-        return;
     }
 
     public void stop() {
@@ -73,6 +49,13 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
             // refresh our cache
             Map<String, String> scripts = this.resourceContext.getParentResourceComponent().getAllKnownScripts();
             this.scriptContent = scripts.get(this.resourceContext.getResourceKey());
+
+            // if we can, ensure the script is loaded in the byteman agent
+            try {
+                addDeployedScript();
+            } catch (Throwable t) {
+                log.warn("Failed to add managed script to the byteman agent - is it up?", t);
+            }
 
             if (this.scriptContent != null) {
                 try {
@@ -98,27 +81,31 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
         // get the script name and the rules content belonging to that script
         String scriptName = this.resourceContext.getResourceKey();
         String scriptRulesContent = allScripts.get(scriptName);
-        if (scriptRulesContent == null) {
-            throw new Exception("Cannot delete unknown script [" + scriptName + "]");
-        }
 
-        // tell Byteman to delete that script's rules
-        Map<String, String> scriptRulesToDelete = new HashMap<String, String>(1);
-        scriptRulesToDelete.put(scriptName, scriptRulesContent);
-        getBytemanClient().deleteRules(scriptRulesToDelete);
-
-        // attempt to delete the source file
+        // attempt to delete the source file.
         // note: the script name is usually the full path name to the script file
+        // note: if there is no script file, ignore this - it was probably a script added
+        // via a non-RHQ mechanism. We only manage physical script files that we (RHQ) deployed
         File scriptFile = null;
         try {
             scriptFile = new File(scriptName);
             if (scriptFile.isFile()) {
                 if (!scriptFile.delete()) {
-                    log.warn("Byteman unloaded the script, but the script file [" + scriptFile + "] failed to delete");
+                    log.warn("The Byteman script file [" + scriptFile + "] failed to delete");
                 }
             }
         } catch (Exception e) {
-            log.warn("Byteman unloaded the script, but the script file [" + scriptFile + "] could not be deleted", e);
+            log.warn("The Byteman script file [" + scriptFile + "] could not be deleted", e);
+        }
+
+        // if the script rule is not loaded, we have nothing else to do.
+        // if the script is still loaded, tell Byteman to delete it
+        if (scriptRulesContent != null) {
+            // tell Byteman to delete that script's rules
+            Map<String, String> scriptRulesToDelete = new HashMap<String, String>(1);
+            scriptRulesToDelete.put(scriptName, scriptRulesContent);
+            getBytemanClient().deleteRules(scriptRulesToDelete);
+
         }
 
         return;
@@ -136,5 +123,35 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
 
     public Submit getBytemanClient() {
         return this.resourceContext.getParentResourceComponent().getBytemanClient();
+    }
+
+    /**
+     * This method will attempt to ensure that the Byteman agent has the managed script
+     * loaded. If a user created this script resource via RHQ (i.e. using the create-child-facet
+     * of the parent resource), then this method will always try to ensure that script is loaded
+     * in the Byteman agent. If it isn't, it reloads it. If it is, this method does nothing.
+     * If this script resource represents an externally managed script (that is, the script
+     * was added to the Byteman agent via some other mechanism, such as Byteman's CLI tool),
+     * this method will do nothing - in this case, this resource component will declare the
+     * resource's availability as DOWN.
+     *  
+     * @throws Exception
+     */
+    protected void addDeployedScript() throws Exception {
+        // If the script content is null, that means the Byteman agent does not have our script loaded anymore.
+        // In this case, force the Byteman agent to reload our managed script. Note that we only force a
+        // reload of our script if it was explicitly created via our parent's create child resource facet.
+        // If this script was loaded by some other non-RHQ means, we do not attempt to reload it, we'll just
+        // show its availability as DOWN and expect the user to correct the situation manually.
+        if (this.scriptContent == null) {
+            File scriptsDataDir = this.resourceContext.getParentResourceComponent().getScriptsDataDirectory();
+            File scriptFile = new File(this.resourceContext.getResourceKey());
+            File scriptParentDir = scriptFile.getParentFile();
+            if (scriptParentDir != null && scriptsDataDir.getAbsolutePath().equals(scriptParentDir.getAbsolutePath())) {
+                getBytemanClient().addRulesFromFiles(Arrays.asList(scriptFile.getAbsolutePath()));
+                this.scriptContent = new String(StreamUtil.slurp(new FileInputStream(scriptFile)));
+            }
+        }
+        return;
     }
 }

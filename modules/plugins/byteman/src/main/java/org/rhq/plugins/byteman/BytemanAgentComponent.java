@@ -333,8 +333,8 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 for (File file : discoveredFiles) {
                     String fullPath = file.getAbsolutePath();
                     String shortName = file.getName();
-                    String version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath, "Implementation-Version",
-                        "0");
+                    String version = BytemanAgentDiscoveryComponent.getJarAttribute(fullPath,
+                        java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION.toString(), "0");
                     PackageDetailsKey detailsKey = new PackageDetailsKey(shortName, version, typeName, "noarch");
                     ResourcePackageDetails detail = new ResourcePackageDetails(detailsKey);
                     detail.setDisplayName(shortName);
@@ -476,7 +476,8 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
         try {
             this.scriptsDataDir.mkdirs();
 
-            // determine where to store the file when we download it
+            // determine where to store the script file when we download it;
+            // do not allow the file to be placed in a subdirectory under our data dir (i.e. take out file separators)
             ResourcePackageDetails newDetails = report.getPackageDetails();
             String newName = report.getUserSpecifiedResourceName();
             if (newName == null) {
@@ -485,6 +486,8 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                     throw new NullPointerException("was not given a name for the new script");
                 }
             }
+            newName = newName.replace('/', '-').replace('\\', '-');
+
             File newFile = new File(this.scriptsDataDir, newName);
             String newFileAbsolutePath = newFile.getAbsolutePath();
 
@@ -513,7 +516,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
 
             // complete the report
             report.setResourceKey(newFileAbsolutePath);
-            report.setResourceName(newFileAbsolutePath);
+            report.setResourceName(newName);
             report.setStatus(CreateResourceStatus.SUCCESS);
         } catch (Throwable t) {
             log.error("Failed to create child resource [" + report + "]", t);
@@ -563,23 +566,6 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
     }
 
     /**
-     * Returns the component's data directory that is used to persist managed content.
-     * <code>suffix</code> is the last part of the file path, essentially providing a specific
-     * location for different kinds of content for the component.
-     *  
-     * @param suffix identifies a specific location under a general data directory for this component.
-     * @return data directory that can be used to persist data for this component
-     */
-    public File getResourceDataDirectory(String suffix) {
-        File pluginDataDir = this.resourceContext.getDataDirectory();
-        File resourceDataDir = new File(pluginDataDir, this.resourceContext.getResourceKey().replace(":", "-"));
-        if (suffix != null) {
-            resourceDataDir = new File(resourceDataDir, suffix);
-        }
-        return resourceDataDir;
-    }
-
-    /**
      * Given a package details, this will attempt to find that package's file.
      * The details "file name" is examined first to figure out where the file is supposed to be.
      * Only if that isn't set will the details general "name" be used as the file name.
@@ -615,12 +601,51 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
     }
 
     /**
+     * @return directory where managed boot classpath jars are persisted
+     */
+    public File getBootJarsDataDirectory() {
+        return this.bootJarsDataDir;
+    }
+
+    /**
+     * @return directory where managed system classpath jars are persisted
+     */
+    public File getSystemJarsDataDirectory() {
+        return this.systemJarsDataDir;
+    }
+
+    /**
+     * @return directory where managed scripts are persisted. Scripts are files
+     * that contain rules.
+     */
+    public File getScriptsDataDirectory() {
+        return this.scriptsDataDir;
+    }
+
+    /**
+     * Returns the component's data directory that is used to persist managed content.
+     * <code>suffix</code> is the last part of the file path, essentially providing a specific
+     * location for different kinds of content for the component.
+     *  
+     * @param suffix identifies a specific location under a general data directory for this component.
+     * @return data directory that can be used to persist data for this component
+     */
+    protected File getResourceDataDirectory(String suffix) {
+        File pluginDataDir = this.resourceContext.getDataDirectory();
+        File resourceDataDir = new File(pluginDataDir, this.resourceContext.getResourceKey().replace(":", "-"));
+        if (suffix != null) {
+            resourceDataDir = new File(resourceDataDir, suffix);
+        }
+        return resourceDataDir;
+    }
+
+    /**
      * Goes through all jars that were deployed via RHQ and ensures they are still deployed, adding
      * them if need be.
      * 
      * @throws Exception
      */
-    private void addDeployedClasspathJars() throws Exception {
+    protected void addDeployedClasspathJars() throws Exception {
         Submit client = getBytemanClient();
         List<String> paths = new ArrayList<String>();
 

@@ -1,6 +1,8 @@
 package org.rhq.plugins.byteman;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +35,32 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
     public void start(ResourceContext<BytemanAgentComponent> context) {
         this.resourceContext = context;
         getAvailability(); // forces the scripts/rules caches to load
+
+        // add the script back to the byteman agent if necessary (must do this after the call to getAvailability)
+        try {
+            addDeployedScript();
+        } catch (Throwable t) {
+            log.warn("Failed to add managed script to the byteman agent - is it up?", t);
+        }
+
+        return;
+    }
+
+    protected void addDeployedScript() throws Exception {
+        // If the script content is null, that means the Byteman agent does not have our script loaded anymore.
+        // In this case, force the Byteman agent to reload our managed script. Note that we only force a
+        // reload of our script if it was explicitly created via our parent's create child resource facet.
+        // If this script was loaded by some other non-RHQ means, we do not attempt to reload it, we'll just
+        // show its availability as DOWN and expect the user to correct the situation manually.
+        if (this.scriptContent == null) {
+            File scriptsDataDir = this.resourceContext.getParentResourceComponent().getScriptsDataDirectory();
+            File scriptFile = new File(this.resourceContext.getResourceKey());
+            File scriptParentDir = scriptFile.getParentFile();
+            if (scriptParentDir != null && scriptsDataDir.getAbsolutePath().equals(scriptParentDir.getAbsolutePath())) {
+                getBytemanClient().addRulesFromFiles(Arrays.asList(scriptFile.getAbsolutePath()));
+            }
+        }
+        return;
     }
 
     public void stop() {
@@ -67,12 +95,17 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
         // we need the most up-to-date info - so ask the byteman agent for the latest data
         Map<String, String> allScripts = getBytemanClient().getAllScripts();
 
+        // get the script name and the rules content belonging to that script
         String scriptName = this.resourceContext.getResourceKey();
-        if (!allScripts.containsKey(scriptName)) {
+        String scriptRulesContent = allScripts.get(scriptName);
+        if (scriptRulesContent == null) {
             throw new Exception("Cannot delete unknown script [" + scriptName + "]");
         }
 
-        getBytemanClient().deleteRules(allScripts);
+        // tell Byteman to delete that script's rules
+        Map<String, String> scriptRulesToDelete = new HashMap<String, String>(1);
+        scriptRulesToDelete.put(scriptName, scriptRulesContent);
+        getBytemanClient().deleteRules(scriptRulesToDelete);
 
         // attempt to delete the source file
         // note: the script name is usually the full path name to the script file
@@ -81,11 +114,11 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
             scriptFile = new File(scriptName);
             if (scriptFile.isFile()) {
                 if (!scriptFile.delete()) {
-                    log.warn("Unloaded the script, but could not delete the script file [" + scriptFile + "]");
+                    log.warn("Byteman unloaded the script, but the script file [" + scriptFile + "] failed to delete");
                 }
             }
         } catch (Exception e) {
-            log.warn("Unloaded the script, but failed to delete the script file [" + scriptFile + "]", e);
+            log.warn("Byteman unloaded the script, but the script file [" + scriptFile + "] could not be deleted", e);
         }
 
         return;

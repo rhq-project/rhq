@@ -1,0 +1,9 @@
+RULE JDBC Trace
+CLASS org.rhq.enterprise.server.measurement.AvailabilityManagerBean
+METHOD mergeAvailabilityReport
+AT ENTRY
+BIND _version:String="0.1beta",
+     report=$1
+IF TRUE
+DO traceln("JDBC TRACE RULE TRIGGERED! ... " + $1)
+ENDRULE

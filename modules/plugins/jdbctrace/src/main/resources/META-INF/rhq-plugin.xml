@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="JDBCTrace"
+        displayName="JDBC Trace"
+        description="Traces JDBC calls to provide JDBC invocation/metric data"
+        package="org.rhq.plugins.jdbctrace"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <depends plugin="Byteman" useClasses="true" />
+
+    <service name="JDBC Tracer"
+             singleton="true"
+             discovery="JdbcTracerDiscoveryComponent"
+             class="JdbcTracerComponent"
+             supportsManualAdd="true"
+             description="A tool that uses byte-code manipulation to trace JDBC calls">
+
+        <runs-inside>
+            <parent-resource-type name="Byteman Agent" plugin="Byteman"/>
+        </runs-inside>
+
+        <plugin-configuration>
+            <c:simple-property name="enabled" type="boolean" required="true" default="true"
+                               description="Turns the JDBC tracing mechanism on and off"/>
+            <c:simple-property name="scriptName" required="true" default="jdbctrace-rules.txt"
+                               description="The name of the script file containing the JDBC trace injection rules. Technically, this is the script file name as found in the plugin's classloader."/>
+        </plugin-configuration>
+    </service>
+
+</plugin>

@@ -37,13 +37,13 @@
             <results>
                 <c:simple-property name="ruleDefinition" type="longString" />
             </results>
-        </operation>       
+        </operation>
 
         <operation name="getClientVersion" description="Reports the version of the Byteman client that is being used by this plugin">
             <results>
                 <c:simple-property name="version" description="The version of the Byteman client"/>
             </results>
-        </operation>       
+        </operation>
 
         <operation name="addJarsToSystemClasspath"
                    description="Adds jars to the Byteman agent's system classpath. Use this if the jar files already exist at the given locations on the remote Byteman agent machine and are accessible to the Byteman agent.">
@@ -53,7 +53,7 @@
             <results>
                 <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
             </results>
-        </operation>       
+        </operation>
 
         <operation name="addJarsToBootClasspath"
                    description="Adds jars to the Byteman agent's boot classpath. Use this if the jar files already exist at the given locations on the remote Byteman agent machine  and are accessible to the Byteman agent.">
@@ -63,23 +63,23 @@
             <results>
                 <c:simple-property name="operationResult" type="longString" description="The response from the Byteman agent" />
             </results>
-        </operation>       
+        </operation>
 
         <operation name="getAddedClasspathJars"
                    description="Gets the names of all jars that were added to both the boot and system classpaths of the Byteman agent. This will return the names of all jars added to the Byteman agent via 1) the Byteman command line client, 2) one of the 'add' operations provided by this RHQ plugin or 3) through the bootJar/systemJar content managed by this RHQ plugin.">
             <results>
                 <c:list-property name="additionalBootClasspathJars" description="Jars that were added to the boot classpath">
-                   <c:map-property name="additionalBootClasspathJar" description="A jar that was added to the boot classpath">
-                      <c:simple-property name="jarPathname" />
-                   </c:map-property>
+                    <c:map-property name="additionalBootClasspathJar" description="A jar that was added to the boot classpath">
+                        <c:simple-property name="jarPathname" />
+                    </c:map-property>
                 </c:list-property>
                 <c:list-property name="additionalSystemClasspathJars" description="Jars that were added to the system classpath">
-                   <c:map-property name="additionalSystemClasspathJar" description="A jar that was added to the system classpath">
-                      <c:simple-property name="jarPathname" />
-                   </c:map-property>
+                    <c:map-property name="additionalSystemClasspathJar" description="A jar that was added to the system classpath">
+                        <c:simple-property name="jarPathname" />
+                    </c:map-property>
                 </c:list-property>
             </results>
-        </operation>       
+        </operation>
 
         <metric property="TRAIT-clientVersion"
                 displayName="Client Version"
@@ -126,9 +126,9 @@
                  createDeletePolicy="both"
                  creationDataType="content"
                  description="A Byteman script that contains rules to be injected in the JVM">
-        
+
             <content name="bytemanScript" isCreationType="true" category="deployable" description="A script file that contains rules to be injected into the JVM"/>
-            
+
             <service name="Byteman Rule"
                      discovery="BytemanRuleDiscoveryComponent"
                      class="BytemanRuleComponent">

@@ -9,22 +9,29 @@
    </parent>
 
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-byteman-plugin</artifactId>
+   <artifactId>rhq-jdbctrace-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ Byteman Plugin</name>
-   <description>a plugin for managing VMs with a byteman agent installed</description>
+   <name>RHQ JDBC Trace Plugin</name>
+   <description>a plugin that traces JDBC invocations via byte-code manipulation</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/byteman/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/byteman/</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jdbctrace/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/jdbctrace/</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/byteman/</scm.module.path>
+      <scm.module.path>modules/plugins/jdbctrace/</scm.module.path>
    </properties>
 
    <dependencies>
+
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-byteman-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
 
       <dependency>
          <groupId>org.jboss.byteman</groupId>
@@ -55,7 +62,7 @@
                         <artifactItem>
                            <groupId>org.jboss</groupId>
                            <artifactId>byteman</artifactId>
-                           <version>1.2.0.1</version>
+                           <version>1.2.0</version>
                         </artifactItem>
 
                      </artifactItems>

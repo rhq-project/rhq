@@ -48,7 +48,11 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
         try {
             // refresh our cache
             Map<String, String> scripts = this.resourceContext.getParentResourceComponent().getAllKnownScripts();
-            this.scriptContent = scripts.get(this.resourceContext.getResourceKey());
+            if (scripts != null) {
+                this.scriptContent = scripts.get(this.resourceContext.getResourceKey());
+            } else {
+                this.scriptContent = null;
+            }
 
             // if we can, ensure the script is loaded in the byteman agent
             try {
@@ -88,8 +92,8 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
         // via a non-RHQ mechanism. We only manage physical script files that we (RHQ) deployed
         File scriptFile = null;
         try {
-            scriptFile = new File(scriptName);
-            if (scriptFile.isFile()) {
+            scriptFile = getManagedScriptFile(scriptName);
+            if (scriptFile != null && scriptFile.isFile()) {
                 if (!scriptFile.delete()) {
                     log.warn("The Byteman script file [" + scriptFile + "] failed to delete");
                 }
@@ -126,6 +130,24 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
     }
 
     /**
+     * This returns a File representation of a managed script found at the given path.
+     * This returns <code>null</code> if the given script path is not a script managed by this plugin.
+     * Even if <code>scriptPath</code> points to a valid script file, if it is not managed by this plugin,
+     * <code>null</code> will be returned.
+     * 
+     * @param scriptPath path to check to see if its a managed script, to be converted to a File if so
+     * @return the File of the managed script, or <code>null</code> if the given path is not a managed script
+     */
+    protected File getManagedScriptFile(String scriptPath) {
+        File scriptsDataDir = this.resourceContext.getParentResourceComponent().getScriptsDataDirectory();
+        File scriptFile = new File(scriptPath);
+        File scriptParentDir = scriptFile.getParentFile();
+        boolean isManaged = scriptParentDir != null
+            && scriptsDataDir.getAbsolutePath().equals(scriptParentDir.getAbsolutePath());
+        return (isManaged) ? scriptFile : null;
+    }
+
+    /**
      * This method will attempt to ensure that the Byteman agent has the managed script
      * loaded. If a user created this script resource via RHQ (i.e. using the create-child-facet
      * of the parent resource), then this method will always try to ensure that script is loaded
@@ -144,10 +166,8 @@ public class BytemanScriptComponent implements ResourceComponent<BytemanAgentCom
         // If this script was loaded by some other non-RHQ means, we do not attempt to reload it, we'll just
         // show its availability as DOWN and expect the user to correct the situation manually.
         if (this.scriptContent == null) {
-            File scriptsDataDir = this.resourceContext.getParentResourceComponent().getScriptsDataDirectory();
-            File scriptFile = new File(this.resourceContext.getResourceKey());
-            File scriptParentDir = scriptFile.getParentFile();
-            if (scriptParentDir != null && scriptsDataDir.getAbsolutePath().equals(scriptParentDir.getAbsolutePath())) {
+            File scriptFile = getManagedScriptFile(this.resourceContext.getResourceKey());
+            if (scriptFile != null) {
                 getBytemanClient().addRulesFromFiles(Arrays.asList(scriptFile.getAbsolutePath()));
                 this.scriptContent = new String(StreamUtil.slurp(new FileInputStream(scriptFile)));
             }

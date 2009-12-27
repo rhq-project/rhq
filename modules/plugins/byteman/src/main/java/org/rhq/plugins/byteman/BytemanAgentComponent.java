@@ -112,6 +112,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * @see ResourceComponent#stop()
      */
     public void stop() {
+        this.resourceContext = null;
         this.bytemanClient = null;
         this.allKnownScripts = null;
     }
@@ -630,7 +631,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
      * @param suffix identifies a specific location under a general data directory for this component.
      * @return data directory that can be used to persist data for this component
      */
-    protected File getResourceDataDirectory(String suffix) {
+    public File getResourceDataDirectory(String suffix) {
         File pluginDataDir = this.resourceContext.getDataDirectory();
         File resourceDataDir = new File(pluginDataDir, this.resourceContext.getResourceKey().replace(":", "-"));
         if (suffix != null) {

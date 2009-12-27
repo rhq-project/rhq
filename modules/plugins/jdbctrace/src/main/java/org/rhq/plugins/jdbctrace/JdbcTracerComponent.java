@@ -37,6 +37,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.plugins.byteman.BytemanAgentComponent;
 
 /**
@@ -84,7 +85,19 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
     }
 
     public OperationResult invokeOperation(String name, Configuration configuration) {
-        return null;
+        OperationResult result = new OperationResult();
+
+        try {
+            if ("refresh".equals(name)) {
+                prepareRules(true);
+            } else {
+                throw new UnsupportedOperationException(name);
+            }
+        } catch (Exception e) {
+            result.setErrorMessage(ThrowableUtil.getAllMessages(e));
+        }
+
+        return result;
     }
 
     public Configuration loadResourceConfiguration() {

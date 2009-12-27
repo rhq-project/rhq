@@ -57,9 +57,9 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
 
     private final Log log = LogFactory.getLog(JdbcTracerDiscoveryComponent.class);
 
-    private static final String SINGLETON_RESOURCEKEY = "jdbctrace";
-    private static final String SINGLETON_RESOURCENAME = "JDBC Tracer";
-    private static final String SINGLETON_RESOURCEDESC = "Byte-injection rules that trace JDBC invocations";
+    private static final String RESOURCE_KEY_PREFIX = "jdbctrace";
+    private static final String RESOURCE_NAME = "JDBC Tracer";
+    private static final String RESOURCE_DESC = "Byte-injection rules that trace JDBC invocations";
 
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<BytemanAgentComponent> context) {
         log.info("Discovering JDBC tracer");
@@ -85,9 +85,9 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
         }
 
         if (discoveredJdbcTraceScriptName != null) {
-            String key = SINGLETON_RESOURCEKEY;
-            String name = SINGLETON_RESOURCENAME;
-            String description = SINGLETON_RESOURCEDESC;
+            String key = RESOURCE_KEY_PREFIX + '-' + JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME;
+            String name = RESOURCE_NAME;
+            String description = RESOURCE_DESC;
             String version = determineJdbcScriptVersion(discoveredJdbcTraceScriptContent);
 
             Configuration pc = context.getDefaultPluginConfiguration();
@@ -107,9 +107,11 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfiguration,
         ResourceDiscoveryContext<BytemanAgentComponent> context) throws InvalidPluginConfigurationException {
 
+        String scriptName;
         String scriptContent;
+
         try {
-            String scriptName = pluginConfiguration.getSimpleValue(JdbcTracerComponent.PLUGINCONFIG_SCRIPTNAME,
+            scriptName = pluginConfiguration.getSimpleValue(JdbcTracerComponent.PLUGINCONFIG_SCRIPTNAME,
                 JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME);
             BytemanAgentComponent bytemanAgentResource = context.getParentResourceComponent();
             File scriptFile = extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
@@ -118,9 +120,9 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
             throw new RuntimeException("Failed to extract jdbc trace script file", e);
         }
 
-        String key = SINGLETON_RESOURCEKEY;
-        String name = SINGLETON_RESOURCENAME;
-        String description = SINGLETON_RESOURCEDESC;
+        String key = RESOURCE_KEY_PREFIX + '-' + scriptName;
+        String name = RESOURCE_NAME;
+        String description = RESOURCE_DESC;
         String version = determineJdbcScriptVersion(scriptContent);
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,

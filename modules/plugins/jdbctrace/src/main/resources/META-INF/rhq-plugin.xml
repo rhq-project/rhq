@@ -11,7 +11,6 @@
     <depends plugin="Byteman" useClasses="true" />
 
     <service name="JDBC Tracer"
-             singleton="true"
              discovery="JdbcTracerDiscoveryComponent"
              class="JdbcTracerComponent"
              supportsManualAdd="true"
@@ -27,6 +26,9 @@
             <c:simple-property name="scriptName" required="true" default="jdbctrace-rules.txt"
                                description="The name of the script file containing the JDBC trace injection rules. Technically, this is the script file name as found in the plugin's classloader."/>
         </plugin-configuration>
+        
+        <operation name="refresh" description="If JDBC tracing is currently enabled, this will force the JDBC trace injection rules to be unloaded then reloaded. If JDBC tracing is disabled, this ensures the rules are unloaded">
+        </operation>
     </service>
 
 </plugin>

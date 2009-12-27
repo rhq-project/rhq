@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -18,6 +19,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.byteman.agent.submit.Submit;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -38,6 +41,8 @@ import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.content.ContentFacet;
 import org.rhq.core.pluginapi.content.ContentServices;
@@ -64,7 +69,7 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author John Mazzitelli
  */
 public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComponent>, MeasurementFacet,
-    OperationFacet, ContentFacet, CreateChildResourceFacet {
+    OperationFacet, ContentFacet, CreateChildResourceFacet, ConfigurationFacet {
 
     private static final String PKG_TYPE_NAME_BOOT_JAR = "bootJar";
     private static final String PKG_TYPE_NAME_SYSTEM_JAR = "systemJar";
@@ -191,6 +196,57 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
             } catch (Exception e) {
                 log.error("Failed to obtain measurement [" + name + "]. Cause: " + e);
             }
+        }
+
+        return;
+    }
+
+    public Configuration loadResourceConfiguration() throws Exception {
+        Properties props = getBytemanClient().listSystemProperties();
+        Configuration config = new Configuration();
+        PropertyList list = new PropertyList("bytemanSystemProperties");
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+            String name = entry.getKey().toString();
+            if (name.startsWith("org.jboss.byteman.")) {
+                PropertyMap map = new PropertyMap("bytemanSystemProperty");
+                map.put(new PropertySimple("name", name));
+                map.put(new PropertySimple("value", entry.getValue().toString()));
+                list.add(map);
+            }
+        }
+
+        if (list.getList().size() > 0) {
+            config.put(list);
+        }
+
+        return config;
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+
+        try {
+            Properties propsToSet = new Properties();
+
+            Configuration config = report.getConfiguration();
+            PropertyList list = config.getList("bytemanSystemProperties");
+            List<Property> maps = list.getList();
+            for (Property map : maps) {
+                Map<String, Property> nameValue = ((PropertyMap) map).getMap();
+                String name = ((PropertySimple) nameValue.get("name")).getStringValue();
+                if (name.startsWith("org.jboss.byteman.")) {
+                    String value = ((PropertySimple) nameValue.get("value")).getStringValue();
+                    // byteman will not allow us to turn off strict mode
+                    if (!name.equals("org.jboss.byteman.sysprops.strict") || value.equals("true")) {
+                        propsToSet.put(name, value);
+                    }
+                }
+            }
+
+            getBytemanClient().setSystemProperties(propsToSet);
+            log.info("Set byteman configuration: " + propsToSet);
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (Exception e) {
+            report.setErrorMessageFromThrowable(e);
         }
 
         return;

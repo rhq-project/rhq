@@ -120,6 +120,15 @@
         <content name="bootJar" category="deployable" description="A jar file that is added to the Byteman agent's boot classpath"/>
         <content name="systemJar" category="deployable" description="A jar file that is added to the Byteman agent's system classpath"/>
 
+        <resource-configuration>
+            <c:list-property name="bytemanSystemProperties">
+                <c:map-property name="bytemanSystemProperty">
+                    <c:simple-property name="name" description="The Byteman configuration sysprop name. This must start with 'org.jboss.byteman.'"/>
+                    <c:simple-property name="value" />
+                </c:map-property>
+            </c:list-property>
+        </resource-configuration>
+
         <service name="Byteman Script"
                  discovery="BytemanScriptDiscoveryComponent"
                  class="BytemanScriptComponent"

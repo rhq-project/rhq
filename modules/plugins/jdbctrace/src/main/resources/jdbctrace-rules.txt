@@ -1,9 +1,44 @@
-RULE JDBC Trace
+RULE Count Connections
+INTERFACE java.sql.Driver
+METHOD getConnection(String, java.util.Properties)
+AT EXIT
+BIND _version:String="1.0.0",
+     url=$1
+IF TRUE
+DO createCounter("jdbctrace.connection", 0),
+   incrementCounter("jdbctrace.connection"),
+   traceln("JDBCTrace: connections=[" + readCounter("jdbctrace.connection") + "] latest connection: " + url)
+ENDRULE
+
+RULE Count Commits
+INTERFACE java.sql.Connection
+METHOD commit()
+AT EXIT
+IF TRUE
+DO createCounter("jdbctrace.commit", 0),
+   incrementCounter("jdbctrace.commit"),
+   traceln("JDBCTrace: commits=[" + readCounter("jdbctrace.commit") + "]")
+ENDRULE
+
+RULE Count Rollbacks
+INTERFACE java.sql.Connection
+METHOD rollback()
+AT EXIT
+IF TRUE
+DO createCounter("jdbctrace.rollback", 0),
+   incrementCounter("jdbctrace.rollback"),
+   traceln("JDBCTrace: rollbacks=[" + readCounter("jdbctrace.rollback") + "]")
+ENDRULE
+
+RULE TEST Rule
 CLASS org.rhq.enterprise.server.measurement.AvailabilityManagerBean
 METHOD mergeAvailabilityReport
 AT ENTRY
-BIND _version:String="0.1beta",
-     report=$1
+BIND report=$1
 IF TRUE
-DO traceln("JDBC TRACE RULE TRIGGERED! ... " + $1)
+DO createCounter("avail", 100),
+   traceln("TEST RULE TRIGGERED! ... " + $1),
+   traceln("TEST RULE TRIGGERED counter: " + readCounter("avail")),
+   incrementCounter("avail")
 ENDRULE
+

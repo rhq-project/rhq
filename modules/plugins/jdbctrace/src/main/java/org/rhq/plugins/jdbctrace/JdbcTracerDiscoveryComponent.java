@@ -21,8 +21,6 @@ package org.rhq.plugins.jdbctrace;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Map;
@@ -73,7 +71,7 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
             for (Map.Entry<String, String> entry : allKnownScripts.entrySet()) {
                 String scriptName = entry.getKey();
                 File file = new File(scriptName);
-                if (JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME.equals(file.getName())) {
+                if (JdbcTracerUtil.DEFAULT_JDBC_TRACER_SCRIPT_NAME.equals(file.getName())) {
                     // it looks like the Byteman agent already has the JDBC tracer script installed! Let's use it
                     discoveredJdbcTraceScriptName = scriptName;
                     discoveredJdbcTraceScriptContent = entry.getValue();
@@ -85,15 +83,15 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
         }
 
         if (discoveredJdbcTraceScriptName != null) {
-            String key = RESOURCE_KEY_PREFIX + '-' + JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME;
+            String key = RESOURCE_KEY_PREFIX + '-' + JdbcTracerUtil.DEFAULT_JDBC_TRACER_SCRIPT_NAME;
             String name = RESOURCE_NAME;
             String description = RESOURCE_DESC;
             String version = determineJdbcScriptVersion(discoveredJdbcTraceScriptContent);
 
             Configuration pc = context.getDefaultPluginConfiguration();
-            pc.put(new PropertySimple(JdbcTracerComponent.PLUGINCONFIG_ENABLED, "true"));
-            pc.put(new PropertySimple(JdbcTracerComponent.PLUGINCONFIG_SCRIPTNAME,
-                JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME));
+            pc.put(new PropertySimple(JdbcTracerUtil.PLUGINCONFIG_ENABLED, "true"));
+            pc.put(new PropertySimple(JdbcTracerUtil.PLUGINCONFIG_SCRIPTNAME,
+                JdbcTracerUtil.DEFAULT_JDBC_TRACER_SCRIPT_NAME));
 
             DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
                 version, description, pc, null);
@@ -111,10 +109,10 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
         String scriptContent;
 
         try {
-            scriptName = pluginConfiguration.getSimpleValue(JdbcTracerComponent.PLUGINCONFIG_SCRIPTNAME,
-                JdbcTracerComponent.DEFAULT_JDBC_TRACER_SCRIPT_NAME);
+            scriptName = pluginConfiguration.getSimpleValue(JdbcTracerUtil.PLUGINCONFIG_SCRIPTNAME,
+                JdbcTracerUtil.DEFAULT_JDBC_TRACER_SCRIPT_NAME);
             BytemanAgentComponent bytemanAgentResource = context.getParentResourceComponent();
-            File scriptFile = extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
+            File scriptFile = new JdbcTracerUtil().extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
             scriptContent = new String(StreamUtil.slurp(new FileInputStream(scriptFile)));
         } catch (Exception e) {
             throw new RuntimeException("Failed to extract jdbc trace script file", e);
@@ -129,55 +127,6 @@ public class JdbcTracerDiscoveryComponent implements ResourceDiscoveryComponent<
             version, description, pluginConfiguration, null);
 
         return resource;
-    }
-
-    /**
-     * Given the byteman agent resource where the JDBC tracer resource is hosted,
-     * returns the file where the jdbc trace rules script file should exist.
-     * 
-     * This is static-package scoped so the {@link JdbcTracerComponent} can use this.
-     * 
-     * @param bytemanAgentComponent resource context of the byteman agent resource
-     * @param scriptName the name of the jdbc rules script file (not path name, just the short file name)
-     * @return the file where the script was extracted
-     * 
-     * @throws Exception
-     */
-    static File getJdbcTraceRulesScriptFile(BytemanAgentComponent bytemanAgentComponent, String scriptName) {
-        File dataDir = bytemanAgentComponent.getResourceDataDirectory("jdbctrace");
-        dataDir.mkdirs();
-        File scriptFile = new File(dataDir, scriptName.replace('/', '-').replace('\\', '-')); // don't want it in subdirectory
-        return scriptFile;
-    }
-
-    /**
-     * Given the parent byteman agent resource where the JDBC tracer resource is hosted,
-     * this will extract the jdbc trace rules script file and store it in a persisted data directory
-     * 
-     * This is static-package scoped so the {@link JdbcTracerComponent} can use this.
-     * 
-     * @param bytemanAgentComponent byteman agent resource
-     * @param scriptName the name of the jdbc rules script file (not path name, just the short file name)
-     * @return the file where the script was extracted
-     * 
-     * @throws Exception
-     */
-    static File extractJdbcTraceRulesScriptFile(BytemanAgentComponent bytemanAgentComponent, String scriptName)
-        throws Exception {
-
-        // extract the script file from our plugin jar into our parent byteman component's data directory
-        File scriptFile = getJdbcTraceRulesScriptFile(bytemanAgentComponent, scriptName);
-
-        InputStream resourceAsStream = JdbcTracerDiscoveryComponent.class.getResourceAsStream("/" + scriptName);
-        if (resourceAsStream == null) {
-            throw new Exception("Cannot find JDBC tracer rules file from classloader");
-        }
-        StreamUtil.copy(resourceAsStream, new FileOutputStream(scriptFile), true);
-
-        LogFactory.getLog(JdbcTracerDiscoveryComponent.class).debug(
-            "Extracted jdbc trace script file from plugin jar to [" + scriptFile.getAbsolutePath() + "]");
-
-        return scriptFile;
     }
 
     /**

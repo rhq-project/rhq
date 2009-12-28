@@ -44,6 +44,28 @@
 
    <build>
       <plugins>
+         <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <id>Package helper jar</id>
+                  <phase>process-classes</phase>
+                  <configuration>
+                     <tasks>
+                        <echo>Preparing the internal byteman helper jar to be installed in byteman classpath</echo>
+                        <mkdir dir="${project.build.outputDirectory}/helper" />
+                        <jar destfile="${project.build.outputDirectory}/helper/rhq-jdbctrace-plugin-helper.jar">
+                           <fileset dir="${project.build.outputDirectory}"
+                                    includes="**/org/rhq/plugins/jdbctrace/helper/*.class"/>
+                         </jar>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
 
          <!--
          <plugin>
@@ -192,7 +214,7 @@
 
                      <execution>
                         <id>deploy</id>
-                        <phase>compile</phase>
+                        <phase>package</phase>
                         <configuration>
                           <tasks>
                             <mkdir dir="${rhq.deploymentDir}" />

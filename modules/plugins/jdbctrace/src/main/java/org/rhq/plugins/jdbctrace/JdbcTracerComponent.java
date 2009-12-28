@@ -48,10 +48,6 @@ import org.rhq.plugins.byteman.BytemanAgentComponent;
 public class JdbcTracerComponent implements ResourceComponent<BytemanAgentComponent>, OperationFacet,
     ConfigurationFacet {
 
-    public static final String PLUGINCONFIG_ENABLED = "enabled";
-    public static final String PLUGINCONFIG_SCRIPTNAME = "scriptName";
-    public static final String DEFAULT_JDBC_TRACER_SCRIPT_NAME = "jdbctrace-rules.txt";
-
     private final Log log = LogFactory.getLog(JdbcTracerComponent.class);
 
     private Configuration resourceConfiguration;
@@ -130,7 +126,7 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
      */
     private boolean isEnabled() {
         Configuration pc = this.resourceContext.getPluginConfiguration();
-        String enabledString = pc.getSimpleValue(PLUGINCONFIG_ENABLED, "true");
+        String enabledString = pc.getSimpleValue(JdbcTracerUtil.PLUGINCONFIG_ENABLED, "true");
         return Boolean.parseBoolean(enabledString);
     }
 
@@ -149,11 +145,16 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
      */
     private void prepareRules(boolean refresh) throws Exception {
         Configuration pc = this.resourceContext.getPluginConfiguration();
-        String scriptName = pc.getSimpleValue(PLUGINCONFIG_SCRIPTNAME, DEFAULT_JDBC_TRACER_SCRIPT_NAME);
+        String scriptName = pc.getSimpleValue(JdbcTracerUtil.PLUGINCONFIG_SCRIPTNAME,
+            JdbcTracerUtil.DEFAULT_JDBC_TRACER_SCRIPT_NAME);
+        String helperJarFileName = JdbcTracerUtil.DEFAULT_JDBC_TRACER_HELPER_JAR;
 
+        JdbcTracerUtil jdbcTracerUtil = new JdbcTracerUtil();
         BytemanAgentComponent bytemanAgentResource = this.resourceContext.getParentResourceComponent();
-        File script = JdbcTracerDiscoveryComponent.getJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
+        File script = jdbcTracerUtil.getJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
         String scriptAbsolutePath = script.getAbsolutePath();
+        File helper = jdbcTracerUtil.getHelperJarFile(bytemanAgentResource, helperJarFileName);
+        String helperAbsolutePath = helper.getAbsolutePath();
 
         // see if there are already jdbc trace rules installed in the byteman agent
         // note that we talk directly to the remote byteman agent to get the info; our parent resource might not have our script yet in its cache
@@ -176,8 +177,15 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
 
             if (existingRules == null) {
                 if (!script.exists()) {
-                    // the file was deleted previously, we need to write it back out again
-                    JdbcTracerDiscoveryComponent.extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
+                    // the script was deleted previously, we need to write it back out again
+                    jdbcTracerUtil.extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
+                }
+                if (!helper.exists()) {
+                    // the helper was deleted previously, we need to write it back out again
+                    jdbcTracerUtil.extractHelperJarFile(bytemanAgentResource, helperJarFileName);
+                }
+                if (!client.getLoadedSystemClassloaderJars().contains(helperAbsolutePath)) {
+                    client.addJarsToSystemClassloader(Arrays.asList(helperAbsolutePath));
                 }
                 client.addRulesFromFiles(Arrays.asList(scriptAbsolutePath));
             }

@@ -30,15 +30,36 @@ DO createCounter("jdbctrace.rollback", 0),
    traceln("JDBCTrace: rollbacks=[" + readCounter("jdbctrace.rollback") + "]")
 ENDRULE
 
-RULE TEST Rule
+RULE Create Prepared Statement
+INTERFACE java.sql.Connection
+METHOD java.sql.PreparedStatement prepareStatement(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND ps = $1,
+     sql = $1
+IF TRUE
+DO traceln("JDBCTrace: prepareStatement: ps=[" + ps + "], sql=[" + sql + "]")
+ENDRULE
+
+RULE TEST Begin Rule
 CLASS org.rhq.enterprise.server.measurement.AvailabilityManagerBean
 METHOD mergeAvailabilityReport
 AT ENTRY
 BIND report=$1
 IF TRUE
-DO createCounter("avail", 100),
+DO resetTimer("avail"),
+   createCounter("avail", 100),
    traceln("TEST RULE TRIGGERED! ... " + $1),
    traceln("TEST RULE TRIGGERED counter: " + readCounter("avail")),
    incrementCounter("avail")
 ENDRULE
 
+
+RULE TEST End Rule
+CLASS org.rhq.enterprise.server.measurement.AvailabilityManagerBean
+METHOD mergeAvailabilityReport
+AT EXIT
+BIND report=$1
+IF TRUE
+DO traceln("TEST RULE TRIGGERED timer: " + getElapsedTimeFromTimer("avail"))
+ENDRULE

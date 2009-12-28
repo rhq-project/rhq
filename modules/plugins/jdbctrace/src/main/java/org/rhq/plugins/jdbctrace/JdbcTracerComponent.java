@@ -175,17 +175,18 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
                 existingRules = null;
             }
 
+            if (!helper.exists()) {
+                // the helper was deleted previously, we need to write it back out again
+                jdbcTracerUtil.extractHelperJarFile(bytemanAgentResource, helperJarFileName);
+            }
+            if (refresh || !client.getLoadedSystemClassloaderJars().contains(helperAbsolutePath)) {
+                client.addJarsToSystemClassloader(Arrays.asList(helperAbsolutePath));
+            }
+
             if (existingRules == null) {
                 if (!script.exists()) {
                     // the script was deleted previously, we need to write it back out again
                     jdbcTracerUtil.extractJdbcTraceRulesScriptFile(bytemanAgentResource, scriptName);
-                }
-                if (!helper.exists()) {
-                    // the helper was deleted previously, we need to write it back out again
-                    jdbcTracerUtil.extractHelperJarFile(bytemanAgentResource, helperJarFileName);
-                }
-                if (!client.getLoadedSystemClassloaderJars().contains(helperAbsolutePath)) {
-                    client.addJarsToSystemClassloader(Arrays.asList(helperAbsolutePath));
                 }
                 client.addRulesFromFiles(Arrays.asList(scriptAbsolutePath));
             }

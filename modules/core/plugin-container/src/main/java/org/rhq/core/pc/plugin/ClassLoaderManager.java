@@ -451,9 +451,7 @@ public class ClassLoaderManager {
     }
 
     /**
-     * Returns a shallow copy of the resource classloaders keyed on a descriptive string
-     * identifying the resource that is assigned the classloaders (technically, its
-     * the value of {@link CanonicalResourceKey#toString()}).
+     * Returns a shallow copy of the resource classloaders keyed on a canonical keys.
      * This method is here just to support the plugin container management MBean.
      * 
      * Do not use this method to obtain a resource's classloader, instead, you want to use
@@ -461,12 +459,8 @@ public class ClassLoaderManager {
      * 
      * @return all resource classloaders currently assigned to resources (will never be <code>null</code>)
      */
-    public synchronized Map<String, ClassLoader> getResourceClassLoaders() {
-        Map<String, ClassLoader> map = new HashMap<String, ClassLoader>();
-        for (Map.Entry<CanonicalResourceKey, ClassLoader> entry : this.resourceClassLoaders.entrySet()) {
-            map.put(entry.getKey().toString(), entry.getValue());
-        }
-        return map;
+    public synchronized Map<CanonicalResourceKey, ClassLoader> getResourceClassLoaders() {
+        return new HashMap<CanonicalResourceKey, ClassLoader>(this.resourceClassLoaders);
     }
 
     private Set<ClassLoader> getUniquePluginClassLoaders() {

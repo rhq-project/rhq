@@ -91,6 +91,30 @@ public class CanonicalResourceKey implements Serializable {
         }
     }
 
+    public String getResourceKey() {
+        return this.resourceKey;
+    }
+
+    public String getResourceTypeName() {
+        return this.resourceTypeName;
+    }
+
+    public String getResourcePlugin() {
+        return this.resourcePlugin;
+    }
+
+    public String getParentKey() {
+        return this.parentKey;
+    }
+
+    public String getParentTypeName() {
+        return this.parentTypeName;
+    }
+
+    public String getParentPlugin() {
+        return this.parentPlugin;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();

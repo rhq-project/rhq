@@ -175,7 +175,7 @@ public class JdbcTracerComponent implements ResourceComponent<BytemanAgentCompon
                 existingRules = null;
             }
 
-            if (!helper.exists()) {
+            if (refresh || !helper.exists()) {
                 // the helper was deleted previously, we need to write it back out again
                 jdbcTracerUtil.extractHelperJarFile(bytemanAgentResource, helperJarFileName);
             }

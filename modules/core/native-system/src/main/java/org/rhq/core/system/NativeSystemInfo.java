@@ -159,24 +159,29 @@ public class NativeSystemInfo implements SystemInfo {
     }
 
     public NetworkStats getNetworkStats(String addressName, int port) {
+        List<NetConnection> matches = getNetworkConnections(addressName, port);
+        NetworkStats stats = new NetworkStats(matches.toArray(new NetConnection[matches.size()]));
+        return stats;
+    }
+
+    public List<NetConnection> getNetworkConnections(String addressName, int port) {
         try {
             int flags = NetFlags.CONN_SERVER | NetFlags.CONN_CLIENT | NetFlags.CONN_TCP;
             NetConnection[] conns = sigar.getNetConnectionList(flags);
 
-            InetAddress matchAddress = InetAddress.getByName(addressName);
+            InetAddress matchAddress = (addressName != null) ? InetAddress.getByName(addressName) : null;
 
-            List<NetConnection> matches = new ArrayList<NetConnection>();
+            List<NetConnection> list = new ArrayList<NetConnection>();
             for (NetConnection conn : conns) {
-
-                InetAddress connAddress = InetAddress.getByName(conn.getLocalAddress());
-                if (conn.getLocalPort() == port && matchAddress.equals(connAddress)) {
-                    matches.add(conn);
+                if (port > 0 && (conn.getLocalPort() != port)) {
+                    continue; // does not match the port we are looking for
                 }
+                if (matchAddress != null && !matchAddress.equals(InetAddress.getByName(conn.getLocalAddress()))) {
+                    continue; // does not match the address we are looking for
+                }
+                list.add(conn); // matches our criteria, add it to the list to be returned to the caller
             }
-
-            NetworkStats stats = new NetworkStats(matches.toArray(new NetConnection[matches.size()]));
-
-            return stats;
+            return list;
         } catch (SigarException e) {
             throw new SystemInfoException(e);
         } catch (UnknownHostException e) {

@@ -22,6 +22,8 @@
   */
 package org.rhq.core.clientapi.agent.metadata;
 
+import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,6 +44,7 @@ import org.rhq.core.clientapi.descriptor.configuration.PropertyOptions;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
 import org.rhq.core.clientapi.descriptor.configuration.RegexConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationFormat;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
@@ -75,6 +78,11 @@ public class ConfigurationMetadataParser {
 
         ConfigurationDefinition configurationDefinition = new ConfigurationDefinition(configurationName,
                 descriptor.getNotes());
+        configurationDefinition.setConfigurationFormat(getConfigurationFormat(descriptor));
+
+        if (configurationDefinition.getConfigurationFormat() == RAW) {
+            return configurationDefinition;            
+        }
 
         for (ConfigurationTemplateDescriptor templateDescriptor : descriptor.getTemplate()) {
             configurationDefinition.putTemplate(parseTemplate(templateDescriptor));
@@ -88,6 +96,19 @@ public class ConfigurationMetadataParser {
         ConfigurationUtility.normalizeConfiguration(defaultConfiguration, configurationDefinition);
 
         return configurationDefinition;
+    }
+
+    private static org.rhq.core.domain.configuration.definition.ConfigurationFormat getConfigurationFormat(
+        ConfigurationDescriptor descriptor) {
+        if (descriptor.getConfigurationFormat() == null) {
+            return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
+        }
+
+        switch (descriptor.getConfigurationFormat()) {
+            case STRUCTURED: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
+            case RAW: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
+            default: return org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED_AND_RAW;
+        }
     }
 
     private static ConfigurationTemplate initDefaultTemplate(ConfigurationDefinition configurationDefinition) {

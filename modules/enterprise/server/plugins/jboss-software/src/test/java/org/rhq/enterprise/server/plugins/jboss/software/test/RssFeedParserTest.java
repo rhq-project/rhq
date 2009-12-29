@@ -25,11 +25,12 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.rhq.core.clientapi.server.plugin.content.ContentSourcePackageDetails;
-import org.rhq.core.clientapi.server.plugin.content.PackageSyncReport;
-import org.rhq.enterprise.server.plugins.jboss.software.RssFeedParser;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugins.jboss.software.RssFeedParser;
 
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.parser.RssParser;
@@ -85,7 +86,7 @@ public class RssFeedParserTest {
         parser.parseResults(rssDocument1, report, null);
 
         // Verify
-        Set<ContentSourcePackageDetails> newPackages = report.getNewPackages();
+        Set<ContentProviderPackageDetails> newPackages = report.getNewPackages();
 
         assert newPackages.size() == 59 : "Incorrect number of cumulative patches found. Expected: 59, Found: "
             + newPackages.size();
@@ -95,7 +96,7 @@ public class RssFeedParserTest {
             + report.getUpdatedPackages().size();
 
         int totalNumVersions = 0;
-        for (ContentSourcePackageDetails pkg : newPackages) {
+        for (ContentProviderPackageDetails pkg : newPackages) {
             totalNumVersions += pkg.getResourceVersions().size();
         }
 
@@ -129,34 +130,33 @@ public class RssFeedParserTest {
 
     @Test
     public void testInstallInstructions() throws Exception {
-    	// Example set 3
+        // Example set 3
         URL exampleFeedUrl = this.getClass().getClassLoader().getResource(EXAMPLE_FILE_3);
         assert exampleFeedUrl != null : "Could not load " + EXAMPLE_FILE_3;
-        
+
         // Setup
         PackageSyncReport report = new PackageSyncReport();
-        
+
         RssDocument rssDocument3 = loadDocument(exampleFeedUrl);
-        
+
         parser.parseResults(rssDocument3, report, null);
-        
-        Set<ContentSourcePackageDetails> newPackages = report.getNewPackages();
-        
+
+        Set<ContentProviderPackageDetails> newPackages = report.getNewPackages();
+
         for (Iterator iterator = newPackages.iterator(); iterator.hasNext();) {
-			ContentSourcePackageDetails contentSourcePackageDetails = (ContentSourcePackageDetails) iterator
-					.next();
-			String installIns = new String(contentSourcePackageDetails.getMetadata());				
-			
-			assert installIns.startsWith("<?xml version=\"1.0\"?>");
-			installIns = installIns.substring(21).trim();
-			assert installIns.startsWith("<process-definition name=\"process\">") ||
-			       installIns.startsWith("<!DOCTYPE process-definition [ <!ENTITY handler_A") 	
-				: "installIns started with:" + installIns.substring(0, 100);
-						
-			assert installIns.endsWith("</process-definition>");			
-		}
+            ContentProviderPackageDetails contentSourcePackageDetails = (ContentProviderPackageDetails) iterator.next();
+            String installIns = new String(contentSourcePackageDetails.getMetadata());
+
+            assert installIns.startsWith("<?xml version=\"1.0\"?>");
+            installIns = installIns.substring(21).trim();
+            assert installIns.startsWith("<process-definition name=\"process\">") ||
+                installIns.startsWith("<!DOCTYPE process-definition [ <!ENTITY handler_A")
+                : "installIns started with:" + installIns.substring(0, 100);
+
+            assert installIns.endsWith("</process-definition>");
+        }
     }
-    
+
     // Private --------------------------------------------
 
     private RssDocument loadDocument(URL exampleFeedUrl) throws Exception {

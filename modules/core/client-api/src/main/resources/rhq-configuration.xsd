@@ -23,7 +23,7 @@
             <jaxb:class name="ConfigurationDescriptor"/>
          </xs:appinfo>
          <xs:documentation>Describes all configurable elements of a resource.</xs:documentation>
-      </xs:annotation>
+      </xs:annotation>       
       <xs:sequence>
          <xs:element name="notes" type="xs:string" minOccurs="0" maxOccurs="1">
             <xs:annotation>
@@ -34,8 +34,16 @@
          <xs:element name="group" type="config:propertyGroup" minOccurs="0" maxOccurs="unbounded"/>
          <xs:element name="template" type="config:configurationTemplate" minOccurs="0" maxOccurs="unbounded"/>
       </xs:sequence>
+      <xs:attribute name="configurationFormat" type="config:configurationFormat"/>
    </xs:complexType>
 
+   <xs:simpleType name="configurationFormat">
+      <xs:restriction base="xs:string">
+         <xs:enumeration value="structured"/>
+         <xs:enumeration value="raw"/>
+         <xs:enumeration value="both"/>
+      </xs:restriction>
+   </xs:simpleType>
 
    <xs:complexType name="configurationTemplate">
       <xs:annotation>

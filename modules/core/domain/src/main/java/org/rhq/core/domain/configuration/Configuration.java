@@ -65,7 +65,6 @@ import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
-import org.rhq.core.domain.util.serial.HibernateUtil;
 
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
@@ -454,56 +453,42 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      * @return the new copy
      */
     public Configuration deepCopy(boolean keepIds) {
-        Configuration copy;
+        Configuration copy = new Configuration();
 
-        try {
-            copy = clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException("CloneNotSupported can't happen");
+        if (keepIds) {
+            copy.id = this.id;
         }
 
-        if (!keepIds) {
-            copy.id = 0;
-
-            for (Property property : copy.properties.values()) {
-                clearIds(property);
-            }
-        }
+        copy.notes = this.notes;
+        copy.version = this.version;
+        createDeepCopyOfProperties(copy, keepIds);
+        createDeepCopyOfRawConfigs(copy, keepIds);
 
         return copy;
-    }
-
-    private void clearIds(Property property) {
-        property.setId(0);
-
-        if (property instanceof PropertyList) {
-            for (Property childProperty : ((PropertyList) property).getList()) {
-                clearIds(childProperty);
-            }
-        } else if (property instanceof PropertyMap) {
-            for (Property childProperty : ((PropertyMap) property).getMap().values()) {
-                clearIds(childProperty);
-            }
-        }
-
-        return;
     }
 
     public Configuration deepCopyWithoutProxies() {
         Configuration copy = new Configuration();
         copy.notes = this.notes;
         copy.version = this.version;
-
-        for (Property property : this.properties.values()) {
-            copy.put(property.deepCopy());
-        }
-
-        for (RawConfiguration rawConfig : rawConfigurations) {
-            copy.addRawConfiguration(rawConfig.deepCopy());    
-        }
+        createDeepCopyOfProperties(copy, false);
+        createDeepCopyOfRawConfigs(copy, false);
 
         return copy;
     }
+
+    private void createDeepCopyOfRawConfigs(Configuration copy, boolean keepId) {
+        for (RawConfiguration rawConfig : rawConfigurations) {
+            copy.addRawConfiguration(rawConfig.deepCopy(keepId));
+        }
+    }
+
+    private void createDeepCopyOfProperties(Configuration copy, boolean keepId) {
+        for (Property property : this.properties.values()) {
+            copy.put(property.deepCopy(keepId));
+        }
+    }
+
 
     /**
      * Clones this object in the same manner as {@link #deepCopy()}.
@@ -611,66 +596,73 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
 
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI == strategy) {
-            writeExternalRemote(out);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION == strategy) {
-            EntitySerializer.writeExternalRemote(this, out);
-        } else {
-            writeExternalAgent(out);
+        if (isAgentOrRemoteAPISerialization(strategy.id())) {
+            writeExternalAgentOrRemote(out);
+        }
+        else {
+            EntitySerializer.writeExternalRemote(this, out);            
         }
     }
 
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         char c = in.readChar();
-        if (ExternalizableStrategy.Subsystem.REMOTEAPI.id() == c) {
-            readExternalRemote(in);
-        } else if (ExternalizableStrategy.Subsystem.REFLECTIVE_SERIALIZATION.id() == c) {
-            EntitySerializer.readExternalRemote(this, in);
-        } else {
-            readExternalAgent(in);
+
+        if (isAgentOrRemoteAPISerialization(c)) {
+            readExternalAgentOrRemote(in);
         }
+        else {
+            EntitySerializer.readExternalRemote(this, in);
+        }
+    }
+
+    private boolean isAgentOrRemoteAPISerialization(char strategy) {
+        return strategy == ExternalizableStrategy.Subsystem.AGENT.id() ||
+               strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
     }
 
     /**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
      */
-    public void writeExternalAgent(ObjectOutput out) throws IOException {
+    public void writeExternalAgentOrRemote(ObjectOutput out) throws IOException {
+        Configuration copy = deepCopyWithoutProxies();
+
         out.writeInt(id);
-        out.writeObject(HibernateUtil.safeMap(getMap()));
+        out.writeObject(createDeepCopyOfMap());
+        out.writeObject(createDeepCopyOfRawConfigs());
         out.writeUTF((notes == null) ? "null" : notes);
         out.writeLong(version);
         out.writeLong(ctime);
         out.writeLong(mtime);
+    }
+
+    private Map<String, Property> createDeepCopyOfMap() {
+        Map<String, Property> copy = new HashMap<String, Property>();
+        for (Map.Entry<String, Property> entry : this.properties.entrySet()) {
+            Property copiedProperty = entry.getValue().deepCopy(true);
+            copiedProperty.setConfiguration(this);
+            copy.put(entry.getKey(), copiedProperty);
+        }
+        return copy;
+    }
+
+    private Set<RawConfiguration> createDeepCopyOfRawConfigs() {
+        Set<RawConfiguration> copy = new HashSet<RawConfiguration>();
+        for (RawConfiguration rawConfig : this.rawConfigurations) {
+            RawConfiguration copiedRawConfig = rawConfig.deepCopy(true);
+            copiedRawConfig.setConfiguration(this);
+            copy.add(copiedRawConfig);
+        }
+        return copy;
     }
 
     /**
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
      */
     @SuppressWarnings("unchecked")
-    public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
+    public void readExternalAgentOrRemote(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         properties = (HashMap<String, Property>) in.readObject();
-        notes = in.readUTF();
-        version = in.readLong();
-        ctime = in.readLong();
-        mtime = in.readLong();
-    }
-
-    // It is assumed that the object is clean of Hibernate proxies (i.e. HibernateDetachUtility has been run if necessary)
-    public void writeExternalRemote(ObjectOutput out) throws IOException {
-        out.writeInt(id);
-        out.writeObject(HibernateUtil.safeMap(properties));
-        out.writeUTF((notes == null) ? "null" : notes);
-        out.writeLong(version);
-        out.writeLong(ctime);
-        out.writeLong(mtime);
-        // Explicitly do not send the history relationship
-    }
-
-    @SuppressWarnings("unchecked")
-    public void readExternalRemote(ObjectInput in) throws IOException, ClassNotFoundException {
-        id = in.readInt();
-        properties = (HashMap<String, Property>) in.readObject();
+        rawConfigurations = (Set<RawConfiguration>) in.readObject();
         notes = in.readUTF();
         version = in.readLong();
         ctime = in.readLong();

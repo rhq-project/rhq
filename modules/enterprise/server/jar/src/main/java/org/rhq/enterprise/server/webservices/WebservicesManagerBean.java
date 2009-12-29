@@ -80,6 +80,7 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.GroupOperationHistory;
@@ -370,8 +371,20 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return configurationManager.updateResourceConfiguration(subject, resourceId, newConfiguration);
     }
 
+    public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
+        Configuration newConfiguration, boolean fromStructured)
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        return configurationManager.updateStructuredOrRawConfiguration(subject, resourceId, newConfiguration,
+            fromStructured);
+    }
+
     public ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId) {
         return configurationManager.getPackageTypeConfigurationDefinition(subject, packageTypeId);
+    }
+
+    public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean fromStructured) throws ResourceNotFoundException {
+        return configurationManager.translateResourceConfiguration(subject, resourceId, configuration, fromStructured);
     }
 
     //CONFIGURATIONMANAGER: END ----------------------------------
@@ -682,6 +695,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public Resource getParentResource(Subject subject, int resourceId) {
         return resourceManager.getParentResource(subject, resourceId);
+    }
+
+    public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
+        return resourceManager.getLiveResourceAvailability(subject, resourceId);
     }
 
     public Resource getResource(Subject subject, int resourceId) {

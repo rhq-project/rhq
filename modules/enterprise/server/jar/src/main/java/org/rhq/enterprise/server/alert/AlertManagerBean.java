@@ -57,7 +57,6 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -83,6 +82,12 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
+import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -182,7 +187,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
 
         /*
-         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the 
+         * Since BULK delete JPQL doesn't enforce cascade options, we need to delete the logs first and then the
          * corresponding Alerts
          */
         long totalTime = 0L;
@@ -533,6 +538,22 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
+    /**
+     * Mark the matching alert as acknowledged by the user
+     * @param alertId Id of the alert to acknowledge
+     * @param user user who acknowledged the alert
+     */
+    public void acknowledgeAlert(int alertId, Subject user) {
+        Alert alert = entityManager.find(Alert.class,alertId);
+        if (alert==null) {
+            log.warn("Alert [ " + alertId + " ] to acknowledge was not found ");
+            return;
+        }
+        alert.setAckBy(user);
+        alert.setAckTime(System.currentTimeMillis());
+    }
+
+
     public void fireAlert(int alertDefinitionId) {
         log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
 
@@ -633,10 +654,29 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     String emailAddress = emailNotification.getEmailAddress();
 
                     processEmailAddress(alert, emailAddress, emailAddresses);
-                } else if (alertNotification instanceof SnmpNotification) {
-                    SnmpNotification snmpNotification = (SnmpNotification) alertNotification;
+                }
 
-                    sendAlertSnmpTrap(alert, snmpNotification);
+
+                // Send over the new AlertSenders
+                if (alertNotification.getSenderName()==null)
+                    continue;
+
+                AlertSender sender = getAlertSender(alertNotification);
+                if (sender!=null) {
+                    try {
+                        SenderResult result = sender.send(alert);
+                        if (result == null) {
+                            log.warn("- !! -- sender " + alertNotification.getSenderName() + " did not return a SenderResult. Please fix this -- !! - ");
+                        } else if (result.getState() == ResultState.SUCCESS) {
+                            if (result.getEmails()!=null && !result.getEmails().isEmpty())
+                                emailAddresses.addAll(result.getEmails());
+                        }
+                        // TODO log result
+                        log.info(result);
+                    }
+                    catch (Throwable t) {
+                        log.error("Sender failed: " + t.getMessage());
+                    }
                 }
             }
 
@@ -644,6 +684,24 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         } catch (Exception e) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
         }
+    }
+
+    /**
+     * Return the plugin manager that is managing alert sender plugins
+     * @return The alert sender plugin manager
+     */
+    public AlertSenderPluginManager getAlertPluginManager() {
+        MasterServerPluginContainer container = LookupUtil.getServerPluginService().getMasterPluginContainer();
+        AlertServerPluginContainer pc = container.getPluginContainerByClass(AlertServerPluginContainer.class);
+        AlertSenderPluginManager manager = (AlertSenderPluginManager) pc.getPluginManager();
+
+        return manager;
+    }
+
+    AlertSender getAlertSender(AlertNotification notification) {
+        AlertSenderPluginManager manager = getAlertPluginManager();
+        AlertSender sender = manager.getAlertSenderForNotification(notification);
+        return sender;
     }
 
     private void processEmailAddress(Alert alert, String emailAddress, Set<String> emailAddresses) {
@@ -711,6 +769,15 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
 
         return builder.toString();
+    }
+
+    /**
+     * Create a human readable description of the conditions that led to this alert.
+     * @param alert Alert to create human readable condition description
+     * @return human readable condition log
+     */
+    public String prettyPrintAlertConditions(Alert alert) {
+        return prettyPrintAlertConditions(alert.getConditionLogs());
     }
 
     private String prettyPrintAlertConditions(Set<AlertConditionLog> conditionLogs) {
@@ -808,44 +875,23 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return builder.toString();
     }
 
-    private String prettyPrintAlertURL(Alert alert) {
+    public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
         String baseUrl = systemManager.getSystemConfiguration().getProperty(RHQConstants.BaseURL);
         builder.append(baseUrl);
-        if (baseUrl.endsWith("/") == false) {
+        if (!baseUrl.endsWith("/")) {
             builder.append("/");
         }
 
         builder.append("alerts/Alerts.do?mode=viewAlert");
 
-        builder.append("&id=" + alert.getAlertDefinition().getResource().getId());
-        builder.append("&a=" + alert.getId());
+        builder.append("&id=").append(alert.getAlertDefinition().getResource().getId());
+        builder.append("&a=").append(alert.getId());
 
         return builder.toString();
     }
 
-    private void sendAlertSnmpTrap(Alert alert, SnmpNotification snmpNotification) {
-        SnmpTrapSender snmpTrapSender = new SnmpTrapSender();
-        log.debug("Sending SNMP trap with OID " + snmpNotification.getOid() + " to SNMP engine "
-            + snmpNotification.getHost() + ":" + snmpNotification.getPort() + "...");
-        String result;
-        List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
-        String platformName = lineage.get(0).getName();
-        String conditions = prettyPrintAlertConditions(alert.getConditionLogs());
-        String alertUrl = prettyPrintAlertURL(alert);
-        try {
-            if (bootTime == null)
-                bootTime = LookupUtil.getCoreServer().getBootTime();
-            result = snmpTrapSender.sendSnmpTrap(alert, snmpNotification, platformName, conditions, bootTime, alertUrl);
-        } catch (Throwable t) {
-            result = "failed - cause: " + t;
-        }
-
-        log.debug("Result of sending SNMP trap: " + result);
-        // TODO: Log the action result to the DB (i.e. as an AlertNotificationLog).
-        //       (see http://jira.jboss.com/jira/browse/JBNADM-1820)
-    }
 
     private void processRecovery(AlertDefinition firedDefinition) {
         Subject overlord = subjectManager.getOverlord();
@@ -872,10 +918,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
 
             /*
-             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe
              * (because we know the AlertManager will only be executing on the same server instance that is processing
-             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
-             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         } else if (firedDefinition.getWillRecover()) {
             log.debug("Disabling " + firedDefinition + " until recovered manually or by recovery definition");
@@ -888,13 +934,37 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             alertDefinitionManager.disableAlertDefinitions(overlord, new Integer[] { firedDefinition.getId() });
 
             /*
-             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe 
+             * there's no reason to update the cache directly anymore.  even though this direct type of update is safe
              * (because we know the AlertManager will only be executing on the same server instance that is processing
-             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will  
-             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it. 
+             * these recovery alerts now) it's unnecessary because changes made via the AlertDefinitionManager will
+             * update the cache indirectly via the status field on the owning agent and the periodic job that checks it.
              */
         }
     }
+
+    /**
+     * Tells us if the definition of the passed alert will be disabled after this alert was fired
+     * @param alert alert to check
+     * @return true if the definition got disabled
+     */
+    public boolean willDefinitionBeDisabled(Alert alert) {
+        entityManager.refresh(alert);
+        AlertDefinition firedDefinition = alert.getAlertDefinition();
+        Subject overlord = subjectManager.getOverlord();
+        Integer recoveryDefinitionId = firedDefinition.getRecoveryId();
+
+        if (recoveryDefinitionId != 0) {
+            AlertDefinition toBeRecoveredDefinition = alertDefinitionManager.getAlertDefinitionById(overlord,
+                recoveryDefinitionId);
+            boolean wasEnabled = toBeRecoveredDefinition.getEnabled();
+            if (!wasEnabled)
+                return false;
+        } else if (firedDefinition.getWillRecover()) {
+            return true;
+        }
+        return false; // Default is not to disable the definition
+    }
+
 
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {

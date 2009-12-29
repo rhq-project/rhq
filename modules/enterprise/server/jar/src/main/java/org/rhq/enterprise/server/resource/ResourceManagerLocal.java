@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -405,6 +406,11 @@ public interface ResourceManagerLocal {
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    /**
+     * #see {@link ResourceManagerRemote#getLiveResourceAvailability(Subject, int)
+     */
+    ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId);
 
     /**
      * #see {@link ResourceManagerRemote#getResource(Subject, int)

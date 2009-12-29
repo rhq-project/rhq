@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
 
@@ -35,7 +36,11 @@ import org.richfaces.event.UploadEvent;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.Plugin;
+import org.rhq.core.domain.plugin.PluginKey;
+import org.rhq.core.domain.plugin.PluginStatusType;
+import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -60,16 +65,40 @@ public class InstalledPluginsUIBean {
     public InstalledPluginsUIBean() {
     }
 
+    public void restartMasterPluginContainer() {
+
+        hasPermission();
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.restartMasterPluginContainer(subject);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Master plugin container has been restarted.");
+        } catch (Exception e) {
+            processException("Failed to restart the master plugin container", e);
+        }
+        return;
+    }
+
     public Collection<Plugin> getInstalledAgentPlugins() {
 
         hasPermission();
-        return resourceMetadataManagerBean.getPlugins();
+        List<Plugin> plugins = resourceMetadataManagerBean.getPlugins();
+        plugins = sort(plugins);
+        return plugins;
     }
 
-    public Collection<Plugin> getInstalledServerPlugins() {
+    public Collection<ServerPlugin> getInstalledServerPlugins() {
 
         hasPermission();
-        return serverPluginsBean.getServerPlugins();
+        List<ServerPlugin> plugins;
+
+        InstalledPluginsSessionUIBean session = FacesContextUtility.getManagedBean(InstalledPluginsSessionUIBean.class);
+        if (session.isShowAllServerPlugins()) {
+            plugins = serverPluginsBean.getAllServerPlugins();
+        } else {
+            plugins = serverPluginsBean.getServerPlugins();
+        }
+        plugins = sort(plugins);
+        return plugins;
     }
 
     public void scan() {
@@ -124,17 +153,49 @@ public class InstalledPluginsUIBean {
     }
 
     public void enableServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
-            selectedPluginNames.add(selectedPlugin.getName());
+        List<ServerPlugin> pluginsToEnable = new ArrayList<ServerPlugin>();
+
+        for (ServerPlugin selectedPlugin : allSelectedPlugins) {
+            if (!selectedPlugin.isEnabled() && selectedPlugin.getStatus() == PluginStatusType.INSTALLED) {
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
+                pluginsToEnable.add(selectedPlugin);
+            }
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No disabled plugins were selected. Nothing to enable");
+            return;
         }
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.enableServerPlugins(subject, getIds(selectedPlugins));
-            FacesContextUtility
-                .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+            List<PluginKey> enabled = serverPluginsBean.enableServerPlugins(subject, getIds(pluginsToEnable));
+            if (enabled.size() == pluginsToEnable.size()) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: "
+                    + selectedPluginNames);
+            } else {
+                List<String> enabledPlugins = new ArrayList<String>();
+                List<String> failedPlugins = new ArrayList<String>();
+                for (ServerPlugin pluginToEnable : pluginsToEnable) {
+                    PluginKey key = PluginKey.createServerPluginKey(pluginToEnable.getType(), pluginToEnable.getName());
+                    if (enabled.contains(key)) {
+                        enabledPlugins.add(pluginToEnable.getDisplayName());
+                    } else {
+                        failedPlugins.add(pluginToEnable.getDisplayName());
+                    }
+                }
+                if (enabledPlugins.size() > 0) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: "
+                        + enabledPlugins);
+                }
+                if (failedPlugins.size() > 0) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to enable server plugins: "
+                        + failedPlugins);
+                }
+            }
         } catch (Exception e) {
             processException("Failed to enable server plugins", e);
         }
@@ -142,15 +203,26 @@ public class InstalledPluginsUIBean {
     }
 
     public void disableServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
-            selectedPluginNames.add(selectedPlugin.getName());
+        List<ServerPlugin> pluginsToDisable = new ArrayList<ServerPlugin>();
+
+        for (ServerPlugin selectedPlugin : allSelectedPlugins) {
+            if (selectedPlugin.isEnabled()) {
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
+                pluginsToDisable.add(selectedPlugin);
+            }
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No enabled plugins were selected. Nothing to disable");
+            return;
         }
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.disableServerPlugins(subject, getIds(selectedPlugins));
+            serverPluginsBean.disableServerPlugins(subject, getIds(pluginsToDisable));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled server plugins: "
                 + selectedPluginNames);
         } catch (Exception e) {
@@ -160,15 +232,25 @@ public class InstalledPluginsUIBean {
     }
 
     public void undeployServerPlugins() {
-        List<Plugin> selectedPlugins = getSelectedServerPlugins();
+        List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
-        for (Plugin selectedPlugin : selectedPlugins) {
-            selectedPluginNames.add(selectedPlugin.getName());
+        List<ServerPlugin> pluginsToUndeploy = new ArrayList<ServerPlugin>();
+        for (ServerPlugin selectedPlugin : allSelectedPlugins) {
+            if (selectedPlugin.getStatus() == PluginStatusType.INSTALLED) {
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
+                pluginsToUndeploy.add(selectedPlugin);
+            }
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No deployed plugins were selected. Nothing to undeploy");
+            return;
         }
 
         try {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
-            serverPluginsBean.undeployServerPlugins(subject, getIds(selectedPlugins));
+            serverPluginsBean.undeployServerPlugins(subject, getIds(pluginsToUndeploy));
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Undeployed server plugins: "
                 + selectedPluginNames);
         } catch (Exception e) {
@@ -177,18 +259,41 @@ public class InstalledPluginsUIBean {
         return;
     }
 
-    private List<Integer> getIds(List<Plugin> plugins) {
+    public void purgeServerPlugins() {
+        List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+
+        for (ServerPlugin selectedPlugin : allSelectedPlugins) {
+            selectedPluginNames.add(selectedPlugin.getDisplayName());
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "No plugins were selected. Nothing to purge");
+            return;
+        }
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            serverPluginsBean.purgeServerPlugins(subject, getIds(allSelectedPlugins));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Purged server plugins: " + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to undeploy server plugins", e);
+        }
+        return;
+    }
+
+    private List<Integer> getIds(List<? extends AbstractPlugin> plugins) {
         ArrayList<Integer> ids = new ArrayList<Integer>(plugins.size());
-        for (Plugin plugin : plugins) {
+        for (AbstractPlugin plugin : plugins) {
             ids.add(plugin.getId());
         }
         return ids;
     }
 
-    private List<Plugin> getSelectedServerPlugins() {
+    private List<ServerPlugin> getSelectedServerPlugins() {
         Integer[] integerItems = getSelectedPluginIds();
         List<Integer> ids = Arrays.asList(integerItems);
-        List<Plugin> plugins = serverPluginsBean.getServerPluginsById(ids);
+        List<ServerPlugin> plugins = serverPluginsBean.getAllServerPluginsById(ids);
         return plugins;
     }
 
@@ -215,5 +320,13 @@ public class InstalledPluginsUIBean {
     private void processException(String errMsg, Exception e) {
         log.error(errMsg + ". Cause: " + ThrowableUtil.getAllMessages(e));
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, errMsg, e);
+    }
+
+    private <T extends AbstractPlugin> List<T> sort(List<T> plugins) {
+        TreeMap<String, T> map = new TreeMap<String, T>();
+        for (T plugin : plugins) {
+            map.put(plugin.getName(), plugin);
+        }
+        return new ArrayList<T>(map.values());
     }
 }

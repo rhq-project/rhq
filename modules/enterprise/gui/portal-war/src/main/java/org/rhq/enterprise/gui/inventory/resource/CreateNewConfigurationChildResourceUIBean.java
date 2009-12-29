@@ -39,7 +39,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.enterprise.gui.configuration.resource.AbstractResourceConfigurationUIBean;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.legacy.ParamConstants;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
@@ -53,7 +53,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Ian Springer
  * @author Jason Dobies
  */
-public class CreateNewConfigurationChildResourceUIBean extends AbstractResourceConfigurationUIBean {
+public class CreateNewConfigurationChildResourceUIBean extends AbstractConfigurationUIBean {
     // Constants  --------------------------------------------
 
     public static final String MANAGED_BEAN_NAME = "CreateNewConfigurationChildResourceUIBean";

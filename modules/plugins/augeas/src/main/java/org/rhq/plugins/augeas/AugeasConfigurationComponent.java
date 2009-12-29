@@ -89,7 +89,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
-    
+
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
@@ -112,7 +112,8 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public void stop() {
-        this.augeas.close();
+        if (this.augeas!=null)
+            this.augeas.close();
     }
 
     public AvailabilityType getAvailability() {

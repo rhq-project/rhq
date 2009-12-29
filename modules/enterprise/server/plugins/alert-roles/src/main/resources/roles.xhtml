@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+    <h:outputText value="Hello New Facelet roles world: #{ListNotificationsUIBean.selectedSender}"/>
+
+
+
+    <br/>
+    <h:outputText value="#{GenericAlertStuffUIBean.theString}">
+        <f:param name="sender" value="Roles"/>
+    </h:outputText>
+
+    <p/>
+    Select a user:<br/>
+    <h:selectOneMenu id="mySenderList" value="#{GenericAlertStuffUIBean.theValue}">
+        <f:selectItems value="#{GenericAlertStuffUIBean.theMap}"/>
+    </h:selectOneMenu>
+
+    <h:commandButton
+        id="roles_submit"
+        value="Add them"
+        type="submit"
+        action="#{GenericAlertStuffUIBean.submitForm}"
+            />
+
+</html>

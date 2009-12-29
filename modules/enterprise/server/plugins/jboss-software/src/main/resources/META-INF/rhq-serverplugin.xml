@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<plugin name="JBossASPatchContentSourcePlugin"
-        xmlns="urn:xmlns:rhq-serverplugin.content"
-        xmlns:c="urn:xmlns:rhq-configuration">
+<content-plugin name="JBossASPatchContentSourcePlugin"
+                version="1.0"
+                apiVersion="2.0"
+                xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:c="urn:xmlns:rhq-configuration">
 
    <contentSourceType name="JBossASPatchSource"
-                      displayName="JBoss AS Patch Content Source"
-                      description="This content source retrieves packages from the JBoss CSP RSS feed."
+                      displayName="JBoss AS Patch Content Provider"
+                      description="This content provider retrieves packages from the JBoss CSP RSS feed."
                       lazyLoad="true"
                       apiClass="org.rhq.enterprise.server.plugins.jboss.software.JBossSoftwareContentSourceAdapter">
 
@@ -35,4 +37,4 @@
 
    </contentSourceType>
 
-</plugin>
+</content-plugin>

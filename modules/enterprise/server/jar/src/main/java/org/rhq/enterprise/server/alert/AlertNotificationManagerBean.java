@@ -34,16 +34,22 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
+import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
@@ -52,6 +58,14 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
  * @author Joseph Marques
@@ -66,6 +80,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     @EJB
     private AlertTemplateManagerLocal alertTemplateManager;
     @EJB
+    private AlertManagerLocal alertManager;
+    @EJB
     private GroupAlertDefinitionManagerLocal groupAlertDefintionManager;
     @EJB
     private AuthorizationManagerLocal authorizationManager;
@@ -73,6 +89,12 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     private RoleManagerLocal roleManager;
     @EJB
     private SubjectManagerLocal subjectManager;
+    @EJB
+    private ConfigurationMetadataManagerLocal confMeMan;
+    @EJB
+    private ServerPluginsLocal serverPluginsBean;
+    @EJB
+    private ConfigurationManagerLocal configManager;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -84,7 +106,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * into AlertDefinitionManager.updateAlertDefinition() which starts a new transaction, the work will be
      * performed at the AlertTemplate layer twice.  This would result in duplicate notifications (RHQ-629) as
      * well as errors during removal (which would be attempted twice for each being removed).
-     * 
+     *
      * Must, however, return an AlertDefinition with a copy of the ids because the removeNotifications method
      * needs to compare ids to figure out what to remove from the set of notifications.
      */
@@ -393,20 +415,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return removed;
     }
 
-    public void setSnmpNotification(Subject subject, Integer alertDefinitionId, SnmpNotification snmpNotification) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> alertNotifications = alertDefinition.getAlertNotifications();
-        for (AlertNotification alertNotification : alertNotifications) {
-            if (alertNotification instanceof SnmpNotification) {
-                alertNotifications.remove(alertNotification);
-            }
-        }
-
-        alertNotifications.add(snmpNotification);
-
-        postProcessAlertDefinition(alertDefinition);
-    }
-
     public int purgeOrphanedAlertNotifications() {
         Query purgeQuery = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_ORPHANED);
         return purgeQuery.executeUpdate();
@@ -429,5 +437,135 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
                 LOG.error("Can not update alert template, invalid definition: " + definition);
             }
         }
+    }
+
+    public Configuration getAlertPropertiesConfiguration(AlertNotification notification) {
+        Configuration config = notification.getConfiguration();
+        if (config!=null)
+                config = config.deepCopy();
+
+        return config;
+    }
+
+    public ConfigurationDefinition getConfigurationDefinitionForSender(String shortName) {
+
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+
+        AlertSenderInfo senderInfo = pluginmanager.getAlertSenderInfo(shortName);
+        String pluginName = senderInfo.getPluginName();
+        PluginKey key = senderInfo.getPluginKey();
+
+        try {
+            AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) serverPluginsBean.getServerPluginDescriptor(key);
+            //ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
+            ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:" + pluginName, descriptor.getAlertConfiguration());
+
+
+            return pluginConfigurationDefinition;
+        }
+        catch (Exception e) {
+            LOG.error(e);
+            return null;
+        }
+    }
+
+
+    /**
+     * Return a list of all available AlertSenders in the system by their shortname.
+     * @return list of senders.
+     */
+    public List<String> listAllAlertSenders() {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        List<String> senders = pluginmanager.getPluginList();
+        return senders;
+    }
+
+    public AlertSenderInfo getAlertInfoForSender(String shortName) {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        AlertSenderInfo info = pluginmanager.getAlertSenderInfo(shortName);
+
+        return info;
+    }
+
+
+    /**
+     * Return the backing bean for the AlertSender with the passed shortNama
+     * @param shortName name of a sender
+     * @return an initialized BackingBean or null in case of error
+     */
+    public AlertBackingBean getBackingBeanForSender(String shortName) {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        AlertBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
+        return bean;
+
+    }
+
+    /**
+     * Add a new AlertNotification to the passed definition
+     * @param user subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @param senderName shortName of the {@link AlertSender}
+     * @param configuration Properties for this alert sender.
+     */
+    public void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
+
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
+        if (definition==null) {
+            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            return;
+        }
+
+        entityManager.persist(configuration);
+        AlertNotification notif = new AlertNotification(definition);
+        notif.setSenderName(senderName);
+        notif.setConfiguration(configuration);
+        entityManager.persist(notif);
+        definition.getAlertNotifications().add(notif);
+
+    }
+
+    /**
+     * Return notifications for a certain alertDefinitionId
+     *
+     * NOTE: this only returns notifications that have an AlertSender defined.
+     *
+     * @param user Subject of the caller
+     * @param alertDefinitionId Id of the alert definition
+     * @return list of defined notification of the passed alert definition
+     *
+     *
+     */
+    public List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId) {
+        AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
+        if (definition==null) {
+            LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
+            return new ArrayList<AlertNotification>();
+        }
+        Set<AlertNotification> notifs = definition.getAlertNotifications();
+        List<AlertNotification> result = new ArrayList<AlertNotification>();
+        for (AlertNotification notif : notifs) {
+            if (notif.getSenderName()!=null) {
+                notif.getConfiguration().getProperties().size(); // Eager load
+                result.add(notif);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
+     * @param template NotificationTemplate to apply
+     * @param def AlertDefinition  to apply the template to
+     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
+     */
+    public void applyNotificationTemplateToAlertDefinition(NotificationTemplate template, AlertDefinition def, boolean removeOldNotifications) {
+
+        if (removeOldNotifications)
+            def.getAlertNotifications().clear();
+
+        for (AlertNotification notif : template.getNotifications()) {
+            def.addAlertNotification(notif.copy(false)); // Attach a copy, as the ones in the template should not be shared
+        }
+
     }
 }

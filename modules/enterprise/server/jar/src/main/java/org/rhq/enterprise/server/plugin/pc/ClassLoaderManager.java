@@ -34,6 +34,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -50,9 +51,9 @@ public class ClassLoaderManager {
     private final File tmpDir;
 
     /**
-     * Provides a map keyed on plugin name whose values are the URLs to those plugin jars.
+     * Provides a map keyed on plugin keys whose values are the URLs to those plugin jars.
      */
-    private final Map<String, URL> pluginNamesUrls;
+    private final Map<PluginKey, URL> pluginKeysUrls;
 
     /**
      * The parent classloader for those classloaders at the top of the classloader hierarchy.
@@ -61,11 +62,10 @@ public class ClassLoaderManager {
 
     /**
      * These are the classloaders that are built for each plugin.
-     * This map is keyed on plugin name.
      * 
      * @see #obtainServerPluginClassLoader(String)
      */
-    private final Map<String, ClassLoader> serverPluginClassLoaders;
+    private final Map<PluginKey, ClassLoader> serverPluginClassLoaders;
 
     /**
      * Creates the object that will manage all classloaders for the plugins deployed in the server.
@@ -79,11 +79,11 @@ public class ClassLoaderManager {
 
         this.rootClassLoader = rootClassLoader;
         this.tmpDir = tmpDir;
-        this.serverPluginClassLoaders = new HashMap<String, ClassLoader>();
+        this.serverPluginClassLoaders = new HashMap<PluginKey, ClassLoader>();
 
-        this.pluginNamesUrls = new HashMap<String, URL>(plugins.size());
+        this.pluginKeysUrls = new HashMap<PluginKey, URL>(plugins.size());
         for (Map.Entry<URL, ? extends ServerPluginDescriptorType> entry : plugins.entrySet()) {
-            this.pluginNamesUrls.put(entry.getValue().getName(), entry.getKey());
+            loadPlugin(entry.getKey(), entry.getValue());
         }
 
         return;
@@ -103,6 +103,37 @@ public class ClassLoaderManager {
             }
         }
         this.serverPluginClassLoaders.clear();
+        return;
+    }
+
+    /**
+     * Hot-deploys a plugin into this classloader manager.
+     * 
+     * @param pluginUrl location of the plugin jar file
+     * @param descriptor the plugin descriptor
+     */
+    public synchronized void loadPlugin(URL pluginUrl, ServerPluginDescriptorType descriptor) {
+        ServerPluginType pluginType = new ServerPluginType(descriptor);
+        PluginKey pluginKey = PluginKey.createServerPluginKey(pluginType.stringify(), descriptor.getName());
+        this.pluginKeysUrls.put(pluginKey, pluginUrl);
+    }
+
+    /**
+     * Unloads the plugin identified with the current key from this classloader manager and destroys
+     * that plugin's classloader, if one existed.
+     * 
+     * @param pluginKey identifies the plugin to be unloaded
+     */
+    public synchronized void unloadPlugin(PluginKey pluginKey) {
+        this.pluginKeysUrls.remove(pluginKey);
+        ClassLoader unloadedCL = this.serverPluginClassLoaders.remove(pluginKey);
+        if (unloadedCL instanceof ServerPluginClassLoader) {
+            try {
+                ((ServerPluginClassLoader) unloadedCL).destroy();
+            } catch (Exception e) {
+                log.warn("Failed to destroy classloader [" + unloadedCL + "] for plugin [" + pluginKey + "]", e);
+            }
+        }
         return;
     }
 
@@ -133,24 +164,24 @@ public class ClassLoaderManager {
     /**
      * Returns a plugin classloader (creating it if necessary).
      * 
-     * @param pluginName the plugin whose classloader is to be created
+     * @param pluginKey the plugin whose classloader is to be created
      * @return the plugin classloader
      * @throws Exception
      */
-    public synchronized ClassLoader obtainServerPluginClassLoader(String pluginName) throws Exception {
+    public synchronized ClassLoader obtainServerPluginClassLoader(PluginKey pluginKey) throws Exception {
 
-        ClassLoader cl = this.serverPluginClassLoaders.get(pluginName);
+        ClassLoader cl = this.serverPluginClassLoaders.get(pluginKey);
 
         if (cl == null) {
-            URL pluginJarUrl = this.pluginNamesUrls.get(pluginName);
+            URL pluginJarUrl = this.pluginKeysUrls.get(pluginKey);
 
             if (log.isDebugEnabled()) {
-                log.debug("Creating classloader for plugin [" + pluginName + "] from URL [" + pluginJarUrl + ']');
+                log.debug("Creating classloader for plugin [" + pluginKey + "] from URL [" + pluginJarUrl + ']');
             }
 
             ClassLoader parentClassLoader = this.rootClassLoader;
             cl = createClassLoader(pluginJarUrl, null, parentClassLoader);
-            this.serverPluginClassLoaders.put(pluginName, cl);
+            this.serverPluginClassLoaders.put(pluginKey, cl);
         }
 
         return cl;
@@ -167,7 +198,7 @@ public class ClassLoaderManager {
     }
 
     /**
-     * Returns a shallow copy of the plugin classloaders keyed on plugin name. This method is here
+     * Returns a shallow copy of the plugin classloaders keyed on plugin key. This method is here
      * just to support a plugin container management MBean.
      * 
      * Do not use this method to obtain a plugin's classloader, instead, you want to use
@@ -175,8 +206,8 @@ public class ClassLoaderManager {
      * 
      * @return all plugin classloaders currently assigned to plugins (will never be <code>null</code>)
      */
-    public synchronized Map<String, ClassLoader> getServerPluginClassLoaders() {
-        return new HashMap<String, ClassLoader>(this.serverPluginClassLoaders);
+    public synchronized Map<PluginKey, ClassLoader> getServerPluginClassLoaders() {
+        return new HashMap<PluginKey, ClassLoader>(this.serverPluginClassLoaders);
     }
 
     private synchronized Set<ClassLoader> getUniqueServerPluginClassLoaders() {
@@ -214,6 +245,7 @@ public class ClassLoaderManager {
             }
         } else {
             // this is mainly to support tests
+            log.info("No jar URL, this should only happen in tests! If this is not a test, this is probably a bug");
             classLoader = parentClassLoader;
         }
 

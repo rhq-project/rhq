@@ -18,8 +18,38 @@
  */
 package org.rhq.enterprise.server.perspective;
 
+import java.util.List;
+
 import javax.ejb.Local;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 
 @Local
 public interface PerspectiveManagerLocal {
+    /**
+     * Return the core menu for the specified subject. Depending on their inventory and roles the
+     * core menu for one subject1 could differ from that of subject2.
+     * 
+     * Subsequent calls will return the same core menu for the same Subject. In other words, it does
+     * not change during a user session.
+     * 
+     * @param subject
+     * @return
+     */
+    List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException;
+
+    /**
+     * Returns the list of tabs that should be displayed for the specified user for the specified Resource.
+     *
+     * @param subject a user
+     * @param resource an inventoried Resource
+     * @return the list of tabs that should be displayed for the specified user for the specified Resource
+     */
+    List<Tab> getResourceTabs(Subject subject, Resource resource);
+
+    public int getUrlKey(String url);
+
+    public String getUrlViaKey(int key);
+
 }

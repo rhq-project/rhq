@@ -1,26 +1,29 @@
- /*
-  * Jopr Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * Jopr Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.plugins.jbossas.helper;
+
+import gnu.getopt.Getopt;
+import gnu.getopt.LongOpt;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -32,15 +35,11 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Properties;
 
-import gnu.getopt.Getopt;
-import gnu.getopt.LongOpt;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.util.StringPropertyReplacer;
-
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.StringPropertyReplacer;
 import org.rhq.plugins.jbossas.util.JBossConfigurationUtility;
 
 /**
@@ -96,8 +95,7 @@ public class JBossInstanceInfo {
         return this.installInfo;
     }
 
-    private void processJvmArgs(String args[])
-            throws Exception {
+    private void processJvmArgs(String args[]) throws Exception {
         // NOTE: We can't use GNU GetOpt to process the JVM options, because they are not GNU-style options.
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
@@ -107,8 +105,7 @@ public class JBossInstanceInfo {
                     continue;
                 }
                 this.classPath = args[i + 1].split(File.pathSeparator);
-            }
-            else if (arg.startsWith("-D")) {
+            } else if (arg.startsWith("-D")) {
                 addPropArgToProps(arg.substring("-D".length()), this.sysProps);
             }
         }
@@ -117,84 +114,84 @@ public class JBossInstanceInfo {
     private void processJBossArgs(String currentWorkingDir, String args[]) {
         String programName = this.sysProps.getProperty("program.name", "jboss");
         String shortOpts = "-:b:c:D:P:";
-        LongOpt longOpts[] = {
-                new LongOpt("configuration", 1, null, 'c'),
-                new LongOpt("properties", 1, null, 'P'),
-                new LongOpt("host", 1, null, 'b'),
-        };
+        LongOpt longOpts[] = { new LongOpt("configuration", 1, null, 'c'), new LongOpt("properties", 1, null, 'P'),
+            new LongOpt("host", 1, null, 'b'), };
         Getopt options = new Getopt(programName, args, shortOpts, longOpts);
         // Tell Getopt not to complain to stderr about unrecognized options...
         options.setOpterr(false);
         int c;
         while ((c = options.getopt()) != -1) {
             switch (c) {
-                case 'b': // 'b' (--host)
-                {
-                    String arg = options.getOptarg();
-                    this.sysProps.setProperty(JBossProperties.BIND_ADDRESS, arg);
+            case 'b': // 'b' (--host)
+            {
+                String arg = options.getOptarg();
+                this.sysProps.setProperty(JBossProperties.BIND_ADDRESS, arg);
+                break;
+            }
+
+            case 'c': // 'c' (--configuration)
+            {
+                String arg = options.getOptarg();
+                this.sysProps.setProperty(JBossProperties.SERVER_NAME, arg);
+                break;
+            }
+
+            case 'D': // 'D'
+            {
+                String arg = options.getOptarg();
+                String name = addPropArgToProps(arg, this.sysProps);
+                String value = this.sysProps.getProperty(name);
+                if (value.equals("")) {
+                    // unlike the JVM, org.jboss.Main interprets -Dfoo as foo="true", rather than as foo=""
+                    this.sysProps.setProperty(name, Boolean.TRUE.toString());
+                }
+                break;
+            }
+
+            case 'P': // 'P' (--properties)
+            {
+                // cwd can be null if native support is not able to determine CWD.
+                if (null == currentWorkingDir) {
+                    log.error("Could not determine CWD. Failed to parse argument to --properties option: "
+                        + options.getOptarg());
                     break;
                 }
 
-                case 'c': // 'c' (--configuration)
-                {
-                    String arg = options.getOptarg();
-                    this.sysProps.setProperty(JBossProperties.SERVER_NAME, arg);
+                String arg = options.getOptarg();
+                URL url;
+                try {
+                    File workingDir = new File(currentWorkingDir);
+                    url = JBossConfigurationUtility.makeURL(arg, workingDir);
+                } catch (Exception e) {
+                    log.error("Failed to parse argument to --properties option: " + options.getOptarg());
                     break;
                 }
-
-                case 'D': // 'D'
-                {
-                    String arg = options.getOptarg();
-                    String name = addPropArgToProps(arg, this.sysProps);
-                    String value = this.sysProps.getProperty(name);
-                    if (value.equals("")) {
-                        // unlike the JVM, org.jboss.Main interprets -Dfoo as foo="true", rather than as foo=""
-                        this.sysProps.setProperty(name, Boolean.TRUE.toString());
-                    }
+                Properties props = new Properties();
+                InputStream inputStream = null;
+                try {
+                    inputStream = new BufferedInputStream(url.openConnection().getInputStream());
+                    props.load(inputStream);
+                } catch (IOException e) {
+                    log.error("Could not read properties from file: " + arg, e);
                     break;
-                }
-
-                case 'P': // 'P' (--properties)
-                {
-                    String arg = options.getOptarg();
-                    URL url;
-                    try {
-                        File workingDir = new File(currentWorkingDir);
-                        url = JBossConfigurationUtility.makeURL(arg, workingDir);
-                    }
-                    catch (Exception e) {
-                        log.error("Failed to parse argument to --properties option: " + options.getOptarg());
-                        break;
-                    }
-                    Properties props = new Properties();
-                    InputStream inputStream = null;
-                    try {
-                        inputStream = new BufferedInputStream(url.openConnection().getInputStream());
-                        props.load(inputStream);
-                    }
-                    catch (IOException e) {
-                        log.error("Could not read properties from file: " + arg, e);
-                        break;
-                    }
-                    finally {
-                        if (inputStream != null) {
-                            try {
-                                inputStream.close();
-                            }
-                            catch (IOException e) {
-                                log.error("Failed to close properties file: " + arg, e);
-                                // not fatal - continue processing...
-                            }
+                } finally {
+                    if (inputStream != null) {
+                        try {
+                            inputStream.close();
+                        } catch (IOException e) {
+                            log.error("Failed to close properties file: " + arg, e);
+                            // not fatal - continue processing...
                         }
                     }
-                    for (Object nameObj : props.keySet()) {
-                        String name = (String)nameObj;
-                        String value = props.getProperty(name);
-                        String newValue = StringPropertyReplacer.replaceProperties(value, this.sysProps);
-                        this.sysProps.setProperty(name, newValue);
-                    }
-                    break;
                 }
+                for (Object nameObj : props.keySet()) {
+                    String name = (String) nameObj;
+                    String value = props.getProperty(name);
+                    String newValue = StringPropertyReplacer.replaceProperties(value, this.sysProps);
+                    this.sysProps.setProperty(name, newValue);
+                }
+                break;
+            }
             }
         }
     }
@@ -206,8 +203,7 @@ public class JBossInstanceInfo {
         if (i == -1) {
             name = arg;
             value = "";
-        }
-        else {
+        } else {
             name = arg.substring(0, i);
             value = arg.substring(i + 1, arg.length());
         }
@@ -223,19 +219,19 @@ public class JBossInstanceInfo {
      */
     private File getHomeDir() throws Exception {
 
-       File runJar=null;
-       File binDir=null;
-       File homeDir=null;
+        File runJar = null;
+        File binDir = null;
+        File homeDir = null;
         // method 1: should work 99% of the time.
-       if (this.processInfo != null && this.processInfo.getExecutable()!=null &&
-                this.processInfo.getExecutable().getCwd() != null) {
-          homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
-          binDir = new File(homeDir, "bin");
-          runJar = new File(binDir, "run.jar");
-          if (runJar.exists()) {
-            return homeDir;
-          }
-       }
+        if (this.processInfo != null && this.processInfo.getExecutable() != null
+            && this.processInfo.getExecutable().getCwd() != null) {
+            homeDir = new File(this.processInfo.getExecutable().getCwd()).getParentFile();
+            binDir = new File(homeDir, "bin");
+            runJar = new File(binDir, "run.jar");
+            if (runJar.exists()) {
+                return homeDir;
+            }
+        }
         // method 2: more expensive, but also more reliable.
         for (String pathElement : this.classPath) {
             if (pathElement.endsWith("run.jar")) {
@@ -264,8 +260,7 @@ public class JBossInstanceInfo {
         File homeDir;
         if (this.sysProps.containsKey(JBossProperties.HOME_DIR)) {
             homeDir = new File(this.sysProps.getProperty(JBossProperties.HOME_DIR));
-        }
-        else {
+        } else {
             homeDir = getHomeDir();
             this.sysProps.setProperty(JBossProperties.HOME_DIR, homeDir.toString());
         }
@@ -284,7 +279,8 @@ public class JBossInstanceInfo {
         }
         this.installInfo = new JBossInstallationInfo(homeDir);
         if (!this.sysProps.containsKey(JBossProperties.SERVER_NAME)) {
-            this.sysProps.setProperty(JBossProperties.SERVER_NAME, this.installInfo.getProductType().DEFAULT_CONFIG_NAME);
+            this.sysProps.setProperty(JBossProperties.SERVER_NAME,
+                this.installInfo.getProductType().DEFAULT_CONFIG_NAME);
         }
         String serverName = this.sysProps.getProperty(JBossProperties.SERVER_NAME);
         if (!this.sysProps.containsKey(JBossProperties.SERVER_HOME_DIR)) {
@@ -304,8 +300,7 @@ public class JBossInstanceInfo {
         String jgroupsBindAddr = this.sysProps.getProperty(JBossProperties.JGROUPS_BIND_ADDR);
         if (jgroupsBindAddress == null) {
             jgroupsBindAddress = (jgroupsBindAddr != null) ? jgroupsBindAddr : remoteAddress;
-            this.sysProps.setProperty(JBossProperties.JGROUPS_BIND_ADDRESS,
-                    jgroupsBindAddress);
+            this.sysProps.setProperty(JBossProperties.JGROUPS_BIND_ADDRESS, jgroupsBindAddress);
         }
         if (jgroupsBindAddr == null) {
             this.sysProps.setProperty(JBossProperties.JGROUPS_BIND_ADDR, jgroupsBindAddress);
@@ -341,8 +336,7 @@ public class JBossInstanceInfo {
         try {
             if (address == null || address.equals(ANY_ADDRESS))
                 return InetAddress.getLocalHost().getHostName();
-        }
-        catch (UnknownHostException ignored) {
+        } catch (UnknownHostException ignored) {
         }
         return address;
     }

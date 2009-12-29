@@ -28,6 +28,13 @@ import static org.testng.Assert.*;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.testng.annotations.Test;
+import org.rhq.core.util.MessageDigestGenerator;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
 public class RawConfigurationTest {
 
@@ -77,9 +84,8 @@ public class RawConfigurationTest {
 
         assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
 
-        byte[] contents = rawConfig.getContents();
-        contents[4] = 15;
-        rawConfig.setContents(contents);
+        byte[] newContents = new byte[] {1, 3, 5, 7, 11, 13, 17, 19, 23};
+        rawConfig.setContents(newContents);
 
         actualSha256 = rawConfig.getSha256();
 
@@ -212,33 +218,49 @@ public class RawConfigurationTest {
     }
 
     @Test
-    public void deepCopyShouldCopyPath() {
+    public void deepCopyShouldCopyPathAndIdWhenIdIncluded() {
         RawConfiguration original = new RawConfiguration();
         original.setPath("/tmp/foo");
+        original.setId(-1);
 
-        RawConfiguration copy = original.deepCopy();
+        RawConfiguration copy = original.deepCopy(true);
 
+        assertEquals(copy.getId(), copy.getId(), "Failed to copy the id property.");
         assertEquals(copy.getPath(), original.getPath(), "Failed to copy the path property.");
     }
 
     @Test
-    public void deepCopyShouldCopyContents() {
+    public void deepCopyShouldCopyPathAndIdWhenIdNotIncluded() {
+        RawConfiguration original = new RawConfiguration();
+        original.setPath("/tmp/foo");
+        original.setId(-1);
+
+        RawConfiguration copy = original.deepCopy(false);
+
+        assertFalse(copy.getId() == original.getId(), "The original id property should not be copied.");
+        assertEquals(copy.getPath(), original.getPath(), "Failed to copy the path property.");
+    }
+
+    @Test
+    public void deepCopyShouldCopyContentsWhenCopyingId() {
         RawConfiguration original = new RawConfiguration();
         original.setContents(new byte[] {1, 2, 3, 4, 5});
 
-        RawConfiguration copy = original.deepCopy();
+        RawConfiguration copy = original.deepCopy(true);
 
         assertFalse(original.getContents() == copy.getContents(), "The values in the contents array should be copied, not the reference to the original object.");
         assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
     }
 
     @Test
-    public void deepCopyShouldNotCopyIdProperty() {
+    public void deepCopyShouldCopyContentsWhenNotCopyingId() {
         RawConfiguration original = new RawConfiguration();
-        original.setId(1);
+        original.setContents(new byte[] {1, 2, 3, 4, 5});
 
-        RawConfiguration copy = original.deepCopy();
+        RawConfiguration copy = original.deepCopy(false);
 
-        assertFalse(original.getId() == copy.getId(), "The id property should not be copied.");
+        assertFalse(original.getContents() == copy.getContents(), "The values in the contents array should be copied, not the reference to the original object.");
+        assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
     }
+
 }

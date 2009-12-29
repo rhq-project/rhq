@@ -18,39 +18,14 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.sql.DataSource;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -72,6 +47,28 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.sql.DataSource;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -125,7 +122,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
      */
     @SuppressWarnings("unchecked")
     public List<Plugin> getPlugins() {
-        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_AGENT);
+        Query q = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
         return q.getResultList();
     }
 
@@ -197,50 +194,24 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         if (plugin.getId() == 0) {
             entityManager.persist(plugin);
         } else {
-            // agent plugins don't support these configs, but if/when they do in the future, this will support it
-            boolean needFlush = false;
-            Configuration config = plugin.getPluginConfiguration();
-            if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setPluginConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
-            }
-            config = plugin.getScheduledJobsConfiguration();
-            if (config != null) {
-                if (config.getId() > 0) {
-                    config = entityManager.getReference(Configuration.class, config.getId());
-                    plugin.setScheduledJobsConfiguration(config);
-                } else {
-                    entityManager.persist(config);
-                    needFlush = true;
-                }
-            }
-            if (needFlush) {
-                entityManager.flush(); // must be flushed to the DB so the JPQL update below works
-            }
-
             // update all the fields except content
-            Query q = entityManager.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", plugin.getId());
-            q.setParameter("name", plugin.getName());
-            q.setParameter("path", plugin.getPath());
-            q.setParameter("displayName", plugin.getDisplayName());
-            q.setParameter("enabled", plugin.isEnabled());
-            q.setParameter("status", plugin.getStatus());
-            q.setParameter("md5", plugin.getMD5());
-            q.setParameter("version", plugin.getVersion());
-            q.setParameter("ampsVersion", plugin.getAmpsVersion());
-            q.setParameter("deployment", plugin.getDeployment());
-            q.setParameter("pluginConfiguration", plugin.getPluginConfiguration());
-            q.setParameter("scheduledJobsConfiguration", plugin.getScheduledJobsConfiguration());
-            q.setParameter("description", plugin.getDescription());
-            q.setParameter("help", plugin.getHelp());
-            q.setParameter("mtime", plugin.getMtime());
-            if (q.executeUpdate() != 1) {
+            Plugin pluginEntity = entityManager.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(plugin.getName());
+            pluginEntity.setPath(plugin.getPath());
+            pluginEntity.setDisplayName(plugin.getDisplayName());
+            pluginEntity.setEnabled(plugin.isEnabled());
+            pluginEntity.setStatus(plugin.getStatus());
+            pluginEntity.setMd5(plugin.getMD5());
+            pluginEntity.setVersion(plugin.getVersion());
+            pluginEntity.setAmpsVersion(plugin.getAmpsVersion());
+            pluginEntity.setDeployment(plugin.getDeployment());
+            pluginEntity.setDescription(plugin.getDescription());
+            pluginEntity.setHelp(plugin.getHelp());
+            pluginEntity.setMtime(plugin.getMtime());
+
+            try {
+                entityManager.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
                 throw new Exception("Failed to update a plugin that matches [" + plugin + "]");
             }
         }

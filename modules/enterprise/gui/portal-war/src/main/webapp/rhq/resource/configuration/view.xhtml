@@ -1,67 +1,188 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component">
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:s="http://jboss.com/products/seam/taglib">
+
 
 THIS TEXT WILL BE REMOVED.
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   THIS TEXT WILL BE REMOVED AS WELL.
+    THIS TEXT WILL BE REMOVED AS WELL.
 
-   <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - View Configuration"/>
+    <ui:param name="pageTitle"
+              value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - View Configuration"/>
 
-   <ui:param name="selectedTabName" value="Configuration.Current"/>
+    <ui:param name="selectedTabName" value="Configuration.Current"/>
 
-   <ui:define name="content">
+    <ui:define name="content">
+        <h:panelGroup layout="block" styleClass="InfoBlock"
+                      rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+            <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+        </h:panelGroup>
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
-         <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-      </h:panelGroup>
+        <c:choose>
+            <c:when test="${ExistingResourceConfigurationViewUIBean.rawSupported}">
+                <script>
+                    window.onbeforeunload = confirmExit;
 
-      <h:outputText value="You do not have permission to edit this resource's configuration" rendered="#{!ResourceUIBean.permissions.configure}"/>
+                    function confirmExit() {
+                    }
+                </script>
 
-      <h:form id="viewResourceConfigurationForm">
+                <h:outputText value="#{messages.youareviewingraw}"/>
+                <h:outputText value=" #{messages.nopermissionedit}"
+                              rendered="#{!ResourceUIBean.permissions.configure}"/>
+                <h:form id="viewResourceConfigurationFormRaw">
+                    <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+                    <h:panelGrid columns="2"
+                                 styleClass="buttons-table"
+                                 columnClasses="button-cell"
+                                 rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
-         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-         </h:panelGrid>
-         
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
-                     accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
-                     readOnly="true"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
-                     prevalidate="true"/>
+                        <h:commandButton value="#{messages.editraw}"
+                                         action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                                         title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                         rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationUIBean.updateInProgress}"/>
+                    </h:panelGrid>
+                </h:form>                    
 
-         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell"
-                      rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-            <h:commandButton value="EDIT" action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed" 
-                             rendered="${ResourceUIBean.permissions.configure}" />
-         </h:panelGrid>
+                    <table class="summary-props-table" style="">
+                        <tr>
+                            <td bgcolor="#a4b2b9" width="25%" valign="top">Files
+                                <h:panelGroup id="changedFiles" layout="vertical">
+                                    <h:form>
+                                        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+                                        <ui:repeat value="#{ExistingResourceConfigurationViewUIBean.paths}" var="path">
+                                            <div>
+                                                <h:commandLink
+                                                        action="#{ExistingResourceConfigurationViewUIBean.select(path)}"
+                                                        value="#{path}"
+                                                        rendered="#{path != ExistingResourceConfigurationViewUIBean.current.path}">
+                                                    <f:param name="currentPath" value="#{path}"/>
+                                                </h:commandLink>
+                                                <h:outputText value="#{path}"
+                                                              rendered="#{path == ExistingResourceConfigurationViewUIBean.current.path}"/>
+                                            </div>
+                                        </ui:repeat>
+                                    </h:form>
+                                </h:panelGroup>
+                                <div>______________________________________</div>
+                                <div>* File contains uncommitted changes.</div>
+                            </td>
+                            <td>
+                                <div>
+                                    Current File:
+                                    <h:outputText value="#{ExistingResourceConfigurationViewUIBean.current.path}"
+                                                  styleClass="outhello"/>
+                                </div>
+                                <h:outputLink value="view-raw-full.xhtml" action="navigateToUpload">
+                                    <img src="/images/viewfullscreen.png"/>
+                                    <h:outputText value=" Full Screen "/>
+                                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                                </h:outputLink>
+                                <s:link action="#{ExistingResourceConfigurationViewUIBean.download}">
+                                    <img src="/images/download.png"/>
+                                    <h:outputText value=" Download "/>
+                                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                                </s:link>
+                                <div>
+                                    <pre><h:outputText
+                                            value="#{ExistingResourceConfigurationViewUIBean.currentContents}"/></pre>
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
+            </c:when>
+            <c:when test="${ExistingResourceConfigurationViewUIBean.structuredSupported}">
+                <h:outputText value="#{messages.youareviewingstructured}"/>
+                <h:outputText value=" #{messages.nopermissionedit}"
+                              rendered="#{!ResourceUIBean.permissions.configure}"/>
+                <h:form id="viewResourceConfigurationFormStructured">
+                    <!--  TODO remove the id version -->
+                    <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-      </h:form>
+                    <h:panelGrid columns="2"
+                                 styleClass="buttons-table"
+                                 columnClasses="button-cell"
+                                 rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
-         <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-      </h:panelGroup>
+                        <h:commandButton value="#{messages.editstructured}"
+                                         action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+                                         title="Edit this Configuration"
+                                         styleClass="buttonmed"
+                                         rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                    </h:panelGrid>
 
-   </ui:define>
+                    <onc:config
+                            configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+                            configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                            accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
+                            readOnly="true"
+                            nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
+                            nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
+                            prevalidate="true"/>
+
+                </h:form>
+            </c:when>
+            <c:when test="${ExistingResourceConfigurationViewUIBean.structuredAndRawSupported}">
+                <h:outputText value="#{messages.youareviewingstructured}"/>
+                <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}">
+                    <h:outputText value=" #{messages.switch2}"/>
+                    <h:outputLink value="view-raw.xhtml">
+                        <f:param name="id" value="#{ResourceUIBean.id}"/>
+                        <h:outputText value=" #{messages.raw}"/>
+                    </h:outputLink>
+                </h:panelGroup>
+                <h:outputText value=" #{messages.nopermissionedit}"
+                              rendered="#{!ResourceUIBean.permissions.configure}"/>
+                <h:form id="viewResourceConfigurationFormStructuredAndRaw">
+                    <!--  TODO remove the id version -->
+                    <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+                    <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+                                 rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+
+                        <h:commandButton value="#{messages.editstructured}"
+                                         action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+                                         title="Edit this Configuration" styleClass="buttonmed"
+                                         rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                        <h:commandButton value="#{messages.editraw}"
+                                         action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                                         title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                         rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                    </h:panelGrid>
+
+                    <onc:config
+                            configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+                            configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                            accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
+                            readOnly="true"
+                            nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
+                            nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
+                            prevalidate="true"/>
+
+                </h:form>
+            </c:when>
+        </c:choose>
+
+        <h:panelGroup layout="block" styleClass="InfoBlock"
+                      rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
+            <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+        </h:panelGroup>
+
+
+    </ui:define>
 
 </ui:composition>
 

@@ -39,8 +39,11 @@
       </f:facet>
 
       <h:panelGrid columns="1" width="100%">
-      <rich:tabPanel>
-      <rich:tab label="Agent Plugins">
+      <rich:tabPanel switchType="ajax" selectedTab="#{InstalledPluginsSessionUIBean.selectedTab}">
+      
+      <!-- ========== AGENT PLUGINS TAB ========== -->
+
+      <rich:tab name="AGENT" label="Agent Plugins">
 
          <rich:dataTable id="agentPluginsDataTable"
                          value="#{InstalledPluginsUIBean.installedAgentPlugins}"
@@ -69,22 +72,20 @@
                <h:outputText value="#{agentPlugin.id}"/>
             </rich:column>
 
-
-            <rich:column>
+            <rich:column sortBy="#{agentPlugin.displayName}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
                <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
                   <f:param name="plugin" value="#{agentPlugin.name}"/>
-                  <f:param name="pluginType" value="AGENT"/>
+                  <f:param name="deployment" value="AGENT"/>
                   <h:outputText value="#{agentPlugin.displayName}"/>
                </h:outputLink>
 
             </rich:column>
 
-
-            <rich:column>
+            <rich:column sortBy="#{agentPlugin.description}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Description"/>
                </f:facet>
@@ -92,7 +93,7 @@
                <h:outputText value="#{agentPlugin.description}"/>
             </rich:column>
 
-            <rich:column>
+            <rich:column sortBy="#{agentPlugin.mtime}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Last Update"/>
                </f:facet>
@@ -102,13 +103,13 @@
                </h:outputText>
             </rich:column>
 
-
             <rich:column>
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Active"/>
+                  <h:outputText styleClass="headerText" value="Enabled"/>
                </f:facet>
 
-               <h:outputText value="#{agentPlugin.enabled}"/>
+               <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{agentPlugin.enabled}"/>
+               <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{!agentPlugin.enabled}"/>
             </rich:column>
 
             <f:facet name="footer">
@@ -125,13 +126,15 @@
 
       </rich:tab>
 
-      <rich:tab label="Server Plugins">
+      <!-- ========== SERVER PLUGINS TAB ========== -->
+
+      <rich:tab name="SERVER" label="Server Plugins">
 
          <rich:dataTable id="serverPluginsDataTable"
                          value="#{InstalledPluginsUIBean.installedServerPlugins}"
                          var="serverPlugin"
                          width="100%"
-                         columnsWidth="3%, 20%, 52%, 15%, 10%"
+                         columnsWidth="#{InstalledPluginsSessionUIBean.showAllServerPlugins ? '3%, 20%, 52%, 15%, 5%, 5%' : '3%, 20%, 52%, 15%, 10%'}"
                          headerClass="tableRowHeader"
                          footerClass="on-pager-footer"
                          onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -154,22 +157,22 @@
                <h:outputText value="#{serverPlugin.id}"/>
             </rich:column>
 
-
-            <rich:column>
+            <rich:column sortBy="#{serverPlugin.displayName}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml">
+               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml" rendered="#{serverPlugin.status eq 'INSTALLED'}">
                   <f:param name="plugin" value="#{serverPlugin.name}"/>
-                  <f:param name="pluginType" value="SERVER"/>
+                  <f:param name="deployment" value="SERVER"/>
+                  <f:param name="pluginType" value="#{serverPlugin.type}"/>
                   <h:outputText value="#{serverPlugin.displayName}"/>
                </h:outputLink>
+               <h:outputText value="#{serverPlugin.displayName}" rendered="#{serverPlugin.status ne 'INSTALLED'}"/>
 
             </rich:column>
 
-
-            <rich:column>
+            <rich:column sortBy="#{serverPlugin.description}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Description"/>
                </f:facet>
@@ -177,7 +180,7 @@
                <h:outputText value="#{serverPlugin.description}"/>
             </rich:column>
 
-            <rich:column>
+            <rich:column sortBy="#{serverPlugin.mtime}">
                <f:facet name="header">
                   <h:outputText styleClass="headerText" value="Last Update"/>
                </f:facet>
@@ -188,20 +191,27 @@
             </rich:column>
 
 
-            <rich:column>
+            <rich:column sortBy="#{serverPlugin.enabled}">
                <f:facet name="header">
-                  <h:outputText styleClass="headerText" value="Active"/>
+                  <h:outputText styleClass="headerText" value="Enabled"/>
                </f:facet>
 
-               <h:outputText value="#{serverPlugin.enabled}"/>
+               <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{serverPlugin.enabled}"/>
+               <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{!serverPlugin.enabled}"/>
+            </rich:column>
+
+            <rich:column  sortBy="#{serverPlugin.status}" rendered="#{InstalledPluginsSessionUIBean.showAllServerPlugins}">
+               <f:facet name="header">
+                  <h:outputText styleClass="headerText" value="Deployed"/>
+               </f:facet>
+
+               <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{serverPlugin.status eq 'INSTALLED' }"/>
+               <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{serverPlugin.status ne 'INSTALLED' }"/>
             </rich:column>
 
             <f:facet name="footer">
                <rich:columnGroup>
-                  <rich:column colspan="5" width="100%">
-                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
-                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
-                     </h:commandButton>
+                  <rich:column colspan="#{InstalledPluginsSessionUIBean.showAllServerPlugins ? 6 : 5}" width="100%">
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableServerPlugins}"
                                               value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
@@ -211,6 +221,26 @@
                      <onc:selectCommandButton action="#{InstalledPluginsUIBean.undeployServerPlugins}"
                                               value="UNDEPLOY" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
                      </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.purgeServerPlugins}"
+                                              rendered="#{InstalledPluginsSessionUIBean.showAllServerPlugins}"
+                                              value="PURGE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                  </rich:column>
+                  <rich:column breakBefore="true" colspan="#{InstalledPluginsSessionUIBean.showAllServerPlugins ? 6 : 5}" width="100%">
+                     <h:commandButton action="#{InstalledPluginsUIBean.scan}"
+                                      value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsUIBean.restartMasterPluginContainer}"
+                                      value="RESTART MASTER PLUGIN CONTAINER" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.showUndeployedServerPlugins}"
+                                      rendered="#{!InstalledPluginsSessionUIBean.showAllServerPlugins}"
+                                      value="SHOW UNDEPLOYED" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
+                     <h:commandButton action="#{InstalledPluginsSessionUIBean.hideUndeployedServerPlugins}"
+                                      rendered="#{InstalledPluginsSessionUIBean.showAllServerPlugins}"
+                                      value="HIDE UNDEPLOYED" styleClass="on-pager-button buttonsmall">
+                     </h:commandButton>
                   </rich:column>
                </rich:columnGroup>
             </f:facet>

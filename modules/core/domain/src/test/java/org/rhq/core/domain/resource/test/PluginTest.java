@@ -73,20 +73,16 @@ public class PluginTest extends AbstractEJB3Test {
             plugin.setHelp(null);
             plugin.setContent(content);
 
-            Query q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+            Query q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME);
             q.setParameter("name", plugin.getName());
-            q.setParameter("type", plugin.getDeployment());
             assert q.getResultList().size() == 0; // not in the db yet
 
             em.persist(plugin);
             id = plugin.getId();
             assert id > 0;
-            assert plugin.getPluginConfiguration() == null : "there was no config that should have been here";
-            assert plugin.getScheduledJobsConfiguration() == null : "there was no config that should have been here";
 
-            q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME_AND_TYPE);
+            q = em.createNamedQuery(Plugin.QUERY_GET_STATUS_BY_NAME);
             q.setParameter("name", plugin.getName());
-            q.setParameter("type", plugin.getDeployment());
             assert ((PluginStatusType) q.getSingleResult()) == PluginStatusType.INSTALLED;
 
             plugin = em.find(Plugin.class, id);
@@ -100,9 +96,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
-            assert plugin.getDeployment() == PluginDeploymentType.AGENT; // default is agent
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
+            assert plugin.getDeployment() == PluginDeploymentType.AGENT;
             assert plugin.getHelp() == null;
             assert new String(plugin.getContent()).equals(new String(content));
 
@@ -116,38 +110,34 @@ public class PluginTest extends AbstractEJB3Test {
             String ampsVersion = "2.1";
             String description = "description-UPDATED";
             String help = "help-UPDATED";
-            PluginDeploymentType deployment = PluginDeploymentType.SERVER;
-            Configuration pluginConfig = new Configuration();
-            Configuration jobsConfig = new Configuration();
-            pluginConfig.put(new PropertySimple("first", "last"));
-            jobsConfig.put(new PropertySimple("aaa", "bbb"));
+            PluginDeploymentType deployment = PluginDeploymentType.AGENT;
 
             em.close();
             getTransactionManager().commit(); // we will be doing an update - needs to be in own tx
             getTransactionManager().begin();
             em = getEntityManager();
 
-            em.persist(pluginConfig);
-            em.persist(jobsConfig);
             em.flush(); // gotta get those two persists to flush to the DB
 
-            q = em.createNamedQuery(Plugin.UPDATE_ALL_BUT_CONTENT);
-            q.setParameter("id", id); // same as the one we just persisted
-            q.setParameter("name", name);
-            q.setParameter("path", path);
-            q.setParameter("displayName", displayName);
-            q.setParameter("enabled", enabled);
-            q.setParameter("status", status);
-            q.setParameter("md5", md5);
-            q.setParameter("version", version);
-            q.setParameter("ampsVersion", ampsVersion);
-            q.setParameter("deployment", deployment);
-            q.setParameter("pluginConfiguration", pluginConfig);
-            q.setParameter("scheduledJobsConfiguration", jobsConfig);
-            q.setParameter("description", description);
-            q.setParameter("help", help);
-            q.setParameter("mtime", System.currentTimeMillis());
-            assert q.executeUpdate() == 1 : "Failed to update the plugin";
+            Plugin pluginEntity = em.getReference(Plugin.class, plugin.getId());
+            pluginEntity.setName(name);
+            pluginEntity.setPath(path);
+            pluginEntity.setDisplayName(displayName);
+            pluginEntity.setEnabled(enabled);
+            pluginEntity.setStatus(status);
+            pluginEntity.setMd5(md5);
+            pluginEntity.setVersion(version);
+            pluginEntity.setAmpsVersion(ampsVersion);
+            pluginEntity.setDeployment(deployment);
+            pluginEntity.setDescription(description);
+            pluginEntity.setHelp(help);
+            pluginEntity.setMtime(System.currentTimeMillis());
+
+            try {
+                em.flush(); // make sure we push this out to the DB now
+            } catch (Exception e) {
+                throw new Exception("Failed to update a plugin that matches [" + plugin + "]", e);
+            }
 
             em.close();
             getTransactionManager().commit(); // must commit now
@@ -163,11 +153,9 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.isEnabled() == enabled;
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion().equals(version);
-            q.setParameter("ampsVersion", ampsVersion);
+            assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
-            assert plugin.getDeployment() == PluginDeploymentType.SERVER;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
+            assert plugin.getDeployment() == PluginDeploymentType.AGENT;
             assert plugin.getHelp().equals(help);
             // and what we really want to test - ensure the content remained intact after the update
             assert new String(plugin.getContent()).equals(new String(content));
@@ -177,9 +165,8 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
-            q.setParameter("type", plugin.getDeployment());
             Plugin doomed = (Plugin) q.getSingleResult();
             doomed = em.getReference(Plugin.class, doomed.getId());
             em.remove(doomed);
@@ -234,9 +221,7 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getMD5().equals(md5);
             assert plugin.getVersion() == null;
             assert plugin.getDescription() == null;
-            assert plugin.getDeployment() == PluginDeploymentType.AGENT; // default is agent
-            assert plugin.getPluginConfiguration() == null;
-            assert plugin.getScheduledJobsConfiguration() == null;
+            assert plugin.getDeployment() == PluginDeploymentType.AGENT;
             assert plugin.getHelp() == null;
             assert plugin.getContent() == null;
 
@@ -259,6 +244,9 @@ public class PluginTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
+            Query query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
+            int originalNumberOfPlugins = query.getResultList().size();
+
             String name = "PluginTest-testPersist";
             String path = "/test/Persist";
             String displayName = "Plugin Test - testPersist";
@@ -268,7 +256,7 @@ public class PluginTest extends AbstractEJB3Test {
             String help = "the test help string is here";
             byte[] content = "this is the test content".getBytes();
             String md5 = MessageDigestGenerator.getDigestString(new String(content));
-            PluginDeploymentType deployment = PluginDeploymentType.SERVER;
+            PluginDeploymentType deployment = PluginDeploymentType.AGENT;
             String ampsVersion = "1.2";
 
             Configuration pluginConfig = new Configuration();
@@ -286,8 +274,6 @@ public class PluginTest extends AbstractEJB3Test {
             plugin.setHelp(help);
             plugin.setContent(content);
             plugin.setDeployment(deployment);
-            plugin.setPluginConfiguration(pluginConfig);
-            plugin.setScheduledJobsConfiguration(jobsConfig);
 
             em.persist(plugin);
             assert plugin.getId() > 0;
@@ -304,13 +290,11 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert new String(plugin.getContent()).equals(new String(content));
 
             // test our queries that purposefully do not load in the content blob
-            Query query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
             plugin = (Plugin) query.getSingleResult();
             assert plugin != null;
@@ -324,14 +308,11 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
-            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS);
             query.setParameter("ids", Arrays.asList(Integer.valueOf(plugin.getId())));
-            query.setParameter("type", plugin.getDeployment());
             plugin = (Plugin) query.getSingleResult();
             assert plugin != null;
             assert plugin.getId() > 0;
@@ -344,12 +325,10 @@ public class PluginTest extends AbstractEJB3Test {
             assert plugin.getAmpsVersion().equals(ampsVersion);
             assert plugin.getDescription().equals(description);
             assert plugin.getDeployment() == deployment;
-            assert plugin.getPluginConfiguration().equals(pluginConfig);
-            assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
             assert plugin.getHelp().equals(help);
             assert plugin.getContent() == null;
 
-            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_SERVER);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
             List<Plugin> all = query.getResultList();
             boolean got_it = false;
             for (Plugin p : all) {
@@ -365,8 +344,6 @@ public class PluginTest extends AbstractEJB3Test {
                     assert plugin.getAmpsVersion().equals(ampsVersion);
                     assert p.getDescription().equals(description);
                     assert plugin.getDeployment() == deployment;
-                    assert plugin.getPluginConfiguration().equals(pluginConfig);
-                    assert plugin.getScheduledJobsConfiguration().equals(jobsConfig);
                     assert p.getHelp().equals(help);
                     assert p.getContent() == null;
                     break;
@@ -376,22 +353,21 @@ public class PluginTest extends AbstractEJB3Test {
 
             // mark a plugin deleted - all of our queries should then never see it
             plugin.setStatus(PluginStatusType.DELETED);
-            em.merge(plugin);
+            plugin = em.merge(plugin);
 
             query = em.createNamedQuery(Plugin.QUERY_FIND_BY_NAME);
             query.setParameter("name", name);
             List<?> results = query.getResultList();
             assert results.size() == 0;
 
-            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS_AND_TYPE);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_BY_IDS);
             query.setParameter("ids", Arrays.asList(Integer.valueOf(plugin.getId())));
-            query.setParameter("type", plugin.getDeployment());
             results = query.getResultList();
             assert results.size() == 0;
 
-            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_SERVER);
+            query = em.createNamedQuery(Plugin.QUERY_FIND_ALL_INSTALLED);
             results = query.getResultList();
-            assert results.size() == 0;
+            assert results.size() == originalNumberOfPlugins;
 
         } finally {
             getTransactionManager().rollback();
@@ -497,9 +473,8 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
-            q.setParameter("type", plugin.getDeployment());
             Plugin doomed = (Plugin) q.getSingleResult();
             doomed = em.getReference(Plugin.class, doomed.getId());
             em.remove(doomed);
@@ -612,9 +587,8 @@ public class PluginTest extends AbstractEJB3Test {
             getTransactionManager().commit();
             getTransactionManager().begin();
             em = getEntityManager();
-            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME_AND_TYPE);
+            Query q = em.createNamedQuery(Plugin.QUERY_FIND_ANY_BY_NAME);
             q.setParameter("name", plugin.getName());
-            q.setParameter("type", plugin.getDeployment());
             Plugin doomed = (Plugin) q.getSingleResult();
             doomed = em.getReference(Plugin.class, doomed.getId());
             em.remove(doomed);

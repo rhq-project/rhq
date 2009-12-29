@@ -613,81 +613,149 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
     private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
         int[] measurementDefinitionIds, long collectionInterval, boolean updateExistingSchedules) {
-        modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, measurementDefinitionIds,
-            collectionInterval > 0, collectionInterval, updateExistingSchedules);
-    }
-
-    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
-        int[] measurementDefinitionIds, boolean enableDisable, long collectionInterval, boolean updateExistingSchedules) {
 
         if (measurementDefinitionIds == null || measurementDefinitionIds.length == 0) {
             log.debug("update metric template: no definitions supplied (interval = " + collectionInterval);
             return;
         }
 
-        List<MeasurementDefinition> measurementDefinitions = getDefinitionsByIds(measurementDefinitionIds);
-        for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
-            measurementDefinition.setDefaultOn(enableDisable);
-            if (collectionInterval > 0) {
-                measurementDefinition.setDefaultInterval(collectionInterval);
-            }
+        boolean enableDisable = (collectionInterval > 0);
+
+        // batch the modifications to prevent the ORA error about IN clauses containing more than 1000 items
+        for (int batchIndex = 0; (batchIndex < measurementDefinitionIds.length); batchIndex += 1000) {
+            int[] batchIdArray = ArrayUtils.copyOfRange(measurementDefinitionIds, batchIndex, batchIndex + 1000);
+
+            modifyDefaultCollectionIntervalForMeasurementDefinitions(subject, batchIdArray, enableDisable,
+                collectionInterval, updateExistingSchedules);
         }
+    }
 
-        Map<Integer, ResourceMeasurementScheduleRequest> reqMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
-        if (updateExistingSchedules) {
-            for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
-                // check if schedules need to be updated as well
+    /** 
+     * @param measurementDefinitionIds 1 <= length <= 1000.
+     */
+    @SuppressWarnings("unchecked")
+    private void modifyDefaultCollectionIntervalForMeasurementDefinitions(Subject subject,
+        int[] measurementDefinitionIds, boolean enableDisable, long collectionInterval, boolean updateExistingSchedules) {
 
-                List<MeasurementSchedule> schedules = measurementDefinition.getSchedules();
-                for (MeasurementSchedule sched : schedules) {
-                    sched.setEnabled(enableDisable);
-                    if (collectionInterval > 0) {
-                        sched.setInterval(collectionInterval);
-                    }
+        // this method has been rewritten to ensure that the Hibernate cache is not utilized in an
+        // extensive way, regardless of the number of measurementDefinitionIds being processed. Future
+        // enhancements must keep this in mind and avoid using attached objects.
 
-                    // Create update requests to feed to the agents
-                    int resourceId = sched.getResource().getId();
-                    if (!reqMap.containsKey(resourceId)) {
-                        ResourceMeasurementScheduleRequest req = new ResourceMeasurementScheduleRequest(resourceId);
-                        reqMap.put(resourceId, req);
-                    }
+        // update all of the measurement definitions via native query to avoid Hibernate caching
+        Connection conn = null;
+        PreparedStatement defUpdateStmt = null;
+        PreparedStatement schedUpdateStmt = null;
+        String queryString = null;
+        int i;
+        try {
+            conn = dataSource.getConnection();
+
+            // update the defaults on the measurement definitions
+            queryString = (collectionInterval > 0L) ? MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULTS_BY_IDS
+                : MeasurementDefinition.QUERY_NATIVE_UPDATE_DEFAULT_ON_BY_IDS;
+
+            String transformedQuery = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@DEFINITION_IDS@@",
+                measurementDefinitionIds.length);
+            defUpdateStmt = conn.prepareStatement(transformedQuery);
+            i = 1;
+            defUpdateStmt.setBoolean(i++, enableDisable);
+            if (collectionInterval > 0L) {
+                defUpdateStmt.setLong(i++, collectionInterval);
+            }
+            JDBCUtil.bindNTimes(defUpdateStmt, measurementDefinitionIds, i++);
+            defUpdateStmt.executeUpdate();
+
+            if (updateExistingSchedules) {
+                Map<Integer, ResourceMeasurementScheduleRequest> reqMap = new HashMap<Integer, ResourceMeasurementScheduleRequest>();
+                List<Integer> idsAsList = ArrayUtils.wrapInList(measurementDefinitionIds);
+
+                // update the schedules associated with the measurement definitions (i.e. the current inventory)
+                queryString = (collectionInterval > 0L) ? MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_BY_IDS
+                    : MeasurementDefinition.QUERY_NATIVE_UPDATE_SCHEDULES_ENABLE_BY_IDS;
+
+                transformedQuery = JDBCUtil.transformQueryForMultipleInParameters(queryString, "@@DEFINITION_IDS@@",
+                    measurementDefinitionIds.length);
+                schedUpdateStmt = conn.prepareStatement(transformedQuery);
+                i = 1;
+                schedUpdateStmt.setBoolean(i++, enableDisable);
+                if (collectionInterval > 0L) {
+                    schedUpdateStmt.setLong(i++, collectionInterval);
+                }
+                JDBCUtil.bindNTimes(schedUpdateStmt, measurementDefinitionIds, i++);
+                schedUpdateStmt.executeUpdate();
+
+                // Notify the agents of the updated schedules for affected resources
+
+                // we need specific information to construct the agent updates. This query is specific to
+                // this use case and therefore is define here and not in a domain module. Note that this
+                // query must not return domain entities as they would be placed in the Hibernate cache.
+                // Return only the data necessary to construct minimal objects ourselves. Using JPQL
+                // is ok, it just lets Hibernate do the heavy lifting for query generation.
+                queryString = "" //
+                    + "SELECT ms.id, ms.resource.id, ms.definition.name, ms.definition.dataType, ms.definition.numericType" //
+                    + " FROM  MeasurementSchedule ms" //
+                    + " WHERE ms.definition.id IN ( :definitionIds )";
+                Query query = entityManager.createQuery(queryString);
+                query.setParameter("definitionIds", idsAsList);
+                List<Object[]> rs = query.getResultList();
+
+                for (Object[] row : rs) {
+                    i = 0;
+                    int schedId = (Integer) row[i++];
+                    int resourceId = (Integer) row[i++];
+                    String name = (String) row[i++];
+                    DataType dataType = (DataType) row[i++];
+                    NumericType numericType = (NumericType) row[i++];
 
                     ResourceMeasurementScheduleRequest req = reqMap.get(resourceId);
-                    MeasurementScheduleRequest msr = new MeasurementScheduleRequest(sched);
+                    if (null == req) {
+                        req = new ResourceMeasurementScheduleRequest(resourceId);
+                        reqMap.put(resourceId, req);
+                    }
+                    MeasurementScheduleRequest msr = new MeasurementScheduleRequest(schedId, name, collectionInterval,
+                        enableDisable, dataType, numericType);
                     req.addMeasurementScheduleRequest(msr);
                 }
-            }
 
-            Map<Agent, Set<ResourceMeasurementScheduleRequest>> agentUpdates = null;
-            agentUpdates = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
+                Map<Agent, Set<ResourceMeasurementScheduleRequest>> agentUpdates = null;
+                agentUpdates = new HashMap<Agent, Set<ResourceMeasurementScheduleRequest>>();
 
-            for (Integer resourceId : reqMap.keySet()) {
-                Agent agent = agentManager.getAgentByResourceId(resourceId);
+                // The number of Agents is manageable, so we can work with entities here
+                for (Integer resourceId : reqMap.keySet()) {
+                    Agent agent = agentManager.getAgentByResourceId(resourceId);
 
-                Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
-                if (agentUpdate == null) {
-                    agentUpdate = new HashSet<ResourceMeasurementScheduleRequest>();
-                    agentUpdates.put(agent, agentUpdate);
+                    Set<ResourceMeasurementScheduleRequest> agentUpdate = agentUpdates.get(agent);
+                    if (agentUpdate == null) {
+                        agentUpdate = new HashSet<ResourceMeasurementScheduleRequest>();
+                        agentUpdates.put(agent, agentUpdate);
+                    }
+
+                    agentUpdate.add(reqMap.get(resourceId));
                 }
 
-                agentUpdate.add(reqMap.get(resourceId));
-            }
-
-            // convert the int[] to Integer[], incase we need to set
-            List<Integer> measurementDefinitionList = ArrayUtils.wrapInList(measurementDefinitionIds);
-            // send schedule updates to agents
-            for (Map.Entry<Agent, Set<ResourceMeasurementScheduleRequest>> agentEntry : agentUpdates.entrySet()) {
-                boolean synced = sendUpdatedSchedulesToAgent(agentEntry.getKey(), agentEntry.getValue());
-                if (!synced) {
-                    /* 
-                     * only sync resources that are affected by this set of definitions that were updated, and only 
-                     * for the agent that couldn't be contacted (under the assumption that 9 times out of 10 the agent
-                     * will be up; so, we don't want to unnecessarily mark more resources as needing syncing that don't
-                     */
-                    int agentId = agentEntry.getKey().getId();
-                    setAgentSynchronizationNeededByDefinitionsForAgent(agentId, measurementDefinitionList);
+                // convert the int[] to Integer[], in case we need to set
+                // send schedule updates to agents
+                for (Map.Entry<Agent, Set<ResourceMeasurementScheduleRequest>> agentEntry : agentUpdates.entrySet()) {
+                    boolean synced = sendUpdatedSchedulesToAgent(agentEntry.getKey(), agentEntry.getValue());
+                    if (!synced) {
+                        /* 
+                         * only sync resources that are affected by this set of definitions that were updated, and only 
+                         * for the agent that couldn't be contacted (under the assumption that 9 times out of 10 the agent
+                         * will be up; so, we don't want to unnecessarily mark more resources as needing syncing that don't
+                         */
+                        int agentId = agentEntry.getKey().getId();
+                        setAgentSynchronizationNeededByDefinitionsForAgent(agentId, idsAsList);
+                    }
                 }
             }
+
+        } catch (Exception e) {
+            log.error("Error updating measurement definitions: ", e);
+            throw new MeasurementException("Error updating measurement definitions: " + e.getMessage());
+        } finally {
+            JDBCUtil.safeClose(defUpdateStmt);
+            JDBCUtil.safeClose(schedUpdateStmt);
+            JDBCUtil.safeClose(conn);
         }
     }
 

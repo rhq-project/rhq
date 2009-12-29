@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <plugin name="lsof"
-        displayName="LSOF Network Resource Detector"
+        displayName="Network Resource Detector"
         description="Detects resources out in the network using lsof technology"
         package="org.rhq.plugins.lsof"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -10,57 +10,66 @@
 
     <depends plugin="Script" useClasses="true" />
 
-    <server name="LSOF Utility"
+    <server name="Network Resource Detector"
             discovery="LsofDiscoveryComponent"
             class="LsofComponent"
-            description="The lsof tool to be used to detect network resources"
+            description="A resource that is used to detect network resources."
             supportsManualAdd="true">
 
         <plugin-configuration>
-            <c:group name="executableEnvironment" displayName="Executable Runtime Environment">
-                <c:simple-property name="executable" required="true" default="lsof" description="The full path to the command line executable or script" />
-                <c:simple-property name="workingDirectory" required="false" description="When the executable is invoked, this will be its working directory." />
-                <c:list-property name="environmentVariables" required="false" description="Environment variables that are set when executing the executable">
+            <c:simple-property name="detectionMechanism" required="true" defaultValue="EXTERNAL" description="Determines how to perform network resource detection. 'external' means that an external executable tool (e.g. lsof) will be used; 'internal' means internal Java detection code provided by the RHQ plugin will be used.">
+                <c:property-options>
+                    <c:option value="EXTERNAL" default="true" />
+                    <c:option value="INTERNAL" />
+                </c:property-options>
+            </c:simple-property>
+            <c:group name="executableEnvironment" displayName="External - Executable Runtime Environment">
+                <c:simple-property name="executable" required="false" default="lsof" description="The full path to the external executable to be used. If not defined, you must select 'internal' for the detection mechanism. This is ignored if using the 'internal' detection mechanism." />
+                <c:simple-property name="workingDirectory" required="false" description="When the external executable is invoked, this will be its working directory. This is ignored if using the 'internal' detection mechanism." />
+                <c:list-property name="environmentVariables" required="false" description="Environment variables that are set when executing the executable. This is ignored if using the 'internal' detection mechanism.">
                     <c:map-property name="environmentVariable">
                         <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable"/>
                         <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
                     </c:map-property>
                 </c:list-property>
             </c:group>
-            <c:group name="version" displayName="Version Definition">
-                <c:simple-property name="versionArguments" required="false" default="-v" description="The arguments to pass to the executable that will help determine the version of the managed resource"/>
-                <c:simple-property name="versionRegex" required="false"  default=".*evision:[ \t]+(\d+\.\d+).*" description="The regex that can pick out the version from the executable output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version."/>
-            </c:group>
-            <c:group name="description" displayName="Description Definition">
-                <c:simple-property name="descriptionArguments" required="false" default="-h" description="The arguments to pass to the executable that will help determine the managed resource description. This can be arguments to enable verbose version output."/>
+            <c:group name="version" displayName="External - Version Definition">
+                <c:simple-property name="versionArguments" required="false" default="-v" description="The arguments to pass to the executable that will help determine the version of the external tool. This is ignored if using the 'internal' detection mechanism."/>
+                <c:simple-property name="versionRegex" required="false"  default=".*evision:[ \t]+(\d+\.\d+).*" description="The regex that can pick out the version from the executable output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version. This is ignored if using the 'internal' detection mechanism."/>
             </c:group>
         </plugin-configuration>
 
         <operation name="execute"
-                   description="Executes the executable with a set of arguments and returns the output and exit code.">
+                   description="Executes the external detection executable with a set of arguments and returns the output and exit code. This is only useful when configured to use the external detection mechanism. If this resource is not configured to use the external mechanism, invoking this operation will fail.">
             <parameters>
                 <c:simple-property name="arguments" required="false" default="-i -P" description="The arguments to pass to the executable." />
             </parameters>
             <results>
                 <c:simple-property name="exitCode" type="integer" required="true"/>
-                <c:simple-property name="output" required="false" />
+                <c:simple-property name="output" type="longString" required="false" />
             </results>
         </operation>
 
         <operation name="getNetworkConnections"
                    description="Determines the network connections currently established on the machine">
             <parameters>
-                <c:simple-property name="arguments" required="true" default="-i -P" description="The arguments to pass to the executable." />
-                <c:simple-property name="regex" required="true" default=".*TCP\s+(.+):(.+)->(.+):(.+)\s+.*" description="Must have groups that match the output fields" />
+                <c:simple-property name="arguments" required="false" default="-i -P" description="The arguments to pass to the executable. This parameter will be ignored if using the 'internal' detection mechanism." />
+                <c:simple-property name="regex" required="false" default=".*TCP\s+(.+):(.+)->(.+):(.+)\s+.*" description="Regular expression used to parse each line of the output of the external executable. This regex must have capture groups that match the output fields as defined in the results metadata. This parameter will be ignored if using the 'internal' detection mechanism." />
             </parameters>
             <results>
+                <c:simple-property name="detectionMechanism" required="true" description="Describes the mechanism that was used to peform the detection.">
+                    <c:property-options>
+                        <c:option value="EXTERNAL" />
+                        <c:option value="INTERNAL" />
+                    </c:property-options>
+                </c:simple-property>
                 <c:simple-property name="exitCode" type="integer" required="true"/>
-                <c:list-property name="networkConnections">
-                    <c:map-property name="networkConnection">
-                        <c:simple-property name="host" type="string" />
-                        <c:simple-property name="port" type="string" />
-                        <c:simple-property name="remoteHost" type="string" />
-                        <c:simple-property name="remotePort" type="string" />
+                <c:list-property name="networkConnections" description="The active network connections that were detected">
+                    <c:map-property name="networkConnection" description="An active network connection that was detected">
+                        <c:simple-property name="localHost" type="string" default="The address of the local side of the connection"/>
+                        <c:simple-property name="localPort" type="string" default="The port of the local side of the connection "/>
+                        <c:simple-property name="remoteHost" type="string" default="The address of the remote side of the connection"/>
+                        <c:simple-property name="remotePort" type="string" default="The port of the remote side of the connection"/>
                     </c:map-property>
                 </c:list-property>
             </results>

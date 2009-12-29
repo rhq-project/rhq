@@ -8,17 +8,63 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="script" useClasses="true" />
+    <depends plugin="Script" useClasses="true" />
 
-   <server name="LSOF Utility" discovery="LsofDiscoveryComponent" class="LsofComponent"
-           supportsManualAdd="true"
-           description="The lsof tool to be used to detect network resources">
+    <server name="LSOF Utility"
+            discovery="LsofDiscoveryComponent"
+            class="LsofComponent"
+            description="The lsof tool to be used to detect network resources"
+            supportsManualAdd="true">
 
-      <plugin-configuration>
-         <c:simple-property name="executablePath" required="false"
-                            description="the path to the Apache executable - if the path is not absolute, it will be resolved relative to the server root directory; if unset, default value is 'bin/httpd' on UNIX or 'bin\Apache.exe' on Windows"/>
-      </plugin-configuration>
+        <plugin-configuration>
+            <c:group name="executableEnvironment" displayName="Executable Runtime Environment">
+                <c:simple-property name="executable" required="true" default="lsof" description="The full path to the command line executable or script" />
+                <c:simple-property name="workingDirectory" required="false" description="When the executable is invoked, this will be its working directory." />
+                <c:list-property name="environmentVariables" required="false" description="Environment variables that are set when executing the executable">
+                    <c:map-property name="environmentVariable">
+                        <c:simple-property name="name" type="string" required="true" summary="true" description="Name of the environment variable"/>
+                        <c:simple-property name="value" type="string" required="true" summary="true" description="Value of the environment variable" />
+                    </c:map-property>
+                </c:list-property>
+            </c:group>
+            <c:group name="version" displayName="Version Definition">
+                <c:simple-property name="versionArguments" required="false" default="-v" description="The arguments to pass to the executable that will help determine the version of the managed resource"/>
+                <c:simple-property name="versionRegex" required="false"  default=".*evision:[ \t]+(\d+\.\d+).*" description="The regex that can pick out the version from the executable output. If the regex has a captured group, its matched content will be used as the version. If there is no captured group, the entire output will be used as the version."/>
+            </c:group>
+            <c:group name="description" displayName="Description Definition">
+                <c:simple-property name="descriptionArguments" required="false" default="-h" description="The arguments to pass to the executable that will help determine the managed resource description. This can be arguments to enable verbose version output."/>
+            </c:group>
+        </plugin-configuration>
 
-   </server>
+        <operation name="execute"
+                   description="Executes the executable with a set of arguments and returns the output and exit code.">
+            <parameters>
+                <c:simple-property name="arguments" required="false" default="-i -P" description="The arguments to pass to the executable." />
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer" required="true"/>
+                <c:simple-property name="output" required="false" />
+            </results>
+        </operation>
 
+        <operation name="getNetworkConnections"
+                   description="Determines the network connections currently established on the machine">
+            <parameters>
+                <c:simple-property name="arguments" required="true" default="-i -P" description="The arguments to pass to the executable." />
+                <c:simple-property name="regex" required="true" default=".*TCP\s+(.+):(.+)->(.+):(.+)\s+.*" description="Must have groups that match the output fields" />
+            </parameters>
+            <results>
+                <c:simple-property name="exitCode" type="integer" required="true"/>
+                <c:list-property name="networkConnections">
+                    <c:map-property name="networkConnection">
+                        <c:simple-property name="host" type="string" />
+                        <c:simple-property name="port" type="string" />
+                        <c:simple-property name="remoteHost" type="string" />
+                        <c:simple-property name="remotePort" type="string" />
+                    </c:map-property>
+                </c:list-property>
+            </results>
+        </operation>
+
+    </server>
 </plugin>

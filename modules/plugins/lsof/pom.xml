@@ -26,13 +26,12 @@
 
    <dependencies>
 
-<!--
       <dependency>
-         <groupId>group-here</groupId>
-         <artifactId>artifact-here</artifactId>
-         <version>1.0</version>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-script-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
       </dependency>
--->
 
    </dependencies>
 

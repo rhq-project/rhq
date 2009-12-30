@@ -1,88 +1,104 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project
+   xmlns="http://maven.apache.org/POM/4.0.0"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
-  <modelVersion>4.0.0</modelVersion>
+   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.rhq</groupId>
-    <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
-  </parent>
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>1.4.0-SNAPSHOT</version>
+   </parent>
 
-  <groupId>org.rhq</groupId>
-  <artifactId>rhq-modules-parent</artifactId>
-  <packaging>pom</packaging>
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-modules-parent</artifactId>
+   <packaging>pom</packaging>
 
-  <name>RHQ Modules</name>
-  <description>parent POM for all RHQ modules</description>
+   <name>RHQ Modules</name>
+   <description>parent POM for all RHQ modules</description>
 
-  <scm>
-    <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</connection>
-    <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</developerConnection>
-  </scm>
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules</developerConnection>
+   </scm>
 
-  <properties>
-    <scm.module.path>modules/</scm.module.path>
-  </properties>
+   <properties>
+      <scm.module.path>modules/</scm.module.path>
+   </properties>
 
-  <profiles>
+   <profiles>
 
-    <profile>
-      <id>default</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>common</module>
-        <module>plugins</module>
-        <module>helpers</module>
-        <module>enterprise</module>
-      </modules>
-    </profile>
+      <profile>
+         <id>default</id>
+         <activation>
+            <activeByDefault>true</activeByDefault>
+         </activation>
+         <modules>
+            <module>core</module>
+            <module>common</module>
+            <module>plugins</module>
+            <module>helpers</module>
+            <module>enterprise</module>
+         </modules>
+      </profile>
 
-    <profile>
-      <id>agent</id>
-      <activation>
-        <property>
-          <name>agent</name>
-        </property>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>enterprise/comm</module>
-        <module>enterprise/agent</module>
-        <module>enterprise/agentupdate</module>
-      </modules>
-    </profile>
+      <profile>
+         <id>agent</id>
+         <activation>
+            <property>
+               <name>agent</name>
+            </property>
+         </activation>
+         <modules>
+            <module>core</module>
+            <module>enterprise/comm</module>
+            <module>enterprise/agent</module>
+            <module>enterprise/agentupdate</module>
+         </modules>
+      </profile>
 
-    <profile>
-      <id>core</id>
-      <activation>
-        <property>
-          <name>core</name>
-        </property>
-      </activation>
-      <modules>
-        <module>core</module>
-        <module>common</module>
-        <module>helpers</module>
-        <module>enterprise</module>
-      </modules>
-    </profile>
+      <profile>
+         <id>core</id>
+         <activation>
+            <property>
+               <name>core</name>
+            </property>
+         </activation>
+         <modules>
+            <module>core</module>
+            <module>common</module>
+            <module>helpers</module>
+            <module>enterprise</module>
+         </modules>
+      </profile>
 
-    <profile>
-      <id>plugins</id>
-      <activation>
-        <property>
-          <name>plugins</name>
-        </property>
-      </activation>
-    </profile>
+      <profile>
+         <id>plugins</id>
+         <activation>
+            <property>
+               <name>plugins</name>
+            </property>
+         </activation>
+      </profile>
 
-  </profiles>
+      <profile>
+         <id>javadoc</id>
+         <activation>
+            <property>
+               <name>javadoc.outputDirectory</name>
+            </property>
+         </activation>
+         <modules>
+            <module>core</module>
+            <module>enterprise</module>
+         </modules>
+      </profile>
 
-  <modules>
-    <module>test-utils</module>
-  </modules>
+   </profiles>
+
+   <modules>
+      <module>test-utils</module>
+   </modules>
 </project>

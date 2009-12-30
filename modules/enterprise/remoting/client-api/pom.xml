@@ -182,5 +182,53 @@
       </dependency>
       
    </dependencies>
+   
+   <profiles>
+         <profile>
+         <id>javadoc</id>
+         <activation>
+            <property>
+               <name>javadoc.outputDirectory</name>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+
+                  <executions>
+                     <execution>
+                        <id>javadoc-client-api</id>
+                        <phase>compile</phase>
+
+                        <configuration>
+                           <doctitle>RHQ ${project.version} - Client API</doctitle>
+                           <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
+                           <destDir>client-api</destDir>
+                           <aggregate>true</aggregate>
+                           <encoding>UTF-8</encoding>
+                           <charset>UTF-8</charset>
+                           <docencoding>UTF-8</docencoding>
+                           <author>false</author>
+                           <breakiterator>true</breakiterator>
+                           <links>
+                              <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+                              <link>../remote-api</link>                              
+                           </links>
+                        </configuration>
+                        <goals>
+                           <goal>javadoc</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+
+               </plugin>
+            </plugins>
+         </build>
+
+      </profile>
+
+   </profiles>   
 
 </project>

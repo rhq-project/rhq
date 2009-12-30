@@ -260,4 +260,46 @@
 
    </h:form>
 
+   <a4j:region
+      renderRegionOnly="true"
+      selfRendered="true">
+
+      <script type="text/javascript">
+
+        function refresh() {
+
+            timeLeft = timeLeft - 1;
+            document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+
+            if (timeLeft &lt; 1) {
+                window.location.href = window.location.href;
+            }
+            setTimeout("refresh()", 1000);
+        }
+
+        var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
+        var timeLeft = refreshTime;
+
+        if (refreshTime > 0) {
+            setTimeout("refresh()", 1000);
+        }
+
+    </script>
+
+      <a4j:form>
+         <a4j:jsFunction
+            name="updatePageRefresh"
+            status="commonStatus"
+            oncomplete="window.location.href = window.location.href;">
+            <a4j:actionparam
+               name="param1"
+               assignTo="#{UserPreferencesUIBean.refreshPath}" />
+            <a4j:actionparam
+               name="param2"
+               assignTo="#{UserPreferencesUIBean.pageRefresh}" />
+         </a4j:jsFunction>
+      </a4j:form>
+
+   </a4j:region>
+
 </a4j:region>

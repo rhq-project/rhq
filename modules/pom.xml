@@ -83,19 +83,6 @@
          </activation>
       </profile>
 
-      <profile>
-         <id>javadoc</id>
-         <activation>
-            <property>
-               <name>javadoc.outputDirectory</name>
-            </property>
-         </activation>
-         <modules>
-            <module>core</module>
-            <module>enterprise</module>
-         </modules>
-      </profile>
-
    </profiles>
 
    <modules>

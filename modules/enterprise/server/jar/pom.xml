@@ -571,7 +571,7 @@
             </dependency>
          </dependencies>
       </profile>
-
+   
       <profile>
          <id>javadoc</id>
          <activation>
@@ -640,7 +640,7 @@
          </build>
 
       </profile>   
-      
-   </profiles>
 
+   </profiles>
+   
 </project>

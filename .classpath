@@ -106,6 +106,9 @@
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/lsof/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
@@ -214,6 +217,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.0.2/byteman-1.2.0.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

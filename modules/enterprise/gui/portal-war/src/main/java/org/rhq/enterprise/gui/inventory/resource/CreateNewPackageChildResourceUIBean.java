@@ -243,12 +243,16 @@ public class CreateNewPackageChildResourceUIBean {
     }
 
     protected Configuration lookupConfiguration() {
-        ConfigurationTemplate deployTimeConfigurationTemplates = getConfigurationDefinition().getDefaultTemplate();
+        ConfigurationTemplate deployTimeConfigurationTemplates = null;
+        ConfigurationDefinition configDef = getConfigurationDefinition();
+        if (configDef != null) {
+            deployTimeConfigurationTemplates = configDef.getDefaultTemplate();
+        }
         Configuration deployTimeConfiguration = (deployTimeConfigurationTemplates != null) ? deployTimeConfigurationTemplates
             .createConfiguration()
             : new Configuration();
         if (deployTimeConfiguration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(deployTimeConfiguration, getConfigurationDefinition());
+            ConfigurationMaskingUtility.maskConfiguration(deployTimeConfiguration, configDef);
         }
 
         return deployTimeConfiguration;

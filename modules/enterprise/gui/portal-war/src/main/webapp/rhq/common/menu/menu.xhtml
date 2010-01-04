@@ -268,19 +268,22 @@
 
         function refresh() {
 
-            timeLeft = timeLeft - 1;
-            document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
-
-            if (timeLeft &lt; 1) {
-                window.location.href = window.location.href;
+            if (timeLeft &gt; 0) {
+               timeLeft = timeLeft - 1;
+               document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+               setTimeout("refresh()", 1000); // call again in 1 second (1000ms)
             }
-            setTimeout("refresh()", 1000);
+
+            if (timeLeft == 0) {
+               document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+               window.location.reload(true); 
+            }            
         }
 
         var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
         var timeLeft = refreshTime;
 
-        if (refreshTime > 0) {
+        if (refreshTime &gt; 0) {
             setTimeout("refresh()", 1000);
         }
 
@@ -290,7 +293,7 @@
          <a4j:jsFunction
             name="updatePageRefresh"
             status="commonStatus"
-            oncomplete="window.location.href = window.location.href;">
+            oncomplete="window.location.reload(true);">
             <a4j:actionparam
                name="param1"
                assignTo="#{UserPreferencesUIBean.refreshPath}" />

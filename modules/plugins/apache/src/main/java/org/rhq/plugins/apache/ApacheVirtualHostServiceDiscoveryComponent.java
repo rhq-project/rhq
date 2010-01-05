@@ -52,9 +52,13 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         ResourceType resourceType = context.getResourceType();
 
         Configuration mainServerPluginConfig = new Configuration();
-        PropertySimple mainServerUrl = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, 
-            context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue());
-        mainServerPluginConfig.put(mainServerUrl);
+        
+        String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
+            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, mainServerUrl);
+            
+            mainServerPluginConfig.put(mainServerUrlProp);
+        }
         
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server",
             null, null, mainServerPluginConfig, null);
@@ -90,12 +94,15 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             String resourceKey = keyBuilder.toString();
             
-            Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
-            String url = "http://" + address.host + ":" + address.port + "/";
-            
             Configuration pluginConfiguration = new Configuration();
-            PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
-            pluginConfiguration.put(urlProp);
+
+            Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
+            if (address != null) {
+                String url = "http://" + address.host + ":" + address.port + "/";
+                
+                PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
+                pluginConfiguration.put(urlProp);
+            }
             
             String resourceName = "VirtualHost ";
             if (serverName != null) {

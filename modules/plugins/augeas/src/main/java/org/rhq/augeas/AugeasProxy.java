@@ -114,7 +114,7 @@ public class AugeasProxy {
             augeas.load();
         } catch (NoClassDefFoundError e) {
             throw new AugeasException("Failed to initialize Augeas. It is probably not installed.", e);
-        } catch (Exception e){
+        } catch (Exception e) {
             throw new AugeasException(e);
         }
     }

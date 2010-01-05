@@ -99,20 +99,22 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
-        try {
-            this.url = new URL(url);
-            if (this.url.getPort() == 0) {
-                throw new InvalidPluginConfigurationException(
-                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
-                        + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
-                        + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
-                        + "this virtual host in httpd.conf.");
+        if (url != null) {
+            try {
+                this.url = new URL(url);
+                if (this.url.getPort() == 0) {
+                    throw new InvalidPluginConfigurationException(
+                        "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                            + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
+                            + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                            + "this virtual host in httpd.conf.");
+                }
+            } catch (MalformedURLException e) {
+                throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
+                    + "') is not a valid URL.");
             }
-        } catch (MalformedURLException e) {
-            throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
-                + "') is not a valid URL.");
         }
-
+        
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -128,7 +130,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return WWWUtils.isAvailable(this.url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {

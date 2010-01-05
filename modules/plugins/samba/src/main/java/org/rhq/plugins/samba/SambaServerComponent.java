@@ -42,6 +42,7 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     static final String ENABLE_RECYCLING = "enableRecycleBin";
     static final String AUTHCONFIG_PATH = "/usr/bin/authconfig";
     static final String NET_PATH = "/usr/bin/net";
+    static final String SPACE = " ";
 
     private ResourceContext resourceContext;
 
@@ -136,7 +137,11 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         String controller = pluginConfig.getSimple("controller").getStringValue();
         String username = pluginConfig.getSimple("username").getStringValue();
         String password = pluginConfig.getSimple("password").getStringValue();
+
         String workgroup = resourceConfig.getSimple("workgroup").getStringValue();
+        String idmapuid = resourceConfig.getSimple("idmap uid").getStringValue();
+        String idmapgid = resourceConfig.getSimple("idmap gid").getStringValue();
+        String shell = resourceConfig.getSimple("template shell").getStringValue();
 
         if (realm == null || controller == null || username == null || password == null || workgroup == null) {
             // no point in doing anything
@@ -146,21 +151,31 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         StringBuilder authArgs = new StringBuilder();
         StringBuilder netArgs = new StringBuilder();
 
-        //String workgroup = pluginConfig.getSimple("workgroup").getStringValue();
-
-        // AuthConfig arguments
+        // AuthConfig arguments...ugly and would be a lot prettier using python
         authArgs.append("--smbservers=" + controller);
-        authArgs.append(" --smbrealm=" + realm);
-        authArgs.append(" --enablewinbind --smbsecurity=ads");
-        authArgs.append(" --smbidmapuid=15000-20000 --smbidmapgid=15000-20000");
-        authArgs.append(" --winbindtemplateshell=/bin/bash");
-        authArgs.append(" --update");
+        authArgs.append(SPACE + "--smbrealm=" + realm);
+        authArgs.append(SPACE + "--enablewinbind --smbsecurity=ads");
+
+        if (idmapuid != null) {
+            authArgs.append(SPACE + "--smbidmapuid=" + idmapuid);
+        }
+
+        if (idmapgid != null) {
+            authArgs.append(SPACE + "--smbidmapgid=" + idmapgid);
+        }
+
+        if (shell != null) {
+            authArgs.append(SPACE + "--winbindtemplateshell=" + shell);
+        }
+
+        authArgs.append(SPACE + "--update");
 
         // Net join arguments
         netArgs.append("join");
-        netArgs.append(" -w " + workgroup);
-        netArgs.append(" -S " + controller);
-        netArgs.append(" -U " + username + "%" + password);        
+        netArgs.append(SPACE + "-w " + workgroup);
+        netArgs.append(SPACE + "-S " + controller);
+        //TODO is there more secure way to do this.
+        netArgs.append(SPACE + "-U " + username + "%" + password);
 
         execute(AUTHCONFIG_PATH, authArgs.toString());
         execute(NET_PATH, netArgs.toString());

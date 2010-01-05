@@ -63,11 +63,12 @@
           </c:group>
 
           <c:group name="Active Server Directory">
-              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
-              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
+              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID range" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
+              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID range" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
+              <c:simple-property name="template shell" required="false" displayName="Template Shell" default="/bin/bash" description="winbindd daemon uses this parameter to fill in the login shell for users"/>
               <c:simple-property name="winbind enum users" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of user info"/>
               <c:simple-property name="winbind enum groups" required="false" displayName="Group enumeration" type="boolean" description="Allow enumeration of group info"/>
-              <c:simple-property name="winbind separator" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
+              <c:simple-property name="winbind separator" default="+" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
           </c:group>
 
       </resource-configuration>

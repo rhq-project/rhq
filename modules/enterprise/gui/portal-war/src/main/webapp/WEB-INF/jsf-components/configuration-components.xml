@@ -10,16 +10,14 @@
    </component>
 
    <component>
-      <component-type>org.jboss.on.RawConfig</component-type>
-      <component-class>org.rhq.core.gui.configuration.RawConfigUIComponent</component-class>
+      <component-type>org.jboss.on.MultiFile</component-type>
+      <component-class>org.rhq.core.gui.configuration.MultiFileUIComponent</component-class>
    </component>
 
-
-
-    <component>
-       <component-type>org.rhq.ConfigurationSet</component-type>
-       <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
-    </component>
+   <component>
+      <component-type>org.rhq.ConfigurationSet</component-type>
+      <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
+   </component>
 
    <render-kit>
       <renderer>
@@ -30,10 +28,10 @@
       </renderer>
       
       <renderer>
-      <description>renderer for Raw Config components</description>
+      <description>renderer for Multi-File Editor</description>
       <component-family>rhq</component-family>
-      <renderer-type>org.jboss.on.RawConfig</renderer-type>
-      <renderer-class>org.rhq.core.gui.configuration.RawConfigRenderer</renderer-class>      
+      <renderer-type>org.jboss.on.MultiFile</renderer-type>
+      <renderer-class>org.rhq.core.gui.configuration.MultiFileRenderer</renderer-class>      
       </renderer>
       
    </render-kit>

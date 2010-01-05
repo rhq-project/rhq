@@ -17,24 +17,15 @@ THIS TEXT WILL BE REMOVED.
 
    THIS TEXT WILL BE REMOVED AS WELL.
 
-   <ui:param name="pageTitle" value="View Test Configuration"/>
-
+   <ui:param name="pageTitle" value=" Raw Edit Configuration Test"/>
    <ui:define name="body">
-   <a href="view-raw-config.xhtml">View</a>
-   <script language="JavaScript" type="text/javascript" src="/js/multi-file-edit.js"></script>
-
-
-	<form id="testForm">
-	<script type="text/javascript">
-	var multiFileEdit = new MultiFileEdit();
-	multiFileEdit.drawTable();
-	</script> 
-	<input type="submit" />
-	<input type="reset" onclick="multiFileEdit.resetArchive();" />
-	</form>
-
+     <a href="view-raw-config.xhtml">View</a>
+     <form id="testForm">
+	   <onc:multifile></onc:multifile>
+	   <input type="submit" value="Commit"/>
+	   <input type="reset" onclick="multiFileEdit.resetArchive();" />
+	 </form>
    </ui:define>
-
 </ui:composition>
 
 THIS TEXT WILL BE REMOVED AS WELL.

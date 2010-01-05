@@ -8,15 +8,23 @@
 
 <a href="view.html">View</a>
 
-<script language="JavaScript" type="text/javascript" src="../../../../js/multi-file-edit.js"></script>
+<script language="JavaScript" type="text/javascript"
+	src="../../../../js/multi-file-edit.js"></script>
 
 <form id="testForm" name="viewTestConfigurationForm" method="post"
 	action="view.html" enctype="application/x-www-form-urlencoded">
 <script type="text/javascript">
 	var multiFileEdit = new MultiFileEdit();
+	for (i=0; i <  6 ;i++)
+	{
+		multiFileEdit.addArchive("/tmp/file/"+i, 
+									 "/tmp/file"+i +" archive = "+ i);
+	}
+	multiFileEdit.downloadUrl = "download.html";
 	multiFileEdit.drawTable();
-</script> 
-<input type="submit" /><input type="reset" onclick="multiFileEdit.resetArchive();" /></form>
+
+</script> <input type="submit" /><input type="reset"
+	onclick="multiFileEdit.resetArchive();" /></form>
 
 
 

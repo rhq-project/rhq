@@ -1,0 +1,24 @@
+<html>
+<head>
+<title>Test multi-edit control</title>
+</head>
+
+
+<body>
+
+<a href="view.html">View</a>
+
+<script language="JavaScript" type="text/javascript" src="../../../../js/multi-file-edit.js"></script>
+
+<form id="testForm" name="viewTestConfigurationForm" method="post"
+	action="view.html" enctype="application/x-www-form-urlencoded">
+<script type="text/javascript">
+	var multiFileEdit = new MultiFileEdit();
+	multiFileEdit.drawTable();
+</script> 
+<input type="submit" /><input type="reset" onclick="multiFileEdit.resetArchive();" /></form>
+
+
+
+</body>
+</html>

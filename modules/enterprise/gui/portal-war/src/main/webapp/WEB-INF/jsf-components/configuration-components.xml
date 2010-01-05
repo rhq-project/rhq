@@ -9,6 +9,13 @@
       <component-class>org.rhq.core.gui.configuration.ConfigUIComponent</component-class>
    </component>
 
+   <component>
+      <component-type>org.jboss.on.RawConfig</component-type>
+      <component-class>org.rhq.core.gui.configuration.RawConfigUIComponent</component-class>
+   </component>
+
+
+
     <component>
        <component-type>org.rhq.ConfigurationSet</component-type>
        <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
@@ -21,6 +28,14 @@
          <renderer-type>org.jboss.on.Config</renderer-type>
          <renderer-class>org.rhq.core.gui.configuration.ConfigRenderer</renderer-class>
       </renderer>
+      
+      <renderer>
+      <description>renderer for Raw Config components</description>
+      <component-family>rhq</component-family>
+      <renderer-type>org.jboss.on.RawConfig</renderer-type>
+      <renderer-class>org.rhq.core.gui.configuration.RawConfigRenderer</renderer-class>      
+      </renderer>
+      
    </render-kit>
 
     <component>

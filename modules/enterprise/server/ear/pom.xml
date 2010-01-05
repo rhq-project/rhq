@@ -118,6 +118,9 @@
                      <tasks>
                         <mkdir
                            dir="${earDirectory}/license" />
+					  <copy
+						 todir="${earDirectory}/license"
+						 file="${basedir}/src/main/license/license.xml" />                              
                      </tasks>
                   </configuration>
                   <goals>

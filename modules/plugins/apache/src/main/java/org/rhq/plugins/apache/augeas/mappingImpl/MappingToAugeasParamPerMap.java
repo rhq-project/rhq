@@ -100,7 +100,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                 }
                 List<String> params = ApacheDirectiveRegExpression.createParams(param.toString(), propertyName);
                 updateNodeParams(nodes.get(i), params);
-                param.delete(0, param.length()-1);
+                param = new StringBuffer();
                 i++;
           }
        }

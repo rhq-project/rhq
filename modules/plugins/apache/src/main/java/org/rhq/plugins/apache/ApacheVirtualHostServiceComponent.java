@@ -307,7 +307,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         boolean updated = false;
 
         for (AugeasNode node : nodes) {
-        	updated = false;
+               updated = false;
             List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
             String tempServerName = null;
 
@@ -315,11 +315,11 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 tempServerName = serverNameNodes.get(0).getValue();
             }
                 if (tempServerName == null & serverName == null)
-                	updated = true;
+                   updated = true;
                 if (tempServerName != null & serverName != null)
-                	if (tempServerName.equals(serverName)){
-                		updated = true;
-                	}
+                    if (tempServerName.equals(serverName)){
+                            updated = true;
+                     }
                 
 
                if (updated){ 

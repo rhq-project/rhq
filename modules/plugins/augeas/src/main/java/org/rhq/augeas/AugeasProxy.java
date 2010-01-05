@@ -103,7 +103,7 @@ public class AugeasProxy {
 
             modules.add(module.getModuletName());
             
-            augeas.set("/augeas/load/" + module.getModuletName() + "/lens", LensHelper.getLensPath(module.getLensPath()));
+            augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
 
             int idx = 1;
             for (String incl : module.getConfigFiles()) {

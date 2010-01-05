@@ -81,6 +81,12 @@ public class AlertNotification implements Serializable {
     @Column(name = "ALERT_SENDER_NAME")
     private String senderName;
 
+    @Column(name = "ALERT_ORDER")
+    private int order;
+
+    @Column(name = "NAME")
+    private String name;
+
     protected AlertNotification() {
     } // JPA spec
 
@@ -100,7 +106,6 @@ public class AlertNotification implements Serializable {
         this.alertDefinition = alertDefinition;
         this.configuration = config.deepCopy();
     }
-
 
 
     public int getId() {
@@ -146,5 +151,21 @@ public class AlertNotification implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 }

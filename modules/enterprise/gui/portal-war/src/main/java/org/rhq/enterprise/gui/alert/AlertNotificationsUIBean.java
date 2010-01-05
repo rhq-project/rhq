@@ -57,6 +57,7 @@ public class AlertNotificationsUIBean {
     private Integer notificationId;
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
+    private String newAlertName;
     private String selectedNewSender;
     private AlertNotification activeNotification;
     private ConfigurationDefinition activeConfigDefinition;
@@ -67,12 +68,24 @@ public class AlertNotificationsUIBean {
         return alertNotifications;
     }
 
+    public void setAlertNotifications(List<AlertNotification> alertNotifications) {
+        this.alertNotifications = alertNotifications;
+    }
+
     public Set<AlertNotification> getSelectedNotifications() {
         return selectedNotifications;
     }
 
     public void setSelectedNotifications(Set<AlertNotification> selectedNotifications) {
         this.selectedNotifications = selectedNotifications;
+    }
+
+    public String getNewAlertName() {
+        return newAlertName;
+    }
+
+    public void setNewAlertName(String newAlertName) {
+        this.newAlertName = newAlertName;
     }
 
     public String getSelectedNewSender() {
@@ -164,7 +177,7 @@ public class AlertNotificationsUIBean {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = this.alertNotificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newSenderConfig);
+        this.activeNotification = this.alertNotificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newAlertName, newSenderConfig);
 
         return SUCCESS_OUTCOME;
     }
@@ -182,6 +195,19 @@ public class AlertNotificationsUIBean {
         List<Integer> ids = getSelectedIds(this.selectedNotifications);
 
         alertNotificationManager.removeNotifications(subject, alertDefinitionId, toArray(ids));
+
+        return SUCCESS_OUTCOME;
+    }
+
+    public String saveOrder() {
+        int orderIndex = 0;
+
+        for (AlertNotification notification : this.alertNotifications) {
+            notification.setOrder(orderIndex++);
+
+            // TODO:  Wait and persist these all in a single operation?
+            this.alertNotificationManager.updateAlertNotification(notification);
+        }
 
         return SUCCESS_OUTCOME;
     }

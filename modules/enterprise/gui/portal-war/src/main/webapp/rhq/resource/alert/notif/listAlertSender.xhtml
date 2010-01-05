@@ -39,19 +39,18 @@
         </h:outputLink>
         <h:outputText> &gt; </h:outputText>
         <h:outputLink value="listAlertSender.xhtml">
-            Alert Sender Definitions
+            Alert Notification Definitions
         </h:outputLink>
     </ui:define>
 
     <ui:define name="body">
         <br/>
-        <h:messages showSummary="true"
-                    showDetail="true"
+        <h:messages showDetail="true"
+                    globalOnly="true"
                     infoClass="InfoBlock"
                     warnClass="WarnBlock"
                     errorClass="ErrorBlock"
                     fatalClass="FatalBlock"
-                    globalOnly="true"
                     layout="table"
                     width="100%"/>
 
@@ -66,16 +65,16 @@
                         <input type="hidden" name="ad" value="${param.ad}"/>
 
                         <rich:orderingList value="#{alertNotificationsUIBean.alertNotifications}"
-                                           var="alertSender"
+                                           var="alertNotification"
                                            selection="#{alertNotificationsUIBean.selectedNotifications}"
                                            activeItem="#{alertNotificationsUIBean.activeNotification}"
                                            converter="#{alertNotificationsUIBean.notificationConverter}"
                                            listWidth="250">
                             <rich:column>
                                 <f:facet name="header">
-                                    <h:outputText value="Alert Sender (Select to Edit)" />
+                                    <h:outputText value="Alert Notifications (Select to Edit)" />
                                 </f:facet>
-                                <h:outputText value="#{alertSender.senderName}" />
+                                <h:outputText value="#{alertNotification.name} (#{alertNotification.senderName})" />
                             </rich:column>
 
                             <a4j:support event="onclick"
@@ -88,6 +87,10 @@
                                          requestDelay="150"
                                          reRender="alertConfig,senderName"
                                          oncomplete="updateCustomContent();" />
+                            <a4j:support event="onorderchanged"
+                                         ignoreDupResponses="true"
+                                         requestDelay="250"
+                                         reRender="senderName" />
                         </rich:orderingList>
                     </h:form>
 
@@ -95,8 +98,13 @@
                         <input type="hidden" name="id" value="${param.id}"/>
                         <input type="hidden" name="ad" value="${param.ad}"/>
 
+                        <h:commandButton id="saveAlertOrderButton"
+                                         value="Save Order"
+                                         action="#{alertNotificationsUIBean.saveOrder}"
+                                         styleClass="buttonmed"/>
+
                         <h:commandButton id="removeAlertButton"
-                                         value="Remove Selected Alerts"
+                                         value="Remove Selected"
                                          action="#{alertNotificationsUIBean.removeSelected}"
                                          styleClass="buttonmed"/>
                     </h:form>
@@ -129,19 +137,36 @@
 
         <rich:panel id="addAlertPanel">
             <f:facet name="header">
-                <h:outputText value="Add Alert Sender" />
+                <h:outputText value="Add Alert Notification" />
             </f:facet>
 
             <h:form id="newNotificationForm">
                 <input type="hidden" name="id" value="${param.id}"/>
                 <input type="hidden" name="ad" value="${param.ad}"/>
 
+                <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
+                <br />
+                <h:inputText id="alertNameInput"
+                             value="#{alertNotificationsUIBean.newAlertName}"
+                             maxlength="100"
+                             required="true" />
+                
+                <h:message for="alertNameInput"
+                           infoClass="InfoBlock"
+                           warnClass="WarnBlock"
+                           errorClass="ErrorBlock"
+                           fatalClass="FatalBlock" />
+                <br /><br />
+
+                <h:outputLabel for="senderList" value="Alert Sender Type:" />
+                <br />
                 <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">
                     <f:selectItems value="#{alertNotificationsUIBean.allAlertSenders}" />
                 </h:selectOneMenu>
+                <br /><br />
 
                 <h:commandButton id="addAlertButton"
-                                 value="Add Alert Sender"
+                                 value="Add Alert Notification"
                                  action="#{alertNotificationsUIBean.addAlertSender}"
                                  styleClass="buttonmed">
                 </h:commandButton>

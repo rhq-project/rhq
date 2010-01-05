@@ -2301,6 +2301,11 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.70.3">
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_ORDER" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NAME" columnType="VARCHAR2"/>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

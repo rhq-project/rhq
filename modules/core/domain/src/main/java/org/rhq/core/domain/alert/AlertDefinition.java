@@ -352,7 +352,7 @@ public class AlertDefinition implements Serializable {
     private Set<AlertCondition> conditions = new LinkedHashSet<AlertCondition>(1); // Most alerts will only have one condition.
 
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
-    @OrderBy
+    @OrderBy("order asc")
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 

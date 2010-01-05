@@ -499,13 +499,9 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     }
 
     /**
-     * Add a new AlertNotification to the passed definition
-     * @param user subject of the caller
-     * @param alertDefinitionId Id of the alert definition
-     * @param senderName shortName of the {@link AlertSender}
-     * @param configuration Properties for this alert sender.
+     * {@inheritDoc}
      */
-    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
+    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
         if (definition==null) {
@@ -516,6 +512,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         entityManager.persist(configuration);
         AlertNotification notif = new AlertNotification(definition);
         notif.setSenderName(senderName);
+        notif.setName(alertName);
         notif.setConfiguration(configuration);
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);

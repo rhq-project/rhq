@@ -24,23 +24,13 @@ THIS TEXT WILL BE REMOVED.
    <script language="JavaScript" type="text/javascript" src="/js/multi-file-edit.js"></script>
 
 
-      <h:messages showSummary="true"
-                  showDetail="true"
-                  errorClass="ErrorBlock"
-                  warnClass="ErrorBlock"
-                  infoClass="ConfirmationBlock"
-                  globalOnly="true"
-                  layout="table"
-                  width="100%"/>
 	<form id="testForm">
 	<script type="text/javascript">
 	var multiFileEdit = new MultiFileEdit();
 	multiFileEdit.drawTable();
-	multiFileEdit.setTextAreaValue(0);
 	</script> 
 	<input type="submit" />
 	<input type="reset" onclick="multiFileEdit.resetArchive();" />
-	<a href="next-page.html" onclick="checkDirty()">Go to next Page</a>
 	</form>
 
    </ui:define>

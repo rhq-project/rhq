@@ -4,6 +4,10 @@ function ArchiveFile(p,c) {
 	  this.contents = c;
 }
 
+
+
+
+
 /*
  * This is a class for editing a collection of files, represented by a map.
  * There is a list of links in the left column, each which represent a file,
@@ -29,7 +33,6 @@ function MultiFileEdit(){
 			document.getElementById("file-row-"+this.currentIndex).className = "OddRow";	
 		}else{
 			document.getElementById("file-row-"+this.currentIndex).className = "EvenRow";
-				
 		}
 		
 		this.currentIndex = id;
@@ -60,7 +63,7 @@ function MultiFileEdit(){
 		window.onbeforeunload = askConfirm;
 				
 		this.isDirty = 1;
-		this.archive[this.currentIndex].contents = textarea.value ;	
+		this.archive[this.currentIndex].contents =   document.getElementById("testForm").textarea.value;	
 		this.archive[this.currentIndex].dirty = 1;
 		document.getElementById("dirty-span-"+this.currentIndex).style.visibility="visible";
 	}	
@@ -124,13 +127,13 @@ function MultiFileEdit(){
 		document.write("<a href=\"#\"><img src='/images/download.png'/> Download</a>");
 		document.write("<a href=\"#\"  ");
 		document.write("onclick=\"multiFileEdit.fullscreen()\"> "); 
-		document.write("<img src='/images/fullscreen.png'/> Full Screen</a>")
+		document.write("<img src='/images/viewfullscreen.png'/> Full Screen</a>")
 		document.write("</div>");
 		document.write("<textarea id='textarea' "); 
 		if (this.disabled){
 			document.write("disabled ");
 		}
-		document.write("onkeyup='multiFileEdit.updateArchive()' cols='80' rows='40'>");				
+		document.write("onkeyup='multiFileEdit.updateArchive();' cols='80' rows='40'>");				
 		document.write(multiFileEdit.archive[0].contents);
 		document.write("</textarea>");
 		
@@ -145,16 +148,15 @@ function MultiFileEdit(){
 	
 	this.fullscreen= function()
 	{
-
 		
 	  var generator=window.open('','full screen','width=1024,height=768,left=0,top=100,screenX=0,screenY=0');
 	  generator.document.write('<html><head><title>Popup</title>');
 	  generator.document.write('<link rel="stylesheet" href="style.css">');	  
-	  generator.document.write('<script language="JavaScript" type="text/javascript" src="multi-file-edit.js"></script>');
+	  generator.document.write('<script language="JavaScript" type="text/javascript" src="/js/multi-file-edit.js"></script>');
 	  generator.document.write('</head><body>');	  
 	  generator.document.write("<form id='full-screen-edit-form'>");
 	  generator.document.write("<div><span id='current-path-span'>" +multiFileEdit.archive[this.currentIndex].path+"</span> ");
-	  generator.document.write("<a href=\"javascript:self.close();\">Close</a>..................");		
+	  generator.document.write("<a href=\"javascript:self.close();\"  >Close</a>..................");		
 	  generator.document.write("</div>");
 	  generator.document.write("<textarea id='textarea'  onkeyup='update_parent();' ");
 	  if (this.disabled){
@@ -181,3 +183,6 @@ function update_parent(){
 	opener.document.getElementById("testForm").textarea.value =  document.getElementById("full-screen-edit-form").textarea.value;
 	opener.multiFileEdit.updateArchive()	
 }
+
+
+

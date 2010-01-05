@@ -27,6 +27,9 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 
@@ -37,6 +40,8 @@ import org.rhq.augeas.tree.AugeasTree;
  */
 public class HttpdAddressUtility {
 
+    private static final Log log = LogFactory.getLog(HttpdAddressUtility.class);
+    
     private HttpdAddressUtility() {
         
     }
@@ -75,38 +80,44 @@ public class HttpdAddressUtility {
      * This just constructs a first available address under which the server or one of its virtual hosts can be reached.
      * 
      * @param ag the tree of the httpd configuration
-     * @return the address
+     * @return the address or null on failure
      */
     public static Address getMainServerSampleAddress(AugeasTree ag) {
-        //there has to be at least one Listen directive
-        AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
-        
-        List<AugeasNode> params = listen.getChildByLabel("param");
-        String address = params.get(0).getValue();
-        
-        String host = null;
-        String port = null;
-        if (address.startsWith("[")) {
-            int bracketIdx = address.indexOf(']');
-            host = address.substring(1, bracketIdx);
-            port = address.substring(bracketIdx + 2);
-        } else {
-            String[] hostPort = address.split(":");
-            if (hostPort.length == 1) {
-                port = hostPort[0];
+        try {
+            //there has to be at least one Listen directive
+            AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
+            
+            List<AugeasNode> params = listen.getChildByLabel("param");
+            String address = params.get(0).getValue();
+            
+            String host = null;
+            String port = null;
+            if (address.startsWith("[")) {
+                int bracketIdx = address.indexOf(']');
+                host = address.substring(1, bracketIdx);
+                port = address.substring(bracketIdx + 2);
             } else {
-                host = hostPort[0];
-                port = hostPort[1];
+                String[] hostPort = address.split(":");
+                if (hostPort.length == 1) {
+                    port = hostPort[0];
+                } else {
+                    host = hostPort[0];
+                    port = hostPort[1];
+                }
             }
-        }
-        if (host == null) {
-            try {
-                host = InetAddress.getLocalHost().getHostAddress();
-            } catch (UnknownHostException e) {
-                throw new IllegalStateException("Unable to get the localhost address.", e);
+            if (host == null) {
+                try {
+                    host = InetAddress.getLocalHost().getHostAddress();
+                } catch (UnknownHostException e) {
+                    throw new IllegalStateException("Unable to get the localhost address.", e);
+                }
             }
+            return new Address(host, Integer.parseInt(port));
+        } catch (Exception e) {
+            log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
+            
+            return null;
         }
-        return new Address(host, Integer.parseInt(port));
     }    
     
     /**
@@ -116,7 +127,7 @@ public class HttpdAddressUtility {
      * @param virtualHost the port or address:port of the virtual host
      * @param serverName the server name for the namebased virtual hosts (or null if the virtual host is ip based)
      * 
-     * @return the address on which the virtual host can be accessed.
+     * @return the address on which the virtual host can be accessed or null on error
      */
     public static Address getVirtualHostSampleAddress(AugeasTree ag, String virtualHost, String serverName) {
         Address addr = new Address(null, -1);
@@ -129,12 +140,16 @@ public class HttpdAddressUtility {
                 //just address specified
                 Address serverAddr = getMainServerSampleAddress(ag);
                 
+                if (serverAddr == null) return null;
+                
                 addr.port = Integer.parseInt(hostPort[0]);
                 addr.host = serverAddr.host;
             } else {
                 String host = hostPort[0];
                 if ("*".equals(host)) {
-                    host = getMainServerSampleAddress(ag).host;
+                    Address serverAddr = getMainServerSampleAddress(ag);
+                    if (serverAddr == null) return null;
+                    host = serverAddr.host;
                 }
                 String port = hostPort[1];
                 addr.host = host;

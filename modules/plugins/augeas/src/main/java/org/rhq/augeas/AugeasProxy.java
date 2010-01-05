@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.augeas.Augeas;
+import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -93,29 +94,29 @@ public class AugeasProxy {
      * Initializes and loads the Augeas tree.
      * 
      * @throws AugeasTreeException
+     * @throws AugeasException if Augeas could not be initialized.
      */
-    public void load() throws AugeasTreeException {
-        config.loadFiles();
-        augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
-
+    public void load() throws AugeasTreeException, AugeasException {
         try {
-        for (AugeasModuleConfig module : config.getModules()) {
-
-            modules.add(module.getModuletName());
-            
-            augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
-
-            int idx = 1;
-            for (String incl : module.getConfigFiles()) {
-                augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
+            config.loadFiles();
+            augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
+    
+            for (AugeasModuleConfig module : config.getModules()) {
+    
+                modules.add(module.getModuletName());
+                augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
+    
+                int idx = 1;
+                for (String incl : module.getConfigFiles()) {
+                    augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
+                }
             }
-
+            augeas.load();
+        } catch (NoClassDefFoundError e) {
+            throw new AugeasException("Failed to initialize Augeas. It is probably not installed.", e);
+        } catch (Exception e){
+            throw new AugeasException(e);
         }
-        }catch(Exception e){
-        	log.error("Loading of augeas failed",e);
-        	throw new AugeasTreeException(e);
-        }
-        augeas.load();
     }
     
  

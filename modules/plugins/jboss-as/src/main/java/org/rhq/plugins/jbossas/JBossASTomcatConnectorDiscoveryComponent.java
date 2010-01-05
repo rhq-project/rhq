@@ -27,8 +27,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.net.URLDecoder;
-import java.io.UnsupportedEncodingException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,16 +42,14 @@ import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 import org.rhq.plugins.jmx.ObjectNameQueryUtility;
 
 /**
- * JON plugin discovery component for Tomcat connectors. The bulk of the discovery is performed by the super class. This
- * class exists to work with the bean attribute values once they were read.
+ * Plugin discovery component for JBoss Web (embedded Tomcat) connectors. The bulk of the discovery is performed by the
+ * super class. This class exists to work with the bean attribute values once they have been read.
  *
  * @author Jason Dobies
  * @author Ian Springer
  */
 public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent> {
     private final Log log = LogFactory.getLog(this.getClass());
-
-    private static final String LOCAL_IP = "0.0.0.0";
 
     // MBeanResourceDiscoveryComponent Overridden Methods  --------------------------------------------
 
@@ -62,16 +58,14 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
         Set<DiscoveredResourceDetails> resourceDetails = super.discoverResources(context);
 
         /*
-         * Get the connectors, pull the schema from them and set them later. 
-         * jk-8009               JBoss 3.2, 4.0 (AJP connector) 
-         * http-0.0.0.0-8080     JBoss 3.2, 4.0, 4.2 (http + https connector) 
-         * ajp-0.0.0.0-9009      JBoss 4.2 (AJP connector)
+         * Lookup all jboss.web:type=GlobalRequestProcessor,* MBeans in order to associate them later with the
+         * corresponding jboss.web:type=Connector,* primary connector MBeans.
          */
         EmsConnection connection = context.getParentResourceComponent().getEmsConnection();
         ObjectNameQueryUtility queryUtility = new ObjectNameQueryUtility("jboss.web:type=GlobalRequestProcessor,name=%name%");
         List<EmsBean> beans = connection.queryBeans(queryUtility.getTranslatedQuery());
 
-        // We can't populate the name and schema in the plugin config if the GlobalRequestProcessor MBeans aren't
+        // We can't populate the name and scheme in the plugin config if the GlobalRequestProcessor MBeans aren't
         // deployed yet, so just abort and try again the next time the PC calls us.
         if (beans.size() != resourceDetails.size()) {
             if (log.isDebugEnabled())
@@ -87,10 +81,11 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
         for (EmsBean bean : beans) {
             EmsBeanName eName = bean.getBeanName();
 
-            // There are a two possible formats for the value of the 'name' key property. When parsing, it's important
+            // There are three possible formats for the value of the 'name' key property. When parsing, it's important
             // to remember that the hostname can potentially contain a '-'. Note, %2F is a URL-encoded '/'.
-            //   1) http-foo-bar.example.com-8080
-            //   2) http-foo-bar.example.com%2F192.168.10.11-8080
+            //   1) jk-8009 (jk connectors in JBoss 3.2 only, due to what I think is a bug)
+            //   2) http-192.168.10.11-8080
+            //   3) http-foo-bar.example.com%2F192.168.10.11-8080
             String oName = eName.getKeyProperty("name");
 
             int firstDashIndex = oName.indexOf('-');
@@ -98,20 +93,10 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
             String remainder = oName.substring(firstDashIndex + 1);
 
             int lastDashIndex = remainder.lastIndexOf('-');
-            String host = remainder.substring(0, lastDashIndex);
             String port = remainder.substring(lastDashIndex + 1);
-
             schemeMap.put(port, scheme);
-
-            try {
-                host = URLDecoder.decode(host, "UTF-8");
-            }
-            catch (UnsupportedEncodingException e) {
-                log.error("Failed to decode host portion of GlobalRequestProcessor name: " + oName, e);
-                continue;
-            }
-
-            addressPresentMap.put(port, host.contains("/"));
+            boolean addressPresent = (lastDashIndex != -1);
+            addressPresentMap.put(port, addressPresent);
         }
 
         // The address may be read with %2F at the start of it. Parse that out before returning the resources.
@@ -120,43 +105,39 @@ public class JBossASTomcatConnectorDiscoveryComponent extends MBeanResourceDisco
             Configuration pluginConfiguration = resource.getPluginConfiguration();
 
             String dirtyAddress = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS).getStringValue();
-            String port = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_PORT).getStringValue();
-            boolean portHasAddress = (Boolean.TRUE.equals(addressPresentMap.get(port)));
 
+            String cleanAddress;
             if (dirtyAddress.startsWith("%2F")) {
-                String cleanAddress = dirtyAddress.substring(3);
-
-                // Update the plugin configuration property for address or remove it if not needed
-                if (portHasAddress) {
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, cleanAddress));
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, "-"));
-                } else {
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, ""));
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, ""));
-                }
+                cleanAddress = dirtyAddress.substring(3);
 
                 // The resource key contains the address, so update that too
                 String dirtyResourceKey = resource.getResourceKey();
                 String cleanResourceKey = dirtyResourceKey.replace(dirtyAddress, cleanAddress);
                 resource.setResourceKey(cleanResourceKey);
-                String resourceName = resource.getResourceName();
-                if (!cleanAddress.equals(LOCAL_IP)) {
-                    resourceName = resourceName.replace("(", " (" + cleanAddress + ":");
-                    resource.setResourceName(resourceName);
-                }
-            } else { // Address not dirty
-                if (portHasAddress) {
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, "-"));
-                } else {
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, ""));
-                    pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, ""));
-                }
+            } else {
+                cleanAddress = dirtyAddress;
             }
+
+            // Add the address to the Resource name (e.g. "Tomcat Connector (127.0.0.1:8080)").
+            String resourceName = resource.getResourceName();
+            resourceName = resourceName.replace("(", "(" + cleanAddress + ":");
+            resource.setResourceName(resourceName);
+
+            String port = pluginConfiguration.getSimple(JBossASTomcatConnectorComponent.PROPERTY_PORT).getStringValue();
 
             String scheme = schemeMap.get(port);
             pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_SCHEMA, scheme));
-            //         if (log.isDebugEnabled())
-            log.debug("Found a connector: " + scheme + "-" + dirtyAddress + ":" + port);
+
+            // Update the "address" and "dash" plugin config props, or remove them if not needed.
+            if (addressPresentMap.containsKey(port)) {
+                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, cleanAddress));
+                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, "-"));
+            } else {
+                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_ADDRESS, ""));
+                pluginConfiguration.put(new PropertySimple(JBossASTomcatConnectorComponent.PROPERTY_DASH, ""));
+            }
+
+            log.debug("Found a JBoss Web connector: " + scheme + "-" + cleanAddress + ":" + port);
         }
 
         return resourceDetails;

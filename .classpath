@@ -217,7 +217,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.0.2/byteman-1.2.0.2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

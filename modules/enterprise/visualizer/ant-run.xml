@@ -49,7 +49,7 @@ ANT Script that provides ways to package the agent.
          <include name="hibernate/hibernate3/${hibernate.version}/hibernate3-${hibernate.version}.jar" />
 
 
-         <include name="org/rhq/rhq-enterprise-client/${project.version}/rhq-enterprise-client-${project.version}.jar" />
+         <include name="org/rhq/rhq-remoting-cli/${project.version}/rhq-remoting-cli-${project.version}.jar" />
          <include name="org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" />
          <include name="org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" />
          <include name="org/rhq/rhq-core-native-system/${project.version}/rhq-core-native-system-${project.version}.jar" />

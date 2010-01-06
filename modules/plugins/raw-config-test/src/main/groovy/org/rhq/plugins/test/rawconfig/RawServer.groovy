@@ -10,6 +10,8 @@ import groovy.util.AntBuilder
 
 class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
+  ResourceContext resourceContext
+
   File rawConfigDir
 
   File rawConfig1
@@ -17,6 +19,8 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   def ant = new AntBuilder()
 
   void start(ResourceContext context) {
+    resourceContext = context;
+
     ant = new AntBuilder()
 
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
@@ -72,6 +76,11 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Update failed for ${rawConfiguration.path}");
+    }
+
     ant.copy(file: rawConfiguration.path, tofile: "${rawConfiguration.path}.orig")
     ant.delete(file: rawConfiguration.path)
 
@@ -84,6 +93,10 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void validateRawConfiguration(RawConfiguration rawConfiguration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Validation failed for ${rawConfiguration.path}");
+    }
   }
 
 }

@@ -29,6 +29,12 @@
           class="RawServer"
           discovery="RawDiscoveryComponent"
           description="A fake server component that supports raw configuration">
+
+    <plugin-configuration>
+      <c:simple-property name="failValidation" type="boolean" default="false"/>
+      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+    </plugin-configuration>
+
     <resource-configuration configurationFormat="raw"/>    
   </server>
 
@@ -36,6 +42,12 @@
           class="StructuredServer"
           discovery="StructuredDiscoveryComponent"
           description="A fake server component that supports structured configuration">
+
+    <plugin-configuration>
+      <c:simple-property name="failValidation" type="boolean" default="false"/>
+      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+    </plugin-configuration>
+
     <resource-configuration configurationFormat="structured">
       <c:simple-property name="foo"/>
       <c:simple-property name="bar"/>

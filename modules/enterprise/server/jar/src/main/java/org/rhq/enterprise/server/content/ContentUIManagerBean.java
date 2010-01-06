@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.AdvisoryDetailsComposite;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -263,6 +265,15 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS);
         q.setParameter("ids", iPackageVersionIds);
         List<PackageVersionComposite> results = q.getResultList();
+
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public AdvisoryDetailsComposite loadAdvisoryDetailsComposite(Subject user, Integer advisoryId) {
+        Query q = entityManager.createNamedQuery(Advisory.QUERY_FIND_COMPOSITE_BY_ID);
+        q.setParameter("id", advisoryId);
+        AdvisoryDetailsComposite results = (AdvisoryDetailsComposite) q.getSingleResult();
 
         return results;
     }

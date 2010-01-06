@@ -19,8 +19,6 @@
 package org.rhq.enterprise.server.content.test;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -35,8 +33,6 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
@@ -50,10 +46,9 @@ import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
+import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
-import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 
 public class RepoManagerBeanTest extends AbstractEJB3Test {
 
@@ -67,6 +62,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
+
         TransactionManager tx = getTransactionManager();
         tx.begin();
 
@@ -74,10 +70,7 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
 
-        TestContentServerPluginService pluginService = new TestContentServerPluginService();
-        prepareCustomServerPluginService(pluginService);
-        pluginService.startMasterPluginContainer();
-
+        TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -101,80 +94,12 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         for (int i = 0; i < 10; i++) {
             Random r = new Random(System.currentTimeMillis());
             Repo repo = new Repo(r.nextLong() + "");
-            repoManager.createRepo(overlord, repo).getId();
+            repoManager.createRepo(overlord, repo);
         }
         repos = repoManager.findRepos(overlord, new PageControl());
 
         assert repos.size() == (origsize + 10);
 
-    }
-
-    @Test(enabled = ENABLED)
-    public void testSyncRepos() throws Exception {
-        Repo repo = new Repo("testSyncStatus");
-        repoManager.createRepo(overlord, repo);
-        Integer[] ids = { repo.getId() };
-        int syncCount = repoManager.synchronizeRepos(overlord, ids);
-
-        assert syncCount == 0;
-
-        ContentSourceType cst = new ContentSourceType("testSyncStatus");
-        ContentSource cs = new ContentSource("testSyncStatus", cst);
-
-        EntityManager em = getEntityManager();
-        em.persist(cst);
-        em.persist(cs);
-
-        repo.addContentSource(cs);
-        syncCount = repoManager.synchronizeRepos(overlord, ids);
-
-        assert syncCount == 1;
-    }
-
-    @Test(enabled = ENABLED)
-    public void testSyncStatus() throws Exception {
-        Repo repo = new Repo("testSyncStatus");
-        repoManager.createRepo(overlord, repo).getId();
-
-        Calendar cal = Calendar.getInstance();
-
-        ContentSourceType cst = new ContentSourceType("testSyncStatus");
-        ContentSource cs = new ContentSource("testSyncStatus", cst);
-        EntityManager em = getEntityManager();
-        em.persist(cst);
-        em.persist(cs);
-
-        for (int i = 0; i < 10; i++) {
-            cal.roll(Calendar.DATE, false);
-            ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
-            if (i % 2 == 0 && i != 0) {
-                System.out.println("Setting failed: i: [" + i + "]");
-                results.setStatus(ContentSourceSyncStatus.FAILURE);
-            } else {
-                results.setStatus(ContentSourceSyncStatus.SUCCESS);
-            }
-
-            results.setEndTime(cal.getTimeInMillis());
-            System.out.println("EndTime: " + new Date(results.getEndTime().longValue()));
-            em.persist(results);
-            cs.addSyncResult(results);
-        }
-
-        // Add one with no end time.  This is to test NPE during sorting
-        ContentSourceSyncResults results = new ContentSourceSyncResults(cs);
-        results.setStartTime(cal.getTimeInMillis());
-        em.persist(results);
-        cs.addSyncResult(results);
-
-        repo.addContentSource(cs);
-
-        em.flush();
-        em.close();
-
-        // Check sync status
-        cs.getSyncResults();
-        String status = repoManager.calculateSyncStatus(overlord, repo.getId());
-        assert status.equals(ContentSourceSyncStatus.SUCCESS.toString());
     }
 
     @Test(enabled = ENABLED)
@@ -499,5 +424,45 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         assert repoManager.getRepo(overlord, repo2.getId()) != null;
         assert repoManager.getRepo(overlord, repo3.getId()) != null;
         assert repoManager.getRepo(overlord, repo4.getId()) != null;
+    }
+
+    @Test(enabled = ENABLED)
+    public void updateRepoWithProvider() throws Exception {
+        // See BZ 537216 for more details
+
+        // Setup
+        String newName = "newRepoName";
+        String oldName = "testRepo";
+
+        ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
+
+        Set<ContentSourceType> types = new HashSet<ContentSourceType>(1);
+        types.add(contentSourceType);
+        contentSourceMetadataManager.registerTypes(types);
+
+        ContentSource source = new ContentSource("testSource1", contentSourceType);
+        source = contentSourceManager.simpleCreateContentSource(overlord, source);
+
+        Repo repo = new Repo(oldName);
+        repo = repoManager.createRepo(overlord, repo);
+
+        repoManager.simpleAddContentSourcesToRepo(overlord, repo.getId(), new int[] { source.getId() });
+
+        // Test
+        repo.setName(newName);
+        repoManager.updateRepo(overlord, repo);
+
+        // Verify
+        RepoCriteria byName = new RepoCriteria();
+        byName.addFilterName(newName);
+        PageList<Repo> reposWithNewName = repoManager.findReposByCriteria(overlord, byName);
+
+        assert reposWithNewName.size() == 1;
+
+        byName = new RepoCriteria();
+        byName.addFilterName(oldName);
+        PageList<Repo> reposWithOldName = repoManager.findReposByCriteria(overlord, byName);
+
+        assert reposWithOldName.size() == 0;
     }
 }

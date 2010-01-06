@@ -57,16 +57,22 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         return "importRepos";
     }
 
-    public String syncSelectedContentSources() {
+    public String syncSelectedRepos() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedRepos();
         Integer[] repoIds = getIntegerArray(selected);
 
         if (repoIds.length > 0) {
-            int syncCount = repoManager.synchronizeRepos(subject, repoIds);
+            int syncCount = 0;
+            try {
+                syncCount = repoManager.synchronizeRepos(subject, repoIds);
+            }
+            catch (Exception e) {
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete repositories.", e);
+            }
             if (syncCount > 0) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + syncCount
-                    + "] content sources.");
+                    + "] content providers.");
             } else {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
                     "Selected Repositories have no content to sync.");
@@ -112,7 +118,6 @@ public class ListReposUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<Repo> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();

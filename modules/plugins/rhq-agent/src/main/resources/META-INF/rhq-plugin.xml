@@ -706,7 +706,9 @@
                <c:list-property name="classloaders" description="Classloaders that have been created and are assigned to resources">
                   <c:map-property name="classloader">
                      <c:simple-property name="resourceName" description="Name of the resource that is assigned the classloader" />
-                     <c:simple-property name="resourceId" description="The ID of the resource that is assigned the classloader" />
+                     <c:simple-property name="resourceId"   description="The ID of the resource that is assigned the classloader" />
+                     <c:simple-property name="resourceUuid" description="The UUID of the resource that is assigned the classloader" />
+                     <c:simple-property name="canonicalId" description="Canonical identification data of the resource that is assigned the classloader" />
                      <c:simple-property name="classloaderInfo" description="The information on the resource classloader" />
                   </c:map-property>
                </c:list-property>

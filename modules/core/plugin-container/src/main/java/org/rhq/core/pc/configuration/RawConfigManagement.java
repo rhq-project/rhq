@@ -33,6 +33,8 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public class RawConfigManagement extends ConfigManagementSupport {
@@ -65,10 +67,21 @@ public class RawConfigManagement extends ConfigManagementSupport {
         throws PluginContainerException {
 
         ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+        List<RawUpdateErrorDetail> errors = new LinkedList<RawUpdateErrorDetail>();
 
         for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-            facet.persistRawConfiguration(rawConfig);
+            try {
+                facet.validateRawConfiguration(rawConfig);
+                facet.persistRawConfiguration(rawConfig);
+            }
+            catch (Throwable t) {
+                // TODO Might want to specify in the error detail whether the validate or update call failed
+                errors.add(new RawUpdateErrorDetail(rawConfig, t));
+            }
         }
 
+        if (errors.size() > 0) {
+            throw new RawUpdateException(errors);
+        }
     }
 }

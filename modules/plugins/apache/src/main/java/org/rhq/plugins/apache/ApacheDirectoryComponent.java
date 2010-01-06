@@ -53,7 +53,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
     public static final String DIRECTIVE_INDEX_PROP = "directiveIndex";
     public static final String REGEXP_PROP = "regexp";
     
-    ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
+    private ResourceContext<ApacheVirtualHostServiceComponent> resourceContext;
     
     public void start(ResourceContext<ApacheVirtualHostServiceComponent> context) throws InvalidPluginConfigurationException, Exception {
         resourceContext = context;
@@ -78,25 +78,28 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         ApacheVirtualHostServiceComponent parentVirtualHost = resourceContext.getParentResourceComponent();
-        
-       AugeasTree tree=null;
-         try {
-       tree = parentVirtualHost.getServerConfigurationTree();
-         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-       ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-       AugeasNode directoryNode = getNode(tree.getRootNode());
-       mapping.updateAugeas(directoryNode,report.getConfiguration(), resourceConfigDef);
-       tree.save();
-       
-       report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-       log.info("Apache configuration was updated");
-         }catch(Exception e){
-              if (tree!=null)
-                   log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
-              else
-                   log.error("Augeas failed to save configuration",e);
-          report.setStatus(ConfigurationUpdateStatus.FAILURE);		
-         }
+
+        AugeasTree tree = null;
+        try {
+            tree = parentVirtualHost.getServerConfigurationTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            AugeasNode directoryNode = getNode(tree.getRootNode());
+            mapping.updateAugeas(directoryNode, report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            log.info("Apache configuration was updated");
+            
+            resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+        }
    }
 
 
@@ -108,6 +111,8 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         AugeasNode myNode = getNode(virtualHostNode);
         tree.removeNode(myNode, true);
         tree.save();
+        
+        resourceContext.getParentResourceComponent().conditionalRestart();
     }
 
     /**

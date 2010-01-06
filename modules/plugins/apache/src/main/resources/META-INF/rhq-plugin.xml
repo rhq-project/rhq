@@ -262,6 +262,15 @@
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
 
+         <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
+            <c:description>
+                If set to true, each configuration update of the server or any underlying virtual host or
+                directory is followed by the restart of the Apache instance so that the configuration changes
+                are applied immediatelly. If set to false, you have to manually restart the server (for example
+                using the restart operation in the operations tab) once all the configuration updates are finished.
+            </c:description>
+         </c:simple-property>
+          
           <!-- Augeas Configuration -->
           <c:group name="Augeas Configuraion">
               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"

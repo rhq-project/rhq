@@ -38,7 +38,6 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.util.Glob;
-import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -105,6 +104,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
     public static final String PLUGIN_CONFIG_PROP_VHOST_FILES_MASK = "vhostFilesMask";
     public static final String PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY = "vhostCreationPolicy";
+    
+    public static final String PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE = "restartAfterConfigurationUpdate";
     
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
@@ -304,23 +305,26 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasTree tree=null;
+        AugeasTree tree = null;
         try {
-        tree = getAugeasTree();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-       ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            tree = getAugeasTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
 
-       mapping.updateAugeas(tree.getRootNode(),report.getConfiguration(), resourceConfigDef);
-       tree.save();
-       
-       report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-       log.info("Apache configuration was updated");
-        }catch(Exception e){
-                 if (tree!=null)
-                   log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
-               else
-                   log.error("Augeas failed to save configuration",e);
-          report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+            mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            log.info("Apache configuration was updated");
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            
+            finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
    }
 
@@ -447,6 +451,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                     
                     tree.save();
                     report.setStatus(CreateResourceStatus.SUCCESS);
+                    
+                    finishChildResourceCreate(report);
                 } catch (Exception e) {
                     report.setStatus(CreateResourceStatus.FAILURE);
                     report.setException(e);
@@ -609,6 +615,51 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public ConfigurationTimestamp getConfigurationTimestamp() {
         AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration()); 
         return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+    }
+    
+    /**
+     * This method is supposed to be called from {@link #updateResourceConfiguration(ConfigurationUpdateReport)}
+     * of this resource and any child resources.
+     * 
+     * Based on the plugin configuration of this resource, the Apache instance is either restarted or left as is.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
+        }
+    }
+    
+    /**
+     * This method is akin to {@link #finishConfigurationUpdate(ConfigurationUpdateReport)} but should
+     * be used in the {@link #createResource(CreateResourceReport)} method.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishChildResourceCreate(CreateResourceReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setException(e);
+        }
+    }
+    
+    /**
+     * Conditionally restarts the server based on the settings in the plugin configuration of the server.
+     * 
+     * @throws Exception if the restart fails.
+     */
+    public void conditionalRestart() throws Exception {
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        boolean restart = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE).getBooleanValue();
+        if (restart) {
+            operationsDelegate.invokeOperation("graceful_restart", new Configuration());
+        }
     }
     
     // TODO: Move this method to a helper class.

@@ -23,16 +23,21 @@
 package org.rhq.core.system;
 
 import java.util.Arrays;
-import org.hyperic.sigar.Sigar;
+import java.util.List;
+import java.util.Map;
 
-/**
+import org.hyperic.sigar.*;
+
+ /**
  * The purpose of this class is to provide a simple main class that can be run from the command line so we can send it
  * to the SIGAR project team members when we need to report a bug and they need a simple replication test case. All
  * tests that we replicate with this class needs to also have a corresponding unit test. When the bug is fixed, we can
  * clean out this class's main() for the next replication procedure - we won't lose the test because it will have been
- * duplicated somewhere in our unit test suite.
+ * duplicated somewhere in our unit test suite. In order to make this class as simple as possible for others to compile
+ * and run, it has no dependencies on other RHQ classes.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 public class SigarTest {
     static {
@@ -51,23 +56,47 @@ public class SigarTest {
         Sigar sigar = new Sigar();
         long[] pids = sigar.getProcList();
         for (long pid : pids) {
-            ProcessInfo p = new ProcessInfo(pid);
-            System.out.println("-->info:   " + p);
-            System.out.println("   name:   " + p.getName());
-            System.out.println("   base:   " + p.getBaseName());
-            System.out.println("   pid:    " + p.getPid());
-            System.out.println("   ppid:   " + p.getParentPid());
-            System.out.println("   cmdlin: "
-                + ((p.getCommandLine() != null) ? Arrays.asList(p.getCommandLine()) : "<null>"));
-            System.out.println("   envvar: " + p.getEnvironmentVariables());
+            printNow("*** Retrieving process info for PID [" + pid + "]...");
 
-            System.out.println("   aggr:   " + p.getAggregateProcessTree());
-            System.out.println("   exec:   " + p.getExecutable());
-            System.out.println("   memory: " + p.getMemory());
-            System.out.println("   cpu:    " + p.getCpu());
-            System.out.println("   state:  " + p.getState());
-            System.out.println("   time:   " + p.getTime());
-            System.out.println();
+            ProcExe exe = sigar.getProcExe(pid);
+            printNow("   exe:    " + exe.toMap());
+
+            ProcState state = sigar.getProcState(pid);
+            printNow("   state:  " + state.toMap());
+
+            List<String> args = Arrays.asList(sigar.getProcArgs(pid));
+            printNow("   args:   " + args);
+
+            Map env = sigar.getProcEnv(pid);
+            printNow("   env:    " + env);
+
+            ProcCpu cpu = sigar.getProcCpu(pid);
+            printNow("   cpu:    " + cpu.toMap());
+
+            ProcCred cred = sigar.getProcCred(pid);
+            printNow("   cred:   " + cred.toMap());
+
+            ProcFd fd = sigar.getProcFd(pid);
+            printNow("   fd:     " + fd.toMap());
+
+            ProcMem mem = sigar.getProcMem(pid);
+            printNow("   mem:    " + mem.toMap());
+
+            List modules = sigar.getProcModules(pid);
+            printNow("   modules:" + modules);
+
+            ProcStat stat = sigar.getProcStat();
+            printNow("   stat:   " + stat.toMap());
+
+            ProcTime time = sigar.getProcTime(pid);
+            printNow("   time:   " + time.toMap());
+
+            printNow("");
         }
+    }
+
+    private static void printNow(String s) {
+        System.out.println(s);
+        System.out.flush();
     }
 }

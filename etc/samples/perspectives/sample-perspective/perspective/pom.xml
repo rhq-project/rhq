@@ -43,6 +43,7 @@
          <scope>provided</scope> <!-- provided by the server/plugin-container -->
       </dependency>
 
+      
       <!-- uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog -->
       <!-- all three are provided to your plugin by the server/plugin-container -->
       <!--

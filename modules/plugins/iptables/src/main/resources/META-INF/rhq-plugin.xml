@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Iptables"
+        displayName="Iptables"
+        description="Iptables"
+        package="org.rhq.plugins.iptables"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <service name="Iptables"
+            description="Iptables"
+            discovery="IptablesDiscoveryComponent"
+            class="IptablesComponent">
+
+       <runs-inside>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Windows"  plugin="Platforms"/>
+         <parent-resource-type name="Solaris"  plugin="Platforms"/>
+         <parent-resource-type name="HP-UX"    plugin="Platforms"/>
+         <parent-resource-type name="AIX"      plugin="Platforms"/>
+         <parent-resource-type name="FreeBSD"  plugin="Platforms"/>
+         <parent-resource-type name="Mac OS X" plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
+       </runs-inside>
+
+      <plugin-configuration>
+    		<c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Iptables" required="true" readOnly="true"
+                             description="the name of the Augeas module/lens to use for loading and updating this resource's configuration"/>
+           <c:simple-property name="configurationFilesInclusionPatterns" displayName="Iptables config file" required="true" readOnly="true"
+                               default="/home/fdrabek/Work/iptables" description="Location of the iptables file."/>
+           <c:simple-property name="augeasLoadPath" required="true" readOnly="true"
+                              default="/home/fdrabek/Work"/>
+      </plugin-configuration>
+           
+     <service name="Tables" description="firewall tables" discovery="IptablesTableDiscoveryComponent" class="IptablesTableComponent">
+	    
+     	<service name="Chains" description="firewall chains" discovery="IptablesChainDiscoveryComponent" class="IptablesChainComponent">
+              <resource-configuration>
+               <c:list-property name="chains">
+                <c:map-property name="rule">               
+                        <c:simple-property name="param" displayName="parameter value" type="string" required="true" activationPolicy="immediate"
+                                  description="parameter value"/>   
+                     </c:map-property>
+                    </c:list-property>                   
+               </resource-configuration>  
+     	</service>
+  
+     </service>
+   </service>
+
+</plugin>

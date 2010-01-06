@@ -355,11 +355,11 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
         try {
             connection = getEmsConnection();
             if (null != connection) {
-                deployer = new TomcatApplicationDeployer(connection);
+                deployer = new TomcatApplicationDeployer(connection, getName());
             }
         } catch (Throwable e) {
             log
-                .error("Unable to access MainDeployer MBean required for creation and deletion of managed resources - this should never happen. Cause: "
+                .error("Unable to access Deployer MBean required for creation and deletion of managed resources - this should never happen. Cause: "
                     + e);
         }
 
@@ -374,7 +374,7 @@ public class TomcatVHostComponent extends MBeanResourceComponent<TomcatServerCom
 
         TomcatApplicationDeployer deployer = getDeployer();
         if (null == deployer) {
-            throw new IllegalStateException("Unable to undeploy " + contextRoot + ", because MainDeployer MBean could "
+            throw new IllegalStateException("Unable to undeploy " + contextRoot + ", because Deployer MBean could "
                 + "not be accessed - this should never happen.");
         }
 

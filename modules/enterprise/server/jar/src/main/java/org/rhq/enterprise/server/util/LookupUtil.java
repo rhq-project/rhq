@@ -75,16 +75,18 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
+import org.rhq.enterprise.server.content.AdvisoryManagerBean;
+import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerBean;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerBean;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerBean;
@@ -420,6 +422,9 @@ public final class LookupUtil {
         return lookupLocal(DistributionManagerBean.class);
     }
 
+    public static AdvisoryManagerLocal getAdvisoryManagerLocal() {
+        return lookupLocal(AdvisoryManagerBean.class);
+    }
 
     public static AffinityGroupManagerLocal getAffinityGroupManager() {
         return lookupLocal(AffinityGroupManagerBean.class);

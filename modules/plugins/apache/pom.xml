@@ -32,6 +32,26 @@
          <version>1.8.2</version>
       </dependency>
       
+      <dependency>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-platform-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
+      </dependency>
+      
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-augeas-plugin</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.hyperic</groupId>
+        <artifactId>sigar</artifactId>
+        <version>${sigar.version}</version>
+        <scope>provided</scope>
+      </dependency>
+
    </dependencies>
 
    <build>
@@ -93,6 +113,7 @@
                               <copy toDir="target/itest/plugins" flatten="true">
                                  <fileset dir="${settings.localRepository}/">
                                     <include name="org/rhq/rhq-platform-plugin/${project.version}/rhq-platform-plugin-${project.version}.jar" />
+                                    <include name="org/rhq/rhq-augeas-plugin/${project.version}/rhq-augeas-plugin-${project.version}.jar" />
                                  </fileset>
                                  <fileset dir="${project.build.directory}">
                                     <include name="${project.artifactId}-${project.version}.jar" />

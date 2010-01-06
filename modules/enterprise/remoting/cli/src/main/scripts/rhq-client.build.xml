@@ -50,6 +50,7 @@
       <copy file="${settings.localRepository}/i18nlog/i18nlog/${i18nlog.version}/i18nlog-${i18nlog.version}.jar" tofile="${lib.home}/i18nlog-${i18nlog.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jline/jline/${jline.version}/jline-${jline.version}.jar" tofile="${lib.home}/jline-${jline.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/log4j/log4j/${log4j.version}/log4j-${log4j.version}.jar" tofile="${lib.home}/log4j-${log4j.version}.jar" verbose="true" />
+      <copy file="${settings.localRepository}/org/rhq/rhq-remoting-client-api/${project.version}/rhq-remoting-client-api-${project.version}.jar" todir="${lib.home}" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-domain/${project.version}/rhq-core-domain-${project.version}.jar" tofile="${lib.home}/rhq-core-domain-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-core-util/${project.version}/rhq-core-util-${project.version}.jar" tofile="${lib.home}/rhq-core-util-${project.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/org/rhq/rhq-enterprise-server/${project.version}/rhq-enterprise-server-${project.version}.jar" tofile="${lib.home}/rhq-enterprise-server-${project.version}.jar" verbose="true" />
@@ -57,7 +58,6 @@
       <copy file="${settings.localRepository}/jboss/jboss-common/${jboss-common.version}/jboss-common-${jboss-common.version}.jar" tofile="${lib.home}/jboss-common-${jboss-common.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/jboss-remoting/${jboss-remoting.version}/jboss-remoting-${jboss-remoting.version}.jar" tofile="${lib.home}/jboss-remoting-${jboss-remoting.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/jboss/javassist/${jboss-javassist.version}/javassist-${jboss-javassist.version}.jar" tofile="${lib.home}/javassist-${jboss-javassist.version}.jar" verbose="true" />
-      <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
       <copy file="${settings.localRepository}/oswego-concurrent/concurrent/${concurrent.version}/concurrent-${concurrent.version}.jar" tofile="${lib.home}/concurrent-${concurrent.version}.jar" verbose="true" />
       <!-- TODO: This can probaby go away after we stop using EJB classes as Exceptions in the RemoteAPI -->
       <copy file="${settings.localRepository}/javax/persistence/persistence-api/${persistence-api.version}/persistence-api-${persistence-api.version}.jar" tofile="${lib.home}/persistence-api-${persistence-api.version}.jar" verbose="true" />

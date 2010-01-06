@@ -23,12 +23,14 @@ import java.util.List;
 import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -107,13 +109,13 @@ public interface RepoManagerLocal {
 
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
-     * 
+     *
      * There is a weight to the status since this returns the most 'relevant' status:
-     * 
+     *
      * 1) ContentSourceSyncStatus.FAILURE
      * 2) ContentSourceSyncStatus.INPROGRESS
      * 3) ContentSourceSyncStatus.SUCCESS
-     * 
+     *
 
      * @param subject caller
      * @param repoId to calc status for
@@ -124,6 +126,19 @@ public interface RepoManagerLocal {
     /**
      */
     void addContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
+
+    /**
+     * Associates content sources with the given repo. Unlike {@link #addContentSourcesToRepo(Subject, int, int[])},
+     * no further operations will be performed, such as any initial synchronization or initialization.
+     * <p/>
+     * This should only be used for test purposes.
+     *
+     * @param subject          may not be <code>null</code>
+     * @param repoId           must refer to a valid repo in the system
+     * @param contentSourceIds may not be <code>null</code>
+     * @throws Exception if there is an error making the association
+     */
+    void simpleAddContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception;
 
     /**
      */
@@ -254,7 +269,7 @@ public interface RepoManagerLocal {
     PageList<Repo> findReposByCriteria(Subject subject, RepoCriteria criteria);
 
     /**
-     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl) 
+     * @see RepoManagerRemote#findPackageVersionsInRepo(Subject, int, String, PageControl)
      */
     PageList<PackageVersion> findPackageVersionsInRepoByCriteria(Subject subject, PackageVersionCriteria criteria);
 
@@ -284,10 +299,77 @@ public interface RepoManagerLocal {
     PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc);
 
     /**
-     * Syncronize the content associated with the repoIds passed in.
-     * @param repoIds to syncronize
-     * @return count of the number of repositories synced.
+     * @see RepoManagerRemote#findAssociatedAdvisory(Subject, int, PageControl)
      */
-    int synchronizeRepos(Subject subject, Integer[] repoIds);
+    PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc);
+
+    /**
+     * Schedules jobs to synchronize the content associated with the repoIds passed in.
+     *
+     * @param repoIds to synchronize; may not be <code>null</code>
+     * @return count of the number of repositories synced.
+     * @throws Exception if there is an error connecting with the plugin container
+     */
+    int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+
+    /**
+     * Performs the actual synchronization of the given repos.
+     *
+     * @param subject user performing the sync
+     * @param repoIds identifies all repos to be syncced
+     * @return number of repos successfully syncced
+     * @throws Exception if any errors occur
+     */
+    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+
+    /**
+     * Creates a new sync results object. Note that this will return <code>null</code> if the given results object has a
+     * status of INPROGRESS but there is already a sync results object that is still INPROGRESS and has been in that
+     * state for less than 24 hours. Use this to prohibit the system from synchronizing on the same content source
+     * concurrently.
+     *
+     * @param  results the results that should be persisted
+     *
+     * @return the persisted object, or <code>null</code> if another sync is currently inprogress.
+     */
+    RepoSyncResults persistRepoSyncResults(RepoSyncResults results);
+
+    /**
+     * Updates an existing sync results object. Do not use this method to create a new sync results object - use
+     * {@link #persistContentRepoSyncResults(RepoSyncResults)} for that.
+     *
+     * @param  results the existing results that should be or merged
+     *
+     * @return the merged object
+     */
+    RepoSyncResults mergeRepoSyncResults(RepoSyncResults results);
+
+    /**
+     * Allows the caller to page through a list of historical sync results for a content source.
+     *
+     * @param  subject user asking to perform this
+     * @param  contentSourceId The id of a content source.
+     * @param  pc pagination controls
+     *
+     * @return the list of results
+     */
+    PageList<RepoSyncResults> getRepoSyncResults(Subject subject, int repoId, PageControl pc);
+
+    /**
+     * Returns the full sync results object.
+     *
+     * @param  resultsId the ID of the object to return
+     *
+     * @return the full sync results
+     */
+    RepoSyncResults getRepoSyncResults(int resultsId);
+
+    /**
+     * Get the most recent RepoSyncResults for this Repo
+     * @param subject caller
+     * @param repoId to fetch most recent sync results for
+     * @return RepoSyncResults if found, null if not
+     */
+    RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId);
 
 }

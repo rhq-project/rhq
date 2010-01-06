@@ -50,7 +50,7 @@ public interface DistributionManagerLocal {
      * @param subject 
      * @param repoId
      */
-    void deleteDistributionByRepo(Subject subject, int repoId);
+    void deleteDistributionMappingsForRepo(Subject subject, int repoId);
 
     /**
      * Deletes a given instance of distribution object. If the object does not exist

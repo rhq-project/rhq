@@ -255,7 +255,12 @@ public class LinuxPlatformComponent extends PlatformComponent implements Content
             DeployPackagesResponse result = new DeployPackagesResponse(ContentResponseResult.SUCCESS);
             List<String> pkgs = new ArrayList<String>();
             for (ResourcePackageDetails p : packages) {
-                pkgs.add(p.getName());
+                String pkgInfo = p.getName();
+                if ((p.getVersion() != null) && (!p.getVersion().isEmpty())) {
+                    pkgInfo = pkgInfo + "-" + p.getVersion();
+                }
+                log.info("Adding <" + pkgInfo + "> to list of packages to deploy, original package object was: " + p);
+                pkgs.add(pkgInfo);
                 result
                     .addPackageResponse(new DeployIndividualPackageResponse(p.getKey(), ContentResponseResult.SUCCESS));
             }

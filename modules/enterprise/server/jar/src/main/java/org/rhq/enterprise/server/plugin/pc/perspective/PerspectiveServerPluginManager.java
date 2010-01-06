@@ -31,6 +31,8 @@ import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
@@ -45,6 +47,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Pe
  * @author John Mazzitelli
  */
 public class PerspectiveServerPluginManager extends ServerPluginManager {
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private PerspectivePluginMetadataManager metadataManager;
 
@@ -84,16 +87,19 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         super.loadPlugin(env, enabled);
 
-        // merge this perspective into any previously loaded perspective definitions 
         this.metadataManager.loadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
 
+        deployEmbeddedWars(env); // TODO: Should this be done in startPlugin() instead?
+    }
+
+    private void deployEmbeddedWars(ServerPluginEnvironment env) {
         String name = null;
         try {
-            JarFile plugin = new JarFile(env.getPluginUrl().getFile());
-            for (JarEntry entry : Collections.list(plugin.entries())) {
+            JarFile pluginJarFile = new JarFile(env.getPluginUrl().getFile());
+            for (JarEntry entry : Collections.list(pluginJarFile.entries())) {
                 name = entry.getName();
                 if (name.toLowerCase().endsWith(".war")) {
-                    deployWar(env, entry.getName(), plugin.getInputStream(entry));
+                    deployWar(env, entry.getName(), pluginJarFile.getInputStream(entry));
                 }
             }
         } catch (Exception e) {
@@ -129,7 +135,6 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     }
 
     private File writeWarToFile(File destFile, InputStream iStream) throws Exception {
-
         // Delete any previous instance of the file
         if (destFile.exists()) {
             getLog().debug("Existing file found and will be deleted at: " + destFile);
@@ -147,6 +152,21 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
         return destFile;
     }
 
+    @Override
+    protected void startPlugin(String pluginName) {
+        super.startPlugin(pluginName);
+
+        // If the metadata manager is started, then this is a hot deploy (or redeploy) of the perspective, so restart
+        // the metadata manage to merge the metadata from this perspective and all other previously loaded perspectives.
+        // If the metadata manager is *not* started, then this is the initial load of the perspective, and the master PC
+        // will call startPlugins() once all perspectives have been loaded, which will take care of starting the
+        // metadata manager.
+        if (isPluginEnabled(pluginName) && this.metadataManager.isStarted()) {
+            this.metadataManager.stop();
+            this.metadataManager.start();
+        }
+    }
+
     /**
      * All of the plugins have been loaded, so now let the metadata manager sort through the definitions.
      *
@@ -155,8 +175,23 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     @Override
     public synchronized void startPlugins() {
         super.startPlugins();
-
         this.metadataManager.start();
+    }
+
+    @Override
+    protected void stopPlugin(String pluginName) {
+        // TODO: This method can be called in three cases:
+        //       1) hot-undeploy of a plugin
+        //       2) hot-redeploy of a plugin (stopPlugin() is called, then startPlugin() is called)
+        //       3) during shutdown of the plugin container
+        // We only want to restart our metadata manager in case 2, but there's no way for us to tell which case we're
+        // dealing with...
+        /*if (case2 && this.metadataManager.isStarted()) {
+            this.metadataManager.stop();
+            this.metadataManager.start();
+        }*/
+
+        super.stopPlugin(pluginName);
     }
 
     /* (non-Javadoc)
@@ -164,7 +199,7 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
      */
     @Override
     public synchronized void stopPlugins() {
-        // TODO Auto-generated method stub
+        this.metadataManager.stop();
         super.stopPlugins();
     }
 
@@ -176,6 +211,12 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     @Override
     public synchronized void unloadPlugin(String pluginName) throws Exception {
         ServerPluginEnvironment env = getPluginEnvironment(pluginName);
+        undeployWars(env); // TODO: Should this be done in stopPlugin() instead?
+        this.metadataManager.unloadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
+        super.unloadPlugin(pluginName);
+    }
+
+    private void undeployWars(ServerPluginEnvironment env) {
         String name = null;
         try {
             JarFile plugin = new JarFile(env.getPluginUrl().getFile());
@@ -185,14 +226,9 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
                     undeployWar(getDeployFile(env, entry.getName()));
                 }
             }
-
         } catch (Exception e) {
-            getLog().error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);
+            this.log.error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);
         }
-
-        this.metadataManager.unloadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
-
-        super.unloadPlugin(pluginName);
     }
 
     private void undeployWar(File deployFile) {
@@ -213,7 +249,7 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
                 server.invoke(mainDeployer, "undeploy", new Object[] { fileUrl }, new String[] { URL.class.getName() });
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to undeploy perspective WAR [" + deployFile + "].", e);
         }
     }
 

@@ -55,7 +55,7 @@ import javax.persistence.Table;
         + "  FROM ContentSourceSyncResults cssr " + " WHERE cssr.contentSource.id = :contentSourceId ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_CONTENT_SRC_SYNC_ID_SEQ")
 @Table(name = "RHQ_CONTENT_SRC_SYNC")
-public class ContentSourceSyncResults implements Serializable {
+public class ContentSourceSyncResults implements ContentSyncResults, Serializable {
     public static final String QUERY_GET_INPROGRESS_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getInProgressByCSId";
     public static final String QUERY_GET_ALL_BY_CONTENT_SOURCE_ID = "ContentSourceSyncResults.getAllByCSId";
 
@@ -72,7 +72,7 @@ public class ContentSourceSyncResults implements Serializable {
 
     @Column(name = "STATUS", nullable = false)
     @Enumerated(EnumType.STRING)
-    private ContentSourceSyncStatus status;
+    private ContentSyncStatus status;
 
     @Column(name = "START_TIME", nullable = false)
     private long startTime;
@@ -85,7 +85,7 @@ public class ContentSourceSyncResults implements Serializable {
 
     protected ContentSourceSyncResults() {
         this.startTime = System.currentTimeMillis();
-        this.status = ContentSourceSyncStatus.INPROGRESS;
+        this.status = ContentSyncStatus.INPROGRESS;
     }
 
     public ContentSourceSyncResults(ContentSource contentSource) {
@@ -115,11 +115,11 @@ public class ContentSourceSyncResults implements Serializable {
     /**
      * The status that typically indicates if the sync request succeeded, failed or is currently in progress.
      */
-    public ContentSourceSyncStatus getStatus() {
+    public ContentSyncStatus getStatus() {
         return status;
     }
 
-    public void setStatus(ContentSourceSyncStatus status) {
+    public void setStatus(ContentSyncStatus status) {
         this.status = status;
     }
 

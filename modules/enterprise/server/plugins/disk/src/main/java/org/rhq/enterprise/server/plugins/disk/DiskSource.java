@@ -42,6 +42,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
  * This is the most basic <i>reference</i> implementation of a content source. It provides primative package
@@ -116,8 +117,11 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+
+        if (!isPackageSource) {
+            return;
+        }
 
         if (!isPackageSource) {
             return;
@@ -191,8 +195,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
      * @throws Exception if the sync fails
      */
     protected void syncPackages(PackageSyncReport report, String repoName,
-                                List<ContentProviderPackageDetails> packages, File directory)
-        throws Exception {
+        List<ContentProviderPackageDetails> packages, File directory) throws Exception {
 
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
@@ -348,5 +351,10 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         public String architectureName;
         public String resourceTypeName;
         public String resourceTypePluginName;
+    }
+
+    @Override
+    public SyncProgressWeight getSyncProgressWeight() {
+        return new SyncProgressWeight(10, 1, 0, 0, 0);
     }
 }

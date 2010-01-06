@@ -9,36 +9,65 @@
    </parent>
 
    <groupId>org.rhq</groupId>
-   <artifactId>rhq-sshd-plugin</artifactId>
+   <artifactId>rhq-lsof-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>RHQ SSHD Plugin</name>
-   <description>A plugin for managing the OpenSSH daemon</description>
+   <name>RHQ Network Resource Detector Plugin</name>
+   <description>a plugin that uses lsof technology to discovery network resources</description>
 
    <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/sshd</developerConnection>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/lsof/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/plugins/lsof/</developerConnection>
    </scm>
 
    <properties>
-      <scm.module.path>modules/plugins/sshd/</scm.module.path>
+      <scm.module.path>modules/plugins/lsof/</scm.module.path>
    </properties>
 
    <dependencies>
-      <dependency>
-         <groupId>net.augeas</groupId>
-         <artifactId>augeas</artifactId>
-         <version>0.0.1</version>
-      </dependency>
 
       <dependency>
-         <groupId>net.java.dev.jna</groupId>
-         <artifactId>jna</artifactId>
-         <version>${jna.version}</version>
+         <groupId>${rhq.groupId}</groupId>
+         <artifactId>rhq-script-plugin</artifactId>
+         <version>${project.version}</version>
+         <scope>provided</scope>
       </dependency>
 
    </dependencies>
 
+   <build>
+      <plugins>
+
+         <!--
+         <plugin>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>2.0</version>
+            <executions>
+               <execution>
+                  <id>copy-rhq-plugins</id>
+                  <phase>process-resources</phase>
+                  <goals>
+                     <goal>copy</goal>
+                  </goals>
+                  <configuration>
+                     <artifactItems>
+
+                        <artifactItem>
+                           <groupId>org.jboss</groupId>
+                           <artifactId>byteman</artifactId>
+                           <version>1.2.0</version>
+                        </artifactItem>
+
+                     </artifactItems>
+                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                  </configuration>
+               </execution>
+            </executions>
+         </plugin>
+         -->
+
+      </plugins>
+   </build>
 
    <profiles>
       <profile>
@@ -52,6 +81,7 @@
 
          <build>
             <plugins>
+               <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
                   <executions>
@@ -59,8 +89,7 @@
                         <phase>pre-integration-test</phase>
                         <configuration>
                            <tasks>
-                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...
-                              </echo>
+                              <echo>Setting up plugin dependencies for ${project.artifactId}-${project.version}.jar...</echo>
                               <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                               <mkdir dir="target/itest" />
                               <mkdir dir="target/itest/plugins" />
@@ -99,7 +128,6 @@
                   </executions>
                </plugin>
 
-               <!-- Integration testing voodoo to load and test this plugin with its plugin dependencies -->
                <plugin>
                   <artifactId>maven-surefire-plugin</artifactId>
                   <configuration>
@@ -134,6 +162,7 @@
                </plugin>
 
             </plugins>
+
          </build>
       </profile>
 
@@ -143,47 +172,26 @@
          <properties>
             <rhq.rootDir>../../..</rhq.rootDir>
             <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>
-               ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins
-            </rhq.deploymentDir>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/rhq-downloads/rhq-plugins</rhq.deploymentDir>
          </properties>
 
          <build>
             <plugins>
 
                <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
-                  <executions>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
 
                      <execution>
                         <id>deploy</id>
-                        <!--<phase>compile</phase>-->
-                        <configuration>
-                           <tasks>
-                              <mkdir dir="${rhq.deploymentDir}" />
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                              <echo>*** Updating ${deployment.file}...</echo>
-                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                           </tasks>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-
-                     <execution>
-                        <id>deploy-jar-meta-inf</id>
-                        <!--<phase>package</phase>-->
+                        <phase>compile</phase>
                         <configuration>
                           <tasks>
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
-                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
-                               <patternset><include name="META-INF/**" /></patternset>
-                             </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
-                             </jar>
+                            <mkdir dir="${rhq.deploymentDir}" />
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Updating ${deployment.file}...</echo>
+                            <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" update="true" />
                           </tasks>
                         </configuration>
                         <goals>
@@ -192,21 +200,40 @@
                      </execution>
 
                      <execution>
-                        <id>undeploy</id>
-                        <!--<phase>clean</phase>-->
+                        <id>deploy-jar-meta-inf</id>
+                        <phase>package</phase>
                         <configuration>
-                           <tasks>
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                              <echo>*** Deleting ${deployment.file}...</echo>
-                              <delete file="${deployment.file}" />
-                           </tasks>
+                          <tasks>                             
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                             <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
+                             <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
+                               <patternset><include name="META-INF/**" /></patternset>
+                             </unjar>
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             </jar>
+                          </tasks>
                         </configuration>
                         <goals>
-                           <goal>run</goal>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+                     
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                            <echo>*** Deleting ${deployment.file}...</echo>
+                            <delete file="${deployment.file}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
                         </goals>
                      </execution>
 
-                  </executions>
+                   </executions>
                </plugin>
 
             </plugins>

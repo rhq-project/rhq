@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.List;
 
 import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.Swap;
 
 /**
@@ -209,8 +210,33 @@ public interface SystemInfo {
      */
     FileSystemInfo getFileSystem(String path);
 
+    /**
+     * Returns network adapter measurements for the named network adapter interface.
+     * @param interfaceName
+     * @return statistics for the named adapter interface
+     */
     NetworkAdapterStats getNetworkAdapterStats(String interfaceName);
 
+    /**
+     * Returns network stats for connections that match the given address and port.
+     * See {@link #getNetworkConnections(String, int)} for the semantics of the parameters.
+     * 
+     * @param addressName
+     * @param port
+     * @return stats for the connections that are found
+     * 
+     * @see #getNetworkConnections(String, int)
+     */
     NetworkStats getNetworkStats(String addressName, int port);
 
+    /**
+     * Returns information on all known network connections from the given address/port.
+     * If address is <code>null</code>, connections from all local addresses will be returned.
+     * If port is <code>0</code>, then connections on all local ports will be returned.
+     * 
+     * @param addressName if not <code>null</code>, the returned connections are from this local address only
+     * @param port if not <code>0</code>, the returned connections are from this local port only
+     * @return the matched connections
+     */
+    List<NetConnection> getNetworkConnections(String addressName, int port);
 }

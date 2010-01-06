@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.Swap;
 
 import org.rhq.core.util.exec.ProcessExecutor;
@@ -277,11 +278,15 @@ public class JavaSystemInfo implements SystemInfo {
     }
 
     public NetworkAdapterStats getNetworkAdapterStats(String interfaceName) {
-        throw getUnsupportedException("Cannot get network stats");
+        throw getUnsupportedException("Cannot get network adapter stats");
     }
 
     public NetworkStats getNetworkStats(String addressName, int port) {
         throw getUnsupportedException("Cannot get network stats");
+    }
+
+    public List<NetConnection> getNetworkConnections(String addressName, int port) {
+        throw getUnsupportedException("Cannot get network connections");
     }
 
     /**

@@ -447,14 +447,6 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        &DocumentRoot;
-        &DirectoryIndex;
-        &DefaultType;
-        &AddDefaultCharset;
-        &Aliases;
-        &ErrorDocuments;
-        &ServerAdmin;
-        &Timeout;
           <c:list-property name="NameVirtualHost" required="false">
              <c:description>
                  A required directive if you want to configure name-based virtual hosts.
@@ -469,14 +461,6 @@
                 <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
             </c:map-property>
         </c:list-property>
-        &Options;
-        &UseCanonicalName;
-        &UseCanonicalPhysicalPort;        
-        <c:group name="Logging">
-            &ErrorLog;
-            &CustomLogs;
-        </c:group>
-        
       </resource-configuration>
       
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
@@ -669,15 +653,17 @@
             &DocumentRoot;
             &AddDefaultCharset;
             &Aliases;
-            &CustomLogs;
             &DefaultType;
             &DirectoryIndex;
             &ErrorDocuments;
-            &ErrorLog;
             &Timeout;
             &Options;
             &UseCanonicalName;
             &UseCanonicalPhysicalPort;
+            <c:group name="Logging">
+                &ErrorLog;
+                &CustomLogs;
+            </c:group>        
          </resource-configuration>
          
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">

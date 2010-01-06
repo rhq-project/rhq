@@ -136,6 +136,7 @@ function MultiFileEdit() {
 			document.write("<tr id='file-row-" + i + "'class='" + divclass
 					+ "'>");
 			document.write("<td>");
+			document.write("<span style=\"visibility:hidden; \" > XX </span>");
 			document.write("<span id='dirty-span-" + i
 					+ "' style=\"visibility:hidden;\" > * </span>");
 			document.write("</td><td>");

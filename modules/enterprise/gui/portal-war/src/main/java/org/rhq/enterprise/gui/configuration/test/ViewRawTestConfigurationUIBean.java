@@ -16,28 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+package org.rhq.enterprise.gui.configuration.test;
 
-package org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc;
+import org.rhq.enterprise.gui.common.Outcomes;
 
-import java.util.List;
+/**
+ * @author Adam Young
+ */
+public class ViewRawTestConfigurationUIBean extends AbstractTestConfigurationUIBean {
+    public static final String MANAGED_BEAN_NAME = ViewRawTestConfigurationUIBean.class.getSimpleName();
 
-import org.apache.xmlrpc.XmlRpcException;
-import org.apache.xmlrpc.client.XmlRpcClient;
-
-public class ApacheXmlRpcExecutor implements XmlRpcExecutor {
-
-    private XmlRpcClient client;
-
-    public ApacheXmlRpcExecutor(XmlRpcClient clientIn) {
-        this.client = clientIn;
+    public String editConfiguration() {
+        return Outcomes.SUCCESS;
     }
-
-    public Object execute(String methodName, Object[] params) throws XmlRpcException {
-        return client.execute(methodName, params);
-    }
-
-    public Object execute(String pMethodName, List pParams) throws XmlRpcException {
-        return client.execute(pMethodName, pParams);
-    }
-
 }

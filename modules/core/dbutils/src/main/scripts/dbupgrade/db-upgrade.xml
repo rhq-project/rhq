@@ -2755,6 +2755,7 @@
             ALTER TABLE RHQ_ADVISORY_PACKAGE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_PKG_SEQ')
           </statement>
         </schema-directSQL>
+      </schemaSpec>
     </dbupgrade>
   </target>
 </project>

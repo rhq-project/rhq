@@ -3,6 +3,7 @@
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
@@ -15,6 +16,7 @@
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
+	<classpathentry kind="src" path="etc/samples/perspectives/sample-perspective/app/src/main/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
@@ -99,6 +101,7 @@
 	<classpathentry kind="src" path="modules/plugins/postfix/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/postfix/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/cron/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/cron/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
@@ -108,9 +111,7 @@
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
@@ -208,7 +209,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2.jar" sourcepath="/M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-common/3.1.2/xmlrpc-common-3.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/ws/commons/util/ws-commons-util/1.0.2/ws-commons-util-1.0.2.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-digester/commons-digester/1.8/commons-digester-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/pircbot/pircbot/1.4.2/pircbot-1.4.2.jar"/>

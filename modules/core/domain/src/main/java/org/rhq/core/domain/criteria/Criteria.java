@@ -25,6 +25,7 @@ package org.rhq.core.domain.criteria;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -57,6 +59,7 @@ public abstract class Criteria implements Serializable {
 
     private boolean filtersOptional;
     private boolean caseSensitive;
+    private List<Permission> requiredPermissions;
     private boolean strict;
 
     protected Map<String, String> filterOverrides;
@@ -233,6 +236,22 @@ public abstract class Criteria implements Serializable {
     /** subclasses should override as necessary */
     public boolean isSecurityManagerRequired() {
         return false;
+    }
+
+    /**
+     * @return the permissions required by the user on any applicable objects. Typically resource permissions
+     * needed by the user on returned resources or resource related data.
+     */
+    public List<Permission> getRequiredPermissions() {
+        return requiredPermissions;
+    }
+
+    /**
+     * @param requiredPermissions the permissions required by the user on any applicable objects.
+     * Typically resource permissions needed by the user on returned resources or resource related data.
+     */
+    public void addRequiredPermissions(Permission... requiredPermissions) {
+        this.requiredPermissions = Arrays.asList(requiredPermissions);
     }
 
     public PageControl getPageControl() {

@@ -110,7 +110,7 @@ public interface AuthorizationManagerLocal {
      * @param  subject    the current subject or caller
      * @param  resourceId the id of some Resource to check permissions against
      *
-     * @return the set of permissions that the current user possesses for the specified {@link Resource}
+     * @return the set of permissions that the current user possesses for the specified {@link Resource} - never null
      */
     Set<Permission> getExplicitResourcePermissions(Subject subject, int resourceId);
 
@@ -120,7 +120,7 @@ public interface AuthorizationManagerLocal {
      * @param  subject    the current subject or caller
      * @param  resourceId the id of some Resource to check permissions against
      *
-     * @return the set of permissions that the current user implicitly possesses for the specified {@link Resource}
+     * @return the set of permissions that the current user implicitly possesses for the specified {@link Resource} - never null
      */
     Set<Permission> getImplicitResourcePermissions(Subject subject, int resourceId);
 
@@ -130,7 +130,7 @@ public interface AuthorizationManagerLocal {
      * @param  subject the current subject or caller
      * @param  groupId the id of some Group to check permissions against
      *
-     * @return the set of permissions that the current user explicitly possesses for the specified {@link Group}
+     * @return the set of permissions that the current user explicitly possesses for the specified {@link Group} - never null
      */
     Set<Permission> getExplicitGroupPermissions(Subject subject, int groupId);
 
@@ -159,7 +159,7 @@ public interface AuthorizationManagerLocal {
      *
      * @param  subject the current subject or caller
      *
-     * @return the set of global permissions that the current user possesses
+     * @return the set of global permissions that the current user possesses - never null
      */
     Set<Permission> getExplicitGlobalPermissions(Subject subject);
 

@@ -23,6 +23,9 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
+import java.util.EnumSet;
+
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 
 /**
  * The set of facets a Resource supports - used to determine which quicknav icons and tabs to display in the UI.
@@ -46,6 +49,7 @@ public class ResourceFacets implements Serializable {
     private final boolean operation;
     private final boolean content;
     private final boolean callTime;
+    private EnumSet<ResourceTypeFacet> facets;
 
     public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
         boolean configuration, boolean operation, boolean content, boolean callTime) {
@@ -56,7 +60,8 @@ public class ResourceFacets implements Serializable {
         this.configuration = configuration;
         this.operation = operation;
         this.content = content;
-        this.callTime = callTime;
+        this.callTime = callTime;       
+        initEnum();
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
@@ -69,6 +74,7 @@ public class ResourceFacets implements Serializable {
         this.operation = operation.intValue() != 0;
         this.content = content.intValue() != 0;
         this.callTime = callTime.intValue() != 0;
+        initEnum();
     }
 
     public int getResourceTypeId() {
@@ -138,5 +144,25 @@ public class ResourceFacets implements Serializable {
      */
     public boolean isCallTime() {
         return callTime;
+    }
+
+    /**
+     * Returns an enum representation of the facets.
+     *
+     * @return an enum representation of the facets
+     */
+    public EnumSet<ResourceTypeFacet> getFacets() {
+        return facets;
+    }
+
+    private void initEnum() {
+        this.facets = EnumSet.noneOf(ResourceTypeFacet.class);
+        if (measurement) this.facets.add(ResourceTypeFacet.MEASUREMENT);
+        if (event) this.facets.add(ResourceTypeFacet.EVENT);
+        if (pluginConfiguration) this.facets.add(ResourceTypeFacet.PLUGIN_CONFIGURATION);
+        if (configuration) this.facets.add(ResourceTypeFacet.CONFIGURATION);
+        if (operation) this.facets.add(ResourceTypeFacet.OPERATION);
+        if (content) this.facets.add(ResourceTypeFacet.CONTENT);
+        if (callTime) this.facets.add(ResourceTypeFacet.CALL_TIME);
     }
 }

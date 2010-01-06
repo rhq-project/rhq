@@ -34,7 +34,6 @@ function MultiFileEdit() {
 			}
 		}
 	}
-
 	
 	this.setTextAreaValue = function(id) {
 		if (this.currentIndex % 2 == 0) {
@@ -59,20 +58,15 @@ function MultiFileEdit() {
 			document.getElementById("reset-span-" + i).style.visibility = "hidden";			
 		}
 	}
-
 	
 	this.resetFile = function(index){
-				
 		 if (index >= this.originalCopies.length) return;
 		 if (index <   0  ) return;
 		 var original = this.originalCopies[index];
 		 this.archive[index] = new ArchiveFile(original.path,original.contents);
-		 
 		 document.getElementById("dirty-span-" + index).style.visibility = "hidden";
 		 document.getElementById("reset-span-" + index).style.visibility = "hidden";			
-		 
 		 this.setTextAreaValue(index);
-		 
 	}
 	
 	function askConfirm() {
@@ -80,7 +74,6 @@ function MultiFileEdit() {
 	}
 
 	this.updateArchive = function() {
-
 		window.onbeforeunload = askConfirm;
 		this.archive[this.currentIndex].contents = document
 				.getElementById("testForm").textarea.value;
@@ -89,49 +82,20 @@ function MultiFileEdit() {
 		document.getElementById("reset-span-" + this.currentIndex).style.visibility = "visible";
 	}
 
-	this.generateLinks = function() {
-		var i = 0;
-		var style = 0;
-		var divclass = "";
-		document
-				.write("<table BORDER=0 RULES=NONE FRAME=BOX><th><td>Configuration File Paths</td><td></td></th>");
-		for (i = 0; i < multiFileEdit.archive.length; i++) {
-
-			if (i == 0) {
-				divclass = "SelectedRow"
-			} else if (style != 0) {
-				style = 0;
-				divclass = "OddRow"
-			} else {
-				style = 1;
-				divclass = "EvenRow"
-			}
-
-			document.write("<tr id='file-row-" + i + "'class='" + divclass
-					+ "'>");
-			document.write("<td>");
-			document.write("<span id='dirty-span-" + i
-					+ "' style=\"visibility:hidden;\" > * </span>");
-			document.write("</td><td>");
-			document
-					.write("<a href=\"#\"  onclick='multiFileEdit.setTextAreaValue("
-							+ i + ")' >" + multiFileEdit.archive[i].path);
-			document.write("</a>");
-			
-			document.write(" <span id='reset-span-" + i
-					+ "' style=\"visibility:hidden;\" >"); 
-			document.write("<a href='#' onclick=' multiFileEdit.resetFile("+i+");'  >reset</a> </span>");
-			
-			
-			document.write("</td></tr>");
-		}
-		document.write("</table>");
-
+	this.download= function() {
+		var generator = window.open(this.downloadUrl,'');
 	}
-
-	this.drawTable = function() {
-		this.initializeArchive();
-		
+	
+	this.upload = function(){
+		alert("upload called");
+	}
+	
+	this.commit = function(){
+		alert("commit called");
+		return false;
+	}
+	
+	this.drawStyleSheet = function(){
 		document.write("<style type=\"text/css\">");
 		document.write("td.multi-edit-table {");
 		document.write("vertical-align: top;");
@@ -147,8 +111,49 @@ function MultiFileEdit() {
 		document.write("tr.SelectedRow {");
 		document.write("background-color:white;");
 		document.write("}");
+		document.write("span.reset {");
+		document.write("background-color:grey; color:white; visibility:hidden; ");		
+		document.write("}");
+		
+		document.write("</style>");	
+	}
+	
+	this.generateLinks = function() {
+		var i = 0;
+		var style = 0;
+		var divclass = "";
+		document.write("<table BORDER=0 RULES=NONE FRAME=BOX><th><td>Configuration File Paths</td><td></td></th>");
+		for (i = 0; i < multiFileEdit.archive.length; i++) {
+			if (i == 0) {
+				divclass = "SelectedRow"
+			} else if (style != 0) {
+				style = 0;
+				divclass = "OddRow"
+			} else {
+				style = 1;
+				divclass = "EvenRow"
+			}
+			document.write("<tr id='file-row-" + i + "'class='" + divclass
+					+ "'>");
+			document.write("<td>");
+			document.write("<span id='dirty-span-" + i
+					+ "' style=\"visibility:hidden;\" > * </span>");
+			document.write("</td><td>");
+			document.write("<a href=\"#\"  onclick='multiFileEdit.setTextAreaValue("
+							+ i + ")' >" + multiFileEdit.archive[i].path);
+			document.write("</a>");
+			document.write("<span class='reset' id='reset-span-" + i + "' ");
+			document.write(" onmouseup=' multiFileEdit.resetFile("+i+");'>"); 
+			document.write(" Undo</span>");
+			document.write("</td></tr>");
+		}
+		document.write("</table>");
+	}
 
-		document.write("</style>");
+	this.drawTable = function() {
+		this.initializeArchive();
+		this.drawStyleSheet();		
+		
 		document
 				.write("<table class='multi-edit-table' border='0' cellpadding='0' >");
 		document.write("<tbody>");
@@ -175,16 +180,29 @@ function MultiFileEdit() {
 				.write("onkeyup='multiFileEdit.updateArchive();' cols='80' rows='25'>");
 		document.write(multiFileEdit.archive[0].contents);
 		document.write("</textarea>");
-		
-		document.write("<div>upload New Version</div>");
-		document.write("<div>Select A File: <input type='file'  onchange='alert(\"onchange called\");' /> </div>");
-
-		document.write("</form>");
+		if (!this.disabled){
+			document.write("<div>upload New Version</div>");
+			document.write("<div>Select A File: <input type='file'  onchange='multiFileEdit.upload();' /> </div>");
+		}
 
 		document.write("</td>");
 		document.write("</tr>");
+		
+		document.write("<tr>");
+		document.write("<td>");
+		if (!this.disabled){
+			document.write("<input type='submit' value='commit' onclick='multiFileEdit.commit();'/>");
+			document.write("<input type='reset' onclick='multiFileEdit.resetArchive();' />");
+		}
+		document.write("</td>");
+		document.write("<td></td>");
+		document.write("</tr>");
+		
 		document.write("</tbody>");
 		document.write("</table>");
+		
+		
+		
 
 	}
 
@@ -219,9 +237,6 @@ function MultiFileEdit() {
 		generator.document.close();
 	}
 
-	this.download= function() {
-		var generator = window.open(this.downloadUrl,'');
-	}
 	
 }
 

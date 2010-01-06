@@ -1,17 +1,31 @@
 <html><head><title>Next Page,</title>
 </head>
-<body>View Results
+<body>
 
 <a href="edit.html">Edit</a>
-<script language="JavaScript" type="text/javascript" src="multi-file-edit.js"></script>
+
+<form id="testForm" name="viewTestConfigurationForm" method="post"
+	action="view.html" enctype="application/x-www-form-urlencoded">
+
+<script language="JavaScript" type="text/javascript"
+	src="../../../../js/multi-file-edit.js"></script>
 
 <form id="testForm" name="viewTestConfigurationForm" method="post"
 	action="view.html" enctype="application/x-www-form-urlencoded">
 <script type="text/javascript">
-var multiFileEdit = new MultiFileEdit();
-multiFileEdit.disabled=1;
-multiFileEdit.drawTable();
+	var multiFileEdit = new MultiFileEdit();
+	multiFileEdit.disabled=1;
+
+	for (i=0; i <  6 ;i++)
+	{
+		multiFileEdit.addArchive("/tmp/file/"+i, 
+									 "/tmp/file"+i +" archive = "+ i);
+	}
+	multiFileEdit.downloadUrl = "download.html";
+	multiFileEdit.drawTable();
+
 </script> 
+
 </form>
 
 </html>

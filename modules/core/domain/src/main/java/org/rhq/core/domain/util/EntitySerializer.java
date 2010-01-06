@@ -44,6 +44,7 @@ import javax.persistence.Entity;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Id;
 
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -61,6 +62,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy.Subsystem;
 public class EntitySerializer {
     private static Set<Class<? extends Annotation>> PERSISTENCE_ANNOTATIONS = new HashSet<Class<? extends Annotation>>();
     static {
+        PERSISTENCE_ANNOTATIONS.add(Id.class);
         PERSISTENCE_ANNOTATIONS.add(Column.class);
         PERSISTENCE_ANNOTATIONS.add(ManyToOne.class);
         PERSISTENCE_ANNOTATIONS.add(OneToMany.class);

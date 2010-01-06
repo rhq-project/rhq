@@ -204,15 +204,26 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
             File destinationDirectory;
             if (file.getName().endsWith(".jar")) {
                 try {
-                    AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                    if (null == AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
+                        throw new NullPointerException("no xml descriptor found in jar");
+                    }
                     destinationDirectory = getAgentPluginDir();
                 } catch (Exception e) {
                     try {
-                        ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL());
+                        log.debug("[" + file.getAbsolutePath() + "] is not an agent plugin jar (Cause: "
+                            + ThrowableUtil.getAllMessages(e) + "). Will see if its a server plugin jar");
+
+                        if (null == ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(file.toURI().toURL())) {
+                            throw new NullPointerException("no xml descriptor found in jar");
+                        }
                         destinationDirectory = getServerPluginDir();
                     } catch (Exception e1) {
                         // skip it, doesn't look like a valid plugin jar
-                        log.warn("Does not look like [" + file.getAbsolutePath() + "] is a plugin jar - ignoring");
+                        File fixmeFile = new File(file.getAbsolutePath() + ".fixme");
+                        boolean renamed = file.renameTo(fixmeFile);
+                        log.warn("Does not look like [" + (renamed ? fixmeFile : file).getAbsolutePath()
+                            + "] is a plugin jar -(Cause: " + ThrowableUtil.getAllMessages(e1)
+                            + "). It will be ignored. Please fix that file or remove it.");
                         continue;
                     }
                 }

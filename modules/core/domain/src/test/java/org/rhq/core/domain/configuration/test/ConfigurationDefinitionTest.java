@@ -39,6 +39,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.FloatRangeConstraint;
 import org.rhq.core.domain.test.AbstractEJB3Test;
@@ -57,6 +58,7 @@ public class ConfigurationDefinitionTest extends AbstractEJB3Test {
             EntityManager em = getEntityManager();
             ConfigurationDefinition definition = new ConfigurationDefinition(CONFIG_NAME,
                 "Config definition for the thing");
+            definition.setConfigurationFormat(ConfigurationFormat.STRUCTURED);
             definition.put(new PropertyDefinitionSimple("SimpleProp", "My Simple Property", true,
                 PropertySimpleType.STRING));
 

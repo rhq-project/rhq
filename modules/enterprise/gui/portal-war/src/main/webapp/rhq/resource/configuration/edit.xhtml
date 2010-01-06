@@ -27,13 +27,18 @@ THIS TEXT WILL BE REMOVED.
 
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-           You are viewing this in standard mode. Switch to 
-           <h:outputLink value="edit-raw.xhtml">
+         
+         <h:outputText value="#{messages.youareviewingstructured}" />
+	  
+		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredAndRawSupported}" >
+		   <h:outputText value=" #{messages.switch2}" />
+           <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToraw}"  >
              <f:param name="conversationId" value="#{conversation.id}"/>
              <f:param name="id" value="#{ResourceUIBean.id}"/>
-             <h:outputText value=" advanced mode"/>
-           </h:outputLink>
-  
+             <h:outputText value=" files mode"/>
+           </h:commandLink>
+		</h:panelGroup>
+		  
          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
@@ -53,7 +58,6 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
          <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
       </h:panelGroup>
-
    </ui:define>
 
 </ui:composition>

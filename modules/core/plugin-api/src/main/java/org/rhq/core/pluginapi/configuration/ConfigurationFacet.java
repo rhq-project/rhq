@@ -31,7 +31,7 @@ import org.rhq.core.domain.configuration.Property;
  *
  * @author Jason Dobies
  */
-public interface ConfigurationFacet {
+public interface ConfigurationFacet extends ConfigurationFacetSupport {
     /**
      * Returns the current values for the specified resource. Note that the returns configuration is the configuration
      * settings for the managed resource itself, not to be confused with the <i>plugin configuration</i> which is used

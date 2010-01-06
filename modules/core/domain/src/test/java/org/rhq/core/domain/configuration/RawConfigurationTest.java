@@ -28,6 +28,13 @@ import static org.testng.Assert.*;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.testng.annotations.Test;
+import org.rhq.core.util.MessageDigestGenerator;
+
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
+import java.io.IOException;
 
 public class RawConfigurationTest {
 
@@ -77,9 +84,8 @@ public class RawConfigurationTest {
 
         assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
 
-        byte[] contents = rawConfig.getContents();
-        contents[4] = 15;
-        rawConfig.setContents(contents);
+        byte[] newContents = new byte[] {1, 3, 5, 7, 11, 13, 17, 19, 23};
+        rawConfig.setContents(newContents);
 
         actualSha256 = rawConfig.getSha256();
 

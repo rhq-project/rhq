@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -161,6 +162,8 @@ public class PluginUpdate {
 
                 // find out what the latest plugins are available to us
                 List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
+
+                config.setPluginsOnServer(new HashSet(latest_plugins));
 
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(AgentI18NResourceKeys.LATEST_PLUGINS_COUNT, latest_plugins.size());

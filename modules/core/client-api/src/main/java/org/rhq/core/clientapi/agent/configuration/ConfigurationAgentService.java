@@ -78,4 +78,24 @@ public interface ConfigurationAgentService {
      * @throws PluginContainerException if a runtime or plugin error occurs a PluginContainerException is thrown
      */
     Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException;
+
+    /**
+     * If the <code>fromStructured</code> flag is <code>true</code>, then the structured configuration (i.e., <code>
+     * Configuration.properties</code>) is merged into the latest raw configurations returned from the plugin. The
+     * Configuration object returned will consist of the structured configuration along with the merged raw 
+     * configurations. If <code>fromStructured</code> is <code>false</code>, then the raw configurations (i.e., <code>
+     * Configuration.rawConfigurations</code>) is merged into the latest structured configurations returned from the
+     * plugin. The returned Configuration will then consist of the raw configuration along with the merged structured
+     * configuration.
+     *
+     * @param configuration The Configuration with the changes to be merged
+     * @param resourceId The id of the resource to which the configuration belongs
+     * @param fromStructured A flag that if <code>true</code> indicates the merge should be from structured to raw,
+     * otherwise merge from raw to structured.
+     * @return The <strong>merged</strong> configuration, where a merge consists of a refresh of the side being merged
+     * followed by the values of the side merging from being applied to the side being merged into.
+     * @throws PluginContainerException if a runtime or plugin error occurs.
+     */
+    Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
+        throws PluginContainerException;
 }

@@ -67,7 +67,7 @@ public class RawConfigManagement extends ConfigManagementSupport {
         throws PluginContainerException {
 
         ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
-        List<RawUpdateErrorDetail> errors = new LinkedList<RawUpdateErrorDetail>();
+        StringBuilder errors = new StringBuilder();
 
         for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
             try {
@@ -76,12 +76,12 @@ public class RawConfigManagement extends ConfigManagementSupport {
             }
             catch (Throwable t) {
                 // TODO Might want to specify in the error detail whether the validate or update call failed
-                errors.add(new RawUpdateErrorDetail(rawConfig, t));
+                errors.append(t.getMessage()).append("\n\n");
             }
         }
 
-        if (errors.size() > 0) {
-            throw new RawUpdateException(errors);
+        if (errors.length() > 0) {
+            throw new ConfigurationUpdateException(errors.toString());
         }
     }
 }

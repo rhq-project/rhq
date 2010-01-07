@@ -8,9 +8,10 @@ import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
-import groovy.util.AntBuilder
 
 class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
+
+  ResourceContext resourceContext
 
   File rawConfigDir
 
@@ -23,6 +24,8 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   def ant = new AntBuilder()
 
   void start(ResourceContext context) {
+    resourceContext = context
+
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
     rawConfig1 = new File(rawConfigDir, "structured-and-raw-test-1.txt")
     rawConfig2 = new File(rawConfigDir, "structured-and-raw-test-2.txt")
@@ -148,15 +151,42 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   }
 
   void validateRawConfiguration(RawConfiguration rawConfig) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
+    if (failValidation.getBooleanValue()) {
+      def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailValidation").stringValue.split()
+      def match = fileNames.find { rawConfig.path.endsWith(it) }
+
+      if (match) {
+        throw new RuntimeException("Validation failed for ${rawConfig.path}");
+      }
+    }
   }
 
   void validateStructuredConfiguration(Configuration config) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Validation failed for $configuration");
+    }
   }
 
   void persistStructuredConfiguration(Configuration config) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Update failed for $configuration");
+    }
   }
 
   void persistRawConfiguration(RawConfiguration rawConfig) {
+    def failUpdate = resourceContext.pluginConfiguration.getSimple("failRawUpdate")
+    if (failUpdate.getBooleanValue()) {
+      def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailUpdate").stringValue.split()
+      def match = fileNames.find { rawConfig.path.endsWith(it) }
+
+      if (match) {
+        throw new RuntimeException("Update failed for ${rawConfig.path}");
+      }
+    }
+
     ant.copy(file: rawConfig.path, tofile: "${rawConfig.path}.orig")
     ant.delete(file: rawConfig.path)
 

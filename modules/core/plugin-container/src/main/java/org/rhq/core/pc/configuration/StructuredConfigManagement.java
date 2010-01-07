@@ -74,7 +74,8 @@ public class StructuredConfigManagement extends ConfigManagementSupport {
             facet.persistStructuredConfiguration(configuration);
         }
         catch (Throwable t) {
-            throw new StructuredUpdateException(t);
+//            throw new StructuredUpdateException(t);
+            throw new ConfigurationUpdateException(t.getMessage());
         }
     }
 }

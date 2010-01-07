@@ -25,6 +25,7 @@ package org.rhq.core.pc.configuration;
 
 import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.*;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -62,6 +63,12 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
         }
 
         ResourceType resourceType = componentService.getResourceType(resourceId);
+
+        ConfigurationFormat format = resourceType.getResourceConfigurationDefinition().getConfigurationFormat();
+        switch (format) {
+            case RAW: break;
+            default: ;            
+        }
 
         if (isStructured(resourceType)) {
             return new StructuredConfigManagement();

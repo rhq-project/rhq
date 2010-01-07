@@ -128,7 +128,8 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
         structuredMgmt.executeUpdate(resourceId, config);
     }
 
-    @Test(expectedExceptions = {StructuredUpdateException.class})
+//    @Test(expectedExceptions = {StructuredUpdateException.class})
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
     public void exceptionShouldBeThrownWhenValidationFails() throws Exception {
         final Configuration config = new Configuration();
 
@@ -141,7 +142,8 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
         structuredMgmt.executeUpdate(resourceId, config);
     }
 
-    @Test(expectedExceptions = {StructuredUpdateException.class})
+//    @Test(expectedExceptions = {StructuredUpdateException.class})
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
     public void exceptionShouldBeThrownWhenUpdateFails() throws Exception {
         final Configuration config = new Configuration();
 

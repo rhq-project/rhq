@@ -131,13 +131,21 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                     log.error(errMsg);
                     throw new Exception(errMsg, t);
                 }
+
+                String beanName = customUI.getBackingBeanName();
+
+                // Default to <backing-bean-class> value if name is not provided
+                if (beanName == null || beanName.length() == 0) {
+                    beanName = className;
+                }
+
+                backingBeanNameByName.put(shortName, beanName);
             }
 
             AlertSenderInfo info = new AlertSenderInfo(shortName, type.getDescription(), env.getPluginKey());
             info.setUiSnippetUrl(uiSnippetUrl);
             senderInfoByName.put(shortName, info);
             pluginEnvByName.put(shortName, env);
-            backingBeanNameByName.put(shortName, customUI.getBackingBeanName());
         }
     }
 

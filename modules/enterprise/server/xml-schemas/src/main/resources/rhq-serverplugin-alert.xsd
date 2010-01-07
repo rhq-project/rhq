@@ -102,7 +102,7 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="backing-bean-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                <xs:element name="backing-bean-name" minOccurs="0" maxOccurs="1" type="xs:string">
                     <xs:annotation>
                         <xs:documentation>
                             The name of a backing bean used in EL expressions in the ui-snippet.

@@ -85,13 +85,6 @@ public class AlertPluginValidator implements ServerPluginValidator {
                 log.error("Backing bean " + className + " not found for plugin " + shortName);
                 return false;
             }
-
-            beanName = customUI.getBackingBeanName();
-
-            if (beanName == null || beanName.length() == 0) {
-                log.error("Must provide a <backing-bean-name> for " + className + " in plugin " + shortName);
-                return false;
-            }
         }
         return true;
     }

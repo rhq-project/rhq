@@ -130,19 +130,46 @@ public class SambaServerComponent extends AugeasConfigurationComponent implement
     }
 
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
-        OperationResult result = null;
 
-        String foo = name;
+        OperationResult result = null;
 
         if (name.equals("join")) {
           result = updateSmbAds(params);
         }
+        else if (name.equals("disconnect")) {
+          result = disconnectSmbAds(params);
+        }
+        return result;
+    }
+
+    private OperationResult disconnectSmbAds(Configuration params) throws Exception {
+
+        Configuration resourceConfig = this.loadResourceConfiguration();
+        OperationResult result = new OperationResult();
+
+        String username = resourceConfig.getSimple("username").getStringValue();
+        String password = resourceConfig.getSimple("password").getStringValue();
+
+        if (username == null || password == null) {
+            result.setSimpleResult("Missing required connection parameters");
+            return result;
+        }
+
+        StringBuilder netArgs = new StringBuilder();
+        netArgs.append("ads leave");
+        netArgs.append(SPACE + "-U " + username + "%" + password);
+
+        ProcessExecutionResults netResults = execute(NET_PATH, netArgs.toString());
+        String results = netResults.getCapturedOutput();
+
+        result.setSimpleResult(results);
+
         return result;
     }
 
     private OperationResult updateSmbAds(Configuration params) throws Exception {
 
-        Configuration resourceConfig = params;
+        Configuration resourceConfig = this.loadResourceConfiguration();
         OperationResult result = new OperationResult();
 
         String realm = resourceConfig.getSimple("realm").getStringValue();

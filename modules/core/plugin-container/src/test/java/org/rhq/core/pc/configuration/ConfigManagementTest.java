@@ -23,23 +23,24 @@
 
 package org.rhq.core.pc.configuration;
 
+import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pc.util.ComponentService;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.test.JMockTest;
-
-import static org.rhq.test.AssertUtils.*;
-import static org.testng.Assert.assertEquals;
 import org.testng.annotations.BeforeMethod;
 
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
+
+import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
 
 public class ConfigManagementTest extends JMockTest {
 

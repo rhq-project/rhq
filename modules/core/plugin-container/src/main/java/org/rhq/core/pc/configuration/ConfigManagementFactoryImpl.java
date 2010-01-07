@@ -23,13 +23,14 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.*;
-
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.pc.util.ComponentService;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.apache.maven.artifact.versioning.ComparableVersion;
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.util.ComponentService;
+
+import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
+import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
 
 public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
 

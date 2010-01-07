@@ -28,9 +28,10 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertNull;
 
 public class StructuredConfigManagementTest extends ConfigManagementTest {
 
@@ -128,7 +129,6 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
         structuredMgmt.executeUpdate(resourceId, config);
     }
 
-//    @Test(expectedExceptions = {StructuredUpdateException.class})
     @Test(expectedExceptions = {ConfigurationUpdateException.class})
     public void exceptionShouldBeThrownWhenValidationFails() throws Exception {
         final Configuration config = new Configuration();
@@ -142,7 +142,6 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
         structuredMgmt.executeUpdate(resourceId, config);
     }
 
-//    @Test(expectedExceptions = {StructuredUpdateException.class})
     @Test(expectedExceptions = {ConfigurationUpdateException.class})
     public void exceptionShouldBeThrownWhenUpdateFails() throws Exception {
         final Configuration config = new Configuration();

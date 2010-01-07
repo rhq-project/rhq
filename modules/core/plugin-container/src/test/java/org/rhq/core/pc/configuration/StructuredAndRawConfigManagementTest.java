@@ -23,21 +23,21 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.testng.Assert.*;
-import static java.util.Collections.*;
-
-import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.jmock.Expectations;
 
 import java.util.Set;
+
+import static java.util.Collections.EMPTY_SET;
+import static org.testng.Assert.assertNull;
 
 public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 

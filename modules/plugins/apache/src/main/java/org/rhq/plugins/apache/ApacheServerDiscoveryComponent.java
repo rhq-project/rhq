@@ -24,11 +24,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.augeas.AugeasException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
+import org.rhq.augeas.AugeasProxy;
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
+import org.rhq.augeas.util.Glob;
+import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -40,24 +47,28 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
+import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
-import org.rhq.plugins.www.snmp.SNMPClient;
-import org.rhq.plugins.www.snmp.SNMPException;
-import org.rhq.plugins.www.snmp.SNMPSession;
-import org.rhq.plugins.www.snmp.SNMPValue;
+import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
+import org.rhq.plugins.platform.PlatformComponent;
+import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
 /**
- * The discovery component for Apache 1.3/2.x servers.
+ * The discovery component for Apache 2.x servers.
  *
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
+public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponent<PlatformComponent>, ManualAddFacet<PlatformComponent> {
     private static final String PRODUCT_DESCRIPTION = "Apache Web Server";
 
-    private final Log log = LogFactory.getLog(this.getClass());
+    private static final Log log = LogFactory.getLog(ApacheServerDiscoveryComponent.class);
 
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext discoveryContext) throws Exception {
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<PlatformComponent> discoveryContext) throws Exception {
         Set<DiscoveredResourceDetails> discoveredResources = new HashSet<DiscoveredResourceDetails>();
 
         // Process any PC-discovered OS processes...
@@ -109,14 +120,36 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                     ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, serverRoot);
                 pluginConfig.put(serverRootProp);
 
-                String url = getUrl(pluginConfig);
-                Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
-                pluginConfig.put(urlProp);
-
                 PropertySimple configFile = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF,
-                        serverConfigFile);
+                    serverConfigFile);
                 pluginConfig.put(configFile);
+            
+                PropertySimple inclusionGlobs = new PropertySimple(PluginDescriptorBasedAugeasConfiguration.INCLUDE_GLOBS_PROP, serverConfigFile);
+                pluginConfig.put(inclusionGlobs);
+            
+                AugeasTree serverConfig = loadAugeas(pluginConfig);
+                
+                if (serverConfig != null) {
+                    //now check if the httpd.conf doesn't redefine the ServerRoot
+                    List<AugeasNode> serverRoots = serverConfig.matchRelative(serverConfig.getRootNode(), "ServerRoot/param");
+                    if (!serverRoots.isEmpty()) {
+                        serverRoot = AugeasNodeValueUtil.unescape(serverRoots.get(0).getValue());
+                        serverRootProp.setValue(serverRoot);
+                    }
 
+                    String url = getUrl(pluginConfig, serverConfig);
+                    if (url != null) {
+                        Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
+                        pluginConfig.put(urlProp);                    
+                    }
+                    
+                    //now try to detect where to put the new files if vhost-per-file option is selected
+                    String globInclude = scanForGlobInclude(serverConfig);
+                    if (globInclude != null) {
+                        pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, globInclude));
+                    }
+                }
+                
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
                     binaryInfo));
             }
@@ -128,7 +161,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
 
 
     public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
-                                                      ResourceDiscoveryContext discoveryContext)
+                                                      ResourceDiscoveryContext<PlatformComponent> discoveryContext)
             throws InvalidPluginConfigurationException {
         validateServerRootAndServerConfigFile(pluginConfig);
 
@@ -168,7 +201,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         return (version != null) && (version.startsWith("1.3") || version.startsWith("2."));
     }
 
-    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext discoveryContext,
+    private DiscoveredResourceDetails createResourceDetails(ResourceDiscoveryContext<PlatformComponent> discoveryContext,
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
         String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
@@ -182,53 +215,18 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
     }
 
     /**
-     * Return the root URL of the first virtual host (i.e. the "main" Apache server). The URL's host and port is
-     * determined by querying the Apache SNMP agent. The URL's protocol is assumed to be "http" and its path is assumed
-     * to be "/". If the SNMP agent cannot be reached, null will be returned.
-     *
+     * Return the root URL as determined from the Httpd configuration loaded by Augeas.
+     * he URL's protocol is assumed to be "http" and its path is assumed to be "/".
+     *  
      * @param  pluginConfig
      *
      * @return
      *
      * @throws Exception
      */
-    @Nullable
-    private static String getUrl(Configuration pluginConfig) throws Exception {
-        SNMPClient snmpClient = new SNMPClient();
-        try {
-            SNMPSession snmpSession = ApacheServerComponent.getSNMPSession(snmpClient, pluginConfig);
-            if (!snmpSession.ping()) {
-                return null;
-            }
-
-            SNMPValue nameValue;
-            SNMPValue portValue;
-            try {
-                nameValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_NAME);
-            } catch (SNMPException e) {
-                throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_NAME + ": "
-                    + e.getMessage(), e);
-            }
-
-            try {
-                portValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_PORT);
-            } catch (SNMPException e) {
-                throw new Exception("Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": "
-                    + e.getMessage(), e);
-            }
-
-            String host = nameValue.toString();
-            String fullPort = portValue.toString();
-
-            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
-            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
-            // and XXXXX is the actual port number
-            int port = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
-
-            return "http://" + host + ":" + port + "/";
-        } finally {
-            snmpClient.close();
-        }
+    private static String getUrl(Configuration pluginConfig, AugeasTree serverConfig) throws Exception {
+        Address addr = HttpdAddressUtility.getMainServerSampleAddress(serverConfig);
+        return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
     }
 
     @Nullable
@@ -335,5 +333,50 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                 + "' does not exist or is not a regular file. Please make sure the '"
                 + ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF + "' connection property is set correctly.");
         }
+    }
+    
+    private static AugeasTree loadAugeas(Configuration pluginConfiguration) {
+        try {
+            AugeasConfigurationApache config = new AugeasConfigurationApache(pluginConfiguration);
+            String moduleName = config.getAugeasModuleName();
+            AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
+            AugeasProxy augeasProxy = new AugeasProxy(config, builder);
+            augeasProxy.load();
+            return augeasProxy.getAugeasTree(moduleName, true);
+        } catch (AugeasException e) {
+            log.warn("Augeas not installed.");
+            return null;
+        }
+    } 
+    
+    public static String scanForGlobInclude(AugeasTree tree) {
+        try {
+            List<AugeasNode> includes = tree.match("//Include/param");
+            for (AugeasNode n : includes) {
+                String include = n.getValue();
+                if (Glob.isWildcard(include)) {
+                    //we only take the '*.something' into account here
+                    //so that we have a useful mask to base the file names on.
+                    
+                    //the only special glob character allowed is *.
+                    for(char specialChar : GlobFilter.WILDCARD_CHARS) {
+                        if (specialChar == '*') {
+                            if (include.indexOf(specialChar) != include.lastIndexOf(specialChar)) {
+                                //more than 1 star... that's too much
+                                break;
+                            }
+                            //we found what we're looking for...
+                            return include;
+                        }
+                        if (include.indexOf(specialChar) >= 0) {
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to detect glob includes in httpd.conf.", e);
+        }
+        return null;
     }
 }

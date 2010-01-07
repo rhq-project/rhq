@@ -72,13 +72,17 @@ REQUEST PARAMETERS:
             <c:forEach
                var="tab"
                items="#{ResourceUIBean.tabs}">
-               <onc:tab name="#{tab.name}" displayName="#{tab.displayName}" image="#{tab.iconUrl}" url="#{tab.url}">
-                   <c:forEach
-                        var="subtab"
-                        items="#{tab.children}">
-                       <onc:subtab name="#{subtab.name}" displayName="#{subtab.displayName}" url="#{subtab.url}" />
-                   </c:forEach>
-               </onc:tab>
+               <c:if test="#{not tab.debugMode or GlobalPermissionsUIBean.debugMode}">
+                   <onc:tab name="#{tab.name}" displayName="#{tab.displayName}" image="#{tab.iconUrl}" url="#{tab.url}">
+                       <c:forEach
+                            var="subtab"
+                            items="#{tab.children}">
+                           <c:if test="#{not subtab.debugMode or GlobalPermissionsUIBean.debugMode}">
+                               <onc:subtab name="#{subtab.name}" displayName="#{subtab.displayName}" url="#{subtab.url}" />
+                           </c:if>
+                       </c:forEach>
+                   </onc:tab>
+                </c:if>
             </c:forEach>          
 
       </onc:tabBar>

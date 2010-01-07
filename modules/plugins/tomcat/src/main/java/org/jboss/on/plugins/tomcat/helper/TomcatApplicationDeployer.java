@@ -34,17 +34,16 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
  * @author Ian Springer
  */
 public class TomcatApplicationDeployer {
-    static public final String DEPLOYER_BEAN = "Catalina:type=Deployer,host=localhost";
-
     private final Log log = LogFactory.getLog(this.getClass());
 
     private EmsOperation deployOperation;
     private EmsOperation undeployOperation;
 
-    public TomcatApplicationDeployer(EmsConnection connection) throws NoSuchMethodException {
-        EmsBean mainDeployer = connection.getBean(DEPLOYER_BEAN);
+    public TomcatApplicationDeployer(EmsConnection connection, String vhostName) throws NoSuchMethodException {
+        String deployerBean = getDeployerBeanName(vhostName);
+        EmsBean mainDeployer = connection.getBean(deployerBean);
         if (mainDeployer == null) {
-            throw new IllegalStateException("MBean named [" + DEPLOYER_BEAN + "] does not exist.");
+            throw new IllegalStateException("MBean named [" + deployerBean + "] does not exist.");
         }
 
         connection.getConnectionProvider().getConnectionSettings().getClassPathEntries();
@@ -52,10 +51,14 @@ public class TomcatApplicationDeployer {
         this.undeployOperation = EmsUtility.getOperation(mainDeployer, "removeServiced", String.class);
     }
 
+    private String getDeployerBeanName(String vhostName) {
+        return "Catalina:type=Deployer,host=" + ((null == vhostName) ? "localhost" : vhostName);
+    }
+
     public void deploy(String contextPath) throws DeployerException {
         log.debug("Servicing " + contextPath + "...");
         try {
-            this.deployOperation.invoke(new Object[] {contextPath});
+            this.deployOperation.invoke(new Object[] { contextPath });
         } catch (RuntimeException e) {
             throw new DeployerException("Failed to service " + contextPath, e);
         }
@@ -64,13 +67,15 @@ public class TomcatApplicationDeployer {
     public void undeploy(String contextPath) throws DeployerException {
         log.debug("Undeploying " + contextPath + "...");
         try {
-            this.undeployOperation.invoke(new Object[] {contextPath});
+            this.undeployOperation.invoke(new Object[] { contextPath });
         } catch (RuntimeException e) {
             throw new DeployerException("Failed to undeploy " + contextPath, e);
         }
     }
 
     public class DeployerException extends Exception {
+        private static final long serialVersionUID = 1L;
+
         DeployerException(String message) {
             super(message);
         }

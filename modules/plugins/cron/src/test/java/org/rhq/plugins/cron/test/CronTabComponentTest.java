@@ -24,6 +24,7 @@
 package org.rhq.plugins.cron.test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 /**
@@ -44,25 +46,16 @@ import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 public class CronTabComponentTest extends AbstractAugeasConfigurationComponentTest {
 
     @Override
-    public void start() {
-        //do nothing..
-        //this method is intentionally not annotated with @BeforeSuite as its parent, so 
-        //that it actually isn't run.. we need to run the @BeforeSuite only once and that
-        //is done in the CronComponentTest
+    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig) {
+        super.tweakDefaultPluginConfig(defaultPluginConfig);
+        //the base cannot support the /etc/cron.d/* glob pattern because it reads stuff from the classloader resource stream
+        //that doesn't support searching (or does it?)
+        //so we have to update the include globs to include only concrete file paths
+        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, CronComponentTest.INCLUDE_GLOBS));
     }
 
     @Override
-    public void stop() {
-        //do nothing.. the cron component test will take care of teardown
-        //as with start() method, this is intentionally not annotated...
-    }
-
-    public void resetConfigFiles() throws IOException {
-        //make this a non-test method so that only the one on the cron component gets executed.
-    }
-    
-    @Override
-    protected Resource getResource() {
+    protected Set<Resource> getResources() {
         //let's pick the "another-crontab" file
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceType resourceType = getResourceType();
@@ -70,10 +63,10 @@ public class CronTabComponentTest extends AbstractAugeasConfigurationComponentTe
         
         for(Resource res : resources) {
             if ("/etc/cron.d/another-crontab".equals(res.getResourceKey())) {
-                return res;
+                return Collections.singleton(res);
             }
         }
-        return null;
+        return Collections.emptySet();
     }
 
     @Override

@@ -23,6 +23,9 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.parser.RssParser;
+
 import org.apache.commons.httpclient.Credentials;
 import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -39,9 +42,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
-
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.parser.RssParser;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
  * Hook into the server to field requests on JBoss software related packages.
@@ -111,7 +112,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
         if (!active)
             return;
 
@@ -194,13 +195,13 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
             int status = client.executeMethod(method);
 
             if (status == 404) {
-                throw new Exception("Could not find the feed at URL [" + url + "]. Make sure the URL field correctly " +
-                    "refers to the CSP feed location.");
+                throw new Exception("Could not find the feed at URL [" + url + "]. Make sure the URL field correctly "
+                    + "refers to the CSP feed location.");
             }
 
             if (status == 401 || status == 403) {
-                throw new Exception("Invalid login credentials specified for user [" + username + "]. Make sure " +
-                    "this user has an active account at the CSP and that the password is correct.");
+                throw new Exception("Invalid login credentials specified for user [" + username + "]. Make sure "
+                    + "this user has an active account at the CSP and that the password is correct.");
             }
 
             if (status != 200) {
@@ -241,6 +242,11 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
                 client.getState().setProxyCredentials(proxyAuthScope, proxyCredentials);
             }
         }
+    }
+
+    @Override
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 
 }

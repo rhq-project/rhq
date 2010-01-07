@@ -57,9 +57,9 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length
-                    + "] content sources.");
+                    + "] content providers.");
             } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete content sources.", e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to delete content providers.", e);
             }
         }
 
@@ -78,10 +78,10 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
                 }
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing [" + ids.length
-                    + "] content sources.");
+                    + "] content providers.");
             } catch (Exception e) {
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to synchronized content sources.",
-                    e);
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                    "Failed to synchronized content providers.", e);
             }
         }
 
@@ -103,7 +103,6 @@ public class ListContentSourcesUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<ContentSource> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();

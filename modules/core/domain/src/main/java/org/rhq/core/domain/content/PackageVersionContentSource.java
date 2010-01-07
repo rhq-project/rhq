@@ -76,17 +76,24 @@ import javax.persistence.Table;
 
     // this is the same as FIND_BY_CONTENT_SOURCE_ID, but it only returns those PVs whose bits are not loaded yet
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_NOT_LOADED, query = "SELECT pvcs "
-        + "  FROM PackageVersionContentSource pvcs "
-        + "       LEFT JOIN FETCH pvcs.packageVersion pv "
-        + "       LEFT JOIN FETCH pv.generalPackage gp "
-        + "       LEFT JOIN FETCH gp.packageType pt "
-        + "       LEFT JOIN FETCH pv.architecture arch "
-        + "       LEFT JOIN FETCH pv.extraProperties extra "
-        + " WHERE pvcs.contentSource.id = :id " + "   AND pv.packageBits IS NULL "),
+        + "  FROM PackageVersionContentSource pvcs " //
+        + "       LEFT JOIN FETCH pvcs.packageVersion pv " //
+        + "       LEFT JOIN FETCH pv.generalPackage gp " //
+        + "       LEFT JOIN FETCH gp.packageType pt " //
+        + "       LEFT JOIN FETCH pv.architecture arch " //
+        + "       LEFT JOIN FETCH pv.extraProperties extra " //
+        + " WHERE pvcs.contentSource.id = :id " //
+        + "   AND pv.packageBits IS NULL " //
+        + "   AND pv.id IN " //
+        + "   (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv " //
+        + "     WHERE rpv.repo.id = :repo_id)"),
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_CONTENT_SOURCE_ID_AND_NOT_LOADED_COUNT, query = "SELECT COUNT(pvcs.contentSource.id) "
         + "  FROM PackageVersionContentSource pvcs "
         + " WHERE pvcs.contentSource.id = :id "
-        + "   AND pvcs.packageVersion.packageBits IS NULL "),
+        + "   AND pvcs.packageVersion.packageBits IS NULL "
+        + "   AND pvcs.packageVersion.id IN " //
+        + "   (SELECT rpv.packageVersion.id FROM RepoPackageVersion rpv " //
+        + "     WHERE rpv.repo.id = :repo_id)"),
 
     // finds the set of content sources that can deliver the pkg ver to the subscribed resource
     @NamedQuery(name = PackageVersionContentSource.QUERY_FIND_BY_PKG_VER_ID_AND_RES_ID, query = "SELECT pvcs "

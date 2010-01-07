@@ -19,35 +19,27 @@
 package org.rhq.enterprise.server.perspective;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceFacets;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.FacetActivatorSetType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.FacetActivatorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorSetType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionActivatorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalPermissionType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorType;
+import org.rhq.enterprise.server.perspective.activator.Activator;
+import org.rhq.enterprise.server.perspective.activator.context.ActivationContext;
+import org.rhq.enterprise.server.perspective.activator.context.ActivationContextScope;
+import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationContext;
+import org.rhq.enterprise.server.perspective.activator.context.ResourceActivationContext;
+import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePluginMetadataManager;
 
 @Stateless
 // @WebService(endpointInterface = "org.rhq.enterprise.server.perspective.PerspectiveManagerRemote")
@@ -63,162 +55,123 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     // This should more appropriately use Subject as the key, but since Subject equality is
     // based on username, it's not quite appropriate.
     // The cache is cleaned anytime there is a new entry.
-    static private Map<Integer, CacheEntry> cache = new HashMap<Integer, CacheEntry>();
-
-    static private Map<Integer, String> urlMap = new HashMap<Integer, String>();
-
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
-
-    @EJB
-    private AuthorizationManagerLocal authorizationManager;
+    static final private Map<Integer, CacheEntry> CACHE = new HashMap<Integer, CacheEntry>();
 
     @EJB
     private SubjectManagerLocal subjectManager;
 
-    @EJB
-    private ResourceTypeManagerLocal resourceTypeManager;
-
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getCoreMenu(org.rhq.core.domain.auth.Subject)
      */
-    public synchronized List<MenuItem> getCoreMenu(Subject subject) throws PerspectiveException {
-        Integer sessionId = subject.getSessionId();
-        CacheEntry cacheEntry = cache.get(sessionId);
-
-        if (null == cacheEntry) {
-            // take this opportunity to clean the cache
-            cleanCache();
-
-            cacheEntry = new CacheEntry();
-            cache.put(sessionId, cacheEntry);
-        }
-
-        List<MenuItem> coreMenu = cacheEntry.getCoreMenu();
-
-        if (null == coreMenu) {
-            try {
-                coreMenu = PerspectiveManagerHelper.getPluginMetadataManager().getCoreMenu();
-
-                // We have to be careful not to mess with the core menu as it is returned from
-                // the perspective manager. The core menu for each subject/sessionid could
-                // differ based on activation checks. So, get a new menu structure when applying
-                // activation filters.
-                coreMenu = getActivatedMenu(subject, coreMenu);
-
-                cacheEntry.setCoreMenu(coreMenu);
-            } catch (Exception e) {
-                throw new PerspectiveException("Failed to get Core Menu.", e);
-            }
-        }
-
-        return coreMenu;
+    public synchronized List<MenuItem> getMenu(Subject subject) throws PerspectiveException {
+        CacheEntry cacheEntry = getCacheEntry(subject);
+        List<MenuItem> menu = cacheEntry.getMenu();
+        return menu;
     }
 
     @NotNull
     public List<Tab> getResourceTabs(Subject subject, Resource resource) {
-        List<Tab> resourceTabs;
-        try
-        {
-            resourceTabs = PerspectiveManagerHelper.getPluginMetadataManager().getResourceTabs();
-        }
-        catch (Exception e)
-        {
-            throw new RuntimeException(e);
-        }
+        // First get a cached copy of the tabs that has the global-scoped activators already applied in the context of
+        // the current Subject.
+        CacheEntry cacheEntry = getCacheEntry(subject);
+        List<Tab> tabs = cacheEntry.getTabs();
 
-        List<Tab> activeResourceTabs = new ArrayList<Tab>();
-        ResourceFacets facets = this.resourceTypeManager.getResourceFacets(resource.getResourceType().getId());
-        for (Tab resourceTab : resourceTabs) {
-            if (isActive(resourceTab, facets)) {
-                activeResourceTabs.add(resourceTab);                                
-                List<Tab> subtabs = resourceTab.getChildren();
-                List<Tab> activeSubtabs = new ArrayList<Tab>();
-                for (Tab subtab : subtabs)
-                {
-                    if (isActive(subtab, facets)) {
-                        activeSubtabs.add(subtab);
-                    }
-                }
-                resourceTab.setChildren(activeSubtabs);
-            }
-        }
-        // TODO: Cache these at some level.
-        return activeResourceTabs;
+        // Now apply the Resource-scoped activators in the context of the current Resource.
+        ResourceActivationContext context = new ResourceActivationContext(subject, resource);
+        EnumSet<ActivationContextScope> scopes = EnumSet.of(ActivationContextScope.RESOURCE_OR_GROUP);
+        List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, tabs);
+
+        return filteredTabs;
     }
 
-    private boolean isActive(Tab resourceTab, ResourceFacets facets)
-    {
-        // TODO: Check global perm activators.
-        // TODO: Check monitoring license activator.
-        List<ResourceActivatorSetType> currentResourceActivatorSets = resourceTab.getCurrentResourceOrGroupActivatorSets();
-        if (currentResourceActivatorSets != null) {
-            for (ResourceActivatorSetType currentResourceActivatorSet : currentResourceActivatorSets) {
-                List<ResourceActivatorType> resourceActivators = currentResourceActivatorSet.getResourceActivator();
-                for (ResourceActivatorType resourceActivator : resourceActivators) {
-                    // TODO: Check resourceType activators.
-                    // TODO: Check resource permission activators.
-                    FacetActivatorSetType facetActivatorSet = resourceActivator.getFacetActivatorSet();
-                    List<FacetActivatorType> facetActivators = facetActivatorSet.getFacetActivator();
-                    for (FacetActivatorType facetActivator : facetActivators) {
-                        String facetName = facetActivator.getFacet().value();
-                        // TODO: Create a Facets enum to avoid these ugly string comparisons.
-                        if (facetName.equals("measurement") && !facets.isMeasurement()) {
-                            return false;
-                        }
-                        if (facetName.equals("event") && !facets.isEvent()) {
-                            return false;
-                        }
-                        if (facetName.equals("pluginConfiguration") && !facets.isPluginConfiguration()) {
-                            return false;
-                        }
-                        if (facetName.equals("configuration") && !facets.isConfiguration()) {
-                            return false;
-                        }
-                        if (facetName.equals("operation") && !facets.isOperation()) {
-                            return false;
-                        }
-                        if (facetName.equals("content") && !facets.isOperation()) {
-                            return false;
-                        }
-                        if (facetName.equals("callTime") && !facets.isCallTime()) {
-                            return false;
-                        }
-                    }
+    /**
+     * Recursively applies activators, based on the specified contexts, to a menu, and returns a
+     * filtered, deep copy of the menu. The supplied <menu> is unmodified.
+     */
+    private List<MenuItem> applyActivatorsToMenu(ActivationContext context, EnumSet<ActivationContextScope> scopes,
+        List<MenuItem> menu) {
+
+        List<MenuItem> filteredMenu = new ArrayList<MenuItem>();
+        for (MenuItem menuItem : menu) {
+            if (isActive(context, scopes, menuItem)) {
+                MenuItem clone = null;
+                try {
+                    clone = (MenuItem) menuItem.clone();
+                } catch (CloneNotSupportedException e) {
+                    log.error("Invalid Clone - This should not happen: " + e);
                 }
+
+                filteredMenu.add(clone);
+                // Recurse...
+                List<MenuItem> filteredChildren = applyActivatorsToMenu(context, scopes, clone.getChildren());
+                clone.setChildren(filteredChildren);
+            }
+        }
+        return filteredMenu;
+    }
+
+    /**
+     * Recursively applies activators, based on the specified contexts, to a list of tabs, and returns a
+     * filtered, deep copy of the list. The supplied <tabs> are unmodified.
+     */
+    private List<Tab> applyActivatorsToTabs(ActivationContext context, EnumSet<ActivationContextScope> scopes,
+        List<Tab> tabs) {
+
+        List<Tab> filteredTabs = new ArrayList<Tab>();
+        for (Tab tab : tabs) {
+            if (isActive(context, scopes, tab)) {
+                Tab clone = null;
+                try {
+                    clone = (Tab) tab.clone();
+                } catch (CloneNotSupportedException e) {
+                    log.error("Invalid Clone - This should not happen: " + e);
+                }
+                filteredTabs.add(clone);
+                // Recurse...
+                List<Tab> filteredChildren = applyActivatorsToTabs(context, scopes, clone.getChildren());
+                clone.setChildren(filteredChildren);
+            }
+        }
+        return filteredTabs;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
+        List<Activator> activators = extension.getActivators();
+        for (Activator activator : activators) {
+            if (scopes.contains(activator.getScope()) && !activator.isActive(context)) {
+                return false;
             }
         }
         return true;
     }
 
-    /**
-     * Return a unique key for the url.
-     * @param url
-     * @return
-     */
-    public synchronized int getUrlKey(String url) {
-        int key = url.hashCode();
+    private CacheEntry getCacheEntry(Subject subject) {
+        Integer sessionId = subject.getSessionId();
+        CacheEntry cacheEntry = CACHE.get(sessionId);
+        long metadataLastModifiedTime = getPluginMetadataManager().getLastModifiedTime();
+        if (cacheEntry == null ||
+            cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
+            // Take this opportunity to clean expired sessions from the cache.
+            cleanCache();
 
-        // in the very unlikely case that we have multiple urls with the same hashcode, protect
-        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
-        String mapEntry = urlMap.get(key);
-        while (!((null == mapEntry) || mapEntry.equals(url))) {
-            key *= 13;
-            mapEntry = urlMap.get(key);
+            GlobalActivationContext context = new GlobalActivationContext(subject);
+            EnumSet<ActivationContextScope> scopes = EnumSet.of(ActivationContextScope.GLOBAL);
+
+            List<MenuItem> baseMenu = getPluginMetadataManager().getMenu();
+            List<MenuItem> filteredMenu = applyActivatorsToMenu(context, scopes, baseMenu);
+
+            List<Tab> baseTabs = getPluginMetadataManager().getResourceTabs();
+            List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, baseTabs);
+
+            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs);
+            CACHE.put(sessionId, cacheEntry);
         }
-
-        if (null == mapEntry) {
-            urlMap.put(key, url);
-        }
-
-        return key;
+        return cacheEntry;
     }
 
-    /**
-     * Return the url for the given key.
-     */
-    public String getUrlViaKey(int key) {
-        return urlMap.get(key);
+    private PerspectivePluginMetadataManager getPluginMetadataManager() {
+        return PerspectiveManagerHelper.getPluginMetadataManager();
     }
 
     // TODO: Is there any sort of listener approach we could use to clear an individual cache entry
@@ -227,93 +180,18 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     private void cleanCache() {
         Subject subject;
 
-        for (Integer sessionId : cache.keySet()) {
+        for (Integer sessionId : CACHE.keySet()) {
             try {
-                subject = subjectManager.getSessionSubject(sessionId);
+                subject = subjectManager.getSubjectBySessionId(sessionId);
                 if (null == subject) {
                     log.debug("Removing perspective cache entry for session " + sessionId);
-                    cache.remove(sessionId);
+                    CACHE.remove(sessionId);
                 }
             } catch (Exception e) {
                 log.debug("Removing perspective cache entry for session " + sessionId);
-                cache.remove(sessionId);
+                CACHE.remove(sessionId);
             }
         }
-    }
-
-    /**
-     * Given a menu return a filtered copy such that inactive menu items are not present. Recursively
-     * handles children menus.
-     * 
-     * @param subject
-     * @param coreMenu
-     * @return A filtered copy of the menu structure. This results in new Lists and new MenuItems
-     * that refer to the original MenuItemType objects.
-     */
-    private List<MenuItem> getActivatedMenu(Subject subject, List<MenuItem> menu) {
-        List<MenuItem> result = new ArrayList<MenuItem>(menu.size());
-
-        for (MenuItem menuItem : menu) {
-            MenuItemType item = menuItem.getItem();
-            List<ResourceActivatorSetType> inventoriedResourceActivatorSet = item.getInventoriedResourceActivatorSet();
-            List<GlobalPermissionActivatorSetType> globalPermissionActivatorSet = item
-                .getGlobalPermissionActivatorSet();
-
-            // Make sure activators are satisfied before copying
-            if (checkActivators(subject, inventoriedResourceActivatorSet, globalPermissionActivatorSet)) {
-                MenuItem copy = new MenuItem(menuItem.getItem());
-
-                result.add(copy);
-                if (menuItem.isMenuGroup()) {
-                    copy.setChildren(getActivatedMenu(subject, menuItem.getChildren()));
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private boolean checkActivators(Subject subject, List<ResourceActivatorSetType> resourceActivatorSets,
-        List<GlobalPermissionActivatorSetType> permissionActivatorSets) {
-
-        // global perm checking is relatively fast, make sure these pass before checking inventory activators
-        for (GlobalPermissionActivatorSetType permissionActivatorSet : permissionActivatorSets) {
-            boolean any = permissionActivatorSet.isAny();
-            boolean anyPassed = false;
-            boolean anyFailed = false;
-
-            for (GlobalPermissionActivatorType permissionActivator : permissionActivatorSet
-                .getGlobalPermissionActivator()) {
-                boolean hasPermission = hasGlobalPermission(subject, permissionActivator.getPermission());
-                anyPassed = hasPermission;
-                anyFailed = !hasPermission;
-
-                if (any && anyPassed) {
-                    break;
-                }
-                if (!any && anyFailed) {
-                    break;
-                }
-            }
-
-            if ((any && !anyPassed) || (!any && anyFailed)) {
-                return false;
-            }
-        }
-
-        for (ResourceActivatorSetType resourceActivatorSet : resourceActivatorSets) {
-            //TODO: impl
-        }
-
-        return true;
-    }
-
-    private boolean hasGlobalPermission(Subject subject, GlobalPermissionType permissionType) {
-        if (permissionType == GlobalPermissionType.SUPERUSER) {
-            return authorizationManager.isSystemSuperuser(subject);
-        }
-
-        return authorizationManager.hasGlobalPermission(subject, Permission.valueOf(permissionType.name()));
     }
 
     // TODO: remove this debug code
@@ -323,29 +201,54 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             return;
 
         for (MenuItem menuItem : menu) {
-            System.out.println(indent + menuItem.getItem().getName());
+            System.out.println(indent + menuItem.getName());
             printMenu(menuItem.getChildren(), indent + "..");
         }
     }
 
     private static class CacheEntry {
-        private List<MenuItem> coreMenu = null;
+        private long metadataLastModifiedTime;
 
-        public CacheEntry() {
+        // This is a copy of the base menu that has had all global-scoped activators already applied to it.
+        // We cache it because the variables used by the global activators do not change very often.
+        private List<MenuItem> menu;
+
+        // This is a copy of the base tabs that has had all global-scoped activators already applied to it.
+        // We cache it because the variables used by the global activators do not change very often.
+        private List<Tab> tabs;
+
+        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs) {
+            this.metadataLastModifiedTime = metadataLastModifiedTime;
+            this.menu = menu;
+            this.tabs = tabs;
         }
 
-        /**
-         * @return the coreMenu
-         */
-        public List<MenuItem> getCoreMenu() {
-            return coreMenu;
+        public long getMetadataLastModifiedTime() {
+            return metadataLastModifiedTime;
         }
 
-        /**
-         * @param coreMenu the coreMenu to set
-         */
-        public void setCoreMenu(List<MenuItem> coreMenu) {
-            this.coreMenu = coreMenu;
+        public List<MenuItem> getMenu() {
+            return menu;
+        }
+
+        public List<Tab> getTabs() {
+            return tabs;
+        }
+    }
+
+    /**
+     * Given a targetUrlKey parameter value, as set in the extension, resolve that key into the targetUrl
+     * for the extension's content.
+     * 
+     * @param key, a valid key
+     * @return the target url
+     * 
+     */
+    public String getUrlViaKey(int key) throws PerspectiveException {
+        try {
+            return getPluginMetadataManager().getUrlViaKey(key);
+        } catch (Exception e) {
+            throw new PerspectiveException("Failed to get URL for key: " + key, e);
         }
     }
 

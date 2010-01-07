@@ -19,8 +19,6 @@
     <serverplugin:plugin-component class="Foo" />
     -->
 
-
-
     <!-- How does this sender show up in drop downs etc -->
     <short-name>Roles</short-name>
 
@@ -29,6 +27,7 @@
 
     <custom-ui>
         <ui-snippet-name>roles.xhtml</ui-snippet-name>
-        <backing-bean-name>RolesBackingBean</backing-bean-name>
+        <backing-bean-class>RolesBackingBean</backing-bean-class>
+        <backing-bean-name>rolesBean</backing-bean-name>
     </custom-ui>
 </alert-plugin>

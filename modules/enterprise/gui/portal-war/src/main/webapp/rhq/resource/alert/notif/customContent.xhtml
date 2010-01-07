@@ -17,15 +17,19 @@
     </head>
     <body>
         <ui:component>
-            <h:form>
-                <rich:panel rendered="#{customContentUIBean.contentUrl ne '/rhq/empty.xhtml'}">
-                    <f:facet name="header">
-                        <h:outputText value="Custom Configuration"/>
-                    </f:facet>
+            <c:if test="#{not empty customContentUIBean.contentUrl}">
+                <h:form>
+                    <input type="hidden" name="senderName" value="#{param.senderName}" />
 
-                    <ui:include src="#{customContentUIBean.contentUrl}" />
-                </rich:panel>
-            </h:form>
+                    <rich:panel>
+                        <f:facet name="header">
+                            <h:outputText value="Custom Configuration"/>
+                        </f:facet>
+
+                        <ui:include src="#{customContentUIBean.contentUrl}" />
+                    </rich:panel>
+                </h:form>
+            </c:if>
         </ui:component>
     </body>
 

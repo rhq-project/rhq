@@ -53,7 +53,7 @@
                            <xs:documentation>
                                The name of the class implementing the plugin functionality. This class needs to
                                implement the org.rhq.enterprise.server.plugin.pc.alert.AlertSender base class.
-                               If not fully qualified, the package given on the &lt;alert-plugin> element will be taken.
+                               If not fully qualified, the package given on the &lt;alert-plugin&gt; element will be taken.
                            </xs:documentation>
                        </xs:annotation>
                    </xs:element>
@@ -94,14 +94,22 @@
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
-                <xs:element name="backing-bean-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                <xs:element name="backing-bean-class" minOccurs="1" maxOccurs="1" type="xs:string">
                     <xs:annotation>
                         <xs:documentation>
                             The class name of a backing bean used in this ui-snippet.
-                            If not fully qualified, the package given on the &lt;alert-plugin> element will be taken.
+                            If not fully qualified, the package given on the &lt;alert-plugin&gt; element will be taken.
                         </xs:documentation>
                     </xs:annotation>
                 </xs:element>
+                <xs:element name="backing-bean-name" minOccurs="1" maxOccurs="1" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            The name of a backing bean used in EL expressions in the ui-snippet.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+
             </xs:sequence>
         </xs:complexType>
     </xs:element>

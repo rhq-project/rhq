@@ -34,7 +34,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
@@ -134,5 +133,7 @@ public interface AlertNotificationManagerLocal {
      * @param shortName name of a sender
      * @return an initialized BackingBean or null in case of error
      */
-    AlertBackingBean getBackingBeanForSender(String shortName);
+    Object getBackingBeanForSender(String shortName);
+
+    String getBackingBeanNameForSender(String shortName);
 }

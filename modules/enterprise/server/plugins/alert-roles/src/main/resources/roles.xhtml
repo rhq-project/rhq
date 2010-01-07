@@ -10,17 +10,18 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
     <body>
-        <p/>
-        Select the roles to add:<br/>
-        <h:selectManyMenu id="mySenderList" value="#{GenericAlertStuffUIBean.theValue}">
-            <f:selectItems value="#{GenericAlertStuffUIBean.theMap}"/>
-        </h:selectManyMenu>
+        <br />
+        <h:outputText value="Select the roles to add:" />
         <br/>
-        <h:commandButton
-            id="roles_submit"
-            value="Add them"
-            type="submit"
-            action="#{GenericAlertStuffUIBean.submitForm}"
-                />
+
+        <h:selectManyMenu id="mySenderList" value="#{rolesBean.currentRoles}">
+            <f:selectItems value="#{rolesBean.rolesMap}"/>
+        </h:selectManyMenu>
+
+        <br />
+        <h:commandButton id="roles_submit"
+                        value="Add Roles"
+                        type="submit"
+                        action="#{rolesBean.submit}" />
     </body>
 </html>

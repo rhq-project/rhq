@@ -58,6 +58,7 @@ public class AlertPluginValidator implements ServerPluginValidator {
         //
 
         String uiSnippetPath;
+        String beanName;
         CustomUi customUI = type.getCustomUi();
         if (customUI != null) {
             uiSnippetPath = customUI.getUiSnippetName();
@@ -73,7 +74,7 @@ public class AlertPluginValidator implements ServerPluginValidator {
             }
 
             // Get the backing bean class
-            className = customUI.getBackingBeanName();
+            className = customUI.getBackingBeanClass();
             if (!className.contains(".")) {
                 className = type.getPackage() + "." + className;
             }
@@ -82,6 +83,13 @@ public class AlertPluginValidator implements ServerPluginValidator {
             }
             catch (Throwable t) {
                 log.error("Backing bean " + className + " not found for plugin " + shortName);
+                return false;
+            }
+
+            beanName = customUI.getBackingBeanName();
+
+            if (beanName == null || beanName.length() == 0) {
+                log.error("Must provide a <backing-bean-name> for " + className + " in plugin " + shortName);
                 return false;
             }
         }

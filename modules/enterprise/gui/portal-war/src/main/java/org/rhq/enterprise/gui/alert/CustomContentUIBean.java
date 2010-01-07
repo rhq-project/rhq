@@ -20,9 +20,13 @@ package org.rhq.enterprise.gui.alert;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
+import org.jboss.seam.contexts.Context;
+import org.jboss.seam.contexts.Contexts;
+import org.jboss.seam.log.Log;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -30,6 +34,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Scope(ScopeType.PAGE)
 @Name("customContentUIBean")
 public class CustomContentUIBean {
+
+    @Logger
+    private Log log;
 
     @RequestParameter
     private String senderName;
@@ -40,14 +47,30 @@ public class CustomContentUIBean {
     }
 
     @Create
-    public void lookupContentUrl()  {
+    public void init()  {
         AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(this.senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
             this.contentUrl = info.getUiSnippetUrl().toString();
-        } else {
-            this.contentUrl = "/rhq/empty.xhtml";
         }
+
+        String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);
+        Object backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName);
+
+        if (backingBeanName != null && backingBean != null) {
+            outjectBean(backingBeanName, backingBean);
+        }
+    }
+
+    /**
+     * We are just getting an Object from the plugin manager which acts as our backing bean.
+     * This method is used instead of @Out or @Factory because we need to be able to look
+     * at the @Name annotation on the backing bean dynamically so that the plugin
+     * author can set the name of bean, but this class is not an "official" seam component.
+     */
+    private void outjectBean(String name, Object bean) {
+        Context pageContext = Contexts.getPageContext();
+        pageContext.set(name, bean);
     }
 }

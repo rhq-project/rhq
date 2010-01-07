@@ -53,6 +53,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     private Map<String, ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
     private Map<String, AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
     private Map<String, String> backingBeanByName = new HashMap<String, String>();
+    private Map<String, String> backingBeanNameByName = new HashMap<String, String>();
 
     public AlertSenderPluginManager(AbstractTypeServerPluginContainer pc) {
         super(pc);
@@ -121,8 +122,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                     throw e;
                 }
 
-                // Get the backing bean class
-                className = customUI.getBackingBeanName();
+                className = customUI.getBackingBeanClass();
                 try {
                     loadPluginClass(env, className, true); // TODO how make this available to Seam and the Web-CL ?
                     backingBeanByName.put(shortName, className);
@@ -136,8 +136,8 @@ public class AlertSenderPluginManager extends ServerPluginManager {
             AlertSenderInfo info = new AlertSenderInfo(shortName, type.getDescription(), env.getPluginKey());
             info.setUiSnippetUrl(uiSnippetUrl);
             senderInfoByName.put(shortName, info);
-
             pluginEnvByName.put(shortName, env);
+            backingBeanNameByName.put(shortName, customUI.getBackingBeanName());
         }
     }
 
@@ -226,15 +226,21 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         return senderInfoByName.get(shortName);
     }
 
-    public AlertBackingBean getBackingBeanForSender(String shortName) {
+    public Object getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
-        AlertBackingBean bean = null;
+        Object bean = null;
+
         try {
-            bean = (AlertBackingBean) instantiatePluginClass(env, className);
+            bean = instantiatePluginClass(env, className);
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
+        
         return bean;
+    }
+
+    public String getBackingBeanNameForSender(String shortName) {
+        return backingBeanNameByName.get(shortName);
     }
 }

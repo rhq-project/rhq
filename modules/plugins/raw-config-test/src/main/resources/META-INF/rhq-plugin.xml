@@ -16,20 +16,26 @@
           description="A fake server component that supports both structured and raw configuration">
 
     <plugin-configuration>
-      <c:simple-property name="faidStructuredValidation" type="boolean" default="false"/>
-      <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      <c:group name="Structured">
+        <c:simple-property name="faidStructuredValidation" type="boolean" default="false"/>
+        <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      </c:group>
 
-      <c:simple-property name="failRawValidation" type="boolean" default="false"/>
-      <c:simple-property name="filesToFailValidation"
-                         description="A comma-delimited list of file names for which validation will fail. The entire
-                                      path does not need to be specified. Simple matching will be done starting from
-                                      the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      <c:group name="Raw Validation">        
+        <c:simple-property name="failRawValidation" type="boolean" default="false"/>
+        <c:simple-property name="filesToFailValidation"
+                           description="A whitespace-separated list of file names for which validation will fail. The entire
+                                        path does not need to be specified. Simple matching will be done starting from
+                                        the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      </c:group>
 
-      <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
-      <c:simple-property name="filesToFailUpdate"
-                         description="A comma-delimited list of file names for which the update will fail. The entire
-                                      path does not need to be specified. Simple matching will be done starting from
-                                      the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      <c:group name="Raw Update">
+        <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
+        <c:simple-property name="filesToFailUpdate"
+                           description="A whitespace-separated list of file names for which the update will fail. The entire
+                                        path does not need to be specified. Simple matching will be done starting from
+                                        the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="both">

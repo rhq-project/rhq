@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-        
+
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
@@ -24,7 +24,7 @@
       <dependency>
          <groupId>${rhq.groupId}</groupId>
          <artifactId>rhq-core-plugin-container</artifactId>
-         <version>${project.version}</version>         
+         <version>${project.version}</version>
       </dependency>
 
       <dependency>
@@ -36,10 +36,10 @@
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>5.9</version>         
+         <version>5.9</version>
          <classifier>jdk15</classifier>
       </dependency>
-    
+
       <dependency>
          <groupId>net.augeas</groupId>
          <artifactId>augeas</artifactId>
@@ -49,7 +49,7 @@
       <dependency>
          <groupId>net.java.dev.jna</groupId>
          <artifactId>jna</artifactId>
-         <version>3.2.2</version>
+         <version>${jna.version}</version>
       </dependency>
 
    </dependencies>
@@ -87,7 +87,7 @@
                </execution>
             </executions>
          </plugin>
-          
+
       </plugins>
    </build>
 
@@ -130,13 +130,13 @@
                         <id>deploy-jar-meta-inf</id>
                         <phase>package</phase>
                         <configuration>
-                          <tasks>                             
-                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />                             
+                          <tasks>
+                             <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
                                <patternset><include name="META-INF/**" /></patternset>
                              </unjar>
-                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">                                
+                             <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                              </jar>
                           </tasks>
                         </configuration>
@@ -144,7 +144,7 @@
                           <goal>run</goal>
                         </goals>
                      </execution>
-                     
+
                      <execution>
                         <id>undeploy</id>
                         <phase>clean</phase>

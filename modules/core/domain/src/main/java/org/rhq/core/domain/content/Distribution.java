@@ -23,15 +23,18 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
@@ -89,7 +92,18 @@ public class Distribution implements Serializable {
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
 
+    @OneToMany(mappedBy = "distribution", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<DistributionFile> distributionFiles;
+
     // Constructor ----------------------------------------
+
+    public Set<DistributionFile> getDistributionFiles() {
+        return distributionFiles;
+    }
+
+    public void setDistributionFiles(Set<DistributionFile> distributionFiles) {
+        this.distributionFiles = distributionFiles;
+    }
 
     public Distribution() {
     }

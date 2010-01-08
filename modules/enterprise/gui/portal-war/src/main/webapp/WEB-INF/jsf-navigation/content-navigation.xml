@@ -6,7 +6,7 @@
 
    <navigation-rule>
       <from-view-id>/rhq/resource/content/subscription.xhtml</from-view-id>
-      
+
       <navigation-case>
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/resource/content/subscription.xhtml?id=#{param.id}</to-view-id>
@@ -30,7 +30,7 @@
 
    <navigation-rule>
       <from-view-id>/rhq/resource/content/view.xhtml</from-view-id>
-      
+
       <navigation-case>
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/resource/content/view.xhtml?id=#{param.id}</to-view-id>
@@ -73,7 +73,7 @@
 
    <navigation-rule>
       <from-view-id>/rhq/resource/content/history.xhtml</from-view-id>
-     
+
       <navigation-case>
          <from-outcome>showContentServiceRequestDetails</from-outcome>
          <to-view-id>/rhq/resource/content/history-request.xhtml?id=#{param.id}&amp;selectedRequestId=#{param.selectedRequestId}</to-view-id>
@@ -135,7 +135,7 @@
 
    <navigation-rule>
       <from-view-id>/rhq/resource/content/create.xhtml</from-view-id>
-      
+
       <navigation-case>
          <from-action>#{CreateNewPackageUIBean.createPackage}</from-action>
          <from-outcome>success</from-outcome>
@@ -147,7 +147,7 @@
          <to-view-id>/rhq/resource/content/deploy.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
    </navigation-rule>
 
    <navigation-rule>
@@ -164,7 +164,7 @@
          <to-view-id>/rhq/resource/content/deploy.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
    </navigation-rule>
 
    <navigation-rule>
@@ -206,14 +206,14 @@
          <to-view-id>/rhq/content/importRepos.xhtml</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
          <redirect/>
-      </navigation-case> 
-      
+      </navigation-case>
+
    </navigation-rule>
 
    <navigation-rule>
@@ -267,14 +267,14 @@
       </navigation-case>
 
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/repo.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
-      </navigation-case> 
-      
+      </navigation-case>
+
    </navigation-rule>
-   
+
    <!-- Content Provider List -->
    <navigation-rule>
       <from-view-id>/rhq/content/listContentProviders.xhtml</from-view-id>
@@ -288,19 +288,19 @@
 
       <navigation-case>
          <from-outcome>createNewContentSource</from-outcome>
-         <to-view-id>/rhq/content/createContentProvider.xhtml</to-view-id>
+         <to-view-id>/rhq/content/createContentProvider.xhtml?mode=new</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/listContentProviders.xhtml</to-view-id>
          <redirect/>
-      </navigation-case> 
-      
+      </navigation-case>
+
    </navigation-rule>
-   
+
    <!-- Content Source View -->
    <navigation-rule>
       <from-view-id>/rhq/content/contentProvider.xhtml</from-view-id>
@@ -318,12 +318,12 @@
       </navigation-case>
 
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/contentProvider.xhtml?mode=view&amp;id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-      
+
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/content/contentProvider-view-map.xhtml</to-view-id>
@@ -421,7 +421,7 @@
          <from-outcome>cancel</from-outcome>
          <to-view-id>/rhq/content/listRepos.xhtml</to-view-id>
       </navigation-case>
-      
+
    </navigation-rule>
 
    <!-- Repo Associations With Content Sources -->
@@ -435,12 +435,12 @@
       </navigation-case>
 
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/repoAssociations.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
-      </navigation-case> 
-      
+      </navigation-case>
+
    </navigation-rule>
 
    <!-- Repo Subscriptions -->
@@ -460,12 +460,12 @@
       </navigation-case>
 
       <navigation-case>
-         <!-- sorting rule --> 
+         <!-- sorting rule -->
          <from-outcome>sort</from-outcome>
          <to-view-id>/rhq/content/repoSubscriptions.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
-      </navigation-case> 
-      
+      </navigation-case>
+
    </navigation-rule>
 
 </faces-config>

@@ -34,11 +34,11 @@ import org.richfaces.model.UploadItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
-import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
@@ -46,10 +46,10 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -162,14 +162,14 @@ public class CreateNewPackageUIBean {
         }
 
         if (repoOption == null) {
-            FacesContextUtility
-                .addMessage(FacesMessage.SEVERITY_ERROR, "A repo deployment option must be specified");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
+                "A repository deployment option must be specified");
             return null;
         }
 
         if (repoOption.equals(REPO_OPTION_NEW) && (newRepoName == null || newRepoName.trim().equals(""))) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                "When creating a new repo, the name of the repo to be created must be specified");
+                "When creating a new repo, the name of the repository to be created must be specified");
             return null;
         }
 
@@ -184,7 +184,7 @@ public class CreateNewPackageUIBean {
             repoId = determineRepo(repoOption, subject, resource.getId());
         } catch (ContentException ce) {
             String errorMessages = ThrowableUtil.getAllMessages(ce);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repo. Cause: "
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to determine repository. Cause: "
                 + errorMessages);
             return "failure";
         }
@@ -234,7 +234,7 @@ public class CreateNewPackageUIBean {
             } catch (Exception e) {
                 String errorMessages = ThrowableUtil.getAllMessages(e);
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to associate package ["
-                    + packageName + "] with repo ID [" + repoId + "]. Cause: " + errorMessages);
+                    + packageName + "] with repository ID [" + repoId + "]. Cause: " + errorMessages);
                 return "failure";
             }
 

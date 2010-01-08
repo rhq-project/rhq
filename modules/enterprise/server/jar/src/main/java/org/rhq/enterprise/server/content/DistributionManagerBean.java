@@ -84,23 +84,11 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void deleteDistributionByRepo(Subject user, int repoId) {
-        log.debug("User [" + user + "] is deleting distribution tree from repo [" + repoId + "]");
-
-        entityManager.flush();
-        entityManager.clear();
+    public void deleteDistributionMappingsForRepo(Subject user, int repoId) {
+        log.debug("User [" + user + "] is removing distribution tree mapping from repo [" + repoId + "]");
 
         entityManager.createNamedQuery(RepoDistribution.DELETE_BY_REPO_ID).setParameter("repoId", repoId)
             .executeUpdate();
-
-        RepoDistribution kstree = entityManager.find(RepoDistribution.class, repoId);
-        if (kstree != null) {
-            entityManager.remove(kstree);
-            log.debug("User [" + user + "] deleted kstree [" + kstree + "]");
-        } else {
-            log.debug("Repo ID [" + repoId + "] doesn't exist - nothing to delete");
-        }
-
     }
 
     public void deleteDistributionByDistId(Subject user, int distId) {
@@ -182,7 +170,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-    
+
 
     /**
      * Returns a list of available distribution files for requested distribution

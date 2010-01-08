@@ -23,12 +23,14 @@
 
 package org.rhq.augeas.tree;
 
+import net.augeas.AugeasException;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasTreeException extends RuntimeException {
+public class AugeasTreeException extends AugeasException {
     private static final long serialVersionUID = 1L;
 
     /**

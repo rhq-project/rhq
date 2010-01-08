@@ -72,7 +72,7 @@ public class MappingToAugeasDirectivePerMap extends ConfigurationToAugeasApacheB
        if (list.getList().size()<nodes.size())
        {
                for (int i=0;i<nodes.size()-list.getList().size();i++){
-                       nodes.get(nodes.size()-i).remove(false);
+                       nodes.get(nodes.size()-1-i).remove(false);
                }
        }
        

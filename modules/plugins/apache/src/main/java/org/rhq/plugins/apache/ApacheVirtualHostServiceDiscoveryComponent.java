@@ -23,6 +23,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import net.augeas.AugeasException;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,6 +48,8 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
+    private final Log log = LogFactory.getLog(getClass());
+    
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 
@@ -51,17 +58,28 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         //first define the root server as one virtual host
         ResourceType resourceType = context.getResourceType();
 
-        Configuration mainServerPluginConfig = new Configuration();
-        PropertySimple mainServerUrl = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, 
-            context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue());
-        mainServerPluginConfig.put(mainServerUrl);
+        Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
+        
+        String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+        if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
+            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, mainServerUrl);
+            
+            mainServerPluginConfig.put(mainServerUrlProp);
+        }
         
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server",
             null, null, mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
 
         //read the virtual hosts from augeas
-        AugeasTree ag = context.getParentResourceComponent().getAugeasTree();
+        AugeasTree ag = null;
+        
+        try {
+            ag = context.getParentResourceComponent().getAugeasTree();
+        } catch (AugeasException e) {
+            log.warn("Could not obtain the Augeas tree, giving up virtual host discovery.", e);
+            return discoveredResources;
+        }
 
         List<AugeasNode> virtualHosts = ag.matchRelative(ag.getRootNode(), "<VirtualHost");
 
@@ -90,12 +108,15 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             String resourceKey = keyBuilder.toString();
             
+            Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
+
             Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
-            String url = "http://" + address.host + ":" + address.port + "/";
-            
-            Configuration pluginConfiguration = new Configuration();
-            PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
-            pluginConfiguration.put(urlProp);
+            if (address != null) {
+                String url = "http://" + address.host + ":" + address.port + "/";
+                
+                PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
+                pluginConfiguration.put(urlProp);
+            }
             
             String resourceName = "VirtualHost ";
             if (serverName != null) {

@@ -18,35 +18,33 @@
  */
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-
-import java.util.List;
-import java.util.ArrayList;
-import java.io.InputStream;
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
+import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
-import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
-import org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.RhnDownloader;
-
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.Test;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 
 /**
  * @author John Matthews
  */
-public class RHNProviderTest
-{
+public class RHNProviderTest {
     // By Default the tests in this class will be skipped.  This class is intended as a simple integration test
     // desire is for it to only run against RHN Hosted, other tests in this package will execute against a mocked RHN
     // connection.  This test is a means for us to manually check that Plugin->RHN Hosted communication is behaving as
@@ -54,33 +52,38 @@ public class RHNProviderTest
     //
     // If you want to run these tests, then set the java property "RunRHNProviderTest"
     //
+    private final Log log = LogFactory.getLog(RHNProviderTest.class);
+
     String PROP_NAME_TO_TRIGGER_TEST = "RunRHNProviderTest";
+    String PROP_NAME_TO_CHECK_MD5SUMS = "RunRHNMD5SumTests";
     String rhnURL = "http://satellite.rhn.redhat.com";
     String certLoc = "./entitlement-cert.xml";
     boolean isTesting = false;
+    boolean isMD5SumTesting = false;
 
     RHNProvider provider = new RHNProvider();
 
     @BeforeTest
-    public void setUp() throws Exception
-    {
+    public void setUp() throws Exception {
         String value = System.getProperty(PROP_NAME_TO_TRIGGER_TEST);
         if (!StringUtils.isBlank(value)) {
-             isTesting = Boolean.parseBoolean(value);
+            isTesting = Boolean.parseBoolean(value);
+        }
+        value = System.getProperty(PROP_NAME_TO_CHECK_MD5SUMS);
+        if (!StringUtils.isBlank(value)) {
+            isMD5SumTesting = Boolean.parseBoolean(value);
         }
     }
 
     @AfterTest
-    public void tearDown()
-    {
+    public void tearDown() {
     }
 
     public Configuration getConfiguration() {
         String certData = "";
         try {
             certData = FileUtils.readFileToString(new File(certLoc));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert false;
         }
@@ -101,10 +104,10 @@ public class RHNProviderTest
     }
 
     @Test
-    public void testGetInputStream()
-    {
+    public void testGetInputStream() {
         if (!isTesting) {
-            System.out.println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
+            System.out
+                .println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
             return;
         }
 
@@ -119,11 +122,9 @@ public class RHNProviderTest
         try {
             provider.initialize(config);
             String loc = RHNHelper.constructPackageUrl(rhnURL, cName, rName);
-            //String loc = rhnURL + "/SAT/$RHN/" + cName + "/getPackage/" + rName;
             InputStream in = provider.getInputStream(loc);
             assert (in != null);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert false;
         }
@@ -132,38 +133,57 @@ public class RHNProviderTest
     }
 
     @Test
-    public void testSynchronizePackages()
-    {
+    public void testSynchronizePackages() {
         if (!isTesting) {
-            System.out.println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
+            System.out
+                .println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
             return;
         }
 
-        //String channelName = "rhn-tools-rhel-i386-server-5";
-        String channelName = "rhel-i386-server-5";
+        String channelName = "rhn-tools-rhel-i386-server-5";
+        //String channelName = "rhel-i386-server-5";
         Configuration config = getConfiguration();
         RHNProvider provider = new RHNProvider();
 
-        System.out.println("testSynchronizePackages invoked");
+        log.info("testSynchronizePackages invoked");
         PackageSyncReport report = new PackageSyncReport();
         List<ContentProviderPackageDetails> existingPackages = new ArrayList<ContentProviderPackageDetails>();
         try {
             provider.initialize(config);
             provider.synchronizePackages(channelName, report, existingPackages);
-        }
-        catch (Exception e) {
+            Set<ContentProviderPackageDetails> newPkgs = report.getNewPackages();
+            log.info(newPkgs.size() + " packages are noted as 'NEW'");
+            assert (newPkgs.size() > 0);
+            if (isMD5SumTesting) {
+                for (ContentProviderPackageDetails pkg : newPkgs) {
+                    String url = RHNHelper.constructPackageUrl(rhnURL, channelName, pkg.getFileName());
+                    log.info("Attempting fetch of rpm: " + pkg.getFileName() + " size = " + pkg.getFileSize());
+                    log.info("URL to use is: " + url);
+                    InputStream in = provider.getInputStream(url);
+                    assert (in != null);
+                    String actualMd5sum = MessageDigestGenerator.getDigestString(in);
+                    String expectedMd5sum = pkg.getMD5();
+                    log.info("MD5SUMs actual = " + actualMd5sum + ", expected = " + expectedMd5sum);
+                    assert (StringUtils.equalsIgnoreCase(actualMd5sum, expectedMd5sum));
+                }
+            }
+        } catch (Exception e) {
             e.printStackTrace();
             assert false;
         }
+        log.info("testSynchronizePackages() we have package metadata for " + report.getNewPackages().size()
+            + " new packages");
         System.out.println("testSynchronizePackages finished.");
     }
 
     @Test
-    public void testSynchronizeDistribution()
-    {
-
+    public void testSynchronizeDistribution() {
+        if (true) {
+            return;
+        }
         if (!isTesting) {
-            System.out.println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
+            System.out
+                .println("Intentionally skipping test, since property is missing: -D" + PROP_NAME_TO_TRIGGER_TEST);
             return;
         }
         System.out.println("testSynchronizeDistribution invoked");
@@ -176,31 +196,32 @@ public class RHNProviderTest
         try {
             provider.initialize(config);
             provider.synchronizeDistribution(channelName, report, existingDistro);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             assert false;
         }
         List<DistributionDetails> details = report.getDistributions();
         System.out.println("RHNProviderTest details.size() = " + details.size());
-        for (DistributionDetails d: details) {
+        for (DistributionDetails d : details) {
             System.out.println("Label = " + d.getLabel());
             System.out.println("Path = " + d.getDistributionPath());
             List<DistributionFileDetails> files = d.getFiles();
-            for (DistributionFileDetails f: files) {
-                System.out.println(d.getLabel() + ", " + d.getDistributionPath() + ", " +
-                        f.getRelativeFilename() + " , " + f.getMd5sum() + ", lastModified = " + f.getLastModified() +
-                        ", fileSize = " + f.getFileSize());
+            for (DistributionFileDetails f : files) {
+                System.out.println(d.getLabel() + ", " + d.getDistributionPath() + ", " + f.getRelativeFilename()
+                    + " , " + f.getMd5sum() + ", lastModified = " + f.getLastModified() + ", fileSize = "
+                    + f.getFileSize());
                 try {
-                    String url = RHNHelper.constructKickstartFileUrl(rhnURL, channelName, d.getLabel(),
-                            f.getRelativeFilename());
+                    String url = RHNHelper.constructKickstartFileUrl(rhnURL, channelName, d.getLabel(), f
+                        .getRelativeFilename());
                     InputStream in = provider.getInputStream(url);
-
-                    String actualMd5sum = MessageDigestGenerator.getDigestString(in);
-                    String expectedMd5sum = f.getMd5sum();
-                    assert(StringUtils.equalsIgnoreCase(actualMd5sum, expectedMd5sum));
-                }
-                catch (Exception e) {
+                    assert (in != null);
+                    if (isMD5SumTesting) {
+                        String actualMd5sum = MessageDigestGenerator.getDigestString(in);
+                        String expectedMd5sum = f.getMd5sum();
+                        System.out.println("MD5SUMs actual = " + actualMd5sum + ", expected = " + expectedMd5sum);
+                        assert (StringUtils.equalsIgnoreCase(actualMd5sum, expectedMd5sum));
+                    }
+                } catch (Exception e) {
                     e.printStackTrace();
                     assert false;
                 }

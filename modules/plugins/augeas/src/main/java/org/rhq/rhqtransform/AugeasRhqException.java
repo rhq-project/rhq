@@ -22,12 +22,14 @@
  */
 package org.rhq.rhqtransform;
 
+import net.augeas.AugeasException;
+
 /**
  * 
  * @author Filip Drabek
  *
  */
-public class AugeasRhqException extends RuntimeException {
+public class AugeasRhqException extends AugeasException {
 
     private static final long serialVersionUID = 1L;
 

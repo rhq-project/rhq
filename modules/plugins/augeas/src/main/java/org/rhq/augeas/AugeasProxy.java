@@ -27,13 +27,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.augeas.Augeas;
+import net.augeas.AugeasException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.rhq.augeas.config.AugeasConfiguration;
 import org.rhq.augeas.config.AugeasModuleConfig;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeBuilder;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
+import org.rhq.augeas.util.LensHelper;
 
 /**
  * This is the main entry point for interfacing with Augeas.
@@ -48,12 +52,14 @@ import org.rhq.augeas.tree.impl.DefaultAugeasTreeBuilder;
  *
  */
 public class AugeasProxy {
-
+	
+	private final Log log = LogFactory.getLog(this.getClass());
     private AugeasConfiguration config;
     private Augeas augeas;
     private List<String> modules;
     private AugeasTreeBuilder augeasTreeBuilder;
-
+ 
+    
     /**
      * Instantiates new proxy with supplied configuration and
      * {@link DefaultAugeasTreeBuilder} as the tree builder.
@@ -88,24 +94,32 @@ public class AugeasProxy {
      * Initializes and loads the Augeas tree.
      * 
      * @throws AugeasTreeException
+     * @throws AugeasException if Augeas could not be initialized.
      */
-    public void load() throws AugeasTreeException {
-        config.loadFiles();
-        augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
-
-        for (AugeasModuleConfig module : config.getModules()) {
-
-            modules.add(module.getModuletName());
-            augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
-
-            int idx = 1;
-            for (String incl : module.getConfigFiles()) {
-                augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
+    public void load() throws AugeasTreeException, AugeasException {
+        try {
+            config.loadFiles();
+            augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
+    
+            for (AugeasModuleConfig module : config.getModules()) {
+    
+                modules.add(module.getModuletName());
+                augeas.set("/augeas/load/" + module.getModuletName() + "/lens", module.getLensPath());
+    
+                int idx = 1;
+                for (String incl : module.getConfigFiles()) {
+                    augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
+                }
             }
-
+            augeas.load();
+        } catch (NoClassDefFoundError e) {
+            throw new AugeasException("Failed to initialize Augeas. It is probably not installed.", e);
+        } catch (Exception e) {
+            throw new AugeasException(e);
         }
-        augeas.load();
     }
+    
+ 
 
     /**
      * Produces the Augeas tree by loading it from augeas (if {@link #load()} wasn't called already)
@@ -134,7 +148,7 @@ public class AugeasProxy {
         try {
             tree = augeasTreeBuilder.buildTree(this, config, moduleName, lazy);
         } catch (Exception e) {
-            throw new AugeasTreeException(e.getMessage());
+            throw new AugeasTreeException("Error building Augeas tree.", e);
         }
 
         return tree;

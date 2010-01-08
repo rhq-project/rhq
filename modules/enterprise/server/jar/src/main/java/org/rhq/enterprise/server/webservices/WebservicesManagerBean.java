@@ -46,6 +46,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -287,8 +288,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    @Override
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
 
@@ -905,6 +905,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoId, PageControl pc) {
         return repoManager.findAssociatedDistributions(subject, repoId, pc);
+    }
+
+    public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoId, PageControl pc) {
+        return repoManager.findAssociatedAdvisory(subject, repoId, pc);
     }
 
 }

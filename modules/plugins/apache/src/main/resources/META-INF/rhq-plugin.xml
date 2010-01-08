@@ -42,7 +42,7 @@
                     The log entry format is documented fully in the Apache documentation http://httpd.apache.org/docs/2.2/mod/mod_log_config.html#formats.
                 </c:description>
             </c:simple-property>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -177,7 +177,7 @@
                     <c:option value="SymLinksIfOwnerMatch"/>
                 </c:property-options>
             </c:simple-property>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -202,7 +202,7 @@
         </c:description>
         <c:map-property name="Allow">
             <c:simple-property name="host"/>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index"  required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>                
@@ -214,7 +214,7 @@
         </c:description>
         <c:map-property name="Deny">
             <c:simple-property name="host"/>
-            <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+            <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
         </c:map-property>
     </c:list-property>
 '>
@@ -262,6 +262,15 @@
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
 
+         <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
+            <c:description>
+                If set to true, each configuration update of the server or any underlying virtual host or
+                directory is followed by the restart of the Apache instance so that the configuration changes
+                are applied immediatelly. If set to false, you have to manually restart the server (for example
+                using the restart operation in the operations tab) once all the configuration updates are finished.
+            </c:description>
+         </c:simple-property>
+          
           <!-- Augeas Configuration -->
           <c:group name="Augeas Configuraion">
               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
@@ -274,23 +283,24 @@
                                              default="/usr/share/augeas/lenses"/>
           
           </c:group>
+         
           <c:group name="Virtual Hosts">
-            <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement"
-                               description="How should the new virtual host definitions be put in the configuration"
-                               default="vhost-per-file">
-                <c:property-options>
-                    <c:option value="single-file" name="In the main configuration file"/>
-                    <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file" default="true"/>
-                </c:property-options>
-            </c:simple-property>
-            <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
-                <c:description>
+                <c:simple-property name="vhostCreationPolicy" displayName="Virtual Hosts Configuration Placement" description="How should the new virtual host definitions be put in the configuration" default="vhost-per-file">
+                   <c:property-options>
+                     <c:option value="single-file" name="In the main configuration file"/>
+                     <c:option value="vhost-per-file" name="Each Virtual Host in a standalone file" default="true"/>
+                   </c:property-options>
+                </c:simple-property>
+
+               <c:simple-property name="vhostFilesMask" displayName="Path To Contain Virtual Hosts Files">
+                  <c:description>
                     If the new virtual hosts should be created in standalone files, this mask determines where
                     to create those files. The '*' in the path is replaced by the name of the virtual host.
                     If the path is relative, it is considered relative to server root.
-                </c:description>                   
-            </c:simple-property>
+                  </c:description>
+               </c:simple-property>
           </c:group>
+          
          <c:group name="errorLog">
               <!-- TODO this is now part of the resource configuration... -->
               <c:simple-property name="errorLogFilePath" type="file" required="false"
@@ -437,26 +447,20 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        <c:list-property name="NameVirtualHost" required="false">
-            <c:description>
-                A required directive if you want to configure name-based virtual hosts.
-                Although the value can be hostname it is recommended that you always use an IP address.
-                IPv6 addresses must be enclosed in square brackets.
-                To receive requests on all interfaces, you can set the value to *.
-                Note that the IP address of a name-based virtual host must exactly match the value of this property.
-                The address may be optionally followed by the port specification to further limit the directive effect.                
-            </c:description>
+          <c:list-property name="NameVirtualHost" required="false">
+             <c:description>
+                 A required directive if you want to configure name-based virtual hosts.
+                 Although the value can be hostname it is recommended that you always use an IP address.
+                 IPv6 addresses must be enclosed in square brackets.
+                 To receive requests on all interfaces, you can set the value to *.
+                 Note that the IP address of a name-based virtual host must exactly match the value of this property.
+                 The address may be optionally followed by the port specification to further limit the directive effect.                
+             </c:description>
             <c:map-property name="NameVirtualHost">
                 <c:simple-property name="address" description="A hostname, an IP address (recommended), or a * optionally followed by the port specification."/>
                 <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
             </c:map-property>
         </c:list-property>
-        &Timeout;
-        <c:group name="Logging">
-            &ErrorLog;
-            &CustomLogs;
-        </c:group>
-        
       </resource-configuration>
       
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
@@ -642,22 +646,24 @@
             <c:list-property name="ServerAlias">
                 <c:map-property name="ServerAlias">
                     <c:simple-property name="hostname"/>
-                    <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                    <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                 </c:map-property>
             </c:list-property>
             &ServerAdmin;
             &DocumentRoot;
             &AddDefaultCharset;
             &Aliases;
-            &CustomLogs;
             &DefaultType;
             &DirectoryIndex;
             &ErrorDocuments;
-            &ErrorLog;
             &Timeout;
             &Options;
             &UseCanonicalName;
             &UseCanonicalPhysicalPort;
+            <c:group name="Logging">
+                &ErrorLog;
+                &CustomLogs;
+            </c:group>        
          </resource-configuration>
          
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">
@@ -675,14 +681,8 @@
                       <c:description>
                           When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
                       </c:description>
-                      <c:simple-property name="All" type="boolean" default="true" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
-                      <c:simple-property name="None" type="boolean" description=".htaccess files are completely ignored. In this case, the server will not even attempt to read .htaccess files in the filesystem."/>
-                      <c:simple-property name="AuthConfig" type="boolean" description="Allow use of the authorization directives (AuthDBMGroupFile, AuthDBMUserFile, AuthGroupFile, AuthName, AuthType, AuthUserFile, Require, etc.)."/>
-                      <c:simple-property name="FileInfo" type="boolean" description="Allow use of the directives controlling document types (DefaultType, ErrorDocument, ForceType, LanguagePriority, SetHandler, SetInputFilter, SetOutputFilter, and mod_mime Add* and Remove* directives, etc.), document meta data (Header, RequestHeader, SetEnvIf, SetEnvIfNoCase, BrowserMatch, CookieExpires, CookieDomain, CookieStyle, CookieTracking, CookieName), mod_rewrite directives RewriteEngine, RewriteOptions, RewriteBase, RewriteCond, RewriteRule) and Action from mod_actions."/>
-                      <c:simple-property name="Indexes" type="boolean" description="Allow use of the directives controlling directory indexing (AddDescription, AddIcon, AddIconByEncoding, AddIconByType, DefaultIcon, DirectoryIndex, FancyIndexing, HeaderName, IndexIgnore, IndexOptions, ReadmeName, etc.)."/>
-                      <c:simple-property name="Limit" type="boolean" description="Allow use of the directives controlling host access (Allow, Deny and Order)."/>
-                      <c:simple-property name="Options" type="boolean" description="Allow use of the directives controlling specific directory features (Options and XBitHack)."/>
-                      <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
                   </c:map-property>
                 </c:list-property>
                 &AddDefaultCharset;
@@ -694,8 +694,8 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
-<!--          
-         <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
+         
+   <!--     <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
             </plugin-configuration>
@@ -732,6 +732,7 @@
             </resource-configuration>
          </service>
  -->
+
       </service>
       <service name="Mod JK" description="Management of mod_jk"
                discovery="ModJKDiscoveryComponent"

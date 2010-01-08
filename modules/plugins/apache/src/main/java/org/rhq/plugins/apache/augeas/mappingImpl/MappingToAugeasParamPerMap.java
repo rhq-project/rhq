@@ -47,7 +47,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
         public void updateList(PropertyDefinitionList propDef, Property prop,
                         AugeasNode listNode, int seq) throws AugeasRhqException {
                 
-                  String propertyName = propDef.getName();
+              String propertyName = propDef.getName();
               PropertyDefinition memberPropDef = propDef.getMemberDefinition();
           
               List<AugeasNode> nodes = tree.matchRelative(listNode, propertyName);
@@ -80,7 +80,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
          if (map.size()<nodes.size())
          {
                  for (int i=0;i<nodes.size()-map.size();i++){
-                       nodes.get(nodes.size()-i).remove(false);
+                       nodes.get(nodes.size()-i-1).remove(false);
                  }
          }
          
@@ -100,7 +100,8 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                 }
                 List<String> params = ApacheDirectiveRegExpression.createParams(param.toString(), propertyName);
                 updateNodeParams(nodes.get(i), params);
-                param.delete(0, param.length()-1);
+                param = new StringBuffer();
+                i++;
           }
        }
         
@@ -129,7 +130,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                       PropertyMap propMap = (PropertyMap)prop;
                       PropertySimple propSim = ((PropertySimple)propMap.get("_index"));
                       int value;
-                      if (propSim ==null)
+                      if (propSim ==null | propSim.getIntegerValue() == null)
                         value = 0;
                               else
                         value = propSim.getIntegerValue().intValue();
@@ -144,13 +145,17 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
                     }
                    min = next;
                    next = Integer.MAX_VALUE;
+                   if (!tempList.isEmpty())
+                   {
                    map.add(tempList);
+                   tempList = new ArrayList<PropertyMap>();
+                   }
                 }
                 return map;
         }
         
         private void updateNodeParams(AugeasNode node,List<String> params){
-                List<AugeasNode> nodes = node.getChildByLabel("param");
+                List<AugeasNode> nodes = tree.matchRelative(node,"param");
                 
               //THERE IS MORE CONFIGURATIONS THAN NODES, NEW NODES WILL BE CREATED
         if (params.size()>nodes.size())
@@ -164,7 +169,7 @@ public class MappingToAugeasParamPerMap extends ConfigurationToAugeasApacheBase{
         if (params.size() < nodes.size())
         {
                 for (int i=0;i<nodes.size()-params.size();i++){
-                      nodes.get(params.size()+i).remove(false);
+                      nodes.get(nodes.size()-i-1).remove(false);
                 }
         }
         

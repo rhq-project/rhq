@@ -66,6 +66,13 @@
          <version>${project.version}</version>
          <type>war</type>
       </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-content_http</artifactId>
+         <version>${project.version}</version>
+         <type>war</type>
+      </dependency>
 
       <!-- ** SARs -->
       <!--
@@ -167,6 +174,15 @@
                      <excluded>${exclude-webdav}</excluded>
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
+                  </webModule>
+                  
+                  <!--  used to expose content through http -->
+                  <webModule>
+                     <groupId>${project.groupId}</groupId>
+                     <artifactId>rhq-content_http</artifactId>
+                     <excluded>${exclude-content_http}</excluded>
+                     <bundleFileName>rhq-content_http.war</bundleFileName>
+                     <contextRoot>/content</contextRoot>
                   </webModule>
 
                   <!-- ** EJB-JARs -->

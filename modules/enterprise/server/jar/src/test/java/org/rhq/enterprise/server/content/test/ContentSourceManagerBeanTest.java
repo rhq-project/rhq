@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -642,10 +643,12 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             ContentSource contentSource = null;
 
             int csTypeCount = contentSourceManager.getAllContentSourceTypes().size();
+            List csList = contentSourceManager.getAllContentSources(overlord, pc);
             int csCount = contentSourceManager.getAllContentSources(overlord, pc).size();
 
             // create the content source type
-            type = new ContentSourceType("testDeleteContentSourceCST");
+            type = new ContentSourceType("testDel-" + RandomStringUtils.randomAlphanumeric(6));
+
             Set<ContentSourceType> types = new HashSet<ContentSourceType>();
             types.add(type);
             contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
@@ -657,7 +660,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert (csTypeCount + 1) == contentSourceManager.getAllContentSourceTypes().size();
 
             // create the content source
-            contentSource = new ContentSource("testDeleteContentSource", type);
+            contentSource = new ContentSource("testDel-" + RandomStringUtils.randomAlphanumeric(6), type);
             contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
@@ -667,7 +670,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert (csCount + 1) == contentSourceManager.getAllContentSources(overlord, pc).size();
 
             // create a repo and associate the new content source with it
-            Repo repo = new Repo("testDeleteContentSourceRepo");
+            Repo repo = new Repo("testDel-" + RandomStringUtils.randomAlphanumeric(6));
             repoManager.createRepo(overlord, repo);
             repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
 

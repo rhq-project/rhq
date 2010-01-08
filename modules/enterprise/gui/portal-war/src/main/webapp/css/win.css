@@ -1713,6 +1713,23 @@ P.compact {
     vertical-align: top;
 }
 
+/**--- Raw Config ---------------------*/
+.raw-outer-table {
+  width: 100%;
+}
+
+.raw-outer-table-left-col {
+  width: 25%;
+  vertical-align: top;
+}
+
+.raw-outer-table-right-col {
+  /*width: 75%;*/
+  margin-left: 10px;
+  margin-right: 10px;
+  vertical-align: top;
+}
+
 /*--- Configuration ---------------------*/
 .property-group-header {
     padding: 4px;

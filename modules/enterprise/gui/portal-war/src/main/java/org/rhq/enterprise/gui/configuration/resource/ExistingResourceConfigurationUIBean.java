@@ -21,11 +21,14 @@ package org.rhq.enterprise.gui.configuration.resource;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -335,6 +338,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public void select(String s) {
         selectedPath = s;
         setCurrentPath(selectedPath);
+        setCurrentContents(getCurrentContents());
     }
 
     public void setCurrentContents(String updated) {
@@ -360,6 +364,26 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public void setModified(RawConfiguration raw) {
         getModified().put(raw.getPath(), raw);
+    }
+
+    public String download() {
+        try {
+            HttpServletResponse response = FacesContextUtility.getResponse();
+            response.setHeader("Content-Disposition", "attachment;filename=" + getCurrentPath());
+            OutputStream ostream = response.getOutputStream();
+            ostream.write(getCurrentContents().getBytes());
+            ostream.flush();
+            ostream.close();
+
+            FacesContextUtility.getFacesContext().responseComplete();
+
+            return null;
+        }
+        catch (IOException e) {
+            log.error("Failed to complete download request for " + getCurrentPath(), e);
+            throw new RuntimeException(e);
+        }
+//        return "download";
     }
 
     /**

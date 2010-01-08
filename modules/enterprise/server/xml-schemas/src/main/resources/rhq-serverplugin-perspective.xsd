@@ -29,7 +29,7 @@
    </xs:annotation>
 
    <xs:element
-      name="perspectivePlugin"
+      name="perspective-plugin"
       type="perspective:PerspectivePluginDescriptorType"
       substitutionGroup="serverplugin:server-plugin">
       <xs:annotation>
@@ -46,6 +46,9 @@
 
    <xs:complexType
       name="PerspectivePluginDescriptorType">
+      <xs:annotation>
+         <xs:documentation>The perspective descriptor providing the complete perspective definition.</xs:documentation>
+      </xs:annotation>
       <xs:complexContent>
          <xs:extension
             base="serverplugin:ServerPluginDescriptorType">
@@ -57,19 +60,19 @@
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  name="globalTask"
+                  name="global-task"
                   type="perspective:GlobalTaskType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  name="resourceTask"
+                  name="resource-task"
                   type="perspective:ResourceTaskType"
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
                <xs:element
-                  name="menuItem"
+                  name="menu-item"
                   type="perspective:MenuItemType"
                   minOccurs="0"
                   maxOccurs="unbounded">
@@ -122,471 +125,347 @@
       </xs:attribute>
    </xs:complexType>
 
-   <xs:complexType name="ExtensionType" abstract="true">
+   <xs:complexType
+      name="ExtensionType"
+      abstract="true">
+      <xs:annotation>
+         <xs:documentation>All extensions extend this type.</xs:documentation>
+      </xs:annotation>
       <xs:sequence>
-          <xs:element
-             name="description"
-             type="perspective:DescriptionType"
-             minOccurs="0"
-             maxOccurs="1">
-             <xs:annotation>
-                <xs:documentation>An optional verbose description for the extension - may be displayed via a tooltip or
-                    some other means in the GUI.
+         <xs:element
+            name="description"
+            type="perspective:DescriptionType"
+            minOccurs="0"
+            maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>An optional verbose description for the extension - may be displayed via a tooltip or
+                  some other means in the GUI.
                 </xs:documentation>
-             </xs:annotation>
-          </xs:element>
-       </xs:sequence>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
 
-       <xs:attribute
-          name="name"
-          type="perspective:NameType"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>
-                Internal name for this extension. Unique within extensions of a certain type defined by the perspective.
+      <xs:attribute
+         name="name"
+         type="perspective:NameType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>Internal name for this extension. Unique within extensions of a certain type defined by
+               the perspective.
              </xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:attribute
-          name="displayName"
-          type="perspective:DisplayNameType"
-          use="required">
-          <xs:annotation>
-             <xs:documentation>The display name for this extension.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:attribute
-          name="iconUrl"
-          type="xs:anyURI"
-          use="optional">
-          <xs:annotation>
-             <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
-                displayed. Required if displayName is an empty string.</xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:attribute
-          name="application"
-          type="xs:string"
-          use="optional">
-          <xs:annotation>
-             <xs:documentation>The application servicing the URLs for this extension. Default is root (rhq-portal.war).
-             </xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:attribute
-          name="action"
-          type="perspective:ActionType"
-          use="optional"
-          default="add">
-          <xs:annotation>
-             <xs:documentation>Add the extension or remove an extension with the given name and position that was
-                 defined by the Core perspective. For removal, all but the name attribute are ignored. The
-                 default is add. Note, a Remove followed by an Add can be used to replace an extension from the
-                 Core perspective.
-             </xs:documentation>
-          </xs:annotation>
-       </xs:attribute>
-       <xs:anyAttribute/>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="displayName"
+         type="perspective:DisplayNameType"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>The display name for this extension.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="iconUrl"
+         type="xs:anyURI"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
+               displayed. Required if displayName is an empty string.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="application"
+         type="xs:string"
+         use="optional">
+         <xs:annotation>
+            <xs:documentation>The application servicing the URLs for this extension. Default is root (rhq-portal.war).
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:attribute
+         name="action"
+         type="perspective:ActionType"
+         use="optional"
+         default="add">
+         <xs:annotation>
+            <xs:documentation>Add the extension or remove an extension with the given name and position that was defined
+               by the Core perspective. For removal, all but the name attribute are ignored. The default is add. Note, a
+               Remove followed by an Add can be used to replace an extension from the Core perspective.
+            </xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+      <xs:anyAttribute />
    </xs:complexType>
 
    <xs:complexType
       name="TaskType">
       <xs:complexContent>
-         <xs:extension base="perspective:ExtensionType">
-             <xs:attribute
-                name="url"
-                type="xs:anyURI"
-                use="required">
-                <xs:annotation>
-                   <xs:documentation>The request URL for this task. Typically kicks off a wizard or similar workflow.
-                   </xs:documentation>
-                </xs:annotation>
-             </xs:attribute>
-             <xs:attribute
-                name="category"
-                type="xs:string"
-                use="optional">
-                <xs:annotation>
-                   <xs:documentation>The display category for this task (optional). Tasks with the same category will
-                      be grouped together in the task pane.</xs:documentation>
-                </xs:annotation>
-             </xs:attribute>
+         <xs:extension
+            base="perspective:ExtensionType">
+            <xs:attribute
+               name="url"
+               type="xs:anyURI"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The request URL for this task. Typically kicks off a wizard or similar workflow.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="category"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The display category for this task (optional). Tasks with the same category will be
+                     grouped together in the task pane.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
 
-    <xs:complexType
-       name="ResourceTaskType">
-       <xs:complexContent>
-          <xs:extension base="perspective:TaskType">
-              <xs:sequence>
-                  <xs:element
-                       name="activators"
-                       type="perspective:ResourceActivatorsType"
-                       minOccurs="0"
-                       maxOccurs="1">
-                       <xs:annotation>
-                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
-                          order for this resource task to be displayed for a particular Resource or Group page request.
-                          </xs:documentation>
-                       </xs:annotation>
-                    </xs:element>
-              </xs:sequence>
-          </xs:extension>
-       </xs:complexContent>
-    </xs:complexType>
+   <xs:complexType
+      name="ResourceTaskType">
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:TaskType">
+            <xs:sequence>
+               <xs:element
+                  name="activators"
+                  type="perspective:ResourceActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this resource task to be displayed for a particular Resource or Group page request.
+                     </xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
 
-    <xs:complexType
-       name="GlobalTaskType">
-       <xs:complexContent>
-          <xs:extension base="perspective:TaskType">
-              <xs:sequence>
-                  <xs:element
-                       name="activators"
-                       type="perspective:GlobalActivatorsType"
-                       minOccurs="0"
-                       maxOccurs="1">
-                       <xs:annotation>
-                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
-                          order for this global task to be displayed for a particular page request.</xs:documentation>
-                       </xs:annotation>
-                    </xs:element>
-              </xs:sequence>
-          </xs:extension>
-       </xs:complexContent>
-    </xs:complexType>
+   <xs:complexType
+      name="GlobalTaskType">
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:TaskType">
+            <xs:sequence>
+               <xs:element
+                  name="activators"
+                  type="perspective:GlobalActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this global task to be displayed for a particular page request.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
 
    <xs:complexType
       name="MenuItemType">
-       <xs:complexContent>
-          <xs:extension base="perspective:ExtensionType">
-              <xs:sequence>
-                 <xs:element
-                    name="position"
-                    type="perspective:PositionType">
-                    <xs:annotation>
-                       <xs:documentation>Specifies the position of the menu item.</xs:documentation>
-                    </xs:annotation>
-                 </xs:element>
-                  <xs:element
-                       name="activators"
-                       type="perspective:GlobalActivatorsType"
-                       minOccurs="0"
-                       maxOccurs="1">
-                       <xs:annotation>
-                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
-                          order for this menu item to be displayed for a particular page request.</xs:documentation>
-                       </xs:annotation>
-                    </xs:element>
-              </xs:sequence>
+      <xs:annotation>
+         <xs:documentation>A (core) menu extension that adds or removes a top level or sub-menu item.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ExtensionType">
+            <xs:sequence>
+               <xs:element
+                  name="position"
+                  type="perspective:PositionType">
+                  <xs:annotation>
+                     <xs:documentation>Specifies the position of the menu item.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element
+                  name="activators"
+                  type="perspective:GlobalActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this menu item to be displayed for a particular page request.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
 
-              <xs:attribute
-                 name="url"
-                 type="xs:anyURI"
-                 use="optional">
-                 <xs:annotation>
-                    <xs:documentation>The request URL for this menu item. Typically kicks off a wizard or similar workflow.
+            <xs:attribute
+               name="url"
+               type="xs:anyURI"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The request URL for this menu item. Typically kicks off a wizard or similar
+                     workflow.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="feature"
+               type="perspective:MenuItemFeatureType"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>A special built-in rendering feature that should be applied when rendering this menu
+                     item.
                     </xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-              <xs:attribute
-                 name="feature"
-                 type="perspective:MenuItemFeatureType"
-                 use="optional">
-                 <xs:annotation>
-                    <xs:documentation>A special built-in rendering feature that should be applied when rendering this menu item.
-                    </xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-              <xs:attribute
-                 name="newWindow"
-                 type="xs:boolean"
-                 use="optional"
-                 default="false">
-                 <xs:annotation>
-                    <xs:documentation>If true, the URL should be directed to a new window. Otherwise the content should be
-                       presented in the current page body.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-              <xs:attribute
-                 name="addBreak"
-                 type="xs:boolean"
-                 use="optional"
-                 default="false">
-                 <xs:annotation>
-                    <xs:documentation>If true, generate a break prior to this menu item.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-          </xs:extension>
-       </xs:complexContent>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="newWindow"
+               type="xs:boolean"
+               use="optional"
+               default="false">
+               <xs:annotation>
+                  <xs:documentation>If true, the URL should be directed to a new window. Otherwise the content should be
+                     presented in the current page body.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="addBreak"
+               type="xs:boolean"
+               use="optional"
+               default="false">
+               <xs:annotation>
+                  <xs:documentation>If true, generate a break prior to this menu item.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
    </xs:complexType>
 
    <xs:complexType
       name="TabType">
-       <xs:complexContent>
-          <xs:extension base="perspective:ExtensionType">
-              <xs:sequence>
-                 <xs:element
-                    name="position"
-                    type="perspective:PositionType">
-                    <xs:annotation>
-                       <xs:documentation>Specifies the position of the tab.</xs:documentation>
-                    </xs:annotation>
-                 </xs:element>
-                  <xs:element
-                       name="activators"
-                       type="perspective:ResourceActivatorsType"
-                       minOccurs="0"
-                       maxOccurs="1">
-                       <xs:annotation>
-                          <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
-                          order for this resource task to be displayed for a particular Resource or Group page request.
-                          </xs:documentation>
-                       </xs:annotation>
-                    </xs:element>
-              </xs:sequence>
+      <xs:annotation>
+         <xs:documentation>An extension that adds or removes a resource tab or subtab.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ExtensionType">
+            <xs:sequence>
+               <xs:element
+                  name="position"
+                  type="perspective:PositionType">
+                  <xs:annotation>
+                     <xs:documentation>Specifies the position of the tab.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+               <xs:element
+                  name="activators"
+                  type="perspective:ResourceActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this resource task to be displayed for a particular Resource or Group page request.
+                     </xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
 
-              <xs:attribute
-                 name="url"
-                 type="xs:anyURI"
-                 use="optional">
-                 <xs:annotation>
-                    <xs:documentation>The request URL for this tab. Typically kicks off a wizard or similar workflow.
-                    </xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-          </xs:extension>
-       </xs:complexContent>
+            <xs:attribute
+               name="url"
+               type="xs:anyURI"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The request URL for this tab. Typically kicks off a wizard or similar workflow.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
    </xs:complexType>
 
 
 
-    <!-- =========================================== Activators ============================================= -->
-    <xs:complexType name="CommonActivatorsType">
+   <!-- =========================================== Activators =============================================
+-->
+   <xs:complexType
+      name="CommonActivatorsType">
+      <xs:annotation>
+         <xs:documentation>Activators common to global and resource activators.</xs:documentation>
+      </xs:annotation>
       <xs:sequence>
-          <xs:element
-                  name="debugMode"
-                  type="perspective:DebugModeActivatorType"
-                  minOccurs="0"
-                  maxOccurs="1">
-          </xs:element>
-          <xs:element
-                  name="licenseFeature"
-                  type="perspective:LicenseFeatureActivatorType"
-                  minOccurs="0"
-                  maxOccurs="unbounded">
-          </xs:element>
-          <xs:element
-                  name="globalPermission"
-                  type="perspective:GlobalPermissionActivatorType"
-                  minOccurs="0"
-                  maxOccurs="unbounded">
-          </xs:element>
-          <xs:element
-                  name="superuser"
-                  type="perspective:SuperuserActivatorType"
-                  minOccurs="0"
-                  maxOccurs="1">
-          </xs:element>
+         <xs:element
+            name="debug-mode"
+            type="perspective:DebugModeActivatorType"
+            minOccurs="0"
+            maxOccurs="1">
+         </xs:element>
+         <xs:element
+            name="license-feature"
+            type="perspective:LicenseFeatureActivatorType"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+         <xs:element
+            name="global-permission"
+            type="perspective:GlobalPermissionActivatorType"
+            minOccurs="0"
+            maxOccurs="unbounded">
+         </xs:element>
+         <xs:element
+            name="superuser"
+            type="perspective:SuperuserActivatorType"
+            minOccurs="0"
+            maxOccurs="1">
+         </xs:element>
       </xs:sequence>
-    </xs:complexType>
+   </xs:complexType>
 
-    <xs:complexType name="GlobalActivatorsType">
-       <xs:complexContent>
-          <xs:extension base="perspective:CommonActivatorsType">
+   <xs:complexType
+      name="GlobalActivatorsType">
+      <xs:annotation>
+         <xs:documentation>If any of the activator conditions evaluate to true then the global activator is active. In
+            other words, there is an implicit OR operation applied. For AND logic it is typical to declare several
+            "activators" elements in the declaring element.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:CommonActivatorsType">
+            <xs:sequence>
+               <xs:element
+                  name="inventory"
+                  type="perspective:InventoryActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="ResourceActivatorsType">
+      <xs:annotation>
+         <xs:documentation>If any of the activator conditions evaluate to true then the resource activator is active. In
+            other words, there is an implicit OR operation applied. For AND logic it is typical to declare several
+            "activators" elements in the declaring element. In addition to the activators common to global and resource
+            level activators, several additional resource level activators can be specified. These are evaluated against
+            the resource in context. Facet Activators ensure the specified facet is implemented by the resource type of
+            the resource in context. Resource-permission activators ensure the user has the specified permission on the
+            resource in context. Trait Activators ensure that the specified trait value satisfies the specified pattern
+            for the resource in context. Resource-type Activators can be used if the extension is active for one or more
+            different resource types. In this situation resource-permission and trait activators can be set in a
+            fine-grained way, differing for each resource type, if necessary.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:CommonActivatorsType">
+            <xs:choice>
                <xs:sequence>
-                    <xs:element
-                            name="inventory"
-                            type="perspective:InventoryActivatorType"
-                            minOccurs="0"
-                            maxOccurs="unbounded">
-                    </xs:element>
-               </xs:sequence>
-          </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType name="ResourceActivatorsType">
-       <xs:complexContent>
-          <xs:extension base="perspective:CommonActivatorsType">
-               <xs:choice>
-                   <xs:sequence>
-                       <xs:element
-                                name="facet"
-                                type="perspective:FacetActivatorType"
-                                minOccurs="1"
-                                maxOccurs="unbounded">
-                        </xs:element>
-                        <xs:element
-                                name="resourcePermission"
-                                type="perspective:ResourcePermissionActivatorType"
-                                minOccurs="0"
-                                maxOccurs="unbounded">
-                        </xs:element>
-                        <xs:element
-                             name="trait"
-                             type="perspective:TraitActivatorType"
-                             minOccurs="0"
-                             maxOccurs="unbounded">
-                        </xs:element>
-                   </xs:sequence>
-                   <xs:element
-                             name="resourceType"
-                             type="perspective:InventoryActivatorType"
-                             minOccurs="0"
-                             maxOccurs="unbounded">
-                   </xs:element>
-               </xs:choice>
-          </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType name="ActivatorType"/>
-
-    <!-- Global Activators -->
-    <xs:complexType
-       name="LicenseFeatureActivatorType">
-        <xs:annotation>
-           <xs:documentation>A certain license feature (e.g. monitoring) must be active in order to activate the extension.
-           </xs:documentation>
-        </xs:annotation>
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-                <xs:attribute
-                   name="name"
-                   type="perspective:LicenseFeatureType"
-                   use="required">
-                   <xs:annotation>
-                      <xs:documentation>The type of license that must be installed to activate the extension point.
-                      </xs:documentation>
-                   </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType
-       name="DebugModeActivatorType">
-        <xs:annotation>
-           <xs:documentation>Debug mode must be enabled in the GUI in order to activate the extension.
-           </xs:documentation>
-        </xs:annotation>
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <!-- Subject Activators -->
-    <xs:complexType
-       name="GlobalPermissionActivatorType">
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-                <xs:attribute
-                   name="name"
-                   type="perspective:GlobalPermissionType"
-                   use="required">
-                   <xs:annotation>
-                      <xs:documentation>The required Global permission.</xs:documentation>
-                   </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType
-       name="InventoryActivatorType">
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-                <xs:sequence>
                   <xs:element
-                     name="resource"
-                     type="perspective:ResourceType"
+                     name="facet"
+                     type="perspective:FacetActivatorType"
                      minOccurs="1"
                      maxOccurs="unbounded">
                   </xs:element>
-               </xs:sequence>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType
-       name="SuperuserActivatorType">
-        <xs:annotation>
-           <xs:documentation>Debug mode must be enabled in the GUI in order to activate the extension.
-           </xs:documentation>
-        </xs:annotation>
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-    <xs:complexType
-       name="FacetActivatorType">
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-                <xs:attribute
-                   name="name"
-                   type="perspective:FacetType"
-                   use="required">
-                   <xs:annotation>
-                      <xs:documentation>The facet name.</xs:documentation>
-                   </xs:annotation>
-                </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
-
-   <xs:complexType
-      name="ResourcePermissionActivatorType">
-       <xs:complexContent>
-           <xs:extension base="perspective:ActivatorType">
-               <xs:attribute
-                  name="name"
-                  type="perspective:ResourcePermissionType"
-                  use="required">
-                  <xs:annotation>
-                     <xs:documentation>The Resource permission name.</xs:documentation>
-                  </xs:annotation>
-               </xs:attribute>
-           </xs:extension>
-       </xs:complexContent>
-   </xs:complexType>
-
-   <xs:complexType
-      name="TraitActivatorType">
-      <xs:complexContent>
-           <xs:extension base="perspective:ActivatorType">
-               <xs:attribute
-                 name="name"
-                 type="xs:string"
-                 use="required">
-                 <xs:annotation>
-                    <xs:documentation>The name of the trait being tested for activation.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-              <xs:attribute
-                 name="value"
-                 type="xs:string"
-                 use="required">
-                 <xs:annotation>
-                    <xs:documentation>A Java-style regular expression for the value of the trait.</xs:documentation>
-                 </xs:annotation>
-              </xs:attribute>
-           </xs:extension>
-       </xs:complexContent>
-   </xs:complexType>
-
-   <!-- =========================================== Helper Types ============================================= -->
-
-    <xs:complexType
-        name="ResourceType">
-        <xs:complexContent>
-            <xs:extension base="perspective:ActivatorType">
-                <xs:sequence>
                   <xs:element
-                     name="permission"
+                     name="resource-permission"
                      type="perspective:ResourcePermissionActivatorType"
                      minOccurs="0"
                      maxOccurs="unbounded">
@@ -597,30 +476,242 @@
                      minOccurs="0"
                      maxOccurs="unbounded">
                   </xs:element>
-                </xs:sequence>
-               <xs:attribute
-                  name="plugin"
-                  type="xs:string"
-                  use="required">
-                  <xs:annotation>
-                     <xs:documentation>Plugin for the specified resource type.</xs:documentation>
-                  </xs:annotation>
-               </xs:attribute>
-               <xs:attribute
-                  name="type"
-                  type="xs:string"
-                  use="required">
-                  <xs:annotation>
-                     <xs:documentation>Resource Type that must be in inventory to activate the extension point.
-                     </xs:documentation>
-                  </xs:annotation>
-               </xs:attribute>
-            </xs:extension>
-        </xs:complexContent>
-    </xs:complexType>
+               </xs:sequence>
+               <xs:element
+                  name="resource-type"
+                  type="perspective:InventoryActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+            </xs:choice>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="ActivatorType">
+      <xs:annotation>
+         <xs:documentation>All Activators extend this type.</xs:documentation>
+      </xs:annotation>
+   </xs:complexType>
+
+   <!-- Global Activators
+-->
+   <xs:complexType
+      name="LicenseFeatureActivatorType">
+      <xs:annotation>
+         <xs:documentation>A certain license feature (e.g. monitoring) must be active in order to activate the
+            extension.
+           </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="perspective:LicenseFeatureType"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The type of license that must be installed to activate the extension point.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="DebugModeActivatorType">
+      <xs:annotation>
+         <xs:documentation>Debug mode must be enabled in the GUI in order to activate the extension.
+           </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- Subject Activators
+-->
+   <xs:complexType
+      name="GlobalPermissionActivatorType">
+      <xs:annotation>
+         <xs:documentation>The user must possess the global permission in order to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="perspective:GlobalPermissionType"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The required Global permission.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="InventoryActivatorType">
+      <xs:annotation>
+         <xs:documentation>The user must have in inventory resources as described to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:sequence>
+               <xs:element
+                  name="resource"
+                  type="perspective:ResourceType"
+                  minOccurs="1"
+                  maxOccurs="unbounded">
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="SuperuserActivatorType">
+      <xs:annotation>
+         <xs:documentation>The user must be superuser in order to activate the extension.
+           </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="FacetActivatorType">
+      <xs:annotation>
+         <xs:documentation>The resource in context must be of a resource type that implements the specified facet.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="perspective:FacetType"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The facet name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="ResourcePermissionActivatorType">
+      <xs:annotation>
+         <xs:documentation>The user must possess the specified resource permission on the relevant resource.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="perspective:ResourcePermissionType"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The Resource permission name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="TraitActivatorType">
+      <xs:annotation>
+         <xs:documentation>The relevant resource must satisfy the trait condition to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The name of the trait being tested for activation.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="value"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>A Java-style regular expression for the value of the trait.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- =========================================== Helper Types =============================================
+-->
+
+   <xs:complexType
+      name="ResourceType">
+      <xs:annotation>
+         <xs:documentation>Resource level activation definition.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:sequence>
+               <xs:element
+                  name="resource-permission"
+                  type="perspective:ResourcePermissionActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+               <xs:element
+                  name="trait"
+                  type="perspective:TraitActivatorType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
+            </xs:sequence>
+            <xs:attribute
+               name="plugin"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>Plugin for the specified resource type.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="type"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>Resource Type that must be in inventory to activate the extension point.
+                  </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
 
    <xs:complexType
       name="PositionType">
+      <xs:annotation>
+         <xs:documentation>Defines position of the extension in the UI, relative to other extensions.</xs:documentation>
+      </xs:annotation>
       <xs:attribute
          name="name"
          type="perspective:NameType"
@@ -717,72 +808,89 @@
       </xs:restriction>
    </xs:simpleType>
 
-    <xs:simpleType
-       name="ResourcePermissionType">
-       <xs:restriction
-          base="xs:string">
-          <xs:enumeration
-             value="CONFIGURE"></xs:enumeration>
-          <xs:enumeration
-             value="CONTROL"></xs:enumeration>
-          <xs:enumeration
-             value="CREATE_CHILD_RESOURCE"></xs:enumeration>
-          <xs:enumeration
-             value="DELETE_RESOURCE"></xs:enumeration>
-          <xs:enumeration
-             value="MANAGE_ALERTS"></xs:enumeration>
-          <xs:enumeration
-             value="MANAGE_CONTENT"></xs:enumeration>
-          <xs:enumeration
-             value="MANAGE_MEASUREMENTS"></xs:enumeration>
-          <xs:enumeration
-             value="MODIFY_RESOURCE"></xs:enumeration>
-          <xs:enumeration
-             value="VIEW_RESOURCE"></xs:enumeration>
-       </xs:restriction>
-    </xs:simpleType>
+   <xs:simpleType
+      name="ResourcePermissionType">
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="CONFIGURE"></xs:enumeration>
+         <xs:enumeration
+            value="CONTROL"></xs:enumeration>
+         <xs:enumeration
+            value="CREATE_CHILD_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="DELETE_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_ALERTS"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_CONTENT"></xs:enumeration>
+         <xs:enumeration
+            value="MANAGE_MEASUREMENTS"></xs:enumeration>
+         <xs:enumeration
+            value="MODIFY_RESOURCE"></xs:enumeration>
+         <xs:enumeration
+            value="VIEW_RESOURCE"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
 
    <xs:simpleType
-       name="FacetType">
-       <xs:restriction
-          base="xs:string">
-          <xs:enumeration value="measurement" >
-              <xs:annotation>
-                 <xs:documentation>The Resource type defines one or more metrics.</xs:documentation>
-              </xs:annotation>
-          </xs:enumeration>
-           <xs:enumeration value="event" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more events.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-           <xs:enumeration value="plugin_configuration" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more plugin configuration (aka connection) properties.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-           <xs:enumeration value="configuration" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more resource configuration properties.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-           <xs:enumeration value="operation" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more operations.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-           <xs:enumeration value="content" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more packages.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-           <xs:enumeration value="call_time" >
-               <xs:annotation>
-                  <xs:documentation>The Resource type defines one or more call-time metrics.</xs:documentation>
-               </xs:annotation>
-           </xs:enumeration>
-       </xs:restriction>
-    </xs:simpleType>
+      name="FacetType">
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="measurement">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines one or more metrics.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="event">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines one or more events.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="plugin_configuration">
+            <xs:annotation>
+               <xs:documentation>
+                  The Resource type defines one or more plugin configuration (aka connection) properties.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="configuration">
+            <xs:annotation>
+               <xs:documentation>
+                  The Resource type defines one or more resource configuration properties.
+               </xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="operation">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines one or more operations.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="content">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines one or more packages.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="call_time">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines one or more call-time metrics.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+         <xs:enumeration
+            value="support">
+            <xs:annotation>
+               <xs:documentation>The Resource type defines support snapshots.</xs:documentation>
+            </xs:annotation>
+         </xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
 
    <xs:simpleType
       name="PlacementType">
@@ -802,16 +910,16 @@
       </xs:restriction>
    </xs:simpleType>
 
-    <xs:simpleType
-       name="LicenseFeatureType">
-       <xs:annotation>
-          <xs:documentation>A license type.</xs:documentation>
-       </xs:annotation>
-       <xs:restriction
-          base="xs:string">
-          <xs:enumeration
-             value="monitoring"></xs:enumeration>
-       </xs:restriction>
-    </xs:simpleType>
+   <xs:simpleType
+      name="LicenseFeatureType">
+      <xs:annotation>
+         <xs:documentation>A license type.</xs:documentation>
+      </xs:annotation>
+      <xs:restriction
+         base="xs:string">
+         <xs:enumeration
+            value="monitoring"></xs:enumeration>
+      </xs:restriction>
+   </xs:simpleType>
 
 </xs:schema>

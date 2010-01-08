@@ -179,6 +179,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             tree.removeNode(myNode, true);
             tree.save();
             
+            deleteEmptyFile(tree, myNode);
             conditionalRestart();
         } catch (IllegalStateException e) {
             //this means we couldn't find the augeas node for this vhost.
@@ -376,6 +377,10 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
      */
     public void conditionalRestart() throws Exception {
         resourceContext.getParentResourceComponent().conditionalRestart();
+    }
+    
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        resourceContext.getParentResourceComponent().deleteEmptyFile(tree, deletedNode);
     }
     
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,

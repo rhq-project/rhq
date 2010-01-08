@@ -109,10 +109,18 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
         AugeasNode virtualHostNode = parentVirtualHost.getNode(tree);
         
         AugeasNode myNode = getNode(virtualHostNode);
-        tree.removeNode(myNode, true);
-        tree.save();
         
-        resourceContext.getParentResourceComponent().conditionalRestart();
+        if (myNode != null) {
+            tree.removeNode(myNode, true);
+            tree.save();
+            
+            ApacheVirtualHostServiceComponent parentVhost = resourceContext.getParentResourceComponent();
+            
+            parentVhost.deleteEmptyFile(tree, myNode);
+            parentVhost.conditionalRestart();
+        } else {
+            log.info("Could find the configuration corresponding to the directory " + resourceContext.getResourceKey() + ". Ignoring.");
+        }
     }
 
     /**
@@ -131,6 +139,7 @@ public class ApacheDirectoryComponent implements ResourceComponent<ApacheVirtual
                 return dir;
             }
         }
-        throw new IllegalStateException("No Directory directive found in the Apache configuration on the configured index.");
+        
+        return null;
     }
 }

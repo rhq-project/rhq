@@ -56,8 +56,10 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
 
         this.ag = component.getAugeas();
 
+        AugeasConfigurationApache apacheConfig = (AugeasConfigurationApache) config;
         AugeasModuleConfig module = config.getModuleByName(name);
-        ApacheAugeasTree tree = new ApacheAugeasTree(component.getAugeas(), module);
+
+        ApacheAugeasTree tree = new ApacheAugeasTree(apacheConfig.getServerRootPath(), component.getAugeas(), module);
 
         List<String> incld = module.getConfigFiles();
 
@@ -67,7 +69,6 @@ public class AugeasTreeBuilderApache implements AugeasTreeBuilder {
         String rootPath = incld.get(0);
 
         AugeasNode rootNode = new ApacheAugeasNode(ApacheAugeasTree.AUGEAS_DATA_PATH + rootPath, tree);
-        AugeasConfigurationApache apacheConfig = (AugeasConfigurationApache) config;
         tree.setRootNode(rootNode);
         File rootFile = new File(apacheConfig.getServerRootPath());
         // we need to know which files are related to each glob

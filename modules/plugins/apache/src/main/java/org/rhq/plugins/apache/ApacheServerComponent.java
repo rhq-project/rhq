@@ -662,6 +662,22 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }
     }
     
+    /**
+     * This method checks whether the supplied node that has been deleted from the tree didn't leave
+     * the file it was contained in empty.
+     * If the file is empty after deleting the node, the file is automatically deleted.
+     * @param tree TODO
+     * @param deletedNode the node that has been deleted from the tree.
+     */
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        File file = tree.getFile(deletedNode);
+        List<AugeasNode> fileContents = tree.match(file.getAbsolutePath() + AugeasTree.PATH_SEPARATOR + "*");
+        
+        if (fileContents.size() == 0) {
+            file.delete();
+        }
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {

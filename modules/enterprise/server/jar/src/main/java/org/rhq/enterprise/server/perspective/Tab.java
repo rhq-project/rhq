@@ -133,7 +133,7 @@ public class Tab extends Extension implements Serializable, Cloneable {
             List<ResourceConditionSet> resourceConditionSets = new ArrayList<ResourceConditionSet>(
                 rawResourceConditions.size());
             for (ResourceType rawResourceCondition : rawResourceConditions) {
-                List<ResourcePermissionActivatorType> rawPermissions = rawResourceCondition.getPermission();
+                List<ResourcePermissionActivatorType> rawPermissions = rawResourceCondition.getResourcePermission();
                 EnumSet<Permission> permissions = EnumSet.noneOf(Permission.class);
                 for (ResourcePermissionActivatorType rawPermission : rawPermissions) {
                     String rawName = rawPermission.getName().toString();

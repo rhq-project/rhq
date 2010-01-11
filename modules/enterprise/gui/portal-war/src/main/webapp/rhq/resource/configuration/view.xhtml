@@ -206,14 +206,10 @@ THIS TEXT WILL BE REMOVED.
             <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                          rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
-              <h:commandButton value="#{messages.editstructured}"
+              <h:commandButton value="Edit"
                                action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
                                title="Edit this Configuration" styleClass="buttonmed"
-                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-              <h:commandButton value="#{messages.editraw}"
-                               action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
-                               title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>              
             </h:panelGrid>
 
             <onc:config
@@ -244,7 +240,7 @@ THIS TEXT WILL BE REMOVED.
                          columnClasses="button-cell"
                          rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
-              <h:commandButton value="#{messages.editraw}"
+              <h:commandButton value="Edit"
                                action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
                                title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
                                rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationUIBean.updateInProgress}"/>

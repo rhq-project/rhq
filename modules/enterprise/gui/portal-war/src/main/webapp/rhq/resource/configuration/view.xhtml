@@ -158,7 +158,6 @@ THIS TEXT WILL BE REMOVED.
         </ui:remove>
       </c:when>
       <c:when test="${ExistingResourceConfigurationViewUIBean.structuredSupported}">
-        <h:outputText value="#{messages.youareviewingstructured}"/>
         <h:outputText value=" #{messages.nopermissionedit}"
                       rendered="#{!ResourceUIBean.permissions.configure}"/>
         <h:form id="viewResourceConfigurationFormStructured">
@@ -189,42 +188,116 @@ THIS TEXT WILL BE REMOVED.
         </h:form>
       </c:when>
       <c:when test="${ExistingResourceConfigurationViewUIBean.structuredAndRawSupported}">
-        <h:outputText value="#{messages.youareviewingstructured}"/>
-        <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawSupported}">
-          <h:outputText value=" #{messages.switch2}"/>
-          <h:outputLink value="view-raw.xhtml">
-            <f:param name="id" value="#{ResourceUIBean.id}"/>
-            <h:outputText value=" #{messages.raw}"/>
-          </h:outputLink>
-        </h:panelGroup>
-        <h:outputText value=" #{messages.nopermissionedit}"
-                      rendered="#{!ResourceUIBean.permissions.configure}"/>
         <h:form id="viewResourceConfigurationFormStructuredAndRaw">
-          <!--  TODO remove the id version -->
           <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+          
+          <h:panelGroup rendered="#{ExistingResourceConfigurationViewUIBean.structuredMode}">
+            <h:outputText value="#{messages.youareviewingstructured}"/>
+            <h:panelGroup>
+              <h:outputText value=" #{messages.switch2}"/>
+              <h:commandLink action="#{ExistingResourceConfigurationViewUIBean.switchToRaw}">
+                <h:outputText value=" files mode"/>
+              </h:commandLink>
+            </h:panelGroup>
 
-          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                       rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+            <h:outputText value=" #{messages.nopermissionedit}"
+                          rendered="#{!ResourceUIBean.permissions.configure}"/>
 
-            <h:commandButton value="#{messages.editstructured}"
-                             action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
-                             title="Edit this Configuration" styleClass="buttonmed"
-                             rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-            <h:commandButton value="#{messages.editraw}"
-                             action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
-                             title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                             rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-          </h:panelGrid>
+            <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+                         rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
-          <onc:config
-                  configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
-                  configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
-                  accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
-                  readOnly="true"
-                  nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
-                  nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
-                  prevalidate="true"/>
+              <h:commandButton value="#{messages.editstructured}"
+                               action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+                               title="Edit this Configuration" styleClass="buttonmed"
+                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+              <h:commandButton value="#{messages.editraw}"
+                               action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                               title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+            </h:panelGrid>
 
+            <onc:config
+                    configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
+                    configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
+                    accessMapActionExpression="#{ExistingResourceConfigurationViewUIBean.accessMap}"
+                    readOnly="true"
+                    nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
+                    nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
+                    prevalidate="true"/>
+
+          </h:panelGroup>
+          <h:panelGroup rendered="#{ExistingResourceConfigurationViewUIBean.rawMode}">
+            <h:outputText value="#{messages.youareviewingraw}"/>
+
+            <h:panelGroup>
+              <h:outputText value=" #{messages.switch2}"/>
+              <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchTostructured}">
+                <h:outputText value=" #{messages.structured}"/>
+              </h:commandLink>
+            </h:panelGroup>
+
+            <h:outputText value=" #{messages.nopermissionedit}"
+                          rendered="#{!ResourceUIBean.permissions.configure}"/>
+
+            <h:panelGrid columns="2"
+                         styleClass="buttons-table"
+                         columnClasses="button-cell"
+                         rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
+
+              <h:commandButton value="#{messages.editraw}"
+                               action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                               title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                               rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationUIBean.updateInProgress}"/>
+            </h:panelGrid>
+
+            <h:panelGrid columns="2"
+                         styleClass="raw-outer-table"
+                         columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+              <rich:panel style="width:100%">
+                <f:facet name="header">Files</f:facet>
+                <rich:panelMenu mode="ajax"
+                                expandMode="client"
+                                iconCollapsedGroup="disc"
+                                limitToList="true"
+                                reRender="fileContents">
+                  <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
+                    <c:forEach items="#{ExistingResourceConfigurationViewUIBean.configuration.rawConfigurations}"
+                               var="rawConfig">
+                      <rich:panelMenuItem label="#{rawConfig.path}"
+                                          action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
+                                          reRender="fileContents,selectedFileHeader">
+                        <f:param name="current" value="#{rawConfig.path}"/>
+                      </rich:panelMenuItem>
+                    </c:forEach>
+                  </rich:panelMenuGroup>
+                </rich:panelMenu>
+              </rich:panel>
+
+              <h:panelGrid columns="1" style="width:100%;">
+                <h:panelGrid columns="4" style="width:100%;">
+                  <h:outputText id="selectedFileHeader"
+                                value="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
+                  <h:commandLink value="View Full Screen"/>
+                  <h:commandLink value="Upload New">
+                    <h:graphicImage value="/images/upload.png"/>
+                  </h:commandLink>
+                  <h:commandLink action="#{ExistingResourceConfigurationViewUIBean.download}" value="Download">
+                    <h:graphicImage value="/images/download.png"/>
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                  </h:commandLink>
+                </h:panelGrid>
+
+                <rich:panel style="margin-left:1px; border: none;">
+                  <h:inputTextarea id="fileContents"
+                                   style="width:100%"
+                                   value="#{ExistingResourceConfigurationViewUIBean.currentContents}"
+                                   readonly="true"/>
+                </rich:panel>
+              </h:panelGrid>
+            </h:panelGrid>
+
+
+          </h:panelGroup>
         </h:form>
       </c:when>
     </c:choose>

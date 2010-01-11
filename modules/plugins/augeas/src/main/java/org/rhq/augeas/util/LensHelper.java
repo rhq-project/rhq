@@ -1,7 +1,6 @@
 package org.rhq.augeas.util;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,39 +15,19 @@ public class LensHelper {
 	    	String lensPath=null;
 	    		    	
 	    	if (param.indexOf(File.separatorChar)==-1){    	   
-	    	   String tempDir = (String)System.getProperties().get(TEMP_DIRECTORY);
-	    	   File tempDirectory = new File(tempDir);
-	    	   File [] lens = tempDirectory.listFiles(new LensFilter(param));
-	    	   File sourceFile = new File(param);
-	    	   
-	    	   File tempFile;
-	    	   
-	    	   if (lens.length==0){	    		  
-	    	     tempFile = File.createTempFile(param, ".aug");
-	    	     tempFile.deleteOnExit();
-                 copyFile(sourceFile,tempFile); 	    	  
-	    	   }else{
-	    		   tempFile = lens[0];
-	    	   }
-	  	      lensPath = tempFile.getAbsolutePath();
+	    	  
 	    	}else
 	    		lensPath = param;
 	    	return lensPath;
 	    	
 	    }
 	 
-	 private static void copyFile(File source,File destination) throws Exception{
+	 public static void copyFile(InputStream in,File destination) throws Exception{
         
 		 if (!destination.canWrite())
         	throw new Exception("Creating of temporary file for lens failed. Destination file "
         			+ destination.getAbsolutePath()+" is not accessible.");
 
-        if (!source.canRead())
-        	throw new Exception("Creating of temporary file for lens failed. Destination file "
-        			+ destination.getAbsolutePath()+" is not accessible.");
-
-        
-        InputStream in = new FileInputStream(source);
         OutputStream out = new FileOutputStream(destination);
     
         byte[] buf = new byte[1024];
@@ -61,6 +40,43 @@ public class LensHelper {
         in.close();
         out.close();
 
+	 }
+	 
+	 public static File createTempDir(String name) throws IOException{
+
+	   String tempDir = (String)System.getProperties().get(TEMP_DIRECTORY);
+  	   
+	   File tempDirectory = new File(tempDir);
+  	   File [] lens = tempDirectory.listFiles(new LensFilter(name));
+  	   
+  	   File lensDirectory;
+  	   
+  	   if (lens.length==0){	    		  
+  	     File tempFile = File.createTempFile(name, "");
+  	     String nm = tempFile.getName();
+  	     tempFile.delete();
+  	     lensDirectory = new File(tempDirectory,nm);
+  	     lensDirectory.mkdir();
+  	     lensDirectory.deleteOnExit(); 	    	  
+  	   }else{
+  		   lensDirectory = lens[0];
+  	   }
+  	   
+  	   return lensDirectory;
+	      
+	 }
+	 
+	 public static File cpFileFromPluginToTemp(File tempDirectory,String fileName) throws IOException,Exception{
+	    	
+	    File destinationFile = new File(tempDirectory,fileName);
+	    if (!destinationFile.exists())
+	       {
+	    	destinationFile.createNewFile();
+	    	InputStream input  = tempDirectory.getClass().getClassLoader().getResourceAsStream(fileName);
+	    	copyFile(input, destinationFile);
+	    	}
+	    
+	    return destinationFile;
 	 }
 	 
 }

@@ -62,12 +62,12 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
         defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, hostsFilePath));
     }
 
-    @BeforeTest
-    @Override
-    public void resetConfigFiles() throws IOException
-    {
-        super.resetConfigFiles();
-    }
+ //   @BeforeTest
+   // @Override
+   // public void resetConfigFiles() throws IOException
+    //{
+      //  super.resetConfigFiles();
+    //}
 
     @Override
     protected Configuration getExpectedResourceConfig() {

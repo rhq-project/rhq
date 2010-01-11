@@ -57,7 +57,6 @@ public class AugeasProxy {
     private Augeas augeas;
     private List<String> modules;
     private AugeasTreeBuilder augeasTreeBuilder;
- 
     
     /**
      * Instantiates new proxy with supplied configuration and
@@ -95,7 +94,7 @@ public class AugeasProxy {
      * @throws AugeasTreeException
      */
     public void load() throws AugeasTreeException {
-        config.loadFiles();
+        config.loadFiles();                
         augeas = new Augeas(config.getRootPath(), config.getLoadPath(), config.getMode());
 
         try {
@@ -110,7 +109,7 @@ public class AugeasProxy {
                 augeas.set("/augeas/load/" + module.getModuletName() + "/incl[" + (idx++) + "]", incl);
             }
 
-        }
+         }
         }catch(Exception e){
         	log.error("Loading of augeas failed",e);
         	throw new AugeasTreeException(e);

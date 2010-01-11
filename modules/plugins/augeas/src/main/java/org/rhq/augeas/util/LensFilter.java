@@ -9,7 +9,7 @@ public class LensFilter implements FileFilter{
     private Pattern pattern;
     
 	public LensFilter(String name){
-	   pattern = Pattern.compile(name+".*"+LensHelper.TEMP_FILE_SUFFIX);
+	   pattern = Pattern.compile(name+".*");
 	}
 	
 	public boolean accept(File pathname) {

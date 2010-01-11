@@ -1730,6 +1730,14 @@ P.compact {
   vertical-align: top;
 }
 
+.rich-pmenu-selected-element {
+  background-color: #D8D8D8;  
+}
+
+.raw-edit-footer {
+  text-align: right;
+}
+
 /*--- Configuration ---------------------*/
 .property-group-header {
     padding: 4px;

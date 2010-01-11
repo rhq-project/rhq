@@ -59,6 +59,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
+    private static final boolean STRUCTURED_MODE = true;
+    private static final boolean RAW_MODE = false;
+
+    private boolean mode = STRUCTURED_MODE;
+
     // =========== actions ===========
 
     public ExistingResourceConfigurationUIBean() {
@@ -75,12 +80,18 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToRaw() {
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
-        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        this.configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
-            resourceId, getConfiguration(), true);
-
-        return SUCCESS_OUTCOME;
+//        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
+//        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+//        Configuration configuration =
+//            configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
+//                resourceId, getConfiguration(), true);
+//
+//        setConfiguration(configuration);
+//
+//        mode = RAW_MODE;
+//
+//        return null;
+        return switchToraw();
     }
 
     public String updateConfiguration() {
@@ -267,7 +278,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getCurrentContents() {
-        return new String(getCurrent().getContents());
+        String currentContents = new String(getCurrent().getContents());
+        return currentContents;
+//        return new String(getCurrent().getContents());
     }
 
     public String getCurrentPath() {
@@ -307,6 +320,14 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     @Create
     public void init() {
 
+    }
+
+    public boolean isStructuredMode() {
+        return mode == STRUCTURED_MODE;
+    }
+
+    public boolean isRawMode() {
+        return mode == RAW_MODE;
     }
 
     public boolean isModified(String path) {
@@ -417,7 +438,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         current = null;
         setConfiguration(configuration);
 
-        return SUCCESS_OUTCOME;
+        mode = RAW_MODE;
+        return null;
+//        return SUCCESS_OUTCOME;
     }
 
     void dumpProperties(Configuration conf, Log log) {
@@ -447,7 +470,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         current = null;
         setConfiguration(configuration);
 
-        return SUCCESS_OUTCOME;
+        mode = STRUCTURED_MODE;
+
+        return null;
     }
 
     void populateRaws() {

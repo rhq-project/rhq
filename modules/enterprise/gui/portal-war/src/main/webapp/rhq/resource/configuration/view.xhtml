@@ -41,9 +41,9 @@ THIS TEXT WILL BE REMOVED.
           }
         </script>
 
-        <h:outputText value="#{messages.youareviewingraw}"/>
         <h:outputText value=" #{messages.nopermissionedit}"
                       rendered="#{!ResourceUIBean.permissions.configure}"/>
+        
         <h:form id="viewResourceConfigurationFormRaw">
           <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
@@ -72,21 +72,19 @@ THIS TEXT WILL BE REMOVED.
                               iconCollapsedGroup="disc"
                               limitToList="true"
                               reRender="fileContents">
-                <rich:panelMenuGroup label="/etc/httpd/conf">
-                  <rich:panelMenuItem>httpd.conf</rich:panelMenuItem>
-                  <rich:panelMenuItem>php.conf</rich:panelMenuItem>
-                </rich:panelMenuGroup>
-                <rich:panelMenuGroup label="/tmp/raw-config">
+                <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
                   <c:forEach items="#{ExistingResourceConfigurationViewUIBean.configuration.rawConfigurations}"
                              var="rawConfig">
-                    <rich:panelMenuItem action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
+                    <rich:panelMenuItem label="#{rawConfig.path}"
+                                        action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
                                         reRender="fileContents,selectedFileHeader">
-                      #{rawConfig.path}
+                      <f:param name="current" value="#{rawConfig.path}"/>
                     </rich:panelMenuItem>
                   </c:forEach>
                 </rich:panelMenuGroup>
               </rich:panelMenu>
             </rich:panel>
+
             <h:panelGrid columns="1" style="width:100%;">
               <h:panelGrid columns="4" style="width:100%;">
                 <h:outputText id="selectedFileHeader" value="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
@@ -94,18 +92,17 @@ THIS TEXT WILL BE REMOVED.
                 <h:commandLink value="Upload New">
                   <h:graphicImage value="/images/upload.png"/>
                 </h:commandLink>
-
-                
-
                 <h:commandLink action="#{ExistingResourceConfigurationViewUIBean.download}" value="Download">
                   <h:graphicImage value="/images/download.png"/>
                   <f:param name="id" value="#{ResourceUIBean.id}"/>
                 </h:commandLink>
               </h:panelGrid>
+
               <rich:panel style="margin-left:1px; border: none;">
                 <h:inputTextarea id="fileContents"
                                  style="width:100%"
-                                 value="#{ExistingResourceConfigurationViewUIBean.currentContents}"/>
+                                 value="#{ExistingResourceConfigurationViewUIBean.currentContents}"
+                                 readonly="true"/>
               </rich:panel>
             </h:panelGrid>
           </h:panelGrid>

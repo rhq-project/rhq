@@ -1,64 +1,251 @@
 <?xml version="1.0"?>
 
 <!DOCTYPE html
-      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:a4j="http://richfaces.org/a4j"
       xmlns:onc="http://jboss.org/on/component">
 
 THIS TEXT WILL BE REMOVED.
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
-   THIS TEXT WILL BE REMOVED AS WELL.
+  THIS TEXT WILL BE REMOVED AS WELL.
 
-   <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Edit Configuration"/>
+  <ui:param name="pageTitle" value="#{ResourceUIBean.resourceType.name} '#{ResourceUIBean.name}' - Edit Configuration"/>
 
-   <ui:param name="selectedTabName" value="Configuration.Current"/>
+  <ui:param name="selectedTabName" value="Configuration.Current"/>
 
-   <ui:define name="content">
+  <ui:define name="content">
 
-      <h:form id="editResourceConfigurationForm" onsubmit="prepareInputsForSubmission(this)" rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
+    <h:form id="editResourceConfigurationForm"
+            onsubmit="prepareInputsForSubmission(this)"
+            rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
 
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-         
-         <h:outputText value="#{messages.youareviewingstructured}" />
-	  
-		 <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredAndRawSupported}" >
-		   <h:outputText value=" #{messages.switch2}" />
-           <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToraw}"  >
-             <f:param name="conversationId" value="#{conversation.id}"/>
-             <f:param name="id" value="#{ResourceUIBean.id}"/>
-             <h:outputText value=" files mode"/>
-           </h:commandLink>
-		</h:panelGroup>
-		  
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                     nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                     nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
-                     prevalidate="true"/>
+      <c:choose>
+        <c:when test="${ExistingResourceConfigurationUIBean.rawSupported}">
+          <h:panelGrid columns="2"
+                       styleClass="raw-outer-table"
+                       columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+            <rich:panel style="width:100%">
+              <f:facet name="header">Files</f:facet>
+              <rich:panelMenu mode="ajax"
+                              expandMode="client"
+                              iconCollapsedGroup="disc"
+                              limitToList="true"
+                              reRender="fileContents">
+                <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
+                  <c:forEach items="#{ExistingResourceConfigurationUIBean.configuration.rawConfigurations}"
+                             var="rawConfig">
+                    <rich:panelMenuItem action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
+                                        styleClass="raw-menu-item"
+                                        tableBorderColor="blue"
+                                        reRender="fileContents,selectedFileHeader">
+                      #{rawConfig.path}
+                    </rich:panelMenuItem>
+                  </c:forEach>
+                </rich:panelMenuGroup>
+              </rich:panelMenu>
+            </rich:panel>
 
-         <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell" rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
+            <h:panelGrid columns="1" style="width:100%;">
+              <h:panelGrid columns="4" style="width:100%;">
+                <h:outputText id="selectedFileHeader" value="#{ExistingResourceConfigurationUIBean.current.path}"/>
+                <h:commandLink value="View Full Screen"/>
+                <h:commandLink value="Upload New">
+                  <h:graphicImage value="/images/upload.png"/>
+                </h:commandLink>
+                <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
+                  <h:graphicImage value="/images/download.png"/>
+                  <f:param name="id" value="#{ResourceUIBean.id}"/>
+                </h:commandLink>
+              </h:panelGrid>
+
+              <rich:panel style="margin-left:1px; border: none;">
+                <h:inputTextarea id="fileContents"
+                                 style="width:100%"
+                                 value="#{ExistingResourceConfigurationUIBean.currentContents}"
+                                 readonly="false"/>
+              </rich:panel>
+            </h:panelGrid>
+
+            <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+              <h:panelGrid columns="2">
+                <h:outputText>n files changed in this configuration</h:outputText>
+                <h:commandButton value="Commit"
+                                 action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                 title="Click to Save Changes"
+                                 styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure}"/>
+              </h:panelGrid>
+            </h:panelGrid>
+          </h:panelGrid>
+        </c:when>
+
+        <c:when test="${ExistingResourceConfigurationUIBean.structuredSupported}">
+          <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
+                      configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+                      nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
+                      nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+                      prevalidate="true"/>
+
+          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+                       rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
             <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
                              title="Click to Save Changes" styleClass="buttonmed"
-                             rendered="${ResourceUIBean.permissions.configure}" />
-            <h:commandButton value="RESET" type="reset" immediate="true" 
+                             rendered="${ResourceUIBean.permissions.configure}"/>
+            <h:commandButton value="RESET" type="reset" immediate="true"
                              title="Click to Reset Fields" styleClass="buttonmed"/>
-         </h:panelGrid>
-         
-      </h:form>
+          </h:panelGrid>
+        </c:when>
 
-      <h:panelGroup layout="block" styleClass="InfoBlock" rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
-         <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-      </h:panelGroup>
-   </ui:define>
+        <c:when test="${ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
+          <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredMode}">
+            <h:outputText value="#{messages.youareviewingstructured}"/>
+
+            <h:panelGroup>
+              <h:outputText value=" #{messages.switch2}"/>
+              <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToRaw}">
+                <h:outputText value=" files mode"/>
+              </h:commandLink>
+            </h:panelGroup>
+
+            <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
+                        configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+                        nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+                        prevalidate="true"/>
+
+            <h:panelGrid columns="2"
+                         styleClass="buttons-table"
+                         columnClasses="button-cell"
+                         rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
+              <h:commandButton value="SAVE"
+                               action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
+                               title="Click to Save Changes"
+                               styleClass="buttonmed"
+                               rendered="${ResourceUIBean.permissions.configure}"/>
+              <h:commandButton value="RESET"
+                               type="reset"
+                               immediate="true"
+                               title="Click to Reset Fields"
+                               styleClass="buttonmed"/>
+            </h:panelGrid>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawMode}">
+            <h:outputText value="#{messages.youareviewingraw}"/>
+
+            <h:panelGroup>
+              <h:outputText value=" #{messages.switch2}"/>
+              <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchTostructured}">
+                <h:outputText value=" #{messages.structured}"/>
+              </h:commandLink>
+            </h:panelGroup>
+
+            <h:panelGrid columns="2"
+                         styleClass="raw-outer-table"
+                         columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+              <rich:panel style="width:100%">
+                <f:facet name="header">Files</f:facet>
+                <rich:panelMenu mode="ajax"
+                                expandMode="client"
+                                iconCollapsedGroup="disc"
+                                limitToList="true"
+                                reRender="fileContents">
+                  <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
+                    <c:forEach items="#{ExistingResourceConfigurationUIBean.configuration.rawConfigurations}"
+                               var="rawConfig">
+                      <rich:panelMenuItem label="#{rawConfig.path}"
+                                          action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
+                                          styleClass="raw-menu-item"
+                                          tableBorderColor="blue"
+                                          reRender="fileContents,selectedFileHeader">
+                        <f:param name="current" value="#{rawConfig.path}"/>
+                      </rich:panelMenuItem>
+                    </c:forEach>
+                  </rich:panelMenuGroup>
+                </rich:panelMenu>
+              </rich:panel>
+
+              <h:panelGrid columns="1" style="width:100%;">
+                <h:panelGrid columns="4" style="width:100%;">
+                  <h:outputText id="selectedFileHeader" value="#{ExistingResourceConfigurationUIBean.current.path}"/>
+                  <h:commandLink value="View Full Screen"/>
+                  <h:commandLink value="Upload New">
+                    <h:graphicImage value="/images/upload.png"/>
+                  </h:commandLink>
+                  <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
+                    <h:graphicImage value="/images/download.png"/>
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                  </h:commandLink>
+                </h:panelGrid>
+
+                <rich:panel style="margin-left:1px; border: none;">
+                  <h:inputTextarea id="fileContents"
+                                   style="width:100%"
+                                   value="#{ExistingResourceConfigurationUIBean.currentContents}"
+                                   readonly="false"/>
+                </rich:panel>
+              </h:panelGrid>
+
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGrid columns="2">
+                  <h:outputText>n files changed in this configuration</h:outputText>
+                  <h:commandButton value="Commit"
+                                   action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                   title="Click to Save Changes"
+                                   styleClass="buttonmed"
+                                   rendered="${ResourceUIBean.permissions.configure}"/>
+                </h:panelGrid>
+              </h:panelGrid>
+            </h:panelGrid>
+          </h:panelGroup>
+        </c:when>
+      </c:choose>
+
+      <ui:remove>
+        <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
+          <h:outputText value=" #{messages.switch2}"/>
+          <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToRaw}">
+            <f:param name="conversationId" value="#{conversation.id}"/>
+            <f:param name="id" value="#{ResourceUIBean.id}"/>
+            <h:outputText value=" files mode"/>
+          </h:commandLink>
+        </h:panelGroup>
+
+
+        <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
+                    configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+                    nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
+                    nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+                    prevalidate="true"/>
+
+        <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
+                     rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
+          <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
+                           title="Click to Save Changes" styleClass="buttonmed"
+                           rendered="${ResourceUIBean.permissions.configure}"/>
+          <h:commandButton value="RESET" type="reset" immediate="true"
+                           title="Click to Reset Fields" styleClass="buttonmed"/>
+        </h:panelGrid>
+      </ui:remove>
+
+    </h:form>
+
+    <h:panelGroup layout="block" styleClass="InfoBlock"
+                  rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+    </h:panelGroup>
+  </ui:define>
 
 </ui:composition>
 

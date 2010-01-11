@@ -87,7 +87,9 @@ THIS TEXT WILL BE REMOVED.
 
             <h:panelGrid columns="1" style="width:100%;">
               <h:panelGrid columns="4" style="width:100%;">
-                <h:outputText id="selectedFileHeader" value="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
+                <a4j:status id="selectedFileHeader"
+                              startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
+                              stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
                 <h:commandLink value="View Full Screen"/>
                 <h:commandLink value="Upload New">
                   <h:graphicImage value="/images/upload.png"/>
@@ -256,10 +258,11 @@ THIS TEXT WILL BE REMOVED.
                                 iconCollapsedGroup="disc"
                                 limitToList="true"
                                 reRender="fileContents">
-                  <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
+                  <rich:panelMenuGroup label="/tmp/raw-config" expanded="true" selectedChild="#{currentPath}">
                     <c:forEach items="#{ExistingResourceConfigurationViewUIBean.configuration.rawConfigurations}"
                                var="rawConfig">
-                      <rich:panelMenuItem label="#{rawConfig.path}"
+                      <rich:panelMenuItem id="raw_#{rawConfig.sha256}"
+                                          label="#{rawConfig.path}"
                                           action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
                                           reRender="fileContents,selectedFileHeader">
                         <f:param name="current" value="#{rawConfig.path}"/>
@@ -271,8 +274,9 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%;">
                 <h:panelGrid columns="4" style="width:100%;">
-                  <h:outputText id="selectedFileHeader"
-                                value="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
+                  <a4j:status id="selectedFileHeader"
+                              startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
+                              stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
                   <h:commandLink value="View Full Screen"/>
                   <h:commandLink value="Upload New">
                     <h:graphicImage value="/images/upload.png"/>

@@ -228,12 +228,10 @@ public class ApplicationServerDiscoveryComponent implements ResourceDiscoveryCom
 
             String javaHome = processInfo.getEnvironmentVariable(JAVA_HOME_ENV_VAR);
             if (javaHome == null && log.isDebugEnabled()) {
-                log.debug("JAVA_HOME environment variable not set in JBoss AS process - defaulting "
-                    + ApplicationServerPluginConfigurationProperties.JAVA_HOME
-                    + " connection property to the plugin container JRE dir.");
-                javaHome = System.getenv(JAVA_HOME_ENV_VAR);
+                log.debug("Unable to determine the JAVA_HOME environment variable for the JBoss AS process - "
+                    + " the Agent is probably running as a user that does not have access to the AS process's "
+                    + " environment.");                
             }
-
             pluginConfiguration.put(new PropertySimple(ApplicationServerPluginConfigurationProperties.JAVA_HOME,
                 javaHome));
 

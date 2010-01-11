@@ -262,6 +262,15 @@
          <c:simple-property name="snmpAgentCommunity" displayName="SNMP Agent Community" default="public"
                             description="the SNMP community of the Apache SNMP agent (typically 'public')"/>
 
+         <c:simple-property name="restartAfterConfigurationUpdate" type="boolean" default="true" required="true">
+            <c:description>
+                If set to true, each configuration update of the server or any underlying virtual host or
+                directory is followed by the restart of the Apache instance so that the configuration changes
+                are applied immediatelly. If set to false, you have to manually restart the server (for example
+                using the restart operation in the operations tab) once all the configuration updates are finished.
+            </c:description>
+         </c:simple-property>
+          
           <!-- Augeas Configuration -->
           <c:group name="Augeas Configuraion">
               <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Httpd" required="true" readOnly="true"
@@ -436,14 +445,6 @@
                 <c:simple-property name="scheme" required="false"/>
             </c:map-property>
         </c:list-property>
-        &DocumentRoot;
-        &DirectoryIndex;
-        &DefaultType;
-        &AddDefaultCharset;
-        &Aliases;
-        &ErrorDocuments;
-        &ServerAdmin;
-        &Timeout;
           <c:list-property name="NameVirtualHost" required="false">
              <c:description>
                  A required directive if you want to configure name-based virtual hosts.
@@ -458,14 +459,6 @@
                 <c:simple-property name="_index" readOnly="true" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
             </c:map-property>
         </c:list-property>
-        &Options;
-        &UseCanonicalName;
-        &UseCanonicalPhysicalPort;        
-        <c:group name="Logging">
-            &ErrorLog;
-            &CustomLogs;
-        </c:group>
-        
       </resource-configuration>
       
       <service name="Apache Virtual Host" discovery="ApacheVirtualHostServiceDiscoveryComponent" class="ApacheVirtualHostServiceComponent" createDeletePolicy="both">
@@ -658,15 +651,17 @@
             &DocumentRoot;
             &AddDefaultCharset;
             &Aliases;
-            &CustomLogs;
             &DefaultType;
             &DirectoryIndex;
             &ErrorDocuments;
-            &ErrorLog;
             &Timeout;
             &Options;
             &UseCanonicalName;
             &UseCanonicalPhysicalPort;
+            <c:group name="Logging">
+                &ErrorLog;
+                &CustomLogs;
+            </c:group>        
          </resource-configuration>
          
          <service name="Directory" class="ApacheDirectoryComponent" discovery="ApacheDirectoryDiscoveryComponent" createDeletePolicy="both">

@@ -378,7 +378,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         query.setParameter("resourceTypeId", resourceTypeId);
         List<ResourceFacets> facets = query.getResultList();
         if (facets.size() != 1) {
-            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false);
+            return new ResourceFacets(resourceTypeId, false, false, false, false, false, false, false, false);
         }
         return facets.get(0);
     }

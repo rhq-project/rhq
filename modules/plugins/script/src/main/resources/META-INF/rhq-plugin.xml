@@ -60,7 +60,7 @@
          </parameters>
          <results>
              <c:simple-property name="exitCode" type="integer" required="true"/>
-             <c:simple-property name="output" required="false" />
+             <c:simple-property name="output" type="longString" required="false" />
          </results>
       </operation>
 

@@ -99,20 +99,22 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
-        try {
-            this.url = new URL(url);
-            if (this.url.getPort() == 0) {
-                throw new InvalidPluginConfigurationException(
-                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
-                        + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
-                        + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
-                        + "this virtual host in httpd.conf.");
+        if (url != null) {
+            try {
+                this.url = new URL(url);
+                if (this.url.getPort() == 0) {
+                    throw new InvalidPluginConfigurationException(
+                        "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                            + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
+                            + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                            + "this virtual host in httpd.conf.");
+                }
+            } catch (MalformedURLException e) {
+                throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
+                    + "') is not a valid URL.");
             }
-        } catch (MalformedURLException e) {
-            throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
-                + "') is not a valid URL.");
         }
-
+        
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -128,7 +130,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return WWWUtils.isAvailable(this.url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -141,23 +143,26 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasTree tree=null;
+        AugeasTree tree = null;
         try {
-        tree = getServerConfigurationTree();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
-        AugeasNode virtHostNode = getNode(tree);
-        mapping.updateAugeas(virtHostNode,report.getConfiguration(), resourceConfigDef);
-        tree.save();
-        
-        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-        log.info("Apache configuration was updated");
-        }catch(Exception e){
-                if (tree!=null)
-                    log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
-                else
-                    log.error("Augeas failed to save configuration",e);
-           report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+            tree = getServerConfigurationTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            AugeasNode virtHostNode = getNode(tree);
+            mapping.updateAugeas(virtHostNode, report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            log.info("Apache configuration was updated");
+            
+            finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
     }
 
@@ -173,6 +178,9 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     
             tree.removeNode(myNode, true);
             tree.save();
+            
+            deleteEmptyFile(tree, myNode);
+            conditionalRestart();
         } catch (IllegalStateException e) {
             //this means we couldn't find the augeas node for this vhost.
             //that error can be safely ignored in this situation.
@@ -266,6 +274,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 tree.save();
                 
                 report.setStatus(CreateResourceStatus.SUCCESS);
+                
+                resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
             } catch (Exception e) {
                 report.setException(e);
                 report.setStatus(CreateResourceStatus.FAILURE);
@@ -353,6 +363,26 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         return virtualHosts.get(0);
     }
 
+    /**
+     * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
+    }
+    
+    /**
+     * @see ApacheServerComponent#conditionalRestart()
+     * 
+     * @throws Exception
+     */
+    public void conditionalRestart() throws Exception {
+        resourceContext.getParentResourceComponent().conditionalRestart();
+    }
+    
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        resourceContext.getParentResourceComponent().deleteEmptyFile(tree, deletedNode);
+    }
+    
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,
         MeasurementScheduleRequest schedule) throws SNMPException {
         SNMPValue snmpValue = null;

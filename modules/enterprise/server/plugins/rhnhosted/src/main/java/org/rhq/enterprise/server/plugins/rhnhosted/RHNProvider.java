@@ -19,6 +19,7 @@
 
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,37 +30,35 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.enterprise.server.content.RepoException;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.InitializationException;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
-import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
-import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
-
 
 /**
  * @author pkilambi
  *
  */
-public class RHNProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource
-{
+public class RHNProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource, AdvisorySource {
 
     private final Log log = LogFactory.getLog(RHNProvider.class);
     private RHNActivator rhnObject;
@@ -116,20 +115,22 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             throw new InitializationException("Invalid 'Certificate' property", e);
         }
 
+        String systemId = FileUtils.readFileToString(new File(RHNConstants.DEFAULT_SYSTEM_ID));
+        helper = new RHNHelper(locationIn, systemId);
+        log.info("RHNProvider initialized RHNHelper with location = " + locationIn + "\n " + "systemid = " + systemId);
+        // Check basic authentication capabilities with passed in systemid and RHN server
+        // If there is a problem a XmlRpcException will be thrown, we'll allow it to be thrown and not try to catch it
+        helper.checkSystemId(systemId);
+
         // Now we have valid data. Spawn the activation.
         try {
-            rhnObject = new RHNActivator(certificate, location);
+            rhnObject = new RHNActivator(systemId, certificate, location);
             rhnObject.processActivation();
             log.debug("Activation successful");
         } catch (Exception e) {
             log.debug("Activation Failed. Please check your configuration");
             throw new InitializationException("Server Activation Failed.", e);
         }
-
-        // RHQ Server is now active, initialize the handler for the bits.
-        helper = new RHNHelper(locationIn, rhnObject.getSystemid());
-        log.info("RHNProvider initialized RHNHelper with ( location = " + locationIn + "\n " +
-                "systemid = " + rhnObject.getSystemid());
     }
 
     /**
@@ -151,10 +152,9 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
-        log.info("synchronizePackages(repoName = " + repoName + ", report = " + report +
-                ", existingPackages.size() = " + existingPackages.size());
+        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        log.info("synchronizePackages(repoName = " + repoName + ", report = " + report + ", existingPackages.size() = "
+            + existingPackages.size());
         RHNSummary summary = new RHNSummary(helper);
         List<ContentProviderPackageDetails> deletedPackages = new ArrayList<ContentProviderPackageDetails>();
         deletedPackages.addAll(existingPackages);
@@ -180,15 +180,19 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                 long startTimeSlice = System.currentTimeMillis();
                 log.debug("Getting package details for slice [" + index + " -> " + end + "]");
                 List<String> pkgSliceList = pkgIds.subList(index, end);
-                pkgDetails.addAll(helper.getPackageDetails(pkgSliceList, repoName));
+                List<ContentProviderPackageDetails> tempList = helper.getPackageDetails(pkgSliceList, repoName);
+                log.debug("We called getPackageDetails() on a list of " + pkgSliceList.size()
+                    + " pkg ids and got a return list of " + tempList.size() + " packages");
+                pkgDetails.addAll(tempList);
                 long endTimeSlice = System.currentTimeMillis();
-                log.debug("Slice processed in " + (endTimeSlice - startTimeSlice) +
-                        "ms current size of pkgDetails is " + pkgDetails.size());
+                log.debug("Slice processed in " + (endTimeSlice - startTimeSlice) + "ms current size of pkgDetails is "
+                    + pkgDetails.size());
             }
             long endTime = System.currentTimeMillis();
-            log.info("It took " + (endTime - startTime) + "ms too get PackageDetails for " + pkgIds.size() + " packages");
-            
-
+            log.info("It took " + (endTime - startTime) + "ms too get PackageDetails for " + pkgIds.size()
+                + " packages");
+            log.info("We fetched metadata for " + pkgDetails.size() + " packages, passed in list of pkgIds was: "
+                + pkgIds.size());
 
             for (ContentProviderPackageDetails p : pkgDetails) {
                 log.debug("Processing package at (" + p.getLocation());
@@ -218,8 +222,44 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     /**
      * @inheritDoc
      */
+    public void synchronizeAdvisory(String repoName, AdvisorySyncReport report,
+        Collection<AdvisoryDetails> existingAdvisory) throws Exception {
+
+        List<String> existingLabels = new ArrayList<String>();
+        for (AdvisoryDetails ad : existingAdvisory) {
+            existingLabels.add(ad.getAdvisory());
+        }
+        List<String> toSyncAdvs = new ArrayList<String>();
+        List<String> deletedAdvs = new ArrayList<String>(); //Existing advisories we want to remove.
+        deletedAdvs.addAll(existingLabels);
+
+        List<String> errataIds = helper.getChannelAdvisory(repoName);
+        List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName);
+        log.debug("Found " + advList.size() + " available errata");
+        for (AdvisoryDetails adv : advList) {
+            log.debug("Processing Advisory ::" + adv.getAdvisory());
+            deletedAdvs.remove(adv.getAdvisory());
+            if (!existingLabels.contains(adv.getAdvisory())) {
+                log.debug("New Advisory " + adv.getAdvisory() + ") detected" + " with bugs" + adv.getBugs()
+                    + "with cves" + adv.getCVEs() + "wiuth packages" + adv.getPkgs());
+                report.addAdvisory(adv);
+            }
+        }
+
+        for (String adv : deletedAdvs) {
+            for (AdvisoryDetails advd : existingAdvisory) {
+                if (advd.getAdvisory().compareToIgnoreCase(adv) == 0) {
+                    report.addDeletedAdvisory(advd);
+                }
+            }
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-                                        Collection<DistributionDetails> existingDistros) throws Exception {
+        Collection<DistributionDetails> existingDistros) throws Exception {
 
         // Goal:
         //   This method will create the metadata representing what kickstart tree files need to be downloaded.
@@ -227,16 +267,16 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         //   NOTE:  This method DOES not do the actual downloading of data.
 
         List<String> existingLabels = new ArrayList<String>();
-        for (DistributionDetails d: existingDistros) {
+        for (DistributionDetails d : existingDistros) {
             existingLabels.add(d.getLabel());
         }
         List<String> toSyncDistros = new ArrayList<String>();
-        List<String> deletedDistros = new ArrayList<String>();  //Existing distros we want to remove.
+        List<String> deletedDistros = new ArrayList<String>(); //Existing distros we want to remove.
         deletedDistros.addAll(existingLabels);
 
         List<String> availableLabels = helper.getSyncableKickstartLabels(repoName);
         log.debug("Found " + availableLabels.size() + " available kickstart trees");
-        for (String label: availableLabels) {
+        for (String label : availableLabels) {
             log.debug("Processing kickstart: " + label);
             deletedDistros.remove(label);
             if (!existingLabels.contains(label)) {
@@ -246,8 +286,8 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         }
 
         // Determine what distros are to be removed, i.e. they are synced by RHQ but no longer exist from RHN
-        for (String label: deletedDistros) {
-            for (DistributionDetails dd: existingDistros) {
+        for (String label : deletedDistros) {
+            for (DistributionDetails dd : existingDistros) {
                 if (dd.getLabel().compareToIgnoreCase(label) == 0) {
                     report.addDeletedDistro(dd);
                 }
@@ -316,4 +356,10 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
     public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
     }
+
+    @Override
+    public SyncProgressWeight getSyncProgressWeight() {
+        return new SyncProgressWeight(10, 1, 0, 0, 1);
+    }
+
 }

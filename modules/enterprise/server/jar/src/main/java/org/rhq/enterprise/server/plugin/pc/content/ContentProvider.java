@@ -60,4 +60,18 @@ public interface ContentProvider {
      */
     void testConnection() throws Exception;
 
+    /**
+     * Fetch the Map of estimated 'weights' for the individual steps for syncing a ContentProvider.
+     * 
+     * Steps include:
+     * 
+     * Package Metadata
+     * Package Bits
+     * Distribution Metadata
+     * Distrubtion Bits
+     * Advisory (Errata) Metadata
+     * Advisory Bits ?
+     */
+
+    SyncProgressWeight getSyncProgressWeight();
 }

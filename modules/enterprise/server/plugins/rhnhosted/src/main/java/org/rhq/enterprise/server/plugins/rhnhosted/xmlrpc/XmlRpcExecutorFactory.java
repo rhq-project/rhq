@@ -27,8 +27,8 @@ import java.util.Map;
 import org.apache.xmlrpc.client.XmlRpcClient;
 import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
-import org.rhq.enterprise.server.util.MethodUtil;
 import org.rhq.enterprise.server.plugins.rhnhosted.RHNConstants;
+import org.rhq.enterprise.server.util.MethodUtil;
 
 /**
  * Class responsible for handing out XmlRpcClient classes, either real or mocked.
@@ -63,7 +63,6 @@ public class XmlRpcExecutorFactory {
         RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
         transportFactory.setRequestProperties(getRequestProperties());
         transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
-        transportFactory.setDumpMessageToFile(false);
         transportFactory.setSSLCert(sslCertPathIn);
         client.setTransportFactory(transportFactory);
         return getExecutor(client);

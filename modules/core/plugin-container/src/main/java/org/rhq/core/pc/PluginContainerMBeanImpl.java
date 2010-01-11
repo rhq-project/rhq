@@ -25,6 +25,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.management.MBeanServer;
@@ -40,6 +41,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.plugin.CanonicalResourceKey;
 import org.rhq.core.pc.plugin.ClassLoaderManager;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
@@ -191,8 +193,8 @@ public class PluginContainerMBeanImpl implements PluginContainerMBeanImplMBean {
 
     public OperationResult retrieveAllResourceClassLoaderInformation() {
 
-        Map<String, ClassLoader> classloaders;
-        Map<String, String[]> uuidToNameIds = new HashMap<String, String[]>(); // [0]=name, [1]=id
+        Map<CanonicalResourceKey, ClassLoader> classloaders;
+        Map<CanonicalResourceKey, String[]> canonicalIdMap = new HashMap<CanonicalResourceKey, String[]>(); // [0]=name, [1]=id, [2]=uuid
 
         ClassLoader originalCL = Thread.currentThread().getContextClassLoader();
         try {
@@ -200,17 +202,19 @@ public class PluginContainerMBeanImpl implements PluginContainerMBeanImplMBean {
             ClassLoaderManager clm = this.pluginContainer.getPluginManager().getClassLoaderManager();
             InventoryManager im = this.pluginContainer.getInventoryManager();
             classloaders = clm.getResourceClassLoaders();
-            for (String uuid : classloaders.keySet()) {
-                ResourceContainer container = im.getResourceContainer(uuid);
-                String[] nameId = new String[2];
+            for (CanonicalResourceKey canonicalId : classloaders.keySet()) {
+                ResourceContainer container = im.getResourceContainer(canonicalId);
+                String[] nameId = new String[3];
                 if (container != null) {
                     nameId[0] = container.getResource().getName();
                     nameId[1] = Integer.toString(container.getResource().getId());
+                    nameId[2] = container.getResource().getUuid();
                 } else {
                     nameId[0] = "<unknown>";
-                    nameId[1] = uuid;
+                    nameId[1] = "<unknown>";
+                    nameId[2] = "<unknown>";
                 }
-                uuidToNameIds.put(uuid, nameId);
+                canonicalIdMap.put(canonicalId, nameId);
             }
         } finally {
             Thread.currentThread().setContextClassLoader(originalCL);
@@ -222,13 +226,15 @@ public class PluginContainerMBeanImpl implements PluginContainerMBeanImplMBean {
         info.getComplexResults().put(numClassLoaders);
         info.getComplexResults().put(list);
 
-        for (Map.Entry<String, ClassLoader> entry : classloaders.entrySet()) {
-            String uuid = entry.getKey();
+        for (Entry<CanonicalResourceKey, ClassLoader> entry : classloaders.entrySet()) {
+            CanonicalResourceKey canonicalId = entry.getKey();
             ClassLoader classloader = entry.getValue();
-            String[] nameId = uuidToNameIds.get(uuid);
+            String[] data = canonicalIdMap.get(canonicalId);
             PropertyMap map = new PropertyMap("classloader");
-            map.put(new PropertySimple("resourceName", nameId[0]));
-            map.put(new PropertySimple("resourceId", nameId[1]));
+            map.put(new PropertySimple("resourceName", data[0]));
+            map.put(new PropertySimple("resourceId", data[1]));
+            map.put(new PropertySimple("resourceUuid", data[2]));
+            map.put(new PropertySimple("canonicalId", canonicalId.toString()));
             map.put(new PropertySimple("classloaderInfo", classloader));
             list.add(map);
         }
@@ -247,8 +253,8 @@ public class PluginContainerMBeanImpl implements PluginContainerMBeanImplMBean {
         try {
             Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
             ClassLoaderManager clm = this.pluginContainer.getPluginManager().getClassLoaderManager();
-            Map<String, ClassLoader> classloaders = clm.getResourceClassLoaders();
-            for (Map.Entry<String, ClassLoader> entry : classloaders.entrySet()) {
+            Map<CanonicalResourceKey, ClassLoader> classloaders = clm.getResourceClassLoaders();
+            for (Entry<CanonicalResourceKey, ClassLoader> entry : classloaders.entrySet()) {
                 AtomicInteger count = classloaderCounts.get(entry.getValue());
                 if (count == null) {
                     count = new AtomicInteger(1);

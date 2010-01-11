@@ -652,7 +652,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                 newBLValue = baselineManager.calculateAutoBaseline(subject, schedule.getId(), chartForm.getStartDate()
                     .getTime(), chartForm.getEndDate().getTime(), false);
             } catch (BaselineCreationException e) {
-                log.debug("Baseline could not be calculated, possibly " + " due to lack of data", e);
+                log.debug("Baseline could not be calculated, possibly due to lack of data.", e);
             }
 
             if (newBLValue != null) {
@@ -666,6 +666,12 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
             postProcessBaselines(request, chartForm);
 
         } else if (chartForm.getMode().equals(ParamConstants.MODE_MON_CHART_SMMR) && (metricId != 0)) {
+            boolean isAutoGroup = (chartForm.getParent() > 0);
+            if (isAutoGroup) {
+                // TODO: Add support for calculating baselines for autogroups.
+                chartForm.setSuppressBaselineSection(true);
+                return;
+            }
             MeasurementDefinition definition = definitionManager.getMeasurementDefinition(subject, metricId);
             if (definition.getNumericType() != NumericType.DYNAMIC) {
                 chartForm.setSuppressBaselineSection(true);
@@ -679,7 +685,7 @@ public class ViewChartFormPrepareAction extends MetricDisplayRangeFormPrepareAct
                     chartForm.getGroupId(), chartForm.getM()[0], chartForm.getStartDate().getTime(), chartForm
                         .getEndDate().getTime(), false);
             } catch (BaselineCreationException e) {
-                log.debug("Baseline could not be calculated, possibly " + " due to lack of data", e);
+                log.debug("Baseline could not be calculated, possibly due to lack of data.", e);
             }
 
             if (newBaseline != null) {

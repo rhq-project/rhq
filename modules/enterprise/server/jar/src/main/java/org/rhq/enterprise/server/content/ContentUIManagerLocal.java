@@ -31,6 +31,7 @@ import org.rhq.core.domain.content.InstalledPackageHistory;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.AdvisoryDetailsComposite;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -237,4 +238,12 @@ public interface ContentUIManagerLocal {
      * @return pagable list of package change items; will not be <code>null</code> 
      */
     PageList<InstalledPackageHistory> getInstalledPackageHistoryForResource(int resourceId, PageControl pc);
+
+    /**
+     * Retrieves Advisory Details by its ID. One and only one must exist for the ID;
+     * @param user user who wants to see the information
+     * @param id identifier for advisory
+     * @return AdvisoryDetailsComposite entity
+     */
+    AdvisoryDetailsComposite loadAdvisoryDetailsComposite(Subject user, Integer id);
 }

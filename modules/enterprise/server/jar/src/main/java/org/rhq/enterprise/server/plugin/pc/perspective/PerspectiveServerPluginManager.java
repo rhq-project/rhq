@@ -33,6 +33,7 @@ import javax.naming.InitialContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
@@ -89,7 +90,9 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
 
         this.metadataManager.loadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
 
-        deployEmbeddedWars(env); // TODO: Should this be done in startPlugin() instead?
+        // Do this here and not startPlugin() because if the app does not deploy the perspective should
+        // be considered invalid.
+        deployEmbeddedWars(env);
     }
 
     private void deployEmbeddedWars(ServerPluginEnvironment env) {
@@ -165,6 +168,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
             this.metadataManager.stop();
             this.metadataManager.start();
         }
+
+        // TODO: execute An MBean Start on any perspective webapps?        
     }
 
     /**
@@ -191,6 +196,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
             this.metadataManager.start();
         }*/
 
+        // TODO: execute An MBean Stop on any perspective webapps?
+
         super.stopPlugin(pluginName);
     }
 
@@ -211,7 +218,8 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
     @Override
     public synchronized void unloadPlugin(String pluginName) throws Exception {
         ServerPluginEnvironment env = getPluginEnvironment(pluginName);
-        undeployWars(env); // TODO: Should this be done in stopPlugin() instead?
+        // Do this here and not stopPlugin(), treat this as a precursor to a possible perspectve deletion 
+        undeployWars(env);
         this.metadataManager.unloadPlugin((PerspectivePluginDescriptorType) env.getPluginDescriptor());
         super.unloadPlugin(pluginName);
     }

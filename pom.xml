@@ -715,6 +715,11 @@
   <profiles>
     <profile>
         <id>ojdbc-driver</id>
+         <activation>
+            <property>
+               <name>rhq.m2.repo.url.oracle</name>
+            </property>
+         </activation>        
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.

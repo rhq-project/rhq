@@ -38,7 +38,8 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDe
 
 /**
  * The superclass to the concurrent and stateful job wrappers.
- * See the subclasses for more information.
+ * See the subclasses for more information. Plugin developers
+ * do not use this class nor do they extend this class.
  *
  * @author John Mazzitelli
  */

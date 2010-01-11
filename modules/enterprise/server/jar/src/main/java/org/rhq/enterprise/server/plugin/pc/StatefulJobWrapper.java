@@ -27,7 +27,8 @@ import org.quartz.StatefulJob;
  * that only one job should be invoked at any one time on any server.
  * 
  * Note that server plugin developers do not extend this class. Instead, developers
- * need to have their plugin components implement {@link ScheduledJob}.
+ * have their plugin components or their job class POJOs implement no-arg methods,
+ * or methods that take {@link ScheduledJobInvocationContext} as a single argument.
  *  
  * @author John Mazzitelli
  */

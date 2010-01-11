@@ -73,6 +73,8 @@ import org.rhq.enterprise.server.common.EntityManagerFacade;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.DynamicConfigurationPropertyBean;
+import org.rhq.enterprise.server.configuration.DynamicConfigurationPropertyLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.content.AdvisoryManagerBean;
@@ -204,7 +206,7 @@ public final class LookupUtil {
 
     /**
      * Returns the main data source that can be used to directly access the database.
-     * 
+     *
      * @return a transactional data source to connect to the database
      */
     public static DataSource getDataSource() {
@@ -220,7 +222,7 @@ public final class LookupUtil {
     /**
      * Returns the transaction manager that you can use for your own managed transactions.
      * Use this sparingly and only inside code that is outside of any CMT-scoped objects.
-     * 
+     *
      * @return the transaction manager
      */
     public static TransactionManager getTransactionManager() {
@@ -312,6 +314,10 @@ public final class LookupUtil {
 
     public static ConfigurationManagerLocal getConfigurationManager() {
         return lookupLocal(ConfigurationManagerBean.class);
+    }
+
+    public static DynamicConfigurationPropertyLocal getDynamicConfigurationProperty() {
+        return lookupLocal(DynamicConfigurationPropertyBean.class);
     }
 
     public static ConfigurationSubsystemManagerLocal getConfigurationSubsystemManager() {

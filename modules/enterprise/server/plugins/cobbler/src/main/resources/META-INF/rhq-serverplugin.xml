@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="CobblerServerPlugin"
+                displayName="Cobbler Plugin"
+                version="1.0"
+                description="A plugin that integrates a Cobbler server into RHQ"
+                package="org.rhq.enterprise.server.plugins.cobbler"
+                disabledOnDiscovery="true"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+       This plugin will periodically sync the RHQ content subsystem
+       with that of a Cobbler server.
+    ]]></serverplugin:help>
+
+    <serverplugin:plugin-component class="CobblerServerPluginComponent" />
+
+    <serverplugin:scheduled-jobs>
+        <!-- notice that we use the map name as the methodName; our stateful component instance is the job class -->
+        <c:map-property name="synchronizeContent">
+            <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Determines whether or not Cobbler will be synchronized with RHQ content"/>
+            <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates the type of trigger this synchronize job will use">
+                <c:property-options>
+                    <c:option value="periodic"/>
+                    <c:option value="cron" default="true"/>
+                </c:property-options>
+            </c:simple-property>
+            <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true" description="Determines how often Cobbler will be synchronized with RHQ content. Based on the schedule type, this is either the period, in milliseconds, or the cron expression."/>
+            <c:simple-property name="concurrent" type="boolean" required="true" default="true" summary="false" readOnly="true" description="This must always be true. can be run multiple times concurrently"/>
+        </c:map-property>
+    </serverplugin:scheduled-jobs>
+
+    <!-- custom global config - unrelated to schedules  -->
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="todo" type="string" required="false" default="todo"
+                           description="TODO this is just a placeholder" />
+    </serverplugin:plugin-configuration>
+
+</generic-plugin>

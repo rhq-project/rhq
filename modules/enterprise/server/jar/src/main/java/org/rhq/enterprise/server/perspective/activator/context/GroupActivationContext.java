@@ -19,10 +19,13 @@
 package org.rhq.enterprise.server.perspective.activator.context;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
@@ -65,14 +68,30 @@ public class GroupActivationContext extends AbstractResourceOrGroupActivationCon
     public EnumSet<Permission> getResourcePermissions() {
         // lazy load
         if (this.resourcePermissions == null) {
-            Set<Permission> perms = this.authorizationManager.getImplicitGroupPermissions(getSubject(),
-                    this.group.getId());
+            Set<Permission> perms = this.authorizationManager.getImplicitGroupPermissions(getSubject(), this.group
+                .getId());
             this.resourcePermissions = EnumSet.copyOf(perms);
         }
         return this.resourcePermissions;
     }
 
+    public Set<Resource> getResources() {
+        // lazy load
+        if (null == this.group.getExplicitResources()) {
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterId(this.group.getId());
+            criteria.fetchExplicitResources(true);
+            List<ResourceGroup> resourceGroups = LookupUtil.getResourceGroupManager().findResourceGroupsByCriteria(
+                this.getSubject(), criteria);
+            if (!resourceGroups.isEmpty()) {
+                this.group.setExplicitResources(resourceGroups.get(0).getExplicitResources());
+            }
+        }
+        return this.group.getExplicitResources();
+    }
+
     public ResourceGroup getGroup() {
         return group;
     }
+
 }

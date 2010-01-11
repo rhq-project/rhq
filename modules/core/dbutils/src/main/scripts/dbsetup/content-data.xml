@@ -55,5 +55,5 @@
       <data id="1" name="kickstart" description="Linux kickstart distribution"/>
       <data id="2" name="jumpstart" description="solaris jumpstart distribution"/>
    </table>
-
+   
 </dbsetup>

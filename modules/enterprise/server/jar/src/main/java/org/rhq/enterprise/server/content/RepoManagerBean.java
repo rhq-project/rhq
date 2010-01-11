@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -34,18 +33,20 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentSource;
-import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoAdvisory;
 import org.rhq.core.domain.content.RepoContentSource;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoGroup;
@@ -54,6 +55,7 @@ import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.RepoRelationship;
 import org.rhq.core.domain.content.RepoRelationshipType;
 import org.rhq.core.domain.content.RepoRepoRelationship;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -61,12 +63,14 @@ import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.plugin.pc.content.ContentProviderManager;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
@@ -314,7 +318,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo createRepo(Subject subject, Repo repo) throws RepoException {
         validateRepo(repo);
-
         repo.setCandidate(false);
 
         log.debug("User [" + subject + "] is creating repo [" + repo + "]");
@@ -558,10 +561,25 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             entityManager.clear();
 
             // ask to synchronize the content source immediately (is this the right thing to do?)
-            pc.syncNow(cs);
+            pc.syncProviderNow(cs);
+        }
+    }
+
+    public void simpleAddContentSourcesToRepo(Subject subject, int repoId, int[] contentSourceIds) throws Exception {
+        Repo repo = entityManager.find(Repo.class, repoId);
+        if (repo == null) {
+            throw new Exception("There is no repo with an ID [" + repoId + "]");
         }
 
-        return;
+        for (int id : contentSourceIds) {
+            ContentSource cs = entityManager.find(ContentSource.class, id);
+            if (cs == null) {
+                throw new Exception("There is no content source with id [" + id + "]");
+            }
+
+            RepoContentSource ccsmapping = repo.addContentSource(cs);
+            entityManager.persist(ccsmapping);
+        }
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
@@ -873,7 +891,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     @SuppressWarnings("unchecked")
     public PageList<Distribution> findAssociatedDistributions(Subject subject, int repoid, PageControl pc) {
-
+        pc.setPrimarySort("rkt.id", PageOrdering.ASC);
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoDistribution.QUERY_FIND_BY_REPO_ID,
             pc);
 
@@ -892,50 +910,137 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     }
 
-    public String calculateSyncStatus(Subject subject, int repoId) {
-        Repo found = this.getRepo(subject, repoId);
-        Set<ContentSourceSyncStatus> stati = new HashSet<ContentSourceSyncStatus>();
-        Set<ContentSource> contentSources = found.getContentSources();
-        Iterator<ContentSource> i = contentSources.iterator();
-        while (i.hasNext()) {
-            ContentSource cs = i.next();
-            List<ContentSourceSyncResults> syncResults = cs.getSyncResults();
-            // Add the most recent sync results status 
-            if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(0) != null) {
-                stati.add(syncResults.get(0).getStatus());
-            } else {
-                stati.add(ContentSourceSyncStatus.NONE);
-            }
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @SuppressWarnings("unchecked")
+    public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoid, PageControl pc) {
+        pc.setPrimarySort("rkt.id", PageOrdering.ASC);
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID, pc);
+
+        query.setParameter("repoId", repoid);
+
+        List<RepoAdvisory> results = query.getResultList();
+
+        ArrayList<Advisory> advs = new ArrayList();
+        for (RepoAdvisory result : results) {
+            advs.add(result.getAdvisory());
         }
-        if (stati.contains(ContentSourceSyncStatus.FAILURE)) {
-            return ContentSourceSyncStatus.FAILURE.toString();
-        }
-        if (stati.contains(ContentSourceSyncStatus.INPROGRESS)) {
-            return ContentSourceSyncStatus.INPROGRESS.toString();
-        }
-        if (stati.contains(ContentSourceSyncStatus.SUCCESS)) {
-            return ContentSourceSyncStatus.SUCCESS.toString();
-        }
-        return null;
+        log.debug("list of Advisory : " + advs + " associated to the repo: " + repoid);
+        long count = getAdvisoryCountFromRepo(subject, repoid);
+
+        return new PageList<Advisory>(advs, (int) count, pc);
+
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+    public long getAdvisoryCountFromRepo(Subject subject, int repoId) {
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoAdvisory.QUERY_FIND_BY_REPO_ID);
+
+        countQuery.setParameter("repoId", repoId);
+
+        return ((Long) countQuery.getSingleResult()).longValue();
+    }
+
+    public String calculateSyncStatus(Subject subject, int repoId) {
+        Repo found = this.getRepo(subject, repoId);
+        Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
+        List<RepoSyncResults> syncResults = found.getSyncResults();
+        // Add the most recent sync results status
+        int latestIndex = syncResults.size() - 1;
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
+            RepoSyncResults results = syncResults.get(latestIndex);
+            return results.getStatus().toString();
+        } else {
+            return ContentSyncStatus.NONE.toString();
+        }
+    }
+
+    public RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId) {
+        Repo found = this.getRepo(subject, repoId);
+        Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
+        List<RepoSyncResults> syncResults = found.getSyncResults();
+
+        int latestIndex = syncResults.size() - 1;
+        if (syncResults != null && (!syncResults.isEmpty()) && syncResults.get(latestIndex) != null) {
+            return syncResults.get(latestIndex);
+        } else {
+            return null;
+        }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         int syncCount = 0;
 
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+
         for (Integer id : repoIds) {
-            Repo r = this.getRepo(subject, id);
-            Set<ContentSource> sources = r.getContentSources();
-            Iterator<ContentSource> i = sources.iterator();
-            while (i.hasNext()) {
-                ContentSource source = i.next();
-                contentSourceManager.synchronizeAndLoadContentSource(subject, source.getId());
+            try {
+                Repo repo = getRepo(subject, id);
+                pc.syncRepoNow(repo);
                 syncCount++;
-                log.debug("Initiating sync: " + source.getId());
+            } catch (SchedulerException e) {
+                log.error("Error synchronizing repo with id [" + id + "]", e);
             }
         }
 
         return syncCount;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        ContentProviderManager providerManager = pc.getAdapterManager();
+
+        int syncCount = 0;
+        for (Integer id : repoIds) {
+            boolean syncExecuted = providerManager.synchronizeRepo(id);
+
+            if (syncExecuted) {
+                syncCount++;
+            }
+        }
+
+        return syncCount;
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public RepoSyncResults persistRepoSyncResults(RepoSyncResults results) {
+
+        ContentManagerHelper helper = new ContentManagerHelper(entityManager);
+        Query q = entityManager.createNamedQuery(RepoSyncResults.QUERY_GET_INPROGRESS_BY_REPO_ID);
+        q.setParameter("repoId", results.getRepo().getId());
+
+        return (RepoSyncResults) helper.persistSyncResults(q, results);
+    }
+
+    @SuppressWarnings("unchecked")
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<RepoSyncResults> getRepoSyncResults(Subject subject, int repoId, PageControl pc) {
+        pc.initDefaultOrderingField("cssr.startTime", PageOrdering.DESC);
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID, pc);
+        Query countQuery = PersistenceUtility.createCountQuery(entityManager, RepoSyncResults.QUERY_GET_ALL_BY_REPO_ID);
+
+        query.setParameter("repoId", repoId);
+        countQuery.setParameter("repoId", repoId);
+
+        List<RepoSyncResults> results = query.getResultList();
+        long count = (Long) countQuery.getSingleResult();
+
+        return new PageList<RepoSyncResults>(results, (int) count, pc);
+    }
+
+    // we want this in its own tx so other tx's can see it immediately, even if calling method is already in a tx
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public RepoSyncResults mergeRepoSyncResults(RepoSyncResults results) {
+        RepoSyncResults retval = entityManager.merge(results);
+        return retval;
+    }
+
+    public RepoSyncResults getRepoSyncResults(int resultsId) {
+        return entityManager.find(RepoSyncResults.class, resultsId);
     }
 
 }

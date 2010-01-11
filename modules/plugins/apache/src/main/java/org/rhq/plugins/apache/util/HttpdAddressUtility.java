@@ -146,7 +146,7 @@ public class HttpdAddressUtility {
                 addr.host = serverAddr.host;
             } else {
                 String host = hostPort[0];
-                if ("*".equals(host)) {
+                if ("*".equals(host) || "_default_".equals(host)) {
                     Address serverAddr = getMainServerSampleAddress(ag);
                     if (serverAddr == null) return null;
                     host = serverAddr.host;

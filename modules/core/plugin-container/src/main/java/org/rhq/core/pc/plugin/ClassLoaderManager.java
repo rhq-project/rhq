@@ -89,10 +89,10 @@ public class ClassLoaderManager {
 
     /**
      * Contains all classloaders for all individual resources that got classloaders created for it.
-     * The map is keyed on the resources' UUIDs.
+     * The map is keyed on a hash built from data belonging to a resource and its parent resource.
      * See {@link #obtainResourceClassLoader(Resource, ResourceContainer, List)}.
      */
-    private final Map<String, ClassLoader> resourceClassLoaders;
+    private final Map<CanonicalResourceKey, ClassLoader> resourceClassLoaders;
 
     /**
      * If <code>true</code>, then this manager will create instances of classloaders for those
@@ -123,7 +123,7 @@ public class ClassLoaderManager {
 
         this.rootClassLoader = rootClassLoader;
         this.pluginClassLoaders = new HashMap<String, ClassLoader>();
-        this.resourceClassLoaders = new HashMap<String, ClassLoader>();
+        this.resourceClassLoaders = new HashMap<CanonicalResourceKey, ClassLoader>();
         this.discoveryClassLoaders = new HashMap<String, ClassLoader>();
 
         this.pluginNamesUrls = pluginNamesUrls;
@@ -292,12 +292,8 @@ public class ClassLoaderManager {
             throw new PluginContainerException("parent must not be null");
         }
 
-        String uuid = resource.getUuid();
-        if (uuid == null) {
-            throw new PluginContainerException("Resource [" + resource + "] without a UUID cannot get a classloader");
-        }
-
-        ClassLoader resourceCL = this.resourceClassLoaders.get(uuid);
+        CanonicalResourceKey mapKey = new CanonicalResourceKey(resource, parent.getResource());
+        ClassLoader resourceCL = this.resourceClassLoaders.get(mapKey);
         if (resourceCL == null) {
 
             if (this.createResourceClassLoaders) {
@@ -385,9 +381,10 @@ public class ClassLoaderManager {
                 String resourcePlugin = resourceType.getPlugin();
                 resourceCL = obtainPluginClassLoader(resourcePlugin);
             }
+
+            this.resourceClassLoaders.put(mapKey, resourceCL);
         }
 
-        this.resourceClassLoaders.put(uuid, resourceCL);
         return resourceCL;
     }
 
@@ -454,16 +451,16 @@ public class ClassLoaderManager {
     }
 
     /**
-     * Returns a shallow copy of the resource classloaders keyed on resource UUIDs. This method is here
-     * just to support the plugin container management MBean.
+     * Returns a shallow copy of the resource classloaders keyed on a canonical keys.
+     * This method is here just to support the plugin container management MBean.
      * 
      * Do not use this method to obtain a resource's classloader, instead, you want to use
      * {@link #obtainResourceClassLoader(Resource, ResourceContainer, List)}.
      * 
      * @return all resource classloaders currently assigned to resources (will never be <code>null</code>)
      */
-    public synchronized Map<String, ClassLoader> getResourceClassLoaders() {
-        return new HashMap<String, ClassLoader>(this.resourceClassLoaders);
+    public synchronized Map<CanonicalResourceKey, ClassLoader> getResourceClassLoaders() {
+        return new HashMap<CanonicalResourceKey, ClassLoader>(this.resourceClassLoaders);
     }
 
     private Set<ClassLoader> getUniquePluginClassLoaders() {

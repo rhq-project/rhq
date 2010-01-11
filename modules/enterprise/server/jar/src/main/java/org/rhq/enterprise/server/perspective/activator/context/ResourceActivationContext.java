@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.perspective.activator.context;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
@@ -36,6 +37,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class ResourceActivationContext extends AbstractResourceOrGroupActivationContext {
     private Resource resource;
+    private Set<Resource> resourceAsSet;
     transient EnumSet<ResourceTypeFacet> facets;
     transient EnumSet<Permission> resourcePermissions;
 
@@ -45,6 +47,8 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
     public ResourceActivationContext(Subject subject, Resource resource) {
         super(subject);
         this.resource = resource;
+        this.resourceAsSet = new HashSet<Resource>(1);
+        this.resourceAsSet.add(resource);
     }
 
     @Override
@@ -56,8 +60,8 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
     public EnumSet<ResourceTypeFacet> getFacets() {
         // lazy load
         if (this.facets == null) {
-            ResourceFacets resourceFacets = this.resourceTypeManager.getResourceFacets(
-                    resource.getResourceType().getId());
+            ResourceFacets resourceFacets = this.resourceTypeManager.getResourceFacets(resource.getResourceType()
+                .getId());
             this.facets = resourceFacets.getFacets();
         }
         return this.facets;
@@ -73,7 +77,7 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
         // lazy load
         if (this.resourcePermissions == null) {
             Set<Permission> perms = this.authorizationManager.getImplicitResourcePermissions(getSubject(),
-                    this.resource.getId());
+                this.resource.getId());
             this.resourcePermissions = EnumSet.copyOf(perms);
         }
         return this.resourcePermissions;
@@ -82,4 +86,9 @@ public class ResourceActivationContext extends AbstractResourceOrGroupActivation
     public Resource getResource() {
         return resource;
     }
+
+    public Set<Resource> getResources() {
+        return this.resourceAsSet;
+    }
+
 }

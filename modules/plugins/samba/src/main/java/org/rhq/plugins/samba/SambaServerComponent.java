@@ -28,6 +28,8 @@ import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
@@ -38,7 +40,7 @@ import org.rhq.plugins.augeas.helper.AugeasNode;
 /**
  * TODO
  */
-public class SambaServerComponent extends AugeasConfigurationComponent {
+public class SambaServerComponent extends AugeasConfigurationComponent implements OperationFacet {
     static final String ENABLE_RECYCLING = "enableRecycleBin";
     static final String AUTHCONFIG_PATH = "/usr/bin/authconfig";
     static final String NET_PATH = "/usr/bin/net";
@@ -50,7 +52,6 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
     public void start(ResourceContext resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         super.start(resourceContext);
-        updateSmbAds(resourceContext);
     }
 
     public void stop() {
@@ -128,24 +129,61 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         return super.toPropertyValue(propDefSimple, augeas, node);
     }
 
-    private void updateSmbAds(ResourceContext resourceContext) throws Exception {
+    public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        Configuration resourceConfig = loadResourceConfiguration();
+        OperationResult result = null;
 
-        String realm = pluginConfig.getSimple("realm").getStringValue();
-        String controller = pluginConfig.getSimple("controller").getStringValue();
-        String username = pluginConfig.getSimple("username").getStringValue();
-        String password = pluginConfig.getSimple("password").getStringValue();
+        if (name.equals("join")) {
+          result = updateSmbAds(params);
+        }
+        else if (name.equals("disconnect")) {
+          result = disconnectSmbAds(params);
+        }
+        return result;
+    }
 
+    private OperationResult disconnectSmbAds(Configuration params) throws Exception {
+
+        Configuration resourceConfig = this.loadResourceConfiguration();
+        OperationResult result = new OperationResult();
+
+        String username = resourceConfig.getSimple("username").getStringValue();
+        String password = resourceConfig.getSimple("password").getStringValue();
+
+        if (username == null || password == null) {
+            result.setSimpleResult("Missing required connection parameters");
+            return result;
+        }
+
+        StringBuilder netArgs = new StringBuilder();
+        netArgs.append("ads leave");
+        netArgs.append(SPACE + "-U " + username + "%" + password);
+
+        ProcessExecutionResults netResults = execute(NET_PATH, netArgs.toString());
+        String results = netResults.getCapturedOutput();
+
+        result.setSimpleResult(results);
+
+        return result;
+    }
+
+    private OperationResult updateSmbAds(Configuration params) throws Exception {
+
+        Configuration resourceConfig = this.loadResourceConfiguration();
+        OperationResult result = new OperationResult();
+
+        String realm = resourceConfig.getSimple("realm").getStringValue();
+        String controller = resourceConfig.getSimple("controller").getStringValue();
+        String username = resourceConfig.getSimple("username").getStringValue();
+        String password = resourceConfig.getSimple("password").getStringValue();
         String workgroup = resourceConfig.getSimple("workgroup").getStringValue();
         String idmapuid = resourceConfig.getSimple("idmap uid").getStringValue();
         String idmapgid = resourceConfig.getSimple("idmap gid").getStringValue();
         String shell = resourceConfig.getSimple("template shell").getStringValue();
 
         if (realm == null || controller == null || username == null || password == null || workgroup == null) {
-            // no point in doing anything
-            return;
+            result.setSimpleResult("Missing required connection parameters");
+            return result;
         }
 
         StringBuilder authArgs = new StringBuilder();
@@ -174,11 +212,16 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         netArgs.append("join");
         netArgs.append(SPACE + "-w " + workgroup);
         netArgs.append(SPACE + "-S " + controller);
-        //TODO is there more secure way to do this.
         netArgs.append(SPACE + "-U " + username + "%" + password);
 
-        execute(AUTHCONFIG_PATH, authArgs.toString());
-        execute(NET_PATH, netArgs.toString());
+        ProcessExecutionResults authResults = execute(AUTHCONFIG_PATH, authArgs.toString());
+        ProcessExecutionResults netResults = execute(NET_PATH, netArgs.toString());
+
+        String results = authResults.getCapturedOutput() + netResults.getCapturedOutput();
+
+        result.setSimpleResult(results);
+
+        return result;
     }
 
     private ProcessExecutionResults execute(String path, String args) throws InvalidPluginConfigurationException {

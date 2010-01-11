@@ -58,7 +58,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         //first define the root server as one virtual host
         ResourceType resourceType = context.getResourceType();
 
-        Configuration mainServerPluginConfig = new Configuration();
+        Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
         
         String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
@@ -108,7 +108,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
             
             String resourceKey = keyBuilder.toString();
             
-            Configuration pluginConfiguration = new Configuration();
+            Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
             Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
             if (address != null) {

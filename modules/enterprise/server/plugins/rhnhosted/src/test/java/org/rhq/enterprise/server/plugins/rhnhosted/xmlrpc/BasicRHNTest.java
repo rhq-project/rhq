@@ -23,6 +23,7 @@ import org.apache.xmlrpc.client.XmlRpcClientConfigImpl;
 
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageShortType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
@@ -507,6 +508,59 @@ public class BasicRHNTest extends TestCase {
                 assertFalse(StringUtils.isBlank(t.getKstreeTypeName()));
                 assertFalse(StringUtils.isBlank(t.getLabel()));
                 assertFalse(StringUtils.isBlank(t.getLastModified()));
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            success = false;
+        }
+        assertTrue(success);
+    }
+
+    public void testDumpErrata() throws Exception {
+        boolean success = true;
+
+        try {
+            String systemid = getSystemId();
+            if (StringUtils.isBlank(systemid)) {
+                System.out.println("Skipping test since systemid is not readable");
+                return;
+            }
+
+            XmlRpcClientConfigImpl config = new XmlRpcClientConfigImpl();
+            config.setServerURL(new URL(serverUrl + "/SAT-DUMP"));
+            XmlRpcClient client = new XmlRpcClient();
+            client.setConfig(config);
+
+            RhnJaxbTransportFactory transportFactory = new RhnJaxbTransportFactory(client);
+            transportFactory.setRequestProperties(getRequestProperties());
+            transportFactory.setJaxbDomain("org.rhq.enterprise.server.plugins.rhnhosted.xml");
+            transportFactory.setDumpMessageToFile(debugDumpFile);
+            transportFactory.setDumpFilePath("/tmp/sample-rhnhosted-dump.errata.xml");
+            client.setTransportFactory(transportFactory);
+
+            List<String> errataIds = new ArrayList<String>();
+
+            errataIds.add("rhn-erratum-6183");
+            errataIds.add("rhn-erratum-6184");
+            errataIds.add("rhn-erratum-6182");
+            Object[] params = new Object[] { systemid, errataIds };
+
+            JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.errata", params);
+            RhnSatelliteType sat = result.getValue();
+
+            List<RhnErratumType> errata = sat.getRhnErrata().getRhnErratum();
+
+            for (RhnErratumType e : errata) {
+                assertFalse(StringUtils.isBlank(e.getAdvisory()));
+                assertFalse(StringUtils.isBlank(e.getChannels()));
+                assertFalse(StringUtils.isBlank(e.getPackages()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumAdvisoryName()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumAdvisoryType()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumDescription()));
+                assertFalse(StringUtils.isBlank(e.getRhnErratumSynopsis()));
+                assertTrue(e.getRhnErratumBugs().getRhnErratumBug().size() > 0);
+
             }
 
         } catch (Exception e) {

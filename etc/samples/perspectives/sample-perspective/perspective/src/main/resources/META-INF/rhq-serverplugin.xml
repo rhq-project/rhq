@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<perspectivePlugin
+<perspective-plugin
    apiVersion="1.0"
    version="1.0"
    description="A Sample Perspective Utilizing Every Extension Point and Filter"
@@ -19,7 +19,7 @@
       baseUrl="/rhq-sample-perspective/" />
 
    <!--  replace the coreMenu log with a new one -->
-   <menuItem
+   <menu-item
       action="remove"
       name="logo"
       displayName=""
@@ -28,8 +28,8 @@
       iconUrl="images/jboss.png">
       <position
          placement="firstChild" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       action="add"
       name="logo"
       displayName=""
@@ -38,42 +38,42 @@
       iconUrl="images/jboss.png">
       <position
          placement="firstChild" />
-   </menuItem>
+   </menu-item>
 
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
-   <menuItem
+   <menu-item
       action="remove"
       name="groups.newGroup"
       displayName="New Group">
       <position
          name="groups.groupDefinitions"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       action="remove"
       name="groups.newGroupDefinition"
       displayName="New Group Definition">
       <position
          name="groups.newGroup"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
-   <!-- Add Sample menuItem to Core Menu -->
-   <menuItem
+   <!-- Add Sample menu-item to Core Menu -->
+   <menu-item
       name="sample"
       displayName="Sample">
       <position
          name="help"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child1"
       displayName="New Group">
       <position
          name="sample"
          placement="firstChild" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child2"
       displayName="Sample Page"
       application="sample"
@@ -81,8 +81,8 @@
       <position
          name="sample.child1"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child3"
       displayName="Random Resource"
       application="sample"
@@ -90,8 +90,8 @@
       <position
          name="sample.child2"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child4"
       displayName="Create EJB3 Admin User"
       application="sample"
@@ -100,9 +100,9 @@
          name="sample.child3"
          placement="after" />
       <activators>
-         <globalPermission
+         <global-permission
             name="MANAGE_INVENTORY" />
-         <globalPermission
+         <global-permission
             name="MANAGE_SECURITY" />
          <inventory>
             <resource
@@ -110,8 +110,8 @@
                type="JBossAS Server" />
          </inventory>
       </activators>
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child5"
       displayName="Config and Restart AS"
       application="sample"
@@ -124,9 +124,9 @@
             <resource
                plugin="JBossAS"
                type="JBossAS Server">
-               <permission
+               <resource-permission
                   name="CONTROL" />
-               <permission
+               <resource-permission
                   name="CONFIGURE" />
                <trait
                   name="Version Name"
@@ -137,8 +137,8 @@
             </resource>
          </inventory>
       </activators>
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child1.newGroup"
       displayName="New Group"
       application="sample"
@@ -148,11 +148,11 @@
          name="sample.child1"
          placement="firstChild" />
       <activators>
-         <globalPermission
+         <global-permission
             name="MANAGE_INVENTORY" />
       </activators>
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="sample.child1.newGroupDefinition"
       displayName="New Group Definition"
       application="sample"
@@ -162,20 +162,28 @@
          name="sample.child1.newGroup"
          placement="after" />
       <activators>
-         <globalPermission
+         <global-permission
             name="MANAGE_INVENTORY" />
       </activators>
-   </menuItem>
+   </menu-item>
 
+
+   <!--  A tab that shows up whenever the RT implements the Support Facet and user can execute operations -->
    <tab
-      name="Sample"
-      displayName="Sample"
+      name="SampleSupport"
+      displayName="Sample Support"
       iconUrl="/images/icons/Favorite_16.png"
       application="sample"
       url="currentResource.seam">
       <position
-         name="Inventory"
+         name="Content"
          placement="after" />
+      <activators>
+         <facet
+            name="support" />
+         <resource-permission
+            name="CONTROL" />
+      </activators>
    </tab>
 
    <!-- a subtab that will only be displayed for Network Adapter Resources -->
@@ -189,11 +197,35 @@
          name="Summary.Timeline"
          placement="after" />
       <activators>
-         <resourceType>
+         <resource-type>
             <resource
                plugin="Platforms"
                type="Network Adapter" />
-         </resourceType>
+         </resource-type>
+      </activators>
+   </tab>
+
+   <!-- a subtab that will only be displayed for AS Server (4 or 5) Resources -->
+   <tab
+      name="Summary.SampleAS"
+      displayName="Sample-AS4,5"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Summary.Timeline"
+         placement="after" />
+      <activators>
+         <resource-type>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server">
+            </resource>
+            <resource
+               plugin="JBossAS5"
+               type="JBossAS Server">
+            </resource>
+         </resource-type>
       </activators>
    </tab>
 
@@ -207,4 +239,4 @@
          placement="after" />
    </tab>
 
-</perspectivePlugin>
+</perspective-plugin>

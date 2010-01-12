@@ -117,7 +117,6 @@
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-test-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>

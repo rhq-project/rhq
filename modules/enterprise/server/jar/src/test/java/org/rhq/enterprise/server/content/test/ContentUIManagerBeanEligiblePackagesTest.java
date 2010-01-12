@@ -20,37 +20,37 @@ package org.rhq.enterprise.server.content.test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.AfterMethod;
+
+import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.Package;
-import org.rhq.core.domain.content.PackageBits;
+import org.rhq.core.domain.content.PackageCategory;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.PackageCategory;
-import org.rhq.core.domain.content.InstalledPackage;
-import org.rhq.core.domain.content.Repo;
-import org.rhq.core.domain.content.ResourceRepo;
-import org.rhq.core.domain.content.RepoPackageVersion;
 import org.rhq.core.domain.content.ProductVersionPackageVersion;
-import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoPackageVersion;
+import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ProductVersion;
-import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.rhq.enterprise.server.util.SessionTestHelper;
 
 /**
  * Specifically tests the logic to ensure the query to find what packages can be installed on a resource.
@@ -119,8 +119,8 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
         Subject overlord = subjectManager.getOverlord();
         PageControl pageControl = new PageControl(0, 100);
 
-        PageList<PackageVersionComposite> pageList =
-            contentUIManager.getPackageVersionCompositesByFilter(overlord, resource.getId(), null, pageControl);
+        PageList<PackageVersionComposite> pageList = contentUIManager.getPackageVersionCompositesByFilter(overlord,
+            resource.getId(), null, pageControl);
 
         assert pageList != null : "Null page list returned from query";
 
@@ -216,7 +216,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
                 em.persist(package4);
 
                 // Wire up the repo to the resource and add all of these packages to it
-                repo1 = new Repo("testRepo1");
+                repo1 = new Repo("repo-" + RandomStringUtils.randomNumeric(6));
                 em.persist(repo1);
 
                 repoPackageVersion1 = repo1.addPackageVersion(packageVersion1);
@@ -233,7 +233,7 @@ public class ContentUIManagerBeanEligiblePackagesTest extends AbstractEJB3Test {
                 em.persist(resourceRepo1);
 
                 // Subscribe the resource to a second repo to make sure the joins won't duplicate stuff
-                repo2 = new Repo("testRepo2");
+                repo2 = new Repo("test-" + RandomStringUtils.randomNumeric(6));
                 em.persist(repo2);
 
                 resourceRepo2 = repo2.addResource(resource);

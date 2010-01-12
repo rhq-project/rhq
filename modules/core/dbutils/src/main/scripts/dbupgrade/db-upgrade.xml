@@ -2756,6 +2756,11 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+            
+            <schemaSpec version="2.75">
+                <schema-addColumn table="RHQ_REPO" column="SYNC_SCHEDULE" columnType="VARCHAR2" precision="64" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>
+

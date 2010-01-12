@@ -79,6 +79,7 @@
         <column name="CREATION_TIME" type="LONG" required="true"/>
         <column name="LAST_MODIFIED_TIME" type="LONG" required="true"/>
         <column name="IS_CANDIDATE" type="BOOLEAN" required="true"/>
+        <column name="SYNC_SCHEDULE" size="64" type="VARCHAR2" required="false"/>
 
         <index name="RHQ_REPO_IDX" unique="true">
             <field ref="NAME"/>

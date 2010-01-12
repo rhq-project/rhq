@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import org.libvirt.LibvirtException;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -38,6 +39,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.virt.LibVirtConnection.HVInfo;
 
 /**
  * Component for managing both virtual hosts and guests though some features are guest only and only
@@ -48,7 +50,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 public class VirtualizationHostComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
 
-    private Log log = LogFactory.getLog(VirtualizationComponent.class);
+    private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
     private LibVirtConnection virt;
     private long cpuNanosLast;
     private long cpuCheckedLast;
@@ -129,7 +131,10 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
         Configuration config = new Configuration();
-        VirtualizationHostDiscoveryComponent.populateConfigurationForHV(config, virt.getHVInfo());
+        HVInfo info = virt.getHVInfo();
+        config.put(new PropertySimple("hypervisorType", info.hvType));
+        config.put(new PropertySimple("hostName", info.hostname));
+        config.put(new PropertySimple("libvirtVersion", info.libvirtVersion));
         return config;
     }
 
@@ -166,6 +171,7 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
         }*/
     }
 
+    // TODO 
     public CreateResourceReport createResource(CreateResourceReport report) {
         /*String xml = DomainConfigurationEditor.getXml(report.getResourceConfiguration());
 

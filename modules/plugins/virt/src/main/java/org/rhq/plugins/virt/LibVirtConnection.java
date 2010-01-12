@@ -54,6 +54,10 @@ public class LibVirtConnection {
         }
     }
 
+    public String getConnectionURI() throws LibvirtException {
+        return connection.getURI();
+    }
+
     public List<String> getDomainNames() throws LibvirtException {
 
         if (connection == null) {

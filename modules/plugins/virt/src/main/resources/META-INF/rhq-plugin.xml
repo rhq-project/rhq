@@ -15,14 +15,17 @@
 
         <plugin-configuration>
             <c:simple-property name="connectionURI" required="true" default=""
-                               description="URI for the libvirt conection to use."/>
+                               description="URI for the libvirt conection to use."/> 
+        </plugin-configuration>
+        <resource-configuration>       
             <c:simple-property name="hypervisorType" readOnly="true" 
                                description="The type of the hypervisor"/>   
 			<c:simple-property name="hostName" readOnly="true" 
                                description="The hostname of of the hypervisor"/>
 			<c:simple-property name="libvirtVersion" readOnly="true" 
-                               description="The version of libvirt being used"/>                               
-        </plugin-configuration>
+                               description="The version of libvirt being used"/>
+        </resource-configuration>                                      
+                       
         
 
         <!--
@@ -30,15 +33,16 @@
         <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>
         <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
                 displayType="summary"/>
+        -->
 
 
         <service name="Virtual Guest"
                  description="Virtual Domain Guest"
-                 discovery="VirtualizationDiscoveryComponent"
-                 class="VirtualizationComponent"
+                 discovery="VirtualizationDomainDiscoveryComponent"
+                 class="VirtualizationDomainComponent"
                  createDeletePolicy="both" creationDataType="configuration">
 
-
+<!--
             <operation name="create"
                        description="Launch a defined domain. If the call succeed the domain moves from the defined to the running domains pools."/>
             <operation name="reboot"
@@ -66,7 +70,7 @@
             <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
                     displayType="summary"/>
 
-
+-->
             <resource-configuration>
 
                 <c:simple-property name="type" type="string" readOnly="true" description="The type of virtual machine"
@@ -121,7 +125,7 @@
                     </c:simple-property>
                 </c:group>
 
-
+<!--
                 <c:group name="Networking">
                     <c:list-property name="interfaces">
                         <c:map-property name="interface">
@@ -155,11 +159,12 @@
                             <c:simple-property name="targetDevice"/>
                         </c:map-property>
                     </c:list-property>
-                </c:group>
+                </c:group> 
+-->
 
             </resource-configuration>
 
-
+<!--
             <service name="Virtual Network Interface"
                      class="VirtualizationInterfaceComponent"
                      discovery="VirtualizationInterfaceDiscoveryComponent">
@@ -187,8 +192,7 @@
 
             </service>
 
-
-        </service>
         -->
+        </service>
     </server>
 </plugin>

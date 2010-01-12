@@ -53,7 +53,7 @@ public class VirtualizationHostDiscoveryComponent implements ResourceDiscoveryCo
             DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
                 resourceDiscoveryContext.getResourceType(), "VirtHost", hi.hvType + " Hypervisor", "" + hi.version,
                 String.format("Libvirt Connection to a %s hypervisor", hi.hvType), null, null);
-            populateConfigurationForHV(detail.getPluginConfiguration(), hi);
+            detail.getPluginConfiguration().put(new PropertySimple("ConnectionURI", virt.getConnectionURI()));
             details.add(detail);
 
         } catch (Throwable t) {

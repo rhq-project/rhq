@@ -35,11 +35,11 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * @author Greg Hinkle
  */
-public class VirtualizationInterfaceComponent implements ResourceComponent<VirtualizationComponent>, MeasurementFacet {
+public class VirtualizationInterfaceComponent implements ResourceComponent<VirtualizationDomainComponent>, MeasurementFacet {
 
-    ResourceContext<VirtualizationComponent> resourceContext;
+    ResourceContext<VirtualizationDomainComponent> resourceContext;
 
-    public void start(ResourceContext<VirtualizationComponent> virtualizationComponentResourceContext)
+    public void start(ResourceContext<VirtualizationDomainComponent> virtualizationComponentResourceContext)
         throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = virtualizationComponentResourceContext;
     }

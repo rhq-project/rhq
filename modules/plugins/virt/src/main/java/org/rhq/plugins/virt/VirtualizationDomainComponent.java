@@ -25,12 +25,10 @@ import org.apache.commons.logging.LogFactory;
 import org.libvirt.LibvirtException;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
@@ -41,6 +39,7 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.virt.LibVirtConnection.DomainInfo;
 
 /**
  * Component for managing both virtual hosts and guests though some features are guest only and only
@@ -48,18 +47,18 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  *
  * @author Greg Hinkle
  */
-public class VirtualizationComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
+public class VirtualizationDomainComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
 
-    private Log log = LogFactory.getLog(VirtualizationComponent.class);
+    private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
     private LibVirtConnection virt;
     private String domainName;
     private long cpuNanosLast;
     private long cpuCheckedLast;
-    private AvailabilityType lastAvailability = AvailabilityType.DOWN;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        virt = new LibVirtConnection("qemu:///system");
+        String uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
+        virt = new LibVirtConnection(uri);
         domainName = resourceContext.getResourceKey();
     }
 
@@ -68,16 +67,14 @@ public class VirtualizationComponent implements ResourceComponent, MeasurementFa
 
     public AvailabilityType getAvailability() {
         try {
-            String state = String.valueOf(virt.getDomainInfo(domainName).domainInfo.state);
-            if (state.equals("1") || state.equals("2")) {
-                lastAvailability = AvailabilityType.UP;
-            } else if (state.equals("0")) {
-                // This is just an inability to tell the state so return the last collected state
-                return lastAvailability;
-            } else {
-                lastAvailability = AvailabilityType.DOWN;
+            switch (virt.getDomainInfo(domainName).domainInfo.state) {
+            case VIR_DOMAIN_RUNNING:
+                return AvailabilityType.UP;
+            case VIR_DOMAIN_PAUSED:
+                return AvailabilityType.UP;
+            default:
+                return AvailabilityType.DOWN;
             }
-            return lastAvailability;
         } catch (LibvirtException e) {
             log.error("Exception caught retriveing the domain info for " + domainName);
             throw new RuntimeException(e);
@@ -85,7 +82,7 @@ public class VirtualizationComponent implements ResourceComponent, MeasurementFa
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        for (MeasurementScheduleRequest request : metrics) {
+        /*for (MeasurementScheduleRequest request : metrics) {
             if (request.getName().equals("cpuTime")) {
                 report.addData(new MeasurementDataNumeric(request,
                     (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
@@ -108,11 +105,12 @@ public class VirtualizationComponent implements ResourceComponent, MeasurementFa
                 report.addData(new MeasurementDataNumeric(request,
                     (double) virt.getDomainInfo(domainName).domainInfo.memory));
             }
-        }
+        }*/
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
+        /*
         int result = -1;
 
         log.info("Executing " + name + " operation on domain " + getDomainName());
@@ -136,17 +134,25 @@ public class VirtualizationComponent implements ResourceComponent, MeasurementFa
             throw new Exception("Failed to run " + name + " command. Result was: " + result);
         } else {
             return new OperationResult();
-        }
+        }*/
+        return new OperationResult();
     }
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
-        String xml = this.virt.getDomainXML(this.domainName);
-
-        return DomainConfigurationEditor.getConfiguration(xml);
+        Configuration config = new Configuration();
+        DomainInfo info = virt.getDomainInfo(domainName);
+        //TODO Type
+        //TODO Lifecycle Actions
+        config.put(new PropertySimple("name", info.name));
+        config.put(new PropertySimple("uuid", info.uuid));
+        config.put(new PropertySimple("vcpu", info.domainInfo.nrVirtCpu));
+        config.put(new PropertySimple("memory", info.domainInfo.maxMem));
+        config.put(new PropertySimple("currentMemory", info.domainInfo.memory));
+        return config;
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        try {
+        /*try {
             String xml = this.virt.getDomainXML(this.domainName);
 
             Configuration oldConfig = loadResourceConfiguration();
@@ -175,22 +181,22 @@ public class VirtualizationComponent implements ResourceComponent, MeasurementFa
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (LibvirtException e) {
             throw new RuntimeException(e);
-        }
+        }*/
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {
         String xml = DomainConfigurationEditor.getXml(report.getResourceConfiguration());
+        /*
+                log.info("Defining new domain");
+                log.debug("New virtualization domain xml:\n" + xml);
 
-        log.info("Defining new domain");
-        log.debug("New virtualization domain xml:\n" + xml);
-
-        try {
-            this.virt.defineDomain(xml);
-            report.setStatus(CreateResourceStatus.SUCCESS);
-        } catch (LibvirtException e) {
-            log.error("Exception creating the domain", e);
-            report.setStatus(CreateResourceStatus.FAILURE);
-        }
+                try {
+                    this.virt.defineDomain(xml);
+                    report.setStatus(CreateResourceStatus.SUCCESS);
+                } catch (LibvirtException e) {
+                    log.error("Exception creating the domain", e);
+                    report.setStatus(CreateResourceStatus.FAILURE);
+                }*/
 
         return report;
     }

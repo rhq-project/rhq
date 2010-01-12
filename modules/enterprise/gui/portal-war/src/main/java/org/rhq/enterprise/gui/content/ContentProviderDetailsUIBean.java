@@ -48,7 +48,7 @@ public class ContentProviderDetailsUIBean {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
         try {
-            manager.updateContentSource(subject, contentSource);
+            manager.updateContentSource(subject, contentSource, true);
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The content provider ["
                 + contentSource.getName() + "] has been updated.");
         } catch (Exception e) {

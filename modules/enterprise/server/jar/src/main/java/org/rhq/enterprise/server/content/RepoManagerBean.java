@@ -560,8 +560,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             entityManager.flush();
             entityManager.clear();
 
-            // ask to synchronize the content source immediately (is this the right thing to do?)
-            pc.syncProviderNow(cs);
         }
     }
 

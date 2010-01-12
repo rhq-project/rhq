@@ -27,11 +27,15 @@ import java.util.Iterator;
 import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.component.html.HtmlPanelGroup;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Scope;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.event.UploadEvent;
 
@@ -54,8 +58,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author Ian Springer
  */
-//@ Name(value = "ExistingResourceConfigurationUIBean")
-//@ Scope(ScopeType.PAGE)
+@Name(value = "ExistingResourceConfigurationViewUIBean")
+@Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
@@ -76,6 +80,12 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editRawConfiguration() {
+        mode = RAW_MODE;
+        return SUCCESS_OUTCOME;
+    }
+
+    public String editRaw() {
+        mode = RAW_MODE;
         return SUCCESS_OUTCOME;
     }
 
@@ -142,8 +152,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
         return SUCCESS_OUTCOME;
     }
-
-    // =========== impls of superclass abstract methods ===========
 
     protected int getConfigurationDefinitionKey() {
         return EnterpriseFacesContextUtility.getResource().getResourceType().getId();
@@ -440,7 +448,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
         mode = RAW_MODE;
         return null;
-//        return SUCCESS_OUTCOME;
     }
 
     void dumpProperties(Configuration conf, Log log) {

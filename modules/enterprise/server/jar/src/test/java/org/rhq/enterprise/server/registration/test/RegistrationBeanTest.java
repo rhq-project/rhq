@@ -67,14 +67,16 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
 
     public void testReleaseRepoMap() throws Exception {
         String release = "5Server";
+        String version = "5.4.0";
         String arch = "x86_64";
-        ReleaseRepoMapping repomap = new ReleaseRepoMapping(release, arch);
+        ReleaseRepoMapping repomap = new ReleaseRepoMapping(release, version, arch);
         String repo = repomap.getCompatibleRepo();
         assert (repo == "rhel-x86_64-server-5");
 
         String release2 = "5Client";
         String arch2 = "x86_64";
-        ReleaseRepoMapping repomap2 = new ReleaseRepoMapping(release2, arch2);
+        String version2 = "5.4.0";
+        ReleaseRepoMapping repomap2 = new ReleaseRepoMapping(release2, version2, arch2);
         String repo2 = repomap2.getCompatibleRepo();
         assert (repo2 == "rhel-x86_64-client-5");
 

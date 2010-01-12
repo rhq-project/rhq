@@ -28,6 +28,7 @@ import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -87,6 +88,15 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public String editRaw() {
         mode = RAW_MODE;
         return SUCCESS_OUTCOME;
+    }
+
+    public void changeTabs(ValueChangeEvent event) {
+        if (event.getNewValue().equals("Advanced Mode")) {
+            switchToRaw();
+        }
+        else if (event.getNewValue().equals("Basic Mode")) {
+            switchTostructured();
+        }
     }
 
     public String switchToRaw() {

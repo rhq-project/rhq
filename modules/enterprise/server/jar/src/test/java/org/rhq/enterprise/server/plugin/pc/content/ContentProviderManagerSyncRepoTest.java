@@ -217,8 +217,10 @@ public class ContentProviderManagerSyncRepoTest extends AbstractEJB3Test {
         // Make sure the proper calls were made into the provider
         assert contentProvider1.getLogSynchronizePackagesRepos().size() == 1 :
             "Expected: 1, Found: " + contentProvider1.getLogSynchronizePackagesRepos().size();
-        assert contentProvider1.getLogGetInputStreamLocations().size() == TestContentProvider.PACKAGES.size() :
-            "Expected: " + TestContentProvider.PACKAGES.size() +
+
+            // Need to add in distro packages being syncced
+        assert contentProvider1.getLogGetInputStreamLocations().size() == TestContentProvider.PACKAGE_COUNT_FOR_BITS :
+            "Expected: " + TestContentProvider.PACKAGE_COUNT_FOR_BITS +
             ", Found: " + contentProvider1.getLogGetInputStreamLocations().size();
 
         // Make sure all of the packages were added

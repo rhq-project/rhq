@@ -88,12 +88,15 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         // Note: The type "kickstart" should already be in the database from installation
 
+        /* Note: The md5 sums below will be used to determine if the file needs to be loaded through
+           a call to getPackageBits. I set these to an invalid MD5 so they will *always* be downloaded.
+         */
         DistributionDetails dis1 = new DistributionDetails(DISTRIBUTION_1_LABEL, "kickstart");
         dis1.setDistributionPath("/kstrees");
         DistributionFileDetails file11 = new DistributionFileDetails("dist1file1", System.currentTimeMillis(),
-            "1c07207667b6c40488a7ea14f5f2538c");
+            "zzz");
         DistributionFileDetails file12 = new DistributionFileDetails("dist1file2", System.currentTimeMillis(),
-            "1c07207667b6c40488a7ea14f5f2538c");
+            "zzz");
         dis1.addFile(file11);
         dis1.addFile(file12);
 
@@ -102,11 +105,13 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         DistributionDetails dis2 = new DistributionDetails(DISTRIBUTION_2_LABEL, "kickstart");
         dis2.setDistributionPath("/kstrees");
         DistributionFileDetails file21 = new DistributionFileDetails("dist2file1", System.currentTimeMillis(),
-            "1c07207667b6c40488a7ea14f5f2538c");
+            "zzz");
         dis2.addFile(file21);
 
         DISTRIBUTIONS.put(dis2.getLabel(), dis2);
     }
+
+    public static final int PACKAGE_COUNT_FOR_BITS = PACKAGES.size() + 3; // packages + number of distro files
 
     /**
      * If <code>true</code>, the call to {@link #testConnection()} will throw an exception.
@@ -255,13 +260,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return "foo";
     }
 
-    /**
-     * Indicates if the {@link #testConnection()} method should fail (i.e. throw an exception).
-     *
-     * @param failTest drives the behavior of the test connection call
-     */
-    public void setFailTest(boolean failTest) {
-        this.failTest = failTest;
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 
     /**
@@ -288,18 +288,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     /**
-     * Returns a list of repo names that were used to all calls to
-     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)} either since the
-     * creation of this instance or the last call to {@link #reset()}.
-     *
-     * @return handle to the actual list used to capture these names; be careful about iterating this
-     *         list while making other calls against this instance
-     */
-    public List<String> getLogSynchronizeDistroRepos() {
-        return logSynchronizeDistroRepos;
-    }
-
-    /**
      * Rests the logging of calls made into this instance.
      */
     public void reset() {
@@ -311,8 +299,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     /**
      * Indicate you want this test to simulate a long running sync.  Will pause for ~10 seconds during
      * the package sync phase.
-     * 
-     * @param longRunningSyncs
+     *
+     * @param longRunningSyncs enables/disables long syncs
      */
     public void setLongRunningSyncs(boolean longRunningSyncs) {
         this.longRunningSyncs = longRunningSyncs;
@@ -328,11 +316,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         }
 
         return null;
-    }
-
-    @Override
-    public SyncProgressWeight getSyncProgressWeight() {
-        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 
 }

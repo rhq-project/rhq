@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.transaction.TransactionManager;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -431,8 +432,8 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
         // See BZ 537216 for more details
 
         // Setup
-        String newName = "newRepoName";
-        String oldName = "testRepo";
+        String newName = "newRepo-" + RandomStringUtils.randomAlphanumeric(6);
+        String oldName = "testRepo-" + RandomStringUtils.randomAlphanumeric(6);
 
         ContentSourceType contentSourceType = new ContentSourceType("testSourceType");
 

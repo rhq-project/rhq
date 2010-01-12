@@ -27,6 +27,7 @@ import org.libvirt.LibvirtException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -37,8 +38,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.plugins.virt.LibVirtConnection.HVInfo;
 
 /**
@@ -47,17 +46,15 @@ import org.rhq.plugins.virt.LibVirtConnection.HVInfo;
  *
  * @author Greg Hinkle
  */
-public class VirtualizationHostComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, CreateChildResourceFacet {
+public class VirtualizationHostComponent implements ResourceComponent, MeasurementFacet, ConfigurationFacet,
+    CreateChildResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
+    private String uri = "";
     private LibVirtConnection virt;
-    private long cpuNanosLast;
-    private long cpuCheckedLast;
-    private AvailabilityType lastAvailability = AvailabilityType.DOWN;
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        String uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
+        uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
         virt = new LibVirtConnection(uri);
     }
 
@@ -74,59 +71,14 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        /*for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().equals("cpuTime")) {
-                report.addData(new MeasurementDataNumeric(request,
-                    (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
-            } else if (request.getName().equals("cpuPercentage")) {
-                long checked = System.nanoTime();
-                long cpuNanos = virt.getDomainInfo(domainName).domainInfo.cpuTime;
-
-                if (cpuCheckedLast != 0) {
-                    long duration = checked - cpuCheckedLast;
-
-                    long diff = cpuNanos - cpuNanosLast;
-
-                    double percentage = ((double) diff) / ((double) duration);
-                    report.addData(new MeasurementDataNumeric(request, percentage));
-                }
-
-                cpuCheckedLast = checked;
-                cpuNanosLast = cpuNanos;
-            } else if (request.getName().equals("memoryUsage")) {
-                report.addData(new MeasurementDataNumeric(request,
-                    (double) virt.getDomainInfo(domainName).domainInfo.memory));
+        HVInfo hi = virt.getHVInfo();
+        for (MeasurementScheduleRequest request : metrics) {
+            if (request.getName().equals("cpus")) {
+                report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.cpus));
+            } else if (request.getName().equals("memory")) {
+                report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.memory));
             }
-        }*/
-    }
-
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
-        /*int result = -1;
-
-        log.info("Executing " + name + " operation on domain " + getDomainName());
-        if (name.equals("reboot")) {
-            result = virt.domainReboot(this.domainName);
-        } else if (name.equals("restore")) {
-            result = virt.domainRestore(parameters.getSimpleValue("fromPath", null));
-        } else if (name.equals("resume")) {
-            result = virt.domainResume(this.domainName);
-        } else if (name.equals("save")) {
-            result = virt.domainSave(this.domainName, parameters.getSimpleValue("toPath", null));
-        } else if (name.equals("shutdown")) {
-            result = virt.domainShutdown(this.domainName);
-        } else if (name.equals("suspend")) {
-            result = virt.domainSuspend(this.domainName);
-        } else if (name.equals("create")) {
-            result = virt.domainCreate(this.domainName);
         }
-
-        if (result < 0) {
-            throw new Exception("Failed to run " + name + " command. Result was: " + result);
-        } else {
-            return new OperationResult();
-        }*/
-        return new OperationResult();
     }
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
@@ -188,4 +140,10 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
         */
         return report;
     }
+
+    public LibVirtConnection getConnection() throws LibvirtException {
+        //return this.resourceContext.getParentResourceComponent().getConnection();
+        return null;
+    }
+
 }

@@ -24,7 +24,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -55,18 +54,12 @@ public class VirtualizationHostDiscoveryComponent implements ResourceDiscoveryCo
                 String.format("Libvirt Connection to a %s hypervisor", hi.hvType), null, null);
             detail.getPluginConfiguration().put(new PropertySimple("ConnectionURI", virt.getConnectionURI()));
             details.add(detail);
-
+            virt.close();
         } catch (Throwable t) {
             log.warn("Can not load libvirt: " + t.getMessage(), t);
             return details;
         }
 
         return details;
-    }
-
-    public static void populateConfigurationForHV(Configuration config, HVInfo info) {
-        config.put(new PropertySimple("hypervisorType", info.hvType));
-        config.put(new PropertySimple("hostName", info.hostname));
-        config.put(new PropertySimple("libvirtVersion", info.libvirtVersion));
     }
 }

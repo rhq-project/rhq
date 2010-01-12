@@ -63,9 +63,6 @@ public class VirtualizationDomainDiscoveryComponent implements ResourceDiscovery
             return details;
         }
 
-        System.out.println("Ids: " + ids.length);
-        System.out.println("Domains: " + guests.size());
-
         // Ids represent running guests, Names are not running. We need to populate both.
         for (int id : ids) {
             LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(id);
@@ -76,6 +73,8 @@ public class VirtualizationDomainDiscoveryComponent implements ResourceDiscovery
             LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(guestName);
             details.add(createResource(resourceDiscoveryContext.getResourceType(), domainInfo));
         }
+
+        virt.close();
 
         return details;
     }

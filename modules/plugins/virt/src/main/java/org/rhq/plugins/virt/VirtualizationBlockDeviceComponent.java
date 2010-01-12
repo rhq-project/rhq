@@ -22,6 +22,7 @@ import java.lang.reflect.Field;
 import java.util.Set;
 
 import org.libvirt.DomainBlockStats;
+import org.libvirt.LibvirtException;
 
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -35,7 +36,8 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * @author Greg Hinkle
  */
-public class VirtualizationBlockDeviceComponent implements ResourceComponent<VirtualizationDomainComponent>, MeasurementFacet {
+public class VirtualizationBlockDeviceComponent implements ResourceComponent<VirtualizationDomainComponent>,
+    MeasurementFacet {
 
     ResourceContext<VirtualizationDomainComponent> resourceContext;
 
@@ -51,7 +53,7 @@ public class VirtualizationBlockDeviceComponent implements ResourceComponent<Vir
         return resourceContext.getParentResourceComponent().getAvailability();
     }
 
-    private LibVirtConnection getConnection() {
+    private LibVirtConnection getConnection() throws LibvirtException {
         return this.resourceContext.getParentResourceComponent().getConnection();
     }
 

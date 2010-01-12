@@ -184,6 +184,10 @@ public class LibVirtConnection {
         return domain.blockStats(path);
     }
 
+    public int close() throws LibvirtException {
+        return connection.close();
+    }
+
     public HVInfo getHVInfo() throws LibvirtException {
         HVInfo hvInfo = new HVInfo();
         hvInfo.libvirtVersion = connection.getLibVirVersion();

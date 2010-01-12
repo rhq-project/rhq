@@ -23,6 +23,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libvirt.LibvirtException;
+import org.libvirt.DomainInfo.DomainState;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -47,19 +48,21 @@ import org.rhq.plugins.virt.LibVirtConnection.DomainInfo;
  *
  * @author Greg Hinkle
  */
-public class VirtualizationDomainComponent implements ResourceComponent, MeasurementFacet, OperationFacet,
-    ConfigurationFacet, CreateChildResourceFacet {
+public class VirtualizationDomainComponent implements ResourceComponent<VirtualizationHostComponent>, MeasurementFacet,
+    OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
-    private LibVirtConnection virt;
     private String domainName;
+    private String uri;
     private long cpuNanosLast;
     private long cpuCheckedLast;
+    ResourceContext<VirtualizationHostComponent> resourceContext;
 
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        String uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
-        virt = new LibVirtConnection(uri);
+    public void start(ResourceContext<VirtualizationHostComponent> resourceContext)
+        throws InvalidPluginConfigurationException, Exception {
+        uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
         domainName = resourceContext.getResourceKey();
+        this.resourceContext = resourceContext;
     }
 
     public void stop() {
@@ -67,7 +70,9 @@ public class VirtualizationDomainComponent implements ResourceComponent, Measure
 
     public AvailabilityType getAvailability() {
         try {
-            switch (virt.getDomainInfo(domainName).domainInfo.state) {
+            LibVirtConnection virt = getConnection();
+            DomainState state = virt.getDomainInfo(domainName).domainInfo.state;
+            switch (state) {
             case VIR_DOMAIN_RUNNING:
                 return AvailabilityType.UP;
             case VIR_DOMAIN_PAUSED:
@@ -83,36 +88,35 @@ public class VirtualizationDomainComponent implements ResourceComponent, Measure
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         /*for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().equals("cpuTime")) {
-                report.addData(new MeasurementDataNumeric(request,
-                    (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
-            } else if (request.getName().equals("cpuPercentage")) {
-                long checked = System.nanoTime();
-                long cpuNanos = virt.getDomainInfo(domainName).domainInfo.cpuTime;
+        if (request.getName().equals("cpuTime")) {
+            report.addData(new MeasurementDataNumeric(request,
+                (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
+        } else if (request.getName().equals("cpuPercentage")) {
+            long checked = System.nanoTime();
+            long cpuNanos = virt.getDomainInfo(domainName).domainInfo.cpuTime;
 
-                if (cpuCheckedLast != 0) {
-                    long duration = checked - cpuCheckedLast;
+            if (cpuCheckedLast != 0) {
+                long duration = checked - cpuCheckedLast;
 
-                    long diff = cpuNanos - cpuNanosLast;
+                long diff = cpuNanos - cpuNanosLast;
 
-                    double percentage = ((double) diff) / ((double) duration);
-                    report.addData(new MeasurementDataNumeric(request, percentage));
-                }
-
-                cpuCheckedLast = checked;
-                cpuNanosLast = cpuNanos;
-            } else if (request.getName().equals("memoryUsage")) {
-                report.addData(new MeasurementDataNumeric(request,
-                    (double) virt.getDomainInfo(domainName).domainInfo.memory));
+                double percentage = ((double) diff) / ((double) duration);
+                report.addData(new MeasurementDataNumeric(request, percentage));
             }
+
+            cpuCheckedLast = checked;
+            cpuNanosLast = cpuNanos;
+        } else if (request.getName().equals("memoryUsage")) {
+            report.addData(new MeasurementDataNumeric(request,
+                (double) virt.getDomainInfo(domainName).domainInfo.memory));
+        }
         }*/
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
         Exception {
-        /*
         int result = -1;
-
+        LibVirtConnection virt = getConnection();
         log.info("Executing " + name + " operation on domain " + getDomainName());
         if (name.equals("reboot")) {
             result = virt.domainReboot(this.domainName);
@@ -134,11 +138,11 @@ public class VirtualizationDomainComponent implements ResourceComponent, Measure
             throw new Exception("Failed to run " + name + " command. Result was: " + result);
         } else {
             return new OperationResult();
-        }*/
-        return new OperationResult();
+        }
     }
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
+        LibVirtConnection virt = getConnection();
         Configuration config = new Configuration();
         DomainInfo info = virt.getDomainInfo(domainName);
         //TODO Type
@@ -201,8 +205,8 @@ public class VirtualizationDomainComponent implements ResourceComponent, Measure
         return report;
     }
 
-    public LibVirtConnection getConnection() {
-        return this.virt;
+    public LibVirtConnection getConnection() throws LibvirtException {
+        return resourceContext.getParentResourceComponent().getConnection();
     }
 
     public String getDomainName() {

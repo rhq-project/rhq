@@ -38,8 +38,8 @@ import org.rhq.enterprise.server.alert.AlertManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
-import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerBean;
+import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
 import org.rhq.enterprise.server.measurement.CallTimeDataManagerBean;
@@ -49,6 +49,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementProblemManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
+import org.rhq.enterprise.server.registration.RegistrationManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerBean;
 import org.rhq.enterprise.server.resource.ResourceManagerBean;
@@ -84,6 +85,7 @@ public class RemoteAPIValidator {
         ResourceGroupManagerBean.class, //
         ResourceManagerBean.class, //
         ResourceTypeManagerBean.class, //
+        RegistrationManagerBean.class, //
         RoleManagerBean.class, //
         SubjectManagerBean.class, //
         SupportManagerBean.class, //

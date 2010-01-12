@@ -124,6 +124,8 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.enterprise.server.registration.RegistrationException;
+import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -173,6 +175,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+    private RegistrationManagerLocal registrationManager = LookupUtil.getRegistrationManager();
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
@@ -372,8 +375,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException {
         return configurationManager.updateStructuredOrRawConfiguration(subject, resourceId, newConfiguration,
             fromStructured);
     }
@@ -654,6 +657,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
         Configuration pluginConfiguration, Configuration resourceConfiguration) {
         resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
             pluginConfiguration, resourceConfiguration);
+    }
+
+    public void registerPlatform(Subject subject, Resource resource, int parentId) {
+        registrationManager.registerPlatform(subject, resource, parentId);
+    }
+
+    public void importPlatform(Subject subject, Resource resource) {
+        registrationManager.importPlatform(subject, resource);
+    }
+
+    public void subscribePlatformToBaseRepo(Subject user, Resource platform, String release, String version, String arch)
+        throws RegistrationException {
+        registrationManager.subscribePlatformToBaseRepo(user, platform, release, version, arch);
     }
 
     public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,

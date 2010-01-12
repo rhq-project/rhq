@@ -47,32 +47,30 @@ public class VirtualizationDiscoveryComponent implements ResourceDiscoveryCompon
 
         LibVirtConnection virt;
         try {
-            virt = new LibVirtConnection();
-        }
-        catch (Throwable t) {
-            log.warn("Can not load native library for libvirt: " + t.getMessage());
+            virt = new LibVirtConnection("qemu:///system");
+        } catch (Throwable t) {
+            log.warn("Can not load native library for libvirt: " + t.getMessage(), t);
             return details;
         }
         int[] ids;
         try {
             ids = virt.getDomainIds();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.info("Failure obtaining domains from libvirt: " + e.getMessage());
             return details;
         }
         List<String> guests = virt.getDomainNames();
-
-
+        System.out.println("Ids: " + ids.length);
+        System.out.println("Domains: " + guests.size());
 
         for (int id : ids) {
             if ((id == 0 && resourceDiscoveryContext.getResourceType().getName().equals("Virtual Host"))
-               || (id != 0 && !resourceDiscoveryContext.getResourceType().getName().equals("Virtual Host"))) {
+                || (id != 0 && !resourceDiscoveryContext.getResourceType().getName().equals("Virtual Host"))) {
 
                 LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(id);
 
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                    resourceDiscoveryContext.getResourceType(), domainInfo.name, domainInfo.name, "0", // TODO - Change to domain id?
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceDiscoveryContext
+                    .getResourceType(), domainInfo.name, domainInfo.name, "0", // TODO - Change to domain id?
                     "Virtualization Domain", null, null);
 
                 details.add(detail);
@@ -81,8 +79,8 @@ public class VirtualizationDiscoveryComponent implements ResourceDiscoveryCompon
             if (!resourceDiscoveryContext.getResourceType().getName().equals("Virtual Host")) {
                 for (String guestName : guests) {
                     LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(guestName);
-                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(
-                        resourceDiscoveryContext.getResourceType(), domainInfo.name, domainInfo.name, "0", // TODO - Change to domain id?
+                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceDiscoveryContext
+                        .getResourceType(), domainInfo.name, domainInfo.name, "0", // TODO - Change to domain id?
                         "Virtualization Guest Domain", null, null);
 
                     details.add(detail);

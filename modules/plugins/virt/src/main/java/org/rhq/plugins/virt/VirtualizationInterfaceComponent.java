@@ -21,6 +21,8 @@ package org.rhq.plugins.virt;
 import java.lang.reflect.Field;
 import java.util.Set;
 
+import org.libvirt.DomainInterfaceStats;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -55,7 +57,7 @@ public class VirtualizationInterfaceComponent implements ResourceComponent<Virtu
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-        LibVirt.VirDomainInterfaceStats stats = getConnection().getDomainInterfaceStats(
+        DomainInterfaceStats stats = getConnection().getDomainInterfaceStats(
             this.resourceContext.getParentResourceComponent().getDomainName(), this.resourceContext.getResourceKey());
 
         for (MeasurementScheduleRequest request : metrics) {

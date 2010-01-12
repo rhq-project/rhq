@@ -21,6 +21,8 @@ package org.rhq.plugins.virt;
 import java.lang.reflect.Field;
 import java.util.Set;
 
+import org.libvirt.DomainBlockStats;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -55,7 +57,7 @@ public class VirtualizationBlockDeviceComponent implements ResourceComponent<Vir
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-        LibVirt.VirDomainBlockStats stats = getConnection().getDomainBlockStats(
+        DomainBlockStats stats = getConnection().getDomainBlockStats(
             this.resourceContext.getParentResourceComponent().getDomainName(), this.resourceContext.getResourceKey());
 
         for (MeasurementScheduleRequest request : metrics) {

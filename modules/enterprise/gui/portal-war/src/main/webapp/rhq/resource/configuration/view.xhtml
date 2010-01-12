@@ -72,9 +72,7 @@ THIS TEXT WILL BE REMOVED.
                              var="rawConfig">
                     <rich:panelMenuItem label="#{rawConfig.path}"
                                         action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
-                                        reRender="fileContents,selectedFileHeader">
-                      <f:param name="current" value="#{rawConfig.path}"/>
-                    </rich:panelMenuItem>
+                                        reRender="fileContents,selectedFileHeader"/>
                   </c:forEach>
                 </rich:panelMenuGroup>
               </rich:panelMenu>
@@ -103,55 +101,6 @@ THIS TEXT WILL BE REMOVED.
               </rich:panel>
             </h:panelGrid>
           </h:panelGrid>
-
-          <ui:remove>
-            <table class="summary-props-table" style="">
-              <tr>
-                <td bgcolor="#a4b2b9" width="25%" valign="top">Files
-                  <h:panelGroup id="changedFiles" layout="vertical">
-                    <h:form>
-                      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-                      <ui:repeat value="#{ExistingResourceConfigurationViewUIBean.paths}" var="path">
-                        <div>
-                          <h:commandLink
-                                  action="#{ExistingResourceConfigurationViewUIBean.select(path)}"
-                                  value="#{path}"
-                                  rendered="#{path != ExistingResourceConfigurationViewUIBean.current.path}">
-                            <f:param name="currentPath" value="#{path}"/>
-                          </h:commandLink>
-                          <h:outputText value="#{path}"
-                                        rendered="#{path == ExistingResourceConfigurationViewUIBean.current.path}"/>
-                        </div>
-                      </ui:repeat>
-                    </h:form>
-                  </h:panelGroup>
-                  <div>______________________________________</div>
-                  <div>* File contains uncommitted changes.</div>
-                </td>
-                <td>
-                  <div>
-                    Current File:
-                    <h:outputText value="#{ExistingResourceConfigurationViewUIBean.current.path}"
-                                  styleClass="outhello"/>
-                  </div>
-                  <h:outputLink value="view-raw-full.xhtml" action="navigateToUpload">
-                    <img src="/images/viewfullscreen.png"/>
-                    <h:outputText value=" Full Screen "/>
-                    <f:param name="id" value="#{ResourceUIBean.id}"/>
-                  </h:outputLink>
-                  <s:link action="#{ExistingResourceConfigurationViewUIBean.download}">
-                    <img src="/images/download.png"/>
-                    <h:outputText value=" Download "/>
-                    <f:param name="id" value="#{ResourceUIBean.id}"/>
-                  </s:link>
-                  <div>
-                                    <pre><h:outputText
-                                            value="#{ExistingResourceConfigurationViewUIBean.currentContents}"/></pre>
-                  </div>
-                </td>
-              </tr>
-            </table>
-          </ui:remove>
         </c:when>
         <c:when test="${ExistingResourceConfigurationViewUIBean.structuredSupported}">
           <h:outputText value=" #{messages.nopermissionedit}"
@@ -234,17 +183,29 @@ THIS TEXT WILL BE REMOVED.
                                 iconCollapsedGroup="disc"
                                 limitToList="true"
                                 reRender="fileContents">
+                  <c:forEach items="#{rawConfigDirectories}"
+                               var="rawConfigDir">
+                    <rich:panelMenuGroup label="#{rawConfigDir.path}"
+                                         expanded="true"
+                                         selectedChild="#{currentPath}">
+                      <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
+                        <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                            action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"
+                                            reRender="fileContents,selectFileHeader"/>
+                      </c:forEach>
+                    </rich:panelMenuGroup>
+                  </c:forEach>
+                  <ui:remove>
                   <rich:panelMenuGroup label="/tmp/raw-config" expanded="true" selectedChild="#{currentPath}">
                     <c:forEach items="#{ExistingResourceConfigurationViewUIBean.configuration.rawConfigurations}"
                                var="rawConfig">
                       <rich:panelMenuItem id="raw_#{rawConfig.sha256}"
                                           label="#{rawConfig.path}"
                                           action="#{ExistingResourceConfigurationViewUIBean.select(rawConfig.path)}"
-                                          reRender="fileContents,selectedFileHeader">
-                        <f:param name="current" value="#{rawConfig.path}"/>
-                      </rich:panelMenuItem>
+                                          reRender="fileContents,selectedFileHeader"/>
                     </c:forEach>
                   </rich:panelMenuGroup>
+                  </ui:remove>
                 </rich:panelMenu>
               </rich:panel>
 

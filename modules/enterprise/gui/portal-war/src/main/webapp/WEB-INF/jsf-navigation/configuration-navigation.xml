@@ -45,7 +45,7 @@
       </navigation-case>
 
       <!--<navigation-case>-->
-         <!--<from-action>#{ExistingResourceConfigurationViewUIBean.switchTostructured}</from-action>-->
+         <!--<from-action>#{ExistingResourceConfigurationViewUIBean.switchToStructured}</from-action>-->
          <!--<to-view-id>/rhq/resource/configuration/view.xhtml</to-view-id>-->
          <!--<redirect/>-->
       <!--</navigation-case>-->

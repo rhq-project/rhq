@@ -23,19 +23,22 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
-import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Out;
 import org.jboss.seam.annotations.Scope;
 import org.jetbrains.annotations.Nullable;
 import org.richfaces.event.UploadEvent;
@@ -69,11 +72,41 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     private boolean mode = STRUCTURED_MODE;
 
-    // =========== actions ===========
+    @Out
+    private Collection<RawConfigDirectory> rawConfigDirectories;
 
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
+    }
+
+    @Create
+    public void begin() {
+        initConfigDirectories();    
+    }
+
+    private void initConfigDirectories() {
+        Map<String, RawConfigDirectory> dirs = new HashMap<String, RawConfigDirectory>();
+
+        for (RawConfiguration rawConfig : getConfiguration().getRawConfigurations()) {
+            String parentDirPath = getParentDir(rawConfig);
+            RawConfigDirectory dir = dirs.get(parentDirPath);
+
+            if (dir == null) {
+                dir = new RawConfigDirectory();
+                dir.setPath(parentDirPath);
+            }
+
+            dir.addRawConfig(rawConfig);
+            dirs.put(parentDirPath, dir);
+        }
+
+        rawConfigDirectories = dirs.values();
+    }
+
+    private String getParentDir(RawConfiguration rawConfig) {
+        File file = new File(rawConfig.getPath());
+        return file.getParentFile().getAbsolutePath();
     }
 
     public String editConfiguration() {
@@ -85,33 +118,49 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return SUCCESS_OUTCOME;
     }
 
-    public String editRaw() {
-        mode = RAW_MODE;
-        return SUCCESS_OUTCOME;
-    }
-
     public void changeTabs(ValueChangeEvent event) {
         if (event.getNewValue().equals("Advanced Mode")) {
             switchToRaw();
         }
         else if (event.getNewValue().equals("Basic Mode")) {
-            switchTostructured();
+            switchToStructured();
         }
     }
 
     public String switchToRaw() {
-//        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
-//        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-//        Configuration configuration =
-//            configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
-//                resourceId, getConfiguration(), true);
-//
-//        setConfiguration(configuration);
-//
-//        mode = RAW_MODE;
-//
-//        return null;
-        return switchToraw();
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+
+        setConfiguration(configuration);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRaws().put(raw.getPath(), raw);
+        }
+        current = null;
+        setConfiguration(configuration);
+
+        mode = RAW_MODE;
+        return null;
+    }
+
+    public String switchToStructured() {
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+
+        for (Property property : configuration.getAllProperties().values()) {
+            property.setConfiguration(configuration);
+        }
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRaws().put(raw.getPath(), raw);
+            setConfiguration(configuration);
+        }
+        current = null;
+        setConfiguration(configuration);
+
+        mode = STRUCTURED_MODE;
+
+        return null;
     }
 
     public String updateConfiguration() {
@@ -256,27 +305,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfiguration().getId();
     }
 
-    /*
-        public Configuration getConfiguration() {
-            if (null == configuration) {
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-                int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-                AbstractResourceConfigurationUpdate configurationUpdate = LookupUtil.getConfigurationManager()
-                    .getLatestResourceConfigurationUpdate(subject, resourceId);
-                Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-                if (configuration != null) {
-                    //ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-                }
-
-                return configuration;
-
-            }
-            return configuration;
-        
-        }
-    */
-
     private ConfigurationFormat getConfigurationFormat() {
         return getConfigurationDefinition().getConfigurationFormat();
     }
@@ -296,9 +324,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getCurrentContents() {
-        String currentContents = new String(getCurrent().getContents());
-        return currentContents;
-//        return new String(getCurrent().getContents());
+        return new String(getCurrent().getContents());
     }
 
     public String getCurrentPath() {
@@ -327,17 +353,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             resourceId = EnterpriseFacesContextUtility.getResource().getId();
         }
         return resourceId;
-    }
-
-    /**
-     * Hack Alert.  This bean needs to be initialized on one of the pages that has id or resourceId set
-     * In order to capture the resource.  It will then Keep track of that particular resources until
-     * commit is called.  Ideally, this should be a conversation scoped bean, but that has other issues
-     * 
-     */
-    @Create
-    public void init() {
-
     }
 
     public boolean isStructuredMode() {
@@ -441,55 +456,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    public String switchToraw() {
-        log.error("switch2raw called");
-        dumpProperties(getConfiguration(), log);
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
-        log.error("switch2raw post merge");
-        dumpProperties(getConfiguration(), log);
-
-        setConfiguration(configuration);
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
-        }
-        current = null;
-        setConfiguration(configuration);
-
-        mode = RAW_MODE;
-        return null;
-    }
-
     void dumpProperties(Configuration conf, Log log) {
         for (String key : conf.getAllProperties().keySet()) {
             log.error("property=" + conf.getAllProperties().get(key));
         }
-    }
-
-    public String switchTostructured() {
-        log.error("switch2structured called");
-
-        dumpProperties(getConfiguration(), log);
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
-        log.error("switch2structured post merge");
-
-        dumpProperties(configuration, log);
-
-        for (Property property : configuration.getAllProperties().values()) {
-            property.setConfiguration(configuration);
-        }
-
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
-            setConfiguration(configuration);
-        }
-        current = null;
-        setConfiguration(configuration);
-
-        mode = STRUCTURED_MODE;
-
-        return null;
     }
 
     void populateRaws() {

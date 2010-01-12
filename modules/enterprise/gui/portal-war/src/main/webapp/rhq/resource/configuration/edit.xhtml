@@ -46,12 +46,11 @@ THIS TEXT WILL BE REMOVED.
                 <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
                   <c:forEach items="#{ExistingResourceConfigurationUIBean.configuration.rawConfigurations}"
                              var="rawConfig">
-                    <rich:panelMenuItem action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
+                    <rich:panelMenuItem label="#{rawConfig.path}"
+                                        action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
                                         styleClass="raw-menu-item"
                                         tableBorderColor="blue"
-                                        reRender="fileContents,selectedFileHeader">
-                      #{rawConfig.path}
-                    </rich:panelMenuItem>
+                                        reRender="fileContents,selectedFileHeader"/>
                   </c:forEach>
                 </rich:panelMenuGroup>
               </rich:panelMenu>
@@ -156,9 +155,7 @@ THIS TEXT WILL BE REMOVED.
                                           action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
                                           styleClass="raw-menu-item"
                                           tableBorderColor="blue"
-                                          reRender="fileContents,selectedFileHeader">
-                        <f:param name="current" value="#{rawConfig.path}"/>
-                      </rich:panelMenuItem>
+                                          reRender="fileContents,selectedFileHeader"/>
                     </c:forEach>
                   </rich:panelMenuGroup>
                 </rich:panelMenu>

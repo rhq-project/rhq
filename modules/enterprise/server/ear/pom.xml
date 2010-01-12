@@ -358,11 +358,11 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
-                        <!--
-                           TODO: Uncomment once errors in virt plugin have been fixed. <artifactItem>
-                           <groupId>org.rhq</groupId> <artifactId>rhq-virt-plugin</artifactId>
-                           <version>${project.version}</version> </artifactItem>
-                        -->
+                        <artifactItem>
+                          <groupId>org.rhq</groupId> 
+                          <artifactId>rhq-virt-plugin</artifactId>
+                          <version>${project.version}</version> 
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                   </configuration>

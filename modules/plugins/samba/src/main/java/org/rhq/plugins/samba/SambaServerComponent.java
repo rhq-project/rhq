@@ -23,28 +23,37 @@ import net.augeas.Augeas;
 import org.rhq.core.domain.configuration.*;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.core.system.ProcessExecution;
-import org.rhq.core.system.ProcessExecutionResults;
-import org.rhq.core.system.SystemInfo;
+import org.rhq.core.pluginapi.util.ObjectUtil;
+import org.rhq.core.system.*;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
+
+import java.util.List;
+import java.util.Set;
 
 
 /**
  * TODO
  */
-public class SambaServerComponent extends AugeasConfigurationComponent implements OperationFacet {
+public class SambaServerComponent extends AugeasConfigurationComponent implements OperationFacet, MeasurementFacet {
+
     static final String ENABLE_RECYCLING = "enableRecycleBin";
     static final String AUTHCONFIG_PATH = "/usr/bin/authconfig";
     static final String NET_PATH = "/usr/bin/net";
     static final String SPACE = " ";
+    private static final int PORT = 445;
+    private ProcessInfo processInfo;
 
     private ResourceContext resourceContext;
 
@@ -52,6 +61,7 @@ public class SambaServerComponent extends AugeasConfigurationComponent implement
     public void start(ResourceContext resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         super.start(resourceContext);
+        getProcess();
     }
 
     public void stop() {
@@ -127,6 +137,33 @@ public class SambaServerComponent extends AugeasConfigurationComponent implement
             return "recycle".equals(augeas.get(node.getParent().getPath() + "/vfs\\ objects"));
         }
         return super.toPropertyValue(propDefSimple, augeas, node);
+    }
+
+    private void getProcess() {
+
+        List<ProcessInfo> procs =
+                resourceContext.getSystemInformation().getProcesses("process|basename|match=smbd,process|basename|nomatch|parent=smbd");
+
+        if (procs.size() == 1) {
+            this.processInfo = procs.get(0).getAggregateProcessTree();
+        }
+    }
+
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+
+        NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", PORT);
+        
+        processInfo.refresh();
+
+        for (MeasurementScheduleRequest request : metrics) {
+            if (request.getName().startsWith("NetworkStat.")) {
+                int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
+                report.addData(new MeasurementDataNumeric(request, (double) val));
+            } else if (request.getName().startsWith("Process.")) {
+                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
+                report.addData(new MeasurementDataNumeric(request, value));
+            }
+        }
     }
 
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {

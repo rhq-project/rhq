@@ -37,7 +37,12 @@
 
    <profiles>
       <profile>      
-          <id>ojdbc-driver</id>
+         <id>ojdbc-driver</id>
+         <activation>
+            <property>
+               <name>rhq.m2.repo.url.oracle</name>
+            </property>
+         </activation>          
          
           <!-- Make sure the Oracle JDBC jar gets included in the plugin jar's lib dir. -->
                

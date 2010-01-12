@@ -4,7 +4,7 @@
    apiVersion="1.0"
    version="1.0"
    description="A Sample Perspective Utilizing Every Extension Point and Filter"
-   displayName="Sample Perspective"
+   displayName="Perspective:Sample"
    name="SamplePerspective"
    package="org.rhq.perspective.sample"
    xmlns="urn:xmlns:rhq-serverplugin.perspective"

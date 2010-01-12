@@ -111,17 +111,12 @@ THIS TEXT WILL BE REMOVED.
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
-          <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.structuredMode}">
-            <h:outputText value="#{messages.youareviewingstructured}"/>
-
-            <h:panelGroup>
-              <h:outputText value=" #{messages.switch2}"/>
-              <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchToRaw}">
-                <h:outputText value=" files mode"/>
-              </h:commandLink>
-            </h:panelGroup>
-
-            <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
+          <h:panelGrid columns="2">
+            <h:outputText value="#{ResourceUIBean.name}"/>
+          </h:panelGrid>
+          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+            <rich:tab label="Basic Mode">
+              <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                         configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                         nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
                         nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
@@ -142,18 +137,9 @@ THIS TEXT WILL BE REMOVED.
                                title="Click to Reset Fields"
                                styleClass="buttonmed"/>
             </h:panelGrid>
-          </h:panelGroup>
-          <h:panelGroup rendered="#{ExistingResourceConfigurationUIBean.rawMode}">
-            <h:outputText value="#{messages.youareviewingraw}"/>
-
-            <h:panelGroup>
-              <h:outputText value=" #{messages.switch2}"/>
-              <h:commandLink action="#{ExistingResourceConfigurationUIBean.switchTostructured}">
-                <h:outputText value=" #{messages.structured}"/>
-              </h:commandLink>
-            </h:panelGroup>
-
-            <h:panelGrid columns="2"
+            </rich:tab>
+            <rich:tab label="Advanced Mode">
+              <h:panelGrid columns="2"
                          styleClass="raw-outer-table"
                          columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
               <rich:panel style="width:100%">
@@ -212,7 +198,8 @@ THIS TEXT WILL BE REMOVED.
                 </h:panelGrid>
               </h:panelGrid>
             </h:panelGrid>
-          </h:panelGroup>
+            </rich:tab>
+          </rich:tabPanel>
         </c:when>
       </c:choose>
 

@@ -137,6 +137,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        resourceContext.getParentResourceComponent().checkConfigurationSupported();
+        
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
             .getResourceConfigurationDefinition();

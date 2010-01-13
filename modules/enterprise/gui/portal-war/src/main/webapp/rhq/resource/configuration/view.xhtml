@@ -92,7 +92,7 @@ THIS TEXT WILL BE REMOVED.
                 <a4j:status id="selectedFileHeader"
                             startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
                             stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
-                <h:commandLink value="View Full Screen"/>
+                <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
                 <h:commandLink value="Upload New">
                   <h:graphicImage value="/images/upload.png"/>
                 </h:commandLink>
@@ -214,7 +214,7 @@ THIS TEXT WILL BE REMOVED.
                   <a4j:status id="selectedFileHeader"
                               startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
                               stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
-                  <h:commandLink value="View Full Screen"/>
+                  <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
                   <h:commandLink value="Upload New">
                     <h:graphicImage value="/images/upload.png"/>
                   </h:commandLink>
@@ -236,6 +236,9 @@ THIS TEXT WILL BE REMOVED.
           </rich:tabPanel>
         </c:when>
       </c:choose>
+
+      <ui:include src="view-raw-modal.xhtml"/>
+      
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

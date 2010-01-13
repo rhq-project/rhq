@@ -32,6 +32,10 @@ THIS TEXT WILL BE REMOVED.
       function cursor_clear() {
         document.body.style.cursor = 'default';
       }
+
+      function open_modal_editor() {
+        
+      }
     </script>
 
     <h:form id="editResourceConfigurationForm"
@@ -75,7 +79,7 @@ THIS TEXT WILL BE REMOVED.
                 <a4j:status id="selectedFileHeader"
                             startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
                             stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
-                <h:commandLink value="View Full Screen"/>
+                <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
                 <h:commandLink value="Upload New">
                   <h:graphicImage value="/images/upload.png"/>
                 </h:commandLink>
@@ -179,34 +183,14 @@ THIS TEXT WILL BE REMOVED.
                     </rich:panelMenuGroup>
                   </c:forEach>
                 </rich:panelMenu>
-
-
-                <ui:remove>
-                <rich:panelMenu mode="ajax"
-                                expandMode="client"
-                                iconCollapsedGroup="disc"
-                                limitToList="true"
-                                reRender="fileContents">
-                  <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
-                    <c:forEach items="#{ExistingResourceConfigurationUIBean.configuration.rawConfigurations}"
-                               var="rawConfig">
-                      <rich:panelMenuItem label="#{rawConfig.path}"
-                                          action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
-                                          styleClass="raw-menu-item"
-                                          tableBorderColor="blue"
-                                          reRender="fileContents,selectedFileHeader"/>
-                    </c:forEach>
-                  </rich:panelMenuGroup>
-                </rich:panelMenu>
-                </ui:remove>
-              </rich:panel>
+                </rich:panel>
 
               <h:panelGrid columns="1" style="width:100%;">
                 <h:panelGrid columns="4" style="width:100%;">
                   <a4j:status id="selectedFileHeader"
                               startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
                               stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
-                  <h:commandLink value="View Full Screen"/>
+                  <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
                   <h:commandLink value="Upload New">
                     <h:graphicImage value="/images/upload.png"/>
                   </h:commandLink>
@@ -266,6 +250,8 @@ THIS TEXT WILL BE REMOVED.
                            title="Click to Reset Fields" styleClass="buttonmed"/>
         </h:panelGrid>
       </ui:remove>
+
+      <ui:include src="view-raw-modal.xhtml"/>
 
     </h:form>
 

@@ -11,7 +11,7 @@
    <depends plugin="Augeas"/>
 
    <service name="Cobbler File"
-           description="the local file used for mapping /etc/cobbler/ modules & setttings"
+           description="the local file used for mapping modules and setttings"
             discovery="CobblerDiscoveryComponent"
             class="CobblerComponent"
             supportsManualAdd="true">

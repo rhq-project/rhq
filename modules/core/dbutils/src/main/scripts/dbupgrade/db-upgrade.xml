@@ -2756,10 +2756,16 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.75">
                 <schema-addColumn table="RHQ_REPO" column="SYNC_SCHEDULE" columnType="VARCHAR2" precision="64" />
             </schemaSpec>
+
+            <schemaSpec version="2.76">
+                <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_TYPE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_KEY" columnType="VARCHAR2" precision="128" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

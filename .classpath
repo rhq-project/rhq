@@ -63,6 +63,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-irc/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-microblog/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-mobicents/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/cobbler/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>

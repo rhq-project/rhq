@@ -93,9 +93,10 @@ public class ServerPluginDescriptorUtilTest {
         assert jobItem.getMethodName().equals("methodNameFoo");
         assert !jobItem.isEnabled();
         assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType().isClustered();
         assert jobItem.getScheduleType() instanceof CronScheduleType;
         assert ((CronScheduleType) jobItem.getScheduleType()).getCronExpression().equals("0 15 10 ? * MON-FRI");
-        assert jobItem.getCallbackData().size() == 7 : jobItem.getCallbackData();
+        assert jobItem.getCallbackData().size() == 8 : jobItem.getCallbackData();
         assert jobItem.getCallbackData().getProperty("custom1").equals("true");
         assert jobItem.getCallbackData().getProperty("anothercustom2").equals("12345");
         assert jobItem.getCallbackData().getProperty("methodName").equals("methodNameFoo"); // just proves we get the built-in data, too
@@ -105,15 +106,17 @@ public class ServerPluginDescriptorUtilTest {
         assert jobItem.getMethodName().equals("anotherMethod");
         assert jobItem.isEnabled();
         assert jobItem.getScheduleType().isConcurrent();
+        assert !jobItem.getScheduleType().isClustered();
         assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
         assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 59999L;
-        assert jobItem.getCallbackData().size() == 3 : jobItem.getCallbackData();
+        assert jobItem.getCallbackData().size() == 4 : jobItem.getCallbackData();
 
         jobItem = scheduledJobs.get(2);
         assert jobItem.getJobId().equals("allDefaultsJob");
         assert jobItem.getMethodName().equals("allDefaultsJob");
         assert jobItem.isEnabled();
         assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType().isClustered() : "when not specified, the default clustered value should be true";
         assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
         assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 600000L;
         assert jobItem.getCallbackData().size() == 0 : jobItem.getCallbackData();

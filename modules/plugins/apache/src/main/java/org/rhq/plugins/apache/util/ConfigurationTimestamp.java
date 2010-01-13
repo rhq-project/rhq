@@ -64,7 +64,7 @@ public class ConfigurationTimestamp {
             Long otherModified = oLastModified.get(entry.getKey());
             if (otherModified == null) return false;
             
-            if (entry.getValue() != otherModified) return false;
+            if (!entry.getValue().equals(otherModified)) return false;
         }
         
         return true;

@@ -10,7 +10,7 @@
 
    <depends plugin="Augeas"/>
 
-   <server name="Cobbler File"
+   <server name="Cobbler"
            description="the local file used for mapping modules and setttings"
             discovery="CobblerDiscoveryComponent"
             class="CobblerComponent"

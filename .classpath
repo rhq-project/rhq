@@ -105,8 +105,10 @@
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
-	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+    <classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/cobbler/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/cobbler/src/test/java"/>
+    <classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>

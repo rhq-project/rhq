@@ -353,7 +353,6 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         public String resourceTypePluginName;
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return new SyncProgressWeight(10, 1, 0, 0, 0);
     }

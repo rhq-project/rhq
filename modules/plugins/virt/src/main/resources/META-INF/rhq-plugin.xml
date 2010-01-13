@@ -22,6 +22,8 @@
 		<metric property="memory" displayName="Memory" dataType="trait" displayType="summary"/>
 		<metric property="memoryUsage" displayName="Memory Usage" units="percentage" displayType="summary"/>
 		<metric property="cpuUsage" displayName="CPU Usage" units="percentage" displayType="summary"/>	
+        <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
+                displayType="summary"/>		
                 
         <resource-configuration>       
             <c:simple-property name="hypervisorType" readOnly="true" 
@@ -61,13 +63,11 @@
             <operation name="shutdown"
                        description="Shutdown a domain, the domain object is still usable there after but the domain OS is being stopped. Note that the guest OS may ignore the request. TODO: should we add an option for reboot, knowing it may not be doable in the general case ?"/>
 
-<!--
             <metric property="cpuPercentage" displayName="CPU Usage" units="percentage" displayType="summary"/>
             <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>
             <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
                     displayType="summary"/>
 
--->
             <resource-configuration>
 
                 <c:simple-property name="type" type="string" readOnly="true" description="The type of virtual machine"

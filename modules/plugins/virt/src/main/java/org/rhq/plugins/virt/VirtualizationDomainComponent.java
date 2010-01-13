@@ -26,8 +26,10 @@ import org.libvirt.LibvirtException;
 import org.libvirt.DomainInfo.DomainState;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -87,30 +89,31 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        /*for (MeasurementScheduleRequest request : metrics) {
-        if (request.getName().equals("cpuTime")) {
-            report.addData(new MeasurementDataNumeric(request,
-                (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
-        } else if (request.getName().equals("cpuPercentage")) {
-            long checked = System.nanoTime();
-            long cpuNanos = virt.getDomainInfo(domainName).domainInfo.cpuTime;
+        LibVirtConnection virt = this.getConnection();
+        for (MeasurementScheduleRequest request : metrics) {
+            if (request.getName().equals("cpuTime")) {
+                report.addData(new MeasurementDataNumeric(request,
+                    (double) virt.getDomainInfo(domainName).domainInfo.cpuTime));
+            } else if (request.getName().equals("cpuPercentage")) {
+                long checked = System.nanoTime();
+                long cpuNanos = virt.getDomainInfo(domainName).domainInfo.cpuTime;
 
-            if (cpuCheckedLast != 0) {
-                long duration = checked - cpuCheckedLast;
+                if (cpuCheckedLast != 0) {
+                    long duration = checked - cpuCheckedLast;
 
-                long diff = cpuNanos - cpuNanosLast;
+                    long diff = cpuNanos - cpuNanosLast;
 
-                double percentage = ((double) diff) / ((double) duration);
-                report.addData(new MeasurementDataNumeric(request, percentage));
+                    double percentage = ((double) diff) / ((double) duration);
+                    report.addData(new MeasurementDataNumeric(request, percentage));
+                }
+
+                cpuCheckedLast = checked;
+                cpuNanosLast = cpuNanos;
+            } else if (request.getName().equals("memoryUsage")) {
+                report.addData(new MeasurementDataNumeric(request,
+                    (double) virt.getDomainInfo(domainName).domainInfo.memory));
             }
-
-            cpuCheckedLast = checked;
-            cpuNanosLast = cpuNanos;
-        } else if (request.getName().equals("memoryUsage")) {
-            report.addData(new MeasurementDataNumeric(request,
-                (double) virt.getDomainInfo(domainName).domainInfo.memory));
         }
-        }*/
     }
 
     public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
@@ -156,36 +159,37 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        /*try {
-            String xml = this.virt.getDomainXML(this.domainName);
+        try {
+            //String xml = this.virt.getDomainXML(this.domainName);
+            LibVirtConnection virt = getConnection();
 
             Configuration oldConfig = loadResourceConfiguration();
             Configuration newConfig = report.getConfiguration();
 
-            String newXml = DomainConfigurationEditor.updateXML(report.getConfiguration(), xml);
+            //String newXml = DomainConfigurationEditor.updateXML(report.getConfiguration(), xml);
 
-            log.info("Calling libvirt to redefine domain");
-            if (!this.virt.defineDomain(newXml)) {
-                log.warn("Call to redefine domain did not return a domain pointer");
-            }
+            //log.info("Calling libvirt to redefine domain");
+            //if (!this.virt.defineDomain(newXml)) {
+            //    log.warn("Call to redefine domain did not return a domain pointer");
+            //}
 
             // TODO GH: There seems to be some situations where an xml define doesn't change settings so we try a more direct approach here
             // TODO BK: Make this operations on the domain
             if (!oldConfig.getSimple("memory").getLongValue().equals(newConfig.getSimple("memory").getLongValue())) {
-                this.virt.setMaxMemory(domainName, newConfig.getSimple("memory").getLongValue());
+                virt.setMaxMemory(domainName, newConfig.getSimple("memory").getLongValue());
             }
             if (!oldConfig.getSimple("currentMemory").getLongValue().equals(
                 newConfig.getSimple("currentMemory").getLongValue())) {
-                this.virt.setMemory(domainName, newConfig.getSimple("currentMemory").getLongValue());
+                virt.setMemory(domainName, newConfig.getSimple("currentMemory").getLongValue());
             }
             if (!oldConfig.getSimple("vcpu").getIntegerValue().equals(newConfig.getSimple("vcpu").getIntegerValue())) {
-                this.virt.setVcpus(domainName, newConfig.getSimple("vcpu").getIntegerValue());
+                virt.setVcpus(domainName, newConfig.getSimple("vcpu").getIntegerValue());
             }
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (LibvirtException e) {
             throw new RuntimeException(e);
-        }*/
+        }
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {

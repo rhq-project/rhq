@@ -101,6 +101,8 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
                 }
                 cpuCheckedLast = checked;
                 cpuNanosLast = cpuNanos;
+            } else if (request.getName().equals("cpuTime")) {
+                report.addData(new MeasurementDataNumeric(request, (double) virt.getCPUTime()));
             }
         }
     }

@@ -46,6 +46,7 @@ import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
 import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
 import org.rhq.core.pc.configuration.ConfigurationManager;
+import org.rhq.core.pc.configuration.ConfigurationManagerInitializer;
 import org.rhq.core.pc.content.ContentManager;
 import org.rhq.core.pc.event.EventManager;
 import org.rhq.core.pc.inventory.InventoryManager;
@@ -353,6 +354,11 @@ public class PluginContainer implements ContainerService {
 
             for (AgentServiceLifecycleListener agentServiceListener : agentServiceListeners) {
                 agentService.addLifecycleListener(agentServiceListener);
+            }
+
+            if (containerService instanceof ConfigurationManager) {
+                ConfigurationManagerInitializer initializer = new ConfigurationManagerInitializer();
+                initializer.initialize((ConfigurationManager)containerService);
             }
         }
 

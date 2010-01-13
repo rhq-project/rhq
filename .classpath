@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-as/src/test/java"/>
@@ -13,7 +16,7 @@
 	<classpathentry kind="src" path="modules/plugins/tomcat/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jboss-cache-v3/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
+	<classpathentry kind="src" path="etc/samples/perspectives/sample-perspective/app/src/main/java"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
@@ -98,6 +101,7 @@
 	<classpathentry kind="src" path="modules/plugins/postfix/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/postfix/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/cron/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/cron/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hudson/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
@@ -107,6 +111,10 @@
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/script/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/lsof/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
@@ -118,6 +126,7 @@
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>
+	<classpathentry kind="src" path="modules/test-utils/src/main/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
@@ -146,7 +155,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar" sourcepath="/M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-jmx/4.2.3.GA/jboss-jmx-4.2.3.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/catalina/5.5.20/catalina-5.5.20.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>
@@ -161,14 +170,14 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/xml/bind/jsr173_api/1.0/jsr173_api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-embeddable-ejb3/jboss-ejb3-all/1.0.0.Alpha9/jboss-ejb3-all-1.0.0.Alpha9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jbpm/3.1.1/jbpm-3.1.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-embeddable-ejb3/hibernate-all/1.0.0.Alpha9/hibernate-all-1.0.0.Alpha9.jar" sourcepath="/M2_REPO/jboss-embeddable-ejb3/hibernate-all/1.0.0.Alpha9/hibernate-all-1.0.0.Alpha9-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-embeddable-ejb3/hibernate-all/1.0.0.Alpha9/hibernate-all-1.0.0.Alpha9.jar" sourcepath="/M2_REPO/hibernate/hibernate3/3.2.r14201-2/hibernate3-3.2.r14201-2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jetbrains/annotations/7.0.2/annotations-7.0.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/ant/ant-launcher/1.6.5/ant-launcher-1.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/cglib/cglib-nodep/2.1_3/cglib-nodep-2.1_3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-logging/commons-logging/1.1/commons-logging-1.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/commons-lang/commons-lang/2.4/commons-lang-2.4.jar" sourcepath="/M2_REPO/commons-lang/commons-lang/2.4/commons-lang-2.4-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-api/1.2_12/jsf-api-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-api/1.2_06/jsf-api-1.2_06-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_12/jsf-impl-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_06/jsf-impl-1.2_06-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/commons-lang/commons-lang/2.4/commons-lang-2.4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-api/1.2_12/jsf-api-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-api/1.2_12/jsf-api-1.2_12-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/javax/faces/jsf-impl/1.2_12/jsf-impl-1.2_12.jar" sourcepath="/M2_REPO/javax/faces/jsf-impl/1.2_12/jsf-impl-1.2_12-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/el/el-api/1.0/el-api-1.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/sun/facelets/jsf-facelets/1.1.14/jsf-facelets-1.1.14.jar" sourcepath="/M2_REPO/com/sun/facelets/jsf-facelets/1.1.13/jsf-facelets-1.1.13-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/mc4j/org-mc4j-ems/1.2.11/org-mc4j-ems-1.2.11.jar" sourcepath="/M2_REPO/mc4j/org-mc4j-ems/1.2.11/org-mc4j-ems-1.2.11-sources.jar"/>
@@ -176,8 +185,8 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.3.1/mail-1.3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-api/3.3.0.GA/richfaces-api-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-api/3.1.3.GA/richfaces-api-3.1.3.GA-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-impl/3.1.3.GA/richfaces-impl-3.1.3.GA-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.1.3.GA/richfaces-ui-3.1.3.GA-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/8.4-701.jdbc3/postgresql-8.4-701.jdbc3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP9/jboss-cache-1.4.1.SP9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82-sources.jar"/>
@@ -205,11 +214,15 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2.jar" sourcepath="/M2_REPO/org/apache/xmlrpc/xmlrpc-client/3.1.2/xmlrpc-client-3.1.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlrpc/xmlrpc-common/3.1.2/xmlrpc-common-3.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/ws/commons/util/ws-commons-util/1.0.2/ws-commons-util-1.0.2.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-digester/commons-digester/1.8/commons-digester-1.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-codec/commons-codec/1.4/commons-codec-1.4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/pircbot/pircbot/1.4.2/pircbot-1.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/net/homeip/yusuke/twitter4j/2.0.9/twitter4j-2.0.9.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

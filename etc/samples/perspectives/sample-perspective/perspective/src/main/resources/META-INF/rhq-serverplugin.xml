@@ -12,6 +12,7 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
+
    <!-- Declare supporting applications for this perspective -->
    <application
       name="sample"
@@ -19,15 +20,24 @@
 
    <!--  replace the coreMenu log with a new one -->
    <menuItem
-      action="replace"
+      action="remove"
       name="logo"
       displayName=""
       application="sample"
       url="/"
       iconUrl="images/jboss.png">
       <position
-         extensionPoint="coreMenu"
-         placement="start" />
+         placement="firstChild" />
+   </menuItem>
+   <menuItem
+      action="add"
+      name="logo"
+      displayName=""
+      application="sample"
+      url="/"
+      iconUrl="images/jboss.png">
+      <position
+         placement="firstChild" />
    </menuItem>
 
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
@@ -36,7 +46,6 @@
       name="groups.newGroup"
       displayName="New Group">
       <position
-         extensionPoint="coreMenu"
          name="groups.groupDefinitions"
          placement="after" />
    </menuItem>
@@ -45,83 +54,157 @@
       name="groups.newGroupDefinition"
       displayName="New Group Definition">
       <position
-         extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
    </menuItem>
 
-   <!-- Add Custom menuItem to Core Menu -->
+   <!-- Add Sample menuItem to Core Menu -->
    <menuItem
-      name="custom"
-      displayName="Custom">
+      name="sample"
+      displayName="Sample">
       <position
-         extensionPoint="coreMenu"
          name="help"
          placement="after" />
    </menuItem>
    <menuItem
-      name="custom.child1"
-      displayName="Child-1">
+      name="sample.child1"
+      displayName="New Group">
       <position
-         extensionPoint="coreMenu"
-         name="custom"
-         placement="start" />
+         name="sample"
+         placement="firstChild" />
    </menuItem>
    <menuItem
-      name="custom.child2"
-      displayName="Child-2"
+      name="sample.child2"
+      displayName="Sample Page"
       application="sample"
-      url="index.html">
+      url="mainpage.html">
       <position
-         extensionPoint="coreMenu"
-         name="custom.child1"
+         name="sample.child1"
          placement="after" />
    </menuItem>
    <menuItem
-      name="custom.child1.newGroup"
+      name="sample.child3"
+      displayName="Random Resource"
+      application="sample"
+      url="randomResource.seam">
+      <position
+         name="sample.child2"
+         placement="after" />
+   </menuItem>
+   <menuItem
+      name="sample.child4"
+      displayName="Create EJB3 Admin User"
+      application="sample"
+      url="wizard.seam">
+      <position
+         name="sample.child3"
+         placement="after" />
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+         <globalPermission
+            name="MANAGE_SECURITY" />
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server" />
+         </inventory>
+      </activators>
+   </menuItem>
+   <menuItem
+      name="sample.child5"
+      displayName="Config and Restart AS"
+      application="sample"
+      url="mainpage.html">
+      <position
+         name="sample.child4"
+         placement="after" />
+      <activators>
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server">
+               <permission
+                  name="CONTROL" />
+               <permission
+                  name="CONFIGURE" />
+               <trait
+                  name="Version Name"
+                  value="Trinity" />
+               <trait
+                  name="Build Date"
+                  value="20\d\d" />
+            </resource>
+         </inventory>
+      </activators>
+   </menuItem>
+   <menuItem
+      name="sample.child1.newGroup"
       displayName="New Group"
       application="sample"
       url="/resource/group/Inventory.do?mode=new"
       iconUrl="images/create.png">
-      <globalPermissionActivatorSet>
-         <globalPermissionActivator
-            permission="MANAGE_INVENTORY" />
-      </globalPermissionActivatorSet>
-       <position
-         extensionPoint="coreMenu"
-         name="custom.child1"
-         placement="start" />
+      <position
+         name="sample.child1"
+         placement="firstChild" />
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+      </activators>
    </menuItem>
    <menuItem
-      name="custom.child1.newGroupDefinition"
+      name="sample.child1.newGroupDefinition"
       displayName="New Group Definition"
       application="sample"
       url="/rhq/definition/group/new.xhtml"
       iconUrl="images/create.png">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
-         name="custom.child1.newGroup"
+         name="sample.child1.newGroup"
          placement="after" />
+      <activators>
+         <globalPermission
+            name="MANAGE_INVENTORY" />
+      </activators>
    </menuItem>
 
-    <tab name="Custom" displayName="Custom" iconUrl="/images/icons/Favorite_16.png"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory"
-           placement="after" />
-    </tab>
+   <tab
+      name="Sample"
+      displayName="Sample"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="currentResource.seam">
+      <position
+         name="Inventory"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Reports" displayName="Reports"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Tables"
-           placement="after" />
-    </tab>
+   <!-- a subtab that will only be displayed for Network Adapter Resources -->
+   <tab
+      name="Summary.SampleNetAdapt"
+      displayName="Sample-NetAdapt"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Summary.Timeline"
+         placement="after" />
+      <activators>
+         <resourceType>
+            <resource
+               plugin="Platforms"
+               type="Network Adapter" />
+         </resourceType>
+      </activators>
+   </tab>
+
+   <tab
+      name="Monitor.Sample"
+      displayName="Sample"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Monitor.Tables"
+         placement="after" />
+   </tab>
 
 </perspectivePlugin>

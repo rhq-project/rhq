@@ -58,17 +58,6 @@ public interface DistributionManagerRemote {
     /**
      * Deletes a given instance of kickstart tree object. If the object does not exist
      * @param subject
-     * @param repoId
-     *
-     */
-    @WebMethod
-    void deleteDistributionByRepo( //
-        @WebParam(name = "subject") Subject subject, //                  
-        @WebParam(name = "repoId") int repoId) throws Exception;
-
-    /**
-     * Deletes a given instance of kickstart tree object. If the object does not exist
-     * @param subject
      * @param distId
      *
      */
@@ -126,5 +115,5 @@ public interface DistributionManagerRemote {
      */
     @WebMethod
     DistributionType getDistributionTypeByName(@WebParam(name = "name") String name);
-   
+
 }

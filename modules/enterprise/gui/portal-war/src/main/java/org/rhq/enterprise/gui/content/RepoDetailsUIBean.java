@@ -20,8 +20,12 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
@@ -29,6 +33,9 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoDetailsUIBean {
+
+    private final Log log = LogFactory.getLog(this.getClass());
+
     private Repo repo;
 
     public Repo getRepo() {
@@ -46,14 +53,38 @@ public class RepoDetailsUIBean {
         return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
     }
 
+    public RepoSyncResults getSyncResults() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        return LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+    }
+
+    public String getPercentComplete() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        RepoSyncResults r = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+        if (r != null && r.getPercentComplete() != null) {
+            return r.getPercentComplete().toString();
+        } else {
+            return "0";
+        }
+    }
+
     public String sync() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer[] repoIds = { FacesContextUtility.getRequiredRequestParameter("id", Integer.class) };
-        int syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);
+        int syncCount = 0;
+        try {
+            syncCount = LookupUtil.getRepoManagerLocal().synchronizeRepos(subject, repoIds);
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + e.getMessage());
+            log.error("Error synchronizing repo ID [" + repoIds + "]", e);
+            return "edit";
+        }
         if (syncCount > 0) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository is syncing.");
         } else {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Nothing to sync for this Repository.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Nothing to sync for this repository.");
         }
         return "success";
     }
@@ -64,7 +95,7 @@ public class RepoDetailsUIBean {
 
         try {
             manager.updateRepo(subject, repo);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repo has been updated.");
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The repository has been updated.");
         } catch (ContentException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode on failure

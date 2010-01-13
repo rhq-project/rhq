@@ -94,6 +94,13 @@
          <artifactId>sigar</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
       </dependency>
+
+      <dependency>
+         <groupId>${groupId}</groupId>
+         <artifactId>test-utils</artifactId>
+         <version>${version}</version>
+         <scope>test</scope>
+      </dependency>
       
    </dependencies>
 

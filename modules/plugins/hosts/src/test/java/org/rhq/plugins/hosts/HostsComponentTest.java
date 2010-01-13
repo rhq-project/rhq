@@ -19,7 +19,6 @@
 package org.rhq.plugins.hosts;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -27,7 +26,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
-import org.testng.annotations.BeforeTest;
 
 /**
  * An integration test for {@link HostsComponent}.
@@ -55,18 +53,10 @@ public class HostsComponentTest extends AbstractAugeasConfigurationComponentTest
     }
 
     @Override
-    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig)
-    {
+    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig) {
         super.tweakDefaultPluginConfig(defaultPluginConfig);
         String hostsFilePath = new File("/etc/hosts").getAbsolutePath();
         defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, hostsFilePath));
-    }
-
-    @BeforeTest
-    @Override
-    public void resetConfigFiles() throws IOException
-    {
-        super.resetConfigFiles();
     }
 
     @Override

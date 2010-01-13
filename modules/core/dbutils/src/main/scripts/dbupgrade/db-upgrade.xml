@@ -1,10 +1,10 @@
 <project name="db-upgrade" default="upgrade" basedir=".">
 
     <!--
-       This target upgrades a database schema. The parameters that it accepts are: jdbc.url = the jdbc url of the database
-       to upgrade jdbc.user = the user to connect to the database as jdbc.password = the database user's password
-       target.schema.version = the schema version to upgrade to. If this is omitted then the schema is upgraded to the
-       latest version. This target assumes that the taskdefs for the dbupgrade ant task have already been defined.
+    This target upgrades a database schema. The parameters that it accepts are: jdbc.url = the jdbc url of the database
+    to upgrade jdbc.user = the user to connect to the database as jdbc.password = the database user's password
+    target.schema.version = the schema version to upgrade to. If this is omitted then the schema is upgraded to the
+    latest version. This target assumes that the taskdefs for the dbupgrade ant task have already been defined.
     -->
 
     <target name="upgrade">
@@ -31,44 +31,40 @@
 
             <schemaSpec version="2.1">
                 <!--
-                   Keep the columnType VARCHAR2, but increase size; (see note for RHQ_ALERT_CONDITION table in alert-schema.xml for more info)
+                    Keep the columnType VARCHAR2, but increase size; (see note for RHQ_ALERT_CONDITION table in alert-schema.xml for more info)
                 -->
-                <schema-alterColumn table="RHQ_ALERT_CONDITION" column="OPTION_STATUS" columnType="VARCHAR2"
-                                    precision="256"/>
+                <schema-alterColumn table="RHQ_ALERT_CONDITION" column="OPTION_STATUS" columnType="VARCHAR2" precision="256" />
             </schemaSpec>
 
             <schemaSpec version="2.2">
                 <!-- RHQ-481 make resource names longer -->
-                <schema-alterColumn table="RHQ_RESOURCE" column="NAME" columnType="VARCHAR2" precision="500"/>
+                <schema-alterColumn table="RHQ_RESOURCE" column="NAME" columnType="VARCHAR2" precision="500" />
             </schemaSpec>
 
             <schemaSpec version="2.3">
                 <!-- RHQ-666 - Don't require resource name at creation time -->
-                <schema-alterColumn table="RHQ_CREATE_RES_HIST" column="CREATED_RESOURCE_NAME" columnType="VARCHAR2"
-                                    precision="500"/>
+                <schema-alterColumn table="RHQ_CREATE_RES_HIST" column="CREATED_RESOURCE_NAME" columnType="VARCHAR2" precision="500" />
             </schemaSpec>
 
             <!-- RHQ-669 - Add metadata to package type to indicate architecture support -->
             <schemaSpec version="2.4">
-                <schema-addColumn table="RHQ_PACKAGE_TYPE" column="SUPPORTS_ARCHITECTURE" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_PACKAGE_TYPE" column="SUPPORTS_ARCHITECTURE" columnType="BOOLEAN" />
 
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+                    <statement targetDBVendor="postgresql" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                         UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = FALSE
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
+                    <statement targetDBVendor="oracle" desc="Updating existing package types with default for SUPPORTS_ARCHITECTURE flag">
                         UPDATE RHQ_PACKAGE_TYPE SET SUPPORTS_ARCHITECTURE = 0
                     </statement>
                 </schema-directSQL>
 
-                <schema-alterColumn table="RHQ_PACKAGE_TYPE" column="SUPPORTS_ARCHITECTURE" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_PACKAGE_TYPE" column="SUPPORTS_ARCHITECTURE" nullable="FALSE" />
             </schemaSpec>
 
             <!-- RHQ-176 - Add notes column to content requests -->
             <schemaSpec version="2.5">
-                <schema-addColumn table="RHQ_CONTENT_REQ" column="NOTES" columnType="VARCHAR2" precision="512"/>
+                <schema-addColumn table="RHQ_CONTENT_REQ" column="NOTES" columnType="VARCHAR2" precision="512" />
             </schemaSpec>
 
             <!-- rhq-488 - RHQ High Availability / Failover Support -->
@@ -80,15 +76,15 @@
                         CREATE TABLE RHQ_AFFINITY_GROUP ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_AFFINITY_GROUP_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_AFFINITY_GROUP_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_AFFINITY_GROUP">
                         ALTER TABLE RHQ_AFFINITY_GROUP ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_AFFINITY_GROUP" column="NAME" columnType="VARCHAR2" precision="255"/>
-                <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="NAME" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_AFFINITY_GROUP" column="NAME" columnType="VARCHAR2" precision="255" />
+                <schema-alterColumn table="RHQ_AFFINITY_GROUP" column="NAME" nullable="FALSE" />
 
                 <!-- RHQ_SERVER -->
                 <schema-directSQL>
@@ -96,24 +92,24 @@
                         CREATE TABLE RHQ_SERVER ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_SERVER_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_SERVER" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_SERVER_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_SERVER">
                         ALTER TABLE RHQ_SERVER ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_SERVER" column="NAME" columnType="VARCHAR2" precision="255"/>
-                <schema-alterColumn table="RHQ_SERVER" column="NAME" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="ADDRESS" columnType="VARCHAR2" precision="255"/>
-                <schema-alterColumn table="RHQ_SERVER" column="ADDRESS" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="PORT" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="SECURE_PORT" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_SERVER" column="CTIME" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_SERVER" column="NAME" columnType="VARCHAR2" precision="255" />
+                <schema-alterColumn table="RHQ_SERVER" column="NAME" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="ADDRESS" columnType="VARCHAR2" precision="255" />
+                <schema-alterColumn table="RHQ_SERVER" column="ADDRESS" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="PORT" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="SECURE_PORT" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_SERVER" column="CTIME" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_SERVER foreign key relation to RHQ_AFFINITY_GROUP">
                         ALTER TABLE RHQ_SERVER
@@ -124,7 +120,7 @@
                 </schema-directSQL>
 
                 <!-- RHQ_AGENT modifications -->
-                <schema-addColumn table="RHQ_AGENT" column="AFFINITY_GROUP_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_AGENT" column="AFFINITY_GROUP_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_AFFINITY_GROUP">
                         ALTER TABLE RHQ_AGENT
@@ -133,7 +129,7 @@
                         REFERENCES RHQ_AFFINITY_GROUP (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_AGENT" column="SERVER_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_AGENT" column="SERVER_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_AGENT foreign key relation to RHQ_SERVER">
                         ALTER TABLE RHQ_AGENT
@@ -149,20 +145,19 @@
                         CREATE TABLE RHQ_PARTITION_EVENT ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_PARTITION_EVENT_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_PARTITION_EVENT_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
                         ALTER TABLE RHQ_PARTITION_EVENT ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2"
-                                  precision="255"/>
-                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" columnType="VARCHAR2" precision="50"/>
-                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_PARTITION_EVENT" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="CTIME" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="SUBJECT_NAME" nullable="FALSE" />
+                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" columnType="VARCHAR2" precision="50" />
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EVENT_TYPE" nullable="FALSE" />
+                <schema-addColumn table="RHQ_PARTITION_EVENT" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="CTIME" nullable="FALSE" />
 
                 <!-- RHQ_PARTITION_DETAILS -->
                 <schema-directSQL>
@@ -170,15 +165,15 @@
                         CREATE TABLE RHQ_PARTITION_DETAILS ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_PARTITION_DETAILS_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_PARTITION_DETAILS_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_PARTITION_DETAILS">
                         ALTER TABLE RHQ_PARTITION_DETAILS ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="PARTITION_EVENT_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_PARTITION_EVENT">
                         ALTER TABLE RHQ_PARTITION_DETAILS
@@ -187,8 +182,8 @@
                         REFERENCES RHQ_PARTITION_EVENT (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_AGENT">
                         ALTER TABLE RHQ_PARTITION_DETAILS
@@ -197,8 +192,8 @@
                         REFERENCES RHQ_AGENT (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_PARTITION_DETAILS foreign key relation to RHQ_SERVER">
                         ALTER TABLE RHQ_PARTITION_DETAILS
@@ -214,15 +209,15 @@
                         CREATE TABLE RHQ_FAILOVER_LIST ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_FAILOVER_LIST_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_FAILOVER_LIST_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_FAILOVER_LIST">
                         ALTER TABLE RHQ_FAILOVER_LIST ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="PARTITION_EVENT_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_PARTITION_EVENT">
                         ALTER TABLE RHQ_FAILOVER_LIST
@@ -231,8 +226,8 @@
                         REFERENCES RHQ_PARTITION_EVENT (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="AGENT_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_FAILOVER_LIST foreign key relation to RHQ_AGENT">
                         ALTER TABLE RHQ_FAILOVER_LIST
@@ -241,8 +236,8 @@
                         REFERENCES RHQ_AGENT (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_LIST" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="CTIME" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_LIST" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_FAILOVER_LIST" column="CTIME" nullable="FALSE" />
 
                 <!-- RHQ_FAILOVER_DETAILS -->
                 <schema-directSQL>
@@ -250,15 +245,15 @@
                         CREATE TABLE RHQ_FAILOVER_DETAILS ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_FAILOVER_DETAILS_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_FAILOVER_DETAILS_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_FAILOVER_DETAILS">
                         ALTER TABLE RHQ_FAILOVER_DETAILS ADD PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="FAILOVER_LIST_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to FAILOVER_LIST_ID">
                         ALTER TABLE RHQ_FAILOVER_DETAILS
@@ -267,8 +262,8 @@
                         REFERENCES RHQ_FAILOVER_LIST (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="SERVER_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_FAILOVER_DETAILS foreign key relation to RHQ_SERVER">
                         ALTER TABLE RHQ_FAILOVER_DETAILS
@@ -277,29 +272,29 @@
                         REFERENCES RHQ_SERVER (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" nullable="FALSE" />
 
             </schemaSpec>
 
             <schemaSpec version="2.7">
-                <schema-addColumn table="RHQ_AGENT" column="STATUS" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_AGENT" column="STATUS" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing agents with default STATUS flag">
                         UPDATE RHQ_AGENT SET STATUS = 0
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_AGENT" column="STATUS" default="0"/>
+                <schema-alterColumn table="RHQ_AGENT" column="STATUS" default="0" />
             </schemaSpec>
 
             <schemaSpec version="2.8">
-                <schema-addColumn table="RHQ_SERVER" column="OPERATION_MODE" columnType="VARCHAR2" precision="32"/>
+                <schema-addColumn table="RHQ_SERVER" column="OPERATION_MODE" columnType="VARCHAR2" precision="32" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default OPERATION_MODE flag">
                         UPDATE RHQ_SERVER SET OPERATION_MODE = 'NORMAL'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="OPERATION_MODE" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="OPERATION_MODE" nullable="FALSE" />
 
                 <schema-directSQL>
                     <statement desc="Creating RHQ_SERVER unique constraint on NAME">
@@ -309,88 +304,86 @@
             </schemaSpec>
 
             <schemaSpec version="2.9">
-                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="ORDINAL" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_FAILOVER_DETAILS" column="ORDINAL" columnType="INTEGER" />
             </schemaSpec>
 
             <schemaSpec version="2.10">
-                <schema-deleteColumn table="RHQ_FAILOVER_DETAILS" column="CTIME"/>
+                <schema-deleteColumn table="RHQ_FAILOVER_DETAILS" column="CTIME" />
             </schemaSpec>
 
             <schemaSpec version="2.11">
-                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_DEFINITION_ID" nullable="TRUE"/>
+                <schema-alterColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_DEFINITION_ID" nullable="TRUE" />
             </schemaSpec>
 
             <schemaSpec version="2.12">
-                <schema-deleteColumn table="RHQ_SERVER" column="PORT"/>
-                <schema-deleteColumn table="RHQ_SERVER" column="SECURE_PORT"/>
+                <schema-deleteColumn table="RHQ_SERVER" column="PORT" />
+                <schema-deleteColumn table="RHQ_SERVER" column="SECURE_PORT" />
 
-                <schema-addColumn table="RHQ_SERVER" column="BIND_PORT" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_SERVER" column="BIND_PORT" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default BIND_PORT=7080">
                         UPDATE RHQ_SERVER SET BIND_PORT = 7080
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="BIND_PORT" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="BIND_PORT" nullable="FALSE" />
 
-                <schema-addColumn table="RHQ_SERVER" column="TRANSPORT" columnType="VARCHAR2" precision="32"/>
+                <schema-addColumn table="RHQ_SERVER" column="TRANSPORT" columnType="VARCHAR2" precision="32" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default TRANSPORT=servlet">
                         UPDATE RHQ_SERVER SET TRANSPORT = 'servlet'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT" nullable="FALSE" />
 
-                <schema-addColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" columnType="VARCHAR2" precision="512"/>
+                <schema-addColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" columnType="VARCHAR2" precision="512" />
                 <schema-directSQL>
                     <statement
-                            desc="Updating existing servers with default TRANSPORT_PARAMS=/jboss-remoting-servlet-invoker/ServerInvokerServlet">
+                        desc="Updating existing servers with default TRANSPORT_PARAMS=/jboss-remoting-servlet-invoker/ServerInvokerServlet">
                         UPDATE RHQ_SERVER SET TRANSPORT_PARAMS = '/jboss-remoting-servlet-invoker/ServerInvokerServlet'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" nullable="FALSE" />
 
-                <schema-addColumn table="RHQ_SERVER" column="COMPUTE_POWER" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_SERVER" column="COMPUTE_POWER" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default COMPUTE_POWER=1">
                         UPDATE RHQ_SERVER SET COMPUTE_POWER = 1
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="COMPUTE_POWER" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="COMPUTE_POWER" nullable="FALSE" />
 
             </schemaSpec>
 
             <schemaSpec version="2.13">
-                <schema-deleteColumn table="RHQ_SERVER" column="BIND_PORT"/>
-                <schema-deleteColumn table="RHQ_SERVER" column="TRANSPORT"/>
-                <schema-deleteColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS"/>
+                <schema-deleteColumn table="RHQ_SERVER" column="BIND_PORT" />
+                <schema-deleteColumn table="RHQ_SERVER" column="TRANSPORT" />
+                <schema-deleteColumn table="RHQ_SERVER" column="TRANSPORT_PARAMS" />
 
-                <schema-addColumn table="RHQ_SERVER" column="PORT" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_SERVER" column="PORT" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default PORT=7080">
                         UPDATE RHQ_SERVER SET PORT = 7080
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_SERVER" column="SECURE_PORT" columnType="INTEGER"/>
+                <schema-alterColumn table="RHQ_SERVER" column="PORT" nullable="FALSE" />
+                <schema-addColumn table="RHQ_SERVER" column="SECURE_PORT" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default SECURE_PORT=7443">
                         UPDATE RHQ_SERVER SET SECURE_PORT = 7443
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="SECURE_PORT" nullable="FALSE" />
             </schemaSpec>
 
             <!-- RHQ-720 - Add read_only column to alert definitions table -->
             <schemaSpec version="2.14">
-                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" columnType="BOOLEAN" />
 
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Updating existing alert definitions with default for READ_ONLY flag">
+                    <statement targetDBVendor="postgresql" desc="Updating existing alert definitions with default for READ_ONLY flag">
                         UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = FALSE
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Updating existing alert definitions with default for READ_ONLY flag">
+                    <statement targetDBVendor="oracle" desc="Updating existing alert definitions with default for READ_ONLY flag">
                         UPDATE RHQ_ALERT_DEFINITION SET READ_ONLY = 0
                     </statement>
                 </schema-directSQL>
@@ -404,25 +397,22 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-alterColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_ALERT_DEFINITION" column="READ_ONLY" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.15">
-                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" columnType="VARCHAR2"
-                                  precision="32"/>
+                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" columnType="VARCHAR2" precision="32" />
                 <schema-directSQL>
                     <statement desc="Updating existing partition events with default EXECUTION_STATUS=COMPLETED">
                         UPDATE RHQ_PARTITION_EVENT SET EXECUTION_STATUS = 'COMPLETED'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_PARTITION_EVENT" column="EXECUTION_STATUS" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.16">
-                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="AGENT_NAME" columnType="VARCHAR2"
-                                  precision="255"/>
-                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="SERVER_NAME" columnType="VARCHAR2"
-                                  precision="255"/>
+                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="AGENT_NAME" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_PARTITION_DETAILS" column="SERVER_NAME" columnType="VARCHAR2" precision="255" />
 
                 <schema-directSQL>
                     <statement desc="Updating existing partition events details with default AGENT_NAME">
@@ -433,32 +423,32 @@
                     <statement desc="Updating existing partition events details with known agents">
                         UPDATE RHQ_PARTITION_DETAILS
                         SET AGENT_NAME = ( SELECT RHQ_AGENT.NAME
-                        FROM RHQ_AGENT
-                        WHERE RHQ_AGENT.ID = RHQ_PARTITION_DETAILS.AGENT_ID )
+                                             FROM RHQ_AGENT
+                                             WHERE RHQ_AGENT.ID = RHQ_PARTITION_DETAILS.AGENT_ID )
                     </statement>
                 </schema-directSQL>
 
                 <schema-directSQL>
-                    <statement desc="Updating existing partition events details with default SERVER_NAME">
-                        UPDATE RHQ_PARTITION_DETAILS SET SERVER_NAME = 'UNKNOWN'
-                    </statement>
+                  <statement desc="Updating existing partition events details with default SERVER_NAME">
+                    UPDATE RHQ_PARTITION_DETAILS SET SERVER_NAME = 'UNKNOWN'
+                  </statement>
                 </schema-directSQL>
                 <schema-directSQL>
                     <statement desc="Updating existing partition events details with known servers">
                         UPDATE RHQ_PARTITION_DETAILS
                         SET SERVER_NAME = ( SELECT RHQ_SERVER.NAME
-                        FROM RHQ_SERVER
-                        WHERE RHQ_SERVER.ID = RHQ_PARTITION_DETAILS.SERVER_ID )
+                                              FROM RHQ_SERVER
+                                             WHERE RHQ_SERVER.ID = RHQ_PARTITION_DETAILS.SERVER_ID )
                     </statement>
                 </schema-directSQL>
 
-                <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID"/>
-                <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID"/>
+                <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="AGENT_ID" />
+                <schema-deleteColumn table="RHQ_PARTITION_DETAILS" column="SERVER_ID" />
             </schemaSpec>
 
             <!-- RHQ-786 - Add read_only column to alert definitions table -->
             <schemaSpec version="2.17">
-                <schema-addColumn table="RHQ_ALERT" column="RECOVERY_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_ALERT" column="RECOVERY_ID" columnType="INTEGER" />
 
                 <schema-directSQL>
                     <statement desc="Updating existing alerts with default for recovery_id">
@@ -466,17 +456,15 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-alterColumn table="RHQ_ALERT" column="RECOVERY_ID" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_ALERT" column="RECOVERY_ID" nullable="FALSE" />
 
-                <schema-addColumn table="RHQ_ALERT" column="WILL_RECOVER" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_ALERT" column="WILL_RECOVER" columnType="BOOLEAN" />
 
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Updating existing alerts with default for WILL_RECOVER flag">
+                    <statement targetDBVendor="postgresql" desc="Updating existing alerts with default for WILL_RECOVER flag">
                         UPDATE RHQ_ALERT SET WILL_RECOVER = FALSE
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Updating existing alerts with default for WILL_RECOVER flag">
+                    <statement targetDBVendor="oracle" desc="Updating existing alerts with default for WILL_RECOVER flag">
                         UPDATE RHQ_ALERT SET WILL_RECOVER = 0
                     </statement>
                 </schema-directSQL>
@@ -490,54 +478,47 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-alterColumn table="RHQ_ALERT" column="WILL_RECOVER" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_ALERT" column="WILL_RECOVER" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.18">
-                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_DETAIL" columnType="VARCHAR2"
-                                  precision="512"/>
+                <schema-addColumn table="RHQ_PARTITION_EVENT" column="EVENT_DETAIL" columnType="VARCHAR2" precision="512" />
 
-                <schema-addColumn table="RHQ_SERVER" column="MTIME" columnType="LONG"/>
+                <schema-addColumn table="RHQ_SERVER" column="MTIME" columnType="LONG" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default MTIME=CTIME">
                         UPDATE RHQ_SERVER SET MTIME = CTIME
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="MTIME" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_SERVER" column="MTIME" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.19">
-                <schema-addColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
                         UPDATE RHQ_AGENT
                         SET LAST_AVAILABILITY_REPORT_LONG =
                         EXTRACT ( EPOCH FROM LAST_AVAILABILITY_REPORT )
                         WHERE LAST_AVAILABILITY_REPORT IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_AGENT.LAST_AVAILABILITY_REPORT timestamp to long">
                         UPDATE RHQ_AGENT
                         SET LAST_AVAILABILITY_REPORT_LONG = 1000 *
                         (
                         extract(day from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00
                         +00:00'))*86400+
-                        extract(hour from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01
-                        00:00:00 +00:00'))*60+
-                        extract(second from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01
-                        00:00:00 +00:00'))
+                        extract(hour from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (LAST_AVAILABILITY_REPORT at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         LAST_AVAILABILITY_REPORT IS NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT"/>
+                <schema-deleteColumn table="RHQ_AGENT" column="LAST_AVAILABILITY_REPORT" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_AGENT.LAST_AVAILABILITY_REPORT column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_AGENT.LAST_AVAILABILITY_REPORT column to match old schema expectations">
                         ALTER TABLE RHQ_AGENT
                         RENAME COLUMN LAST_AVAILABILITY_REPORT_LONG
                         TO
@@ -547,37 +528,30 @@
             </schemaSpec>
 
             <schemaSpec version="2.20">
-                <schema-addColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
                         UPDATE RHQ_ALERT_DAMPEN_EVENT
                         SET EVENT_TIMESTAMP_LONG =
                         EXTRACT ( EPOCH FROM EVENT_TIMESTAMP )
                         WHERE EVENT_TIMESTAMP IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP timestamp to long">
                         UPDATE RHQ_ALERT_DAMPEN_EVENT
                         SET EVENT_TIMESTAMP_LONG = 1000
                         *
-                        ( extract(day from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        ( extract(day from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (EVENT_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         EVENT_TIMESTAMP IS NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP"/>
+                <schema-deleteColumn table="RHQ_ALERT_DAMPEN_EVENT" column="EVENT_TIMESTAMP" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_ALERT_DAMPEN_EVENT.EVENT_TIMESTAMP column to match old schema expectations">
                         ALTER TABLE RHQ_ALERT_DAMPEN_EVENT
                         RENAME COLUMN EVENT_TIMESTAMP_LONG
                         TO
@@ -587,8 +561,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.21">
-                <schema-addColumn table="RHQ_EVENT" column="TIMESTAMP_LONG" columnType="LONG"/>
-                <schema-addColumn table="RHQ_EVENT" column="ACK_TIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_EVENT" column="TIMESTAMP_LONG" columnType="LONG" />
+                <schema-addColumn table="RHQ_EVENT" column="ACK_TIME_LONG" columnType="LONG" />
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Converting RHQ_EVENT.TIMESTAMP timestamp to long">
                         UPDATE RHQ_EVENT
@@ -623,8 +597,8 @@
                         WHERE ACK_TIME IS NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_EVENT" column="TIMESTAMP"/>
-                <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME"/>
+                <schema-deleteColumn table="RHQ_EVENT" column="TIMESTAMP" />
+                <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
                 <schema-directSQL>
                     <statement desc="Renaming new RHQ_EVENT.TIMESTAMP column to match old schema expectations">
                         ALTER TABLE RHQ_EVENT
@@ -641,68 +615,55 @@
 
             <schemaSpec version="2.22">
                 <!-- RHQ_CONTENT_SOURCE timestamp to long conversion -->
-                <schema-addColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME_LONG" columnType="LONG"/>
-                <schema-addColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME_LONG" columnType="LONG" />
+                <schema-addColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
                         UPDATE RHQ_CONTENT_SOURCE
                         SET CREATION_TIME_LONG =
                         EXTRACT ( EPOCH FROM CREATION_TIME )
                         WHERE CREATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
                         UPDATE RHQ_CONTENT_SOURCE
                         SET LAST_MODIFIED_TIME_LONG =
                         EXTRACT ( EPOCH FROM LAST_MODIFIED_TIME )
                         WHERE LAST_MODIFIED_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_CONTENT_SOURCE.CREATION_TIME timestamp to long">
                         UPDATE RHQ_CONTENT_SOURCE
                         SET CREATION_TIME_LONG = 1000 *
                         (
-                        extract(day from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
+                        extract(day from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
                         extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         CREATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME timestamp to long">
                         UPDATE RHQ_CONTENT_SOURCE
                         SET LAST_MODIFIED_TIME_LONG = 1000
                         *
-                        ( extract(day from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        ( extract(day from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         LAST_MODIFIED_TIME IS NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME"/>
-                <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME"/>
+                <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="CREATION_TIME" />
+                <schema-deleteColumn table="RHQ_CONTENT_SOURCE" column="LAST_MODIFIED_TIME" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_CONTENT_SOURCE.CREATION_TIME column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_CONTENT_SOURCE.CREATION_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_CONTENT_SOURCE
                         RENAME COLUMN CREATION_TIME_LONG
                         TO CREATION_TIME
                     </statement>
-                    <statement
-                            desc="Renaming new RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_CONTENT_SOURCE.LAST_MODIFIED_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_CONTENT_SOURCE
                         RENAME COLUMN LAST_MODIFIED_TIME_LONG
                         TO
@@ -711,17 +672,15 @@
                 </schema-directSQL>
 
                 <!-- RHQ_CHANNEL timestamp to long conversion -->
-                <schema-addColumn table="RHQ_CHANNEL" column="CREATION_TIME_LONG" columnType="LONG"/>
-                <schema-addColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_CHANNEL" column="CREATION_TIME_LONG" columnType="LONG" />
+                <schema-addColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_CHANNEL.CREATION_TIME timestamp to long">
                         UPDATE RHQ_CHANNEL
                         SET CREATION_TIME_LONG = EXTRACT ( EPOCH FROM CREATION_TIME )
                         WHERE CREATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
                         UPDATE RHQ_CHANNEL
                         SET LAST_MODIFIED_TIME_LONG = EXTRACT
                         ( EPOCH FROM LAST_MODIFIED_TIME )
@@ -731,45 +690,36 @@
                         UPDATE RHQ_CHANNEL
                         SET CREATION_TIME_LONG = 1000 *
                         (
-                        extract(day from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
+                        extract(day from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
                         extract(second from (CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         CREATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_CHANNEL.LAST_MODIFIED_TIME timestamp to long">
                         UPDATE RHQ_CHANNEL
                         SET LAST_MODIFIED_TIME_LONG = 1000 *
                         (
-                        extract(day from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        extract(day from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (LAST_MODIFIED_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         LAST_MODIFIED_TIME IS NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_CHANNEL" column="CREATION_TIME"/>
-                <schema-deleteColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME"/>
+                <schema-deleteColumn table="RHQ_CHANNEL" column="CREATION_TIME" />
+                <schema-deleteColumn table="RHQ_CHANNEL" column="LAST_MODIFIED_TIME" />
                 <schema-directSQL>
                     <statement desc="Renaming new RHQ_CHANNEL.CREATION_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_CHANNEL
                         RENAME COLUMN CREATION_TIME_LONG
                         TO CREATION_TIME
                     </statement>
-                    <statement
-                            desc="Renaming new RHQ_CHANNEL.LAST_MODIFIED_TIME column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_CHANNEL.LAST_MODIFIED_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_CHANNEL
                         RENAME COLUMN LAST_MODIFIED_TIME_LONG
                         TO LAST_MODIFIED_TIME
@@ -777,37 +727,30 @@
                 </schema-directSQL>
 
                 <!-- RHQ_PACKAGE_VERSION timestamp to long conversion -->
-                <schema-addColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
                         UPDATE RHQ_PACKAGE_VERSION
                         SET FILE_CREATION_TIME_LONG =
                         EXTRACT ( EPOCH FROM FILE_CREATION_TIME )
                         WHERE FILE_CREATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_PACKAGE_VERSION.FILE_CREATION_TIME timestamp to long">
                         UPDATE RHQ_PACKAGE_VERSION
                         SET FILE_CREATION_TIME_LONG = 1000
                         *
-                        ( extract(day from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*86400+
-                        extract(hour from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        ( extract(day from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*86400+
+                        extract(hour from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (FILE_CREATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE
                         FILE_CREATION_TIME IS NOT NULL
-                    </statement>
+                   </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME"/>
+                <schema-deleteColumn table="RHQ_PACKAGE_VERSION" column="FILE_CREATION_TIME" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_PACKAGE_VERSION.FILE_CREATION_TIME column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_PACKAGE_VERSION.FILE_CREATION_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_PACKAGE_VERSION
                         RENAME COLUMN FILE_CREATION_TIME_LONG
                         TO
@@ -816,36 +759,30 @@
                 </schema-directSQL>
 
                 <!-- RHQ_INSTALLED_PACKAGE timestamp to long conversion -->
-                <schema-addColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
                         UPDATE RHQ_INSTALLED_PACKAGE
                         SET INSTALLATION_TIME_LONG = EXTRACT ( EPOCH FROM INSTALLATION_TIME )
                         WHERE INSTALLATION_TIME IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME timestamp to long">
                         UPDATE RHQ_INSTALLED_PACKAGE
                         SET INSTALLATION_TIME_LONG =
                         1000 *
                         ( extract(day from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
                         +00:00'))*86400+
-                        extract(hour from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        extract(hour from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (INSTALLATION_TIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE INSTALLATION_TIME IS
                         NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME"/>
+                <schema-deleteColumn table="RHQ_INSTALLED_PACKAGE" column="INSTALLATION_TIME" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_INSTALLED_PACKAGE.INSTALLATION_TIME column to match old schema expectations">
                         ALTER TABLE RHQ_INSTALLED_PACKAGE
                         RENAME COLUMN INSTALLATION_TIME_LONG
                         TO
@@ -854,36 +791,30 @@
                 </schema-directSQL>
 
                 <!-- RHQ_INSTALLED_PKG_HIST timestamp to long conversion -->
-                <schema-addColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
                         UPDATE RHQ_INSTALLED_PKG_HIST
                         SET HISTORY_TIMESTAMP_LONG = EXTRACT ( EPOCH FROM HISTORY_TIMESTAMP )
                         WHERE HISTORY_TIMESTAMP IS NOT NULL
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
+                    <statement targetDBVendor="oracle" desc="Converting RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP timestamp to long">
                         UPDATE RHQ_INSTALLED_PKG_HIST
                         SET HISTORY_TIMESTAMP_LONG =
                         1000 *
                         ( extract(day from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
                         +00:00'))*86400+
-                        extract(hour from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*3600+
-                        extract(minute from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))*60+
-                        extract(second from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00
-                        +00:00'))
+                        extract(hour from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*3600+
+                        extract(minute from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))*60+
+                        extract(second from (HISTORY_TIMESTAMP at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE HISTORY_TIMESTAMP IS
                         NOT NULL
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP"/>
+                <schema-deleteColumn table="RHQ_INSTALLED_PKG_HIST" column="HISTORY_TIMESTAMP" />
                 <schema-directSQL>
-                    <statement
-                            desc="Renaming new RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP column to match old schema expectations">
+                    <statement desc="Renaming new RHQ_INSTALLED_PKG_HIST.HISTORY_TIMESTAMP column to match old schema expectations">
                         ALTER TABLE RHQ_INSTALLED_PKG_HIST
                         RENAME COLUMN HISTORY_TIMESTAMP_LONG
                         TO
@@ -893,10 +824,9 @@
             </schemaSpec>
 
             <schemaSpec version="2.23">
-                <schema-addColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME_LONG" columnType="LONG"/>
+                <schema-addColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME_LONG" columnType="LONG" />
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
+                    <statement targetDBVendor="postgresql" desc="Converting RHQ_MEASUREMENT_SCHED.MTIME timestamp to long">
                         UPDATE RHQ_MEASUREMENT_SCHED
                         SET MTIME_LONG = EXTRACT ( EPOCH FROM MTIME )
                         WHERE MTIME IS NOT NULL
@@ -911,9 +841,9 @@
                         extract(second from (MTIME at time zone 'UTC' - timestamp '1970-01-01 00:00:00 +00:00'))
                         )
                         WHERE MTIME IS NOT NULL
-                    </statement>
+                   </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME"/>
+                <schema-deleteColumn table="RHQ_MEASUREMENT_SCHED" column="MTIME" />
                 <schema-directSQL>
                     <statement desc="Renaming new RHQ_MEASUREMENT_SCHED.MTIME column to match old schema expectations">
                         ALTER TABLE RHQ_MEASUREMENT_SCHED
@@ -932,8 +862,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.25">
-                <schema-dropTable table="RHQ_MEASUREMENT_OOB"/>
-                <schema-dropSequence name="rhq_measurement_oob_id_seq"/>
+                <schema-dropTable table="RHQ_MEASUREMENT_OOB" />
+                <schema-dropSequence name="rhq_measurement_oob_id_seq" />
             </schemaSpec>
 
             <schemaSpec version="2.26">
@@ -991,15 +921,15 @@
                         CREATE TABLE RHQ_RESOURCE_AVAIL ( ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="ID" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_RESOURCE_AVAIL_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_RESOURCE_AVAIL_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_RESOURCE_AVAIL">
                         ALTER TABLE RHQ_RESOURCE_AVAIL ADD CONSTRAINT RHQ_RES_AVAIL_ID_PK PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="RESOURCE_ID" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_RESOURCE_AVAIL foreign key relation to RHQ_RESOURCE">
                         ALTER TABLE RHQ_RESOURCE_AVAIL
@@ -1010,10 +940,9 @@
                         ON DELETE CASCADE
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" columnType="SMALLINT"/>
+                <schema-addColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" columnType="SMALLINT" />
                 <schema-directSQL>
-                    <statement targetDBVendor="oracle"
-                               desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
+                    <statement targetDBVendor="oracle" desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
                         INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID,
                         AVAILABILITY_TYPE )
                         SELECT RHQ_RESOURCE_AVAIL_ID_SEQ.NEXTVAL, RES.ID, AVAIL.AVAILABILITY_TYPE
@@ -1025,8 +954,7 @@
                         FROM RHQ_AVAILABILITY A
                         WHERE A.RESOURCE_ID = RES.ID )
                     </statement>
-                    <statement targetDBVendor="postgresql"
-                               desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
+                    <statement targetDBVendor="postgresql" desc="Inserting known, current availability data into RHQ_RESOURCE_AVAIL">
                         INSERT INTO RHQ_RESOURCE_AVAIL ( ID, RESOURCE_ID,
                         AVAILABILITY_TYPE )
                         SELECT nextval('RHQ_RESOURCE_AVAIL_ID_SEQ'::text), RES.ID, AVAIL.AVAILABILITY_TYPE
@@ -1043,10 +971,9 @@
 
             <schemaSpec version="2.31">
                 <!-- The following three columns support backing groups for resource clusters -->
-                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_RESOURCE_GROUP_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_RESOURCE_GROUP_ID" columnType="INTEGER" />
                 <schema-directSQL>
-                    <statement
-                            desc="Creating RHQ_RESOURCE_GROUP foreign key relation to RHQ_RESOURCE_GROUP for resource cluster groups">
+                    <statement desc="Creating RHQ_RESOURCE_GROUP foreign key relation to RHQ_RESOURCE_GROUP for resource cluster groups">
                         ALTER TABLE RHQ_RESOURCE_GROUP
                         ADD CONSTRAINT RHQ_RESOURCE_GROUP_ID_FK
                         FOREIGN KEY (CLUSTER_RESOURCE_GROUP_ID)
@@ -1054,31 +981,26 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" columnType="VARCHAR2"
-                                  precision="4000"/>
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" columnType="VARCHAR2" precision="4000" />
 
-                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="VISIBLE" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="VISIBLE" columnType="BOOLEAN" />
 
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Updating existing resource groups with default for VISIBLE  flag">
+                    <statement targetDBVendor="postgresql" desc="Updating existing resource groups with default for VISIBLE  flag">
                         UPDATE RHQ_RESOURCE_GROUP SET VISIBLE = TRUE
                     </statement>
-                    <statement targetDBVendor="oracle"
-                               desc="Updating existing resource groups with default for VISIBLE  flag">
+                    <statement targetDBVendor="oracle" desc="Updating existing resource groups with default for VISIBLE  flag">
                         UPDATE RHQ_RESOURCE_GROUP SET VISIBLE = 1
                     </statement>
                 </schema-directSQL>
 
                 <!-- The following constraint change forces cascade delete of config_update if the parent config is deleted -->
                 <schema-directSQL>
-                    <statement targetDBVendor="postgresql"
-                               desc="Dropping RHQ_CONFIG_UPDATE foreign key relation to RHQ_CONFIG">
+                    <statement targetDBVendor="postgresql" desc="Dropping RHQ_CONFIG_UPDATE foreign key relation to RHQ_CONFIG">
                         ALTER TABLE rhq_config_update DROP CONSTRAINT rhq_config_update_configuration_id_fkey;
                     </statement>
                     <!-- the following PL/SQL is necessary since we have to deal with generated constraint names in the ora dbs -->
-                    <statement targetDBVendor="oracle"
-                               desc="Dropping RHQ_CONFIG_UPDATE foreign key relation to RHQ_CONFIG">
+                    <statement targetDBVendor="oracle" desc="Dropping RHQ_CONFIG_UPDATE foreign key relation to RHQ_CONFIG">
                         DECLARE
                         CURSOR c IS
                         SELECT uc.constraint_name con
@@ -1110,8 +1032,8 @@
 
             <schemaSpec version="2.32">
                 <!--
-                  Remove the ClusterManagerJob from the Quartz tables. It has been renamed. Note that deleting the job removes
-                  other rows by cascade delete.
+                    Remove the ClusterManagerJob from the Quartz tables. It has been renamed. Note that deleting the job removes
+                    other rows by cascade delete.
                 -->
                 <schema-directSQL>
                     <statement desc="Remove the ClusterManagerJob from the Quartz tables. It has been renamed.">
@@ -1123,8 +1045,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.33">
-                <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME"/>
-                <schema-deleteColumn table="RHQ_EVENT" column="ACK_USER"/>
+                <schema-deleteColumn table="RHQ_EVENT" column="ACK_TIME" />
+                <schema-deleteColumn table="RHQ_EVENT" column="ACK_USER" />
             </schemaSpec>
 
             <!-- delete all constant data no longer used -->
@@ -1151,9 +1073,9 @@
 
             <schemaSpec version="2.35">
                 <!-- Remove RHQ_RESOURCE_GROUP.CLUSTER_KEY added in 2.31. This value will instead be the group name -->
-                <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY"/>
+                <schema-deleteColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" />
                 <!-- Increase RHQ_RESOURCE_GROUP.NAME to accomodate the potentially large cluster key values -->
-                <schema-alterColumn table="RHQ_RESOURCE_GROUP" column="NAME" columnType="VARCHAR2" precision="4000"/>
+                <schema-alterColumn table="RHQ_RESOURCE_GROUP" column="NAME" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
 
             <schemaSpec version="2.36">
@@ -1162,28 +1084,25 @@
                         DROP INDEX RHQ_METRIC_DEF_KEY_IDX
                     </statement>
                 </schema-directSQL>
-                <schema-deleteColumn table="RHQ_MEASUREMENT_DEF" column="PER_MINUTE"/>
-                <schema-addColumn table="RHQ_MEASUREMENT_DEF" column="RAW_NUMERIC_TYPE" columnType="SMALLINT"/>
+                <schema-deleteColumn table="RHQ_MEASUREMENT_DEF" column="PER_MINUTE" />
+                <schema-addColumn table="RHQ_MEASUREMENT_DEF" column="RAW_NUMERIC_TYPE" columnType="SMALLINT" />
                 <schema-directSQL>
                     <statement desc="Populating values for new column RHQ_MEASUREMENT_DEF.RAW_NUMERIC_TYPE">
                         UPDATE RHQ_MEASUREMENT_DEF md
                         SET RAW_NUMERIC_TYPE = (SELECT NUMERIC_TYPE FROM RHQ_MEASUREMENT_DEF
-                        WHERE NAME = md.NAME AND RESOURCE_TYPE_ID = md.RESOURCE_TYPE_ID AND (NUMERIC_TYPE = 1 OR
-                        NUMERIC_TYPE = 2))
+                        WHERE NAME = md.NAME AND RESOURCE_TYPE_ID = md.RESOURCE_TYPE_ID AND (NUMERIC_TYPE = 1 OR NUMERIC_TYPE = 2))
                         WHERE NUMERIC_TYPE = 0
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
-                    <statement
-                            desc="Creating unique index on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
-                        CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME,
-                        RAW_NUMERIC_TYPE)
+                    <statement desc="Creating unique index on RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)">
+                        CREATE UNIQUE INDEX RHQ_METRIC_DEF_KEY_IDX ON RHQ_MEASUREMENT_DEF (RESOURCE_TYPE_ID, NAME, RAW_NUMERIC_TYPE)
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.37">
-                <schema-addColumn table="RHQ_GROUP_DEF" column="CALC_INTERVAL" columnType="LONG"/>
+                <schema-addColumn table="RHQ_GROUP_DEF" column="CALC_INTERVAL" columnType="LONG" />
                 <schema-directSQL>
                     <statement desc="Defaulting all group definition recalculation intervals">
                         UPDATE RHQ_GROUP_DEF SET CALC_INTERVAL = 0
@@ -1193,10 +1112,9 @@
 
             <schemaSpec version="2.38">
                 <!-- Keep these with the same columnType=VARCHAR2, but increase size -->
-                <schema-alterColumn table="RHQ_CONTENT_SOURCE" column="NAME" columnType="VARCHAR2" precision="200"/>
+                <schema-alterColumn table="RHQ_CONTENT_SOURCE" column="NAME" columnType="VARCHAR2" precision="200" />
 
-                <schema-alterColumn table="RHQ_CONTENT_SOURCE_TYPE" column="NAME" columnType="VARCHAR2"
-                                    precision="200"/>
+                <schema-alterColumn table="RHQ_CONTENT_SOURCE_TYPE" column="NAME" columnType="VARCHAR2" precision="200" />
 
                 <schema-directSQL>
                     <statement desc="Removing obsolete content source sync jobs">
@@ -1224,13 +1142,12 @@
                         CREATE TABLE RHQ_MEASUREMENT_OOB ( SCHEDULE_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="SCHEDULE_ID" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="SCHEDULE_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" columnType="LONG" />
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="TIME_STAMP" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_MEASUREMENT_OOB">
-                        ALTER TABLE RHQ_MEASUREMENT_OOB ADD CONSTRAINT rhq_meas_oob_id_t_pk PRIMARY KEY ( TIME_STAMP,
-                        SCHEDULE_ID )
+                        ALTER TABLE RHQ_MEASUREMENT_OOB ADD CONSTRAINT rhq_meas_oob_id_t_pk PRIMARY KEY ( TIME_STAMP, SCHEDULE_ID )
                     </statement>
                 </schema-directSQL>
                 <schema-directSQL>
@@ -1243,10 +1160,10 @@
                     </statement>
                 </schema-directSQL>
 
-                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="OOB_FACTOR" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="OOB_FACTOR" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" nullable="FALSE" />
+                <schema-addColumn table="RHQ_MEASUREMENT_OOB" column="OOB_FACTOR" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB" column="OOB_FACTOR" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.40">
@@ -1258,21 +1175,21 @@
             </schemaSpec>
 
             <schemaSpec version="2.41">
-                <schema-addColumn table="RHQ_PLUGIN" column="CONTENT" columnType="BLOB"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="CONTENT" columnType="BLOB" />
             </schemaSpec>
 
             <schemaSpec version="2.42">
-                <schema-addColumn table="RHQ_PLUGIN" column="MTIME" columnType="LONG"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="MTIME" columnType="LONG" />
                 <schema-directSQL>
                     <statement desc="Setting the plugin modified times to the same as created times">
                         UPDATE RHQ_PLUGIN SET MTIME = CTIME
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PLUGIN" column="MTIME" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_PLUGIN" column="MTIME" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.43">
-                <schema-deleteColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT"/>
+                <schema-deleteColumn table="RHQ_MEASUREMENT_OOB" column="OOB_COUNT" />
             </schemaSpec>
 
             <!-- RHQ 1448 -->
@@ -1280,7 +1197,7 @@
                 <schema-directSQL>
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R00 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R00_SID_IDX ON RHQ_MEAS_DATA_NUM_R00 (schedule_id)
-                    </statement>
+                     </statement>
                     <statement desc="Creating index on RHQ_MEAS_DATA_NUM_R01 (SCHEDULE_ID)">
                         CREATE INDEX RHQ_MEAS_DATA_R01_SID_IDX ON RHQ_MEAS_DATA_NUM_R01 (schedule_id)
                     </statement>
@@ -1327,18 +1244,17 @@
             </schemaSpec>
 
             <schemaSpec version="2.45">
-                <schema-addColumn table="RHQ_SERVER" column="STATUS" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_SERVER" column="STATUS" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Updating existing servers with default STATUS flag">
                         UPDATE RHQ_SERVER SET STATUS = 0
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_SERVER" column="STATUS" default="0"/>
+                <schema-alterColumn table="RHQ_SERVER" column="STATUS" default="0" />
             </schemaSpec>
 
             <schemaSpec version="2.46">
-                <schema-alterColumn table="RHQ_MEASUREMENT_DATA_TRAIT" column="VALUE" columnType="VARCHAR2"
-                                    precision="4000"/>
+                <schema-alterColumn table="RHQ_MEASUREMENT_DATA_TRAIT" column="VALUE" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
 
             <schemaSpec version="2.47">
@@ -1350,8 +1266,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.48">
-                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" columnType="VARCHAR2"
-                                  precision="4000"/>
+                <schema-addColumn table="RHQ_RESOURCE_GROUP" column="CLUSTER_KEY" columnType="VARCHAR2" precision="4000" />
             </schemaSpec>
 
             <schemaSpec version="2.49">
@@ -1373,17 +1288,16 @@
                         CREATE TABLE RHQ_MEASUREMENT_OOB_TMP ( SCHEDULE_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="SCHEDULE_ID" nullable="FALSE"/>
-                <schema-addColumn table="RHQ_MEASUREMENT_OOB_TMP" column="TIME_STAMP" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="TIME_STAMP" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="SCHEDULE_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_MEASUREMENT_OOB_TMP" column="TIME_STAMP" columnType="LONG" />
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="TIME_STAMP" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_MEASUREMENT_OOB_TMP">
-                        ALTER TABLE RHQ_MEASUREMENT_OOB_TMP ADD CONSTRAINT rhq_meas_oob_t_s_pk PRIMARY KEY ( SCHEDULE_ID
-                        )
+                        ALTER TABLE RHQ_MEASUREMENT_OOB_TMP ADD CONSTRAINT rhq_meas_oob_t_s_pk PRIMARY KEY ( SCHEDULE_ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" nullable="FALSE"/>
+                <schema-addColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_MEASUREMENT_OOB_TMP" column="OOB_FACTOR" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.50">
@@ -1395,8 +1309,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.51">
-                <schema-addColumn table="RHQ_QRTZ_TRIGGERS" column="PRIORITY" columnType="INTEGER"/>
-                <schema-addColumn table="RHQ_QRTZ_FIRED_TRIGGERS" column="PRIORITY" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_QRTZ_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_QRTZ_FIRED_TRIGGERS" column="PRIORITY" columnType="INTEGER" />
             </schemaSpec>
 
             <schemaSpec version="2.52">
@@ -1413,7 +1327,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.53">
-                <schema-addColumn table="RHQ_AGENT" column="BACKFILLED" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_AGENT" column="BACKFILLED" columnType="BOOLEAN" />
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="Updating backfilled bit for all agents">
                         UPDATE RHQ_AGENT SET BACKFILLED = FALSE
@@ -1422,7 +1336,7 @@
                         UPDATE RHQ_AGENT SET BACKFILLED = 0
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_AGENT" column="BACKFILLED" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_AGENT" column="BACKFILLED" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.54">
@@ -1551,8 +1465,8 @@
             </schemaSpec>
 
             <schemaSpec version="2.58">
-                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER"/>
-                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="RESOURCE_GROUP_ID" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ALERT_DEFINITION" column="GROUP_ALERT_DEF_ID" columnType="INTEGER" />
             </schemaSpec>
 
             <schemaSpec version="2.59">
@@ -1561,8 +1475,8 @@
                         CREATE TABLE RHQ_RAW_CONFIG (ID INTEGER)
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER" nullable="FALSE"/>
-                <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001"/>
+                <schema-alterColumn table="RHQ_RAW_CONFIG" column="ID" columnType="INTEGER" nullable="FALSE" />
+                <schema-createSequence name="RHQ_RAW_CONFIG_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement desc="Creating primary key for RHQ_PARTITION_EVENT">
                         ALTER TABLE RHQ_RAW_CONFIG ADD PRIMARY KEY (ID)
@@ -1618,7 +1532,7 @@
             </schemaSpec>
 
             <schemaSpec version="2.59.1">
-                <schema-addColumn table="RHQ_PLUGIN" column="AMPS_VERSION" columnType="VARCHAR2"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="AMPS_VERSION" columnType="VARCHAR2" />
                 <schema-alterColumn table="RHQ_PLUGIN"
                                     column="AMPS_VERSION"
                                     columnType="VARCHAR2"
@@ -1756,17 +1670,16 @@
                 </schema-directSQL>
 
                 <!-- RHQ_REPO_GROUP_TYPE -->
-                <schema-createSequence name="RHQ_REPO_GROUP_TYPE_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_REPO_GROUP_TYPE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_REPO_GROUP_TYPE ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" precision="200" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="DESCRIPTION" precision="500"
-                                  columnType="VARCHAR2"/>
+                <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_REPO_GROUP_TYPE" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_GROUP_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
                 <schema-directSQL>
                     <statement>
                         INSERT INTO RHQ_REPO_GROUP_TYPE ( ID, NAME )
@@ -1775,18 +1688,18 @@
                 </schema-directSQL>
 
                 <!-- RHQ_REPO_GROUP -->
-                <schema-createSequence name="RHQ_REPO_GROUP_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_REPO_GROUP_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_REPO_GROUP ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_GROUP" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_GROUP" column="NAME" precision="200" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_REPO_GROUP" column="NAME" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_GROUP" column="DESCRIPTION" precision="500" columnType="VARCHAR2"/>
-                <schema-addColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_GROUP" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_GROUP" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_REPO_GROUP" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_GROUP" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_GROUP" column="REPO_GROUP_TYPE_ID" nullable="false" />
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO_GROUP
@@ -1815,11 +1728,11 @@
                         CREATE TABLE RHQ_REPO_REPO_GRP_MAP ( REPO_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="CTIME" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="REPO_GRP_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_REPO_GRP_MAP" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_REPO_REPO_GRP_MAP" column="CTIME" nullable="false" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_REPO_REPO_GRP_MAP
@@ -1851,17 +1764,16 @@
                 </schema-directSQL>
 
                 <!-- RHQ_REPO_RELATION_TYPE -->
-                <schema-createSequence name="RHQ_REPO_RELATION_TYPE_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_REPO_RELATION_TYPE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_REPO_RELATION_TYPE ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" precision="200" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="DESCRIPTION" precision="500"
-                                  columnType="VARCHAR2"/>
+                <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_REPO_RELATION_TYPE" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_RELATION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
                 <schema-directSQL>
                     <statement>
                         INSERT INTO
@@ -1876,17 +1788,17 @@
                 </schema-directSQL>
 
                 <!-- RHQ_REPO_RELATION -->
-                <schema-createSequence name="RHQ_REPO_RELATION_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_REPO_RELATION_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_REPO_RELATION ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_RELATION" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_RELATION" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_RELATION" column="RELATED_REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_RELATION" column="REPO_RELATION_TYPE_ID" nullable="false" />
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
                         ALTER TABLE RHQ_REPO_RELATION
@@ -1918,11 +1830,11 @@
                         CREATE TABLE RHQ_REPO_REPO_RELATION_MAP ( REPO_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="REPO_RELATION_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_REPO_REPO_RELATION_MAP" column="CTIME" nullable="false" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_REPO_REPO_RELATION_MAP
@@ -1958,24 +1870,23 @@
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_DISTRIBUTION_TYPE ( ID INTEGER PRIMARY KEY )
-                    </statement>
+                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" precision="200" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="DESCRIPTION" precision="500"
-                                  columnType="VARCHAR2"/>
+                <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION_TYPE" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
                 <schema-directSQL>
                     <statement>
                         INSERT INTO
                         RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
                         VALUES ( 1, 'kickstart', 'Linux kickstart distribution' )
-                    </statement>
+                     </statement>
                     <statement>
                         INSERT INTO
                         RHQ_DISTRIBUTION_TYPE ( ID, NAME, DESCRIPTION )
                         VALUES ( 2, 'jumpstart', 'solaris jumpstart distribution' )
-                    </statement>
+                     </statement>
                 </schema-directSQL>
 
                 <schema-directSQL>
@@ -1983,14 +1894,14 @@
                         CREATE TABLE RHQ_DISTRIBUTION ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION" column="LABEL" precision="64" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION" column="LABEL" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" precision="256" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" nullable="false"/>
+                <schema-addColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION" column="DISTRIBUTION_TYPE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION" column="LABEL" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION" column="LABEL" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" precision="256" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION" column="BASE_PATH" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
                         CREATE UNIQUE INDEX RHQ_DISTRIBUTION_IDX ON RHQ_DISTRIBUTION ( LABEL, BASE_PATH )
@@ -2002,12 +1913,12 @@
                         ADD CONSTRAINT RHQ_DIST_TYPE_FKEY
                         FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
                         REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-                    </statement>
+                     </statement>
                     <statement targetDBVendor="oracle">
                         ALTER TABLE RHQ_DISTRIBUTION
                         ADD FOREIGN KEY ( DISTRIBUTION_TYPE_ID )
                         REFERENCES RHQ_DISTRIBUTION_TYPE ( ID )
-                    </statement>
+                     </statement>
                 </schema-directSQL>
 
                 <schema-directSQL>
@@ -2015,11 +1926,11 @@
                         CREATE TABLE RHQ_REPO_DISTRIBUTION ( REPO_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="REPO_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_DISTRIBUTION" column="DISTRIBUTION_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="DISTRIBUTION_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="LAST_MODIFIED" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_DISTRIBUTION" column="DISTRIBUTION_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="DISTRIBUTION_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_DISTRIBUTION" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_REPO_DISTRIBUTION" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_REPO_DISTRIBUTION ADD CONSTRAINT RHQ_REPO_DIST_MAP_KEY
@@ -2054,46 +1965,53 @@
 
             <schemaSpec version="2.62">
                 <schema-alterColumn
-                        table="RHQ_CONFIG_PROP_DEF"
-                        column="NAME"
-                        columnType="VARCHAR2"
-                        precision="255"/>
+                  table="RHQ_CONFIG_PROP_DEF"
+                  column="NAME"
+                  columnType="VARCHAR2"
+                  precision="255" />
 
                 <schema-alterColumn
-                        table="RHQ_CONFIG_PROPERTY"
-                        column="NAME"
-                        columnType="VARCHAR2"
-                        precision="255"/>
+                  table="RHQ_CONFIG_PROPERTY"
+                  column="NAME"
+                  columnType="VARCHAR2"
+                  precision="255" />
             </schemaSpec>
 
+            <schemaSpec version="2.62.2">
+                <schema-addColumn table="RHQ_CONFIG_DEF" column="CONFIG_FORMAT" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_CONFIG_DEF"
+                                    column="CONFIG_FORMAT"
+                                    precision="32"
+                                    nullable="true" />
+            </schemaSpec>
 
             <schemaSpec version="2.63">
-                <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN"/>
+                <schema-addColumn table="RHQ_REPO" column="IS_CANDIDATE" columnType="BOOLEAN" />
 
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
                         UPDATE RHQ_REPO SET IS_CANDIDATE = FALSE
-                    </statement>
+                     </statement>
                     <statement targetDBVendor="oracle">
                         UPDATE RHQ_REPO SET IS_CANDIDATE = 0
-                    </statement>
+                     </statement>
                 </schema-directSQL>
 
-                <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO" column="IS_CANDIDATE" nullable="false" />
             </schemaSpec>
 
             <!-- Generic tagging support -->
             <schemaSpec version="2.64">
-                <schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_TAG_ID_SEQ" initial="10001" />
                 <schema-directSQL>
                     <statement>
                         CREATE TABLE RHQ_TAG ( ID INTEGER PRIMARY KEY )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false"/>
-                <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false"/>
-                <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2"/>
+                <schema-alterColumn table="RHQ_TAG" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_TAG" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_TAG" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_TAG" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
             </schemaSpec>
 
             <!-- Distribution Files -->
@@ -2103,14 +2021,13 @@
                         CREATE TABLE RHQ_DISTRIBUTION_FILE ( DISTRIBUTION_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256"
-                                  columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false"/>
-                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false"/>
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="DISTRIBUTION_ID" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="RELATIVE_FILENAME" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="MD5SUM" nullable="false" />
+                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="LAST_MODIFIED" nullable="false" />
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql">
                         CREATE UNIQUE INDEX RHQ_DISTRIBUTION_FILE_IDX
@@ -2144,9 +2061,9 @@
                         CREATE TABLE RHQ_REPO_TAG_MAP ( REPO_ID INTEGER )
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="REPO_ID" nullable="false"/>
-                <schema-addColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" nullable="false"/>
+                <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_TAG_MAP" column="TAG_ID" nullable="false" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_REPO_TAG_MAP
@@ -2179,15 +2096,14 @@
             </schemaSpec>
 
             <schemaSpec version="2.68">
-                <schema-createSequence name="RHQ_DISTRIBUTION_FILE_ID_SEQ" initial="10001"/>
+                <schema-createSequence name="RHQ_DISTRIBUTION_FILE_ID_SEQ" initial="10001" />
 
-                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER"/>
-                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false"/>
+                <schema-addColumn table="RHQ_DISTRIBUTION_FILE" column="ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_DISTRIBUTION_FILE" column="ID" nullable="false" />
 
                 <schema-directSQL>
                     <statement>
-                        ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT
-                        NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
+                        ALTER TABLE RHQ_DISTRIBUTION_FILE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_DISTRIBUTION_FILE_ID_SEQ')
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -2195,16 +2111,16 @@
             <!-- Add support for server-side plugins -->
             <schemaSpec version="2.69">
                 <!-- add the new column that indicates if this is deployed on the SERVER or AGENT -->
-                <schema-addColumn table="RHQ_PLUGIN" column="DEPLOYMENT" columnType="VARCHAR2" precision="8"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="DEPLOYMENT" columnType="VARCHAR2" precision="8" />
                 <schema-directSQL>
                     <statement desc="Updating existing plugins with default deployment of AGENT">
                         UPDATE RHQ_PLUGIN SET DEPLOYMENT = 'AGENT'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PLUGIN" column="DEPLOYMENT" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_PLUGIN" column="DEPLOYMENT" nullable="FALSE" />
 
                 <!-- add the new column that provides configuration to a plugin -->
-                <schema-addColumn table="RHQ_PLUGIN" column="PLUGIN_CONFIG_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="PLUGIN_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for plugin config">
                         ALTER TABLE RHQ_PLUGIN
@@ -2215,7 +2131,7 @@
                 </schema-directSQL>
 
                 <!-- add the new column that provides configuration to a plugin -->
-                <schema-addColumn table="RHQ_PLUGIN" column="JOBS_CONFIG_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="JOBS_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_PLUGIN foreign key relation to RHQ_CONFIG for scheduled jobs">
                         ALTER TABLE RHQ_PLUGIN
@@ -2224,17 +2140,25 @@
                         REFERENCES RHQ_CONFIG (ID)
                     </statement>
                 </schema-directSQL>
+
+                <!-- Fix bug:538157 -->
+                <schema-directSQL>
+                    <statement>
+                        CREATE INDEX RHQ_REPO_PKG_VER_MAP_IDX
+                        ON RHQ_REPO_PKG_VERSION_MAP ( PACKAGE_VERSION_ID )
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
             <schemaSpec version="2.69.1">
                 <!-- add the new column that indicates if this is plugin has been deleted -->
-                <schema-addColumn table="RHQ_PLUGIN" column="STATUS" columnType="VARCHAR2" precision="16"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="STATUS" columnType="VARCHAR2" precision="16" />
                 <schema-directSQL>
                     <statement desc="Updating existing plugins with status of INSTALLED">
                         UPDATE RHQ_PLUGIN SET STATUS = 'INSTALLED'
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_PLUGIN" column="STATUS" nullable="FALSE"/>
+                <schema-alterColumn table="RHQ_PLUGIN" column="STATUS" nullable="FALSE" />
             </schemaSpec>
 
             <schemaSpec version="2.69.2">
@@ -2243,8 +2167,7 @@
                     <statement desc="Dropping unique index on RHQ_PLUGIN (NAME)">
                         DROP INDEX RHQ_PLUGIN_NAME_IDX
                     </statement>
-                    <statement
-                            desc="Creating unique index on RHQ_PLUGIN (NAME, DEPLOYMENT) so server plugin names need not be unique with agent plugins">
+                    <statement desc="Creating unique index on RHQ_PLUGIN (NAME, DEPLOYMENT) so server plugin names need not be unique with agent plugins">
                         CREATE UNIQUE INDEX RHQ_PLUGIN_NAME_DEPLOY_IDX ON RHQ_PLUGIN (NAME, DEPLOYMENT)
                     </statement>
                 </schema-directSQL>
@@ -2252,12 +2175,12 @@
 
             <schemaSpec version="2.69.3">
                 <!-- add the new column that indicates what type of plugin this is (e.g. alert, generic, content) - for server plugins only -->
-                <schema-addColumn table="RHQ_PLUGIN" column="PTYPE" columnType="VARCHAR2" precision="200"/>
+                <schema-addColumn table="RHQ_PLUGIN" column="PTYPE" columnType="VARCHAR2" precision="200" />
             </schemaSpec>
 
             <schemaSpec version="2.70">
-                <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG"/>
-                <schema-addColumn table="RHQ_ALERT" column="ACK_BY_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_ALERT" column="ACK_TIME" columnType="LONG" />
+                <schema-addColumn table="RHQ_ALERT" column="ACK_BY_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT
@@ -2266,8 +2189,8 @@
                         REFERENCES RHQ_SUBJECT(ID)
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" columnType="VARCHAR2"/>
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" columnType="INTEGER"/>
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_SENDER_NAME" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_CONFIG_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement>
                         ALTER TABLE RHQ_ALERT_NOTIFICATION
@@ -2289,23 +2212,550 @@
                         PRIMARY KEY ( ID )
                     </statement>
                 </schema-directSQL>
-                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" columnType="VARCHAR2"/>
-                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" columnType="VARCHAR2"/>
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="NAME" columnType="VARCHAR2" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_TEMPL" column="DESCRIPTION" columnType="VARCHAR2" />
             </schemaSpec>
 
-            <schemaSpec version="2.70.2">
+            <!-- RHQ Advisory Representation -->
+            <schemaSpec version="2.71">
                 <schema-directSQL>
                     <statement>
-                        DELETE FROM RHQ_SYSTEM_CONFIG WHERE PROPERTY_KEY LIKE 'SNMP_%'
+                        CREATE TABLE RHQ_ADVISORY_TYPE ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_TYPE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_TYPE" column="NAME" precision="200" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY_TYPE" column="NAME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_TYPE" column="DESCRIPTION" precision="500" columnType="VARCHAR2" />
+                <schema-directSQL>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
+                        VALUES ( 101, 'Bug Fix Advisory', 'Bug fix(RHBA) Advisory' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
+                        VALUES ( 102, 'Product Enhancement Advisory', 'Product Enhancement(RHEA) Advisory' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, NAME, DESCRIPTION )
+                        VALUES ( 103, 'Security Advisory', 'Security Advisory(RHSA) Advisory' )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_SEVERITY ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_SEVERITY" column="RANK" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="RANK" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_SEVERITY" column="LABEL" precision="40" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY_SEVERITY" column="LABEL" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
+                        VALUES ( 101, 0, 'errata.sev.label.critical' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
+                        VALUES ( 102, 1, 'errata.sev.label.important' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
+                        VALUES ( 103, 2, 'errata.sev.label.moderate' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_TYPE ( ID, RANK, LABEL)
+                        VALUES ( 104, 3, 'errata.sev.label.low' )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_FILE_TYPE ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_FILE_TYPE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE_TYPE" column="LABEL" precision="40" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE_TYPE" column="LABEL" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
+                        VALUES ( 101, 'RPM' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
+                        VALUES ( 102, 'SRPM' )
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
+                        VALUES ( 103, 'IMG')
+                    </statement>
+                    <statement>
+                        INSERT INTO
+                        RHQ_ADVISORY_FILE_TYPE ( ID, LABEL)
+                        VALUES ( 104, 'OVAL')
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="RHQ_ADVISORY_SEQ" initial="10001" />
+                <schema-directSQL>
+
+                    <statement desc="Creating table RHQ_ADVISORY">
+                        CREATE TABLE RHQ_ADVISORY ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY" column="ID" nullable="false" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_TYPE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_NAME" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_NAME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ADVISORY_REL" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ADVISORY_REL" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="DESCRIPTION" precision="4000" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="DESCRIPTION" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="SYNOPSIS" precision="4000" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="SYNOPSIS" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="TOPIC" precision="4000" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="TOPIC" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="SOLUTION" precision="4000" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="SOLUTION" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="SEVERITY_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="SEVERITY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="ISSUE_DATE" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="ISSUE_DATE" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="UPDATE_DATE" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="UPDATE_DATE" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="CTIME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY" column="LAST_MODIFIED" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ
+                        ON RHQ_ADVISORY ( ADVISORY_NAME )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_NAME_UQ
+                        ON RHQ_ADVISORY ( ADVISORY_NAME )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_UQ
+                        ON RHQ_ADVISORY ( ADVISORY )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_UQ
+                        ON RHQ_ADVISORY ( ADVISORY )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        CREATE INDEX RHQ_ADVISORY_UDATE_IDX
+                        ON RHQ_ADVISORY (UPDATE_DATE )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        CREATE INDEX RHQ_ADVISORY_UDATE_IDX
+                        ON RHQ_ADVISORY (UPDATE_DATE )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        CREATE INDEX RHQ_ADVISORY_SYN_IDX
+                        ON RHQ_ADVISORY ( SYNOPSIS )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        CREATE INDEX RHQ_ADVISORY_SYN_IDX
+                        ON RHQ_ADVISORY ( SYNOPSIS )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY
+                        ADD CONSTRAINT RHQ_ADV_TYPE_FKEY
+                        FOREIGN KEY ( ADVISORY_TYPE_ID )
+                        REFERENCES RHQ_ADVISORY_TYPE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY
+                        ADD CONSTRAINT RHQ_ADV_TYPE_FKEY
+                        FOREIGN KEY ( ADVISORY_TYPE_ID )
+                        REFERENCES RHQ_ADVISORY_TYPE ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY
+                        ADD CONSTRAINT RHQ_ADV_SEV_FKEY
+                        FOREIGN KEY ( SEVERITY_ID )
+                        REFERENCES RHQ_ADVISORY_SEVERITY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY
+                        ADD CONSTRAINT RHQ_ADV_SEV_FKEY
+                        FOREIGN KEY ( SEVERITY_ID )
+                        REFERENCES RHQ_ADVISORY_SEVERITY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="RHQ_ADVISORY_FILE_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_FILE ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE" column="ADVISORY_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE" column="FILE_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="FILE_TYPE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE" column="RELATIVE_FILENAME" precision="256" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="RELATIVE_FILENAME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE" column="MD5SUM" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="MD5SUM" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE" column="LAST_MODIFIED" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="postgresql">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_ID_FILE_UQ
+                        ON RHQ_ADVISORY_FILE ( ADVISORY_ID, RELATIVE_FILENAME )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        CREATE UNIQUE INDEX RHQ_ADVISORY_ID_FILE_UQ
+                        ON RHQ_ADVISORY_FILE ( ADVISORY_ID, RELATIVE_FILENAME )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_FILE
+                        ADD CONSTRAINT RHQ_ADV_FILE_FKEY
+                        FOREIGN KEY ( ADVISORY_ID)
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_FILE
+                        ADD CONSTRAINT RHQ_ADV_FILE_FKEY
+                        FOREIGN KEY ( ADVISORY_ID)
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_FILE
+                        ADD CONSTRAINT RHQ_ADV_FILE_TYPE_FKEY
+                        FOREIGN KEY ( FILE_TYPE_ID )
+                        REFERENCES RHQ_ADVISORY_FILE_TYPE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_FILE
+                        ADD CONSTRAINT RHQ_ADV_FILE_TYPE_FKEY
+                        FOREIGN KEY ( FILE_TYPE_TYPE )
+                        REFERENCES RHQ_ADVISORY_FILE_TYPE ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_PACKAGE_MAP ( ADVISORY_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="PACKAGE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE_MAP" column="PACKAGE_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD CONSTRAINT RHQ_ADV_PKG_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_ID, PACKAGE_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD CONSTRAINT RHQ_ADV_PKG_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_ID, PACKAGE_ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD FOREIGN KEY ( PACKAGE_ID )
+                        REFERENCES RHQ_PACKAGE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP
+                        ADD FOREIGN KEY ( PACKAGE_ID )
+                        REFERENCES RHQ_PACKAGE ( ID )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_FILE_PKG_MAP ( ADVISORY_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="ADVISORY_FILE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="PACKAGE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_FILE_PKG_MAP" column="PACKAGE_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD CONSTRAINT RHQ_ADV_FILE_PKG_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_FILE_ID, PACKAGE_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD CONSTRAINT RHQ_ADV_FILE_PKG_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_FILE_ID, PACKAGE_ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD FOREIGN KEY ( ADVISORY_FILE_ID )
+                        REFERENCES RHQ_ADVISORY_FILE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD FOREIGN KEY ( ADVISORY_FILE_ID )
+                        REFERENCES RHQ_ADVISORY_FILE ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD FOREIGN KEY ( PACKAGE_ID )
+                        REFERENCES RHQ_PACKAGE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_FILE_PKG_MAP
+                        ADD FOREIGN KEY ( PACKAGE_ID )
+                        REFERENCES RHQ_PACKAGE ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="RHQ_CVE_SEQ" initial="101" />
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_CVE ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_CVE" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_CVE" column="NAME" precision="64" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_CVE" column="NAME" nullable="false" />
+
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_CVE ( ADVISORY_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_CVE" column="CVE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="CVE_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_CVE" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="CTIME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="LAST_MODIFIED" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD CONSTRAINT RHQ_ADV_CVE_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_ID, CVE_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD CONSTRAINT RHQ_ADV_CVE_MAP_KEY
+                        PRIMARY KEY ( ADVISORY_ID, CVE_ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD FOREIGN KEY ( CVE_ID )
+                        REFERENCES RHQ_CVE ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_CVE
+                        ADD FOREIGN KEY ( CVE_ID )
+                        REFERENCES RHQ_CVE ( ID )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_ADVISORY_BUGLIST ( ADVISORY_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="BUG_ID" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="CTIME" nullable="false" />
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="LAST_MODIFIED" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST
+                        ADD CONSTRAINT RHQ_ADV_BUG_LIST_KEY
+                        PRIMARY KEY ( ADVISORY_ID, BUG_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST
+                        ADD CONSTRAINT RHQ_ADV_BUG_LIST_KEY
+                        PRIMARY KEY ( ADVISORY_ID, BUG_ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_REPO_ADVISORY ( REPO_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_REPO_ADVISORY" column="REPO_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_ADVISORY" column="ADVISORY_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_ADVISORY" column="ADVISORY_ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_ADVISORY" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_REPO_ADVISORY" column="CTIME" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_ADVISORY" column="LAST_MODIFIED" columnType="LONG" />
+                <schema-alterColumn table="RHQ_REPO_ADVISORY" column="LAST_MODIFIED" nullable="false" />
+                <schema-directSQL>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD CONSTRAINT RHQ_REPO_ADV_MAP_KEY
+                        PRIMARY KEY ( REPO_ID, ADVISORY_ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD CONSTRAINT RHQ_REPO_ADV_MAP_KEY
+                        PRIMARY KEY ( REPO_ID, ADVISORY_ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD FOREIGN KEY ( ADVISORY_ID )
+                        REFERENCES RHQ_ADVISORY ( ID )
+                    </statement>
+                    <statement targetDBVendor="oracle">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD FOREIGN KEY ( REPO_ID )
+                        REFERENCES RHQ_REPO ( ID )
+                    </statement>
+                    <statement targetDBVendor="postgresql">
+                        ALTER TABLE RHQ_REPO_ADVISORY
+                        ADD FOREIGN KEY ( REPO_ID )
+                        REFERENCES RHQ_REPO ( ID )
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
 
-            <schemaSpec version="2.70.3">
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="ALERT_ORDER" columnType="INTEGER"/>
-                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NAME" columnType="VARCHAR2"/>
+            <!-- Adding repo_sync support -->
+            <schemaSpec version="2.72">
+                <schema-createSequence name="RHQ_REPO_SYNC_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement>
+                        CREATE TABLE RHQ_REPO_SYNC ( ID INTEGER PRIMARY KEY )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_REPO_SYNC" column="ID" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="STATUS" precision="16" columnType="VARCHAR2" />
+                <schema-alterColumn table="RHQ_REPO_SYNC" column="STATUS" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="START_TIME" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_SYNC" column="START_TIME" nullable="false" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="END_TIME" columnType="INTEGER" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="RESULTS" columnType="LONGVARCHAR" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="PERCENT_COMPLETE" columnType="LONG" />
+                <schema-addColumn table="RHQ_REPO_SYNC" column="REPO_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_REPO_SYNC" column="REPO_ID" nullable="false" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_REPO_SYNC foreign key relation to RHQ_REPO for scheduled jobs">
+                        ALTER TABLE RHQ_REPO_SYNC
+                        ADD CONSTRAINT RHQ_REPO_SYNC_REPO_ID_FKEY
+                        FOREIGN KEY (REPO_ID)
+                        REFERENCES RHQ_REPO (ID)
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.74">
+                <schema-createSequence name="RHQ_ADVISORY_ID_SEQ" initial="10001" />
+                <schema-createSequence name="RHQ_ADVISORY_CVE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_CVE DROP CONSTRAINT RHQ_ADV_CVE_MAP_KEY
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_ADVISORY_CVE" column="ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_CVE" column="ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_CVE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_CVE_SEQ')
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="RHQ_ADVISORY_BUGLIST_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST DROP CONSTRAINT RHQ_ADV_BUG_LIST_KEY
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_ADVISORY_BUGLIST" column="ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_BUGLIST" column="ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_BUGLIST ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_BUG_SEQ')
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE_MAP RENAME TO RHQ_ADVISORY_PACKAGE
+                    </statement>
+                </schema-directSQL>
+                <schema-createSequence name="RHQ_ADVISORY_PACKAGE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE DROP CONSTRAINT RHQ_ADV_PKG_MAP_KEY
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_ADVISORY_PACKAGE" column="ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_ADVISORY_PACKAGE" column="ID" nullable="false" />
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ADVISORY_PACKAGE ALTER COLUMN ID SET DEFAULT NEXTVAL('RHQ_ADVISORY_PKG_SEQ')
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

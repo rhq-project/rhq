@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
-import org.rhq.core.domain.content.ContentSourceSyncStatus;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.ContentSourceType;
 import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageType;
@@ -83,13 +83,13 @@ public class ContentSourceSyncResultsTest extends AbstractEJB3Test {
             assert syncResults.size() == 1;
             results = syncResults.get(0);
             assert results.getContentSource().equals(cs);
-            assert results.getStatus() == ContentSourceSyncStatus.INPROGRESS;
+            assert results.getStatus() == ContentSyncStatus.INPROGRESS;
             assert results.getResults() == null;
             assert results.getEndTime() == null;
             assert results.getStartTime() <= System.currentTimeMillis();
 
             results.setEndTime(System.currentTimeMillis());
-            results.setStatus(ContentSourceSyncStatus.FAILURE);
+            results.setStatus(ContentSyncStatus.FAILURE);
             results.setResults("dummy failure");
             results = em.merge(results);
 

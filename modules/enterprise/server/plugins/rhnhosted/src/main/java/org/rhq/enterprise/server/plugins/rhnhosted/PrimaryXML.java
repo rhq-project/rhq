@@ -21,11 +21,16 @@ package org.rhq.enterprise.server.plugins.rhnhosted;
 import java.io.Serializable;
 import java.util.List;
 
+import javax.xml.bind.JAXBElement;
+
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jdom.Element;
+import org.jdom.Namespace;
 import org.jdom.output.XMLOutputter;
 
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageObsoletesEntryType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageObsoletesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesEntryType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesType;
@@ -87,6 +92,8 @@ public class PrimaryXML {
     final static int RPM_SENSE_GREATER = 4;
     final static int RPM_SENSE_EQUAL = 8;
 
+    final static String RHNHOSTED_URI = "http://rhq-project.org/rhnhosted";
+
     static private final Log log = LogFactory.getLog(PrimaryXML.class);
 
     static public String getFlags(String sense) {
@@ -103,22 +110,29 @@ public class PrimaryXML {
         } else if (flags == (RPM_SENSE_EQUAL)) {
             return "EQ";
         }
-
-        log.error("Unknown rpm sense value of " + sense + " which parsed to an integer of " + tmp);
         return "";
     }
 
+    /**
+     * Will return the 'epoch'.  If the epoch is empty, then a "0" is returned
+     * to comply with yum's expectations for package metadata
+     * @param version  string containing epoch:version-release
+     * @return
+     */
     static public String getEpoch(String version) {
         int end = version.indexOf("-");
         if (end < 0) {
-            return "";
+            return "0";
         }
         String tmp = version.substring(0, end);
         int index = tmp.indexOf(":");
         if (index < 0) {
-            return "";
+            return "0";
         }
         String epoch = tmp.substring(0, index);
+        if (StringUtils.isBlank(epoch)) {
+            return "0";
+        }
         return epoch;
     }
 
@@ -140,7 +154,7 @@ public class PrimaryXML {
     static public String getRelease(String version) {
         int start = version.indexOf("-");
         if (start < 0) {
-            return ""; //unsure how to parse, return ""
+            return "";
         }
         start = start + 1; // go past the "-" character
         return version.substring(start);
@@ -153,138 +167,196 @@ public class PrimaryXML {
      * @return string snippet of xml data
      */
     static public String createPackageXML(RhnPackageType pkg) {
-        Element top = new Element("package");
+        Namespace packageNS = Namespace.getNamespace(RHNHOSTED_URI);
+
+        Element top = new Element("package", packageNS);
         top.setAttribute("type", "rpm");
 
-        Element name = new Element("name");
+        Element name = new Element("name", packageNS);
         name.setText(pkg.getName());
         top.addContent(name);
 
-        Element arch = new Element("arch");
+        Element arch = new Element("arch", packageNS);
         arch.setText(pkg.getPackageArch());
         top.addContent(arch);
 
-        Element version = new Element("version");
+        Element version = new Element("version", packageNS);
         version.setText(pkg.getVersion());
         version.setAttribute("ver", pkg.getVersion());
         version.setAttribute("rel", pkg.getRelease());
-        version.setAttribute("epoch", pkg.getEpoch());
+        String epoch = pkg.getEpoch();
+        // Note, if epoch is empty we need to change it to a zero as that is what yum expects.
+        if (StringUtils.isBlank(epoch)) {
+            epoch = "0";
+        }
+        version.setAttribute("epoch", epoch);
         top.addContent(version);
 
-        Element checksum = new Element("checksum");
+        Element checksum = new Element("checksum", packageNS);
         checksum.setAttribute("type", "md5");
         checksum.setAttribute("pkgid", "YES");
         checksum.setText(pkg.getMd5Sum());
         top.addContent(checksum);
 
-        Element summary = new Element("summary");
+        Element summary = new Element("summary", packageNS);
         summary.setText(pkg.getRhnPackageSummary());
         top.addContent(summary);
 
-        Element description = new Element("description");
+        Element description = new Element("description", packageNS);
         description.setText(pkg.getRhnPackageDescription());
         top.addContent(description);
 
-        Element packager = new Element("packager");
+        Element packager = new Element("packager", packageNS);
         //TODO: Not sure if we get 'packager' info from RHN.
         packager.setText("");
         top.addContent(packager);
 
-        Element url = new Element("url");
+        Element url = new Element("url", packageNS);
         //TODO: Not sure what to put for url value, don't think it applies to RHN
         url.setText("");
         top.addContent(url);
 
-        Element time = new Element("time");
+        Element time = new Element("time", packageNS);
         //TODO: Verify below, guessing for file/build times.
         time.setAttribute("file", pkg.getLastModified());
         time.setAttribute("build", pkg.getBuildTime());
         top.addContent(time);
 
-        Element size = new Element("size");
+        Element size = new Element("size", packageNS);
         size.setAttribute("package", pkg.getPackageSize());
         size.setAttribute("archive", pkg.getPayloadSize());
         //TODO: Unsure about installed, does this need to change on server side when package is installed on a client?
         size.setAttribute("installed", "");
         top.addContent(size);
 
-        Element location = new Element("location");
+        Element location = new Element("location", packageNS);
         //This value can not be empty and can not contain a "?".
         //It's value is ignored by the RHQ processing for yum.  
-        //RHQ will append a series of request parameters to download the file.  
-        location.setAttribute("href", "getPackage");
+        //RHQ will append a series of request parameters to download the file.
+        String rpmName = RHNHelper.constructRpmDownloadName(pkg.getName(), pkg.getVersion(), pkg.getRelease(), pkg.getEpoch(),
+            pkg.getPackageArch());
+        location.setAttribute("href", rpmName);
         top.addContent(location);
 
-        Element format = new Element("format");
+        Element format = new Element("format", packageNS);
 
-        Element rpmLicense = new Element("license", "rpm");
+        Namespace rpmNS = Namespace.getNamespace("rpm", "http://rhq-project.org/rhnhosted");
+        Element rpmLicense = new Element("license", rpmNS);
         rpmLicense.setText(pkg.getRhnPackageCopyright());
         format.addContent(rpmLicense);
 
-        Element rpmVendor = new Element("vendor", "rpm");
+        Element rpmVendor = new Element("vendor", rpmNS);
         rpmVendor.setText(pkg.getRhnPackageVendor());
         format.addContent(rpmVendor);
 
-        Element rpmGroup = new Element("group", "rpm");
+        Element rpmGroup = new Element("group", rpmNS);
         rpmGroup.setText(pkg.getPackageGroup());
         format.addContent(rpmGroup);
 
-        Element rpmBuildHost = new Element("buildhost", "rpm");
+        Element rpmBuildHost = new Element("buildhost", rpmNS);
         rpmBuildHost.setText(pkg.getBuildHost());
         format.addContent(rpmBuildHost);
 
-        Element rpmSourceRPM = new Element("sourcerpm", "rpm");
+        Element rpmSourceRPM = new Element("sourcerpm", rpmNS);
         rpmSourceRPM.setText(pkg.getSourceRpm());
         format.addContent(rpmSourceRPM);
 
-        Element rpmHeaderRange = new Element("header-range", "rpm");
+        Element rpmHeaderRange = new Element("header-range", rpmNS);
         rpmHeaderRange.setAttribute("start", pkg.getRhnPackageHeaderStart());
         rpmHeaderRange.setAttribute("end", pkg.getRhnPackageHeaderEnd());
         format.addContent(rpmHeaderRange);
 
-        Element rpmProvides = new Element("provides", "rpm");
+        Element rpmProvides = new Element("provides", rpmNS);
         RhnPackageProvidesType provides_type = pkg.getRhnPackageProvides();
         if (provides_type != null) {
             List<RhnPackageProvidesEntryType> provides = provides_type.getRhnPackageProvidesEntry();
             for (RhnPackageProvidesEntryType provEntry : provides) {
-                Element entry = new Element("entry", "rpm");
+                Element entry = new Element("entry", rpmNS);
                 entry.setAttribute("name", provEntry.getName());
-                entry.setAttribute("flags", getFlags(provEntry.getSense()));
-                entry.setAttribute("epoch", getEpoch(provEntry.getVersion()));
-                entry.setAttribute("ver", getVersion(provEntry.getVersion()));
-                entry.setAttribute("rel", getRelease(provEntry.getVersion()));
+                String flags = getFlags(provEntry.getSense());
+                if (!StringUtils.isBlank(flags)) {
+                    entry.setAttribute("flags", flags);
+                    String provEpoch = getEpoch(provEntry.getVersion());
+                    entry.setAttribute("epoch", provEpoch);
+                    String provVer = getVersion(provEntry.getVersion());
+                    entry.setAttribute("ver", provVer);
+                    String provRel = getRelease(provEntry.getVersion());
+                    entry.setAttribute("rel", getRelease(provEntry.getVersion()));
+                }
                 rpmProvides.addContent(entry);
             }
         }
         format.addContent(rpmProvides);
 
-        Element rpmRequires = new Element("requires", "rpm");
+        Element rpmRequires = new Element("requires", rpmNS);
         RhnPackageRequiresType requires_type = pkg.getRhnPackageRequires();
         if (requires_type != null) {
             List<RhnPackageRequiresEntryType> requires = requires_type.getRhnPackageRequiresEntry();
             for (RhnPackageRequiresEntryType reqEntry : requires) {
-                Element entry = new Element("entry", "rpm");
+                Element entry = new Element("entry", rpmNS);
                 entry.setAttribute("name", reqEntry.getName());
-                entry.setAttribute("flags", getFlags(reqEntry.getSense()));
-                entry.setAttribute("epoch", getEpoch(reqEntry.getVersion()));
-                entry.setAttribute("ver", getVersion(reqEntry.getVersion()));
-                entry.setAttribute("rel", getRelease(reqEntry.getVersion()));
+                String flags = getFlags(reqEntry.getSense());
+                if (!StringUtils.isBlank(flags)) {
+                    entry.setAttribute("flags", flags);
+                    String reqEpoch = getEpoch(reqEntry.getVersion());
+                    entry.setAttribute("epoch", reqEpoch);
+                    String reqVer = getVersion(reqEntry.getVersion());
+                    entry.setAttribute("ver", reqVer);
+                    String reqRel = getRelease(reqEntry.getVersion());
+                    entry.setAttribute("rel", getRelease(reqEntry.getVersion()));
+                }
                 rpmRequires.addContent(entry);
             }
         }
         format.addContent(rpmRequires);
 
-        Element rpmConflicts = new Element("conflicts", "rpm");
+        Element rpmConflicts = new Element("conflicts", rpmNS);
         rpmConflicts.setText(pkg.getRhnPackageConflicts());
         format.addContent(rpmConflicts);
 
-        Element rpmObsoletes = new Element("obsoletes", "rpm");
+        Element rpmObsoletes = new Element("obsoletes", rpmNS);
         RhnPackageObsoletesType obs_type = pkg.getRhnPackageObsoletes();
         if (obs_type != null) {
             List<Serializable> obsoletes = obs_type.getContent();
-            for (Serializable obsEntry : obsoletes) {
-                Element entry = new Element("entry", "rpm");
-                entry.setAttribute("name", obsEntry.toString());
+            for (Serializable s : obsoletes) {
+                RhnPackageObsoletesEntryType obsEntry = null;
+                if (s instanceof String) {
+                    String obsString = (String) s;
+                    if (StringUtils.isBlank(obsString)) {
+                        continue;
+                    }
+                    //log.debug("Adding Obsoletes info <String Class> value = " + obsString);
+                    Element entry = new Element("entry", rpmNS);
+                    entry.setAttribute("name", obsString);
+                    rpmObsoletes.addContent(entry);
+                    // skip rest of obs processing for this entry
+                    continue;
+                }
+                //
+                // Below obs entry processing is for JAXBElement types only
+                //
+                if (s instanceof JAXBElement) {
+                    JAXBElement je = (JAXBElement) s;
+                    //log.debug("Processing obsolete info for JAXBElement of type : " + je.getDeclaredType());
+                    obsEntry = (RhnPackageObsoletesEntryType) je.getValue();
+                } else if (s instanceof RhnPackageObsoletesEntryType) {
+                    obsEntry = (RhnPackageObsoletesEntryType) s;
+                } else {
+                    log.info("Processing obsoletes info:  unable to determine what class obsoletes entry is: "
+                        + "getClass() =  " + s.getClass() + ", toString() = " + s.toString() + ", hashCode = "
+                        + s.hashCode());
+                    continue;
+                }
+                Element entry = new Element("entry", rpmNS);
+                entry.setAttribute("name", obsEntry.getName());
+                String obsVer = obsEntry.getVersion();
+                if (!StringUtils.isBlank(obsVer)) {
+                    entry.setAttribute("version", obsVer);
+                }
+                String obsFlags = getFlags(obsEntry.getSense());
+                if (!StringUtils.isBlank(obsFlags)) {
+                    entry.setAttribute("flags", obsFlags);
+                }
                 rpmObsoletes.addContent(entry);
             }
         }

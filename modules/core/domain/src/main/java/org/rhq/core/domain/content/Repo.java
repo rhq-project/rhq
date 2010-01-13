@@ -23,7 +23,11 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -36,6 +40,7 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
@@ -93,8 +98,7 @@ import org.rhq.core.domain.resource.Resource;
         + "     WHERE rcs.repo.id = r.id " //
         + "     AND rcs.contentSource.id = :contentSourceId) = 1 " //
         + "AND (SELECT COUNT(rcs) FROM RepoContentSource rcs" //
-        + "     WHERE rcs.repo.id = r.id) = 1 ")
-    })
+        + "     WHERE rcs.repo.id = r.id) = 1 ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable, Taggable {
@@ -156,6 +160,17 @@ public class Repo implements Serializable, Taggable {
 
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoTag> repoTags;
+
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OrderBy("startTime DESC")
+    // latest appears first, oldest last
+    private List<RepoSyncResults> syncResults;
+
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoDistribution> repoDistributions;
+
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoAdvisory> repoAdvisories;
 
     @Transient
     private String syncStatus;
@@ -325,6 +340,25 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
+     * Returns the explicit mapping entities.
+     *
+     * @return the mapping entities
+     *
+     * @see    #getContentSources()
+     */
+    public Set<RepoDistribution> getRepoDistributions() {
+        return repoDistributions;
+    }
+
+    public Set<RepoAdvisory> getRepoAdvisories() {
+        return repoAdvisories;
+    }
+
+    public void setRepoAdvisories(Set<RepoAdvisory> repoAdvisories) {
+        this.repoAdvisories = repoAdvisories;
+    }
+
+    /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
      * 
      * There is a weight to the status since this returns the most 'relevant' status:
@@ -337,6 +371,7 @@ public class Repo implements Serializable, Taggable {
      */
     @Transient
     public String getSyncStatus() {
+
         return this.syncStatus;
     }
 
@@ -791,4 +826,38 @@ public class Repo implements Serializable, Taggable {
     public void setSyncStatus(String syncStatusIn) {
         this.syncStatus = syncStatusIn;
     }
+
+    public void addSyncResult(RepoSyncResults syncResult) {
+        if (this.syncResults == null) {
+            this.syncResults = new ArrayList<RepoSyncResults>();
+        }
+
+        this.syncResults.add(syncResult);
+        syncResult.setRepo(this);
+    }
+
+    /**
+     * The list of sync results - order ENSURED by the incrementing ID of this object
+     */
+    public List<RepoSyncResults> getSyncResults() {
+        if (syncResults == null) {
+            return null;
+        }
+
+        Comparator dc = new Comparator() {
+            public int compare(Object arg0, Object arg1) {
+                RepoSyncResults c1 = (RepoSyncResults) arg0;
+                RepoSyncResults c2 = (RepoSyncResults) arg1;
+
+                Integer id1 = c1.getId();
+                Integer id2 = c2.getId();
+
+                return id1.compareTo(id2);
+            }
+        };
+        Collections.sort(syncResults, dc);
+
+        return syncResults;
+    }
+
 }

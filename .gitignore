@@ -12,6 +12,8 @@ logs
 *.iml
 *.ipr
 *.iws
+.idea
+.idea/*
 dev-container
 dev-agent
 antlr-generated/

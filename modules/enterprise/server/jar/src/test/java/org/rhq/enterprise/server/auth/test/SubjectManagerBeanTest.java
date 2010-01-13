@@ -400,7 +400,7 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             session2 = subject2.getSessionId();
 
             assert session1 != session2 : "A new session should have been assigned after logging out";
-            assert subject2.equals(subjectManager.getSessionSubject(session2));
+            assert subject2.equals(subjectManager.getSubjectBySessionId(session2));
 
             try {
                 subjectManager.loginUnauthenticated("rhqadminX", true);

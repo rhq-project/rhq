@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.content;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.util.PageControl;
@@ -49,10 +50,10 @@ public class ContentSourceSyncResultsUIBean extends PagedDataTableUIBean {
                 contentSourceManager.deleteContentSourceSyncResults(subject, ids);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Deleted [" + ids.length
-                    + "] content source sync results.");
+                    + "] content provider sync results.");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to delete content source sync results.", e);
+                    "Failed to delete content provider sync results.", e);
             }
         }
 
@@ -75,7 +76,6 @@ public class ContentSourceSyncResultsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<ContentSourceSyncResults> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             int id = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("id"));

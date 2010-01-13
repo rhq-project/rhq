@@ -38,6 +38,8 @@ import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamiliesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelsType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErrataType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFileType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartFilesType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnKickstartableTreeType;
@@ -174,6 +176,31 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
                 RhnPackagesType ptypes = new RhnPackagesType();
                 setPrivateList("rhnPackage", ptypes, rhnPackage);
                 retval.setRhnPackages(ptypes);
+            }
+            return element;
+
+        } else if (methodName.equals("dump.errata")) {
+            if (systemid.contains("<value><string>ID-0000000000</string></value>")) {
+                throw new XmlRpcException(-9, "Invalid System Credentials");
+            }
+            JAXBElement element = getRhnSatelliteType();
+            RhnSatelliteType retval = (RhnSatelliteType) element.getValue();
+            RhnErrataType errata = new RhnErrataType();
+            List<RhnErratumType> erratum = errata.getRhnErratum();
+            List<String> erratumIds = (List<String>) params[1];
+            List<RhnErratumType> rhnErrata = new LinkedList<RhnErratumType>();
+            for (String eid : erratumIds) {
+                RhnErratumType ptype = new RhnErratumType();
+                ptype.setAdvisory("RHSA-2007:0540");
+                ptype.setChannels("rhel-i386-server-5 rhel-x86_64-server-5 rhel-ia64-server-5 rhel-ppc-server-5");
+                ptype.setPackages("rhn-package-410949 rhn-package-410950");
+                ptype.setRhnErratumAdvisoryName("RHSA-2007:0540");
+                ptype.setRhnErratumAdvisoryType("Security Advisory");
+                ptype.setRhnErratumDescription("test errata description");
+                ptype.setRhnErratumSynopsis("New package test");
+                erratum.add(ptype);
+
+                retval.setRhnErrata(errata);
             }
             return element;
 

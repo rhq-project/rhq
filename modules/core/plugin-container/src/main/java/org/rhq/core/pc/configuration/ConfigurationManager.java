@@ -22,30 +22,34 @@
  */
 package org.rhq.core.pc.configuration;
 
-import java.util.List;
+import java.util.Set;
+import java.util.Queue;
+import java.util.LinkedList;
 import java.util.concurrent.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.PluginContainer;
+import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.util.exception.WrappedRemotingException;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -61,8 +65,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
 
+    private static final ComparableVersion NON_LEGACY_VERSION = new ComparableVersion("2.1");
+
     private PluginContainerConfiguration pluginContainerConfiguration;
     private ScheduledExecutorService threadPool;
+
+    private ComponentService componentService;
+
+    private ConfigManagementFactory configMgmtFactory;
 
     public ConfigurationManager() {
         super(ConfigurationAgentService.class);
@@ -94,15 +104,23 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         pluginContainerConfiguration = configuration;
     }
 
+    public void setComponentService(ComponentService componentService) {
+        this.componentService = componentService;
+    }
+
+    public void setConfigManagementFactory(ConfigManagementFactory factory) {
+        configMgmtFactory = factory;
+    }
+
     public void updateResourceConfiguration(ConfigurationUpdateRequest request) {
         ConfigurationServerService configurationServerService = getConfigurationServerService();
 
         try {
-            ResourceType resourceType = getResourceType(request.getResourceId());
-            ConfigurationFacet configurationFacet = getConfigurationFacet(request.getResourceId(), FacetLockType.WRITE);
+            ConfigManagement configMgmt = configMgmtFactory.getStrategy(request.getResourceId());
+            ResourceType resourceType = componentService.getResourceType(request.getResourceId());
 
             Runnable runnable = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
-                configurationFacet, request);
+                configMgmt, request);
             getThreadPool().submit(runnable);
         } catch (PluginContainerException e) {
             log.error("Failed to submit config update task. Cause: " + e);
@@ -127,12 +145,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         try {
             ConfigurationServerService configurationServerService = getConfigurationServerService();
             ResourceType resourceType = getResourceType(request.getResourceId());
-            ConfigurationFacet configurationFacet = getConfigurationFacet(request.getResourceId(), FacetLockType.WRITE);
+
+            ConfigManagement configMgmt = new LegacyConfigManagement();
+            configMgmt.setComponentService(componentService);
 
             Callable<ConfigurationUpdateResponse> runner;
 
             runner = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
-                configurationFacet, request);
+                configMgmt, request);
 
             response = getThreadPool().submit(runner).get();
         } catch (Exception e) {
@@ -142,39 +162,141 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return response;
     }
 
-    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
-        ResourceType resourceType = getResourceType(resourceId);
-        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
-        try {
-            Configuration configuration = configComponent.loadResourceConfiguration();
-            if (configuration == null) {
-                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+    public Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
+        throws PluginContainerException {
+
+        // TODO Throw an exception if the resource does not support structured and raw
+
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+
+        ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
+            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+
+        if (fromStructured) {
+            mergedStructuredIntoRaws(configuration, facet);
+        }
+        else {
+            mergeRawsIntoStructured(configuration, facet);
+        }
+
+        return configuration;
+    }
+
+    private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
+        Configuration structuredConfig = facet.loadStructuredConfiguration();
+
+        if (structuredConfig != null) {
+            prepareConfigForMergeIntoStructured(configuration, structuredConfig);
+
+            for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                structuredConfig.addRawConfiguration(rawConfig);
+                facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
-
-            // If the plugin didn't already set the notes field, set it to something useful.
-            if (configuration.getNotes() == null) {
-                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-            }
-
-            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
-
-            // Normalize and validate the config.
-            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
-                configurationDefinition);
-            for (String errorMessage : errorMessages) {
-                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-                    + resourceType.getPlugin() + " plugin - " + errorMessage);
-            }
-
-            return configuration;
-        } catch (Throwable t) {
-            //noinspection ThrowableInstanceNeverThrown
-            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-                new WrappedRemotingException(t));
         }
     }
+
+    private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {
+        config.getAllProperties().clear();
+        for (Property property : latestStructured.getProperties()) {
+            config.put(property);
+        }
+    }
+
+    private void mergedStructuredIntoRaws(Configuration configuration, ResourceConfigurationFacet facet) {
+        Set<RawConfiguration> rawConfigs = facet.loadRawConfigurations();
+
+        if (rawConfigs == null) {
+            return;
+        }
+
+        prepareConfigForMergeIntoRaws(configuration, rawConfigs);
+
+        Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
+
+        while (!queue.isEmpty()) {
+            RawConfiguration originalRaw = queue.poll();
+            RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
+
+            if (mergedRaw != null) {
+                updateRawConfig(configuration, originalRaw, mergedRaw);
+            }
+        }
+    }
+
+    private void prepareConfigForMergeIntoRaws(Configuration config, Set<RawConfiguration> latestRaws) {
+        config.getRawConfigurations().clear();
+        for (RawConfiguration raw : latestRaws) {
+            config.addRawConfiguration(raw);
+        }
+    }
+
+    private void updateRawConfig(Configuration configuration, RawConfiguration originalRaw,
+        RawConfiguration mergedRaw) {
+
+        configuration.removeRawConfiguration(originalRaw);
+        configuration.addRawConfiguration(mergedRaw);
+    }
+
+    public Configuration loadResourceConfiguration(int resourceId)
+        throws PluginContainerException {
+
+        ConfigManagement loadConfig = configMgmtFactory.getStrategy(resourceId);
+        Configuration configuration = null;
+
+        try {
+            configuration = loadConfig.executeLoad(resourceId);
+        } catch (Throwable t) {
+            throw new PluginContainerException(createErrorMsg(resourceId, "An exception was thrown."), t);
+        }
+
+        if (configuration == null) {
+            throw new PluginContainerException(createErrorMsg(resourceId, "returned a null Configuration."));
+        }
+
+        return configuration;
+    }
+
+    private String createErrorMsg(int resourceId, String msg) throws PluginContainerException {
+        ResourceType resourceType = componentService.getResourceType(resourceId);
+
+        return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" +
+            resourceId + "]: " + msg;
+    }
+
+//    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
+//        ResourceType resourceType = getResourceType(resourceId);
+//        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
+//        try {
+//            Configuration configuration = configComponent.loadResourceConfiguration();
+//            if (configuration == null) {
+//                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
+//                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+//            }
+//
+//            // If the plugin didn't already set the notes field, set it to something useful.
+//            if (configuration.getNotes() == null) {
+//                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+//            }
+//
+//            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
+//
+//            // Normalize and validate the config.
+//            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
+//            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
+//                configurationDefinition);
+//            for (String errorMessage : errorMessages) {
+//                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
+//                    + resourceType.getPlugin() + " plugin - " + errorMessage);
+//            }
+//
+//            return configuration;
+//        } catch (Throwable t) {
+//            //noinspection ThrowableInstanceNeverThrown
+//            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
+//                new WrappedRemotingException(t));
+//        }
+//    }
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a
@@ -184,6 +306,15 @@ public class ConfigurationManager extends AgentService implements ContainerServi
      */
     protected ExecutorService getThreadPool() {
         return threadPool;
+    }
+
+    /**
+     * This setter is here to provide a test hook
+     *
+     * @param threadPool A fake object such as a mock
+     */
+    void setThreadPool(ScheduledExecutorService threadPool) {
+        this.threadPool = threadPool;
     }
 
     /**

@@ -30,12 +30,12 @@ import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This is the list of content sources that are currently disassociated from a repo.
+ * This is the list of content providers that are currently disassociated from a repo.
  */
 public class RepoDisassociationsUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "RepoDisassociationsUIBean";
@@ -55,10 +55,10 @@ public class RepoDisassociationsUIBean extends PagedDataTableUIBean {
                 manager.addContentSourcesToRepo(subject, repoId, contentSourceIds);
 
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Associated [" + contentSourceIds.length
-                    + "] content sources with repo");
+                    + "] content providers with repo");
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,
-                    "Failed to associate one or more content sources with repo", e);
+                    "Failed to associate one or more content providers with repo", e);
             }
         }
 
@@ -68,8 +68,7 @@ public class RepoDisassociationsUIBean extends PagedDataTableUIBean {
     @Override
     public DataModel getDataModel() {
         if (dataModel == null) {
-            dataModel = new RepoDisassociationsDataModel(PageControlView.RepoDisassociationsList,
-                MANAGED_BEAN_NAME);
+            dataModel = new RepoDisassociationsDataModel(PageControlView.RepoDisassociationsList, MANAGED_BEAN_NAME);
         }
 
         return dataModel;
@@ -81,7 +80,6 @@ public class RepoDisassociationsUIBean extends PagedDataTableUIBean {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
         public PageList<ContentSource> fetchPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();

@@ -20,44 +20,44 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
 
 <ui:composition>
 
-      <c:if test="#{not currentMenuItem.item.isDebug or GlobalPermissionsUIBean.debugMode}">
+      <c:if test="#{not currentMenuItem.debugMode or GlobalPermissionsUIBean.debugMode}">
 
-         <c:if test="#{currentMenuItem.item.position.addBreak}">
+         <c:if test="#{currentMenuItem.addBreak}">
             <rich:menuSeparator />
          </c:if>
 
          <c:choose>
-            <c:when test="#{currentMenuItem.item.feature eq null}">
+            <c:when test="#{currentMenuItem.feature eq null}">
                <c:choose>
-                  <c:when test="#{currentMenuItem.item.newWindow}">
+                  <c:when test="#{currentMenuItem.newWindow}">
                      <rich:menuItem
                         submitMode="none"
-                        onclick="window.open('#{currentMenuItem.item.url}')"
+                        onclick="window.open('#{currentMenuItem.url}')"
                         target="blank_"
-                        icon="#{currentMenuItem.item.iconUrl}"
-                        width="#{currentMenuItem.item.iconWidth}"
-                        height="#{currentMenuItem.item.iconHeight}">
-                        <h:outputText value="#{currentMenuItem.item.displayName}" />
+                        icon="#{currentMenuItem.iconUrl}"
+                        width="16"
+                        height="16">
+                        <h:outputText value="#{currentMenuItem.displayName}" />
                      </rich:menuItem>
                   </c:when>
                   <c:otherwise>
                      <rich:menuItem
                         submitMode="none"
-                        onclick="window.location = '#{currentMenuItem.item.url}'"
-                        icon="#{currentMenuItem.item.iconUrl}"
-                        width="#{currentMenuItem.item.iconWidth}"
-                        height="#{currentMenuItem.item.iconHeight}">
-                        <h:outputText value="#{currentMenuItem.item.displayName}" />
+                        onclick="window.location = '#{currentMenuItem.url}'"
+                        icon="#{currentMenuItem.iconUrl}"
+                        width="16"
+                        height="16">
+                        <h:outputText value="#{currentMenuItem.displayName}" />
                      </rich:menuItem>
                   </c:otherwise>
                </c:choose>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'ABOUT_BOX'}">
+            <c:when test="#{currentMenuItem.feature eq 'ABOUT_BOX'}">
                <rich:menuItem
                   submitMode="none"
                   id="aboutLink"
-                  icon="#{currentMenuItem.item.iconUrl}">
-                  <h:outputText value="#{currentMenuItem.item.displayName}" />
+                  icon="#{currentMenuItem.iconUrl}">
+                  <h:outputText value="#{currentMenuItem.displayName}" />
                   <rich:componentControl
                      for="aboutPanel"
                      attachTo="aboutLink"
@@ -65,10 +65,10 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                      event="onclick" />
                </rich:menuItem>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_FAVORITES'}">
+            <c:when test="#{currentMenuItem.feature eq 'GROUP_FAVORITES'}">
                <rich:menuGroup
-                  value="#{currentMenuItem.item.displayName}"
-                  icon="#{currentMenuItem.item.iconUrl}">
+                  value="#{currentMenuItem.displayName}"
+                  icon="#{currentMenuItem.iconUrl}">
                   <c:forEach
                      var="group"
                      items="#{UserPreferencesUIBean.groupFavorites}">
@@ -81,10 +81,10 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                   </c:forEach>
                </rich:menuGroup>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_RECENTLY_VIEWED'}">
+            <c:when test="#{currentMenuItem.feature eq 'GROUP_RECENTLY_VIEWED'}">
                <rich:menuGroup
-                  value="#{currentMenuItem.item.displayName}"
-                  icon="#{currentMenuItem.item.iconUrl}">
+                  value="#{currentMenuItem.displayName}"
+                  icon="#{currentMenuItem.iconUrl}">
                   <c:forEach
                      var="visit"
                      items="#{UserPreferencesUIBean.recentVisits}">
@@ -99,13 +99,13 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                   </c:forEach>
                </rich:menuGroup>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'GROUP_SEARCH'}">
+            <c:when test="#{currentMenuItem.feature eq 'GROUP_SEARCH'}">
                <rich:menuItem
                   submitMode="none"
                   disabled="true"
-                  iconDisabled="#{currentMenuItem.item.iconUrl}">
+                  iconDisabled="#{currentMenuItem.iconUrl}">
                   <h:outputText
-                     value="#{currentMenuItem.item.displayName} "
+                     value="#{currentMenuItem.displayName} "
                      style="color: black;" />
                   <h:panelGroup>
                      <h:inputText
@@ -161,10 +161,10 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                   </h:panelGroup>
                </rich:menuItem>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_FAVORITES'}">
+            <c:when test="#{currentMenuItem.feature eq 'RESOURCE_FAVORITES'}">
                <rich:menuGroup
-                  value="#{currentMenuItem.item.displayName}"
-                  icon="#{currentMenuItem.item.iconUrl}">
+                  value="#{currentMenuItem.displayName}"
+                  icon="#{currentMenuItem.iconUrl}">
                   <c:forEach
                      var="resource"
                      items="#{UserPreferencesUIBean.resourceFavorites}">
@@ -177,10 +177,10 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                   </c:forEach>
                </rich:menuGroup>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_RECENTLY_VIEWED'}">
+            <c:when test="#{currentMenuItem.feature eq 'RESOURCE_RECENTLY_VIEWED'}">
                <rich:menuGroup
-                  value="#{currentMenuItem.item.displayName}"
-                  icon="#{currentMenuItem.item.iconUrl}">
+                  value="#{currentMenuItem.displayName}"
+                  icon="#{currentMenuItem.iconUrl}">
                   <c:forEach
                      var="visit"
                      items="#{UserPreferencesUIBean.recentVisits}">
@@ -195,13 +195,13 @@ currentMenuItem - the org.rhq.enterprise.server.perspective.menuItem to render
                   </c:forEach>
                </rich:menuGroup>
             </c:when>
-            <c:when test="#{currentMenuItem.item.feature eq 'RESOURCE_SEARCH'}">
+            <c:when test="#{currentMenuItem.feature eq 'RESOURCE_SEARCH'}">
                <rich:menuItem
                   submitMode="none"
                   disabled="true"
-                  iconDisabled="#{currentMenuItem.item.iconUrl}">
+                  iconDisabled="#{currentMenuItem.iconUrl}">
                   <h:outputText
-                     value="#{currentMenuItem.item.displayName} "
+                     value="#{currentMenuItem.displayName} "
                      style="color: black;" />
                   <h:panelGroup>
                      <h:inputText

@@ -1,0 +1,24 @@
+Overview:
+  Run a test against RHN Hosted to see if basic rhnhosted functionality is working.
+
+What will be tested:
+  Package Syncs & Distribution Syncs
+
+Setup:
+  1) systemid file is required at: "/etc/sysconfig/rhn/systemid"  
+  Register a RHEL5 system to RHN Hosted.
+  Copy the /etc/sysconfig/rhn/systemid file from the RHEL5 box to your local machine where you will be running RHQ and this test.
+
+  2) /usr/share/rhn/RHNS-CA-CERT
+  This is required if you want to run against a https connection
+  Copy this from a RHEL5 box
+
+  3) Edit pom.xml
+  Change the property:  "RunRHNProviderTest" to "true".
+  
+  If you want to run a more exhaustive test change:
+  "RunRHNMD5SumTests" to "true".  This will download each package and kickstart file and compare the md5sum against the expected value.
+
+Run:
+    Execute:  mvn test -Dtest="RHNProviderTest"
+

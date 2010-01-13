@@ -1,0 +1,159 @@
+RULE Count Connections
+INTERFACE java.sql.Driver
+METHOD getConnection(String, java.util.Properties)
+AT EXIT
+BIND _version:String="1.0.0",
+     url=$1
+IF TRUE
+DO createCounter("jdbctrace.connection", 0),
+   incrementCounter("jdbctrace.connection"),
+   traceln("JDBCTrace: connections=[" + readCounter("jdbctrace.connection") + "] latest connection: " + url)
+ENDRULE
+
+RULE Count Commits
+INTERFACE java.sql.Connection
+METHOD commit()
+AT EXIT
+IF TRUE
+DO createCounter("jdbctrace.commit", 0),
+   incrementCounter("jdbctrace.commit"),
+   traceln("JDBCTrace: commits=[" + readCounter("jdbctrace.commit") + "]")
+ENDRULE
+
+RULE Count Rollbacks
+INTERFACE java.sql.Connection
+METHOD rollback()
+AT EXIT
+IF TRUE
+DO createCounter("jdbctrace.rollback", 0),
+   incrementCounter("jdbctrace.rollback"),
+   traceln("JDBCTrace: rollbacks=[" + readCounter("jdbctrace.rollback") + "]")
+ENDRULE
+
+RULE Enter Statement.executeQuery
+INTERFACE java.sql.Statement
+METHOD executeQuery(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND sql = $1
+IF TRUE
+DO resetTimer("jdbctrace.executeQuery." + String.valueOf(sql.hashCode())),
+   traceln("JDBCTrace: Statement.executeQuery entry: sql=" + sql)
+ENDRULE
+RULE Exit Statement.executeQuery
+INTERFACE java.sql.Statement
+METHOD executeQuery(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND sql = $1
+IF TRUE
+DO traceln("JDBCTrace: Statement.executeQuery exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.executeQuery." + String.valueOf(sql.hashCode()))),
+   deleteTimer("jdbctrace.executeQuery." + String.valueOf(sql.hashCode()))
+ENDRULE
+
+RULE Enter Statement.executeUpdate
+INTERFACE java.sql.Statement
+METHOD executeUpdate(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND sql = $1
+IF TRUE
+DO resetTimer("jdbctrace.executeUpdate." + String.valueOf(sql.hashCode())),
+   traceln("JDBCTrace: Statement.executeUpdate entry: sql=" + sql)
+ENDRULE
+RULE Exit Statement.executeUpdate
+INTERFACE java.sql.Statement
+METHOD executeUpdate(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND sql = $1
+IF TRUE
+DO traceln("JDBCTrace: Statement.executeUpdate exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.executeUpdate." + String.valueOf(sql.hashCode()))),
+   deleteTimer("jdbctrace.executeUpdate." + String.valueOf(sql.hashCode()))
+ENDRULE
+
+RULE Enter Statement.execute
+INTERFACE java.sql.Statement
+METHOD execute(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND sql = $1
+IF TRUE
+DO resetTimer("jdbctrace.execute." + String.valueOf(sql.hashCode())),
+   traceln("JDBCTrace: Statement.execute entry: sql=" + sql)
+ENDRULE
+RULE Exit Statement.execute
+INTERFACE java.sql.Statement
+METHOD execute(String)
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND sql = $1
+IF TRUE
+DO traceln("JDBCTrace: Statement.execute exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.execute." + String.valueOf(sql.hashCode()))),
+   deleteTimer("jdbctrace.execute." + String.valueOf(sql.hashCode()))
+ENDRULE
+
+################
+
+RULE Enter PreparedStatement.executeQuery
+INTERFACE java.sql.Statement
+METHOD executeQuery
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND stmt = $0
+IF TRUE
+DO resetTimer("jdbctrace.executeQuery." + String.valueOf(stmt.hashCode())),
+   traceln("JDBCTrace: PreparedStatement.executeQuery entry: stmt=" + stmt)
+ENDRULE
+RULE Exit PreparedStatement.executeQuery
+INTERFACE java.sql.Statement
+METHOD executeQuery
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND stmt = $0
+IF TRUE
+DO traceln("JDBCTrace: PreparedStatement.executeQuery exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.executeQuery." + String.valueOf(stmt.hashCode()))),
+   deleteTimer("jdbctrace.executeQuery." + String.valueOf(stmt.hashCode()))
+ENDRULE
+
+RULE Enter PreparedStatement.executeUpdate
+INTERFACE java.sql.Statement
+METHOD executeUpdate
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND stmt = $0
+IF TRUE
+DO resetTimer("jdbctrace.executeUpdate." + String.valueOf(stmt.hashCode())),
+   traceln("JDBCTrace: PreparedStatement.executeUpdate entry: stmt=" + stmt)
+ENDRULE
+RULE Exit PreparedStatement.executeUpdate
+INTERFACE java.sql.Statement
+METHOD executeUpdate
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND stmt = $0
+IF TRUE
+DO traceln("JDBCTrace: PreparedStatement.executeUpdate exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.executeUpdate." + String.valueOf(stmt.hashCode()))),
+   deleteTimer("jdbctrace.executeUpdate." + String.valueOf(stmt.hashCode()))
+ENDRULE
+
+RULE Enter PreparedStatement.execute
+INTERFACE java.sql.Statement
+METHOD execute
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT ENTRY
+BIND stmt = $0
+IF TRUE
+DO resetTimer("jdbctrace.execute." + String.valueOf(stmt.hashCode())),
+   traceln("JDBCTrace: PreparedStatement.execute entry: stmt=" + stmt)
+ENDRULE
+RULE Exit PreparedStatement.execute
+INTERFACE java.sql.Statement
+METHOD execute
+HELPER org.rhq.plugins.jdbctrace.helper.JdbcTracerHelper
+AT EXIT
+BIND stmt = $0
+IF TRUE
+DO traceln("JDBCTrace: PreparedStatement.execute exit: elapsed=" + getElapsedTimeFromTimer("jdbctrace.execute." + String.valueOf(stmt.hashCode()))),
+   deleteTimer("jdbctrace.execute." + String.valueOf(stmt.hashCode()))
+ENDRULE

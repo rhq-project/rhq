@@ -38,6 +38,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageType;
 
 /**
@@ -175,8 +176,7 @@ public class UrlProvider implements ContentProvider, PackageSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the remote system. Any leftover in the list
@@ -391,5 +391,10 @@ public class UrlProvider implements ContentProvider, PackageSource {
         }
 
         return null; // the file doesn't match any known types for this content source
+    }
+
+    @Override
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 }

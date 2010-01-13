@@ -24,6 +24,15 @@ THIS TEXT WILL BE REMOVED.
   <ui:param name="selectedTabName" value="Configuration.Current"/>
 
   <ui:define name="content">
+    <script type="text/javascript">
+      function cursor_wait() {
+        document.body.style.cursor = 'wait';
+      }
+
+      function cursor_clear() {
+        document.body.style.cursor = 'default';
+      }
+    </script>
 
     <h:form id="editResourceConfigurationForm"
             onsubmit="prepareInputsForSubmission(this)"
@@ -38,29 +47,34 @@ THIS TEXT WILL BE REMOVED.
                        columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
             <rich:panel style="width:100%">
               <f:facet name="header">Files</f:facet>
+
               <rich:panelMenu mode="ajax"
                               expandMode="client"
                               iconCollapsedGroup="disc"
                               limitToList="true"
                               reRender="fileContents">
-                <rich:panelMenuGroup label="/tmp/raw-config" expanded="true">
-                  <c:forEach items="#{ExistingResourceConfigurationUIBean.configuration.rawConfigurations}"
-                             var="rawConfig">
-                    <rich:panelMenuItem label="#{rawConfig.path}"
-                                        action="#{ExistingResourceConfigurationUIBean.select(rawConfig.path)}"
-                                        styleClass="raw-menu-item"
-                                        tableBorderColor="blue"
-                                        reRender="fileContents,selectedFileHeader"/>
-                  </c:forEach>
-                </rich:panelMenuGroup>
+                <c:forEach items="#{rawConfigDirectories}"
+                           var="rawConfigDir">
+                  <rich:panelMenuGroup label="#{rawConfigDir.path}"
+                                       expanded="true"
+                                       selectedChild="#{currentPath}">
+                    <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
+                      <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                          onclick="cursor_wait();"
+                                          oncomplete="cursor_clear();"
+                                          action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
+                                          reRender="fileContents,selectFileHeader"/>
+                    </c:forEach>
+                  </rich:panelMenuGroup>
+                </c:forEach>
               </rich:panelMenu>
             </rich:panel>
 
             <h:panelGrid columns="1" style="width:100%;">
               <h:panelGrid columns="4" style="width:100%;">
                 <a4j:status id="selectedFileHeader"
-                              startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
-                              stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
+                            startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
+                            stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
                 <h:commandLink value="View Full Screen"/>
                 <h:commandLink value="Upload New">
                   <h:graphicImage value="/images/upload.png"/>
@@ -143,6 +157,31 @@ THIS TEXT WILL BE REMOVED.
                          columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
               <rich:panel style="width:100%">
                 <f:facet name="header">Files</f:facet>
+
+
+                <rich:panelMenu mode="ajax"
+                                expandMode="client"
+                                iconCollapsedGroup="disc"
+                                limitToList="true"
+                                reRender="fileContents">
+                  <c:forEach items="#{rawConfigDirectories}"
+                               var="rawConfigDir">
+                    <rich:panelMenuGroup label="#{rawConfigDir.path}"
+                                         expanded="true"
+                                         selectedChild="#{currentPath}">
+                      <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
+                        <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                            onclick="cursor_wait();"
+                                            oncomplete="cursor_clear();"
+                                            action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
+                                            reRender="fileContents,selectFileHeader"/>
+                      </c:forEach>
+                    </rich:panelMenuGroup>
+                  </c:forEach>
+                </rich:panelMenu>
+
+
+                <ui:remove>
                 <rich:panelMenu mode="ajax"
                                 expandMode="client"
                                 iconCollapsedGroup="disc"
@@ -159,6 +198,7 @@ THIS TEXT WILL BE REMOVED.
                     </c:forEach>
                   </rich:panelMenuGroup>
                 </rich:panelMenu>
+                </ui:remove>
               </rich:panel>
 
               <h:panelGrid columns="1" style="width:100%;">

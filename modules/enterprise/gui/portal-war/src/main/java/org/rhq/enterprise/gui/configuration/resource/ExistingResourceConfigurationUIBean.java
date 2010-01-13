@@ -59,11 +59,12 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-/**
- * @author Ian Springer
- */
-@Name(value = "ExistingResourceConfigurationViewUIBean")
-@Scope(ScopeType.PAGE)
+// This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
+// UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
+// annotations again.
+//
+//@Name(value = "ExistingResourceConfigurationViewUIBean")
+//@Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 

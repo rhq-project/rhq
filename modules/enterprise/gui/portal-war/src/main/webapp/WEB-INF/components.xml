@@ -19,4 +19,13 @@
        <property name="createTempFiles">false</property>
        <property name="maxRequestSize">1000000</property>
     </component>
+
+  <component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"
+             name="ExistingResourceConfigurationViewUIBean"
+             scope="page"/>
+
+  <component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"
+             name="ExistingResourceConfigurationUIBean"
+             scope="session"/>
+
 </components>

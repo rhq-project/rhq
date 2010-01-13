@@ -15,12 +15,8 @@
         This alert sender plugin is used to send notifications via SNMP traps
     </serverplugin:help>
 
-    <!-- startup & tear down listener, + scheduled jobs
-    <serverplugin:plugin-component class="Foo" />
-    -->
 
-
-    <!-- Global preferences for all mircoblog alerts -->
+    <!-- Global preferences for all snmp alerts -->
     <serverplugin:plugin-configuration>
         <c:simple-property name="snmpVersion" displayName="Snmp protcol version" type="string" required="false" default="1">
             <c:property-options>
@@ -77,7 +73,7 @@
 
     <alert-configuration>
         <c:simple-property name="host" type="string" required="true" description="Trap target host"/>
-        <c:simple-property name="port" type="integer" required="false" default="161" description="Trap target port"/>
+        <c:simple-property name="port" type="integer" required="false" default="162" description="Trap target port"/>
         <c:simple-property name="OID" type="string" required="true" description="OID of the trap sent"/>
 
     </alert-configuration>

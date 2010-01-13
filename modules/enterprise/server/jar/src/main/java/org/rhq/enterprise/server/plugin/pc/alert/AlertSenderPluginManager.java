@@ -64,10 +64,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      * in the super class.
      * Here we verify that the passed &lt;plugin-class&gt; is valid and build the
      * list of plugins that can be queried by the UI etc.
-     * 
+     *
      * @param env the environment of the plugin to be loaded
      * @param enabled if <code>true</code>, the plugin is to be enabled and will be started soon
-     * 
+     *
      * @throws Exception if the alert plugin could not be loaded due to errors such as the alert class being invalid
      */
     @Override
@@ -236,6 +236,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
     public Object getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
+
+        if (className == null)
+            return null;
+
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
         Object bean = null;
 
@@ -244,7 +248,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
-        
+
         return bean;
     }
 

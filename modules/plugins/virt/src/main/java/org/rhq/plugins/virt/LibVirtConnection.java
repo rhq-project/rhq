@@ -193,12 +193,18 @@ public class LibVirtConnection {
         double usedMemory = 0;
         for (int id : connection.listDomains()) {
             Domain domain = connection.domainLookupByID(id);
-            System.out.println(domain.getName());
-            System.out.println(domain.getInfo().memory);
             usedMemory += domain.getInfo().memory;
         }
-        System.out.println(usedMemory);
         return usedMemory / memory;
+    }
+
+    public long getCPUTime() throws LibvirtException {
+        long cpuTime = 0;
+        for (int id : connection.listDomains()) {
+            Domain domain = connection.domainLookupByID(id);
+            cpuTime += domain.getInfo().cpuTime;
+        }
+        return cpuTime;
     }
 
     public HVInfo getHVInfo() throws LibvirtException {

@@ -57,12 +57,14 @@ public class LibVirtConnection {
         }
         for (String i : connection.listInterfaces()) {
             System.out.println("i2 " + i);
+            System.out.println(connection.interfaceLookupByName(i).getXMLDescription(0));
         }
         for (String i : connection.listDefinedNetworks()) {
             System.out.println("n " + i);
         }
         for (String i : connection.listNetworks()) {
             System.out.println("n2 " + i);
+            System.out.println(connection.networkLookupByName(i).getXMLDesc(0));
         }
     }
 

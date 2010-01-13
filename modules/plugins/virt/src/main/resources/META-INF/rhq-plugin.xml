@@ -188,5 +188,23 @@
             </service>
 
         </service>
+        <service name="Virtual Network"
+                 description="Virtual Network"
+                 discovery="VirtualizationNetworkDiscoveryComponent"
+                 class="VirtualizationNetworkComponent"
+                 createDeletePolicy="both" creationDataType="configuration">
+                 
+            <resource-configuration>
+                <c:simple-property name="name" type="string" readOnly="false" required="true" description="The name of the network"/>
+                <c:simple-property name="bridge" type="string" readOnly="false" required="false"  description="The bridge device which is used"/>
+				<c:simple-property name="forwardMode" type="string" readOnly="false" required="false"  description="How to forward to the physical LAN"/>
+				<c:simple-property name="forwardDevice" type="string" readOnly="false" required="false"  description="The physical device to forward to"/>				                
+				<c:simple-property name="autostart" type="boolean" readOnly="false" required="false" description="If the network should autostart"/>
+				<c:simple-property name="ipAddress" type="string" readOnly="false" required="true"  description="IP Address for the network"/>
+				<c:simple-property name="netmask" type="string" readOnly="false" required="true"  description="Netmask for the ip address"/>				
+				<c:simple-property name="dhcpStart" type="string" readOnly="false" required="false" description="Beginning of the DHCP Range"/>
+				<c:simple-property name="dhcpEnd" type="string" readOnly="false" required="false" description="End of the DHCP Range"/>		
+			</resource-configuration>						
+        </service>        
     </server>
 </plugin>

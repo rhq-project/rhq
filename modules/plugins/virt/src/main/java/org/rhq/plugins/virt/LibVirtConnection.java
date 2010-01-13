@@ -29,6 +29,7 @@ import org.libvirt.Domain;
 import org.libvirt.DomainBlockStats;
 import org.libvirt.DomainInterfaceStats;
 import org.libvirt.LibvirtException;
+import org.libvirt.Network;
 
 /**
  * Represents a connection, via libVirt to domain management.
@@ -51,20 +52,6 @@ public class LibVirtConnection {
             if (connection == null) {
                 log.warn("LIbvirt readonly access failed.");
             }
-        }
-        for (String i : connection.listDefinedInterfaces()) {
-            System.out.println("i " + i);
-        }
-        for (String i : connection.listInterfaces()) {
-            System.out.println("i2 " + i);
-            System.out.println(connection.interfaceLookupByName(i).getXMLDescription(0));
-        }
-        for (String i : connection.listDefinedNetworks()) {
-            System.out.println("n " + i);
-        }
-        for (String i : connection.listNetworks()) {
-            System.out.println("n2 " + i);
-            System.out.println(connection.networkLookupByName(i).getXMLDesc(0));
         }
     }
 
@@ -230,6 +217,26 @@ public class LibVirtConnection {
         hvInfo.hostname = connection.getHostName();
         hvInfo.nodeInfo = connection.nodeInfo();
         return hvInfo;
+    }
+
+    public List<String> getNetworks() throws LibvirtException {
+        if (connection == null) {
+            return Arrays.asList(new String[0]);
+        } else {
+            return Arrays.asList(connection.listNetworks());
+        }
+    }
+
+    public List<String> getDefinedNetworks() throws LibvirtException {
+        if (connection == null) {
+            return Arrays.asList(new String[0]);
+        } else {
+            return Arrays.asList(connection.listDefinedNetworks());
+        }
+    }
+
+    public Network getNetwork(String name) throws LibvirtException {
+        return connection.networkLookupByName(name);
     }
 
     public static class DomainInfo {

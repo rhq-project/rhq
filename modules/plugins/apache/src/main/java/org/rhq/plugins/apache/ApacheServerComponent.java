@@ -28,6 +28,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import net.augeas.AugeasException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -328,7 +330,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         }
    }
 
-    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
+    public AugeasProxy getAugeasProxy() throws AugeasException {
         AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());
         AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
         AugeasProxy augeasProxy = new AugeasProxy(config, builder);
@@ -336,7 +338,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return augeasProxy;
     }
 
-    public AugeasTree getAugeasTree() throws AugeasTreeException {
+    public AugeasTree getAugeasTree() throws AugeasException {
         AugeasProxy proxy = getAugeasProxy();
         String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
         

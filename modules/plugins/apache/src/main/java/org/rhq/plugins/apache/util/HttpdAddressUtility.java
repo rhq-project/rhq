@@ -48,11 +48,35 @@ public class HttpdAddressUtility {
     
     public static class Address {
         public String host;
-        public int port;
+        public int port = -1;
         
         public Address(String host, int port) {
             this.host = host;
             this.port = port;
+        }
+        
+        /**
+         * A simple parser of the provided address into host and port
+         * sections.
+         * 
+         * @param address the address to parse
+         * @return an instance of Address with host and port set accordingly
+         */
+        public static Address parse(String address) {
+            int lastColonIdx = address.lastIndexOf(':');
+            if (lastColonIdx == -1) {
+                return new Address(address, -1);
+            } else {
+                int lastRightBracketPos = address.lastIndexOf(']');
+                if (lastColonIdx > lastRightBracketPos) {
+                    String host = address.substring(0, lastColonIdx);
+                    int port = Integer.parseInt(address.substring(lastColonIdx + 1));
+                    return new Address(host, port);
+                } else {
+                    //this is an IP6 address without a port spec
+                    return new Address(address, -1);
+                }
+            }
         }
         
         @Override
@@ -90,29 +114,18 @@ public class HttpdAddressUtility {
             List<AugeasNode> params = listen.getChildByLabel("param");
             String address = params.get(0).getValue();
             
-            String host = null;
-            String port = null;
-            if (address.startsWith("[")) {
-                int bracketIdx = address.indexOf(']');
-                host = address.substring(1, bracketIdx);
-                port = address.substring(bracketIdx + 2);
-            } else {
-                String[] hostPort = address.split(":");
-                if (hostPort.length == 1) {
-                    port = hostPort[0];
-                } else {
-                    host = hostPort[0];
-                    port = hostPort[1];
-                }
-            }
-            if (host == null) {
+            Address addr = Address.parse(address);
+            
+            if (addr.port == -1) {
+                addr.port = Integer.parseInt(addr.host);
                 try {
-                    host = InetAddress.getLocalHost().getHostAddress();
+                    addr.host = InetAddress.getLocalHost().getHostAddress();
                 } catch (UnknownHostException e) {
                     throw new IllegalStateException("Unable to get the localhost address.", e);
                 }
             }
-            return new Address(host, Integer.parseInt(port));
+            
+            return addr;
         } catch (Exception e) {
             log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");
             
@@ -130,31 +143,23 @@ public class HttpdAddressUtility {
      * @return the address on which the virtual host can be accessed or null on error
      */
     public static Address getVirtualHostSampleAddress(AugeasTree ag, String virtualHost, String serverName) {
-        Address addr = new Address(null, -1);
-        if (virtualHost.startsWith("[")) {
-            //TODO IPv6 address
-            return null;
+        Address addr = Address.parse(virtualHost);
+        if (addr.port == -1) {
+            //just port specified
+            Address serverAddr = getMainServerSampleAddress(ag);
+            
+            if (serverAddr == null) return null;
+            
+            addr.port = Integer.parseInt(addr.host);
+            addr.host = serverAddr.host;
         } else {
-            String[] hostPort = virtualHost.split(":");
-            if (hostPort.length == 1) {
-                //just address specified
+            String host = addr.host;
+            if ("*".equals(host) || "_default_".equals(host)) {
                 Address serverAddr = getMainServerSampleAddress(ag);
-                
                 if (serverAddr == null) return null;
-                
-                addr.port = Integer.parseInt(hostPort[0]);
-                addr.host = serverAddr.host;
-            } else {
-                String host = hostPort[0];
-                if ("*".equals(host) || "_default_".equals(host)) {
-                    Address serverAddr = getMainServerSampleAddress(ag);
-                    if (serverAddr == null) return null;
-                    host = serverAddr.host;
-                }
-                String port = hostPort[1];
-                addr.host = host;
-                addr.port = Integer.parseInt(port);
+                host = serverAddr.host;
             }
+            addr.host = host;
         }
         
         if (serverName != null) {

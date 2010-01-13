@@ -1737,6 +1737,22 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             packageVersionId);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream) {
+        // Used by export of content through http
+
+        PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
+            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
+            .getArchitecture().toString());
+
+        int resourceId = 0; //set to dummy value
+
+        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, 0, -1, packageVersion
+            .getId());
+    }
+
     @SuppressWarnings("unchecked")
     private long outputPackageVersionBitsRangeHelper(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte, int packageVersionId) {

@@ -559,6 +559,23 @@ public interface ContentSourceManagerLocal {
         PackageDetailsKey packageDetailsKey, OutputStream outputStream);
 
     /**
+     * Requests the bits of a package be streamed down to the caller over the given output stream. 
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param packageVersion    packageVersion to fetch 
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream);
+
+    /**
      * Adds the specified content source to the database but does not attempt to create or start
      * the server-side plugin provider implementation associated with it.
      * <p/>

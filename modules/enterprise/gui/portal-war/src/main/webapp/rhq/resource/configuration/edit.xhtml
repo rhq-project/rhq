@@ -44,8 +44,14 @@ THIS TEXT WILL BE REMOVED.
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
+      <h:panelGrid columns="2">
+        <h:outputText value="#{ResourceUIBean.name}"/>
+      </h:panelGrid>
+
       <c:choose>
         <c:when test="${ExistingResourceConfigurationUIBean.rawSupported}">
+          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+            <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
           <h:panelGrid columns="2"
                        styleClass="raw-outer-table"
                        columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
@@ -108,9 +114,13 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </h:panelGrid>
           </h:panelGrid>
+          </rich:tab>
+          </rich:tabPanel>
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredSupported}">
+          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+            <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
           <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                       configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                       nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
@@ -125,6 +135,8 @@ THIS TEXT WILL BE REMOVED.
             <h:commandButton value="RESET" type="reset" immediate="true"
                              title="Click to Reset Fields" styleClass="buttonmed"/>
           </h:panelGrid>
+          </rich:tab>
+          </rich:tabPanel>
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredAndRawSupported}">

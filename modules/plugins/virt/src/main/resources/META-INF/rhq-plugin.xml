@@ -159,7 +159,7 @@
 
             </resource-configuration>
 
-<!--
+
             <service name="Virtual Network Interface"
                      class="VirtualizationInterfaceComponent"
                      discovery="VirtualizationInterfaceDiscoveryComponent">
@@ -187,7 +187,6 @@
 
             </service>
 
-        -->
         </service>
     </server>
 </plugin>

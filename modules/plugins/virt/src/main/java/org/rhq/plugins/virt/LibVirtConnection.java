@@ -259,7 +259,7 @@ public class LibVirtConnection {
         System.out.println("HV URI:" + hi.uri);
         for (int foo : conn.getDomainIds()) {
             System.out.println(foo);
-            System.out.println(conn.connection.domainLookupByID(foo).getXMLDesc(0));
+            System.out.println(conn.connection.domainLookupByID(foo).interfaceStats(""));
         }
         for (String foo : conn.getDomainNames()) {
             System.out.println(foo);

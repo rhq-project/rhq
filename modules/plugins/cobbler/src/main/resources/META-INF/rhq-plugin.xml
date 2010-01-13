@@ -10,7 +10,7 @@
 
    <depends plugin="Augeas"/>
 
-   <service name="Cobbler File"
+   <server name="Cobbler File"
            description="the local file used for mapping modules and setttings"
             discovery="CobblerDiscoveryComponent"
             class="CobblerComponent"
@@ -37,7 +37,7 @@
                                   description="The IP address of the cobbler server."/>      
       </resource-configuration>
 
-   </service>
+   </server>
 
 </plugin>
         

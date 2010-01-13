@@ -18,48 +18,28 @@
  */
 package org.rhq.plugins.cobbler;
 
-import java.io.File;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-import org.rhq.plugins.augeas.test.AbstractAugeasConfigurationComponentTest;
 
 /**
  * An integration test for {@link CobblerComponent}.
  *
  * @author Ian Springer
  */
-public class CobblerComponentTest extends AbstractAugeasConfigurationComponentTest {
+public class CobblerComponentTest {
     private static final String PLUGIN_NAME = "Cobbler";
     private static final String RESOURCE_TYPE_NAME = "Cobbler File";
 
-    @Override
     protected String getPluginName() {
         return PLUGIN_NAME;
     }
 
-    @Override
     protected String getResourceTypeName() {
         return RESOURCE_TYPE_NAME;
     }
 
-    @Override
-    protected boolean isResourceConfigSupported() {
-        // The cobbler plugin will use Augeas if it's available but will fall back to direct file parsing if it's not.
-        return true;
-    }
-
-    @Override
-    protected void tweakDefaultPluginConfig(Configuration defaultPluginConfig) {
-        super.tweakDefaultPluginConfig(defaultPluginConfig);
-        String cobblerFilePath = new File("/etc/cobbler").getAbsolutePath();
-        defaultPluginConfig.put(new PropertySimple(AugeasConfigurationComponent.INCLUDE_GLOBS_PROP, cobblerFilePath));
-    }
-
-    @Override
     protected Configuration getExpectedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");
@@ -100,7 +80,6 @@ public class CobblerComponentTest extends AbstractAugeasConfigurationComponentTe
         return config;
     }
 
-    @Override
     protected Configuration getUpdatedResourceConfig() {
         Configuration config = new Configuration();
         PropertyList entries = new PropertyList(".");

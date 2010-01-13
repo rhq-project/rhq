@@ -20,10 +20,10 @@
         
 		<metric property="cpus" displayName="CPUs" dataType="trait" displayType="summary"/>
 		<metric property="memory" displayName="Memory" dataType="trait" displayType="summary"/>
+		<metric property="memoryUsage" displayName="Memory Usage" units="percentage" displayType="summary"/>		
 		
         <!--
         <metric property="cpuPercentage" displayName="CPU Usage" units="percentage" displayType="summary"/>
-        <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>
         <metric property="cpuTime" displayName="CPU Time" measurementType="trendsup" units="nanoseconds"
                 displayType="summary"/>
         -->

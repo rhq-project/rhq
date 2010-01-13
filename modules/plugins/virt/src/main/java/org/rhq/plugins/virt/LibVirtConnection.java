@@ -188,6 +188,19 @@ public class LibVirtConnection {
         return connection.close();
     }
 
+    public double getMemoryPercentage() throws LibvirtException {
+        double memory = connection.nodeInfo().memory;
+        double usedMemory = 0;
+        for (int id : connection.listDomains()) {
+            Domain domain = connection.domainLookupByID(id);
+            System.out.println(domain.getName());
+            System.out.println(domain.getInfo().memory);
+            usedMemory += domain.getInfo().memory;
+        }
+        System.out.println(usedMemory);
+        return usedMemory / memory;
+    }
+
     public HVInfo getHVInfo() throws LibvirtException {
         HVInfo hvInfo = new HVInfo();
         hvInfo.libvirtVersion = connection.getLibVirVersion();

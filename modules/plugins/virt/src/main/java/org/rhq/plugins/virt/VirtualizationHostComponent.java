@@ -27,6 +27,7 @@ import org.libvirt.LibvirtException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
@@ -73,10 +74,13 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
         HVInfo hi = virt.getHVInfo();
         for (MeasurementScheduleRequest request : metrics) {
+            System.out.println(request.getName());
             if (request.getName().equals("cpus")) {
                 report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.cpus));
             } else if (request.getName().equals("memory")) {
                 report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.memory));
+            } else if (request.getName().equals("memoryUsage")) {
+                report.addData(new MeasurementDataNumeric(request, virt.getMemoryPercentage()));
             }
         }
     }

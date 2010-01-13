@@ -36,22 +36,28 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.AugeasUtility;
+import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
  *
  * @author Ian Springer
  */
-public class CobblerComponent extends AugeasConfigurationComponent {
+public class CobblerComponent extends AugeasConfigurationComponent<PlatformComponent> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+    public void start(ResourceContext<PlatformComponent> resourceContext) throws InvalidPluginConfigurationException,
+        Exception {
         super.start(resourceContext);
     }
 
-    public void stop() {
-        return;
+    @Override
+    protected void setupAugeasModules(Augeas augeas) {
+        augeas.set("/augeas/load/CobblerSettings/lens", "CobblerSettings.lns");
+        augeas.set("/augeas/load/CobblerSettings/incl[1]", "/etc/cobbler/settings");
+        augeas.set("/augeas/load/CobblerModules/lens", "CobblerModules.lns");
+        augeas.set("/augeas/load/CobblerModules/incl[1]", "/etc/cobbler/modules.conf");
     }
 
     public AvailabilityType getAvailability() {

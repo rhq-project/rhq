@@ -27,7 +27,6 @@ import org.libvirt.DomainInfo.DomainState;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -42,7 +41,6 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.plugins.virt.LibVirtConnection.DomainInfo;
 
 /**
  * Component for managing both virtual hosts and guests though some features are guest only and only
@@ -146,7 +144,7 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
         LibVirtConnection virt = getConnection();
-        Configuration config = new Configuration();
+        /*Configuration config = new Configuration();
         DomainInfo info = virt.getDomainInfo(domainName);
         //TODO Type
         //TODO Lifecycle Actions
@@ -155,23 +153,27 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
         config.put(new PropertySimple("vcpu", info.domainInfo.nrVirtCpu));
         config.put(new PropertySimple("memory", info.domainInfo.maxMem));
         config.put(new PropertySimple("currentMemory", info.domainInfo.memory));
-        return config;
+        return config;*/
+
+        String xml = virt.getDomainXML(this.domainName);
+        return DomainConfigurationEditor.getConfiguration(xml);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         try {
-            //String xml = this.virt.getDomainXML(this.domainName);
+
             LibVirtConnection virt = getConnection();
+            String xml = virt.getDomainXML(this.domainName);
 
             Configuration oldConfig = loadResourceConfiguration();
             Configuration newConfig = report.getConfiguration();
 
-            //String newXml = DomainConfigurationEditor.updateXML(report.getConfiguration(), xml);
+            String newXml = DomainConfigurationEditor.updateXML(report.getConfiguration(), xml);
 
-            //log.info("Calling libvirt to redefine domain");
-            //if (!this.virt.defineDomain(newXml)) {
-            //    log.warn("Call to redefine domain did not return a domain pointer");
-            //}
+            log.info("Calling libvirt to redefine domain");
+            if (!virt.defineDomain(newXml)) {
+                log.warn("Call to redefine domain did not return a domain pointer");
+            }
 
             // TODO GH: There seems to be some situations where an xml define doesn't change settings so we try a more direct approach here
             // TODO BK: Make this operations on the domain

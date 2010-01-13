@@ -122,7 +122,6 @@
                     </c:simple-property>
                 </c:group>
 
-<!--
                 <c:group name="Networking">
                     <c:list-property name="interfaces">
                         <c:map-property name="interface">
@@ -157,7 +156,6 @@
                         </c:map-property>
                     </c:list-property>
                 </c:group> 
--->
 
             </resource-configuration>
 

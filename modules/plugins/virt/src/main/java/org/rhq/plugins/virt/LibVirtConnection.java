@@ -52,6 +52,18 @@ public class LibVirtConnection {
                 log.warn("LIbvirt readonly access failed.");
             }
         }
+        for (String i : connection.listDefinedInterfaces()) {
+            System.out.println("i " + i);
+        }
+        for (String i : connection.listInterfaces()) {
+            System.out.println("i2 " + i);
+        }
+        for (String i : connection.listDefinedNetworks()) {
+            System.out.println("n " + i);
+        }
+        for (String i : connection.listNetworks()) {
+            System.out.println("n2 " + i);
+        }
     }
 
     public String getConnectionURI() throws LibvirtException {
@@ -245,9 +257,11 @@ public class LibVirtConnection {
         System.out.println("HV URI:" + hi.uri);
         for (int foo : conn.getDomainIds()) {
             System.out.println(foo);
+            System.out.println(conn.connection.domainLookupByID(foo).getXMLDesc(0));
         }
         for (String foo : conn.getDomainNames()) {
             System.out.println(foo);
+            System.out.println(conn.connection.domainLookupByName(foo).getXMLDesc(0));
         }
     }
 }

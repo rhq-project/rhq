@@ -143,6 +143,9 @@ public class Repo implements Serializable, Taggable {
     @Column(name = "IS_CANDIDATE", nullable = false)
     private boolean candidate;
 
+    @Column(name = "SYNC_SCHEDULE", nullable = true)
+    private String syncSchedule = "0 0 3 * * ?";
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
@@ -251,6 +254,25 @@ public class Repo implements Serializable, Taggable {
 
     public void setCandidate(boolean candidate) {
         this.candidate = candidate;
+    }
+
+    /**
+     * Periodically, the Repo will be asked to synchronize with the remote ContentProviders associated with it
+     * This attribute defines the schedule, as a cron string. The default will be set for everyday at
+     * 3:00am local time. If this content source should never automatically sync, this should be null, but
+     * an empty string would also indicate this, too.
+     *
+     * @return sync schedule as a cron string or null if the sync should not automatically occur
+     */
+    public String getSyncSchedule() {
+        return syncSchedule;
+    }
+
+    public void setSyncSchedule(String syncSchedule) {
+        if (syncSchedule != null && syncSchedule.trim().length() == 0) {
+            syncSchedule = null;
+        }
+        this.syncSchedule = syncSchedule;
     }
 
     /**

@@ -66,6 +66,14 @@
               value="#{RepoDetailsUIBean.repo.description}" /></td>
           </tr>
           <tr>
+            <td align="right"><b>Sync Schedule:</b></td>
+            <td align="left"><h:inputText
+              rendered="${mode eq 'edit'}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /> <h:outputText
+              rendered="${mode ne 'edit'}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /></td>
+          </tr>
+          <tr>
             <td align="right"><b>Creation Date:</b></td>
             <td align="left"><h:outputText
               value="#{RepoDetailsUIBean.repo.creationDate}">

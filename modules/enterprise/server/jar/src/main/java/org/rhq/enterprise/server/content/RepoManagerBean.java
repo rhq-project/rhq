@@ -312,6 +312,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         repo = entityManager.merge(repo);
         log.debug("User [" + subject + "] updated repo [" + repo + "]");
 
+        try {
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            pc.unscheduleRepoSyncJob(repo);
+            pc.scheduleRepoSyncJob(repo);
+        } catch (Exception e) {
+            log.warn("Failed to reschedule for [" + repo + "]", e);
+        }
+
         return repo;
     }
 
@@ -323,6 +331,16 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         log.debug("User [" + subject + "] is creating repo [" + repo + "]");
         entityManager.persist(repo);
         log.debug("User [" + subject + "] created repo [" + repo + "]");
+
+        // Schedule the repo sync job.
+        try {
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            // Schedule a job for the future
+            pc.scheduleRepoSyncJob(repo);
+        } catch (Exception e) {
+            log.error("error trying to schedule RepoSync", e);
+            throw new RuntimeException(e);
+        }
 
         return repo; // now has the ID set
     }

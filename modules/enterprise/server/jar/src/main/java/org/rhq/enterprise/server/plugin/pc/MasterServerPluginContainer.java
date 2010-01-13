@@ -21,19 +21,27 @@ package org.rhq.enterprise.server.plugin.pc;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerFactory;
+import org.quartz.impl.StdSchedulerFactory;
+import org.quartz.simpl.RAMJobStore;
 
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
+import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
+import org.rhq.enterprise.server.scheduler.EnhancedSchedulerImpl;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
@@ -56,6 +64,9 @@ public class MasterServerPluginContainer {
     /** the object that provides all the classloaders for all plugins */
     private ClassLoaderManager classLoaderManager;
 
+    /** this is used to obtain an in-memory, non-persistent scheduler used to schedule jobs to run only within this JVM */
+    private SchedulerFactory nonClusteredSchedulerFactory;
+
     /**
      * Because the individual plugin containers are only managing enabled plugins (they are never told about plugins that disabled).
      * this map contains the lists of plugins that are disabled so others can find out what plugins are registered but not running.
@@ -72,6 +83,8 @@ public class MasterServerPluginContainer {
             log.debug("Master server plugin container is being initialized with config: " + config);
 
             this.configuration = config;
+
+            initializeNonClusteredScheduler();
 
             // load all server-side plugins - this just parses their descriptors and confirms they are valid server plugins
             Map<URL, ? extends ServerPluginDescriptorType> plugins = preloadAllPlugins();
@@ -199,6 +212,8 @@ public class MasterServerPluginContainer {
                 log.error("Failed to shutdown server plugin container for plugin type [" + pluginType + "]", e);
             }
         }
+
+        shutdownNonClusteredScheduler();
 
         // now shutdown the classloader manager, destroying the classloaders it created
         if (this.classLoaderManager != null) {
@@ -463,5 +478,79 @@ public class MasterServerPluginContainer {
     protected ClassLoaderManager createClassLoaderManager(Map<URL, ? extends ServerPluginDescriptorType> plugins,
         ClassLoader rootClassLoader, File tmpDir) {
         return new ClassLoaderManager(plugins, rootClassLoader, tmpDir);
+    }
+
+    /**
+     * Some schedule jobs may want to run on all machines in the RHQ cluster. We can't use our
+     * normal persistent, clustered scheduler for these jobs. Instead, each master plugin container
+     * running in each RHQ server will have their own internal scheduler that can be used to run
+     * jobs for this purpose.
+     * 
+     * @throws Exception if failed to initialize the internal scheduler
+     */
+    protected void initializeNonClusteredScheduler() throws Exception {
+        Properties schedulerConfig = new Properties();
+        schedulerConfig.setProperty(StdSchedulerFactory.PROP_JOB_STORE_CLASS, RAMJobStore.class.getName());
+        schedulerConfig.setProperty(StdSchedulerFactory.PROP_SCHED_INSTANCE_NAME, "RHQServerPlugins");
+
+        StdSchedulerFactory factory = new StdSchedulerFactory();
+        factory.initialize(schedulerConfig);
+        factory.getScheduler(); // confirms that we can get it and no exceptions get thrown
+        this.nonClusteredSchedulerFactory = factory;
+        return;
+    }
+
+    /**
+     * This will stop the internal, non-clustered scheduler running in the master plugin container.
+     * This tells all jobs to shut down. 
+     */
+    @SuppressWarnings("unchecked")
+    protected void shutdownNonClusteredScheduler() {
+        if (this.nonClusteredSchedulerFactory != null) {
+            try {
+                // I'm just being thorough (ok, ok.. paranoid) - should only have one scheduler, but shutdown all if we magically get more than 1
+                Collection<Scheduler> schedulers = this.nonClusteredSchedulerFactory.getAllSchedulers();
+                if (schedulers != null) {
+                    for (Scheduler schedule : schedulers) {
+                        schedule.shutdown(false);
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Failed to shutdown master plugin container nonclustered scheduler", e);
+            } finally {
+                this.nonClusteredSchedulerFactory = null;
+            }
+        }
+        return;
+    }
+
+    /**
+     * Some schedule jobs may want to run on all machines in the RHQ cluster. We can't use our
+     * normal persistent, clustered scheduler for these jobs. Instead, each master plugin container
+     * running in each RHQ server will have their own internal scheduler that can be used to run
+     * jobs for this purpose.
+     * 
+     * @throws Exception if failed to obtain the internal scheduler
+     * 
+     * @see #getClusteredScheduler()
+     */
+    protected EnhancedScheduler getNonClusteredScheduler() throws Exception {
+        if (this.nonClusteredSchedulerFactory == null) {
+            throw new NullPointerException("The non-clustered scheduler has not be initialized");
+        }
+        return new EnhancedSchedulerImpl(this.nonClusteredSchedulerFactory.getScheduler());
+    }
+
+    /**
+     * Most jobs need to be scheduled using the clustered scheduler so they can be run on different
+     * machines in the RHQ cluster in order to balance the load across the cluster. Use this
+     * scheduler when scheduling those jobs.
+     * 
+     * @return the clustered scheduler
+     * 
+     * @see #getNonClusteredScheduler()
+     */
+    protected EnhancedScheduler getClusteredScheduler() {
+        return LookupUtil.getSchedulerBean();
     }
 }

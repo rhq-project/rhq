@@ -35,23 +35,23 @@ public class CobblerServerPluginComponent implements ServerPluginComponent {
 
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
-        log.debug("initialized!!! : " + this);
+        log.error("initialized!!! : " + this);
     }
 
     public void start() {
-        log.debug("started!!! : " + this);
+        log.error("started!!! : " + this);
     }
 
     public void stop() {
-        log.debug("stopped!!! : " + this);
+        log.error("stopped!!! : " + this);
     }
 
     public void shutdown() {
-        log.debug("shutdown!!! : " + this);
+        log.error("shutdown!!! : " + this);
     }
 
     public void synchronizeContent(ScheduledJobInvocationContext invocation) throws Exception {
-        log.info("Synchronizing content to the local Cobbler server: " + this);
+        log.error("Synchronizing content to the local Cobbler server: " + this);
     }
 
     @Override

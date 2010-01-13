@@ -102,6 +102,13 @@ abstract class AbstractJobWrapper implements Job {
     public static final String DATAMAP_IS_CONCURRENT = DATAMAP_LEADER + "isConcurrent";
 
     /**
+     * Key to the job data map that indicates if the job is clustered or not. If this
+     * job is clustered, the job may be executing on a machine that did not originally
+     * schedule the job.
+     */
+    public static final String DATAMAP_IS_CLUSTERED = DATAMAP_LEADER + "isClustered";
+
+    /**
      * This is the method that quartz calls when the schedule has triggered. This method will
      * delegate to the plugin component that is responsible to do work for the plugin.
      * 
@@ -119,6 +126,7 @@ abstract class AbstractJobWrapper implements Job {
         String jobClass = dataMap.getString(DATAMAP_JOB_CLASS);
         String jobMethodName = dataMap.getString(DATAMAP_JOB_METHOD_NAME);
         boolean isConcurrent = Boolean.parseBoolean(dataMap.getString(DATAMAP_IS_CONCURRENT));
+        boolean isClustered = Boolean.parseBoolean(dataMap.getString(DATAMAP_IS_CLUSTERED));
         String scheduleTypeStr = dataMap.getString(DATAMAP_SCHEDULE_TYPE);
         String scheduleTrigger = dataMap.getString(DATAMAP_SCHEDULE_TRIGGER);
 
@@ -210,7 +218,7 @@ abstract class AbstractJobWrapper implements Job {
             jobMethod = pluginJobObject.getClass().getMethod(jobMethodName, ScheduledJobInvocationContext.class);
             params = new Object[1];
 
-            AbstractScheduleType scheduleType = AbstractScheduleType.create(isConcurrent, scheduleTypeStr,
+            AbstractScheduleType scheduleType = AbstractScheduleType.create(isConcurrent, isClustered, scheduleTypeStr,
                 scheduleTrigger);
             if (scheduleType == null) {
                 // how is this possible that we got bad schedule data in the datamap? this isn't fatal, just log it and leave it null

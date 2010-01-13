@@ -466,4 +466,27 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         assert reposWithOldName.size() == 0;
     }
+
+    @Test(enabled = ENABLED)
+    public void updateSyncSchedule() {
+        Repo repo = new Repo("updateSyncSchedule");
+        repo.setSyncSchedule("NOT A VALID CRON");
+        boolean failed = false;
+        try {
+            repo = repoManager.createRepo(overlord, repo);
+        } catch (RepoException e) {
+            failed = true;
+        }
+        assert failed;
+
+        failed = false;
+        repo.setSyncSchedule("0 0 3 * * ?");
+        try {
+            repo = repoManager.createRepo(overlord, repo);
+        } catch (RepoException e) {
+            failed = true;
+        }
+        assert !failed;
+    }
+
 }

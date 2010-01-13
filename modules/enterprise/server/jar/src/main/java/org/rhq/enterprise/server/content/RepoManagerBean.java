@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,7 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
@@ -300,10 +302,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
-        if (repo.getName() == null || repo.getName().trim().equals("")) {
-            throw new RepoException("Repo name is required");
-        }
-
+        validateFields(repo);
         // HHH-2864 - Leave this in until we move to hibernate > 3.2.r14201-2
         getRepo(subject, repo.getId());
 
@@ -790,10 +789,21 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         repo.addRepoRelationship(repoRelationship);
     }
 
-    private void validateRepo(Repo c) throws RepoException {
-        if (c.getName() == null || c.getName().trim().equals("")) {
+    private void validateFields(Repo repo) throws RepoException {
+        if (repo.getName() == null || repo.getName().trim().equals("")) {
             throw new RepoException("Repo name is required");
         }
+        if (repo.getSyncSchedule() != null) {
+            try {
+                CronExpression ce = new CronExpression(repo.getSyncSchedule());
+            } catch (ParseException e) {
+                throw new RepoException("Repo sync schedule is not a vaild format.");
+            }
+        }
+    }
+
+    private void validateRepo(Repo c) throws RepoException {
+        this.validateFields(c);
 
         List<Repo> repos = getRepoByName(c.getName());
         if (repos.size() != 0) {

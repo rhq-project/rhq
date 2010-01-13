@@ -108,23 +108,32 @@ public class HttpdAddressUtility {
      */
     public static Address getMainServerSampleAddress(AugeasTree ag) {
         try {
-            //there has to be at least one Listen directive
-            AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
+            Address addr = null;
             
-            List<AugeasNode> params = listen.getChildByLabel("param");
-            String address = params.get(0).getValue();
+            //check if there is a ServerName directive
+            List<AugeasNode> serverNameNodes = ag.matchRelative(ag.getRootNode(), "ServerName");
             
-            Address addr = Address.parse(address);
-            
-            if (addr.port == -1) {
-                addr.port = Integer.parseInt(addr.host);
-                try {
-                    addr.host = InetAddress.getLocalHost().getHostAddress();
-                } catch (UnknownHostException e) {
-                    throw new IllegalStateException("Unable to get the localhost address.", e);
-                }
+            if (serverNameNodes.size() > 0) {
+                String serverName = serverNameNodes.get(0).getChildByLabel("param").get(0).getValue();
+                addr = Address.parse(serverName);
+            } else {
+                //there has to be at least one Listen directive
+                AugeasNode listen = ag.matchRelative(ag.getRootNode(), "Listen").get(0);
+                
+                List<AugeasNode> params = listen.getChildByLabel("param");
+                String address = params.get(0).getValue();
+                
+                addr = Address.parse(address);
+                
+                if (addr.port == -1) {
+                    addr.port = Integer.parseInt(addr.host);
+                    try {
+                        addr.host = InetAddress.getLocalHost().getHostName();
+                    } catch (UnknownHostException e) {
+                        throw new IllegalStateException("Unable to get the localhost address.", e);
+                    }
+                }                
             }
-            
             return addr;
         } catch (Exception e) {
             log.info("Failed to obtain main server address. Is augeas installed and correct lens in use?");

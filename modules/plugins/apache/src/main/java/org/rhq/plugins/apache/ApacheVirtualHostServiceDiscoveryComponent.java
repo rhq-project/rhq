@@ -18,6 +18,8 @@
  */
 package org.rhq.plugins.apache;
 
+import java.io.File;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -48,8 +50,12 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
  */
 public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
+    public static final String LOGS_DIRECTORY_NAME = "logs";
+
+    private static final String RT_LOG_FILE_NAME_SUFFIX = "_rt.log";
+
     private final Log log = LogFactory.getLog(getClass());
-    
+
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ApacheServerComponent> context)
         throws InvalidPluginConfigurationException, Exception {
 
@@ -59,21 +65,41 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         ResourceType resourceType = context.getResourceType();
 
         Configuration mainServerPluginConfig = context.getDefaultPluginConfiguration();
+
+        File configPath = context.getParentResourceComponent().getServerRoot();
+        File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);        
         
-        String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
+        String mainServerUrl = context.getParentResourceContext().getPluginConfiguration().getSimple(
+            ApacheServerComponent.PLUGIN_CONFIG_PROP_URL).getStringValue();
         if (mainServerUrl != null && !"null".equals(mainServerUrl)) {
-            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, mainServerUrl);
-            
+            PropertySimple mainServerUrlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP,
+                mainServerUrl);
+
             mainServerPluginConfig.put(mainServerUrlProp);
+
+            URI mainServerUri = new URI(mainServerUrl);
+            String host = mainServerUri.getHost();
+            int port = mainServerUri.getPort();
+            if (port == -1) {
+                port = 80;
+            }
+            
+            File rtLogFile = new File(logsDir, host + port
+                + RT_LOG_FILE_NAME_SUFFIX);
+            
+            PropertySimple rtLogProp = new PropertySimple(
+                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+            mainServerPluginConfig.put(rtLogProp);
         }
-        
-        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType, ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server",
-            null, null, mainServerPluginConfig, null);
+
+        DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
+            ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server", null, null,
+            mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
 
         //read the virtual hosts from augeas
         AugeasTree ag = null;
-        
+
         try {
             ag = context.getParentResourceComponent().getAugeasTree();
         } catch (AugeasException e) {
@@ -86,53 +112,56 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         for (AugeasNode node : virtualHosts) {
             List<AugeasNode> hosts = ag.matchRelative(node, "param");
             String firstAddress = hosts.get(0).getValue();
-            
+
             List<AugeasNode> serverNames = ag.matchRelative(node, "ServerName/param");
             String serverName = null;
             if (serverNames.size() > 0) {
                 serverName = serverNames.get(0).getValue();
             }
-            
+
             StringBuilder keyBuilder = new StringBuilder();
             if (serverName != null) {
                 keyBuilder.append(serverName).append("|");
             }
             keyBuilder.append(firstAddress);
-            
+
             Iterator<AugeasNode> it = hosts.iterator();
             it.next();
-            
+
             while (it.hasNext()) {
                 keyBuilder.append(" ").append(it.next().getValue());
             }
-            
+
             String resourceKey = keyBuilder.toString();
-            
+
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
             Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
             if (address != null) {
                 String url = "http://" + address.host + ":" + address.port + "/";
-                
+
                 PropertySimple urlProp = new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url);
                 pluginConfiguration.put(urlProp);
             }
+
+            File rtLogFile = new File(logsDir, address.host + address.port
+                + RT_LOG_FILE_NAME_SUFFIX);
             
-            String resourceName = "VirtualHost ";
+            PropertySimple rtLogProp = new PropertySimple(
+                ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
+            pluginConfiguration.put(rtLogProp);
+
+            String resourceName = "Virtual Host ";
             if (serverName != null) {
                 resourceName += address.host + ":" + address.port;
             } else {
                 resourceName += resourceKey;
             }
-            
-            //TODO there is no simple way how to determine the RT log file. The server can listen on multiple
-            //ports and vhost can be configured to listen on all of them. Also the server can listen on multiple
-            //IPs and virtual host can also listen on all of them. Thus the host_port_rt.log is rather non-deterministic.
-            
-            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null,
-                null, pluginConfiguration, null));
+
+            discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,
+                pluginConfiguration, null));
         }
 
         return discoveredResources;
-    }    
+    }
 }

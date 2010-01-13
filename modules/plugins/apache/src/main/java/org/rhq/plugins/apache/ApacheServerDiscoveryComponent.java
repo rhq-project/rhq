@@ -137,7 +137,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                         serverRootProp.setValue(serverRoot);
                     }
 
-                    String url = getUrl(pluginConfig, serverConfig);
+                    String url = getUrl(serverConfig);
                     if (url != null) {
                         Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
                         pluginConfig.put(urlProp);                    
@@ -218,13 +218,11 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      * Return the root URL as determined from the Httpd configuration loaded by Augeas.
      * he URL's protocol is assumed to be "http" and its path is assumed to be "/".
      *  
-     * @param  pluginConfig
-     *
      * @return
      *
      * @throws Exception
      */
-    private static String getUrl(Configuration pluginConfig, AugeasTree serverConfig) throws Exception {
+    private static String getUrl(AugeasTree serverConfig) throws Exception {
         Address addr = HttpdAddressUtility.getMainServerSampleAddress(serverConfig);
         return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
     }

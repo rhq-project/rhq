@@ -27,6 +27,18 @@ THIS TEXT WILL BE REMOVED.
   <ui:param name="selectedTabName" value="Configuration.Current"/>
 
   <ui:define name="content">
+    <script type="text/javascript">
+      var curentFile = 
+
+      function cursor_wait() {
+        document.body.style.cursor = 'wait';
+      }
+
+      function cursor_clear() {
+        document.body.style.cursor = 'default';
+      }
+    </script>
+
     <h:panelGroup layout="block" styleClass="InfoBlock"
                   rendered="#{ExistingResourceConfigurationViewUIBean.updateInProgress}">
       <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
@@ -133,7 +145,7 @@ THIS TEXT WILL BE REMOVED.
             <h:outputText value="#{ResourceUIBean.name}"/>
           </h:panelGrid>
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
-            <rich:tab label="Basic Mode">
+            <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
                           <h:outputText value=" #{messages.nopermissionedit}"
                                         rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -157,7 +169,7 @@ THIS TEXT WILL BE REMOVED.
                                   prevalidate="true"/>
 
             </rich:tab>
-            <rich:tab label="Advanced Mode">
+            <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
               <h:outputText value=" #{messages.nopermissionedit}"
                           rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -190,6 +202,8 @@ THIS TEXT WILL BE REMOVED.
                                          selectedChild="#{currentPath}">
                       <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                         <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                            onclick="cursor_wait();"
+                                            oncomplete="cursor_clear();"
                                             action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"
                                             reRender="fileContents,selectFileHeader"/>
                       </c:forEach>

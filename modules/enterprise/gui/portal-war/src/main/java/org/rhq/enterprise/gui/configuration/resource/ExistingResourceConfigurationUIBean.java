@@ -332,6 +332,13 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getCurrent().getPath();
     }
 
+    public String getModalEditorContents() {
+        return getCurrentContents();
+    }
+
+    public void setModalEditorContents(String contents) {
+    }
+
     public TreeMap<String, RawConfiguration> getModified() {
         if (modified == null) {
             modified = new TreeMap<String, RawConfiguration>();

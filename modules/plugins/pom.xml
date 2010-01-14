@@ -121,7 +121,7 @@
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>
-      <!--<module>virt</module>-->
+      <module>virt</module>
 
       <!-- this is just for testing raw config -->
       <module>raw-config-test</module>

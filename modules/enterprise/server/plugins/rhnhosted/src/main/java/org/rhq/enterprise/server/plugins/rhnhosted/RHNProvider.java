@@ -357,7 +357,6 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return new SyncProgressWeight(10, 1, 0, 0, 1);
     }

@@ -393,7 +393,6 @@ public class UrlProvider implements ContentProvider, PackageSource {
         return null; // the file doesn't match any known types for this content source
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

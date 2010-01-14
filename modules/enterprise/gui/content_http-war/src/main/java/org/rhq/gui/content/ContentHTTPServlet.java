@@ -19,6 +19,8 @@
 package org.rhq.gui.content;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.ServletException;
@@ -46,6 +48,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentHTTPServlet extends DefaultServlet {
     private final Log log = LogFactory.getLog(ContentHTTPServlet.class);
 
+    protected static final String CONTENT_URI = "/content";
+
     protected static final String PACKAGES = "packages";
     protected static final String DISTRIBUTIONS = "distributions";
 
@@ -65,9 +69,17 @@ public class ContentHTTPServlet extends DefaultServlet {
         log.info("ContentHTTPServlet resolved references in init.");
     }
 
+    protected boolean isIconRequest(HttpServletRequest request) {
+        String dir = getNthPiece(2, request.getRequestURI());
+        return StringUtils.equalsIgnoreCase(dir, "icons");
+    }
+
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         log.info("doGet():  requestURI = " + request.getRequestURI());
-
+        if (isIconRequest(request)) {
+            super.doGet(request, response);
+            return;
+        }
         // Check if repo has been specified
         Repo repo = getRepo(request, response);
         if (repo == null) {
@@ -121,12 +133,30 @@ public class ContentHTTPServlet extends DefaultServlet {
             log.info("Potential repo: Name = " + r.getName() + ", ID = " + r.getId());
         }
         log.info("TODO: generate index.html");
-
-        // dont include candidate repos
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        for (Repo r : repos) {
+            log.info("Potential repo: Name = " + r.getName() + ", ID = " + r.getId());
+            // Skip candidate repos
+            if (!r.isCandidate()) {
+                String lastMod = new Date(r.getLastModifiedDate()).toString();
+                HtmlRenderer.formDirEntry(request, sb, r.getName(), lastMod);
+            }
+        }
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
     }
 
-    protected void renderChoiceOfContent(HttpServletRequest request, HttpServletResponse response, Repo repo) {
+    protected void renderChoiceOfContent(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
         log.info("Choice of content is: {" + PACKAGES + ", " + DISTRIBUTIONS + "}");
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
+        HtmlRenderer.formDirEntry(request, sb, PACKAGES, "-");
+        HtmlRenderer.formDirEntry(request, sb, DISTRIBUTIONS, "-");
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
     }
 
     protected void renderPackages(HttpServletRequest request, HttpServletResponse response, Repo repo)
@@ -143,38 +173,59 @@ public class ContentHTTPServlet extends DefaultServlet {
             renderPackageIndex(request, response, repo);
             return;
         } else {
-            log.info("TODO: fetch package bits and return them.");
+            log.info("fetch package bits and return them.");
             PackageVersion pv = getPackageVersionFromFileName(repo, fileName);
             if (pv == null) {
                 log.info("Unable to find PackageVersion from filename: " + fileName);
                 renderErrorPage(request, response);
                 return;
             }
-            response.setContentType("application/x-rpm");
+            response.setContentType("application/octet-stream");
             writePackageVersionBits(pv, response.getOutputStream());
         }
     }
 
-    protected void renderPackageIndex(HttpServletRequest request, HttpServletResponse response, Repo repo) {
-        // placeholder for packages index.html
+    protected void renderPackageIndex(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
         log.info("Forming packages index.html for repo: " + repo.getName() + ", ID = " + repo.getId());
 
         List<PackageVersion> pvs = repoMgr.findPackageVersionsInRepo(LookupUtil.getSubjectManager().getOverlord(), repo
             .getId(), PageControl.getUnlimitedInstance());
 
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
         for (PackageVersion pv : pvs) {
-            log.info("Add PackageVersion: " + pv);
+            HtmlRenderer.formFileEntry(sb, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
+                .getFileSize());
         }
-
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
     }
 
-    protected void renderDistributions(HttpServletRequest request, HttpServletResponse response, Repo repo) {
+    protected void renderDistributions(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
 
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
     }
 
     protected void renderErrorPage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         log.info("render error page for request: " + request.getRequestURI());
         response.sendError(response.SC_NOT_FOUND);
+    }
+
+    protected boolean writeResponse(String data, HttpServletResponse response) throws IOException {
+
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.write(data);
+        out.flush();
+        out.close();
+        return true;
     }
 
     protected Repo getRepo(HttpServletRequest request, HttpServletResponse response) {
@@ -233,13 +284,23 @@ public class ContentHTTPServlet extends DefaultServlet {
      * 
      */
     protected String getNthPiece(int n, String requestURI) {
-        int index = n - 1;
         StrTokenizer st = new StrTokenizer(requestURI, "/");
         List<String> tokens = st.getTokenList();
-        if (tokens.size() < index) {
+        if (tokens.size() < n) {
             return "";
         }
-        return tokens.get(index);
+        return tokens.get(n - 1); // caller is starting at 1 not 0
+    }
+
+    protected String getParentURI(String uri) {
+        if (uri.endsWith("/")) {
+            uri = uri.substring(0, uri.length() - 1);
+        }
+        int index = uri.lastIndexOf("/");
+        if (index == -1) {
+            return uri;
+        }
+        return uri.substring(0, index);
     }
 
     protected PackageVersion getPackageVersionFromFileName(Repo repo, String fileName) {

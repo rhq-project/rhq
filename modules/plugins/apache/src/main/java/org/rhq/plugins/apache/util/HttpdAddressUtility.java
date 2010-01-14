@@ -87,6 +87,10 @@ public enum HttpdAddressUtility {
                         Address tmp = Address.parse(listen);
                         host = tmp.host;
                         portToUse = tmp.port;
+                        if (portToUse == -1) {
+                            host = null;
+                            portToUse = Integer.parseInt(tmp.host);
+                        }
                     }
                     
                     if (host == null) {

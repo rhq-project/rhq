@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <perspectivePlugin
-   version="1.0"
-   apiVersion="2.0"
    description="The Core Perspective defining Core UI Elements"
    displayName="Core Perspective"
    name="CorePerspective"

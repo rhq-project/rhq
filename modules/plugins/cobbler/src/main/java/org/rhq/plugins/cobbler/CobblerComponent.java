@@ -18,19 +18,24 @@
  */
 package org.rhq.plugins.cobbler;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.augeas.Augeas;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
@@ -43,7 +48,8 @@ import org.rhq.plugins.platform.PlatformComponent;
  *
  * @author Ian Springer
  */
-public class CobblerComponent extends AugeasConfigurationComponent<PlatformComponent> {
+public class CobblerComponent extends AugeasConfigurationComponent<PlatformComponent> implements
+    ResourceConfigurationFacet {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -105,6 +111,59 @@ public class CobblerComponent extends AugeasConfigurationComponent<PlatformCompo
             }
         }
         return null;
+    }
+
+    @Override
+    public Set<RawConfiguration> loadRawConfigurations() {
+        Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
+        RawConfiguration config = new RawConfiguration();
+        return null;
+    }
+
+    @Override
+    public Configuration loadStructuredConfiguration() {
+        try {
+            return loadResourceConfiguration();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
+    @Override
+    public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void persistRawConfiguration(RawConfiguration rawConfiguration) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void persistStructuredConfiguration(Configuration configuration) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void validateRawConfiguration(RawConfiguration rawConfiguration) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void validateStructuredConfiguration(Configuration configuration) {
+        // TODO Auto-generated method stub
+
     }
 
 }

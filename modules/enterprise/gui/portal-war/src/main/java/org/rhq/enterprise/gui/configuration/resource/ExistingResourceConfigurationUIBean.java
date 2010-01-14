@@ -120,10 +120,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public void changeTabs(ValueChangeEvent event) {
-        if (event.getNewValue().equals("Advanced Mode")) {
+        if (event.getNewValue().equals("rawTab")) {
             switchToRaw();
         }
-        else if (event.getNewValue().equals("Basic Mode")) {
+        else if (event.getNewValue().equals("structuredTab")) {
             switchToStructured();
         }
     }

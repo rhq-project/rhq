@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="UrlContentSourcePlugin" 
-                version="1.0"
-                apiVersion="2.0"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
                 xmlns:c="urn:xmlns:rhq-configuration">
 

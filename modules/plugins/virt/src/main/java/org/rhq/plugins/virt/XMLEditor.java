@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -29,6 +31,7 @@ import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.XMLOutputter;
 
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -36,11 +39,13 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
- * Handles reading and saving changes to the libVirt xml format for domain definition.
+ * Handles reading and saving changes to the libVirt xml format for domain and network definitions.
  *
  * @author Greg Hinkle
  */
 public class XMLEditor {
+
+    private static Log log = LogFactory.getLog(LibVirtConnection.class);
 
     /**
      * Only updates simple properties right now
@@ -51,7 +56,7 @@ public class XMLEditor {
      * @throws JDOMException
      * @throws IOException
      */
-    public static String updateXML(Configuration config, String xmlToEdit) {
+    public static String updateDomainXML(Configuration config, String xmlToEdit) {
 
         try {
             SAXBuilder builder = new SAXBuilder();
@@ -83,12 +88,7 @@ public class XMLEditor {
         return null;
     }
 
-    private static void updateSimpleNode(Configuration config, Element parent, String name) {
-        Element e = parent.getChild(name);
-        e.setText(config.getSimple(name).getStringValue());
-    }
-
-    public static String getXml(Configuration config) {
+    public static String getDomainXml(Configuration config) {
         Document doc = new Document();
 
         Element root = new Element("domain");
@@ -166,19 +166,13 @@ public class XMLEditor {
         return outputter.outputString(doc);
     }
 
-    private static void addSimpleNode(Configuration config, Element parent, String name) {
-        Element e = new Element(name);
-        e.setText(config.getSimple(name).getStringValue());
-        parent.addContent(e);
-    }
-
     /**
      * Parse the XML from calling libvirts virDomainGetXMLDesc()
      * @param xml XML String from libvirt
      * @return The resulting configuration
      * @see {http://libvirt.org/formatdomain.html}
      */
-    public static Configuration getConfiguration(String xml) {
+    public static Configuration getDomainConfiguration(String xml) {
 
         if (xml == null) {
             return null;
@@ -219,25 +213,10 @@ public class XMLEditor {
                 String iType = interfaceElement.getAttribute("type").getValue();
                 intf.put(new PropertySimple("type", iType));
 
-                String macAddress = getChildAttribute(interfaceElement, "mac", "address");
-                if (macAddress != null) {
-                    intf.put(new PropertySimple("macAddress", macAddress));
-                }
-
-                String targetDevice = getChildAttribute(interfaceElement, "target", "dev");
-                if (targetDevice != null) {
-                    intf.put(new PropertySimple("target", targetDevice));
-                }
-
-                String source = getChildAttribute(interfaceElement, "source", "bridge");
-                if (source != null) {
-                    intf.put(new PropertySimple("source", source));
-                }
-
-                String scriptPath = getChildAttribute(interfaceElement, "script", "path");
-                if (scriptPath != null) {
-                    intf.put(new PropertySimple("script", scriptPath));
-                }
+                addChildAttribute(intf, interfaceElement, "mac", "address", "macAddress");
+                addChildAttribute(intf, interfaceElement, "target", "dev", "target");
+                addChildAttribute(intf, interfaceElement, "source", "bridge", "source");
+                addChildAttribute(intf, interfaceElement, "script", "path", "script");
 
                 interfaces.add(intf);
             }
@@ -280,48 +259,75 @@ public class XMLEditor {
 
             return config;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error parsing the domain XML", e);
         }
 
         return null;
     }
 
-    private static String getChildAttribute(Element element, String childElementName, String childAttributeName) {
+    /**
+     * Parse the XML for libvirts network definition()
+     * @param xml XML String from libvirt
+     * @return The resulting configuration
+     * @see {http://www.libvirt.org/formatnetwork.html}
+     */
+    public static Configuration getNetworkConfiguration(String xml, boolean autostart) {
+
+        if (xml == null) {
+            return null;
+        }
+        Configuration config = new Configuration();
+
+        try {
+            SAXBuilder builder = new SAXBuilder();
+            Document doc = builder.build(new StringReader(xml));
+
+            // Get the root element
+            Element root = doc.getRootElement();
+            addChildTextSimpleProperty(config, root, "name");
+            addChildTextSimpleProperty(config, root, "uuid");
+            config.put(new PropertySimple("autostart", autostart));
+            addChildAttribute(config, root, "bridge", "name", "bridge");
+            addChildAttribute(config, root, "forward", "mode", "forwardMode");
+            addChildAttribute(config, root, "forward", "dev", "forwardDevice");
+            addChildAttribute(config, root, "ip", "address", "ipaddress");
+            addChildAttribute(config, root, "ip", "netmask", "netmask");
+            Element ip = root.getChild("ip");
+            if (ip != null) {
+                Element dhcp = ip.getChild("dhcp");
+                if (dhcp != null) {
+                    addChildAttribute(config, dhcp, "range", "start", "dhcpStart");
+                    addChildAttribute(config, dhcp, "range", "end", "dhcpEnd");
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error parsing the network XML", e);
+        }
+
+        return config;
+    }
+
+    private static void addSimpleNode(Configuration config, Element parent, String name) {
+        Element e = new Element(name);
+        e.setText(config.getSimple(name).getStringValue());
+        parent.addContent(e);
+    }
+
+    private static void updateSimpleNode(Configuration config, Element parent, String name) {
+        Element e = parent.getChild(name);
+        e.setText(config.getSimple(name).getStringValue());
+    }
+
+    private static void addChildAttribute(AbstractPropertyMap config, Element element, String childElementName,
+        String childAttributeName, String propertyName) {
         Element child = element.getChild(childElementName);
-        return child != null ? child.getAttributeValue(childAttributeName) : null;
+        if (child != null) {
+            config.put(new PropertySimple(propertyName, child.getAttributeValue(childAttributeName)));
+        }
     }
 
     private static void addChildTextSimpleProperty(Configuration config, Element root, String property) {
         String val = root.getChildText(property);
         config.put(new PropertySimple(property, val));
-    }
-
-    public static void main(String[] args) throws JDOMException, IOException {
-        String xml = "<domain type='xen' id='6'>\n" + "  <name>ghvirt1</name>\n"
-            + "  <uuid>81731cbe-009c-0f8c-772a-46c9a345a4c4</uuid>\n" + "  <bootloader>/usr/bin/pygrub</bootloader>\n"
-            + "  <os>\n" + "    <type>linux</type>\n" + "  </os>\n" + "  <memory>819200</memory>\n"
-            + "  <currentMemory>512000</currentMemory>\n" + "  <vcpu>1</vcpu>\n"
-            + "  <on_poweroff>destroy</on_poweroff>\n" + "  <on_reboot>restart</on_reboot>\n"
-            + "  <on_crash>restart</on_crash>\n" + "  <devices>\n" + "    <interface type='bridge'>\n"
-            + "      <source bridge='virbr0'/>\n" + "      <target dev='vif6.0'/>\n"
-            + "      <mac address='00:16:3e:5e:ef:b6'/>\n" + "      <script path='vif-bridge'/>\n"
-            + "    </interface>\n" + "    <disk type='file' device='disk'>\n" + "      <driver name='file'/>\n"
-            + "      <source file='/home/ghinkle/ghvirt1'/>\n" + "      <target dev='xvda'/>\n" + "    </disk>\n"
-            + "    <input type='mouse' bus='xen'/>\n" + "    <graphics type='vnc' port='5900'/>\n"
-            + "    <console tty='/dev/pts/4'/>\n" + "  </devices>\n" + "</domain>";
-
-        Configuration c = getConfiguration(xml);
-        for (Property p : c.getProperties()) {
-            if (p instanceof PropertySimple) {
-                System.out.println(p.getName() + " = " + ((PropertySimple) p).getStringValue());
-            }
-        }
-
-        System.out.println("-------------------------");
-        System.out.println(xml);
-        System.out.println("-------------------------");
-        c.getSimple("currentMemory").setIntegerValue(768000);
-        System.out.println(updateXML(c, xml));
-
     }
 }

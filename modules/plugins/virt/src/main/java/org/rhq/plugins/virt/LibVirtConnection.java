@@ -44,13 +44,19 @@ public class LibVirtConnection {
 
     private Log log = LogFactory.getLog(LibVirtConnection.class);
 
+    private boolean connected = false;
+
     public LibVirtConnection(String uri) throws LibvirtException {
-        connection = new Connect(uri);
-        if (connection == null) {
-            log.warn("Can not obtain an instance of libvirt, trying read only");
-            connection = new Connect(uri, true);
-            if (connection == null) {
-                log.warn("LIbvirt readonly access failed.");
+        try {
+            connection = new Connect(uri);
+            connected = true;
+        } catch (LibvirtException e) {
+            try {
+                log.warn("Can not obtain an instance of libvirt, trying read only");
+                connection = new Connect(uri, true);
+                connected = true;
+            } catch (LibvirtException ie) {
+                throw ie;
             }
         }
     }
@@ -71,6 +77,7 @@ public class LibVirtConnection {
     protected void finalize() throws Throwable {
         super.finalize();
         connection.close();
+        connected = false;
     }
 
     public int[] getDomainIds() throws Exception {
@@ -186,7 +193,12 @@ public class LibVirtConnection {
     }
 
     public int close() throws LibvirtException {
-        return connection.close();
+        if (!connected) {
+            connected = false;
+            return connection.close();
+        } else {
+            return 0;
+        }
     }
 
     public double getMemoryPercentage() throws LibvirtException {
@@ -241,6 +253,11 @@ public class LibVirtConnection {
 
     public Network getNetwork(String name) throws LibvirtException {
         return connection.networkLookupByName(name);
+    }
+
+    public String getNetworkXML(String name) throws LibvirtException {
+        Network network = connection.networkLookupByName(name);
+        return network.getXMLDesc(0);
     }
 
     public static class DomainInfo {

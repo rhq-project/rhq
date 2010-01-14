@@ -196,6 +196,7 @@
                  
             <resource-configuration>
                 <c:simple-property name="name" type="string" readOnly="false" required="true" description="The name of the network"/>
+				<c:simple-property name="uuid" type="string" readOnly="false" required="true" description="The name of the network"/>                
                 <c:simple-property name="bridge" type="string" readOnly="false" required="false"  description="The bridge device which is used"/>
 				<c:simple-property name="forwardMode" type="string" readOnly="false" required="false"  description="How to forward to the physical LAN"/>
 				<c:simple-property name="forwardDevice" type="string" readOnly="false" required="false"  description="The physical device to forward to"/>				                

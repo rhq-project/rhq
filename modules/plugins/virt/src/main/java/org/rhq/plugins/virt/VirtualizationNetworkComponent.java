@@ -101,20 +101,10 @@ public class VirtualizationNetworkComponent implements ResourceComponent<Virtual
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
         LibVirtConnection virt = getConnection();
-        /*Configuration config = new Configuration();
-        DomainInfo info = virt.getDomainInfo(domainName);
-        //TODO Type
-        //TODO Lifecycle Actions
-        config.put(new PropertySimple("name", info.name));
-        config.put(new PropertySimple("uuid", info.uuid));
-        config.put(new PropertySimple("vcpu", info.domainInfo.nrVirtCpu));
-        config.put(new PropertySimple("memory", info.domainInfo.maxMem));
-        config.put(new PropertySimple("currentMemory", info.domainInfo.memory));
-        return config;*/
 
-        /*String xml = virt.getDomainXML(this.domainName);
-        return DomainConfigurationEditor.getConfiguration(xml);*/
-        return new Configuration();
+        String xml = virt.getNetworkXML(networkName);
+        boolean autostart = virt.getNetwork(networkName).getAutostart();
+        return XMLEditor.getNetworkConfiguration(xml, autostart);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {

@@ -362,4 +362,23 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
         return null;
     }
+
+    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+        throws PluginContainerException {
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+        ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
+									 FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+        if (isStructured) {
+            return;
+        } else {
+            for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                try {
+                    facet.validateRawConfiguration(rawConfiguration);
+                } catch (IllegalArgumentException e) {
+                    throw new PluginContainerException(e);
+                } 
+            }
+        }
+    }
 }

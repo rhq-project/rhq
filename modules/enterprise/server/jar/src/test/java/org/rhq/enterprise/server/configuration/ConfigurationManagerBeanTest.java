@@ -1153,5 +1153,8 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         @Asynchronous(guaranteedDelivery = true)
         public void synchronizeInventory(ResourceSyncInfo syncInfo) {
         }
+	public void validate(Configuration configuration, int resourceId, boolean isStructured)
+            throws PluginContainerException {
+        }
     }
 }

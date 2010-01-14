@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -61,6 +62,15 @@ public interface RepoManagerLocal {
      * @return the list of subscriptions
      */
     PageList<RepoComposite> findResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
+
+    /**
+     * Gets all repos that are subscribed to by the given resource.
+     * @param subject
+     * @param resourceId
+     * @param pc
+     * @return
+     */
+    PageList<SubscribedRepo> findSubscriptions(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Gets all repos that aren't subscribed to for the given resource.

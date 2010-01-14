@@ -60,6 +60,7 @@ import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -226,6 +227,17 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         long count = (Long) countQuery.getSingleResult();
 
         return new PageList<RepoComposite>(results, (int) count, pc);
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public PageList<SubscribedRepo> findSubscriptions(Subject subject, int resourceId, PageControl pc) {
+        PageList<SubscribedRepo> list = new PageList<SubscribedRepo>();
+        for (RepoComposite repoComposite : findResourceSubscriptions(subject, resourceId, pc)) {
+            Repo repo = repoComposite.getRepo();
+            SubscribedRepo summary = new SubscribedRepo(repo.getId(), repo.getName());
+            list.add(summary);
+        }
+        return list;
     }
 
     @SuppressWarnings("unchecked")

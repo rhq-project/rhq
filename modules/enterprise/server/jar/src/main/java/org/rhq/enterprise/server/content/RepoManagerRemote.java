@@ -31,6 +31,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -283,4 +284,9 @@ public interface RepoManagerRemote {
     int synchronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds)
         throws Exception;
 
+    @WebMethod
+    PageList<SubscribedRepo> findSubscriptions( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId, //
+        @WebParam(name = "resource") PageControl pc);
 }

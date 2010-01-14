@@ -76,24 +76,41 @@ public class HtmlRenderer {
         }
         sb.append("<tr><td valign=\"top\"><img src=\"" + getIconPath("/icons/folder.gif")
             + "\" alt=\"[DIR]\" width=\"20\" height=\"22\"></td>\n");
-        sb.append("<td><a href=\"" + request.getRequestURI() + "/" + dirName + "\">" + dirName + "</a></td>\n");
+        sb.append("<td><a href=\"" + getLink(request, dirName) + "\">" + dirName + "</a></td>\n");
         sb.append("<td align=\"right\">" + lastMod + "</td><td align=\"right\">  - </td><td>&nbsp;</td></tr>\n");
     }
 
-    public static String formFileEntry(String fileName, String lastModDate, long fileSize) {
+    public static String formFileEntry(HttpServletRequest request, String fileName, String lastModDate, long fileSize) {
         StringBuffer sb = new StringBuffer();
-        formFileEntry(sb, fileName, lastModDate, fileSize);
+        formFileEntry(request, sb, fileName, lastModDate, fileSize);
         return sb.toString();
     }
 
-    public static void formFileEntry(StringBuffer sb, String fileName, String lastMod, long fileSize) {
+    public static void formFileEntry(HttpServletRequest request, StringBuffer sb, String fileName, String lastMod,
+        long fileSize) {
         sb.append("<tr><td valign=\"top\"><img src=\"" + getIconPath("/icons/unknown.gif")
             + "\" alt=\"[DIR]\" width=\"20\" height=\"22\"></td>\n");
-        sb.append("<td><a href=\"" + fileName + "\">" + fileName + "</a></td>\n");
+        sb.append("<td><a href=\"" + getLink(request, fileName) + "\">" + fileName + "</a></td>\n");
         sb.append("<td align=\"right\">" + lastMod + "</td><td align=\"right\">  - </td><td>&nbsp;</td></tr>\n");
     }
 
     protected static String getIconPath(String path) {
+        if (!ContentHTTPServlet.CONTENT_URI.endsWith("/")) {
+            if (!path.startsWith("/")) {
+                path = "/" + path;
+            }
+        }
         return ContentHTTPServlet.CONTENT_URI + path;
+    }
+
+    protected static String getLink(HttpServletRequest request, String path) {
+        String reqUri = request.getRequestURI();
+        if (!reqUri.endsWith("/")) {
+            reqUri = reqUri + "/"; // we need to ensure this ends with a "/"
+        }
+        if (path.startsWith("/")) {
+            path = path.substring(1); // this is just to make the link look nice, it's not "needed"
+        }
+        return reqUri + path;
     }
 }

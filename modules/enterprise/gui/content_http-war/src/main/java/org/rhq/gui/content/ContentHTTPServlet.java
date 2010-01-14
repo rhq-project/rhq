@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ContentHTTPServlet extends DefaultServlet {
     private final Log log = LogFactory.getLog(ContentHTTPServlet.class);
 
-    protected static final String CONTENT_URI = "/content";
+    protected static final String CONTENT_URI = "/content/";
 
     protected static final String PACKAGES = "packages";
     protected static final String DISTRIBUTIONS = "distributions";
@@ -77,13 +77,15 @@ public class ContentHTTPServlet extends DefaultServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         log.info("doGet():  requestURI = " + request.getRequestURI());
         if (isIconRequest(request)) {
+            // this request is for our icons which are static content in the webapp
+            // defer back to DefaultServlet.doGet and this will be served automatically
             super.doGet(request, response);
             return;
         }
         // Check if repo has been specified
         Repo repo = getRepo(request, response);
         if (repo == null) {
-            log.info("No repo found so we'll render a list of all repos.");
+            log.info("No repo found, possibly bad repo name, or no name was entered.");
             renderRepoList(request, response);
             return;
         }
@@ -196,7 +198,7 @@ public class ContentHTTPServlet extends DefaultServlet {
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
         for (PackageVersion pv : pvs) {
-            HtmlRenderer.formFileEntry(sb, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
+            HtmlRenderer.formFileEntry(request, sb, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
                 .getFileSize());
         }
         HtmlRenderer.formEnd(sb);

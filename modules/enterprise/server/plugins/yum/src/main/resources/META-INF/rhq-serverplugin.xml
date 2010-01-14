@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="YumContentSourcePlugin"
-                version="1.0"
-                apiVersion="2.0"
+                displayName="Yum Content"
+                description="Provides the ability to obtain content from a Yum repository"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Provides a content provider that retrieves content from a local or remote Yum repository.
+    ]]></serverplugin:help>
 
    <contentSourceType name="YumSource"
                       displayName="Yum Repository Content Provider"

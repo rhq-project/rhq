@@ -378,7 +378,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             AugeasProxy proxy = getAugeasProxy();
             AugeasTree tree = getAugeasTree();
             String[] vhostDefs = vhostDef.split(" ");
-            HttpdAddressUtility.Address addr = HttpdAddressUtility.getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
+            HttpdAddressUtility.Address addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
             
             String resourceName;
             if (serverName != null) {
@@ -794,6 +794,12 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 
+    /**
+     * Checks whether the configuration is supported for this apache instance.
+     * Checks for Augeas availability and Apache version greater than 2.x are made.
+     * 
+     * @throws IllegalStateException if configuration isn't supported
+     */
     public void checkConfigurationSupported() {
         if (!HAS_AUGEAS) {
             throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
@@ -804,6 +810,11 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         if (!version.startsWith("2.")) {
             throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
         }
+    }
+    
+    public HttpdAddressUtility getAddressUtility() {
+        String version = resourceContext.getVersion();
+        return HttpdAddressUtility.get(version);
     }
     
     private String getNewVhostFileName(HttpdAddressUtility.Address address, String mask) {

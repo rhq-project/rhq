@@ -70,8 +70,10 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         //read the virtual hosts from augeas
         AugeasTree ag = null;
 
+        ApacheServerComponent serverComponent = context.getParentResourceComponent();
+        
         try {
-            ag = context.getParentResourceComponent().getAugeasTree();
+            ag = serverComponent.getAugeasTree();
         } catch (AugeasException e) {
             //ok, augeas is not around, let's try fall back to SNMP
             try {
@@ -87,7 +89,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
         ResourceType resourceType = context.getResourceType();
 
-        File configPath = context.getParentResourceComponent().getServerRoot();
+        File configPath = serverComponent.getServerRoot();
         File logsDir = new File(configPath, LOGS_DIRECTORY_NAME);
 
         List<AugeasNode> virtualHosts = ag.matchRelative(ag.getRootNode(), "<VirtualHost");
@@ -119,7 +121,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
 
             Configuration pluginConfiguration = context.getDefaultPluginConfiguration();
 
-            Address address = HttpdAddressUtility.getVirtualHostSampleAddress(ag, firstAddress, serverName);
+            Address address = serverComponent.getAddressUtility().getVirtualHostSampleAddress(ag, firstAddress, serverName);
             if (address != null) {
                 String url = "http://" + address.host + ":" + address.port + "/";
 

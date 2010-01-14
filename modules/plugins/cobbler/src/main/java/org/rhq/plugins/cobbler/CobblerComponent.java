@@ -20,7 +20,6 @@ package org.rhq.plugins.cobbler;
 
 import java.io.File;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import net.augeas.Augeas;
@@ -30,17 +29,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.AugeasUtility;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
@@ -62,49 +54,6 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public AvailabilityType getAvailability() {
         return super.getAvailability();
-    }
-
-    @Override
-    protected String getNodeInsertionPoint(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
-        PropertySimple propSimple) {
-        if ("alias".equals(propSimple.getName())) {
-            return String.format("%s/canonical", node.getParent().getPath());
-        }
-        return super.getNodeInsertionPoint(augeas, node, propDefSimple, propSimple);
-    }
-
-    @Override
-    protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap,
-        int listIndex) {
-        return new AugeasNode(listNode, "0" + listIndex);
-    }
-
-    protected AugeasNode getExistingChildNodeForListMemberPropertyMap(AugeasNode parentNode,
-        PropertyDefinitionList propDefList, PropertyMap propMap) {
-        // First find all child nodes with the same 'canonical' value as the PropertyMap.
-        Augeas augeas = getAugeas();
-        String canonicalFilter = parentNode.getPath() + "/*/canonical";
-        String canonical = propMap.getSimple("canonical").getStringValue();
-        List<String> canonicalPaths = AugeasUtility.matchFilter(augeas, canonicalFilter, canonical);
-        if (canonicalPaths.isEmpty()) {
-            return null;
-        }
-
-        // Now see if there's at least one node in this list with an 'ipaddr' value with the same IP address version as
-        // the PropertyMap.
-        String ipaddr = propMap.getSimple("ipaddr").getStringValue();
-        int ipAddressVersion = (ipaddr.indexOf(':') == -1) ? 4 : 6;
-        for (String canonicalPath : canonicalPaths) {
-            AugeasNode canonicalNode = new AugeasNode(canonicalPath);
-            AugeasNode childNode = canonicalNode.getParent();
-            AugeasNode ipaddrNode = new AugeasNode(childNode, "ipaddr");
-            String existingIpaddr = augeas.get(ipaddrNode.getPath());
-            int existingIpAddressVersion = (existingIpaddr.indexOf(':') == -1) ? 4 : 6;
-            if (existingIpAddressVersion == ipAddressVersion) {
-                return childNode;
-            }
-        }
-        return null;
     }
 
     @Override
@@ -150,8 +99,11 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     @Override
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
-        // TODO Auto-generated method stub
-
+        try {
+            FileUtils.writeByteArrayToFile(new File(rawConfiguration.getPath()), rawConfiguration.getContents());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

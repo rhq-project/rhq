@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <generic-plugin name="CobblerServerPlugin"
-                displayName="Cobbler Plugin"
+                displayName="Cobbler"
                 description="A plugin that integrates a Cobbler server into RHQ"
                 package="org.rhq.enterprise.server.plugins.cobbler"
                 disabledOnDiscovery="true"

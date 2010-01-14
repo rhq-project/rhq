@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="JBossASPatchContentSourcePlugin"
+                displayName="JBoss CSP Content"
+                description="Provides the ability to obtain content from the JBoss CSP RSS feed"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Provides a content provider that retrieves content from the  JBoss CSP RSS feed.
+    ]]></serverplugin:help>
 
    <contentSourceType name="JBossASPatchSource"
                       displayName="JBoss AS Patch Content Provider"

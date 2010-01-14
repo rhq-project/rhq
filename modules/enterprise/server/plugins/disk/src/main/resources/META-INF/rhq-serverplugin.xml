@@ -1,8 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="DiskContentSourcePlugin"
+                displayName="Disk Content"
+                description="Provides the ability to obtain content from a local file system"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Provides a content provider that retrieves content from a local file system.
+        If deployed in an HA environment, this must be on a distributed file system that all servers can access.
+        The content must be of the package type as defined in the content provider configuration.
+    ]]></serverplugin:help>
 
     <contentSourceType name="DiskSource"
                        displayName="Local Disk Storage Content Provider"

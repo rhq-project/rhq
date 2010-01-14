@@ -6,6 +6,7 @@
         package="org.rhq.plugins.cobbler"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
+         ampsVersion="2.1"
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <depends plugin="Augeas"/>
@@ -32,7 +33,7 @@
                               default="/files/etc/cobbler/"/>                             
       </plugin-configuration>
 
-      <resource-configuration>
+      <resource-configuration configurationFormat="both">
                <c:simple-property name="settings/server" displayName="Server" type="string" required="true" activationPolicy="immediate"
                                   description="The IP address of the cobbler server."/>      
       </resource-configuration>

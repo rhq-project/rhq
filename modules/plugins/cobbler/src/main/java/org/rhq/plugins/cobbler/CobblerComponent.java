@@ -18,12 +18,14 @@
  */
 package org.rhq.plugins.cobbler;
 
+import java.io.File;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import net.augeas.Augeas;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -36,34 +38,26 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.AugeasUtility;
-import org.rhq.plugins.platform.PlatformComponent;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
  *
  * @author Ian Springer
  */
-public class CobblerComponent extends AugeasConfigurationComponent<PlatformComponent> implements
-    ResourceConfigurationFacet {
-
+public class CobblerComponent extends AugeasConfigurationComponent implements ResourceConfigurationFacet {
+    private static final String MODULES_PATH = "/etc/cobbler/modules.conf";
+    private static final String SETTINGS_PATH = "/etc/cobbler/settings";
     private final Log log = LogFactory.getLog(this.getClass());
-
-    public void start(ResourceContext<PlatformComponent> resourceContext) throws InvalidPluginConfigurationException,
-        Exception {
-        super.start(resourceContext);
-    }
 
     @Override
     protected void setupAugeasModules(Augeas augeas) {
         augeas.set("/augeas/load/CobblerSettings/lens", "CobblerSettings.lns");
-        augeas.set("/augeas/load/CobblerSettings/incl[1]", "/etc/cobbler/settings");
+        augeas.set("/augeas/load/CobblerSettings/incl[1]", SETTINGS_PATH);
         augeas.set("/augeas/load/CobblerModules/lens", "CobblerModules.lns");
-        augeas.set("/augeas/load/CobblerModules/incl[1]", "/etc/cobbler/modules.conf");
+        augeas.set("/augeas/load/CobblerModules/incl[1]", MODULES_PATH);
     }
 
     public AvailabilityType getAvailability() {
@@ -115,9 +109,21 @@ public class CobblerComponent extends AugeasConfigurationComponent<PlatformCompo
 
     @Override
     public Set<RawConfiguration> loadRawConfigurations() {
-        Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
-        RawConfiguration config = new RawConfiguration();
-        return null;
+        try {
+            Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
+            RawConfiguration modules = new RawConfiguration();
+            modules.setPath(MODULES_PATH);
+            modules.setContents(FileUtils.readFileToByteArray(new File(MODULES_PATH)));
+            configs.add(modules);
+
+            RawConfiguration settings = new RawConfiguration();
+            settings.setPath(SETTINGS_PATH);
+            settings.setContents(FileUtils.readFileToByteArray(new File(SETTINGS_PATH)));
+            configs.add(settings);
+            return configs;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

@@ -94,7 +94,7 @@ public class PropertySetRenderer extends Renderer {
 
         // If it's an AJAX request for this component, apply the group config to the member configs
         // and clear our child components. NOTE: This can *not* be done in decode(), because the model
-        // will not have been updated yet with any changes made to child UIInput values. 
+        // will not have been updated yet with any changes made to child UIInput values.
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         if (refresh != null && refresh.equals(ConfigRenderer.PROPERTY_SET_COMPONENT_ID)) {
             propertySetComponent.getConfigurationSet().applyGroupConfiguration();
@@ -122,8 +122,8 @@ public class PropertySetRenderer extends Renderer {
         addPropertyDisplayNameAndDescription(propertySetComponent, propertyDefinitionSimple, propertySimple);
 
         boolean configReadOnly = propertySetComponent.getReadOnly() != null && propertySetComponent.getReadOnly();
-        boolean propIsReadOnly = PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple, null, configReadOnly,
-            false);
+        boolean propIsReadOnly = PropertyRenderingUtility.isReadOnly(propertyDefinitionSimple.isReadOnly(),
+            propertyDefinitionSimple.isRequired(), null, configReadOnly,false);
         HtmlPanelGroup setAllToSameValueControlPanel = null;
         if (!propIsReadOnly) {
             // NOTE: We'll add children to the below panel a bit later when we know the id's of the inputs.
@@ -184,8 +184,9 @@ public class PropertySetRenderer extends Renderer {
         HtmlSelectBooleanCheckbox unsetCheckbox = null;
         if (isOptional(propertyDefinitionSimple)) {
             FacesComponentUtility.addOutputText(panelGrid, null, "Unset All: ", null);
-            unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid, propertyDefinitionSimple, null,
-                propertySetComponent.getListIndex(), input, false, propertySetComponent.getReadOnly(), false);
+            unsetCheckbox = PropertyRenderingUtility.addUnsetControl(panelGrid, propertyDefinitionSimple.isRequired(),
+                propertyDefinitionSimple.isReadOnly(), null, propertySetComponent.getListIndex(), input, false,
+                propertySetComponent.getReadOnly(), false);
         }
 
         // the 'APPLY' button
@@ -382,8 +383,8 @@ public class PropertySetRenderer extends Renderer {
             FacesComponentUtility.addVerbatimText(propertySetComponent, "<td class='"
                 + CssStyleClasses.MEMBER_PROPERTY_UNSET_CELL + "'>");
             HtmlSelectBooleanCheckbox unsetCheckbox = PropertyRenderingUtility.addUnsetControl(propertySetComponent,
-                propertyDefinitionSimple, propertyInfo.getProperty(), propertySetComponent.getListIndex(), input,
-                false, propertySetComponent.getReadOnly(), false);
+                propertyDefinitionSimple.isRequired(), propertyDefinitionSimple.isReadOnly(), propertyInfo.getProperty(),
+                propertySetComponent.getListIndex(), input, false, propertySetComponent.getReadOnly(), false);
             propertyInfo.setUnsetCheckbox(unsetCheckbox);
             FacesComponentUtility.addVerbatimText(propertySetComponent, "</td>");
         }

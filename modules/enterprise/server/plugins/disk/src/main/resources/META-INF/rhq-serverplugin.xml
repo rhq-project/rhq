@@ -18,6 +18,18 @@
             <c:group name="General">
                 <c:simple-property name="rootDirectory" type="directory" required="true"
                                    description="The root directory that contains all content that is to be served by this content provider. In an HA environment, this must be on a distributed file system that all servers can access."/>
+
+                <c:dynamic-property name="users" description="TEST - List of all users in the system.">
+                    <c:database-backing key="users"/>
+                </c:dynamic-property>
+
+<!--                <c:dynamic-property name="roles" description="TEST - List of all roles in the system.">
+                    <c:database-backing key="roles"/>
+                </c:dynamic-property>
+
+                <c:dynamic-property name="packageTypes" description="TEST - List of all package types in the system.">
+                    <c:database-backing key="package-types"/>
+                </c:dynamic-property>-->
             </c:group>
 
             <c:group name="Package Source">

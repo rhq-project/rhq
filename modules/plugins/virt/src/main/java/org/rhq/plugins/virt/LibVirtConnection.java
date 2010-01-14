@@ -260,6 +260,12 @@ public class LibVirtConnection {
         return network.getXMLDesc(0);
     }
 
+    public void updateNetwork(String name, String xml, boolean autostart) throws LibvirtException {
+        connection.networkDefineXML(xml);
+        Network network = connection.networkLookupByName(name);
+        network.setAutostart(autostart);
+    }
+
     public static class DomainInfo {
         public int id;
         public String name;

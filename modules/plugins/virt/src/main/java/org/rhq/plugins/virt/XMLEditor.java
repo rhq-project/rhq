@@ -307,6 +307,41 @@ public class XMLEditor {
         return config;
     }
 
+    public static String getNetworkXml(Configuration config) {
+        Document doc = new Document();
+
+        Element root = new Element("network");
+        doc.setRootElement(root);
+        addSimpleNode(config, root, "name");
+        addSimpleNode(config, root, "uuid");
+
+        Element bridge = new Element("bridge");
+        bridge.setAttribute("name", config.getSimpleValue("bridge", ""));
+        root.addContent(bridge);
+
+        Element forward = new Element("forward");
+        forward.setAttribute("mode", config.getSimpleValue("forwardMode", ""));
+        forward.setAttribute("dev", config.getSimpleValue("forwardDevice", ""));
+        root.addContent(forward);
+
+        Element ip = new Element("ip");
+        ip.setAttribute("address", config.getSimpleValue("ipaddress", ""));
+        ip.setAttribute("netmask", config.getSimpleValue("netmask", ""));
+        root.addContent(ip);
+
+        Element dhcp = new Element("dhcp");
+        Element range = new Element("range");
+        range.setAttribute("start", config.getSimpleValue("dhcpStart", ""));
+        range.setAttribute("end", config.getSimpleValue("dhcpEnd", ""));
+        dhcp.addContent(range);
+        root.addContent(dhcp);
+
+        XMLOutputter outputter = new XMLOutputter();
+        outputter.getFormat().setIndent("    ");
+        outputter.getFormat().setLineSeparator("\n");
+        return outputter.outputString(doc);
+    }
+
     private static void addSimpleNode(Configuration config, Element parent, String name) {
         Element e = new Element(name);
         e.setText(config.getSimple(name).getStringValue());

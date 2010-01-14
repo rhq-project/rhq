@@ -50,6 +50,7 @@
     <module>alert-roles</module>
     <module>alert-snmp</module>
     <module>alert-subject</module>
+    <module>cobbler</module>
     <module>validate-all-serverplugins</module>
   </modules>
 

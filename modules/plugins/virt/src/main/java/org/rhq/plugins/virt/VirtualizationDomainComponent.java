@@ -156,7 +156,7 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
         return config;*/
 
         String xml = virt.getDomainXML(this.domainName);
-        return DomainConfigurationEditor.getConfiguration(xml);
+        return XMLEditor.getConfiguration(xml);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
@@ -168,7 +168,7 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
             Configuration oldConfig = loadResourceConfiguration();
             Configuration newConfig = report.getConfiguration();
 
-            String newXml = DomainConfigurationEditor.updateXML(report.getConfiguration(), xml);
+            String newXml = XMLEditor.updateXML(report.getConfiguration(), xml);
 
             log.info("Calling libvirt to redefine domain");
             if (!virt.defineDomain(newXml)) {
@@ -195,7 +195,7 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
     }
 
     public CreateResourceReport createResource(CreateResourceReport report) {
-        String xml = DomainConfigurationEditor.getXml(report.getResourceConfiguration());
+        String xml = XMLEditor.getXml(report.getResourceConfiguration());
         /*
                 log.info("Defining new domain");
                 log.debug("New virtualization domain xml:\n" + xml);

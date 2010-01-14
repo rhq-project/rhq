@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  *
  * @author Greg Hinkle
  */
-public class DomainConfigurationEditor {
+public class XMLEditor {
 
     /**
      * Only updates simple properties right now

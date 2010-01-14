@@ -235,6 +235,10 @@ public class LibVirtConnection {
         }
     }
 
+    public boolean isNetworkActive(String name) throws LibvirtException {
+        return getNetworks().contains(name);
+    }
+
     public Network getNetwork(String name) throws LibvirtException {
         return connection.networkLookupByName(name);
     }

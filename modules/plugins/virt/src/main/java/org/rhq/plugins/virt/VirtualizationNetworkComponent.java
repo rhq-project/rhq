@@ -36,8 +36,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationFacet;
-import org.rhq.core.pluginapi.operation.OperationResult;
 
 /**
  * Component for managing both virtual hosts and guests though some features are guest only and only
@@ -46,7 +44,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Greg Hinkle
  */
 public class VirtualizationNetworkComponent implements ResourceComponent<VirtualizationHostComponent>,
-    MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
+    MeasurementFacet, ConfigurationFacet, CreateChildResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
     private String networkName;
@@ -64,22 +62,13 @@ public class VirtualizationNetworkComponent implements ResourceComponent<Virtual
     }
 
     public AvailabilityType getAvailability() {
-        /*try {
+        try {
             LibVirtConnection virt = getConnection();
-            DomainState state = virt.getDomainInfo(domainName).domainInfo.state;
-            switch (state) {
-            case VIR_DOMAIN_RUNNING:
-                return AvailabilityType.UP;
-            case VIR_DOMAIN_PAUSED:
-                return AvailabilityType.UP;
-            default:
-                return AvailabilityType.DOWN;
-            }
+            return virt.isNetworkActive(networkName) ? AvailabilityType.UP : AvailabilityType.DOWN;
         } catch (LibvirtException e) {
-            log.error("Exception caught retriveing the domain info for " + domainName);
+            log.error("Exception caught retriveing the domain info for " + networkName);
             throw new RuntimeException(e);
-        }*/
-        return AvailabilityType.UP;
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
@@ -108,35 +97,6 @@ public class VirtualizationNetworkComponent implements ResourceComponent<Virtual
                     (double) virt.getDomainInfo(domainName).domainInfo.memory));
             }
         }*/
-    }
-
-    public OperationResult invokeOperation(String name, Configuration parameters) throws InterruptedException,
-        Exception {
-        /*int result = -1;
-        LibVirtConnection virt = getConnection();
-        log.info("Executing " + name + " operation on domain " + getDomainName());
-        if (name.equals("reboot")) {
-            result = virt.domainReboot(this.domainName);
-        } else if (name.equals("restore")) {
-            result = virt.domainRestore(parameters.getSimpleValue("fromPath", null));
-        } else if (name.equals("resume")) {
-            result = virt.domainResume(this.domainName);
-        } else if (name.equals("save")) {
-            result = virt.domainSave(this.domainName, parameters.getSimpleValue("toPath", null));
-        } else if (name.equals("shutdown")) {
-            result = virt.domainShutdown(this.domainName);
-        } else if (name.equals("suspend")) {
-            result = virt.domainSuspend(this.domainName);
-        } else if (name.equals("create")) {
-            result = virt.domainCreate(this.domainName);
-        }
-
-        if (result < 0) {
-            throw new Exception("Failed to run " + name + " command. Result was: " + result);
-        } else {
-            return new OperationResult();
-        }*/
-        return new OperationResult();
     }
 
     public Configuration loadResourceConfiguration() throws LibvirtException {

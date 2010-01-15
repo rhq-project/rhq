@@ -90,6 +90,11 @@
                                     <artifactId>cobbler4j</artifactId>
                                     <version>${cobber4j.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>redstone.xmlrpc</groupId>
+                                    <artifactId>xmlrpc</artifactId>
+                                    <version>1.1.1</version>
+                                </artifactItem>
 
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

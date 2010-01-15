@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
@@ -56,7 +57,10 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         return super.getAvailability();
     }
 
-    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        super.updateResourceConfiguration(report);
+    }
+
     public Set<RawConfiguration> loadRawConfigurations() {
         try {
             Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
@@ -75,7 +79,6 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         }
     }
 
-    @Override
     public Configuration loadStructuredConfiguration() {
         try {
             return loadResourceConfiguration();
@@ -85,19 +88,15 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     }
 
-    @Override
     public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    @Override
     public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
         // TODO Auto-generated method stub
-
     }
 
-    @Override
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
         try {
             FileUtils.writeByteArrayToFile(new File(rawConfiguration.getPath()), rawConfiguration.getContents());
@@ -106,22 +105,15 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         }
     }
 
-    @Override
     public void persistStructuredConfiguration(Configuration configuration) {
-        // TODO Auto-generated method stub
-
     }
 
-    @Override
     public void validateRawConfiguration(RawConfiguration rawConfiguration) {
         // TODO Auto-generated method stub
-
     }
 
-    @Override
     public void validateStructuredConfiguration(Configuration configuration) {
         // TODO Auto-generated method stub
-
     }
 
 }

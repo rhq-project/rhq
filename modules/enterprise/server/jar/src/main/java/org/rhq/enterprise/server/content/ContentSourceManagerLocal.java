@@ -30,6 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -574,6 +575,20 @@ public interface ContentSourceManagerLocal {
      * @return the number of bytes written to the output stream
      */
     long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream);
+
+    /**
+     * Requests the bits of a distribution file be streamed down to the caller over the given output stream.
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility.
+     *
+     * @param distFile          distribution file to fetch
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputDistributionFileBits(DistributionFile distFile, OutputStream outputStream);
 
     /**
      * Adds the specified content source to the database but does not attempt to create or start

@@ -66,11 +66,11 @@ public class HtmlRenderer {
 
     public static String formDirEntry(HttpServletRequest request, String dirName, String lastMod) {
         StringBuffer sb = new StringBuffer();
-        formDirEntry(request, sb, dirName, lastMod);
+        formDirEntry(sb, request, dirName, lastMod);
         return sb.toString();
     }
 
-    public static void formDirEntry(HttpServletRequest request, StringBuffer sb, String dirName, String lastMod) {
+    public static void formDirEntry(StringBuffer sb, HttpServletRequest request, String dirName, String lastMod) {
         if (!dirName.endsWith("/")) {
             dirName = dirName + "/";
         }
@@ -82,16 +82,22 @@ public class HtmlRenderer {
 
     public static String formFileEntry(HttpServletRequest request, String fileName, String lastModDate, long fileSize) {
         StringBuffer sb = new StringBuffer();
-        formFileEntry(request, sb, fileName, lastModDate, fileSize);
+        formFileEntry(sb, request, fileName, lastModDate, fileSize);
         return sb.toString();
     }
 
-    public static void formFileEntry(HttpServletRequest request, StringBuffer sb, String fileName, String lastMod,
+    public static void formFileEntry(StringBuffer sb, HttpServletRequest request, String fileName, String lastMod,
         long fileSize) {
+
+        String fSize = new Long(fileSize).toString();
+        if (fileSize < 0) {
+            fSize = "-";
+        }
         sb.append("<tr><td valign=\"top\"><img src=\"" + getIconPath("/icons/unknown.gif")
             + "\" alt=\"[DIR]\" width=\"20\" height=\"22\"></td>\n");
         sb.append("<td><a href=\"" + getLink(request, fileName) + "\">" + fileName + "</a></td>\n");
-        sb.append("<td align=\"right\">" + lastMod + "</td><td align=\"right\">  - </td><td>&nbsp;</td></tr>\n");
+        sb.append("<td align=\"right\">" + lastMod + "</td><td align=\"right\">" + fSize
+            + "</td><td>&nbsp;</td></tr>\n");
     }
 
     protected static String getIconPath(String path) {

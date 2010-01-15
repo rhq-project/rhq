@@ -35,6 +35,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -42,6 +44,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -56,6 +59,7 @@ public class ContentHTTPServlet extends DefaultServlet {
     protected RepoManagerLocal repoMgr;
     protected ContentManagerLocal contentMgr;
     protected ContentSourceManagerLocal contentSourceMgr;
+    protected DistributionManagerLocal distroMgr;
 
     public ContentHTTPServlet() {
         super();
@@ -66,6 +70,7 @@ public class ContentHTTPServlet extends DefaultServlet {
         repoMgr = LookupUtil.getRepoManagerLocal();
         contentMgr = LookupUtil.getContentManager();
         contentSourceMgr = LookupUtil.getContentSourceManager();
+        distroMgr = LookupUtil.getDistributionManagerLocal();
         log.info("ContentHTTPServlet resolved references in init.");
     }
 
@@ -142,7 +147,7 @@ public class ContentHTTPServlet extends DefaultServlet {
             // Skip candidate repos
             if (!r.isCandidate()) {
                 String lastMod = new Date(r.getLastModifiedDate()).toString();
-                HtmlRenderer.formDirEntry(request, sb, r.getName(), lastMod);
+                HtmlRenderer.formDirEntry(sb, request, r.getName(), lastMod);
             }
         }
         HtmlRenderer.formEnd(sb);
@@ -155,8 +160,8 @@ public class ContentHTTPServlet extends DefaultServlet {
         StringBuffer sb = new StringBuffer();
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
-        HtmlRenderer.formDirEntry(request, sb, PACKAGES, "-");
-        HtmlRenderer.formDirEntry(request, sb, DISTRIBUTIONS, "-");
+        HtmlRenderer.formDirEntry(sb, request, PACKAGES, "-");
+        HtmlRenderer.formDirEntry(sb, request, DISTRIBUTIONS, "-");
         HtmlRenderer.formEnd(sb);
         writeResponse(sb.toString(), response);
     }
@@ -183,7 +188,7 @@ public class ContentHTTPServlet extends DefaultServlet {
                 return;
             }
             response.setContentType("application/octet-stream");
-            writePackageVersionBits(pv, response.getOutputStream());
+            writePackageVersionBits(response.getOutputStream(), pv);
         }
     }
 
@@ -198,7 +203,7 @@ public class ContentHTTPServlet extends DefaultServlet {
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
         for (PackageVersion pv : pvs) {
-            HtmlRenderer.formFileEntry(request, sb, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
+            HtmlRenderer.formFileEntry(sb, request, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
                 .getFileSize());
         }
         HtmlRenderer.formEnd(sb);
@@ -207,10 +212,85 @@ public class ContentHTTPServlet extends DefaultServlet {
 
     protected void renderDistributions(HttpServletRequest request, HttpServletResponse response, Repo repo)
         throws IOException {
+        log.info("renderDistributions(repo name = " + repo.getName() + ", id = " + repo.getId() + ", isCandidate = "
+            + repo.isCandidate() + ")");
+
+        String distLabel = getDistLabel(request.getRequestURI());
+        log.info("Parsed dist label is = " + distLabel);
+        if (StringUtils.isBlank(distLabel)) {
+            // form a directory listing for each distribution in repository.
+            log.info("TODO: create index.html listing all the distribution labels for this repo: " + repo.getName());
+            renderDistributionLabels(request, response, repo);
+            return;
+        }
+        // Get Distribution
+        Distribution dist = distroMgr.getDistributionByLabel(distLabel);
+        if (dist == null) {
+            log.info("Unable to find Distribution by label '" + distLabel + "'");
+            renderErrorPage(request, response);
+            return;
+        }
+        String fileRequest = getDistFilePath(request.getRequestURI());
+        if (StringUtils.isEmpty(fileRequest)) {
+            log.info("no distribution file was found in request, so render list of all distribution files");
+            renderDistributionFileList(request, response, dist);
+            return;
+        }
+        log.info("Parsed DistributionFile request is for: " + fileRequest);
+        // Looks like a request for a distribution file
+        List<DistributionFile> distFiles = distroMgr.getDistributionFilesByDistId(dist.getId());
+        if (distFiles.isEmpty()) {
+            log.info("Unable to find any distribution files for dist: " + dist.getLabel());
+            renderErrorPage(request, response);
+            return;
+        }
+        for (DistributionFile dFile : distFiles) {
+            log.info("Compare: " + dFile.getRelativeFilename() + " to " + fileRequest);
+            if (StringUtils.equalsIgnoreCase(dFile.getRelativeFilename(), fileRequest)) {
+                response.setContentType("application/octet-stream");
+                writeDistributionFileBits(response.getOutputStream(), dFile);
+                return;
+            }
+        }
+        log.info("Searched through DistributionFiles and unable to find: " + fileRequest + ", in Distribution: "
+            + dist.getLabel());
+
+        renderErrorPage(request, response);
+
+    }
+
+    protected void renderDistributionFileList(HttpServletRequest request, HttpServletResponse response,
+        Distribution dist) throws IOException {
+
+        List<DistributionFile> distFiles = distroMgr.getDistributionFilesByDistId(dist.getId());
+        log.info("For Distribution label '" + dist.getLabel() + "' " + distFiles.size()
+            + " distribution files were found");
 
         StringBuffer sb = new StringBuffer();
         HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
         HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
+        for (DistributionFile dFile : distFiles) {
+            HtmlRenderer.formFileEntry(sb, request, dFile.getRelativeFilename(), new Date(dFile.getLastModified())
+                .toString(), -1);
+        }
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
+    }
+
+    protected void renderDistributionLabels(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
+
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
+        // Get list of Distributions per repo
+        List<Distribution> distros = repoMgr.findAssociatedDistributions(LookupUtil.getSubjectManager().getOverlord(),
+            repo.getId(), PageControl.getUnlimitedInstance());
+        log.info("Found " + distros.size() + " for repo " + repo.getName());
+        for (Distribution d : distros) {
+            log.info("Creating link for distribution label: " + d.getLabel());
+            HtmlRenderer.formDirEntry(sb, request, d.getLabel(), new Date(d.getLastModifiedDate()).toString());
+        }
         HtmlRenderer.formEnd(sb);
         writeResponse(sb.toString(), response);
     }
@@ -280,6 +360,37 @@ public class ContentHTTPServlet extends DefaultServlet {
         return getNthPiece(4, requestURI);
     }
 
+    protected String getDistLabel(String requestURI) {
+        return getNthPiece(4, requestURI);
+    }
+
+    /**
+     *
+     * @param requestURI
+     * @return
+     */
+    protected String getDistFilePath(String requestURI) {
+        // Goal is we find where the distribution file path starts
+        // then we return the entire path, it may include an unknown
+        // level of sub-directories.
+        StrTokenizer st = new StrTokenizer(requestURI, "/");
+        List<String> tokens = st.getTokenList();
+        if (tokens.isEmpty()) {
+            return "";
+        }
+        int startIndex = 4;
+        String distFilePath = "";
+        for (int index = startIndex; index < tokens.size(); index++) {
+            distFilePath = distFilePath + "/" + tokens.get(index);
+            log.info("index = " + index + ", distFilePath = " + distFilePath);
+        }
+        // Remove the '/' we added to the front of this string
+        if (distFilePath.startsWith("/")) {
+            distFilePath = distFilePath.substring(1);
+        }
+        return distFilePath;
+    }
+
     /**
      * @param n nth element to return from requestURI, (first element corresponds to 1, not 0)
      * @param requestURI
@@ -326,7 +437,24 @@ public class ContentHTTPServlet extends DefaultServlet {
         return pv;
     }
 
-    protected boolean writePackageVersionBits(PackageVersion pkgVer, ServletOutputStream output) {
+    protected boolean writeDistributionFileBits(ServletOutputStream output, DistributionFile distFile)
+        throws IOException {
+
+        try {
+            contentSourceMgr.outputDistributionFileBits(distFile, output);
+            output.flush();
+            output.close();
+        } catch (IllegalStateException e) {
+            log.error(e);
+            return false;
+        } catch (IOException e) {
+            log.error(e);
+            return false;
+        }
+        return true;
+    }
+
+    protected boolean writePackageVersionBits(ServletOutputStream output, PackageVersion pkgVer) {
 
         try {
             contentSourceMgr.outputPackageVersionBits(pkgVer, output);

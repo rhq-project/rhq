@@ -2068,4 +2068,33 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         return packageBitsFile;
     }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputDistributionFileBits(DistributionFile distFile, OutputStream outputStream) {
+
+        long numBytes = 0;
+        InputStream bitStream = null;
+        try {
+            Distribution dist = distFile.getDistribution();
+            log.info("Distribution has a basePath of " + dist.getBasePath());
+            String distFilePath = dist.getBasePath() + "/" + distFile.getRelativeFilename();
+            File f = getDistributionFileBitsLocalFilesystemFile(dist.getLabel(), distFilePath);
+            log.info("Fetching: " + distFilePath + " on local file store from: " + f.getAbsolutePath());
+            bitStream = new FileInputStream(f);
+            numBytes = StreamUtil.copy(bitStream, outputStream);
+
+        } catch (Exception e) {
+            log.info(e);
+        } finally {
+            // close our stream but leave the output stream open
+            try {
+                bitStream.close();
+            } catch (Exception closeError) {
+                log.warn("Failed to close the bits stream", closeError);
+            }
+        }
+        log.debug("Retrieved and sent [" + numBytes + "] bytes for [" + distFile.getRelativeFilename() + "]");
+        return numBytes;
+    }
 }

@@ -991,13 +991,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 	if (isRawSupported(resourceId)){
 	    try{
 	    validateResourceConfiguration(subject, resourceId, newConfiguration,false);
-	    } catch(RuntimeException e){
+	    } catch(PluginContainerException e){
 		ResourceConfigurationUpdate response = new ResourceConfigurationUpdate(null, newConfiguration, subject.getName());
 		response.setErrorMessage(e.getMessage());
+		response.setStatus(ConfigurationUpdateStatus.UNSENT);
 		return response;
-	    } catch (PluginContainerException e) {
-                return null;
-            }
+	    } 
 	}
 
         ResourceConfigurationUpdate newUpdate =

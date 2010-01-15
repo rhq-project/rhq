@@ -359,30 +359,33 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     }
 
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
-        throws PluginContainerException {
+    throws PluginContainerException {
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
-									 FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
         if (isStructured) {
             return;
         } else {
             StringBuilder  errorMessage = null;
-            
-            for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-                try {
-                    facet.validateRawConfiguration(rawConfiguration);
-                } catch (Throwable e) {
-                    if (null == errorMessage){
-                        errorMessage = new StringBuilder();
+            try{
+                for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                    try {
+                        facet.validateRawConfiguration(rawConfiguration);
+                    } catch (IllegalArgumentException e) {
+                        if (null == errorMessage){
+                            errorMessage = new StringBuilder();
+                        }
+                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+".  "  );                  
                     }
-                    errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+".  "  );
-                  
-                } 
+                }
+            }catch(Throwable t){
+                errorMessage.append("configuation validation failed with" + t.getMessage()+".  "  );                
+                    }
                 if (null != errorMessage){
                     throw new PluginContainerException(errorMessage.toString());
                 }
             }
         }
     }
-}
+

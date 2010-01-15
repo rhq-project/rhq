@@ -106,6 +106,11 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
     }
 
     public void persistStructuredConfiguration(Configuration configuration) {
+        try {
+          updateStructuredConfiguration(configuration);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void validateRawConfiguration(RawConfiguration rawConfiguration) {

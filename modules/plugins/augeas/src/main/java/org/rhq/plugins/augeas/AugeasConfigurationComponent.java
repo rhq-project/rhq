@@ -145,6 +145,24 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return resourceConfig;
     }
 
+    protected void updateStructuredConfiguration(Configuration config) throws Exception {
+      abortIfAugeasNotAvailable();
+
+        // Load the config files from disk and build a tree representation of them in memory.
+        loadConfigurationFiles(this.augeas);
+
+        ConfigurationDefinition resourceConfigDef = this.resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+
+        Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
+        for (PropertyDefinition propDef : propDefs) {
+            setNode(propDef, config, this.augeas, this.resourceConfigRootNode);
+        }
+
+        // Write the updated tree out to the config file.
+        saveConfigurationFiles();
+    }
+
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
         try {
             abortIfAugeasNotAvailable();

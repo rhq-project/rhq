@@ -117,23 +117,23 @@ public class XMLEditor {
 
             Element intfElement = new Element("interface");
             devices.addContent(intfElement);
-            intfElement.setAttribute("type", intfMap.getSimple("type").getStringValue());
+            addSimpleAttribute(intfMap, intfElement, "type", "type");
 
             Element sourceElement = new Element("source");
             intfElement.addContent(sourceElement);
-            sourceElement.setAttribute("bridge", intfMap.getSimple("source").getStringValue());
+            addSimpleAttribute(intfMap, sourceElement, "source", "bridge");
 
             Element targetElement = new Element("target");
             intfElement.addContent(targetElement);
-            targetElement.setAttribute("dev", intfMap.getSimple("target").getStringValue());
+            addSimpleAttribute(intfMap, targetElement, "target", "dev");
 
             Element macElement = new Element("mac");
             intfElement.addContent(macElement);
-            macElement.setAttribute("address", intfMap.getSimple("mac").getStringValue());
+            addSimpleAttribute(intfMap, macElement, "mac", "address");
 
             Element scriptElement = new Element("script");
             intfElement.addContent(scriptElement);
-            scriptElement.setAttribute("path", intfMap.getSimple("script").getStringValue());
+            addSimpleAttribute(intfMap, scriptElement, "script", "path");
         }
 
         PropertyList disks = config.getList("disks");
@@ -142,21 +142,23 @@ public class XMLEditor {
 
             Element diskElement = new Element("disk");
             devices.addContent(diskElement);
-            diskElement.setAttribute("type", diskMap.getSimple("type").getStringValue());
+            addSimpleAttribute(diskMap, diskElement, "type", "type");
+            addSimpleAttribute(diskMap, diskElement, "device", "dev");
 
-            Element sourceElement = new Element("driver");
+            Element driverElement = new Element("driver");
+            diskElement.addContent(driverElement);
+            addSimpleAttribute(diskMap, driverElement, "driverName", "name");
+            addSimpleAttribute(diskMap, driverElement, "driverType", "type");
+
+            Element sourceElement = new Element("source");
             diskElement.addContent(sourceElement);
-            sourceElement.setAttribute("name", diskMap.getSimple("driverName").getStringValue());
-            // TODO driverFile
+            addSimpleAttribute(diskMap, driverElement, "sourceFile", "file");
+            addSimpleAttribute(diskMap, driverElement, "sourceDevice", "dev");
 
-            Element targetElement = new Element("source");
+            Element targetElement = new Element("target");
             diskElement.addContent(targetElement);
-            targetElement.setAttribute("file", diskMap.getSimple("sourceFile").getStringValue());
-            // TODO sourceDevice
-
-            Element macElement = new Element("target");
-            diskElement.addContent(macElement);
-            macElement.setAttribute("dev", diskMap.getSimple("targetDevice").getStringValue());
+            addSimpleAttribute(diskMap, driverElement, "targetDevice", "dev");
+            addSimpleAttribute(diskMap, driverElement, "targetBus", "bus");
 
         }
 
@@ -235,24 +237,17 @@ public class XMLEditor {
                     dType = "block"; // see http://libvirt.org/formatdomain.html#elementsDisks -- 'either: file or block
                 disk.put(new PropertySimple("type", dType));
 
-                Element driver = diskElement.getChild("driver");
-                if (driver != null) {
-                    String driverName = driver.getAttribute("name").getValue();
-                    disk.put(new PropertySimple("driverName", driverName));
-                    String driverType = driver.getAttributeValue("type");
-                    if (driverType != null) {
-                        disk.put(new PropertySimple("driverType", driverType));
-                    }
+                Attribute diskDevice = diskElement.getAttribute("device");
+                if (diskDevice != null) {
+                    disk.put(new PropertySimple("device", diskDevice.getValue()));
                 }
 
-                Element source = diskElement.getChild("source");
-                if (source != null) {
-                    String sourceFile = source.getAttributeValue("file");
-                    disk.put(new PropertySimple("sourceFile", sourceFile));
-                }
-
-                String targetDevice = diskElement.getChild("target").getAttributeValue("dev");
-                disk.put(new PropertySimple("targetDevice", targetDevice));
+                addChildAttribute(disk, diskElement, "driver", "name", "driverName");
+                addChildAttribute(disk, diskElement, "driver", "type", "driverType");
+                addChildAttribute(disk, diskElement, "source", "file", "sourceFile");
+                addChildAttribute(disk, diskElement, "source", "dev", "sourceDevice");
+                addChildAttribute(disk, diskElement, "target", "dev", "targetDevice");
+                addChildAttribute(disk, diskElement, "target", "bus", "targetBus");
 
                 disks.add(disk);
             }
@@ -342,13 +337,24 @@ public class XMLEditor {
         return outputter.outputString(doc);
     }
 
-    private static void addSimpleNode(Configuration config, Element parent, String name) {
-        Element e = new Element(name);
-        e.setText(config.getSimple(name).getStringValue());
-        parent.addContent(e);
+    private static void addSimpleNode(AbstractPropertyMap config, Element parent, String name) {
+        PropertySimple prop = config.getSimple(name);
+        if (prop != null) {
+            Element e = new Element(name);
+            e.setText(prop.getStringValue());
+            parent.addContent(e);
+        }
     }
 
-    private static void updateSimpleNode(Configuration config, Element parent, String name) {
+    private static void addSimpleAttribute(AbstractPropertyMap config, Element element, String configName,
+        String attributeName) {
+        PropertySimple prop = config.getSimple(configName);
+        if (prop != null) {
+            element.setAttribute(attributeName, prop.getStringValue());
+        }
+    }
+
+    private static void updateSimpleNode(AbstractPropertyMap config, Element parent, String name) {
         Element e = parent.getChild(name);
         e.setText(config.getSimple(name).getStringValue());
     }
@@ -357,7 +363,10 @@ public class XMLEditor {
         String childAttributeName, String propertyName) {
         Element child = element.getChild(childElementName);
         if (child != null) {
-            config.put(new PropertySimple(propertyName, child.getAttributeValue(childAttributeName)));
+            String attributeValue = child.getAttributeValue(childAttributeName);
+            if (attributeValue != null) {
+                config.put(new PropertySimple(propertyName, attributeValue));
+            }
         }
     }
 

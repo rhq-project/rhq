@@ -148,11 +148,13 @@
                                     <c:option value="block" name="block"/>
                                 </c:property-options>
                             </c:simple-property>
-                            <c:simple-property name="driverName"/>
+                            <c:simple-property name="device" required="false"/>                            
+                            <c:simple-property name="driverName" required="false"/>
                             <c:simple-property name="driverType" required="false"/>
                             <c:simple-property name="sourceFile" required="false"/>
                             <c:simple-property name="sourceDevice" required="false"/>
-                            <c:simple-property name="targetDevice"/>
+                            <c:simple-property name="targetDevice" required="false"/>
+                            <c:simple-property name="targetBus" required="false"/>                            
                         </c:map-property>
                     </c:list-property>
                 </c:group> 

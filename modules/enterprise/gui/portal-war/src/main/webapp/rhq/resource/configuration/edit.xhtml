@@ -75,7 +75,14 @@ THIS TEXT WILL BE REMOVED.
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
-                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu"/>
+                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
+                            <h:panelGroup>
+                              <h:outputText value="#{#rawConfigUIBean.fileName}"/>
+                              <c:if test="#{rawConfigUIBean.modified}">
+                                <h:commandButton value="Undo"/>                                
+                              </c:if>
+                            </h:panelGroup>
+                          </rich:panelMenuItem>
                         </c:forEach>
                       </rich:panelMenuGroup>
                     </c:forEach>
@@ -200,7 +207,14 @@ THIS TEXT WILL BE REMOVED.
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
                                               limitToList="true"
-                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu"/>
+                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
+                            <h:panelGroup>
+                              <h:outputText value="#{#rawConfigUIBean.fileName}"/>
+                              <c:if test="#{rawConfigUIBean.modified}">
+                                <h:commandButton value="Undo"/>
+                              </c:if>
+                            </h:panelGroup>
+                          </rich:panelMenuItem>
                         </c:forEach>
                       </rich:panelMenuGroup>
                     </c:forEach>

@@ -115,7 +115,7 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   void validateRawConfiguration(RawConfiguration rawConfiguration) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
     if (failValidation.getBooleanValue()) {
-      throw new RuntimeException("Validation failed for ${rawConfiguration.path}");
+      throw new IllegalArgumentException("Validation failed for ${rawConfiguration.path}");
     }
   }
 

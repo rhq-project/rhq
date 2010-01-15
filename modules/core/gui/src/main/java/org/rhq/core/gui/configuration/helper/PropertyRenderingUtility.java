@@ -360,8 +360,10 @@ public class PropertyRenderingUtility {
         Property property, boolean configReadOnly) {
         String displayName = (propertyDefinition != null) ? propertyDefinition.getDisplayName() : property.getName();
         FacesComponentUtility.addOutputText(parent, null, displayName, CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
-        if (!configReadOnly && propertyDefinition != null && propertyDefinition.isRequired()
-            && (propertyDefinition instanceof PropertyDefinitionSimple)) {
+        if (!configReadOnly && propertyDefinition != null &&
+            propertyDefinition.isRequired() &&
+               (propertyDefinition instanceof PropertyDefinitionSimple ||
+                propertyDefinition instanceof PropertyDefinitionDynamic) ) {
             // Print a required marker next to required simples.
             // Ignore the required field for maps and lists, as it is has no significance for them.
             FacesComponentUtility.addOutputText(parent, null, " * ", CssStyleClasses.REQUIRED_MARKER_TEXT);

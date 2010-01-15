@@ -372,7 +372,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     if (null == errorMessage){
                         errorMessage = new StringBuilder();
                     }

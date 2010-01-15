@@ -44,6 +44,6 @@ public interface ResourceConfigurationFacet {
 
     void validateStructuredConfiguration(Configuration configuration);
 
-    void validateRawConfiguration(RawConfiguration rawConfiguration) throws RuntimeException;
+    void validateRawConfiguration(RawConfiguration rawConfiguration) throws IllegalArgumentException;
 
 }

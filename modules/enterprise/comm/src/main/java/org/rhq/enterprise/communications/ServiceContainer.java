@@ -1355,7 +1355,7 @@ public class ServiceContainer {
      */
     private void createKeyStore() {
         SecurityUtil.createKeyStore(m_configuration.getConnectorSecurityKeystoreFile(), m_configuration
-            .getConnectorSecurityKeystoreAlias(), "CN=JBoss ON, OU=JBoss, O=jboss.com, C=US", m_configuration
+            .getConnectorSecurityKeystoreAlias(), "CN=RHQ, OU=RedHat, O=redhat.com, C=US", m_configuration
             .getConnectorSecurityKeystorePassword(), m_configuration.getConnectorSecurityKeystoreKeyPassword(), "DSA",
             36500);
 

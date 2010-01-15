@@ -338,6 +338,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getCurrent().getPath();
     }
 
+    public String getModalEditorHeader() {
+        return getCurrentPath();
+    }
+
     public String getModalEditorContents() {
         return getCurrentContents();
     }
@@ -353,6 +357,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public Object[] getPaths() {
+        
         return getRaws().keySet().toArray();
     }
 

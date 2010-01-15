@@ -245,7 +245,8 @@ public class ConfigurationMetadataParser {
             .deCamelCase(dynamicProperty.getName());
 
         PropertyDefinitionDynamic property = new PropertyDefinitionDynamic(dynamicProperty.getName(), description,
-            dynamicProperty.isRequired(), PropertyDynamicType.DATABASE, dynamicProperty.getDatabaseBacking().getKey());
+            dynamicProperty.isRequired(), PropertyDynamicType.DATABASE,
+            dynamicProperty.getDatabaseBacking().getKey().value());
 
         property.setReadOnly(dynamicProperty.isReadOnly());
         property.setSummary(dynamicProperty.isSummary());

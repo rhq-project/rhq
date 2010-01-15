@@ -232,13 +232,20 @@
            <xs:documentation>Configures a property to look up values from the database.</xs:documentation>
        </xs:annotation>
 
-       <xs:attribute name="key" type="xs:string" use="required">
+       <xs:attribute name="key" type="config:databaseBackingKeys" use="required">
            <xs:annotation>
                <xs:documentation>Key RHQ will use to determine what values to retieve from the database.</xs:documentation>
            </xs:annotation>
        </xs:attribute>
-
    </xs:complexType>
+
+   <xs:simpleType name="databaseBackingKeys">
+       <xs:restriction base="xs:string">
+          <xs:enumeration value="users"/>
+          <xs:enumeration value="roles"/>
+          <xs:enumeration value="package-types"/>
+       </xs:restriction>
+   </xs:simpleType>
 
    <xs:element name="simple-property" type="config:simpleProperty" substitutionGroup="config:configuration-property"/>
    <xs:complexType name="simpleProperty">

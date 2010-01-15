@@ -306,7 +306,6 @@ public abstract class AbstractTypeServerPluginContainer {
         EnhancedScheduler nonclusteredScheduler = getMasterServerPluginContainer().getNonClusteredScheduler();
 
         for (Scheduler scheduler : new Scheduler[] { clusteredScheduler, nonclusteredScheduler }) {
-            scheduler.pauseJobGroup(groupName);
             String[] jobNames = scheduler.getJobNames(groupName);
             if (jobNames != null) {
                 for (String jobName : jobNames) {

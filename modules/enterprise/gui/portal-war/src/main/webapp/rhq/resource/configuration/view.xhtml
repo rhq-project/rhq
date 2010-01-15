@@ -75,7 +75,8 @@ THIS TEXT WILL BE REMOVED.
                   <f:facet name="header">Files</f:facet>
                   <rich:panelMenu mode="ajax"
                                   expandMode="client"
-                                  iconCollapsedGroup="disc"
+                                  iconCollapsedGroup="/images/icn_tree_folder.gif"
+                                  iconExpandedGroup="/images/icn_tree_folder.gif"
                                   limitToList="true"
                                   reRender="fileContents">
                     <c:forEach items="#{rawConfigDirectories}"
@@ -120,6 +121,7 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
+          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationViewUIBean.structuredSupported}">
@@ -201,7 +203,8 @@ THIS TEXT WILL BE REMOVED.
                   <f:facet name="header">Files</f:facet>
                   <rich:panelMenu mode="ajax"
                                   expandMode="client"
-                                  iconCollapsedGroup="disc"
+                                  iconCollapsedGroup="/images/icn_tree_folder.gif"
+                                  iconExpandedGroup="/images/icn_tree_folder.gif"
                                   limitToList="true"
                                   reRender="fileContents">
                     <c:forEach items="#{rawConfigDirectories}"
@@ -219,7 +222,7 @@ THIS TEXT WILL BE REMOVED.
                       </rich:panelMenuGroup>
                     </c:forEach>
                   </rich:panelMenu>
-                </rich:panel>
+                </rich:panel>                  
 
                 <h:panelGrid columns="1" style="width:100%;">
                   <h:panelGrid columns="4" style="width:100%;">
@@ -244,15 +247,11 @@ THIS TEXT WILL BE REMOVED.
                   </rich:panel>
                 </h:panelGrid>
               </h:panelGrid>
-
-              <ui:include src="view-raw-modal.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
+          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
       </c:choose>
-
-
-
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

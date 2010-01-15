@@ -55,12 +55,14 @@ THIS TEXT WILL BE REMOVED.
               <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+                <h:panelGrid columns="1">
                 <rich:panel style="width:100%">
                   <f:facet name="header">Files</f:facet>
 
                   <rich:panelMenu mode="ajax"
                                   expandMode="client"
-                                  iconCollapsedGroup="disc"
+                                  iconCollapsedGroup="/images/icn_tree_folder.gif"
+                                  iconExpandedGroup="/images/icn_tree_folder.gif"
                                   limitToList="true"
                                   reRender="fileContents">
                     <c:forEach items="#{rawConfigDirectories}"
@@ -79,6 +81,8 @@ THIS TEXT WILL BE REMOVED.
                     </c:forEach>
                   </rich:panelMenu>
                 </rich:panel>
+                  * - Contains uncommitted changes
+                </h:panelGrid>
 
                 <h:panelGrid columns="1" style="width:100%;">
                   <h:panelGrid columns="4" style="width:100%;">
@@ -116,6 +120,7 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
+          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredSupported}">
@@ -170,13 +175,15 @@ THIS TEXT WILL BE REMOVED.
               <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+                <h:panelGrid columns="1">
                 <rich:panel style="width:100%">
                   <f:facet name="header">Files</f:facet>
 
 
                   <rich:panelMenu mode="ajax"
                                   expandMode="client"
-                                  iconCollapsedGroup="disc">
+                                  iconCollapsedGroup="/images/icn_tree_folder.gif"
+                                  iconExpandedGroup="/images/icn_tree_folder.gif">
                     <c:forEach items="#{rawConfigDirectories}"
                                var="rawConfigDir">
                       <rich:panelMenuGroup label="#{rawConfigDir.path}"
@@ -194,6 +201,8 @@ THIS TEXT WILL BE REMOVED.
                     </c:forEach>
                   </rich:panelMenu>
                 </rich:panel>
+                  * - Contains uncommitted changes
+                </h:panelGrid>
 
                 <h:panelGrid columns="1" style="width:100%;">
                   <h:panelGrid columns="4" style="width:100%;">
@@ -229,14 +238,12 @@ THIS TEXT WILL BE REMOVED.
                   </h:panelGrid>
                 </h:panelGrid>
               </h:panelGrid>
-
-              <ui:include src="view-raw-modal.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
+
+          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
       </c:choose>
-
-
 
     </h:form>
 

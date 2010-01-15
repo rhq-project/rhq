@@ -59,12 +59,11 @@ THIS TEXT WILL BE REMOVED.
                 <rich:panel style="width:100%">
                   <f:facet name="header">Files</f:facet>
 
-                  <rich:panelMenu mode="ajax"
+                  <rich:panelMenu id="fileMenu"
+                                  mode="ajax"
                                   expandMode="client"
                                   iconCollapsedGroup="/images/icn_tree_folder.gif"
-                                  iconExpandedGroup="/images/icn_tree_folder.gif"
-                                  limitToList="true"
-                                  reRender="fileContents">
+                                  iconExpandedGroup="/images/icn_tree_folder.gif">
                     <c:forEach items="#{rawConfigDirectories}"
                                var="rawConfigDir">
                       <rich:panelMenuGroup label="#{rawConfigDir.path}"
@@ -72,16 +71,20 @@ THIS TEXT WILL BE REMOVED.
                                            selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
                         <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                           <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                              icon="#{rawConfigUIBean.icon}"
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
-                                              reRender="fileContents,selectedFileHeader,modalEditor"/>
+                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu"/>
                         </c:forEach>
                       </rich:panelMenuGroup>
                     </c:forEach>
                   </rich:panelMenu>
                 </rich:panel>
-                  * - Contains uncommitted changes
+                  <rich:panel style="border:none">
+                    <h:graphicImage url="/images/star_on_24.png"/>
+                    <h:outputText value="- Contains uncommitted changes"/>
+                  </rich:panel>
                 </h:panelGrid>
 
                 <h:panelGrid columns="1" style="width:100%;">
@@ -180,7 +183,8 @@ THIS TEXT WILL BE REMOVED.
                   <f:facet name="header">Files</f:facet>
 
 
-                  <rich:panelMenu mode="ajax"
+                  <rich:panelMenu id="fileMenu"
+                                  mode="ajax"
                                   expandMode="client"
                                   iconCollapsedGroup="/images/icn_tree_folder.gif"
                                   iconExpandedGroup="/images/icn_tree_folder.gif">
@@ -191,17 +195,21 @@ THIS TEXT WILL BE REMOVED.
                                            selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
                         <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                           <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                              icon="#{rawConfigUIBean.icon}"
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
                                               limitToList="true"
-                                              reRender="fileContents,selectedFileHeader,modalEditor"/>
+                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu"/>
                         </c:forEach>
                       </rich:panelMenuGroup>
                     </c:forEach>
                   </rich:panelMenu>
                 </rich:panel>
-                  * - Contains uncommitted changes
+                  <rich:panel style="border:none">
+                    <h:graphicImage url="/images/star_on_24.png"/>
+                    <h:outputText value="- Contains uncommitted changes"/>
+                  </rich:panel>
                 </h:panelGrid>
 
                 <h:panelGrid columns="1" style="width:100%;">

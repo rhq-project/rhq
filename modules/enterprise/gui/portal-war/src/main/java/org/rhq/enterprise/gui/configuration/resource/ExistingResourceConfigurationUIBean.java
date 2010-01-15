@@ -420,8 +420,20 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
             current.setContents(updated.getBytes());
-            //TODO update other values like MD5
+
+            markCurrentRawConfigUIBeanModified();
             getModified().put(current.getPath(), current);
+        }
+    }
+
+    private void markCurrentRawConfigUIBeanModified() {
+        for (RawConfigDirectory dir : rawConfigDirectories) {
+            for (RawConfigUIBean bean : dir.getRawConfigUIBeans()) {
+                if (bean.getPath().equals(current.getPath())) {
+                    bean.setModified(true);
+                    return;
+                }
+            }
         }
     }
 

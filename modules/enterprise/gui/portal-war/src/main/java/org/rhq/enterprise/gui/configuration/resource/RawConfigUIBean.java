@@ -57,4 +57,12 @@ public class RawConfigUIBean {
         File file = new File(rawConfiguration.getPath());
         return file.getName();
     }
+
+    public String getIcon() {
+        if (isModified()) {
+            return "/images/star_on_24.png";
+        }
+
+        return "/images/blank.png";
+    }
 }

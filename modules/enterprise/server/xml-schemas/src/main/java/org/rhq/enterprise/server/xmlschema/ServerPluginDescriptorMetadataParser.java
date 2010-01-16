@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ControlType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -107,6 +108,44 @@ public class ServerPluginDescriptorMetadataParser {
             }
         }
         return className;
+    }
+
+    /**
+     * Returns the list of all defined control operations. If there are no controls, an empty list is returned.
+     * 
+     * @param descriptor
+     * 
+     * @return list of control operations defined in the descriptor
+     *
+     * @throws Exception if the plugin descriptor was invalid
+     */
+    public static List<ControlDefinition> getControlDefinitions(ServerPluginDescriptorType descriptor) throws Exception {
+
+        List<ControlDefinition> defs = new ArrayList<ControlDefinition>();
+        List<ControlType> descriptorDefs = descriptor.getPluginComponent().getControl();
+        if (descriptorDefs != null && descriptorDefs.size() > 0) {
+            for (ControlType descriptorDef : descriptorDefs) {
+                String name = descriptorDef.getName();
+                String displayName = descriptorDef.getDisplayName();
+                String description = descriptorDef.getDescription();
+                ConfigurationDefinition params = null;
+                ConfigurationDefinition results = null;
+
+                ConfigurationDescriptor xml = descriptorDef.getParameters();
+                if (xml != null) {
+                    params = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_params", xml);
+                }
+                xml = descriptorDef.getResults();
+                if (xml != null) {
+                    results = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_results", xml);
+                }
+
+                ControlDefinition def = new ControlDefinition(name, displayName, description, params, results);
+                defs.add(def);
+            }
+        }
+
+        return defs;
     }
 
     /**

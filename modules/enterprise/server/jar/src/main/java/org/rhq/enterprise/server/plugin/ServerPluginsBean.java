@@ -55,6 +55,7 @@ import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
@@ -569,6 +570,25 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return allPlugins;
+    }
+
+    public ControlResults invokeServerPluginControl(PluginKey pluginKey, String controlName, Configuration params)
+        throws Exception {
+
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        if (master != null) {
+            AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+            if (pc != null) {
+                ControlResults results = pc.invokePluginControl(pluginKey, controlName, params);
+                return results;
+            } else {
+                throw new Exception("There is no known plugin named [" + pluginKey + "]. Cannot invoke [" + controlName
+                    + "]");
+            }
+        } else {
+            throw new Exception("Master plugin container not available - is it initialized?");
+        }
     }
 
     /**

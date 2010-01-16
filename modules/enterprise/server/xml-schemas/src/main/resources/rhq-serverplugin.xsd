@@ -191,14 +191,24 @@
     </xs:complexType>
 
     <xs:complexType name="ServerPluginComponentType">
-        <xs:sequence></xs:sequence>
-        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+        <xs:sequence>
+            <xs:element name="control" type="serverplugin:ControlType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
-                        The class that will be instantiated. This is a stateful object, once initialized, the same
-                        instance will be notified when the plugin is started, stopped or when schedules are triggered.
+                        Defines operations a user can invoke on the plugin component.
+                        Typically, a user interface will allow a user to invoke these operations to
+                        control the server plugin component during runtime. 
                     </xs:documentation>
                 </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The class that will be instantiated. This is a stateful object, once initialized, the same
+                    instance will be notified when the plugin is started, stopped or when schedules are triggered.
+                </xs:documentation>
+            </xs:annotation>
         </xs:attribute>
     </xs:complexType>
 
@@ -217,4 +227,43 @@
         </xs:sequence>
     </xs:complexType>
 
+    <xs:complexType name="ControlType">
+        <xs:sequence>
+            <xs:element name="parameters" type="config:configuration" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the parameters the user can pass in to the control operation.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="results" type="config:configuration" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the results the control operation can return.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The name of the control operation being defined.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="displayName" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    The name of the control operation that is shown to the user in user interfaces.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    A short description that describes what the control operation does.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
 </xs:schema>

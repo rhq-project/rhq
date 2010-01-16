@@ -441,21 +441,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             // if the ID is 0, it means this is a new plugin and we need to add a row to the db
             // otherwise, this is an update to an existing plugin so we need to update the existing db row
             if (plugin.getId() == 0) {
-                PluginStatusType status = (existingPlugin != null) ? existingPlugin.getStatus() : null;
-                if (PluginStatusType.DELETED == status) {
-                    throw new IllegalArgumentException("Cannot register plugin [" + plugin.getName()
-                        + "], it has been previously marked as deleted.");
-                }
                 entityManager.persist(plugin);
-
-                // load this into the plugin container now
-                ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
-                MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
-                if (master != null) {
-                    master.loadPlugin(pluginFile.toURI().toURL(), false); // we'll enable it down below, if need be 
-                }
             } else {
-                disableServerPluginInMasterContainer(pluginKey);
+                undeployServerPluginInMasterContainer(pluginKey); // remove the old plugin to immediately; this throws away the classloader, too 
                 plugin = updateServerPluginExceptContent(subject, plugin);
             }
 
@@ -464,6 +452,7 @@ public class ServerPluginsBean implements ServerPluginsLocal {
                 streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
             }
 
+            loadServerPluginInMasterContainer(pluginFile.toURI().toURL());
             if (plugin.isEnabled()) {
                 enableServerPluginInMasterContainer(pluginKey);
             }
@@ -472,6 +461,15 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         }
 
         return plugin;
+    }
+
+    private void loadServerPluginInMasterContainer(URL pluginUrl) throws Exception {
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        if (master != null) {
+            master.loadPlugin(pluginUrl, false); // don't enable it - let the caller do that later
+        }
+        return;
     }
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)

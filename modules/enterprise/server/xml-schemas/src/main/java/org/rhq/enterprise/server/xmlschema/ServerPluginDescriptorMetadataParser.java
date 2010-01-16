@@ -122,26 +122,28 @@ public class ServerPluginDescriptorMetadataParser {
     public static List<ControlDefinition> getControlDefinitions(ServerPluginDescriptorType descriptor) throws Exception {
 
         List<ControlDefinition> defs = new ArrayList<ControlDefinition>();
-        List<ControlType> descriptorDefs = descriptor.getPluginComponent().getControl();
-        if (descriptorDefs != null && descriptorDefs.size() > 0) {
-            for (ControlType descriptorDef : descriptorDefs) {
-                String name = descriptorDef.getName();
-                String displayName = descriptorDef.getDisplayName();
-                String description = descriptorDef.getDescription();
-                ConfigurationDefinition params = null;
-                ConfigurationDefinition results = null;
+        if (descriptor.getPluginComponent() != null) {
+            List<ControlType> descriptorDefs = descriptor.getPluginComponent().getControl();
+            if (descriptorDefs != null && descriptorDefs.size() > 0) {
+                for (ControlType descriptorDef : descriptorDefs) {
+                    String name = descriptorDef.getName();
+                    String displayName = descriptorDef.getDisplayName();
+                    String description = descriptorDef.getDescription();
+                    ConfigurationDefinition params = null;
+                    ConfigurationDefinition results = null;
 
-                ConfigurationDescriptor xml = descriptorDef.getParameters();
-                if (xml != null) {
-                    params = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_params", xml);
-                }
-                xml = descriptorDef.getResults();
-                if (xml != null) {
-                    results = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_results", xml);
-                }
+                    ConfigurationDescriptor xml = descriptorDef.getParameters();
+                    if (xml != null) {
+                        params = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_params", xml);
+                    }
+                    xml = descriptorDef.getResults();
+                    if (xml != null) {
+                        results = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_results", xml);
+                    }
 
-                ControlDefinition def = new ControlDefinition(name, displayName, description, params, results);
-                defs.add(def);
+                    ControlDefinition def = new ControlDefinition(name, displayName, description, params, results);
+                    defs.add(def);
+                }
             }
         }
 

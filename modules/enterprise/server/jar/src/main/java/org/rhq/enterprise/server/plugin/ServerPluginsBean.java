@@ -57,9 +57,12 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.xmlschema.ControlDefinition;
+import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorMetadataParser;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -570,6 +573,25 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             }
         }
         return allPlugins;
+    }
+
+    public List<ControlDefinition> getServerPluginControlDefinitions(PluginKey pluginKey) throws Exception {
+
+        ServerPluginServiceManagement serverPluginService = LookupUtil.getServerPluginService();
+        MasterServerPluginContainer master = serverPluginService.getMasterPluginContainer();
+        if (master != null) {
+            AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(pluginKey);
+            if (pc != null) {
+                ServerPluginEnvironment env = pc.getPluginManager().getPluginEnvironment(pluginKey.getPluginName());
+                List<ControlDefinition> defs;
+                defs = ServerPluginDescriptorMetadataParser.getControlDefinitions(env.getPluginDescriptor());
+                return defs;
+            } else {
+                throw new Exception("There is no known plugin named [" + pluginKey + "]");
+            }
+        } else {
+            throw new Exception("Master plugin container not available - is it initialized?");
+        }
     }
 
     public ControlResults invokeServerPluginControl(PluginKey pluginKey, String controlName, Configuration params)

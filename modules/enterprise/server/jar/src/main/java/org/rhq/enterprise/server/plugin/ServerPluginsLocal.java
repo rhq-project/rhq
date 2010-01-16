@@ -14,6 +14,7 @@ import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.xmlschema.ControlDefinition;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -229,6 +230,16 @@ public interface ServerPluginsLocal {
      * @return keys of all enabled and disabled plugins, keyed on their types
      */
     Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType();
+
+    /**
+     * Returns the metadata for all control operations for the given plugin.
+     * If there are no control operations, an empty list is returned.
+     * 
+     * @param pluginKey
+     * @return list of control definitions that are defined for the given plugin
+     * @throws Exception if failed to determine a plugin's control definitions
+     */
+    List<ControlDefinition> getServerPluginControlDefinitions(PluginKey pluginKey) throws Exception;
 
     /**
      * Invokes a control operation on a given plugin and returns the results. This method blocks until

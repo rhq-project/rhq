@@ -47,9 +47,6 @@
                  <h:outputLabel styleClass="BlockLabel" value="Version:"/>
                  <h:outputText  styleClass="BlockContent" value="#{plugin.version}"/>
 
-                 <h:outputLabel styleClass="BlockLabel" value="AMPS Version:"/>
-                 <h:outputText  styleClass="BlockContent" value="#{InstalledPluginUIBean.plugin.ampsVersion}"/>
-
                  <h:outputLabel styleClass="BlockLabel" value="Enabled:"/>
                  <h:outputText value="#{plugin.enabled}"/>
 
@@ -80,10 +77,7 @@
                  </f:facet>
 
                  <h:outputText escape="false" value="&lt;pre&gt; #{plugin.help} &lt;/pre&gt;"/>
-
               </rich:panel>
-
-              <ui:insert name="post-config" />
            </rich:panel>
         </h:form>
 

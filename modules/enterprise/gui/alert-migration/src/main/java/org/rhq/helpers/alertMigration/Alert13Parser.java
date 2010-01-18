@@ -88,10 +88,10 @@ public class Alert13Parser {
             if (line.length<2) // Skip over empty lines
                 continue;
 
-            System.out.println(Arrays.asList(line));
+            log.debug(Arrays.asList(line));
             String tmp = line[9]; // alert definition id
-            int alertDefiitionId = Integer.valueOf(tmp);
-            System.out.println("  adefid " + alertDefiitionId);
+            int alertDefinitionId = Integer.valueOf(tmp);
+            log.debug("  adefid " + alertDefinitionId);
 
             tmp = line[1]; // Notifications
             CSVReader nr = new CSVReader(new StringReader(tmp));
@@ -101,7 +101,7 @@ public class Alert13Parser {
             while (i < notifications.length) {
                 int nid;
                 String n = notifications[i];
-//                System.out.println("   Notification: " + n);
+                log.debug("   Notification: " + n);
                 /*
                  * A single notification now runs over multiple lines
                  */
@@ -116,7 +116,7 @@ public class Alert13Parser {
                 nid = Integer.valueOf(getField(n,"id"));
 
 
-                AlertNotification alNo = new AlertNotification(alertDefiitionId,nid);
+                AlertNotification alNo = new AlertNotification(alertDefinitionId,nid);
                 Configuration config = new Configuration();
                 alNo.setConfiguration(config);
                 alNo.setOrder(pos);
@@ -125,7 +125,7 @@ public class Alert13Parser {
                     String subjectId = getField(notifications[i+1],"id");
                     String subject = getField(notifications[i+2],"name");
                     i+=4;
-                    System.out.print("subject: " + subjectId);
+                    log.debug("subject: " + subjectId);
                     config.put(new PropertySimple("subjectId", subjectId));
                     alNo.setSenderName("RHQ Users");
                     alNo.setName(subject);
@@ -134,7 +134,7 @@ public class Alert13Parser {
                     String roleId = getField(notifications[i+1],"id");
                     String role = getField(notifications[i+2],"name");
                     i+=4;
-                    System.out.print("role: " + roleId);
+                    log.debug("role: " + roleId);
                     config.put(new PropertySimple("roleId", roleId));
                     alNo.setSenderName("Roles");
                     alNo.setName(role);
@@ -145,7 +145,7 @@ public class Alert13Parser {
                     String port = getField(notifications[i+2],"port");
                     String oid =  getField(notifications[i+3],"oid");
                     i+=5;
-                    System.out.print("snmp: " + host + ", " + port + ", " + oid);
+                    log.debug("snmp: " + host + ", " + port + ", " + oid);
                     config.put(new PropertySimple("host",host));
                     config.put(new PropertySimple("port",port));
                     config.put(new PropertySimple("OID",oid));
@@ -154,16 +154,16 @@ public class Alert13Parser {
 
                 } else if (n.startsWith("Email")) {
                     String emails = getField(notifications[i+1],"emailAddress");
-                    System.out.print("email: " + emails);
+                    log.debug("email: " + emails);
                     config.put(new PropertySimple("emailAddress",emails));
                     alNo.setSenderName("Email");
                     alNo.setName(emails);
                     i+=3;
                 } else {
-                    System.err.println("Unknown notification :>" + n + "<");
+                    log.error("Unknown notification :>" + n + "<");
                     i++;
                 }
-                System.out.println(" -- for nid : " + nid);
+                log.debug(" -- for nid : " + nid);
 
                 result.add(alNo);
                 pos++;
@@ -173,7 +173,7 @@ public class Alert13Parser {
             nr = new CSVReader(new StringReader(tmp));
             String[] operations = nr.readNext();
 //            for (String op: operations) {
-//                System.out.println("   Operation: " + op);
+//                log.debug("   Operation: " + op);
 //            }
 
         }

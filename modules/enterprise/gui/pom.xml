@@ -34,7 +34,8 @@
       <modules>
         <module>portal-war</module>
         <module>installer-war</module>
-        <module>webdav-war</module>        
+        <module>webdav-war</module>
+        <module>alert-migration</module>
       </modules>
     </profile>
 

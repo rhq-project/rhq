@@ -124,25 +124,27 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
+
+        // avoid NPEs l8er if the caller passed an invalid id
+        if (alertDefinition==null)
+            return null;
+
         if (checkViewPermission(subject, alertDefinition) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view alertDefinition[id=" + alertDefinitionId + "] for resource[id="
                 + alertDefinition.getResource().getId() + "]");
         }
 
-        if (alertDefinition != null) {
-            // avoid NPEs if the caller passed an invalid id
-            alertDefinition.getConditions().size();
-            // this is now lazy
-            for (AlertCondition cond : alertDefinition.getConditions()) {
-                if (cond.getMeasurementDefinition() != null) {
-                    cond.getMeasurementDefinition().getId();
-                }
+        alertDefinition.getConditions().size();
+        // this is now lazy
+        for (AlertCondition cond : alertDefinition.getConditions()) {
+            if (cond.getMeasurementDefinition() != null) {
+                cond.getMeasurementDefinition().getId();
             }
-            // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
-            //alertDefinition.getAlerts().size();
-            alertDefinition.getAlertNotifications().size();
         }
+        // DO NOT LOAD ALL ALERTS FOR A DEFINITION... This would be all alerts that have been fired
+        //alertDefinition.getAlerts().size();
+        alertDefinition.getAlertNotifications().size();
 
         return alertDefinition;
     }
@@ -207,7 +209,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
         }
 
-        /* 
+        /*
          * performance optimization for the common case of single-condition alerts; it's easier for the
          * out-of-band process to check whether or not ANY conditions are true rather than ALL of them
          */
@@ -481,7 +483,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 AlertDefinitionEvent.DELETED);
         }
 
-        /* 
+        /*
          * performance optimization for the common case of single-condition alerts; it's easier for the
          * out-of-band process to check whether or not ANY conditions are true rather than ALL of them
          */

@@ -23,8 +23,8 @@
 package org.rhq.core.domain.alert.notification;
 
 import java.io.Serializable;
-import java.util.Set;
 
+import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -105,7 +105,7 @@ public class AlertNotificationLog implements Serializable {
         StringBuilder subjectsBuilder = new StringBuilder();
         StringBuilder emailsBuilder = new StringBuilder();
 
-        Set<AlertNotification> currentNotifications = alertDefinition.getAlertNotifications();
+        List<AlertNotification> currentNotifications = alertDefinition.getAlertNotifications();
         for (AlertNotification notification : currentNotifications) {
             if (notification instanceof RoleNotification) {
                 if (rolesBuilder.length() != 0) {

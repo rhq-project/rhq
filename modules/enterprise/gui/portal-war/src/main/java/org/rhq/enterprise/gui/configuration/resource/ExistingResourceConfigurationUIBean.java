@@ -117,6 +117,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editConfiguration() {
+        mode = STRUCTURED_MODE;
         return SUCCESS_OUTCOME;
     }
 
@@ -128,17 +129,23 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public void changeTabs(ValueChangeEvent event) {
         if (event.getNewValue().equals("rawTab")) {
             switchToRaw();
+            mode = RAW_MODE;
         }
         else if (event.getNewValue().equals("structuredTab")) {
             switchToStructured();
+            mode = STRUCTURED_MODE;
         }
     }
 
     public String switchToRaw() {
+//        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+//            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
 
         setConfiguration(configuration);
+
+        getModified().clear();
 
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
             getRaws().put(raw.getPath(), raw);
@@ -284,6 +291,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfiguration();
     }
 
+    public void undoEdit() {
+        
+    }
+
     public String discard() {
         nullify();
         return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
@@ -358,6 +369,22 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             modified = new TreeMap<String, RawConfiguration>();
         }
         return modified;
+    }
+
+    public String getSelectedTab() {
+        if (mode == STRUCTURED_MODE) {
+            return "structuredTab";
+        }
+        return "rawTab";
+    }
+
+    public void setSelectedTab(String tab) {
+        if (tab.equals("structuredTab")) {
+            mode = STRUCTURED_MODE;
+        }
+        else {
+            mode = RAW_MODE;
+        }
     }
 
     public Object[] getPaths() {

@@ -157,7 +157,10 @@ THIS TEXT WILL BE REMOVED.
 
         <c:when test="${ExistingResourceConfigurationViewUIBean.structuredAndRawSupported}">
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
-            <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
+            <rich:tab id="structuredTab"
+                      label="Basic Mode"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -166,7 +169,7 @@ THIS TEXT WILL BE REMOVED.
 
                 <h:commandButton id="editStructuredButton"
                                  value="Edit"
-                                 action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
                                  title="Edit this Configuration" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
               </h:panelGrid>
@@ -181,7 +184,10 @@ THIS TEXT WILL BE REMOVED.
                       prevalidate="true"/>
 
             </rich:tab>
-            <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
+            <rich:tab id="rawTab"
+                      label="Advanced Mode"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -192,7 +198,7 @@ THIS TEXT WILL BE REMOVED.
 
                 <h:commandButton id="editRawButton"
                                  value="Edit"
-                                 action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                                  title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
               </h:panelGrid>

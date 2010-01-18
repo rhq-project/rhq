@@ -15,11 +15,17 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
 
   File rawConfigDir
 
+  File rawConfigSubdir1
+
+  File rawConfigSubdir2
+
   File rawConfig1
 
   File rawConfig2
 
   File rawConfig3
+
+  File rawConfig4
 
   def ant = new AntBuilder()
 
@@ -27,18 +33,24 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     resourceContext = context
 
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "structured-and-raw-test-1.txt")
-    rawConfig2 = new File(rawConfigDir, "structured-and-raw-test-2.txt")
-    rawConfig3 = new File(rawConfigDir, "structured-and-raw-test-3.txt")
+    rawConfigSubdir1 = new File(rawConfigDir, "structured-and-raw-1")
+    rawConfigSubdir2 = new File(rawConfigDir, "structured-and-raw-2")
 
-    createRawConfigDir()
+    rawConfig1 = new File(rawConfigSubdir1, "structured-and-raw-test-1.txt")
+    rawConfig2 = new File(rawConfigSubdir1, "structured-and-raw-test-2.txt")
+    rawConfig3 = new File(rawConfigSubdir2, "structured-and-raw-test-3.txt")
+    rawConfig4 = new File(rawConfigSubdir2, "structured-and-raw-test-4.txt")
+
+    createRawConfigDirs()
     createConfigFile(rawConfig1, ["x": "1", "y": "2", "z": "3"])
     createConfigFile(rawConfig2, ["username": "rhqadmin", "password": "rhqadmin"])
     createConfigFile(rawConfig3, ["rhq.server.hostname": "localhost", "rhq.server.port": "7080"])
+    createConfigFile(rawConfig4, ["raw.only.x": "foo", "raw.only.y": "bar"])
   }
 
-  def createRawConfigDir() {
-    rawConfigDir.mkdirs()
+  def createRawConfigDirs() {
+    rawConfigSubdir1.mkdirs()
+    rawConfigSubdir2.mkdirs()
   }
 
   def createConfigFile(File rawConfig, Map properties) {
@@ -100,11 +112,16 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
     rawConfigs.add(new RawConfiguration(path: rawConfig2.absolutePath, contents: rawConfig2.readBytes()))
     rawConfigs.add(new RawConfiguration(path: rawConfig3.absolutePath, contents: rawConfig3.readBytes()))
+    rawConfigs.add(new RawConfiguration(path: rawConfig4.absolutePath, contents: rawConfig4.readBytes()))
 
     return rawConfigs
   }
 
   RawConfiguration mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
+    if (rawConfiguration.path == rawConfig4.absolutePath) {
+      return rawConfiguration
+    }
+
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 
@@ -129,6 +146,10 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   }
 
   void mergeStructuredConfiguration(RawConfiguration rawConfiguration, Configuration configuration) {
+    if (rawConfiguration.path == rawConfig4.absolutePath) {
+      return
+    }
+
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 

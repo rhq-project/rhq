@@ -33,12 +33,22 @@ public class RawConfigUIBean {
 
     private boolean modified;
 
+    private String modifiedContents;
+
     public RawConfiguration getRawConfiguration() {
         return rawConfiguration;
     }
 
     public void setRawConfiguration(RawConfiguration rawConfiguration) {
         this.rawConfiguration = rawConfiguration;
+    }
+
+    public String getModifiedContents() {
+        return modifiedContents;
+    }
+
+    public void setModifiedContents(String contents) {
+        modifiedContents = contents;
     }
 
     public boolean isModified() {

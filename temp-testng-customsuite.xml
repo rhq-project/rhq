@@ -1,8 +1,0 @@
-<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
-<suite name="rhq" parallel="">
-  <test verbose="2" name="org.rhq.core.gui.configuration.ConfigRendererTest" annotations="JDK">
-    <classes>
-      <class name="org.rhq.core.gui.configuration.ConfigRendererTest"/>
-    </classes>
-  </test>
-</suite>

@@ -67,6 +67,13 @@
          <type>war</type>
       </dependency>
 
+      <dependency>
+          <groupId>org.rhq.helpers</groupId>
+          <artifactId>alert-migration</artifactId>
+          <version>${project.version}</version>
+          <type>war</type>
+      </dependency>
+
       <!-- ** SARs -->
       <!--
          <dependency> <groupId>org.rhq</groupId> <artifactId>rhq-enterprise-server-agent-sar</artifactId>

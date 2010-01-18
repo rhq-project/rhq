@@ -135,10 +135,14 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToRaw() {
+//        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+//            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
 
         setConfiguration(configuration);
+
+        getModified().clear();
 
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
             getRaws().put(raw.getPath(), raw);
@@ -278,6 +282,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         getConfiguration().getRawConfigurations().clear();
         getConfiguration().getRawConfigurations().addAll(getRaws().values());
         return getConfiguration();
+    }
+
+    public void undoEdit() {
+        
     }
 
     public String discard() {

@@ -121,8 +121,9 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void setPageSize(int pageSize) {
+        this.pageNumber = (pageSize != 0) ? (getStartRow() / pageSize) : 0;
         this.pageSize = pageSize;
-    }
+    }    
 
     public PageOrdering getPrimarySortOrder() {
         OrderingField primaryOrderingField = getPrimaryOrderingField();

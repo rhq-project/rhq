@@ -110,11 +110,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void getDistributionBits(Subject user, String kslabel) {
-        //TODO: Implement the ks tree bit downloads
-    }
-
     @SuppressWarnings("unchecked")
     public Distribution getDistributionByLabel(String kslabel) {
         Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_LABEL);

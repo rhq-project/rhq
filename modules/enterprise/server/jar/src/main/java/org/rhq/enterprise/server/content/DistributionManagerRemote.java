@@ -67,16 +67,6 @@ public interface DistributionManagerRemote {
         @WebParam(name = "distId") int distId) throws Exception;
 
     /**
-     * get the kickstart tree bits either from database or filesystem based on kickstart label
-     * @param subject
-     * @param kslabel
-     * @return
-     */
-    @WebMethod
-    void getDistributionBits(@WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "kslabel") String kslabel) throws Exception;
-
-    /**
      * get kickstart tree based on a given label
      * @param kslabel kickstart tree label
      * @return kickstart tree object

@@ -53,6 +53,7 @@ public class ServerPluginDescriptorMetadataParser {
     private static final String SCHEDULED_JOB_PROP_NAME_CLASS = "class";
     private static final String SCHEDULED_JOB_PROP_NAME_METHOD_NAME = "methodName";
     private static final String SCHEDULED_JOB_PROP_NAME_CONCURRENT = "concurrent";
+    private static final String SCHEDULED_JOB_PROP_NAME_CLUSTERED = "clustered";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE = "scheduleType";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER = "scheduleTrigger";
 
@@ -199,6 +200,7 @@ public class ServerPluginDescriptorMetadataParser {
             String className = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
+            String clusteredStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLUSTERED, "true");
             String scheduleTypeStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
                 PeriodicScheduleType.TYPE_NAME);
             String scheduleTriggerStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER, "600000");
@@ -206,9 +208,10 @@ public class ServerPluginDescriptorMetadataParser {
             String jobId = jobMapDef.getName();
             boolean enabled = Boolean.parseBoolean(enabledStr);
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
+            boolean clustered = Boolean.parseBoolean(clusteredStr);
 
             AbstractScheduleType scheduleType;
-            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            scheduleType = AbstractScheduleType.create(concurrent, clustered, scheduleTypeStr, scheduleTriggerStr);
             if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }
@@ -288,6 +291,7 @@ public class ServerPluginDescriptorMetadataParser {
             String className = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
+            String clusteredStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLUSTERED, "true");
             String scheduleTypeStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
                 PeriodicScheduleType.TYPE_NAME);
             String scheduleTriggerStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER, "600000");
@@ -295,9 +299,10 @@ public class ServerPluginDescriptorMetadataParser {
             String jobId = jobMap.getName();
             boolean enabled = Boolean.parseBoolean(enabledStr);
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
+            boolean clustered = Boolean.parseBoolean(clusteredStr);
 
             AbstractScheduleType scheduleType;
-            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            scheduleType = AbstractScheduleType.create(concurrent, clustered, scheduleTypeStr, scheduleTriggerStr);
             if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }

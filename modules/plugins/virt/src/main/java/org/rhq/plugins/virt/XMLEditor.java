@@ -40,7 +40,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
  *
  * @author Greg Hinkle
  */
-public class DomainConfigurationEditor {
+public class XMLEditor {
 
     /**
      * Only updates simple properties right now
@@ -88,7 +88,6 @@ public class DomainConfigurationEditor {
         e.setText(config.getSimple(name).getStringValue());
     }
 
-
     public static String getXml(Configuration config) {
         Document doc = new Document();
 
@@ -122,19 +121,19 @@ public class DomainConfigurationEditor {
 
             Element sourceElement = new Element("source");
             intfElement.addContent(sourceElement);
-            sourceElement.setAttribute("bridge",intfMap.getSimple("source").getStringValue());
+            sourceElement.setAttribute("bridge", intfMap.getSimple("source").getStringValue());
 
             Element targetElement = new Element("target");
             intfElement.addContent(targetElement);
-            targetElement.setAttribute("dev",intfMap.getSimple("target").getStringValue());
+            targetElement.setAttribute("dev", intfMap.getSimple("target").getStringValue());
 
             Element macElement = new Element("mac");
             intfElement.addContent(macElement);
-            macElement.setAttribute("address",intfMap.getSimple("mac").getStringValue());
+            macElement.setAttribute("address", intfMap.getSimple("mac").getStringValue());
 
             Element scriptElement = new Element("script");
             intfElement.addContent(scriptElement);
-            scriptElement.setAttribute("path",intfMap.getSimple("script").getStringValue());
+            scriptElement.setAttribute("path", intfMap.getSimple("script").getStringValue());
         }
 
         PropertyList disks = config.getList("disks");
@@ -145,24 +144,21 @@ public class DomainConfigurationEditor {
             devices.addContent(diskElement);
             diskElement.setAttribute("type", diskMap.getSimple("type").getStringValue());
 
-
             Element sourceElement = new Element("driver");
             diskElement.addContent(sourceElement);
-            sourceElement.setAttribute("name",diskMap.getSimple("driverName").getStringValue());
+            sourceElement.setAttribute("name", diskMap.getSimple("driverName").getStringValue());
             // TODO driverFile
-
 
             Element targetElement = new Element("source");
             diskElement.addContent(targetElement);
-            targetElement.setAttribute("file",diskMap.getSimple("sourceFile").getStringValue());
+            targetElement.setAttribute("file", diskMap.getSimple("sourceFile").getStringValue());
             // TODO sourceDevice
 
             Element macElement = new Element("target");
             diskElement.addContent(macElement);
-            macElement.setAttribute("dev",diskMap.getSimple("targetDevice").getStringValue());
+            macElement.setAttribute("dev", diskMap.getSimple("targetDevice").getStringValue());
 
         }
-
 
         XMLOutputter outputter = new XMLOutputter();
         outputter.getFormat().setIndent("    ");
@@ -184,10 +180,9 @@ public class DomainConfigurationEditor {
      */
     public static Configuration getConfiguration(String xml) {
 
-        if (xml==null) {
+        if (xml == null) {
             return null;
         }
-
 
         try {
             SAXBuilder builder = new SAXBuilder();
@@ -224,17 +219,25 @@ public class DomainConfigurationEditor {
                 String iType = interfaceElement.getAttribute("type").getValue();
                 intf.put(new PropertySimple("type", iType));
 
-                String macAddress = interfaceElement.getChild("mac").getAttribute("address").getValue();
-                intf.put(new PropertySimple("macAddress", macAddress));
+                String macAddress = getChildAttribute(interfaceElement, "mac", "address");
+                if (macAddress != null) {
+                    intf.put(new PropertySimple("macAddress", macAddress));
+                }
 
-                String targetDevice = interfaceElement.getChild("target").getAttribute("dev").getValue();
-                intf.put(new PropertySimple("target", targetDevice));
+                String targetDevice = getChildAttribute(interfaceElement, "target", "dev");
+                if (targetDevice != null) {
+                    intf.put(new PropertySimple("target", targetDevice));
+                }
 
-                String source = interfaceElement.getChild("source").getAttribute("bridge").getValue();
-                intf.put(new PropertySimple("source", source));
+                String source = getChildAttribute(interfaceElement, "source", "bridge");
+                if (source != null) {
+                    intf.put(new PropertySimple("source", source));
+                }
 
-                String scriptPath = interfaceElement.getChild("script").getAttribute("path").getValue();
-                intf.put(new PropertySimple("script", scriptPath));
+                String scriptPath = getChildAttribute(interfaceElement, "script", "path");
+                if (scriptPath != null) {
+                    intf.put(new PropertySimple("script", scriptPath));
+                }
 
                 interfaces.add(intf);
             }
@@ -243,7 +246,7 @@ public class DomainConfigurationEditor {
             config.put(disks);
 
             List<Element> diskElementList = devices.getChildren("disk");
-            for (Element diskElement :diskElementList) {
+            for (Element diskElement : diskElementList) {
                 PropertyMap disk = new PropertyMap("disk");
                 Attribute diskType = diskElement.getAttribute("type");
                 String dType;
@@ -255,18 +258,22 @@ public class DomainConfigurationEditor {
 
                 Element driver = diskElement.getChild("driver");
                 if (driver != null) {
-                  String driverName = driver.getAttribute("name").getValue();
-                  disk.put(new PropertySimple("driverName",driverName));
+                    String driverName = driver.getAttribute("name").getValue();
+                    disk.put(new PropertySimple("driverName", driverName));
+                    String driverType = driver.getAttributeValue("type");
+                    if (driverType != null) {
+                        disk.put(new PropertySimple("driverType", driverType));
+                    }
                 }
 
                 Element source = diskElement.getChild("source");
                 if (source != null) {
-                  String sourceFile = source.getAttributeValue("file");
-                   disk.put(new PropertySimple("sourceFile",sourceFile));
+                    String sourceFile = source.getAttributeValue("file");
+                    disk.put(new PropertySimple("sourceFile", sourceFile));
                 }
 
                 String targetDevice = diskElement.getChild("target").getAttributeValue("dev");
-                disk.put(new PropertySimple("targetDevice",targetDevice));
+                disk.put(new PropertySimple("targetDevice", targetDevice));
 
                 disks.add(disk);
             }
@@ -277,6 +284,11 @@ public class DomainConfigurationEditor {
         }
 
         return null;
+    }
+
+    private static String getChildAttribute(Element element, String childElementName, String childAttributeName) {
+        Element child = element.getChild(childElementName);
+        return child != null ? child.getAttributeValue(childAttributeName) : null;
     }
 
     private static void addChildTextSimpleProperty(Configuration config, Element root, String property) {
@@ -310,10 +322,6 @@ public class DomainConfigurationEditor {
         System.out.println("-------------------------");
         c.getSimple("currentMemory").setIntegerValue(768000);
         System.out.println(updateXML(c, xml));
-
-
-
-
 
     }
 }

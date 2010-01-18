@@ -29,8 +29,8 @@ public class PeriodicScheduleType extends AbstractScheduleType {
 
     private final long period;
 
-    public PeriodicScheduleType(boolean concurrent, long period) {
-        super(concurrent, TYPE_NAME);
+    public PeriodicScheduleType(boolean concurrent, boolean clustered, long period) {
+        super(concurrent, clustered, TYPE_NAME);
         this.period = period;
     }
 

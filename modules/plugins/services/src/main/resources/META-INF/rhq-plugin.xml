@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Services"
+        displayName="Services"
+        description="Support for services file"
+        package="org.rhq.plugins.services"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <service name="Services File"
+            description="the local file used for mapping host names to IP addresses"
+            discovery="ServicesDiscoveryComponent"
+            class="ServicesComponent"
+            supportsManualAdd="true">
+      
+      <runs-inside>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
+      </runs-inside>
+
+
+
+      <resource-configuration>
+         <c:list-property name="services" displayName="Services">
+            <c:map-property name="service">
+               <c:simple-property name="name" displayName="Service Name" type="string" required="true" activationPolicy="immediate"
+                                  description="Name of the service"/>
+
+               <c:simple-property name="type" displayName="Service Type" type="string" required="true" activationPolicy="immediate"
+                                  description="TSys V / XinetD service."/>
+            </c:map-property>
+         </c:list-property>
+      </resource-configuration>
+       <service name="Service" description="a service"
+                discovery="ServiceDiscoveryComponent" class="ServiceComponent">
+           <plugin-configuration>
+               <c:simple-property name="name" required="true" readOnly="true"/>
+               <c:simple-property name="type" required="true" readOnly="true"/>
+           </plugin-configuration>                
+           <resource-configuration>
+               <c:simple-property name="name" displayName = "Name" required="true" readOnly="true" description="Name of the Service"/>
+               <c:simple-property name="enabled" type="boolean" displayName = "Enabled"  readOnly="true" description="True if the Service is Enabled"/>
+           </resource-configuration>
+       </service>
+   </service>
+
+</plugin>
+        

@@ -86,7 +86,16 @@
                               RHQ Server in the system, and this is false, you can be assured that only
                               a single server will handle the invocation at any one time (i.e. multiple servers
                               will not run invocations at the same time).
-                           4) has an optional simple property called "class" of type string that is the
+                           4) has a simple property called "clustered" of type boolean to indicate if
+                              invocations of the scheduled job are allowed to occur on different
+                              machines from where the job was scheduled. If true, a clustered job
+                              will be allowed to be invoked on any machine in the server cluster.
+                              If false, the job will always be triggered on the machine where it was
+                              scheduled. Set this to false if you have a job that must be run on
+                              all machines on the configured schedule (since all plugins are registered
+                              on all server cluster nodes, a non-clustered job will run on each
+                              server as a standalone job).
+                           5) has an optional simple property called "class" of type string that is the
                               name of class to be instantiated as the target of the job invocation.
                               If not defined, the target of the job invocation is the stateful plugin component
                               itself. Whatever class is used as the target, it must have a method as defined
@@ -94,7 +103,7 @@
                               Typically, plugin developers don't use this class property because you normally
                               want to target the stateful plugin component; however, this class property provides
                               the plugin developer a way to declare stateless jobs if that is needed.
-                           5) has any other simple properties that will be used as custom callback data properties.
+                           6) has any other simple properties that will be used as custom callback data properties.
                         You may additionally define one list-of-maps property which can be used to allow a user
                         to define their own custom jobs. The list-of-maps must contain a map property definition
                         that follows the same rules as described above.

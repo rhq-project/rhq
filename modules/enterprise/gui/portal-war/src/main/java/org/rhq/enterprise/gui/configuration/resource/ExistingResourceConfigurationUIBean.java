@@ -138,23 +138,30 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String switchToRaw() {
-//        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-//            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
         Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
             EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
 
         setConfiguration(configuration);
-
-        getModified().clear();
 
         for (RawConfiguration raw : configuration.getRawConfigurations()) {
             getRaws().put(raw.getPath(), raw);
         }
         current = null;
         setConfiguration(configuration);
-
+        updateModifiedCache();
         mode = RAW_MODE;
         return null;
+    }
+
+    private void updateModifiedCache() {
+        Configuration configuration = getConfiguration();
+
+        for (RawConfiguration updatedRaw : configuration.getRawConfigurations()) {
+            RawConfiguration cachedRaw = modified.get(updatedRaw.getPath());
+            if (cachedRaw != null && !updatedRaw.getSha256().equals(cachedRaw.getSha256())) {
+                modified.remove(cachedRaw.getPath());
+            }
+        }
     }
 
     public String switchToStructured() {
@@ -171,6 +178,12 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         }
         current = null;
         setConfiguration(configuration);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            System.out.println(raw.getPath() + " -\n" + (new String(raw.getContents())) + "\n");
+        }
+
+        updateModifiedCache();
 
         mode = STRUCTURED_MODE;
 
@@ -418,12 +431,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public boolean isRawSupported() {
-//        return getConfigurationFormat().isRawSupported();
-        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.RAW;            
+        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.RAW;
     }
 
     public boolean isStructuredSupported() {
-//        return getConfigurationFormat().isStructuredSupported();
         return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED;
     }
 
@@ -499,7 +510,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             log.error("Failed to complete download request for " + getCurrentPath(), e);
             throw new RuntimeException(e);
         }
-//        return "download";
     }
 
     /**

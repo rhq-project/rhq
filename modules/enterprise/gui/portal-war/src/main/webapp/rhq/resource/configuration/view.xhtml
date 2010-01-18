@@ -63,7 +63,7 @@ THIS TEXT WILL BE REMOVED.
                            rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
                 <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}"
+                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                                  title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
               </h:panelGrid>

@@ -44,8 +44,18 @@ THIS TEXT WILL BE REMOVED.
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-      <h:panelGrid columns="2">
+      <h:panelGrid columns="2" style="width:100%">
         <h:outputText value="#{ResourceUIBean.name}"/>
+        <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+          <h:panelGroup style="text-align:right">
+            <h:outputText style="padding-right:10px">n files changed in this configuration</h:outputText>
+            <h:commandButton value="Commit"
+                             action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                             title="Click to Save Changes"
+                             styleClass="buttonmed"
+                             rendered="${ResourceUIBean.permissions.configure}"/>
+          </h:panelGroup>
+        </h:panelGrid>
       </h:panelGrid>
 
       <c:choose>
@@ -116,17 +126,17 @@ THIS TEXT WILL BE REMOVED.
                                      readonly="false"/>
                   </rich:panel>
                 </h:panelGrid>
+              </h:panelGrid>
 
-                <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                  <h:panelGrid columns="2">
-                    <h:outputText>n files changed in this configuration</h:outputText>
-                    <h:commandButton value="Commit"
-                                     action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
-                                     title="Click to Save Changes"
-                                     styleClass="buttonmed"
-                                     rendered="${ResourceUIBean.permissions.configure}"/>
-                  </h:panelGrid>
-                </h:panelGrid>
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:outputText style="padding-right:10px">n files changed in this configuration</h:outputText>
+                  <h:commandButton value="Commit"
+                                   action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                   title="Click to Save Changes"
+                                   styleClass="buttonmed"
+                                   rendered="${ResourceUIBean.permissions.configure}"/>
+                </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
@@ -187,40 +197,40 @@ THIS TEXT WILL BE REMOVED.
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
                 <h:panelGrid columns="1">
-                <rich:panel style="width:100%">
-                  <f:facet name="header">Files</f:facet>
+                  <rich:panel style="width:100%">
+                    <f:facet name="header">Files</f:facet>
 
 
-                  <rich:panelMenu id="fileMenu"
-                                  mode="ajax"
-                                  expandMode="client"
-                                  iconCollapsedGroup="/images/icn_tree_folder.gif"
-                                  iconExpandedGroup="/images/icn_tree_folder.gif">
-                    <c:forEach items="#{rawConfigDirectories}"
-                               var="rawConfigDir">
-                      <rich:panelMenuGroup label="#{rawConfigDir.path}"
-                                           expanded="true"
-                                           selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
-                        <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                          <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
-                                              icon="#{rawConfigUIBean.icon}"
-                                              onclick="cursor_wait();"
-                                              oncomplete="cursor_clear();"
-                                              action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
-                                              limitToList="true"
-                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
-                            <h:panelGroup>
-                              <h:outputText value="#{#rawConfigUIBean.fileName}"/>
-                              <c:if test="#{rawConfigUIBean.modified}">
-                                <h:commandButton value="Undo"/>
-                              </c:if>
-                            </h:panelGroup>
-                          </rich:panelMenuItem>
-                        </c:forEach>
-                      </rich:panelMenuGroup>
-                    </c:forEach>
-                  </rich:panelMenu>
-                </rich:panel>
+                    <rich:panelMenu id="fileMenu"
+                                    mode="ajax"
+                                    expandMode="client"
+                                    iconCollapsedGroup="/images/icn_tree_folder.gif"
+                                    iconExpandedGroup="/images/icn_tree_folder.gif">
+                      <c:forEach items="#{rawConfigDirectories}"
+                                 var="rawConfigDir">
+                        <rich:panelMenuGroup label="#{rawConfigDir.path}"
+                                             expanded="true"
+                                             selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
+                          <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
+                            <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                                icon="#{rawConfigUIBean.icon}"
+                                                onclick="cursor_wait();"
+                                                oncomplete="cursor_clear();"
+                                                action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
+                                                limitToList="true"
+                                                reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
+                              <h:panelGroup>
+                                <h:outputText value="#{#rawConfigUIBean.fileName}"/>
+                                <c:if test="#{rawConfigUIBean.modified}">
+                                  <h:commandButton value="Undo"/>
+                                </c:if>
+                              </h:panelGroup>
+                            </rich:panelMenuItem>
+                          </c:forEach>
+                        </rich:panelMenuGroup>
+                      </c:forEach>
+                    </rich:panelMenu>
+                  </rich:panel>
                   <rich:panel style="border:none">
                     <h:graphicImage url="/images/star_on_24.png"/>
                     <h:outputText value="- Contains uncommitted changes"/>
@@ -249,17 +259,17 @@ THIS TEXT WILL BE REMOVED.
                                      readonly="false"/>
                   </rich:panel>
                 </h:panelGrid>
+              </h:panelGrid>
 
-                <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                  <h:panelGrid columns="2">
-                    <h:outputText>n files changed in this configuration</h:outputText>
-                    <h:commandButton value="Commit"
-                                     action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
-                                     title="Click to Save Changes"
-                                     styleClass="buttonmed"
-                                     rendered="${ResourceUIBean.permissions.configure}"/>
-                  </h:panelGrid>
-                </h:panelGrid>
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:outputText style="padding-right:10px">n files changed in this configuration</h:outputText>
+                  <h:commandButton value="Commit"
+                                   action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                   title="Click to Save Changes"
+                                   styleClass="buttonmed"
+                                   rendered="${ResourceUIBean.permissions.configure}"/>
+                </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>

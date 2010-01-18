@@ -292,6 +292,12 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
     }
 
     @Test
+    public void catchExceptionThrownByFailedValidationOfRawConfigS() throws Exception {
+        assertTrue(false);
+    }
+    
+    
+    @Test
     public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
         Configuration config = new Configuration();
         config.addRawConfiguration(createRawConfiguration("/tmp/foo.txt"));

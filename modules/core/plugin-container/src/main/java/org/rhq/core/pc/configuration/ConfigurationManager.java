@@ -382,7 +382,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 }
             }catch(Throwable t){
                 errorMessage = new StringBuilder();
-                errorMessage.append("configuation validation failed with" + t.getMessage()+".  "  );                
+                errorMessage.append("configuation validation failed with" + t.getMessage()+"."  );                
 	    }
 	    if (null != errorMessage){
 		throw new PluginContainerException(errorMessage.toString());

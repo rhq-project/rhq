@@ -19,6 +19,7 @@
 package org.rhq.helpers.alertMigration;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,7 +42,9 @@ import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * // TODO: Document this
+ * Simple servlet to upload an rhq 1.3 alert definition dump after
+ * migrating the database to rhq 3.0 format.
+ *
  * @author Heiko W. Rupp
  */
 public class MigrationServlet extends HttpServlet {
@@ -51,6 +54,7 @@ public class MigrationServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
+        PrintWriter writer;
         if (ServletFileUpload.isMultipartContent(req)){
 
             ServletFileUpload servletFileUpload = new ServletFileUpload(new DiskFileItemFactory());
@@ -58,7 +62,13 @@ public class MigrationServlet extends HttpServlet {
             try {
                 fileItemsList = servletFileUpload.parseRequest(req);
             } catch (FileUploadException e) {
-                e.printStackTrace();  // TODO: Customise this generated block
+
+                writer = resp.getWriter();
+                writer.write("<strong>File upload failed: </strong><br/>");
+                for (StackTraceElement elem : e.getStackTrace())
+                    writer.write(elem.toString() + "br/>");
+                writer.flush();
+                return;
             }
 
             Iterator it = fileItemsList.iterator();
@@ -78,7 +88,11 @@ public class MigrationServlet extends HttpServlet {
 
                   notificationManager.mergeTransientAlertNotifications(overlord,notifications);
 
-                  // TODO give feedback to the user
+                  writer = resp.getWriter();
+                  writer.write("<strong>Alert Definitions have been migrated</strong><p/>");
+                  writer.write("<a href=\"/Dashboard.do\">To the RHQ Dashboard</a>");
+                  writer.flush();
+
               }
             }
         }

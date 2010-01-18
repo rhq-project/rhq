@@ -27,9 +27,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.alert.notification.AlertNotification;
+
 /**
- * Read in a dump file and apply the (old style) alert notifications
- * to the new way of doing notifications
+ * Read in a dump file and print the Alert notifications to stdout.
+ * Only useful for testing.
  *
  * @author Heiko W. Rupp
  */
@@ -52,51 +54,14 @@ public class RestoreAlerts {
         }
 
         Alert13Parser parser = new Alert13Parser(file);
-        parser.parse();
+        List<AlertNotification> notifications = parser.parse();
+        
+        System.out.println("Found " + notifications.size() + " notifications in the dump");
+        for (AlertNotification n : notifications)
+            System.out.println(n);
 
-        System.exit(0);
-
-        boolean isFirst = true;
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            while (br.ready()) {
-                String line = br.readLine();
-                if (isFirst) { // Skip over line with headers
-                    isFirst = false;
-                    continue;
-                }
-                if (line.length()==0)
-                        continue;
-
-                // Split line into the items
-                String[] items = line.split("\",");
-                if (items.length==1)
-                    continue;
-                System.out.println(items[1]);
-                String tmp = items[8].substring(1);
-                int alertDefinitionId = Integer.parseInt(tmp);
-                System.out.println("  " + alertDefinitionId);
-                tmp = items[1].substring(1);
-                String[] notifications = splitNotifications(tmp);
-
-
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
-    private static String[] splitNotifications(String tmp) {
-
-        tmp = tmp.substring(1); // remove ^[
-        tmp = tmp.substring(0,tmp.length()-1); // remove ]$
-
-        List<String> notifs = new ArrayList<String>();
-
-
-        return new String[0];  // TODO: Customise this generated block
-    }
 
     private static void usage() {
         System.out.println("Usage:");

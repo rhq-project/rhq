@@ -85,17 +85,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         LoggingThreadFactory threadFactory = new LoggingThreadFactory(SENDER_THREAD_POOL_NAME, true);
         threadPool = new ScheduledThreadPoolExecutor(1, threadFactory);
 
-        ConfigurationCheckExecutor configurationChecker =
-                new ConfigurationCheckExecutor(this, getConfigurationServerService(),
-                        PluginContainer.getInstance().getInventoryManager());
+        ConfigurationCheckExecutor configurationChecker = new ConfigurationCheckExecutor(this,
+            getConfigurationServerService(), PluginContainer.getInstance().getInventoryManager());
 
         if (pluginContainerConfiguration.getConfigurationDiscoveryPeriod() > 0
-               && pluginContainerConfiguration.isInsideAgent()) {
-            threadPool.scheduleAtFixedRate(
-                    configurationChecker,
-                    pluginContainerConfiguration.getConfigurationDiscoveryInitialDelay(),
-                    pluginContainerConfiguration.getConfigurationDiscoveryPeriod(),
-                    TimeUnit.SECONDS);
+            && pluginContainerConfiguration.isInsideAgent()) {
+            threadPool.scheduleAtFixedRate(configurationChecker, pluginContainerConfiguration
+                .getConfigurationDiscoveryInitialDelay(), pluginContainerConfiguration
+                .getConfigurationDiscoveryPeriod(), TimeUnit.SECONDS);
         }
     }
 
@@ -154,8 +151,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
             Callable<ConfigurationUpdateResponse> runner;
 
-            runner = new UpdateResourceConfigurationRunner(configurationServerService, resourceType,
-                configMgmt, request);
+            runner = new UpdateResourceConfigurationRunner(configurationServerService, resourceType, configMgmt,
+                request);
 
             response = getThreadPool().submit(runner).get();
         } catch (Exception e) {
@@ -178,8 +175,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
         if (fromStructured) {
             mergedStructuredIntoRaws(configuration, facet);
-        }
-        else {
+        } else {
             mergeRawsIntoStructured(configuration, facet);
         }
 
@@ -234,15 +230,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
     }
 
-    private void updateRawConfig(Configuration configuration, RawConfiguration originalRaw,
-        RawConfiguration mergedRaw) {
+    private void updateRawConfig(Configuration configuration, RawConfiguration originalRaw, RawConfiguration mergedRaw) {
 
         configuration.removeRawConfiguration(originalRaw);
         configuration.addRawConfiguration(mergedRaw);
     }
 
-    public Configuration loadResourceConfiguration(int resourceId)
-        throws PluginContainerException {
+    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
 
         ConfigManagement loadConfig = configMgmtFactory.getStrategy(resourceId);
         Configuration configuration = null;
@@ -263,43 +257,43 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private String createErrorMsg(int resourceId, String msg) throws PluginContainerException {
         ResourceType resourceType = componentService.getResourceType(resourceId);
 
-        return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" +
-            resourceId + "]: " + msg;
+        return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" + resourceId
+            + "]: " + msg;
     }
 
-//    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
-//        ResourceType resourceType = getResourceType(resourceId);
-//        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
-//        try {
-//            Configuration configuration = configComponent.loadResourceConfiguration();
-//            if (configuration == null) {
-//                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-//                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
-//            }
-//
-//            // If the plugin didn't already set the notes field, set it to something useful.
-//            if (configuration.getNotes() == null) {
-//                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-//            }
-//
-//            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
-//
-//            // Normalize and validate the config.
-//            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-//            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
-//                configurationDefinition);
-//            for (String errorMessage : errorMessages) {
-//                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-//                    + resourceType.getPlugin() + " plugin - " + errorMessage);
-//            }
-//
-//            return configuration;
-//        } catch (Throwable t) {
-//            //noinspection ThrowableInstanceNeverThrown
-//            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-//                new WrappedRemotingException(t));
-//        }
-//    }
+    //    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
+    //        ResourceType resourceType = getResourceType(resourceId);
+    //        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
+    //        try {
+    //            Configuration configuration = configComponent.loadResourceConfiguration();
+    //            if (configuration == null) {
+    //                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
+    //                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
+    //            }
+    //
+    //            // If the plugin didn't already set the notes field, set it to something useful.
+    //            if (configuration.getNotes() == null) {
+    //                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
+    //            }
+    //
+    //            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
+    //
+    //            // Normalize and validate the config.
+    //            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
+    //            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
+    //                configurationDefinition);
+    //            for (String errorMessage : errorMessages) {
+    //                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
+    //                    + resourceType.getPlugin() + " plugin - " + errorMessage);
+    //            }
+    //
+    //            return configuration;
+    //        } catch (Throwable t) {
+    //            //noinspection ThrowableInstanceNeverThrown
+    //            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
+    //                new WrappedRemotingException(t));
+    //        }
+    //    }
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a
@@ -333,7 +327,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     protected ConfigurationFacet getConfigurationFacet(int resourceId, FacetLockType lockType)
         throws PluginContainerException {
         boolean daemonThread = (lockType != FacetLockType.WRITE);
-        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT, daemonThread, true);
+        return ComponentUtil.getComponent(resourceId, ConfigurationFacet.class, lockType, FACET_METHOD_TIMEOUT,
+            daemonThread, true);
     }
 
     /**
@@ -362,4 +357,36 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
         return null;
     }
-}
+
+    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+    throws PluginContainerException {
+        boolean daemonOnly = true;
+        boolean onlyIfStarted = true;
+        ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
+            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+        if (isStructured) {
+            return;
+        } else {
+            StringBuilder  errorMessage = null;
+            try{
+                for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                    try {
+                        facet.validateRawConfiguration(rawConfiguration);
+                    } catch (IllegalArgumentException e) {
+                        if (null == errorMessage){
+                            errorMessage = new StringBuilder();
+                        }
+                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+".  "  );                  
+                    }
+                }
+            }catch(Throwable t){
+                errorMessage = new StringBuilder();
+                errorMessage.append("configuation validation failed with" + t.getMessage()+".  "  );                
+                    }
+                if (null != errorMessage){
+                    throw new PluginContainerException(errorMessage.toString());
+                }
+            }
+        }
+    }
+

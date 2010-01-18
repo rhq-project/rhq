@@ -203,7 +203,11 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                     + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
                 return FAILURE_OUTCOME;
-            }
+            case UNSENT:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update was not valid"
+                    , updateRequest.getErrorMessage());
+                return FAILURE_OUTCOME;
+            }        
         } else {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
                 + "no update request has been sent to the Agent.");

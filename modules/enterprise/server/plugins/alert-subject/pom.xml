@@ -27,6 +27,14 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by ear -->
+        </dependency>
+        
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server</artifactId>

@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
 import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
@@ -30,7 +31,7 @@ import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
  * AlertSender that notifies RHQ subjects by gathering the email addresses of the
  * subjects and putting them into the SenderResult object for later delivery
  * by the system.
- * 
+ *
  * @author Heiko W. Rupp
  */
 public class SubjectsSender extends AlertSender {
@@ -39,6 +40,10 @@ public class SubjectsSender extends AlertSender {
 
     @Override
     public SenderResult send(Alert alert) {
+
+
+        PropertySimple subjectIdProp = alertParameters.getSimple("subjectId");
+
         return new SenderResult(ResultState.FAILURE,"Not yet implemented");
     }
 }

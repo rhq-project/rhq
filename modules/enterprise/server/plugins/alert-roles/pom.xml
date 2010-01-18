@@ -26,6 +26,14 @@
     </properties>
 
     <dependencies>
+
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by ear -->
+        </dependency>
+        
         <dependency>
            <groupId>javax.mail</groupId>
            <artifactId>mail</artifactId>

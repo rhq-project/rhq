@@ -377,7 +377,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                         if (null == errorMessage){
                             errorMessage = new StringBuilder();
                         }
-                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+".  "  );                  
+                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+"."  );                  
                     }
                 }
             }catch(Throwable t){

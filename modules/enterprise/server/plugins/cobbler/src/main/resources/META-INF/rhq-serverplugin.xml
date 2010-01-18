@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <generic-plugin name="CobblerServerPlugin"
-                displayName="Cobbler Plugin"
-                version="1.0"
+                displayName="Cobbler"
                 description="A plugin that integrates a Cobbler server into RHQ"
                 package="org.rhq.enterprise.server.plugins.cobbler"
                 disabledOnDiscovery="true"
@@ -28,7 +27,8 @@
                 </c:property-options>
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/30 * * * ?" summary="true" description="Determines how often Cobbler will be synchronized with RHQ content. Based on the schedule type, this is either the period, in milliseconds, or the cron expression."/>
-            <c:simple-property name="concurrent" type="boolean" required="true" default="true" summary="false" readOnly="true" description="This must always be true. can be run multiple times concurrently"/>
+            <c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="false" readOnly="true" description="This must always be false - only want one sync job running at a time"/>
+            <c:simple-property name="clustered" type="boolean" required="true" default="false" summary="false" readOnly="true" description="This must always be false - each RHQ server will run this job to sync their own Cobbler server"/>
         </c:map-property>
     </serverplugin:scheduled-jobs>
 

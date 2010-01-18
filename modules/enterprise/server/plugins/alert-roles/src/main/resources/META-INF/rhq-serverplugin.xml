@@ -8,7 +8,6 @@
         xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
         package="org.rhq.enterprise.server.plugins.alertRoles"
         description="Alert sender plugin that sends alert notifications to RHQ roles"
-        version="1.0"
         >
 
     <serverplugin:help>

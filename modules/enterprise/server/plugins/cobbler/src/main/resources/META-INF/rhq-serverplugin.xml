@@ -14,7 +14,17 @@
        with that of a Cobbler server.
     ]]></serverplugin:help>
 
-    <serverplugin:plugin-component class="CobblerServerPluginComponent" />
+    <serverplugin:plugin-component class="CobblerServerPluginComponent">
+        <serverplugin:control name="getCobblerDistros" description="Shows the distros known to Cobbler">
+            <serverplugin:results>
+                <c:list-property name="distros">
+                    <c:map-property name="distro">
+                        <c:simple-property name="name" />
+                    </c:map-property>
+                </c:list-property>
+            </serverplugin:results>
+        </serverplugin:control>
+    </serverplugin:plugin-component>
 
     <serverplugin:scheduled-jobs>
         <!-- notice that we use the map name as the methodName; our stateful component instance is the job class -->

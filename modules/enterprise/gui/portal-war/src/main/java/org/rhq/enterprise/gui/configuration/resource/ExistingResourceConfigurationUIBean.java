@@ -117,6 +117,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editConfiguration() {
+        mode = STRUCTURED_MODE;
         return SUCCESS_OUTCOME;
     }
 
@@ -128,9 +129,11 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public void changeTabs(ValueChangeEvent event) {
         if (event.getNewValue().equals("rawTab")) {
             switchToRaw();
+            mode = RAW_MODE;
         }
         else if (event.getNewValue().equals("structuredTab")) {
             switchToStructured();
+            mode = STRUCTURED_MODE;
         }
     }
 
@@ -366,6 +369,22 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             modified = new TreeMap<String, RawConfiguration>();
         }
         return modified;
+    }
+
+    public String getSelectedTab() {
+        if (mode == STRUCTURED_MODE) {
+            return "structuredTab";
+        }
+        return "rawTab";
+    }
+
+    public void setSelectedTab(String tab) {
+        if (tab.equals("structuredTab")) {
+            mode = STRUCTURED_MODE;
+        }
+        else {
+            mode = RAW_MODE;
+        }
     }
 
     public Object[] getPaths() {

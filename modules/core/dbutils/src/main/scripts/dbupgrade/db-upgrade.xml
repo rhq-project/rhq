@@ -2756,6 +2756,19 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+            <schemaSpec version="2.77">
+                <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIF_TEMPLATE_ID" columnType="INTEGER"/>
+                <schema-directSQL>
+                    <statement>
+                        ALTER TABLE RHQ_ALERT_NOTIFICATION
+                        ADD CONSTRAINT RHQ_NOTIF_TEMPL_ID_FKEY
+                        FOREIGN KEY (NOTIF_TEMPLATE_ID)
+                        REFERENCES RHQ_ALERT_NOTIF_TEMPL(ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

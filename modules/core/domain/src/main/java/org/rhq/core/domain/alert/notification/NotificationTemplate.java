@@ -30,12 +30,12 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 /**
  * A template that consists of multiple notifications. This can be used to create
  * 'bundles' of preconfigured alert notifications which can then be applied to
  * AlertDefinitions directly or via AlertTemplates.
+ *
  * @author Heiko W. Rupp
  */
 @Entity
@@ -55,10 +55,10 @@ public class NotificationTemplate implements Serializable {
     private String description;
 
 
- //   @OneToMany(cascade = CascadeType.ALL)
-    @Transient
+    @OneToMany(mappedBy = "notificationTemplate", cascade = CascadeType.ALL)
     List<AlertNotification> notifications = new ArrayList<AlertNotification>();
 
+    @SuppressWarnings("unused")
     protected NotificationTemplate() {
         // for JPA
     }
@@ -108,10 +108,10 @@ public class NotificationTemplate implements Serializable {
 
         NotificationTemplate that = (NotificationTemplate) o;
 
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (!name.equals(that.name)) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null)
+            return false;
+        return name.equals(that.name);
 
-        return true;
     }
 
     @Override

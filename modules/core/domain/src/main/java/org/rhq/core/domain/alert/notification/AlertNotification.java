@@ -80,6 +80,10 @@ public class AlertNotification implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
+    @JoinColumn(name = "NOTIF_TEMPLATE_ID")
+    @ManyToOne
+    private NotificationTemplate notificationTemplate;
+
     @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration configuration;

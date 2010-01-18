@@ -63,6 +63,7 @@ import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataMan
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -539,7 +540,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
             return new ArrayList<AlertNotification>();
         }
-        
+
         List<AlertNotification> notifications = definition.getAlertNotifications();
         for (AlertNotification notification : notifications) {
             notification.getConfiguration().getProperties().size();  // eager load
@@ -573,5 +574,39 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             def.addAlertNotification(notif.copy(false)); // Attach a copy, as the ones in the template should not be shared
         }
 
+    }
+
+    /**
+     * Add the passed 'transient' notifications onto the alert definitions contained. The old
+     * notifications are removed.
+     * This method is mainly used when migrating alerts from an old format to the current.
+     * @param subject Subject of the caller
+     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
+     */
+    public void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications) {
+
+        // Clear out old notifications
+        for (AlertNotification n : notifications) {
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
+            if (def==null) {
+                LOG.error("Alert Definition with id " + n.getAlertDefinitionId() + "does not exist for notification " + n);
+                continue;
+            }
+            def.getAlertNotifications().clear();
+        }
+
+        // add the new ones
+        for (AlertNotification n : notifications) {
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
+            if (def==null)
+                continue;
+
+            AlertNotification alNo = new AlertNotification(def,n.getConfiguration());
+            alNo.setSenderName(n.getSenderName());
+            alNo.setName(n.getName());
+            alNo.setOrder(n.getOrder());
+            entityManager.persist(alNo);
+            def.addAlertNotification(alNo);
+        }
     }
 }

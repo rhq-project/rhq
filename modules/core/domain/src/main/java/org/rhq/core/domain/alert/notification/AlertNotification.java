@@ -42,6 +42,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -64,6 +65,11 @@ public class AlertNotification implements Serializable {
     public static final String DELETE_BY_ID = "AlertNotification.deleteById";
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
+
+    @Transient
+    transient int alertDefinitionId;
+    @Transient
+    transient int alertNotificationId;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
@@ -107,6 +113,15 @@ public class AlertNotification implements Serializable {
         this.configuration = config.deepCopy();
     }
 
+    /**
+     * Constructor only for transient usage
+     * @param alertDefinitionId
+     * @param alertNotificationId
+     */
+    public AlertNotification(int alertDefinitionId, int alertNotificationId) {
+        this.alertDefinitionId = alertDefinitionId;
+        this.alertNotificationId = alertNotificationId;
+    }
 
     public int getId() {
         return id;
@@ -167,5 +182,13 @@ public class AlertNotification implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public int getAlertDefinitionId() {
+        return alertDefinitionId;
+    }
+
+    public int getAlertNotificationId() {
+        return alertNotificationId;
     }
 }

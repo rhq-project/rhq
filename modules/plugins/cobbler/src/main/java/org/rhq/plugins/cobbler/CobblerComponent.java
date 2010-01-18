@@ -18,87 +18,107 @@
  */
 package org.rhq.plugins.cobbler;
 
-import java.util.List;
+import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import net.augeas.Augeas;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.AugeasUtility;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
  *
  * @author Ian Springer
  */
-public class CobblerComponent extends AugeasConfigurationComponent {
-
+public class CobblerComponent extends AugeasConfigurationComponent implements ResourceConfigurationFacet {
+    private static final String MODULES_PATH = "/etc/cobbler/modules.conf";
+    private static final String SETTINGS_PATH = "/etc/cobbler/settings";
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-        super.start(resourceContext);
-    }
-
-    public void stop() {
-        return;
+    @Override
+    protected void setupAugeasModules(Augeas augeas) {
+        augeas.set("/augeas/load/CobblerSettings/lens", "CobblerSettings.lns");
+        augeas.set("/augeas/load/CobblerSettings/incl[1]", SETTINGS_PATH);
+        augeas.set("/augeas/load/CobblerModules/lens", "CobblerModules.lns");
+        augeas.set("/augeas/load/CobblerModules/incl[1]", MODULES_PATH);
     }
 
     public AvailabilityType getAvailability() {
         return super.getAvailability();
     }
 
-    @Override
-    protected String getNodeInsertionPoint(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
-        PropertySimple propSimple) {
-        if ("alias".equals(propSimple.getName())) {
-            return String.format("%s/canonical", node.getParent().getPath());
-        }
-        return super.getNodeInsertionPoint(augeas, node, propDefSimple, propSimple);
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        super.updateResourceConfiguration(report);
     }
 
-    @Override
-    protected AugeasNode getNewListMemberNode(AugeasNode listNode, PropertyDefinitionMap listMemberPropDefMap,
-        int listIndex) {
-        return new AugeasNode(listNode, "0" + listIndex);
+    public Set<RawConfiguration> loadRawConfigurations() {
+        try {
+            Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
+            RawConfiguration modules = new RawConfiguration();
+            modules.setPath(MODULES_PATH);
+            modules.setContents(FileUtils.readFileToByteArray(new File(MODULES_PATH)));
+            configs.add(modules);
+
+            RawConfiguration settings = new RawConfiguration();
+            settings.setPath(SETTINGS_PATH);
+            settings.setContents(FileUtils.readFileToByteArray(new File(SETTINGS_PATH)));
+            configs.add(settings);
+            return configs;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    protected AugeasNode getExistingChildNodeForListMemberPropertyMap(AugeasNode parentNode,
-        PropertyDefinitionList propDefList, PropertyMap propMap) {
-        // First find all child nodes with the same 'canonical' value as the PropertyMap.
-        Augeas augeas = getAugeas();
-        String canonicalFilter = parentNode.getPath() + "/*/canonical";
-        String canonical = propMap.getSimple("canonical").getStringValue();
-        List<String> canonicalPaths = AugeasUtility.matchFilter(augeas, canonicalFilter, canonical);
-        if (canonicalPaths.isEmpty()) {
-            return null;
+    public Configuration loadStructuredConfiguration() {
+        try {
+            return loadResourceConfiguration();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
-        // Now see if there's at least one node in this list with an 'ipaddr' value with the same IP address version as
-        // the PropertyMap.
-        String ipaddr = propMap.getSimple("ipaddr").getStringValue();
-        int ipAddressVersion = (ipaddr.indexOf(':') == -1) ? 4 : 6;
-        for (String canonicalPath : canonicalPaths) {
-            AugeasNode canonicalNode = new AugeasNode(canonicalPath);
-            AugeasNode childNode = canonicalNode.getParent();
-            AugeasNode ipaddrNode = new AugeasNode(childNode, "ipaddr");
-            String existingIpaddr = augeas.get(ipaddrNode.getPath());
-            int existingIpAddressVersion = (existingIpaddr.indexOf(':') == -1) ? 4 : 6;
-            if (existingIpAddressVersion == ipAddressVersion) {
-                return childNode;
-            }
-        }
+    }
+
+    public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
+        // TODO Auto-generated method stub
         return null;
+    }
+
+    public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
+        // TODO Auto-generated method stub
+    }
+
+    public void persistRawConfiguration(RawConfiguration rawConfiguration) {
+        try {
+            FileUtils.writeByteArrayToFile(new File(rawConfiguration.getPath()), rawConfiguration.getContents());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void persistStructuredConfiguration(Configuration configuration) {
+        try {
+          updateStructuredConfiguration(configuration);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void validateRawConfiguration(RawConfiguration rawConfiguration) {
+        // TODO Auto-generated method stub
+    }
+
+    public void validateStructuredConfiguration(Configuration configuration) {
+        // TODO Auto-generated method stub
     }
 
 }

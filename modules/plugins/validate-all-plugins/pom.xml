@@ -59,6 +59,7 @@
                               <pathelement location="../rhq-agent/target/rhq-agent-plugin-${project.version}.jar" />
                               <pathelement location="../snmptrapd/target/rhq-snmptrapd-plugin-${project.version}.jar" />
                               <pathelement location="../sshd/target/rhq-sshd-plugin-${project.version}.jar" />
+                              <pathelement location="../virt/target/rhq-virt-plugin-${project.version}.jar" />
                            </classpath>
                            <sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
                            <!--

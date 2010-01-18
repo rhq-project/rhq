@@ -137,6 +137,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        resourceContext.getParentResourceComponent().checkConfigurationSupported();
+        
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
             .getResourceConfigurationDefinition();
@@ -495,20 +497,22 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
             
             if (configTree != null) {
+                ApacheServerComponent parent = resourceContext.getParentResourceComponent();
                 if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                    vhostAddresses.add(HttpdAddressUtility.getMainServerSampleAddress(configTree));
+                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(configTree));
                 } else {
                     for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                        vhostAddresses.add(HttpdAddressUtility.getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
+                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
                             vhostServerName));
                     }
                 }
             } else {
                 Configuration pluginConfig = resourceContext.getPluginConfiguration();
-                HttpdAddressUtility.Address addr = HttpdAddressUtility.Address.parse(pluginConfig.getSimpleValue(URL_CONFIG_PROP, null));
-                //chop off the schema part of the URL
-                URI uri = new URI(addr.host);
-                addr.host = uri.getHost();
+                URI uri = new URI(pluginConfig.getSimpleValue(URL_CONFIG_PROP, null));
+                String host = uri.getHost();
+                int port = uri.getPort();
+                if (port == -1) port = 80;
+                HttpdAddressUtility.Address addr = new HttpdAddressUtility.Address(host, port);
                 
                 if (addr != null) {
                     vhostAddresses.add(addr);

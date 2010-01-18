@@ -107,9 +107,12 @@
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
     <classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
+   	<classpathentry kind="src" path="modules/plugins/raw-config-test/src/main/java"/>
+    <classpathentry kind="src" path="modules/plugins/raw-config-test/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/cobbler/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/cobbler/src/test/java"/>
     <classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/virt/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/snmptrapd/src/main/java"/>
@@ -224,8 +227,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jmock/jmock/2.5.1/jmock-2.5.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-core/1.1/hamcrest-core-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
+	<classpathentry kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.0/libvirt-0.4.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

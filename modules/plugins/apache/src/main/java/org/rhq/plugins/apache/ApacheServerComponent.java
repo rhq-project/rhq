@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import net.augeas.Augeas;
 import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
@@ -88,6 +89,9 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  */
 public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
+
+    private static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -134,6 +138,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
 
+    private static final boolean HAS_AUGEAS;
+    static {
+        boolean augeasPresent;
+        try {
+            new Augeas();
+            augeasPresent = true;
+        } catch (Throwable e) {
+            augeasPresent = false;
+        }
+        HAS_AUGEAS = augeasPresent;
+    }
+    
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -289,9 +305,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        if (!isConfigurationSupported()) {
-            throw new IllegalStateException("Configuration is supported only for Apache version 2 and up.");
-        }
+        checkConfigurationSupported();
 
         try {
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
@@ -364,7 +378,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             AugeasProxy proxy = getAugeasProxy();
             AugeasTree tree = getAugeasTree();
             String[] vhostDefs = vhostDef.split(" ");
-            HttpdAddressUtility.Address addr = HttpdAddressUtility.getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
+            HttpdAddressUtility.Address addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
             
             String resourceName;
             if (serverName != null) {
@@ -780,9 +794,27 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 
-    private boolean isConfigurationSupported() {
+    /**
+     * Checks whether the configuration is supported for this apache instance.
+     * Checks for Augeas availability and Apache version greater than 2.x are made.
+     * 
+     * @throws IllegalStateException if configuration isn't supported
+     */
+    public void checkConfigurationSupported() {
+        if (!HAS_AUGEAS) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         String version = resourceContext.getVersion();
-        return version.startsWith("2.");
+        
+        if (!version.startsWith("2.")) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+    }
+    
+    public HttpdAddressUtility getAddressUtility() {
+        String version = resourceContext.getVersion();
+        return HttpdAddressUtility.get(version);
     }
     
     private String getNewVhostFileName(HttpdAddressUtility.Address address, String mask) {

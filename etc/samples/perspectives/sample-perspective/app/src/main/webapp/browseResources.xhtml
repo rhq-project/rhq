@@ -27,27 +27,53 @@
 
         <h2>Browse Resources</h2>
 
-        <rich:dataTable id="resources" value="#{BrowseResourcesUIBean.dataModel}"
-                        var="resource" rows="10" width="100%">
-            <rich:column sortBy="id">
+        <ui:remove><!-- The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
+        <h:form>
+        <rich:extendedDataTable id="resourcesDataTable"
+                        value="#{BrowseResourcesUIBean.dataModel}" var="resource"
+                        first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
+                        rows="#{BrowseResourcesUIBean.pageControl.pageSize}"
+                        sortMode="multi"
+                        selectionMode="multi" selection="#{BrowseResourcesUIBean.selection}"
+                        width="100%">
+            <rich:column sortBy="#{r.id}" width="10%">
                 <f:facet name="header">
                     <h:outputLabel for="id" value="Id" />
                 </f:facet>
                 <h:outputText id="id" value="#{resource.id}" />
             </rich:column>
-            <rich:column sortBy="name">
+
+            <rich:column sortBy="#{r.name}" width="30%">
                 <f:facet name="header">
                     <h:outputLabel for="name" value="Name" />
                 </f:facet>
                 <h:outputText id="name" value="#{resource.name}" />
             </rich:column>
-            <rich:column sortBy="description">
+            
+            <rich:column sortBy="#{r.description}" width="60%">
                 <f:facet name="header">
                     <h:outputLabel for="description" value="Description" />
                 </f:facet>
                 <h:outputText id="description" value="#{resource.description}" />
             </rich:column>
-        </rich:dataTable>
+
+           <f:facet name="footer">
+              <rich:columnGroup>
+                 <rich:column colspan="8">
+                    <a4j:commandButton value="UNINVENTORY"
+                                       action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
+                                       reRender="resourcesDataTable, resourcesDataTableScroller" />
+
+                    <ui:include src="/WEB-INF/includes/pageControls.xhtml">
+                        <ui:param name="dataTableName" value="resourcesDataTable"/>
+                        <ui:param name="dataModel" value="#{BrowseResourcesUIBean.dataModel}"/>
+                        <ui:param name="pageControl" value="#{BrowseResourcesUIBean.pageControl}"/>
+                    </ui:include>
+                 </rich:column>
+              </rich:columnGroup>
+           </f:facet>
+        </rich:extendedDataTable>
+        </h:form>
 
     </f:view>
 

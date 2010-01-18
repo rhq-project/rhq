@@ -8,6 +8,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+import org.rhq.enterprise.server.perspective.AbstractPerspectiveUIBean;
 
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.web.RequestParameter;

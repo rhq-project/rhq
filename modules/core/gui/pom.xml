@@ -126,17 +126,17 @@
 
       <!-- == Seam Related Dependencies ================ -->
       
-        <dependency>
-            <groupId>org.jboss.seam</groupId>
-            <artifactId>jboss-seam</artifactId>
-            <version>${seam.version}</version>
-            <exclusions>
-                <exclusion>
-                  <groupId>xml-apis</groupId>
-                  <artifactId>xml-apis</artifactId>     
-                </exclusion>
-            </exclusions>
-        </dependency>
+      <dependency>
+        <groupId>org.jboss.seam</groupId>
+        <artifactId>jboss-seam</artifactId>
+        <version>${seam.version}</version>
+        <exclusions>
+            <exclusion>
+              <groupId>xml-apis</groupId>
+              <artifactId>xml-apis</artifactId>
+            </exclusion>
+        </exclusions>
+      </dependency>
 
    </dependencies>
 

@@ -14,6 +14,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.perspective.AbstractPerspectiveUIBean;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 
@@ -80,7 +81,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     //define enumeration to enforce type restriction.
 
     enum Group {//Compatible == homogeneous AND mixed != homogeneous
-        Compatible, Mixed;
+        Compatible, Mixed
     }
 
     private String groupType = Group.Mixed.name(); //REQUIRED: defaults to mixed to all resources show up

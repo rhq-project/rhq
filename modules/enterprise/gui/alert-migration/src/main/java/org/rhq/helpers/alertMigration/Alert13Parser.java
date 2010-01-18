@@ -49,7 +49,9 @@ public class Alert13Parser {
     File inputFile;
     Reader inputReader;
 
-    Alert13Parser(File input) {
+    public static final String RHQ_USERS = "RHQ Users";
+
+    public Alert13Parser(File input) {
         this.inputFile = input;
         try {
             inputReader = new FileReader(input);
@@ -58,11 +60,11 @@ public class Alert13Parser {
         }
     }
 
-    Alert13Parser(Reader reader) {
+    public Alert13Parser(Reader reader) {
         inputReader = reader;
     }
 
-    Alert13Parser(InputStream stream) {
+    public Alert13Parser(InputStream stream) {
         inputReader = new InputStreamReader(stream);
     }
 
@@ -127,7 +129,7 @@ public class Alert13Parser {
                     i+=4;
                     log.debug("subject: " + subjectId);
                     config.put(new PropertySimple("subjectId", subjectId));
-                    alNo.setSenderName("RHQ Users");
+                    alNo.setSenderName(RHQ_USERS);
                     alNo.setName(subject);
 
                 } else if (n.startsWith("Role")) {

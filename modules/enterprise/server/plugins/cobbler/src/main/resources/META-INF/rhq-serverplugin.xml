@@ -16,10 +16,32 @@
 
     <serverplugin:plugin-component class="CobblerServerPluginComponent">
         <serverplugin:control name="getCobblerDistros" description="Shows the distros known to Cobbler">
+            <serverplugin:parameters>
+                <c:simple-property name="searchRegex" required="false" description="If specified, only those distros whose name matches this regex will be returned" />
+            </serverplugin:parameters>
             <serverplugin:results>
                 <c:list-property name="distros">
                     <c:map-property name="distro">
                         <c:simple-property name="name" />
+                        <c:simple-property name="breed" />
+                        <c:simple-property name="osversion" displayName="OS Version" />
+                        <c:simple-property name="arch" />
+                        <c:simple-property name="initrd" />
+                        <c:simple-property name="kernel" />
+                    </c:map-property>
+                </c:list-property>
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="getCobblerProfiles" description="Shows the profiles known to Cobbler">
+            <serverplugin:parameters>
+                <c:simple-property name="searchRegex" required="false" description="If specified, only those profiles whose name matches this regex will be returned" />
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:list-property name="profiles">
+                    <c:map-property name="profile">
+                        <c:simple-property name="name" />
+                        <c:simple-property name="distro" />
+                        <c:simple-property name="kickstart" />
                     </c:map-property>
                 </c:list-property>
             </serverplugin:results>
@@ -29,7 +51,7 @@
     <serverplugin:scheduled-jobs>
         <!-- notice that we use the map name as the methodName; our stateful component instance is the job class -->
         <c:map-property name="synchronizeContent">
-            <c:simple-property name="enabled" type="boolean" required="true" default="true" summary="true" description="Determines whether or not Cobbler will be synchronized with RHQ content"/>
+            <c:simple-property name="enabled" type="boolean" required="true" default="false" summary="true" description="Determines whether or not Cobbler will be synchronized with RHQ content"/>
             <c:simple-property name="scheduleType" type="string" required="true" default="cron" summary="true" description="Indicates the type of trigger this synchronize job will use">
                 <c:property-options>
                     <c:option value="periodic"/>
@@ -44,8 +66,11 @@
 
     <!-- custom global config - unrelated to schedules  -->
     <serverplugin:plugin-configuration>
-        <c:simple-property name="todo" type="string" required="false" default="todo"
-                           description="TODO this is just a placeholder" />
+        <c:group name="cobblerServerConnection">
+            <c:simple-property name="url" type="string" required="true" default="http://127.0.0.1:80" description="The URL where the Cobbler server is found" />
+            <c:simple-property name="username" type="string" required="true" default="testing" description="The username that this plugin will use when logging into the Cobbler server" />
+            <c:simple-property name="password" type="password" required="true" default="testing" description="The password that this plugin will use when logging into the Cobbler server" />
+        </c:group>
     </serverplugin:plugin-configuration>
 
 </generic-plugin>

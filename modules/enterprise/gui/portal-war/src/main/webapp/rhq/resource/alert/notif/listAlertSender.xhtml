@@ -150,7 +150,7 @@
                              value="#{alertNotificationsUIBean.newAlertName}"
                              maxlength="100"
                              required="true" />
-                
+
                 <h:message for="alertNameInput"
                            infoClass="InfoBlock"
                            warnClass="WarnBlock"
@@ -171,6 +171,30 @@
                                  styleClass="buttonmed">
                 </h:commandButton>
             </h:form>
+        </rich:panel>
+
+        <rich:panel id="addAlertFromTemplatePanel">
+            <f:facet name="header">
+                <h:outputText value="Add Alert Notifications from template"/>
+            </f:facet>
+
+            <h:selectOneMenu id="templateList" value="#{alertNotificationsUIBean.selectedTemplate}">
+                <f:selectItems value="#{alertNotificationsUIBean.allNotificationTemplates}"/>
+            </h:selectOneMenu>
+
+            <br/>
+
+            <h:selectBooleanCheckbox title="clearExisting" value="#{alertNotificationsUIBean.clearExistingNotifications}"/>
+            <h:outputText value="Clear existing notifications"/>
+
+            <br/>
+
+            <h:commandButton id="addTemplateButton"
+                             value="Add Alert Notification from Template"
+                             action="#{alertNotificationsUIBean.addAlertSenderFromTemplate}"
+                             styleClass="buttonmed">
+            </h:commandButton>
+
         </rich:panel>
 
         <br />

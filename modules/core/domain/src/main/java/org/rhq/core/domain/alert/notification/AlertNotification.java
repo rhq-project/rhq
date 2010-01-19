@@ -127,6 +127,12 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
+
+    public AlertNotification(String name, String sender) {
+        this.name = name;
+        this.senderName = sender;
+    }
+
     public int getId() {
         return id;
     }
@@ -186,6 +192,14 @@ public class AlertNotification implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public NotificationTemplate getNotificationTemplate() {
+        return notificationTemplate;
+    }
+
+    public void setNotificationTemplate(NotificationTemplate notificationTemplate) {
+        this.notificationTemplate = notificationTemplate;
     }
 
     public int getAlertDefinitionId() {

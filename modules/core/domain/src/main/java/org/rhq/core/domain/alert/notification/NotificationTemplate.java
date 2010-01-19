@@ -27,6 +27,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -38,10 +40,19 @@ import javax.persistence.Table;
  *
  * @author Heiko W. Rupp
  */
+
+@NamedQueries({
+        @NamedQuery(name = NotificationTemplate.FIND_BY_NAME, query = "SELECT t FROM NotificationTemplate t WHERE t.name = :name"),
+        @NamedQuery(name = NotificationTemplate.FIND_ALL, query = "SELECT t FROM NotificationTemplate t LEFT JOIN FETCH t.notifications")
+})
 @Entity
 @Table(name="RHQ_ALERT_NOTIF_TEMPL")
 @SequenceGenerator(name="RHQ_ALERT_NOTIF_SEQ", sequenceName = "RHQ_ALERT_NOTIF_SEQ")
 public class NotificationTemplate implements Serializable {
+
+    public static final String FIND_BY_NAME = "NotificationTemplate.findByName";
+    public static final String FIND_ALL = "NotificationTemplate.findAll";
+
 
     @Column(name="ID", nullable = false)
     @GeneratedValue(generator = "RHQ_ALERT_NOTIF_SEQ")

@@ -145,4 +145,30 @@ public interface AlertNotificationManagerLocal {
      * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
      */
     void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications);
+
+    /**
+     * Create a new NotificationTemplate from the passed parameters. The passed AlertNotification objects need to have the
+     * name and sender and any configuration properties already set; alert definitions must not be set.
+     * @param name name of this notification template. Must be unique
+     * @param description description of the template
+     * @param notifications notifications that make up the template
+     * @return the newly created template
+     * @throws IllegalArgumentException when a template with the passed name already exists
+     */
+    NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException;
+
+    /**
+     * Get all defined notification templates in the system along with their AlertNotifications
+     * @param user Subject of the caller
+     * @return List of all defined alert notification templates
+     */
+    List<NotificationTemplate> listNotificationTemplates(Subject user);
+
+    /**
+     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
+     * @param templateName name of a pre-defined alert NotificationTemplate
+     * @param alertDefinitionId id of an AlertDefinition on which the template should be applied
+     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
+     */
+    void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications);
 }

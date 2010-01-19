@@ -23,10 +23,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.faces.application.FacesMessage;
-import javax.faces.model.SelectItem;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
@@ -35,9 +35,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
-import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.plugin.AbstractPlugin;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -47,38 +45,43 @@ import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ControlDefinition;
 
-@Scope(ScopeType.PAGE)
+@Scope(ScopeType.CONVERSATION)
 @Name("ServerPluginControlUIBean")
 public class ServerPluginControlUIBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final ServerPluginsLocal serverPluginsBean = LookupUtil.getServerPlugins();
 
-    @RequestParameter
-    private String plugin;
-    @RequestParameter
-    private String pluginType;
+    @In("plugin")
+    private AbstractPlugin abstractPlugin;
 
-    private PluginKey serverPluginKey;
+    @RequestParameter
+    private String control;
+
     private ServerPlugin serverPlugin;
+    private String serverPluginType;
+    private String serverPluginName;
+    private PluginKey serverPluginKey;
     private List<ControlDefinition> serverPluginControlDefinitions;
-    private String selectedControl;
 
     private Configuration params;
     private ControlResults results;
 
     @Create
     public void init() throws Exception {
-        this.serverPluginKey = PluginKey.createServerPluginKey(this.pluginType, this.plugin);
-        this.serverPlugin = this.serverPluginsBean.getServerPlugin(this.serverPluginKey);
+        this.serverPlugin = (ServerPlugin) this.abstractPlugin;
+
+        this.serverPluginType = this.serverPlugin.getType();
+        this.serverPluginName = this.serverPlugin.getName();
+        this.serverPluginKey = PluginKey.createServerPluginKey(this.serverPluginType, this.serverPluginName);
 
         ArrayList<ControlDefinition> defs = new ArrayList<ControlDefinition>();
-        if (checkPermission()) {
+        if (getPermission()) {
             defs.addAll(this.serverPluginsBean.getServerPluginControlDefinitions(this.serverPluginKey));
         }
         this.serverPluginControlDefinitions = defs;
 
-        setSelectedControl(null);
+        setSelectedControl(this.control);
     }
 
     public PluginKey getServerPluginKey() {
@@ -89,31 +92,30 @@ public class ServerPluginControlUIBean implements Serializable {
         return this.serverPlugin;
     }
 
-    public String getSelectedControl() {
-        return this.selectedControl;
-    }
-
     public void setSelectedControl(String controlName) {
         if (controlName != null) {
-            this.selectedControl = controlName;
-            this.params = (getParamsDefinition() != null) ? new Configuration() : null;
-            this.results = null;
+            this.control = controlName;
+            if (getParamsDefinition() != null) {
+                this.params = getParamsDefinition().getDefaultTemplate().createConfiguration();
+            } else {
+                this.params = null;
+            }
         } else {
-            this.selectedControl = null;
+            this.control = null;
             this.params = null;
-            this.results = null;
         }
+        this.results = null;
     }
 
-    public List<SelectItem> getControlOptions() throws Exception {
-        List<SelectItem> items = new ArrayList<SelectItem>();
-
-        if (this.serverPluginControlDefinitions != null) {
-            for (ControlDefinition def : this.serverPluginControlDefinitions) {
-                items.add(new SelectItem(def.getName(), def.getDisplayName(), def.getDescription()));
-            }
+    public List<String[]> getControls() throws Exception {
+        if (this.serverPluginControlDefinitions == null) {
+            return null;
         }
 
+        List<String[]> items = new ArrayList<String[]>();
+        for (ControlDefinition def : this.serverPluginControlDefinitions) {
+            items.add(new String[] { def.getName(), def.getDisplayName(), def.getDescription() });
+        }
         return items;
     }
 
@@ -122,17 +124,9 @@ public class ServerPluginControlUIBean implements Serializable {
     }
 
     public ConfigurationDefinition getParamsDefinition() {
-        // TODO: just mock somethign to test, remove me later
-        ConfigurationDefinition def1 = new ConfigurationDefinition("test", "foo");
-        PropertyDefinition prop = new PropertyDefinitionSimple("simple-pr", "description", false,
-            PropertySimpleType.STRING);
-        def1.put(prop);
-        if (1 == 1)
-            return def1;
-
         if (this.serverPluginControlDefinitions != null) {
             for (ControlDefinition def : this.serverPluginControlDefinitions) {
-                if (def.getName().equals(this.selectedControl)) {
+                if (def.getName().equals(this.control)) {
                     ConfigurationDefinition paramsDef = def.getParameters();
                     return paramsDef;
                 }
@@ -142,8 +136,21 @@ public class ServerPluginControlUIBean implements Serializable {
         return null; // return null to indicate that there are no params defined
     }
 
-    public boolean isResultsAvailable() {
+    public boolean getResultsAvailable() {
         return this.results != null;
+    }
+
+    public ConfigurationDefinition getResultsDefinition() {
+        if (this.serverPluginControlDefinitions != null) {
+            for (ControlDefinition def : this.serverPluginControlDefinitions) {
+                if (def.getName().equals(this.control)) {
+                    ConfigurationDefinition resultsDef = def.getResults();
+                    return resultsDef;
+                }
+            }
+        }
+
+        return null;
     }
 
     public Configuration getResultsConfiguration() {
@@ -154,9 +161,9 @@ public class ServerPluginControlUIBean implements Serializable {
         return this.results != null ? this.results.getError() : null;
     }
 
-    public void invokeControl() {
+    public String invokeControl() {
         try {
-            this.results = this.serverPluginsBean.invokeServerPluginControl(this.serverPluginKey, this.selectedControl,
+            this.results = this.serverPluginsBean.invokeServerPluginControl(this.serverPluginKey, this.control,
                 getParamsConfiguration());
             if (this.results.isSuccess()) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
@@ -168,14 +175,11 @@ public class ServerPluginControlUIBean implements Serializable {
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to invoke the plugin control", e);
         }
+
+        return "success";
     }
 
-    public void selectControl() {
-        //TODO should not be neeed
-        System.out.println("here");
-    }
-
-    private boolean checkPermission() throws Exception {
+    public boolean getPermission() throws Exception {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         if (!LookupUtil.getAuthorizationManager().hasGlobalPermission(subject, Permission.MANAGE_SETTINGS)) {
             return false;

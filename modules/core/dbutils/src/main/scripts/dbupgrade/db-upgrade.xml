@@ -2768,7 +2768,17 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-
+            <schemaSpec version="2.77.1">
+                <schema-createSequence name="RHQ_ALERT_NOTIF_TEMPL_ID_SEQ" initial="10001"/>
+            </schemaSpec>
+<!--
+            <schemaSpec version="2.77.2">
+                <schema-deleteColumn table="RHQ_ALERT_NOIFICATION" column="snmp_host"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOIFICATION" column="snmp_port"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOIFICATION" column="snmp_oid"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOIFICATION" column="email_address"/>
+            </schemaSpec>
+-->
         </dbupgrade>
     </target>
 </project>

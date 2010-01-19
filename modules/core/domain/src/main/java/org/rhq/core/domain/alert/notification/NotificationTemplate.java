@@ -47,7 +47,7 @@ import javax.persistence.Table;
 })
 @Entity
 @Table(name="RHQ_ALERT_NOTIF_TEMPL")
-@SequenceGenerator(name="RHQ_ALERT_NOTIF_SEQ", sequenceName = "RHQ_ALERT_NOTIF_SEQ")
+@SequenceGenerator(name="RHQ_ALERT_NOTIF_TEMPL_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
 public class NotificationTemplate implements Serializable {
 
     public static final String FIND_BY_NAME = "NotificationTemplate.findByName";
@@ -55,7 +55,7 @@ public class NotificationTemplate implements Serializable {
 
 
     @Column(name="ID", nullable = false)
-    @GeneratedValue(generator = "RHQ_ALERT_NOTIF_SEQ")
+    @GeneratedValue(generator = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
     @Id
     private int id;
 

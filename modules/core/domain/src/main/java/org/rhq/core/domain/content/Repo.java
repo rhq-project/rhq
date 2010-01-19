@@ -46,6 +46,7 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
@@ -169,9 +170,11 @@ public class Repo implements Serializable, Taggable {
     // latest appears first, oldest last
     private List<RepoSyncResults> syncResults;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoDistribution> repoDistributions;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoAdvisory> repoAdvisories;
 
@@ -382,13 +385,13 @@ public class Repo implements Serializable, Taggable {
 
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
-     * 
+     *
      * There is a weight to the status since this returns the most 'relevant' status:
-     * 
+     *
      * 1) ContentSourceSyncStatus.FAILURE
      * 2) ContentSourceSyncStatus.INPROGRESS
      * 3) ContentSourceSyncStatus.SUCCESS
-     * 
+     *
      * @return String summary of the status of this Repository
      */
     @Transient
@@ -819,7 +822,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
-     * Removes association with a tag, if it exists. 
+     * Removes association with a tag, if it exists.
      */
     public void removeTag(Tag tag) {
         if ((this.repoTags == null) || (tag == null)) {

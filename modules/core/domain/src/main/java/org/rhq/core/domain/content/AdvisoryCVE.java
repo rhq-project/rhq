@@ -36,9 +36,10 @@ import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
- * This is the many-to-many entity that correlates an advisory with a package. 
+ * This is the many-to-many entity that correlates an advisory with a package.
  *
  * @author Pradeep Kilambi
  */
@@ -65,6 +66,7 @@ public class AdvisoryCVE implements Serializable {
     @Id
     private int id;
 
+    @XmlTransient
     @ManyToOne
     @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false)
     private Advisory advisory;

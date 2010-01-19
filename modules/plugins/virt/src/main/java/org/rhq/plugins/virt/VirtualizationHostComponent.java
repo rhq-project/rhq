@@ -122,9 +122,19 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
             HVInfo info = virt.getHVInfo();
             config.put(new PropertySimple("hypervisorType", info.hvType));
             config.put(new PropertySimple("hostName", info.hostname));
-            config.put(new PropertySimple("libvirtVersion", info.libvirtVersion));
+            config.put(new PropertySimple("libvirtVersion", getLibvirtVersion(info.libvirtVersion)));
         }
         return config;
+    }
+
+    public String getLibvirtVersion(long version) {
+        long major, minor, micro, remainder;
+        major = version / 1000000;
+        remainder = version % 1000000;
+        minor = remainder / 1000;
+        micro = remainder % 1000;
+        return major + "." + minor + "." + micro;
+
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {

@@ -57,20 +57,17 @@ public class LibVirtConnection {
             connected = true;
             connection.setConnectionErrorCallback(Logger.INSTANCE);
         } catch (LibvirtException e) {
-            //log.warn("Can not obtain an instance of libvirt");
-            //connection = null;
-            //throw e;
-            try {
-                log.warn("**********00000");
+            log.warn("Can not obtain an instance of libvirt");
+            connection = null;
+            throw e;
+            /*try {
                 log.warn("Can not obtain an instance of libvirt, trying read only");
                 connection = new Connect(uri, true);
-                log.warn("**********11111");
                 connection.setConnectionErrorCallback(Logger.INSTANCE);
                 connected = true;
-                log.warn("**********AAAA");
             } catch (LibvirtException ie) {
                 throw ie;
-            }
+            }*/
         } finally {
             Connect.setErrorCallback(null);
         }

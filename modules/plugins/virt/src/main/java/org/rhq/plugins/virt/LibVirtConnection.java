@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.Pointer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libvirt.Connect;
@@ -30,6 +32,7 @@ import org.libvirt.DomainBlockStats;
 import org.libvirt.DomainInterfaceStats;
 import org.libvirt.LibvirtException;
 import org.libvirt.Network;
+import org.libvirt.jna.virError;
 
 /**
  * Represents a connection, via libVirt to domain management.
@@ -48,16 +51,28 @@ public class LibVirtConnection {
 
     public LibVirtConnection(String uri) throws LibvirtException {
         try {
+            //Connect.setErrorCallback(Logger.INSTANCE);
+            //Connect.setErrorCallback(null);
             connection = new Connect(uri);
             connected = true;
+            connection.setConnectionErrorCallback(Logger.INSTANCE);
         } catch (LibvirtException e) {
+            //log.warn("Can not obtain an instance of libvirt");
+            //connection = null;
+            //throw e;
             try {
+                log.warn("**********00000");
                 log.warn("Can not obtain an instance of libvirt, trying read only");
                 connection = new Connect(uri, true);
+                log.warn("**********11111");
+                connection.setConnectionErrorCallback(Logger.INSTANCE);
                 connected = true;
+                log.warn("**********AAAA");
             } catch (LibvirtException ie) {
                 throw ie;
             }
+        } finally {
+            Connect.setErrorCallback(null);
         }
     }
 
@@ -76,8 +91,14 @@ public class LibVirtConnection {
 
     protected void finalize() throws Throwable {
         super.finalize();
-        connection.close();
-        connected = false;
+        if (connected) {
+            connection.close();
+            connected = false;
+        }
+    }
+
+    public boolean isConnected() {
+        return connected;
     }
 
     public int[] getDomainIds() throws Exception {
@@ -193,7 +214,7 @@ public class LibVirtConnection {
     }
 
     public int close() throws LibvirtException {
-        if (!connected) {
+        if (connected) {
             connected = false;
             return connection.close();
         } else {
@@ -299,5 +320,19 @@ public class LibVirtConnection {
             System.out.println(foo);
             System.out.println(conn.connection.domainLookupByName(foo).getXMLDesc(0));
         }
+    }
+}
+
+class Logger extends org.libvirt.ErrorCallback {
+
+    // Make this static so the callback will always have an object
+    // to reference. If the object is GC'ed a core dump will occur.
+    public static Logger INSTANCE = new Logger();
+
+    private Log log = LogFactory.getLog(Logger.class);
+
+    @Override
+    public void errorCallback(Pointer arg0, virError arg1) {
+        log.warn(arg1.message);
     }
 }

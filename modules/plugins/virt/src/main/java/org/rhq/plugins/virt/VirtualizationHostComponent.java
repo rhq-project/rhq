@@ -59,6 +59,9 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         uri = resourceContext.getPluginConfiguration().getSimpleValue("connectionURI", "");
         virt = new LibVirtConnection(uri);
+        if (!virt.isConnected()) {
+            virt = null;
+        }
     }
 
     public void stop() {
@@ -70,49 +73,57 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     }
 
     public AvailabilityType getAvailability() {
-        try {
-            virt.getHVInfo();
-            return AvailabilityType.UP;
-        } catch (Exception e) {
+        if (virt.isConnected()) {
+            try {
+                virt.getHVInfo();
+                return AvailabilityType.UP;
+            } catch (Exception e) {
+                return AvailabilityType.DOWN;
+            }
+        } else {
             return AvailabilityType.DOWN;
         }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        HVInfo hi = virt.getHVInfo();
-        for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().equals("cpus")) {
-                report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.cpus));
-            } else if (request.getName().equals("memory")) {
-                report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.memory));
-            } else if (request.getName().equals("memoryUsage")) {
-                report.addData(new MeasurementDataNumeric(request, virt.getMemoryPercentage()));
-            } else if (request.getName().equals("cpuUsage")) {
-                long checked = System.nanoTime();
-                long cpuNanos = virt.getCPUTime();
+        if (virt.isConnected()) {
+            HVInfo hi = virt.getHVInfo();
+            for (MeasurementScheduleRequest request : metrics) {
+                if (request.getName().equals("cpus")) {
+                    report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.cpus));
+                } else if (request.getName().equals("memory")) {
+                    report.addData(new MeasurementDataTrait(request, "" + hi.nodeInfo.memory));
+                } else if (request.getName().equals("memoryUsage")) {
+                    report.addData(new MeasurementDataNumeric(request, virt.getMemoryPercentage()));
+                } else if (request.getName().equals("cpuUsage")) {
+                    long checked = System.nanoTime();
+                    long cpuNanos = virt.getCPUTime();
 
-                if (cpuCheckedLast != 0) {
-                    long duration = checked - cpuCheckedLast;
+                    if (cpuCheckedLast != 0) {
+                        long duration = checked - cpuCheckedLast;
 
-                    long diff = cpuNanos - cpuNanosLast;
+                        long diff = cpuNanos - cpuNanosLast;
 
-                    double percentage = ((double) diff) / ((double) duration);
-                    report.addData(new MeasurementDataNumeric(request, percentage));
+                        double percentage = ((double) diff) / ((double) duration);
+                        report.addData(new MeasurementDataNumeric(request, percentage));
+                    }
+                    cpuCheckedLast = checked;
+                    cpuNanosLast = cpuNanos;
+                } else if (request.getName().equals("cpuTime")) {
+                    report.addData(new MeasurementDataNumeric(request, (double) virt.getCPUTime()));
                 }
-                cpuCheckedLast = checked;
-                cpuNanosLast = cpuNanos;
-            } else if (request.getName().equals("cpuTime")) {
-                report.addData(new MeasurementDataNumeric(request, (double) virt.getCPUTime()));
             }
         }
     }
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
         Configuration config = new Configuration();
-        HVInfo info = virt.getHVInfo();
-        config.put(new PropertySimple("hypervisorType", info.hvType));
-        config.put(new PropertySimple("hostName", info.hostname));
-        config.put(new PropertySimple("libvirtVersion", info.libvirtVersion));
+        if (virt.isConnected()) {
+            HVInfo info = virt.getHVInfo();
+            config.put(new PropertySimple("hypervisorType", info.hvType));
+            config.put(new PropertySimple("hostName", info.hostname));
+            config.put(new PropertySimple("libvirtVersion", info.libvirtVersion));
+        }
         return config;
     }
 

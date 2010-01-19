@@ -35,7 +35,7 @@
       <dependency>
          <groupId>org.libvirt</groupId>
          <artifactId>libvirt</artifactId>
-         <version>0.4.0</version>
+         <version>0.4.1</version>
       </dependency>      
 
       <dependency>
@@ -75,7 +75,7 @@
                       	<artifactItem>
 					         <groupId>org.libvirt</groupId>
 					         <artifactId>libvirt</artifactId>
-					         <version>0.4.0</version>
+					         <version>0.4.1</version>
 					     </artifactItem>                        
                       </artifactItems>
                       <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

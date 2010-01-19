@@ -29,6 +29,7 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
@@ -569,9 +570,11 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
         q.setParameter("name",templateName);
-        NotificationTemplate template = (NotificationTemplate) q.getSingleResult();
-        if (template == null) {
-            throw new IllegalArgumentException("There is no template with name " + templateName);
+        NotificationTemplate template;
+        try {
+            template = (NotificationTemplate) q.getSingleResult();
+        } catch (NoResultException nre) {
+            throw new IllegalArgumentException("There is no template with name '" + templateName +"'");
         }
 
         AlertDefinition definition = getDetachedAlertDefinition(alertDefinitionId);
@@ -605,6 +608,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
+    @SuppressWarnings("unchecked")
     public NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException {
 
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
@@ -630,15 +634,11 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param user Subject of the caller
      * @return List of all defined alert notification templates
      */
+    @SuppressWarnings("unchecked")
     public List<NotificationTemplate> listNotificationTemplates(Subject user) {
 
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_ALL);
         List<NotificationTemplate> ret = q.getResultList();
-
-        NotificationTemplate tmp = new NotificationTemplate("testName", "test-description");
-        AlertNotification not = new AlertNotification("myNotification","testSender");
-        tmp.getNotifications().add(not);
-        ret.add(tmp);
 
         return ret;
     }

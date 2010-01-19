@@ -80,6 +80,11 @@ public class ContentHTTPServlet extends DefaultServlet {
         return StringUtils.equalsIgnoreCase(dir, "icons");
     }
 
+    protected void doHead(HttpServletRequest request, HttpServletResponse response) throws IOException,
+        ServletException {
+        doGet(request, response);
+    }
+
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         log.info("doGet():  requestURI = " + request.getRequestURI());
         if (isIconRequest(request)) {
@@ -302,8 +307,20 @@ public class ContentHTTPServlet extends DefaultServlet {
                 return;
             }
         }
-        log.info("Searched through DistributionFiles and unable to find: " + fileRequest + ", in Distribution: "
-            + dist.getLabel());
+        // This isn't a DistributionFile
+        // This could be a request for a package.  Package requests will come in as:
+        // ..../distributions/{Server,Cluster,Packages,etc}/a2ps-XXXXX.rpm  
+
+        String possiblePkgName = getLastPiece(request.getRequestURI());
+        log.info("Looking up : " + possiblePkgName + ", it might be a package request");
+        PackageVersion pv = getPackageVersionFromFileName(repo, possiblePkgName);
+        if (pv != null) {
+            log.info(possiblePkgName + " resolved to a package, will send package bytes back as response");
+            response.setContentType("application/octet-stream");
+            writePackageVersionBits(response.getOutputStream(), pv);
+        }
+        log.info("Searched through DistributionFiles and Packages, unable to find: " + fileRequest
+            + ", in Distribution: " + dist.getLabel());
 
         renderErrorPage(request, response);
 
@@ -426,6 +443,15 @@ public class ContentHTTPServlet extends DefaultServlet {
 
     protected String getDistLabel(String requestURI) {
         return getNthPiece(4, requestURI);
+    }
+
+    protected String getLastPiece(String requestURI) {
+        StrTokenizer st = new StrTokenizer(requestURI, "/");
+        List<String> tokens = st.getTokenList();
+        if (tokens.size() < 1) {
+            return "";
+        }
+        return tokens.get(tokens.size() - 1);
     }
 
     /**

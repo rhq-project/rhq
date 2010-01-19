@@ -77,6 +77,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
+    private String modalEditorContents;
+
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
@@ -197,6 +199,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public String updateRawConfiguration() {
         return updateConfiguration(false);
+    }
+
+    public void saveModalEditorContents() {
+        setCurrentContents(modalEditorContents);
     }
 
     public String updateConfiguration(boolean fromStructured) {
@@ -371,10 +377,15 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getModalEditorContents() {
-        return getCurrentContents();
+        if (modalEditorContents == null) {
+            modalEditorContents = getCurrentContents();
+        }
+//        return getCurrentContents();
+        return modalEditorContents;
     }
 
     public void setModalEditorContents(String contents) {
+        modalEditorContents = contents;
     }
 
     public TreeMap<String, RawConfiguration> getModified() {
@@ -454,6 +465,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         selectedPath = s;
         setCurrentPath(selectedPath);
         setCurrentContents(getCurrentContents());
+        modalEditorContents = getCurrentContents();
     }
 
     public void setCurrentContents(String updated) {

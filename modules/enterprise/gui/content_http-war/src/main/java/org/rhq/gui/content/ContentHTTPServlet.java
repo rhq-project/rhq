@@ -55,6 +55,7 @@ public class ContentHTTPServlet extends DefaultServlet {
 
     protected static final String PACKAGES = "packages";
     protected static final String DISTRIBUTIONS = "distributions";
+    protected static final String REPODATA = "repodata";
 
     protected RepoManagerLocal repoMgr;
     protected ContentManagerLocal contentMgr;
@@ -176,20 +177,29 @@ public class ContentHTTPServlet extends DefaultServlet {
         log.info("Parsed file name = " + fileName);
         if (StringUtils.isBlank(fileName)) {
             // form a directory listing for each package in repository. 
-            log.info("TODO: create index.html listing all the packages for this repo: " + repo.getName());
+            log.info("create listing of all packages for this repo: " + repo.getName());
             renderPackageIndex(request, response, repo);
             return;
-        } else {
-            log.info("fetch package bits and return them.");
-            PackageVersion pv = getPackageVersionFromFileName(repo, fileName);
-            if (pv == null) {
-                log.info("Unable to find PackageVersion from filename: " + fileName);
-                renderErrorPage(request, response);
-                return;
-            }
-            response.setContentType("application/octet-stream");
-            writePackageVersionBits(response.getOutputStream(), pv);
         }
+        /*
+         * This will likely change in a future sprint.
+         * For now we are assuming that metadata is only yum metadata
+         * and it's accessed as 'packages/repodata/primary.xml'
+         */
+        if (StringUtils.equals(fileName, REPODATA)) {
+            renderMetadata(request, response, repo);
+            return;
+        }
+
+        log.info("fetch package bits and return them.");
+        PackageVersion pv = getPackageVersionFromFileName(repo, fileName);
+        if (pv == null) {
+            log.info("Unable to find PackageVersion from filename: " + fileName);
+            renderErrorPage(request, response);
+            return;
+        }
+        response.setContentType("application/octet-stream");
+        writePackageVersionBits(response.getOutputStream(), pv);
     }
 
     protected void renderPackageIndex(HttpServletRequest request, HttpServletResponse response, Repo repo)
@@ -206,6 +216,46 @@ public class ContentHTTPServlet extends DefaultServlet {
             HtmlRenderer.formFileEntry(sb, request, pv.getFileName(), new Date(pv.getFileCreatedDate()).toString(), pv
                 .getFileSize());
         }
+        HtmlRenderer.formEnd(sb);
+        writeResponse(sb.toString(), response);
+    }
+
+    protected void renderMetadata(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
+        log.info("renderMetadata(repo name = " + repo.getName() + ", id = " + repo.getId());
+
+        String metadataFilename = getMetadataFileName(request.getRequestURI());
+        if (StringUtils.isBlank(metadataFilename)) {
+            renderMetadataIndex(request, response, repo);
+            return;
+        }
+        // Generate Yum Metadata
+        log.info("Generate Yum Metadata for : " + metadataFilename);
+        List<PackageVersion> pvs = repoMgr.findPackageVersionsInRepo(LookupUtil.getSubjectManager().getOverlord(), repo
+            .getId(), PageControl.getUnlimitedInstance());
+        log.info(pvs.size() + " packages were found for repo : " + repo.getName());
+        StringBuffer sb = new StringBuffer();
+        if (!YumMetadata.generate(sb, repo, pvs, metadataFilename)) {
+            log.info("Error generating: " + metadataFilename + " for repo: " + repo.getName() + " with " + pvs.size()
+                + " packages");
+            renderErrorPage(request, response);
+            return;
+        }
+        writeResponse(sb.toString(), response, "text/xml; charset=utf-8");
+    }
+
+    protected void renderMetadataIndex(HttpServletRequest request, HttpServletResponse response, Repo repo)
+        throws IOException {
+        log.info("renderMetadataIndex(repo name = " + repo.getName() + ", id = " + repo.getId());
+
+        StringBuffer sb = new StringBuffer();
+        HtmlRenderer.formStart(sb, "Index of ", request.getRequestURI());
+        HtmlRenderer.formParentLink(sb, getParentURI(request.getRequestURI()));
+
+        // We are only supporting 2 types of yum metadata
+        HtmlRenderer.formFileEntry(sb, request, "primary.xml", new Date().toString(), -1);
+        HtmlRenderer.formFileEntry(sb, request, "repomd.xml", new Date().toString(), -1);
+
         HtmlRenderer.formEnd(sb);
         writeResponse(sb.toString(), response);
     }
@@ -301,8 +351,12 @@ public class ContentHTTPServlet extends DefaultServlet {
     }
 
     protected boolean writeResponse(String data, HttpServletResponse response) throws IOException {
+        return writeResponse(data, response, "text/html");
+    }
 
-        response.setContentType("text/html");
+    protected boolean writeResponse(String data, HttpServletResponse response, String contentType) throws IOException {
+
+        response.setContentType(contentType);
         PrintWriter out = response.getWriter();
         out.write(data);
         out.flush();
@@ -358,6 +412,16 @@ public class ContentHTTPServlet extends DefaultServlet {
      */
     protected String getFileName(String requestURI) {
         return getNthPiece(4, requestURI);
+    }
+
+    /**
+     * 
+     * @param requestURI
+     * @return metadata file name or "" if no file name could be determined
+     */
+    protected String getMetadataFileName(String requestURI) {
+        // expecting something like '.../packages/repodata/primary.xml'
+        return getNthPiece(5, requestURI);
     }
 
     protected String getDistLabel(String requestURI) {

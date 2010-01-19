@@ -178,22 +178,27 @@
                 <h:outputText value="Add Alert Notifications from template"/>
             </f:facet>
 
-            <h:selectOneMenu id="templateList" value="#{alertNotificationsUIBean.selectedTemplate}">
-                <f:selectItems value="#{alertNotificationsUIBean.allNotificationTemplates}"/>
-            </h:selectOneMenu>
+            <h:form id="newNotificationsFromTemplateForm">
+                <input type="hidden" name="id" value="${param.id}"/>
+                <input type="hidden" name="ad" value="${param.ad}"/>
+                
+                <h:selectOneMenu id="templateList" value="#{alertNotificationsUIBean.selectedTemplate}">
+                    <f:selectItems value="#{alertNotificationsUIBean.allNotificationTemplates}"/>
+                </h:selectOneMenu>
 
-            <br/>
+                <br/>
 
-            <h:selectBooleanCheckbox title="clearExisting" value="#{alertNotificationsUIBean.clearExistingNotifications}"/>
-            <h:outputText value="Clear existing notifications"/>
+                <h:selectBooleanCheckbox title="clearExisting" value="#{alertNotificationsUIBean.clearExistingNotifications}"/>
+                <h:outputText value="Clear existing notifications"/>
 
-            <br/>
+                <br/>
 
-            <h:commandButton id="addTemplateButton"
-                             value="Add Alert Notification from Template"
-                             action="#{alertNotificationsUIBean.addAlertSenderFromTemplate}"
-                             styleClass="buttonmed">
-            </h:commandButton>
+                <h:commandButton id="addTemplateButton"
+                                 value="Add Alert Notification from Template"
+                                 action="#{alertNotificationsUIBean.addAlertSenderFromTemplate}"
+                                 styleClass="buttonmed">
+                </h:commandButton>
+            </h:form>
 
         </rich:panel>
 

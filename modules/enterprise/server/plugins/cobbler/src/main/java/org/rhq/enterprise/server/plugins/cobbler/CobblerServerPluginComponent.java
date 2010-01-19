@@ -20,11 +20,13 @@
 package org.rhq.enterprise.server.plugins.cobbler;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.fedorahosted.cobbler.CobblerConnection;
+import org.fedorahosted.cobbler.CobblerObject;
 import org.fedorahosted.cobbler.Finder;
 import org.fedorahosted.cobbler.ObjectType;
 import org.fedorahosted.cobbler.autogen.Distro;
@@ -71,8 +73,55 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
             results.put(list);
 
             PropertyMap map = new PropertyMap("distro");
-            list.add(map);
-            map.put(new PropertySimple("distroName", "distroUrl"));
+
+            CobblerConnection conn = getConnection();
+            Finder finder = Finder.getInstance();
+            List<? extends CobblerObject> distros = finder.listItems(conn, ObjectType.DISTRO);
+            for (CobblerObject cobblerObject : distros) {
+                if (cobblerObject instanceof Distro) {
+                    Distro d = (Distro) cobblerObject;
+                    map.put(new PropertySimple("name", d.getName()));
+                    map.put(new PropertySimple("breed", d.getBreed()));
+                    map.put(new PropertySimple("osversion", d.getOsVersion()));
+                    map.put(new PropertySimple("arch", d.getArch()));
+                    map.put(new PropertySimple("initrd", d.getInitrd()));
+                    map.put(new PropertySimple("kernel", d.getKernel()));
+                } else {
+                    log.error("Instead of a distro, Cobbler returned an object of type [" + cobblerObject.getClass()
+                        + "]: " + cobblerObject);
+                }
+            }
+
+            // only add the propery map into the list if we have 1 or more items in the map
+            if (map.getMap().size() > 0) {
+                list.add(map);
+            }
+        } else if (name.equals("getCobblerProfiles")) {
+            Configuration results = controlResults.getComplexResults();
+            PropertyList list = new PropertyList("profiles");
+            results.put(list);
+
+            PropertyMap map = new PropertyMap("profile");
+
+            CobblerConnection conn = getConnection();
+            Finder finder = Finder.getInstance();
+            List<? extends CobblerObject> profiles = finder.listItems(conn, ObjectType.PROFILE);
+            for (CobblerObject cobblerObject : profiles) {
+                if (cobblerObject instanceof Profile) {
+                    Profile p = (Profile) cobblerObject;
+                    map.put(new PropertySimple("name", p.getName()));
+                    map.put(new PropertySimple("distro", p.getDistro()));
+                    map.put(new PropertySimple("kickstart", p.getKickstart()));
+                } else {
+                    log.error("Instead of a profile, Cobbler returned an object of type [" + cobblerObject.getClass()
+                        + "]: " + cobblerObject);
+                }
+            }
+
+            // only add the propery map into the list if we have 1 or more items in the map
+            if (map.getMap().size() > 0) {
+                list.add(map);
+            }
         } else {
             controlResults.setError("Unknown operation name: " + name);
         }
@@ -84,14 +133,16 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
         log.info("Synchronizing content to the local Cobbler server: " + this);
         this.context.getPluginConfiguration().getSimpleValue("", "");
 
-        CobblerConnection conn = new CobblerConnection("http://172.31.0.227", "testing", "testing");
+        CobblerConnection conn = getConnection();
         Finder finder = Finder.getInstance();
         Profile profile = (Profile) finder.findItemByName(conn, ObjectType.PROFILE, "mazz-profile");
         Distro distro = (Distro) finder.findItemByName(conn, ObjectType.DISTRO, "mazz-distro");
 
         if (distro != null) {
             log.info("REMOVING PROFILE: " + profile);
-            profile.remove();
+            if (profile != null) {
+                profile.remove();
+            }
             log.info("REMOVING DISTRO: " + distro);
             distro.remove();
         } else {
@@ -127,6 +178,20 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
         str.append("plugin-url=").append(this.context.getPluginEnvironment().getPluginUrl()).append(",");
         str.append("plugin-config=[").append(getPluginConfigurationString()).append(']'); // do not append ,
         return str.toString();
+    }
+
+    private CobblerConnection getConnection() {
+        Configuration pc = this.context.getPluginConfiguration();
+        String url = pc.getSimpleValue("url", "http://127.0.0.1");
+        String username = pc.getSimpleValue("username", "");
+        String password = pc.getSimpleValue("password", "");
+
+        if (log.isDebugEnabled()) {
+            log.debug("Connecting to Cobbler at [" + url + "] as user [" + username + "]");
+        }
+
+        CobblerConnection conn = new CobblerConnection(url, username, password);
+        return conn;
     }
 
     private String getPluginConfigurationString() {

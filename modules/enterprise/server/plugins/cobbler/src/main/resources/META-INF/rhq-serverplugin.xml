@@ -16,6 +16,9 @@
 
     <serverplugin:plugin-component class="CobblerServerPluginComponent">
         <serverplugin:control name="getCobblerDistros" description="Shows the distros known to Cobbler">
+            <serverplugin:parameters>
+                <c:simple-property name="searchRegex" required="false" description="If specified, only those distros whose name matches this regex will be returned" />
+            </serverplugin:parameters>
             <serverplugin:results>
                 <c:list-property name="distros">
                     <c:map-property name="distro">
@@ -30,6 +33,9 @@
             </serverplugin:results>
         </serverplugin:control>
         <serverplugin:control name="getCobblerProfiles" description="Shows the profiles known to Cobbler">
+            <serverplugin:parameters>
+                <c:simple-property name="searchRegex" required="false" description="If specified, only those profiles whose name matches this regex will be returned" />
+            </serverplugin:parameters>
             <serverplugin:results>
                 <c:list-property name="profiles">
                     <c:map-property name="profile">

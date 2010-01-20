@@ -244,7 +244,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         }
     }
 
-    @Override
+
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

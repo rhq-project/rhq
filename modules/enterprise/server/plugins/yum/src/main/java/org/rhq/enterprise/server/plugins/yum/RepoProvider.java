@@ -191,7 +191,6 @@ public class RepoProvider implements ContentProvider, PackageSource {
         return path;
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

@@ -330,7 +330,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return null;
     }
 
-    @Override
+
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

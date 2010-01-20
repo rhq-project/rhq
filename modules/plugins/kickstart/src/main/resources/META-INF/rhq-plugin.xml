@@ -19,8 +19,9 @@
          <parameters>
             <c:group name="required" displayName="Required Parameters" hiddenByDefault="false">
                <c:description>All of these properties are required</c:description>
-               <c:simple-property name="server" type="string"/>
-               <c:simple-property name="profile" type="string"/>               
+               <c:simple-property name="name" type="string"/>
+               <c:simple-property name="server" type="string"/>       
+               <c:simple-property name="profile" type="string"/>   
             </c:group>
          </parameters>
          <results>

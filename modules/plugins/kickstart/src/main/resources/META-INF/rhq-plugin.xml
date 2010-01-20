@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="Kickstart"
+        displayName="Kickstart Plugin"
+        version="1.0"
+        package="org.rhq.plugins.kickstart"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">        
+
+
+   <server name="Kickstart Client"
+           discovery="KickstartDiscoveryComponent"
+           class="KickstartServerComponent"
+           description="A Kickstart client for re-install">
+
+      <operation name="installGuest"
+                 description="Install a virt guest.">
+         <parameters>
+            <c:group name="required" displayName="Required Parameters" hiddenByDefault="false">
+               <c:description>All of these properties are required</c:description>
+               <c:simple-property name="server" type="string"/>
+               <c:simple-property name="profile" type="string"/>               
+            </c:group>
+         </parameters>
+         <results>
+             <c:simple-property name="results" />
+         </results>
+      </operation>
+   </server>
+</plugin>

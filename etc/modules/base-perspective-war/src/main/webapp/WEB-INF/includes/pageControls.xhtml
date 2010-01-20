@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+        xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+        xmlns:onf="http://jboss.org/on/function">
+<body>
+
+    Usage: The following parameters must be set in the calling page:
+
+    dataTableName - Name of the data table to be controlled
+    dataModel - Data model of the underlying table being controlled (used for total row count)
+    pageControl - Page control value to set when changing the number of rows per page
+    pageControlSettingsUIBean (optional, defaults to #{DefaultPageControlSettingsUIBean}") - page control settings
+
+    <ui:composition>
+
+        <h:panelGroup layout="block" style="float: right; margin-right: 30px">
+            <ui:param name="dataScrollerName" value="#{dataTableName}Scroller"/>
+            <c:if test="#{empty pageControlSettingsUIBean}">
+                <ui:param name="pageControlSettingsUIBean" value="#{DefaultPageControlSettingsUIBean}"/>
+            </c:if>
+
+            <table>
+                <tr>
+                    <td nowrap="nowrap">
+
+                        <h:outputText value="Total: #{dataModel.rowCount}"
+                                      style="margin-right: 2em; font-weight: bold; "/>
+
+                        <h:panelGroup layout="block" rendered="#{dataModel.rowCount gt pageControlSettingsUIBean.minimumPageSize
+                                                        and pageControl.pageSize gt 0}">
+                            <h:outputText value="Items Per Page: #{pageControl.pageSize}"
+                                          style="font-weight: bold; "
+                                          rendered="#{pageControlSettingsUIBean.pageSizeCount le 1}"/>
+                            <h:panelGroup layout="block" rendered="#{pageControlSettingsUIBean.pageSizeCount gt 1}">
+                                <h:outputText value="Items Per Page:"
+                                              style="margin-right: 1em; font-weight: bold; "/>
+                                <h:selectOneListbox id="currentPageSize"
+                                                    size="1"
+                                                    value="#{pageControl.pageSize}">
+                                    <a4j:support event="onchange"
+                                                 status="commonStatus"
+                                                 reRender="#{dataTableName}, #{dataScrollerName}"/>
+                                    <f:selectItems value="#{pageControlSettingsUIBean.pageSizeSelectItems}"/>
+                                </h:selectOneListbox>
+                            </h:panelGroup>
+                        </h:panelGroup>
+
+                    </td>
+
+                    <td nowrap="nowrap">
+
+                        <rich:datascroller id="#{dataScrollerName}"
+                                           for="#{dataTableName}"
+                                           status="commonStatus"
+                                           rendered="#{pageControl.pageSize gt 0}"
+                                           selectedStyle="font-weight: bold;"
+                                           inactiveStyle="font-weight: normal;"
+                                           stepControls="show"
+                                           fastControls="hide"
+                                           boundaryControls="hide"
+                                           maxPages="#{pageControlSettingsUIBean.maximumPages}"
+                                           page="#{pageControl.pageNumber}">
+                            <f:facet name="next">
+                                <h:panelGroup>
+                                    <h:graphicImage value="http://127.0.0.1:7080/images/tbb_pageright.gif"
+                                                    style="padding: 0px 5px 0px 7px;"/>
+                                </h:panelGroup>
+                            </f:facet>
+                            <f:facet name="next_disabled">
+                                <h:panelGroup>
+                                    <h:graphicImage value="http://127.0.0.1:7080/images/tbb_pageright_gray.gif"
+                                                    style="padding: 0px 5px 0px 7px;"/>
+                                </h:panelGroup>
+                            </f:facet>
+                            <f:facet name="previous">
+                                <h:panelGroup>
+                                    <h:graphicImage value="http://127.0.0.1:7080/images/tbb_pageleft.gif" style="padding: 0px 5px 0px 7px;"/>
+                                </h:panelGroup>
+                            </f:facet>
+                            <f:facet name="previous_disabled">
+                                <h:panelGroup>
+                                    <h:graphicImage value="http://127.0.0.1:7080/images/tbb_pageleft_gray.gif"
+                                                    style="padding: 0px 5px 0px 7px;"/>
+                                </h:panelGroup>
+                            </f:facet>
+                        </rich:datascroller>
+
+                    </td>
+                </tr>
+            </table>
+
+        </h:panelGroup>
+
+        <div style="clear: both;"/>
+
+    </ui:composition>
+
+</body>
+</html>
+        

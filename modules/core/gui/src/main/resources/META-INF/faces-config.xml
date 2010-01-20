@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<faces-config xmlns="http://java.sun.com/xml/ns/javaee"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd"
+  version="1.2">
+
+    <component>
+       <component-type>org.rhq.RowSelector</component-type>
+       <component-class>org.rhq.core.gui.table.component.RowSelectorComponent</component-class>
+       <component-extension>
+          <component-family>org.rhq.RowSelector</component-family>
+          <renderer-type>org.rhq.RowSelector</renderer-type>
+       </component-extension>
+    </component>
+
+   <render-kit>
+
+      <renderer>
+         <description>renders either one radio button or one checkbox per data table row, which the user can select in
+                      order to select the corresponding row</description>
+         <component-family>org.rhq.RowSelector</component-family>
+         <renderer-type>org.rhq.RowSelector</renderer-type>
+         <renderer-class>org.rhq.core.gui.table.renderer.RowSelectorRenderer</renderer-class>
+      </renderer>
+
+   </render-kit>
+
+</faces-config>

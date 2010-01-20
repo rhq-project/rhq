@@ -6,7 +6,8 @@
       xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.org/rich">
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:rhq="http://rhq-project.org/rhq">
 <ui:remove>
     <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
   other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
@@ -27,30 +28,50 @@
 
         <h2>Browse Resources</h2>
 
+        <style type="text/css">
+            .infoBlock {
+                background-color: #BFF1B5; /* light green */
+                border-top-color: #00AC3D; /* medium green */
+            }
+
+            .warnBlock {
+                background-color: #FFFD99; /* light yellow */
+                border-top-color: #FF9C15; /* medium orange */
+             }
+        </style>
+        <rich:messages globalOnly="true" infoClass="infoBlock" warnClass="warnBlock"/>
+
         <ui:remove><!-- The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
         <h:form>
-        <rich:extendedDataTable id="resourcesDataTable"
+        <rich:dataTable id="resourcesDataTable"
                         value="#{BrowseResourcesUIBean.dataModel}" var="resource"
                         first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
                         rows="#{BrowseResourcesUIBean.pageControl.pageSize}"
                         sortMode="multi"
-                        selectionMode="multi" selection="#{BrowseResourcesUIBean.selection}"
                         width="100%">
-            <rich:column sortBy="#{r.id}" width="10%">
+
+            <rich:column width="20">
+                <f:facet name="header">
+                    <!-- TODO -->
+                </f:facet>
+                <rhq:rowSelector mode="multi" value="#{BrowseResourcesUIBean.selectedResources}"/>
+            </rich:column>
+
+            <rich:column sortBy="#{r.id}" width="60">
                 <f:facet name="header">
                     <h:outputLabel for="id" value="Id" />
                 </f:facet>
                 <h:outputText id="id" value="#{resource.id}" />
             </rich:column>
 
-            <rich:column sortBy="#{r.name}" width="30%">
+            <rich:column sortBy="#{r.name}" width="240">
                 <f:facet name="header">
                     <h:outputLabel for="name" value="Name" />
                 </f:facet>
                 <h:outputText id="name" value="#{resource.name}" />
             </rich:column>
             
-            <rich:column sortBy="#{r.description}" width="60%">
+            <rich:column sortBy="#{r.description}">
                 <f:facet name="header">
                     <h:outputLabel for="description" value="Description" />
                 </f:facet>
@@ -72,7 +93,7 @@
                  </rich:column>
               </rich:columnGroup>
            </f:facet>
-        </rich:extendedDataTable>
+        </rich:dataTable>
         </h:form>
 
     </f:view>

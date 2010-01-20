@@ -115,9 +115,6 @@
 	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/lsof/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/target/generated-sources/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
@@ -224,7 +221,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hamcrest/hamcrest-library/1.1/hamcrest-library-1.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/antlr/antlr-runtime/3.2/antlr-runtime-3.2.jar"/>
 	<classpathentry exported="true" kind="lib" path="modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-1.4.0-SNAPSHOT/wsconsume-output"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.0/libvirt-0.4.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.1/libvirt-0.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>

@@ -43,6 +43,7 @@
                            changeExpandListener="#{ResourceTreeStateAdvisor.changeExpandListener}"
                            nodeSelectListener="#{ResourceTreeStateAdvisor.nodeSelectListener}"
                            ajaxSubmitSelection="true"
+                           showConnectingLines="false"
                            nodeFace="#{treeNode.data.class.simpleName}">
                     <rich:recursiveTreeNodesAdaptor roots="#{ResourceTreeModelUIBean.roots}"
                                                     var="resourceTreeItem"

@@ -45,7 +45,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Backing bean for Alert Sender Plugins configuration
  *
- * @author jharris
+ * @author Justin Harris
  */
 @Scope(ScopeType.PAGE)
 @Name("alertNotificationsUIBean")

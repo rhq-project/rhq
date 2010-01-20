@@ -368,6 +368,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             return;
         } else {
             StringBuilder  errorMessage = null;
+
             try{
                 for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                     try {
@@ -376,17 +377,16 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                         if (null == errorMessage){
                             errorMessage = new StringBuilder();
                         }
-                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+".  "  );                  
+                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+"."  );                  
                     }
                 }
             }catch(Throwable t){
                 errorMessage = new StringBuilder();
-                errorMessage.append("configuation validation failed with" + t.getMessage()+".  "  );                
-                    }
-                if (null != errorMessage){
-                    throw new PluginContainerException(errorMessage.toString());
-                }
-            }
-        }
+                errorMessage.append("configuation validation failed with" + t.getMessage()+".");                
+	    }
+	    if (null != errorMessage){
+		throw new PluginContainerException(errorMessage.toString());
+	    }
+	}
     }
-
+}

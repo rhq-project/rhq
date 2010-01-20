@@ -23,18 +23,17 @@
 
 package org.rhq.core.pc.configuration;
 
-import org.apache.maven.artifact.versioning.ComparableVersion;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.pc.util.ComponentService;
-
-import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.RAW;
-import static org.rhq.core.domain.configuration.definition.ConfigurationFormat.STRUCTURED;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
-
-    private static final ComparableVersion NON_LEGACY_AMPS_VERSION = new ComparableVersion("2.1");
 
     private ComponentService componentService;
 
@@ -57,41 +56,30 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
     }
 
     private ConfigManagement createStrategy(int resourceId) throws PluginContainerException {
-        String ampsVersion = componentService.getAmpsVersion(resourceId);
+        ResourceType resourceType = componentService.getResourceType(resourceId);
+        ConfigurationFormat format = resourceType.getResourceConfigurationDefinition().getConfigurationFormat();
 
-        if (isLegacyVersion(ampsVersion)) {
+        if (null == format) {
             return new LegacyConfigManagement();
         }
 
-        ResourceType resourceType = componentService.getResourceType(resourceId);
-
-        ConfigurationFormat format = resourceType.getResourceConfigurationDefinition().getConfigurationFormat();
         switch (format) {
-            case RAW: break;
-            default: ;            
-        }
-
-        if (isStructured(resourceType)) {
-            return new StructuredConfigManagement();
-        }
-
-        if (isRaw(resourceType)) {
+        case RAW:
             return new RawConfigManagement();
+        case STRUCTURED_AND_RAW:
+            return new StructuredAndRawConfigManagement();
+        case STRUCTURED:
+        default:
+                boolean daemonOnly = true;
+                boolean onlyIfStarted = true;
+                ResourceComponent resourceComponent = componentService.getComponent(resourceId,
+                    ResourceComponent  .class, FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT,
+                    daemonOnly, onlyIfStarted);
+                if (resourceComponent instanceof ResourceConfigurationFacet){
+                    return new StructuredConfigManagement();
+                }else{
+                    return new LegacyConfigManagement();
+                }
         }
-
-        // else format is both structured and raw
-        return new StructuredAndRawConfigManagement();
-    }
-
-    private boolean isLegacyVersion(String ampsVersion) {
-        return new ComparableVersion(ampsVersion).compareTo(NON_LEGACY_AMPS_VERSION) < 0;
-    }
-
-    private boolean isStructured(ResourceType resourceType) {
-        return resourceType.getResourceConfigurationDefinition().getConfigurationFormat().equals(STRUCTURED);
-    }
-
-    private boolean isRaw(ResourceType resourceType) {
-        return resourceType.getResourceConfigurationDefinition().getConfigurationFormat().equals(RAW);
     }
 }

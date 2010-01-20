@@ -43,7 +43,7 @@ THIS TEXT WILL BE REMOVED.
             onsubmit="prepareInputsForSubmission(this)"
             rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
 
-      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+      <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" style="width:100%">
         <h:outputText value="#{ResourceUIBean.name}"/>
@@ -273,7 +273,9 @@ THIS TEXT WILL BE REMOVED.
                                    autoclear="false"
                                    allowFlash="false"
                                    maxRequestSize="100000">
-                    <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>                    
+                    <a4j:support event="onuploadcomplete"
+                                 reRender="fileContents"
+                                 action="#{ExistingResourceConfigurationUIBean.upload}"/>                    
                   </rich:fileUpload>
                   </ui:remove>
                 </h:panelGrid>
@@ -298,7 +300,6 @@ THIS TEXT WILL BE REMOVED.
 
     </h:form>
 
-    <ui:remove>
     <!--
       Here I tried the file upload in a separate form. It has resulted in javascript errors. The latest error in the
       firefox error console is,
@@ -307,11 +308,10 @@ THIS TEXT WILL BE REMOVED.
           Source File: http://localhost:7080/a4j/g/3_3_2.SR1org/ajax4jsf/javascript/scripts/form.js.xhtml
           Line: 6
     -->
-    <h:form id="uploadForm">
+    <h:form id="uploadForm" enctype="multipart/form-data">
       <rich:panel>
 
-        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
-        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+        <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
 
         <rich:fileUpload id="fileUpload"
                          listHeight="100px"
@@ -322,7 +322,6 @@ THIS TEXT WILL BE REMOVED.
 
       </rich:panel>
     </h:form>
-    </ui:remove>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"
                   rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">

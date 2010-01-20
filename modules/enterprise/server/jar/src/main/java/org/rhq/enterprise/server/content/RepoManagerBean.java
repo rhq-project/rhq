@@ -1025,8 +1025,13 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
-        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws InterruptedException {
+        ContentServerPluginContainer pc;
+        try {
+            pc = ContentManagerHelper.getPluginContainer();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         ContentProviderManager providerManager = pc.getAdapterManager();
 
         int syncCount = 0;
@@ -1039,6 +1044,23 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         return syncCount;
+    }
+
+    @Override
+    public void cancelSync(Subject subject, int repoId) throws ContentException {
+        ContentServerPluginContainer pc;
+        try {
+            pc = ContentManagerHelper.getPluginContainer();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Repo repo = this.getRepo(subject, repoId);
+        try {
+            pc.cancelRepoSync(repo);
+        } catch (SchedulerException e) {
+            throw new ContentException(e);
+        }
     }
 
     @SuppressWarnings("unchecked")

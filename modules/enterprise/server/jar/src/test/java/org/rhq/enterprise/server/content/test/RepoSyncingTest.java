@@ -19,12 +19,16 @@ import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoDistribution;
 import org.rhq.core.domain.content.RepoSyncResults;
+import org.rhq.enterprise.server.content.ContentManagerHelper;
+import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.TestContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.TestContentServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RepoSyncingTest extends AbstractEJB3Test {
+    private static final boolean ENABLED = false;
+
     private EntityManager em;
     private Repo repo;
     private ContentSource contentSource;
@@ -53,7 +57,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLED)
     public void testSyncResults() throws Exception {
         // We have to commit because bean has new transaction inside it
         getTransactionManager().commit();
@@ -66,7 +70,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         assert (results.getPercentComplete().equals(new Long(100)));
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLED)
     public void testMultipleSyncResults() throws Exception {
         getTransactionManager().commit();
         // Sync 2x so we get multiple results
@@ -88,9 +92,9 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         assert (r1.getId() > r2.getId());
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLED)
     public void testSyncRepos() throws Exception {
-        p1.setLongRunningSyncs(true);
+        p1.setLongRunningSynchSleep(5000);
 
         assert repo.getContentSources().size() == 1;
         // We have to commit because bean has new transaction inside it
@@ -140,7 +144,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLED)
     public void testSyncCount() throws Exception {
 
         Integer[] ids = { repo.getId() };
@@ -150,6 +154,39 @@ public class RepoSyncingTest extends AbstractEJB3Test {
 
         assert syncCount == 1;
 
+    }
+
+    @Test(enabled = true)
+    public void testCancelSync() throws Exception {
+        getTransactionManager().commit();
+        p1 = new TestContentProvider();
+        p1.setLongRunningSynchSleep(10000);
+        pluginService.associateContentProvider(contentSource, p1);
+
+        prepareScheduler();
+        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+        pc.syncRepoNow(repo);
+
+        for (int i = 0; i < 100; i++) {
+            RepoSyncResults res = getSyncResults(repo.getId());
+            if (res != null) {
+                System.out.println("status: [" + res.getStatus() + "] CTRL+C to exit");
+                if (res.getStatus() == ContentSyncStatus.CANCELLED) {
+                    break;
+                }
+            } else {
+                System.out.println("CTRL+C to exit");
+            }
+            Thread.sleep(1000);
+            if (i == 5) {
+                pc.cancelRepoSync(repo);
+            }
+
+        }
+        RepoSyncResults res = getSyncResults(repo.getId());
+        assert res != null;
+        assert res.getStatus() == ContentSyncStatus.CANCELLED;
+        unprepareScheduler();
     }
 
     private RepoSyncResults getSyncResults(int repoId) {

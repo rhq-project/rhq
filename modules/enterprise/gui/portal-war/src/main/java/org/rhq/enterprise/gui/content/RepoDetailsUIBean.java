@@ -104,6 +104,21 @@ public class RepoDetailsUIBean {
         return "success";
     }
 
+    public String cancelSync() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
+        Integer repoId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        try {
+            manager.cancelSync(subject, repoId);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The synchronization has been cancelled.");
+        } catch (Exception ce) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
+            return "success"; // stay in edit mode on failure
+        }
+
+        return "success";
+    }
+
     public String cancel() {
         return "success";
     }

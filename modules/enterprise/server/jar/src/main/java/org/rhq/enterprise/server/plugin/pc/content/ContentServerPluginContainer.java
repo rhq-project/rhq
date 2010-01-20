@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.Set;
 
 import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
 
@@ -137,8 +138,8 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * @throws SchedulerException if the job cannot be scheduled
      */
     public void syncRepoNow(Repo repo) throws SchedulerException {
-        JobDetail job = new JobDetail(RepoSyncJob.createUniqueJobName(repo), CONTENT_SRC_SYNC_JOB_GROUP_NAME,
-            RepoSyncJob.class, false, false, false);
+        JobDetail job = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME, RepoSyncJob.class,
+            false, false, false);
 
         RepoSyncJob.createJobDataMap(job, repo);
 
@@ -151,6 +152,22 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         getLog().info(
             "Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + next
                 + "] for [" + repo + "]");
+    }
+
+    public void cancelRepoSync(Repo repo) throws SchedulerException {
+        JobDetail jobDetail = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME,
+            RepoSyncJob.class, false, false, false);
+
+        RepoSyncJob.createJobDataMap(jobDetail, repo);
+
+        SimpleTrigger trigger = new SimpleTrigger(jobDetail.getName(), jobDetail.getGroup());
+        trigger.setVolatility(false);
+
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+
+        boolean cancelled = scheduler.interrupt(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME);
+
+        getLog().info("cancelled repo sync job [" + jobDetail.getName() + ':' + jobDetail.getGroup() + "] ");
     }
 
     /**
@@ -268,4 +285,5 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         ContentProviderManager am = new ContentProviderManager();
         return am;
     }
+
 }

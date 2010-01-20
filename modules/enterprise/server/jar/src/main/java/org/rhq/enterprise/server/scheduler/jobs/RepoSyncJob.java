@@ -26,11 +26,13 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.InterruptableJob;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.StatefulJob;
+import org.quartz.UnableToInterruptJobException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Repo;
@@ -59,16 +61,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Jason Dobies
  */
-public class RepoSyncJob implements StatefulJob {
+public class RepoSyncJob implements StatefulJob, InterruptableJob {
 
     public static final String KEY_REPO_NAME = "repoName";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
+    private Thread executionThread;
+
     /**
      * {@inheritDoc}
      */
     public void execute(JobExecutionContext context) throws JobExecutionException {
+
+        executionThread = Thread.currentThread();
+
         try {
             JobDetail jobDetail = context.getJobDetail();
             if (jobDetail == null) {
@@ -87,13 +94,13 @@ public class RepoSyncJob implements StatefulJob {
             }
 
             sync(repoName);
-        }
-        catch (Exception e) {
+        } catch (InterruptedException ie) {
+            log.error("Cancelled job [" + context.getJobDetail() + "]");
+        } catch (Exception e) {
             String errorMsg = "Failed to sync repo in job [" + context.getJobDetail() + "]";
 
             log.error(errorMsg, e);
-            JobExecutionException jobExecutionException = new JobExecutionException(errorMsg, e,
-                false);
+            JobExecutionException jobExecutionException = new JobExecutionException(errorMsg, e, false);
 
             // Do not retrigger if we threw IllegalStateException because it'll never work anyway
             if (!(e instanceof IllegalStateException)) {
@@ -142,8 +149,8 @@ public class RepoSyncJob implements StatefulJob {
         String jobName = Integer.toHexString(repo.getName().hashCode());
 
         if (jobName.length() > 80) {
-            throw new IllegalArgumentException("Job names max size is 80 chars due to DB column " +
-                "size restrictions: " + jobName);
+            throw new IllegalArgumentException("Job names max size is 80 chars due to DB column "
+                + "size restrictions: " + jobName);
         }
 
         return jobName;
@@ -165,13 +172,12 @@ public class RepoSyncJob implements StatefulJob {
         jobName = jobName + "-" + uniquifier;
 
         if (jobName.length() > 80) {
-            throw new IllegalArgumentException("Job names max size is 80 chars due to DB column " +
-                "size restrictions: " + jobName);
+            throw new IllegalArgumentException("Job names max size is 80 chars due to DB column "
+                + "size restrictions: " + jobName);
         }
 
         return jobName;
     }
-
 
     /**
      * Performs the repo synchronization.
@@ -182,9 +188,11 @@ public class RepoSyncJob implements StatefulJob {
      * timeout a transaction.
      *
      * @param repoName may not be <code>null</code>
+     * @throws InterruptedException 
+     * @throws  
      * @throws Exception if there is an error in the sync
      */
-    private void sync(String repoName) throws Exception {
+    private void sync(String repoName) throws InterruptedException {
 
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
@@ -198,12 +206,24 @@ public class RepoSyncJob implements StatefulJob {
         List<Repo> repoList = repoManager.getRepoByName(repoName);
 
         if (repoList.size() != 1) {
-            throw new Exception("Unexpected number of repos found for name [" + repoName + "]. " +
-                "Found [" + repoList.size() + "] repos");
+            throw new RuntimeException("Unexpected number of repos found for name [" + repoName + "]. " + "Found ["
+                + repoList.size() + "] repos");
         }
         Repo repoToSync = repoList.get(0);
 
         // This call executes all of the logic associated with synchronizing the given repo
-        repoManager.internalSynchronizeRepos(overlord, new Integer[]{repoToSync.getId()});
+        repoManager.internalSynchronizeRepos(overlord, new Integer[] { repoToSync.getId() });
+    }
+
+    @Override
+    public void interrupt() throws UnableToInterruptJobException {
+
+        if (executionThread == null) {
+            log.error("execution thread is null, cant interrupt", new IllegalStateException());
+
+        } else {
+            log.debug("exeThread : [" + executionThread.getName() + "]");
+            executionThread.interrupt();
+        }
     }
 }

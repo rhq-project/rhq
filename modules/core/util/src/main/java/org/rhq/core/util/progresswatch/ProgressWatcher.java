@@ -104,4 +104,12 @@ public class ProgressWatcher {
     public void stop() {
         this.started = false;
     }
+
+    /**
+     * Reset the ProgressWatcher to zero.
+     */
+    public void resetToZero() {
+        start();
+        stop();
+    }
 }

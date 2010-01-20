@@ -26,8 +26,16 @@ import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathFactory;
+
+import churchillobjects.rss4j.RssChannel;
+import churchillobjects.rss4j.RssChannelItem;
+import churchillobjects.rss4j.RssDocument;
+import churchillobjects.rss4j.RssDublinCore;
+import churchillobjects.rss4j.RssJbnDependency;
+import churchillobjects.rss4j.RssJbnPatch;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -39,13 +47,6 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
-
-import churchillobjects.rss4j.RssChannel;
-import churchillobjects.rss4j.RssChannelItem;
-import churchillobjects.rss4j.RssDocument;
-import churchillobjects.rss4j.RssDublinCore;
-import churchillobjects.rss4j.RssJbnDependency;
-import churchillobjects.rss4j.RssJbnPatch;
 
 /**
  * Parses the contents of the JBoss RSS feed into the server's domain model.
@@ -86,7 +87,7 @@ public class RssFeedParser {
     // Public  --------------------------------------------
 
     public void parseResults(RssDocument feed, PackageSyncReport report,
-                             Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws ParserConfigurationException {
 
         // Used to determine if a package was already sent to the server or is new
         Map<PackageDetailsKey, ContentProviderPackageDetails> existingPackageMap = unpack(existingPackages);
@@ -202,8 +203,7 @@ public class RssFeedParser {
                             // bytes will be retrieved using platform encoding on the agent side so use the same
                             // on the server side and assume they are identical
                             packageDetails.setMetadata(choppedInstructions.trim().getBytes());
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             log.error("Could not parse or set automated installation instructions for package: "
                                 + packageName);
                             continue;
@@ -254,8 +254,7 @@ public class RssFeedParser {
      */
     private Map<PackageDetailsKey, ContentProviderPackageDetails> unpack(
         Collection<ContentProviderPackageDetails> existingPackages) {
-        Map<PackageDetailsKey, ContentProviderPackageDetails> map =
-            new HashMap<PackageDetailsKey, ContentProviderPackageDetails>();
+        Map<PackageDetailsKey, ContentProviderPackageDetails> map = new HashMap<PackageDetailsKey, ContentProviderPackageDetails>();
 
         if (existingPackages == null) {
             return map;

@@ -154,7 +154,7 @@
         </table>
       </rich:panel>
 
-      <h:panelGrid columns="2" styleClass="buttons-table"
+      <h:panelGrid columns="3" styleClass="buttons-table"
         columnClasses="button-cell">
         <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
@@ -162,6 +162,9 @@
         <h:commandButton rendered="${mode ne 'edit'}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
+        <h:commandButton rendered="${mode ne 'edit'}"
+          value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
+          alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
         <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"
           action="#{RepoDetailsUIBean.save}" alt="Save"
           styleClass="buttonmed" id="saveButton" />

@@ -330,7 +330,15 @@ public interface RepoManagerLocal {
      * @return number of repos successfully syncced
      * @throws Exception if any errors occur
      */
-    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws InterruptedException;
+
+    /**
+     * Cancel any running sync job for the given repo
+     *
+     * @param repoId you want to cancel the sync for
+     * @return boolean if it was cancelled or not
+     */
+    void cancelSync(Subject subject, int repoId) throws ContentException;
 
     /**
      * Creates a new sync results object. Note that this will return <code>null</code> if the given results object has a

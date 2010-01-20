@@ -42,8 +42,7 @@ public interface DistributionSource {
      *                   source cannot be connected to.
      */
     void synchronizeDistribution(String repoName, DistributionSyncReport report,
-                                 Collection<DistributionDetails> existingDistros)
-        throws Exception;
+        Collection<DistributionDetails> existingDistros) throws SyncException, InterruptedException;
 
     /**
      * Get an input stream for the specified distribution.
@@ -64,4 +63,3 @@ public interface DistributionSource {
     String getDistFileRemoteLocation(String repoName, String label, String relativeFilename);
 
 }
-

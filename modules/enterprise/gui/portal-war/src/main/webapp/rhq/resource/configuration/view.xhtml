@@ -194,18 +194,6 @@ THIS TEXT WILL BE REMOVED.
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
               <h:panelGrid columns="2"
-                           styleClass="buttons-table"
-                           columnClasses="button-cell"
-                           rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-
-                <h:commandButton id="editRawButton"
-                                 value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-              </h:panelGrid>
-
-              <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
                 <rich:panel style="width:100%">

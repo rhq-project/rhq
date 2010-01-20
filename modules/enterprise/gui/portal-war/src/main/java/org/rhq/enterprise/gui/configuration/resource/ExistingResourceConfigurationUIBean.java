@@ -18,6 +18,32 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.Out;
+import org.jetbrains.annotations.Nullable;
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
+import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.event.UploadEvent;
+import org.richfaces.model.UploadItem;
+
+import javax.faces.application.FacesMessage;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,35 +54,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
-
-import javax.faces.application.FacesMessage;
-import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletResponse;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.jboss.seam.annotations.Out;
-import org.jetbrains.annotations.Nullable;
-import org.richfaces.event.UploadEvent;
-
-import org.jboss.seam.annotations.Create;
-
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
-import org.richfaces.model.UploadItem;
 
 // This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
 // UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
@@ -583,11 +580,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return raws;
     }
 
-    /**
-     * 
-     */
     String selectedPath;
+
     private TreeMap<String, RawConfiguration> raws;
+    
     TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     RawConfiguration current = null;
 

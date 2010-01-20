@@ -43,7 +43,7 @@ THIS TEXT WILL BE REMOVED.
             onsubmit="prepareInputsForSubmission(this)"
             rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
 
-      <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
+      <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" style="width:100%">
         <h:outputText value="#{ResourceUIBean.name}"/>

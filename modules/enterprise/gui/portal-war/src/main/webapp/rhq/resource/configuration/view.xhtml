@@ -221,6 +221,7 @@ THIS TEXT WILL BE REMOVED.
                                            selectedChild="#{currentPath}">
                         <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                           <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                                              icon="/images/blank.png"
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"

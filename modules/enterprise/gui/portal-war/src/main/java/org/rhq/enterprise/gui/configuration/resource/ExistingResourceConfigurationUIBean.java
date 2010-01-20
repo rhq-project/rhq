@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.configuration.resource;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
@@ -76,6 +78,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
+
+    @Out
+    private FileUploadUIBean fileUploader = new FileUploadUIBean();
 
     private String modalEditorContents;
 
@@ -532,12 +537,9 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    /**
-     * This is a no-op, since the upload work was done by upload file
-     * But is kept as a target for the "action" value 
-     */
     public String upload() {
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+//        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
+        return null;
     }
 
     void dumpProperties(Configuration conf, Log log) {

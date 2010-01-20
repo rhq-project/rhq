@@ -16,8 +16,9 @@
 
 
     <component class="org.jboss.seam.web.MultipartFilter">
-       <property name="createTempFiles">false</property>
+       <property name="createTempFiles">true</property>
        <property name="maxRequestSize">1000000</property>
+       <property name="urlPattern">*.xhtml</property>
     </component>
 
   <component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"

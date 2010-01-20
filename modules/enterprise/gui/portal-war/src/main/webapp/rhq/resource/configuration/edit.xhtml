@@ -9,6 +9,7 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
       xmlns:rich="http://richfaces.org/rich"
       xmlns:a4j="http://richfaces.org/a4j"
       xmlns:onc="http://jboss.org/on/component">
@@ -222,7 +223,7 @@ THIS TEXT WILL BE REMOVED.
                               <h:panelGroup>
                                 <h:outputText value="#{#rawConfigUIBean.fileName}"/>
                                 <c:if test="#{rawConfigUIBean.modified}">
-                                  <h:commandButton value="Undo"/>
+                                  <h:commandButton value="Undo" styleClass="buttonmed"/>
                                 </c:if>
                               </h:panelGroup>
                             </rich:panelMenuItem>
@@ -243,6 +244,7 @@ THIS TEXT WILL BE REMOVED.
                                 startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
                                 stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
                     <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
+
                     <h:commandLink value="Upload New">
                       <h:graphicImage value="/images/upload.png"/>
                     </h:commandLink>
@@ -259,14 +261,20 @@ THIS TEXT WILL BE REMOVED.
                                      readonly="false"/>
                   </rich:panel>
                   <ui:remove>
-                  <h:form id="uploadForm" enctype="multipart/form-data">
+                  <!--
+                    Here I tried the file upload in the existing form. It does not generate any errors in the firefox
+                    error console, but the upload is not working.
+                  -->
                   <rich:fileUpload id="fileUpload"
-                                   listHeight="100px"
                                    fileUploadListener="#{ExistingResourceConfigurationUIBean.fileUploadListener}"
-                                   immediateUpload="true">
+                                   maxFilesQuantity="1"
+                                   noDuplicate="true"
+                                   immediateUpload="true"
+                                   autoclear="false"
+                                   allowFlash="false"
+                                   maxRequestSize="100000">
                     <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>                    
                   </rich:fileUpload>
-                  </h:form>
                   </ui:remove>
                 </h:panelGrid>
               </h:panelGrid>
@@ -291,14 +299,29 @@ THIS TEXT WILL BE REMOVED.
     </h:form>
 
     <ui:remove>
-    <rich:panel>
-      <rich:fileUpload id="fileUpload"
-                                   listHeight="100px"
-                                   fileUploadListener="#{ExistingResourceConfigurationUIBean.fileUploadListener}"
-                                   immediateUpload="true">
-                    <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>
-                  </rich:fileUpload>
-    </rich:panel>
+    <!--
+      Here I tried the file upload in a separate form. It has resulted in javascript errors. The latest error in the
+      firefox error console is,
+
+          Error: form.dispatchEvent is not a function
+          Source File: http://localhost:7080/a4j/g/3_3_2.SR1org/ajax4jsf/javascript/scripts/form.js.xhtml
+          Line: 6
+    -->
+    <h:form id="uploadForm">
+      <rich:panel>
+
+        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+        <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+
+        <rich:fileUpload id="fileUpload"
+                         listHeight="100px"
+                         fileUploadListener="#{fileUploader.fileUploadListener}"
+                         immediateUpload="true">
+          <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>
+        </rich:fileUpload>
+
+      </rich:panel>
+    </h:form>
     </ui:remove>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

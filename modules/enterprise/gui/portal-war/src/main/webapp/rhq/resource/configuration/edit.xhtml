@@ -309,7 +309,11 @@ THIS TEXT WILL BE REMOVED.
                          listHeight="50px"
                          fileUploadListener="#{fileUploader.fileUploadListener}"
                          addControlLabel="Browse"
-                         immediateUpload="false">
+                         immediateUpload="false"
+                         allowFlash="auto">
+          <f:facet name="label">
+            <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}" />
+          </f:facet>
           <a4j:support event="onuploadcomplete"
                        reRender="fileUpload,fileContents,menuItem_#{ExistingResourceConfigurationUIBean.current.sha256}"/>
         </rich:fileUpload>

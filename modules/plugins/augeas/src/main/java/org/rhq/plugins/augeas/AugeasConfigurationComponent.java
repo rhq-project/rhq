@@ -78,7 +78,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";
-    private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
+    protected static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -89,6 +89,10 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private Augeas augeas;
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
+
+    protected String getAugeasRootPath() {
+        return augeasRootPath;
+    }
 
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
@@ -146,13 +150,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     protected void updateStructuredConfiguration(Configuration config) throws Exception {
-      abortIfAugeasNotAvailable();
+        abortIfAugeasNotAvailable();
 
         // Load the config files from disk and build a tree representation of them in memory.
         loadConfigurationFiles(this.augeas);
 
         ConfigurationDefinition resourceConfigDef = this.resourceContext.getResourceType()
-                .getResourceConfigurationDefinition();
+            .getResourceConfigurationDefinition();
 
         Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
         for (PropertyDefinition propDef : propDefs) {
@@ -334,9 +338,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         }
     }
 
-    private Augeas createAugeas() {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-
+    protected Augeas createAugeas() {
         Augeas augeas;
         try {
             augeas = new Augeas(this.augeasRootPath, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);

@@ -64,8 +64,8 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
      * Registers the platform as a resource on RHQ server
      * @param user secure id user
      * @param platform to be registered
-     * @param parenId if any.
-     * 
+     * @param parentId if any.
+     *
      */
     public void registerPlatform(Subject user, Resource platform, int parentId) {
         try {
@@ -92,8 +92,8 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
     /**
      * Imports the registered resource into inventory and makes it a managed resource
      * @param user secure id user
-     * @param platform to be imported
-     * 
+     * @param resource to be imported
+     *
      */
     public void importPlatform(Subject user, Resource resource) {
         resource.setInventoryStatus(InventoryStatus.COMMITTED);
@@ -103,7 +103,7 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
     /**
      * subscribe the requested platform to a compatible base repo based on release
      * and arch information. This method does a lookup in ReleaseRepoMapping
-     * to get the compatible base channel and tried to tie the platform to 
+     * to get the compatible base channel and tried to tie the platform to
      * the repo.
      *  @param user secure id user
      *  @param platform to be imported

@@ -206,7 +206,7 @@ THIS TEXT WILL BE REMOVED.
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
                 <h:panelGrid columns="1">
-                  <rich:panel style="width:100%">
+                  <rich:panel id="fileMenuPanel" style="width:100%">
                     <f:facet name="header">Files</f:facet>
 
 
@@ -221,8 +221,10 @@ THIS TEXT WILL BE REMOVED.
                                              expanded="true"
                                              selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
                           <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                            <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                            <rich:panelMenuItem id="menuItem_#{rawConfigUIBean.rawConfiguration.sha256}"
+                                                label="#{rawConfigUIBean.fileName}"
                                                 icon="#{rawConfigUIBean.icon}"
+                                                binding="#{rawConfigUIBean.panelMenuItem}"
                                                 onclick="cursor_wait();"
                                                 oncomplete="cursor_clear();"
                                                 action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
@@ -268,23 +270,6 @@ THIS TEXT WILL BE REMOVED.
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
                                      readonly="false"/>
                   </rich:panel>
-                  <ui:remove>
-                  <!--
-                    Here I tried the file upload in the existing form. It does not generate any errors in the firefox
-                    error console, but the upload is not working.
-                  -->
-                  <rich:fileUpload id="fileUpload"
-                                   fileUploadListener="#{ExistingResourceConfigurationUIBean.fileUploadListener}"
-                                   maxFilesQuantity="1"
-                                   noDuplicate="true"
-                                   immediateUpload="true"
-                                   autoclear="false"
-                                   allowFlash="false"
-                                   maxRequestSize="100000">
-                    <a4j:support event="onuploadcomplete"
-                                 reRender="fileMenu,fileContents"/>                    
-                  </rich:fileUpload>
-                  </ui:remove>
                 </h:panelGrid>
               </h:panelGrid>
 
@@ -324,8 +309,9 @@ THIS TEXT WILL BE REMOVED.
                          listHeight="50px"
                          fileUploadListener="#{fileUploader.fileUploadListener}"
                          addControlLabel="Browse"
-                         immediateUpload="true">
-          <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>
+                         immediateUpload="false">
+          <a4j:support event="onuploadcomplete"
+                       reRender="fileContents,menuItem_#{ExistingResourceConfigurationUIBean.current.sha256}"/>
         </rich:fileUpload>
 
       </rich:panel>

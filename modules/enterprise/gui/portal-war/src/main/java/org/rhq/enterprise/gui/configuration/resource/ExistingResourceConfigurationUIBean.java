@@ -21,31 +21,23 @@ package org.rhq.enterprise.gui.configuration.resource;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
-import javax.faces.component.UIComponent;
 import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Out;
-import org.jboss.seam.annotations.Scope;
 import org.jetbrains.annotations.Nullable;
-import org.richfaces.component.UISwitchablePanel;
-import org.richfaces.component.UITabPanel;
 import org.richfaces.event.UploadEvent;
 
 import org.jboss.seam.annotations.Create;
@@ -64,6 +56,7 @@ import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.model.UploadItem;
 
 // This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
 // UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
@@ -373,7 +366,23 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getCurrentContents() {
-        return new String(getCurrent().getContents());
+        try {
+            if (fileUploader.getFileItem() != null) {
+                UploadItem fileItem = fileUploader.getFileItem();
+                if (fileItem.isTempFile()) {
+                    setCurrentContents(FileUtils.readFileToString(fileItem.getFile()));
+                }
+                else {
+                    setCurrentContents(new String(fileItem.getData()));
+                }
+                fileUploader.clear();
+            }
+
+            return new String(getCurrent().getContents());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String getCurrentPath() {
@@ -388,7 +397,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (modalEditorContents == null) {
             modalEditorContents = getCurrentContents();
         }
-//        return getCurrentContents();
         return modalEditorContents;
     }
 
@@ -427,8 +435,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     /**
     *      
     * @return the id associated with the resource.  
-    * The value Cached in order to be available on the upload page, 
-    * where seeing the resource id conflicts with the rich upload tag.
+    * The value Cached in order to be available on the completeUpload page,
+    * where seeing the resource id conflicts with the rich completeUpload tag.
     */
     public int getResourceId() {
         if (resourceId == null) {
@@ -481,7 +489,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public void setCurrentContents(String updated) {
-
         String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
@@ -537,14 +544,14 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     /**
-     * This is a no-op, since the upload work was done by upload file
+     * This is a no-op, since the completeUpload work was done by completeUpload file
      * But is kept as a target for the "save" icon from the full screen page
      */
     public String update() {
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    public String upload() {
+    public String completeUpload() {
         return null;
     }
 

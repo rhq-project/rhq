@@ -24,6 +24,7 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.richfaces.component.html.HtmlPanelMenuItem;
 
 import java.io.File;
 
@@ -35,12 +36,22 @@ public class RawConfigUIBean {
 
     private String modifiedContents;
 
+    private HtmlPanelMenuItem panelMenuItem;
+
     public RawConfiguration getRawConfiguration() {
         return rawConfiguration;
     }
 
     public void setRawConfiguration(RawConfiguration rawConfiguration) {
         this.rawConfiguration = rawConfiguration;
+    }
+
+    public HtmlPanelMenuItem getPanelMenuItem() {
+        return panelMenuItem;
+    }
+
+    public void setPanelMenuItem(HtmlPanelMenuItem panelMenuItem) {
+        this.panelMenuItem = panelMenuItem;
     }
 
     public String getModifiedContents() {
@@ -57,6 +68,7 @@ public class RawConfigUIBean {
 
     public void setModified(boolean modified) {
         this.modified = modified;
+        panelMenuItem.setIcon(getIcon());
     }
 
     public String getPath() {

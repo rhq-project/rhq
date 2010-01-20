@@ -45,8 +45,16 @@ THIS TEXT WILL BE REMOVED.
     <h:form id="viewResourceConfigurationForm">
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-      <h:panelGrid columns="2">
+      <h:panelGrid columns="2" style="width:100%">
         <h:outputText value="#{ResourceUIBean.name}"/>
+        <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+          <h:panelGroup style="text-align:right">
+            <h:commandButton value="Edit"
+                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
+                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+          </h:panelGroup>
+        </h:panelGrid>
       </h:panelGrid>
 
       <c:choose>
@@ -56,17 +64,6 @@ THIS TEXT WILL BE REMOVED.
             <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
-
-              <h:panelGrid columns="2"
-                           styleClass="buttons-table"
-                           columnClasses="button-cell"
-                           rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-
-                <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-              </h:panelGrid>
 
               <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
@@ -120,6 +117,15 @@ THIS TEXT WILL BE REMOVED.
                   </rich:panel>
                 </h:panelGrid>
               </h:panelGrid>
+
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:commandButton value="Edit"
+                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
+                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                </h:panelGroup>
+              </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
           <ui:include src="view-raw-modal.xhtml"/>
@@ -131,18 +137,6 @@ THIS TEXT WILL BE REMOVED.
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
-              <h:panelGrid columns="2"
-                           styleClass="buttons-table"
-                           columnClasses="button-cell"
-                           rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-
-                <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                                 title="Edit this Configuration"
-                                 styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-              </h:panelGrid>
-
               <onc:config
                       configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
                       configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
@@ -151,6 +145,15 @@ THIS TEXT WILL BE REMOVED.
                       nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationDefinitionMessage}"
                       nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
                       prevalidate="true"/>
+
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:commandButton value="Edit"
+                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                </h:panelGroup>
+              </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -164,16 +167,6 @@ THIS TEXT WILL BE REMOVED.
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
-              <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                           rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
-
-                <h:commandButton id="editStructuredButton"
-                                 value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                                 title="Edit this Configuration" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
-              </h:panelGrid>
-
               <onc:config
                       configurationDefinition="#{ExistingResourceConfigurationViewUIBean.configurationDefinition}"
                       configuration="#{ExistingResourceConfigurationViewUIBean.configuration}"
@@ -183,7 +176,16 @@ THIS TEXT WILL BE REMOVED.
                       nullConfigurationMessage="#{ExistingResourceConfigurationViewUIBean.nullConfigurationMessage}"
                       prevalidate="true"/>
 
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:commandButton value="Edit"
+                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
+                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                </h:panelGroup>
+              </h:panelGrid>
             </rich:tab>
+
             <rich:tab id="rawTab"
                       label="Advanced Mode"
                       onlabelclick="cursor_wait();"
@@ -254,6 +256,15 @@ THIS TEXT WILL BE REMOVED.
                                      readonly="true"/>
                   </rich:panel>
                 </h:panelGrid>
+              </h:panelGrid>
+
+              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+                <h:panelGroup style="text-align:right">
+                  <h:commandButton value="Edit"
+                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
+                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
+                                 rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>
+                </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>

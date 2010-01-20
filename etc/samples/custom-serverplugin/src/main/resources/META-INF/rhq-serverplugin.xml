@@ -16,7 +16,23 @@
        It also demonstrates several jobs using different types of schedules.
     ]]></serverplugin:help>
 
-    <serverplugin:plugin-component class="MyLifecycleListener" />
+    <serverplugin:plugin-component class="MyLifecycleListener">
+        <serverplugin:control name="testControl" description="A test control operation">
+            <serverplugin:parameters>
+                <c:simple-property name="paramProp" required="true" description="Set to 'fail' to simulate an error"/>
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="resultProp" required="false"/>
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="testControlWithNoParams" description="A test control operation that has no parameters">
+            <serverplugin:results>
+                <c:simple-property name="result" required="false"/>
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="testControlWithNoParamsOrResults">
+        </serverplugin:control>
+    </serverplugin:plugin-component>
 
     <serverplugin:scheduled-jobs>
         <!-- notice that we use the map name as the methodName -->

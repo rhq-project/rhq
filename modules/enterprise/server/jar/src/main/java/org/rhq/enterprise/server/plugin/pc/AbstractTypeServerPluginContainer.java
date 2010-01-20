@@ -28,6 +28,7 @@ import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.Scheduler;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
 import org.rhq.enterprise.server.xmlschema.CronScheduleType;
@@ -306,7 +307,6 @@ public abstract class AbstractTypeServerPluginContainer {
         EnhancedScheduler nonclusteredScheduler = getMasterServerPluginContainer().getNonClusteredScheduler();
 
         for (Scheduler scheduler : new Scheduler[] { clusteredScheduler, nonclusteredScheduler }) {
-            scheduler.pauseJobGroup(groupName);
             String[] jobNames = scheduler.getJobNames(groupName);
             if (jobNames != null) {
                 for (String jobName : jobNames) {
@@ -321,6 +321,60 @@ public abstract class AbstractTypeServerPluginContainer {
         }
 
         return;
+    }
+
+    /**
+     * Invokes a control operation on a given plugin and returns the results. This method blocks until
+     * the plugin component completes the invocation.
+     * 
+     * @param pluginKey identifies the plugin whose control operation is to be invoked
+     * @param controlName identifies the name of the control operation to invoke
+     * @param params parameters to pass to the control operation; may be <code>null</code>
+     * @return the results of the invocation
+     * 
+     * @throws if failed to obtain the plugin component and invoke the control. This usually means an
+     *         abnormal error occurred - if the control operation merely failed to do what it needed to do,
+     *         the error will be reported in the returned results, not as a thrown exception.
+     */
+    public ControlResults invokePluginControl(PluginKey pluginKey, String controlName, Configuration params)
+        throws Exception {
+
+        if (this.pluginManager != null) {
+            String pluginName = pluginKey.getPluginName();
+            if (this.pluginManager.isPluginEnabled(pluginName)) {
+                ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
+                if (pluginEnv != null) {
+                    ServerPluginComponent pluginComponent = this.pluginManager.getServerPluginComponent(pluginName);
+                    if (pluginComponent != null) {
+                        log.debug("Invoking control [" + controlName + "] on server plugin [" + pluginKey + "]");
+                        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+                        try {
+                            ControlFacet controlFacet = (ControlFacet) pluginComponent; // let it throw ClassCastException when appropriate
+                            Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
+                            ControlResults results = controlFacet.invoke(controlName, params);
+                            return results;
+                        } catch (Throwable t) {
+                            throw new Exception("Failed to invoke control operation [" + controlName
+                                + "] for server plugin [" + pluginKey + "]", t);
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                        }
+                    } else {
+                        throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                            + pluginKey + "]; failed to get server plugin component");
+                    }
+                } else {
+                    throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                        + pluginKey + "]; failed to get server plugin environment");
+                }
+            } else {
+                throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                    + pluginKey + "]; plugin is not enabled");
+            }
+        } else {
+            throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin [" + pluginKey
+                + "]; plugin container is not initialized yet");
+        }
     }
 
     /**

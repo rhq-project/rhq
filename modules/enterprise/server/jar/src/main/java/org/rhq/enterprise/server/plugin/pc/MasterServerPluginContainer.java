@@ -499,7 +499,10 @@ public class MasterServerPluginContainer {
 
         StdSchedulerFactory factory = new StdSchedulerFactory();
         factory.initialize(schedulerConfig);
-        factory.getScheduler(); // confirms that we can get it and no exceptions get thrown
+
+        Scheduler scheduler = factory.getScheduler();
+        scheduler.start();
+
         this.nonClusteredSchedulerFactory = factory;
         return;
     }

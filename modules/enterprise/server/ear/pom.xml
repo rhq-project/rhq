@@ -67,6 +67,13 @@
          <type>war</type>
       </dependency>
 
+      <dependency>
+          <groupId>org.rhq.helpers</groupId>
+          <artifactId>alert-migration</artifactId>
+          <version>${project.version}</version>
+          <type>war</type>
+      </dependency>
+
       <!-- ** SARs -->
       <!--
          <dependency> <groupId>org.rhq</groupId> <artifactId>rhq-enterprise-server-agent-sar</artifactId>
@@ -120,7 +127,7 @@
                            dir="${earDirectory}/license" />
 					  <copy
 						 todir="${earDirectory}/license"
-						 file="${basedir}/src/main/license/license.xml" />                              
+						 file="${basedir}/src/main/license/license.xml" />
                      </tasks>
                   </configuration>
                   <goals>
@@ -167,6 +174,13 @@
                      <excluded>${exclude-webdav}</excluded>
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
+                  </webModule>
+
+                  <webModule>
+                      <groupId>org.rhq.helpers</groupId>
+                      <artifactId>alert-migration</artifactId>
+                      <bundleFileName>alert-migration.war</bundleFileName>
+                      <contextRoot>/alert-migration</contextRoot>
                   </webModule>
 
                   <!-- ** EJB-JARs -->
@@ -359,9 +373,9 @@
                         </artifactItem>
 
                         <artifactItem>
-                          <groupId>org.rhq</groupId> 
+                          <groupId>org.rhq</groupId>
                           <artifactId>rhq-virt-plugin</artifactId>
-                          <version>${project.version}</version> 
+                          <version>${project.version}</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>

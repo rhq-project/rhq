@@ -18,7 +18,7 @@
       name="sample"
       baseUrl="/rhq-sample-perspective/" />
 
-   <!--  replace the coreMenu log with a new one -->
+   <!--  replace the coreMenu logo with a new one -->
    <menu-item
       action="remove"
       name="logo"

@@ -100,6 +100,7 @@ public class ResourceCriteria extends Criteria {
         filterOverrides.put("parentResourceId", "parentResource.id = ?");
         filterOverrides.put("parentResourceName", "parentResource.name like ?");
         filterOverrides.put("agentName", "agent.name like ?");
+        filterOverrides.put("currentAvailability", "currentAvailability.availabilityType = ?");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");

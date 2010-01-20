@@ -150,21 +150,27 @@ public class Repo implements Serializable, Taggable {
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoContentSource> repoContentSources;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoTag> repoTags;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy("startTime DESC")
     // latest appears first, oldest last
@@ -756,7 +762,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     public void setRepoTags(Set<RepoTag> tags) {
-        this.repoTags = repoTags;
+        this.repoTags = tags;
     }
 
     public boolean hasTag(Tag tag) {

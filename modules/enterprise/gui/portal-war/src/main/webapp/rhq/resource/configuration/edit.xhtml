@@ -170,7 +170,11 @@ THIS TEXT WILL BE REMOVED.
                          selectedTab="#{ExistingResourceConfigurationUIBean.selectedTab}"
                          switchType="ajax"
                          valueChangeListener="#{ExistingResourceConfigurationUIBean.changeTabs}">
-            <rich:tab id="structuredTab" label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
+            <rich:tab id="structuredTab"
+                      label="Basic Mode"
+                      reRender="uploadForm"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();">
               <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
                           configuration="#{ExistingResourceConfigurationUIBean.configuration}"
                           nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
@@ -193,7 +197,11 @@ THIS TEXT WILL BE REMOVED.
                                  styleClass="buttonmed"/>
               </h:panelGrid>
             </rich:tab>
-            <rich:tab id="rawTab" label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
+            <rich:tab id="rawTab"
+                      label="Advanced Mode"
+                      reRender="uploadForm"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();">
               <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
@@ -274,8 +282,7 @@ THIS TEXT WILL BE REMOVED.
                                    allowFlash="false"
                                    maxRequestSize="100000">
                     <a4j:support event="onuploadcomplete"
-                                 reRender="fileContents"
-                                 action="#{ExistingResourceConfigurationUIBean.upload}"/>                    
+                                 reRender="fileMenu,fileContents"/>                    
                   </rich:fileUpload>
                   </ui:remove>
                 </h:panelGrid>
@@ -309,13 +316,14 @@ THIS TEXT WILL BE REMOVED.
           Line: 6
     -->
     <h:form id="uploadForm" enctype="multipart/form-data">
-      <rich:panel>
+      <rich:panel id="uploadPanel" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
 
         <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
 
         <rich:fileUpload id="fileUpload"
-                         listHeight="100px"
+                         listHeight="50px"
                          fileUploadListener="#{fileUploader.fileUploadListener}"
+                         addControlLabel="Browse"
                          immediateUpload="true">
           <a4j:support event="onuploadcomplete" reRender="fileMenu,fileContents"/>
         </rich:fileUpload>

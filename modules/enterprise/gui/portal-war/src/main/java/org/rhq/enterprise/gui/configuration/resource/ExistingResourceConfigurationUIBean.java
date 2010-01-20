@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.component.UIComponent;
 import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletResponse;
 
@@ -43,6 +44,8 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Out;
 import org.jboss.seam.annotations.Scope;
 import org.jetbrains.annotations.Nullable;
+import org.richfaces.component.UISwitchablePanel;
+import org.richfaces.component.UITabPanel;
 import org.richfaces.event.UploadEvent;
 
 import org.jboss.seam.annotations.Create;
@@ -417,7 +420,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public Object[] getPaths() {
-        
+
         return getRaws().keySet().toArray();
     }
 
@@ -456,6 +459,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public boolean isStructuredAndRawSupported() {
         return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW;        
+    }
+
+    public boolean isFileUploadAvailable() {
+        return isRawSupported() || (isStructuredAndRawSupported() && isRawMode());
     }
 
     void nullify() {
@@ -538,7 +545,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String upload() {
-//        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
         return null;
     }
 

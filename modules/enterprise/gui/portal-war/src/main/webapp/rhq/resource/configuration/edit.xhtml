@@ -311,7 +311,7 @@ THIS TEXT WILL BE REMOVED.
                          addControlLabel="Browse"
                          immediateUpload="false">
           <a4j:support event="onuploadcomplete"
-                       reRender="fileContents,menuItem_#{ExistingResourceConfigurationUIBean.current.sha256}"/>
+                       reRender="fileUpload,fileContents,menuItem_#{ExistingResourceConfigurationUIBean.current.sha256}"/>
         </rich:fileUpload>
 
       </rich:panel>

@@ -137,7 +137,7 @@ THIS TEXT WILL BE REMOVED.
                            rendered="#{ExistingResourceConfigurationViewUIBean.configuration != null and !ExistingResourceConfigurationViewUIBean.updateInProgress}">
 
                 <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationViewUIBean.editConfiguration}"
+                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
                                  title="Edit this Configuration"
                                  styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure and !ExistingResourceConfigurationViewUIBean.updateInProgress}"/>

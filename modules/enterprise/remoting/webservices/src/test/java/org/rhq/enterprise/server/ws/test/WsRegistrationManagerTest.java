@@ -22,21 +22,16 @@
 */
 package org.rhq.enterprise.server.ws.test;
 
-import java.lang.Exception;
-import java.net.URL;
 import java.util.List;
 
-import javax.xml.namespace.QName;
-
-import org.testng.AssertJUnit;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import org.rhq.enterprise.server.ws.*;
+import org.rhq.enterprise.server.ws.InventoryStatus;
+import org.rhq.enterprise.server.ws.Resource;
+import org.rhq.enterprise.server.ws.ResourceCriteria;
+import org.rhq.enterprise.server.ws.Subject;
 import org.rhq.enterprise.server.ws.test.util.WsResourceUtility;
 import org.rhq.enterprise.server.ws.test.util.WsSubjectUtility;
-import org.rhq.enterprise.server.ws.utility.WsUtility;
 
 /**
  * Web service tests for the registration manager services.
@@ -44,26 +39,9 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jason Dobies
  */
 @Test(groups = "ws")
-public class WsRegistrationManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsRegistrationManagerTest extends WsUnitTestBase {
 
     private static final boolean TESTS_ENABLED = true;
-
-    private WebservicesRemote service;
-    private ObjectFactory objectFactory;
-
-    @BeforeClass
-    public void setup() throws Exception {
-
-        // Variables needed
-        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
-        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
-
-        // Establish outbound webservices connections
-        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
-        service = jws.getWebservicesManagerBeanPort();
-
-        objectFactory = new ObjectFactory();
-    }
 
     @Test(enabled = TESTS_ENABLED)
     public void importPlatform() throws Exception {

@@ -22,22 +22,10 @@
 */
 package org.rhq.enterprise.server.ws.test;
 
-import java.net.URL;
-
-import javax.xml.namespace.QName;
-
-import org.testng.AssertJUnit;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.ws.Advisory;
-import org.rhq.enterprise.server.ws.ObjectFactory;
 import org.rhq.enterprise.server.ws.Subject;
-import org.rhq.enterprise.server.ws.TestPropertiesInterface;
-import org.rhq.enterprise.server.ws.WebservicesManagerBeanService;
-import org.rhq.enterprise.server.ws.WebservicesRemote;
-import org.rhq.enterprise.server.ws.test.util.WsSubjectUtility;
-import org.rhq.enterprise.server.ws.utility.WsUtility;
 
 /**
  * Web service tests for the advisory manager services.
@@ -45,30 +33,9 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  * @author Jason Dobies
  */
 @Test(groups = "ws")
-public class WsAdvisoryManagerTest extends AssertJUnit implements TestPropertiesInterface {
+public class WsAdvisoryManagerTest extends WsUnitTestBase {
 
     private static final boolean TESTS_ENABLED = true;
-
-    private WebservicesRemote service;
-    private ObjectFactory objectFactory;
-
-    private WsSubjectUtility subjectUtil;
-
-    @BeforeClass
-    public void setup() throws Exception {
-
-        // Variables needed
-        URL gUrl = WsUtility.generateRemoteWebserviceURL(WebservicesManagerBeanService.class, host, port, useSSL);
-        QName gQName = WsUtility.generateRemoteWebserviceQName(WebservicesManagerBeanService.class);
-
-        // Establish outbound webservices connections
-        WebservicesManagerBeanService jws = new WebservicesManagerBeanService(gUrl, gQName);
-        service = jws.getWebservicesManagerBeanPort();
-
-        objectFactory = new ObjectFactory();
-
-        subjectUtil = new WsSubjectUtility(service);
-    }
 
     @Test(enabled = TESTS_ENABLED)
     public void createGetDeleteAdvisory() throws Exception {

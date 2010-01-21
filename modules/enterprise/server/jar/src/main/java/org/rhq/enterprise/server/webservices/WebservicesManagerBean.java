@@ -117,6 +117,7 @@ import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.DistributionException;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -195,13 +196,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private EntitlementManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
 
     //ADVISORYMANAGER: BEGIN ------------------------------------------
 
     public Advisory createAdvisory(@WebParam(name = "subject") Subject user,
-                                   @WebParam(name = "advisory") String advisory,
-                                   @WebParam(name = "advisoryType") String advisoryType,
-                                   @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException {
+        @WebParam(name = "advisory") String advisory, @WebParam(name = "advisoryType") String advisoryType,
+        @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException {
         return advisoryManager.createAdvisory(user, advisory, advisoryType, advisoryName);
     }
 
@@ -211,14 +212,13 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user,
-                                         @WebParam(name = "advisory") Advisory advisory,
-                                         @WebParam(name = "cve") CVE cve) throws AdvisoryException {
+        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "cve") CVE cve) throws AdvisoryException {
         return advisoryManager.createAdvisoryCVE(user, advisory, cve);
     }
 
     public AdvisoryPackage createAdvisoryPackage(@WebParam(name = "subject") Subject user,
-                                                 @WebParam(name = "advisory") Advisory advisory,
-                                                 @WebParam(name = "pkg") PackageVersion pkg) throws AdvisoryException {
+        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "pkg") PackageVersion pkg)
+        throws AdvisoryException {
         return advisoryManager.createAdvisoryPackage(user, advisory, pkg);
     }
 
@@ -234,8 +234,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         advisoryManager.deleteAdvisoryCVE(user, advId);
     }
 
-    public void deleteAdvisoryByAdvId(@WebParam(name = "subject") Subject subject,
-                                      @WebParam(name = "advId") int advId) {
+    public void deleteAdvisoryByAdvId(@WebParam(name = "subject") Subject subject, @WebParam(name = "advId") int advId) {
         advisoryManager.deleteAdvisoryByAdvId(subject, advId);
     }
 
@@ -244,25 +243,22 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject,
-                                                       @WebParam(name = "advId") int advId,
-                                                       @WebParam(name = "pc") PageControl pc) {
+        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
         return advisoryManager.findPackageByAdvisory(subject, advId, pc);
     }
 
     public PackageVersion findPackageVersionByPkgId(@WebParam(name = "subject") Subject subject,
-                                                    @WebParam(name = "rpmName") String rpmName,
-                                                    @WebParam(name = "pc") PageControl pc) {
+        @WebParam(name = "rpmName") String rpmName, @WebParam(name = "pc") PageControl pc) {
         return advisoryManager.findPackageVersionByPkgId(subject, rpmName, pc);
     }
 
     public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(@WebParam(name = "subject") Subject subject,
-                                                       @WebParam(name = "advId") int advId,
-                                                       @WebParam(name = "pc") PageControl pc) {
+        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
         return advisoryManager.getAdvisoryCVEByAdvId(subject, advId, pc);
     }
 
     public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject,
-                                                           @WebParam(name = "advId") int advId) {
+        @WebParam(name = "advId") int advId) {
         return advisoryManager.getAdvisoryBuglistByAdvId(subject, advId);
     }
 
@@ -275,14 +271,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public AdvisoryPackage findAdvisoryPackage(@WebParam(name = "subject") Subject overlord,
-                                               @WebParam(name = "advId") int advId,
-                                               @WebParam(name = "pkgVerId") int pkgVerId) {
+        @WebParam(name = "advId") int advId, @WebParam(name = "pkgVerId") int pkgVerId) {
         return advisoryManager.findAdvisoryPackage(overlord, advId, pkgVerId);
     }
 
     public AdvisoryBuglist getAdvisoryBuglist(@WebParam(name = "subject") Subject subject,
-                                              @WebParam(name = "advId") int advId,
-                                              @WebParam(name = "buginfo") String buginfo) {
+        @WebParam(name = "advId") int advId, @WebParam(name = "buginfo") String buginfo) {
         return advisoryManager.getAdvisoryBuglist(subject, advId, buginfo);
     }
 
@@ -571,7 +565,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject,
-                                                @WebParam(name = "distid") int distid) {
+        @WebParam(name = "distid") int distid) {
         distributionManager.deleteDistributionByDistId(subject, distid);
     }
 
@@ -588,20 +582,18 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void deleteDistributionByDistId(@WebParam(name = "subject") Subject subject,
-                                           @WebParam(name = "distId") int distId) throws Exception {
+        @WebParam(name = "distId") int distId) throws Exception {
         distributionManager.deleteDistributionByDistId(subject, distId);
     }
 
     public void deleteDistributionTypeByName(@WebParam(name = "subject") Subject subject,
-                                             @WebParam(name = "name") String name) {
+        @WebParam(name = "name") String name) {
         distributionManager.deleteDistributionTypeByName(subject, name);
     }
 
     public Distribution createDistribution(@WebParam(name = "subject") Subject subject,
-                                           @WebParam(name = "kslabel") String kslabel,
-                                           @WebParam(name = "basepath") String basepath,
-                                           @WebParam(name = "disttype") DistributionType disttype)
-        throws DistributionException {
+        @WebParam(name = "kslabel") String kslabel, @WebParam(name = "basepath") String basepath,
+        @WebParam(name = "disttype") DistributionType disttype) throws DistributionException {
         return distributionManager.createDistribution(subject, kslabel, basepath, disttype);
     }
 
@@ -1082,6 +1074,6 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
-        return repoManager.getCertificates(subject, resourceId);
+        return entitlementManager.getCertificates(subject, resourceId);
     }
 }

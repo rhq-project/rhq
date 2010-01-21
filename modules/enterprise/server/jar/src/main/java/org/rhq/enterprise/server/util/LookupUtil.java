@@ -87,6 +87,8 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementManagerBean;
+import org.rhq.enterprise.server.content.EntitlementManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
@@ -424,6 +426,10 @@ public final class LookupUtil {
 
     public static RepoManagerLocal getRepoManagerLocal() {
         return lookupLocal(RepoManagerBean.class);
+    }
+
+    public static EntitlementManagerLocal getEntitlementManager() {
+        return lookupLocal(EntitlementManagerBean.class);
     }
 
     public static DistributionManagerLocal getDistributionManagerLocal() {

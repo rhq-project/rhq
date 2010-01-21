@@ -32,7 +32,6 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
-import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -389,12 +388,4 @@ public interface RepoManagerLocal {
      * @return
      */
     List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
-
-    /**
-     * Get a list of entitlement certificates for the specified resources.
-     * @param subject    The logged in user's subject.
-     * @param resourceId The resource id.
-     * @return
-     */
-    List<EntitlementCertificate> getCertificates(Subject subject, int resourceId);
 }

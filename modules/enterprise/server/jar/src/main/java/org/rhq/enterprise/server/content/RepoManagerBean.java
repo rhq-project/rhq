@@ -60,7 +60,6 @@ import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
-import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -241,17 +240,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             Repo repo = repoComposite.getRepo();
             SubscribedRepo summary = new SubscribedRepo(repo.getId(), repo.getName());
             list.add(summary);
-        }
-        return list;
-    }
-
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
-        List<EntitlementCertificate> list = new ArrayList<EntitlementCertificate>();
-        if (resourceId % 2 == 0) {
-            list.add(EntitlementCertificate.getEven());
-        } else {
-            list.add(EntitlementCertificate.getOdd());
         }
         return list;
     }

@@ -1753,6 +1753,23 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             .getId());
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream, long startByte,
+        long endByte) {
+        // Used by export of content through http
+
+        PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
+            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
+            .getArchitecture().toString());
+
+        int resourceId = 0; //set to dummy value
+
+        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
+            packageVersion.getId());
+    }
+
     @SuppressWarnings("unchecked")
     private long outputPackageVersionBitsRangeHelper(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte, int packageVersionId) {
@@ -1877,12 +1894,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // the magic happens here - outputStream is probably a remote stream down to the agent
             long bytesRetrieved;
-
             if (endByte < 0) {
                 if (startByte > 0) {
                     bitsStream.skip(startByte);
                 }
-
                 bytesRetrieved = StreamUtil.copy(bitsStream, outputStream, false);
             } else {
                 BufferedInputStream bis = new BufferedInputStream(bitsStream);

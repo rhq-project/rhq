@@ -568,6 +568,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      */
     public void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications) {
 
+        NotificationTemplate template = getNotificationTemplateByName(templateName);
+
+        AlertDefinition definition = getDetachedAlertDefinition(alertDefinitionId);
+
+        applyNotificationTemplateToAlertDefinition(template,definition, removeOldNotifications);
+    }
+
+    private NotificationTemplate getNotificationTemplateByName(String templateName) {
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
         q.setParameter("name",templateName);
         NotificationTemplate template;
@@ -576,12 +584,8 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         } catch (NoResultException nre) {
             throw new IllegalArgumentException("There is no template with name '" + templateName +"'");
         }
-
-        AlertDefinition definition = getDetachedAlertDefinition(alertDefinitionId);
-
-        applyNotificationTemplateToAlertDefinition(template,definition, removeOldNotifications);
+        return template;
     }
-
 
     /**
      * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
@@ -627,6 +631,30 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         }
         return templ;
+    }
+
+    /**
+     * Add a new alert Notification to a template
+     * @param user subject of the caller
+     * @param templateName name of the NotificationTemplate to use
+     * @param sender the alert sender to use
+     * @param notificationName the name of this notification
+     * @param notificationConfiguration the configuration of this AlertNotification
+     * @return the new AlertNotification
+     */
+    public AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration) {
+
+        NotificationTemplate template = getNotificationTemplateByName(templateName);
+
+        entityManager.persist(notificationConfiguration);
+        AlertNotification alertNotification = new AlertNotification(notificationName,sender);
+        alertNotification.setConfiguration(notificationConfiguration);
+        alertNotification.setNotificationTemplate(template);
+        entityManager.persist(alertNotification);
+        template.addNotification(alertNotification);
+
+        return alertNotification;
+
     }
 
     /**

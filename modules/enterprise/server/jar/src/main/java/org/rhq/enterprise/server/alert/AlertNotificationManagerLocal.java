@@ -171,4 +171,15 @@ public interface AlertNotificationManagerLocal {
      * @param removeOldNotifications Shall old Notifications on the Definition be removed?
      */
     void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications);
+
+    /**
+     * Add a new alert Notification to a template
+     * @param user subject of the caller
+     * @param templateName name of the NotificationTemplate to use
+     * @param sender the alert sender to use
+     * @param notificationName the name of this notification
+     * @param notificationConfiguration the configuration of this AlertNotification
+     * @return the new AlertNotification
+     */
+    AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration);
 }

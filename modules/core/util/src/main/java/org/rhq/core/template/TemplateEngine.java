@@ -1,24 +1,53 @@
 package org.rhq.core.template;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TemplateEngine {
-	public final Map<String, String> tokens;
+    public final Map<String, String> tokens;
 
-	public TemplateEngine(Map<String, String> tokens) {
-		super();
-		this.tokens = tokens;
-	}
+    /**
+     * In English, the open delimiter <%
+     * zero or more white space characters
+     * The following pattern at least once:
+     *      one or more word characters followed by an optional period
+     * zero or more white space characters
+     * The closing delimiter %>
+     *  Thus  <% rhq.system %> and <%rhq.system%> are equivalent
+     *  <% rhq.platform.ip_address %> is Valid.
+     *  <% & %> is not a valid token
+     *  
+     */
 
-	public String replaceTokens(String input){
-		
-		for (String  token : tokens.keySet()) {
-			//Since . is a special regex character, 
-			//replace it with \. before building the larger regex
-			String regex = "<%\\s*" + token.replaceAll("\\.", "\\\\.") + "\\s*%>";
-			input = input.replaceAll(regex, tokens.get(token) );
-		}
-		
-		return input;
-	}
+    static String tokenRegex = "<%\\s*(\\w+\\.?)+\\s*%>";
+    static String keyRegex = "(\\w+\\.?)+";
+
+    static Pattern tokenPattern = Pattern.compile(tokenRegex);
+    static Pattern keyPattern = Pattern.compile(keyRegex);
+
+    public TemplateEngine(Map<String, String> tokens) {
+        super();
+        this.tokens = tokens;
+    }
+
+    public String replaceTokens(String input) {
+        StringBuffer buffer = new StringBuffer();
+        Matcher matcher = tokenPattern.matcher(input);
+        while (matcher.find()) {
+            String next = matcher.group();
+            Matcher keyMatcher = keyPattern.matcher(next);
+            if (keyMatcher.find()) {
+                String value = tokens.get(keyMatcher.group());
+                if (value != null) {
+                    next = value;
+                }
+            }
+            //If we didn't find a replacement for the key
+            //We leave the original value unchanged
+            matcher.appendReplacement(buffer, next);
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
 }

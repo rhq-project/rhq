@@ -42,6 +42,12 @@ public class SenderResult {
         this.state = state;
     }
 
+    public SenderResult(ResultState state, String message, List<String> emails) {
+        this.message = message;
+        this.state = state;
+        this.emails = emails;
+    }
+
     public String getMessage() {
         return message;
     }

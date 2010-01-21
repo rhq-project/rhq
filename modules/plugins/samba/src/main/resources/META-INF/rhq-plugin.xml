@@ -29,6 +29,7 @@
                               default="/files/etc/samba/smb.conf/target[.='global']"/>
            </c:group>
        </plugin-configuration>
+       
 
        <operation name="join"
                  displayName="Join Active Server Directory"
@@ -39,6 +40,24 @@
                   displayName="Disconnect Active Server Directory"
                   description="Disconnects the Samba domain member to the Active Server Directory">
        </operation>
+       
+       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allOutboundTotal" displayName="All Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpEstablished" displayName="State ESTABLISHED"/>
+       <metric property="NetworkStat.tcpSynSent" displayName="State SYN_SENT"/>
+       <metric property="NetworkStat.tcpSynRecv" displayName="State SYN_RECV"/>
+       <metric property="NetworkStat.tcpFinWait1" displayName="State FIN_WAIT1"/>
+       <metric property="NetworkStat.tcpFinWait2" displayName="State FIN_WAIT2"/>
+       <metric property="NetworkStat.tcpTimeWait" displayName="State TIME_WAIT"/>
+       <metric property="NetworkStat.tcpClose" displayName="State CLOSE"/>
+       <metric property="NetworkStat.tcpCloseWait" displayName="State CLOSE_WAIT"/>
+       <metric property="NetworkStat.tcpLastAck" displayName="State LAST_ACK"/>
+       <metric property="NetworkStat.tcpListen" displayName="State LISTEN"/>
+       <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
+       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
+       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
 
       <resource-configuration>
         <c:group name="Basic Configurations">

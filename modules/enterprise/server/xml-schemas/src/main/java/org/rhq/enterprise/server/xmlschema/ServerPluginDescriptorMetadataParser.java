@@ -38,6 +38,7 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionList;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ControlType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
@@ -53,6 +54,7 @@ public class ServerPluginDescriptorMetadataParser {
     private static final String SCHEDULED_JOB_PROP_NAME_CLASS = "class";
     private static final String SCHEDULED_JOB_PROP_NAME_METHOD_NAME = "methodName";
     private static final String SCHEDULED_JOB_PROP_NAME_CONCURRENT = "concurrent";
+    private static final String SCHEDULED_JOB_PROP_NAME_CLUSTERED = "clustered";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE = "scheduleType";
     private static final String SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER = "scheduleTrigger";
 
@@ -106,6 +108,46 @@ public class ServerPluginDescriptorMetadataParser {
             }
         }
         return className;
+    }
+
+    /**
+     * Returns the list of all defined control operations. If there are no controls, an empty list is returned.
+     * 
+     * @param descriptor
+     * 
+     * @return list of control operations defined in the descriptor
+     *
+     * @throws Exception if the plugin descriptor was invalid
+     */
+    public static List<ControlDefinition> getControlDefinitions(ServerPluginDescriptorType descriptor) throws Exception {
+
+        List<ControlDefinition> defs = new ArrayList<ControlDefinition>();
+        if (descriptor.getPluginComponent() != null) {
+            List<ControlType> descriptorDefs = descriptor.getPluginComponent().getControl();
+            if (descriptorDefs != null && descriptorDefs.size() > 0) {
+                for (ControlType descriptorDef : descriptorDefs) {
+                    String name = descriptorDef.getName();
+                    String displayName = descriptorDef.getDisplayName();
+                    String description = descriptorDef.getDescription();
+                    ConfigurationDefinition params = null;
+                    ConfigurationDefinition results = null;
+
+                    ConfigurationDescriptor xml = descriptorDef.getParameters();
+                    if (xml != null) {
+                        params = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_params", xml);
+                    }
+                    xml = descriptorDef.getResults();
+                    if (xml != null) {
+                        results = ConfigurationMetadataParser.parse(descriptorDef.getName() + "_results", xml);
+                    }
+
+                    ControlDefinition def = new ControlDefinition(name, displayName, description, params, results);
+                    defs.add(def);
+                }
+            }
+        }
+
+        return defs;
     }
 
     /**
@@ -199,6 +241,7 @@ public class ServerPluginDescriptorMetadataParser {
             String className = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
+            String clusteredStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLUSTERED, "true");
             String scheduleTypeStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
                 PeriodicScheduleType.TYPE_NAME);
             String scheduleTriggerStr = defaults.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER, "600000");
@@ -206,9 +249,10 @@ public class ServerPluginDescriptorMetadataParser {
             String jobId = jobMapDef.getName();
             boolean enabled = Boolean.parseBoolean(enabledStr);
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
+            boolean clustered = Boolean.parseBoolean(clusteredStr);
 
             AbstractScheduleType scheduleType;
-            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            scheduleType = AbstractScheduleType.create(concurrent, clustered, scheduleTypeStr, scheduleTriggerStr);
             if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }
@@ -288,6 +332,7 @@ public class ServerPluginDescriptorMetadataParser {
             String className = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLASS, null);
             String enabledStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_ENABLED, "true");
             String concurrentStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CONCURRENT, "false");
+            String clusteredStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_CLUSTERED, "true");
             String scheduleTypeStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TYPE,
                 PeriodicScheduleType.TYPE_NAME);
             String scheduleTriggerStr = jobMap.getSimpleValue(SCHEDULED_JOB_PROP_NAME_SCHEDULE_TRIGGER, "600000");
@@ -295,9 +340,10 @@ public class ServerPluginDescriptorMetadataParser {
             String jobId = jobMap.getName();
             boolean enabled = Boolean.parseBoolean(enabledStr);
             boolean concurrent = Boolean.parseBoolean(concurrentStr);
+            boolean clustered = Boolean.parseBoolean(clusteredStr);
 
             AbstractScheduleType scheduleType;
-            scheduleType = AbstractScheduleType.create(concurrent, scheduleTypeStr, scheduleTriggerStr);
+            scheduleType = AbstractScheduleType.create(concurrent, clustered, scheduleTypeStr, scheduleTriggerStr);
             if (scheduleType == null) {
                 throw new InvalidPluginDescriptorException("Invalid schedule type: " + scheduleTypeStr);
             }

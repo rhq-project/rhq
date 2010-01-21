@@ -231,6 +231,17 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             if (cs.getConfiguration() != null) {
                 entityManager.remove(cs.getConfiguration());
             }
+
+            List<ContentSourceSyncResults> results = cs.getSyncResults();
+            if (results != null) {
+                int[] ids = new int[results.size()];
+                for (int i = 0; i < ids.length; i++) {
+                    ids[i] = results.get(i).getId();
+                }
+
+                this.deleteContentSourceSyncResults(subject, ids);
+            }
+
             entityManager.remove(cs);
             log.debug("User [" + subject + "] deleted content source [" + cs + "]");
 
@@ -471,7 +482,7 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public ContentSource updateContentSource(Subject subject, ContentSource contentSource)
+    public ContentSource updateContentSource(Subject subject, ContentSource contentSource, boolean syncNow)
         throws ContentSourceException {
 
         log.debug("User [" + subject + "] is updating content source [" + contentSource + "]");
@@ -504,13 +515,14 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
         // now that the content source has been changed,
         // restart its adapter and reschedule its sync job because the config might have changed.
-        // synchronize it now, too
         try {
             ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
             pc.unscheduleProviderSyncJob(contentSource);
             pc.getAdapterManager().restartAdapter(contentSource);
             pc.scheduleProviderSyncJob(contentSource);
-            pc.syncProviderNow(contentSource);
+            if (syncNow) {
+                pc.syncProviderNow(contentSource);
+            }
         } catch (Exception e) {
             log.warn("Failed to restart adapter for [" + contentSource + "]", e);
         }

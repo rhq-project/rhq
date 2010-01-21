@@ -27,6 +27,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.augeas.AugeasException;
+
 import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
@@ -54,7 +56,15 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
 
         Set<DiscoveredResourceDetails> discoveredResources = new LinkedHashSet<DiscoveredResourceDetails>();
 
-        AugeasTree tree = context.getParentResourceComponent().getServerConfigurationTree();
+        AugeasTree tree = null;
+        
+        try {
+            tree = context.getParentResourceComponent().getServerConfigurationTree();
+        } catch (AugeasException e) {
+            //we depend on Augeas to do anything useful with directories.
+            //give up, if Augeas isn't there.
+            return discoveredResources;
+        }
 
         List<AugeasNode> directories = tree.matchRelative(context.getParentResourceComponent().getNode(tree), "<Directory");
 

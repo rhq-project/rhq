@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="Cobbler"
+        displayName="Cobbler"
+        description="Support for cobbler file"
+        package="org.rhq.plugins.cobbler"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+         ampsVersion="2.1"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="Augeas"/>
+
+   <server name="Cobbler"
+           description="the local file used for mapping modules and setttings"
+            discovery="CobblerDiscoveryComponent"
+            class="CobblerComponent"
+            supportsManualAdd="true">
+      
+      <runs-inside>
+         <parent-resource-type name="Linux"    plugin="Platforms"/>
+         <parent-resource-type name="Java"     plugin="Platforms"/>
+      </runs-inside>
+
+      <plugin-configuration>
+          <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Cobbler" required="true" readOnly="true"
+                             description="the name of the Augeas module/lens to use for loading and updating this Resource's configuration"/>
+
+          <c:simple-property name="configurationFilesInclusionPatterns"
+                             default="/etc/cobbler/settings|/etc/cobbler/modules.conf" required="true" readOnly="true"
+                             description="the absolute paths of the configuration files, delimited with pipe characters; wildcards are permitted in the last component of the path (e.g. /etc/cron.d/*)"/>
+           <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
+                              default="/files/etc/cobbler/"/>                             
+      </plugin-configuration>
+
+      <resource-configuration configurationFormat="both">
+               <c:simple-property name="settings/server" displayName="Server" type="string" required="true" activationPolicy="immediate"
+                                  description="The IP address of the cobbler server."/>      
+      </resource-configuration>
+
+   </server>
+
+</plugin>
+        

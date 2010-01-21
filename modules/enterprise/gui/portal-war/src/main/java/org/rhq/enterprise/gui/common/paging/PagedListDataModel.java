@@ -34,7 +34,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
- * <p>A special type of JSF DataModel to allow a datatable and datascroller to page through a large set of data without
+ * <p>A special type of JSF DataModel to allow a table and datascroller to page through a large set of data without
  * having to hold the entire set of data in memory at once.</p>
  *
  * <p>Any time a managed bean wants to avoid holding an entire dataset, the managed bean should declare an inner class

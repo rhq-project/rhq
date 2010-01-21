@@ -31,6 +31,12 @@
          <artifactId>jna</artifactId>
          <version>${jna.version}</version>
       </dependency>
+      
+      <dependency>
+         <groupId>org.libvirt</groupId>
+         <artifactId>libvirt</artifactId>
+         <version>0.4.1</version>
+      </dependency>      
 
       <dependency>
          <groupId>jdom</groupId>
@@ -56,16 +62,21 @@
                    </goals>
                    <configuration>
                       <artifactItems>
-                        <artifactItem>
-                           <groupId>com.sun.jna</groupId>
-                           <artifactId>jna</artifactId>
-                           <version>3.0.1</version>
-                        </artifactItem>
+                      	<artifactItem>
+					         <groupId>net.java.dev.jna</groupId>
+					         <artifactId>jna</artifactId>
+					         <version>${jna.version}</version>
+					     </artifactItem>
                          <artifactItem>
                            <groupId>jdom</groupId>
                            <artifactId>jdom</artifactId>
                            <version>1.0</version>
                         </artifactItem>
+                      	<artifactItem>
+					         <groupId>org.libvirt</groupId>
+					         <artifactId>libvirt</artifactId>
+					         <version>0.4.1</version>
+					     </artifactItem>                        
                       </artifactItems>
                       <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                    </configuration>

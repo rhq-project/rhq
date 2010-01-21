@@ -21,6 +21,7 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import net.augeas.AugeasException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -134,6 +137,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+        resourceContext.getParentResourceComponent().checkConfigurationSupported();
+        
         AugeasTree tree = getServerConfigurationTree();
         ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
             .getResourceConfigurationDefinition();
@@ -452,6 +457,8 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
         ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
         if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
             snmpWwwServiceIndex = -1;
+            //don't go through this configuration again even if we fail further below.. we'd fail again.
+            lastConfigurationTimeStamp = currentTimestamp;
             
             //configuration has changed. re-read the service index of this virtual host
 
@@ -477,18 +484,38 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             }
             vhostAddressStrings = key.substring(pipeIdx + 1).split(" ");
 
-            AugeasTree configTree = resourceContext.getParentResourceComponent().getAugeasTree();
-
+            AugeasTree configTree = null;
+            try {
+                configTree = resourceContext.getParentResourceComponent().getAugeasTree();
+            } catch (AugeasException e) {
+                //ok, we'll need to live without augeas...
+            }
+            
             //convert the vhost addresses into fully qualified ip/port addresses
             List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
                 vhostAddressStrings.length);
 
-            if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
-                vhostAddresses = Collections.singletonList(HttpdAddressUtility.getMainServerSampleAddress(configTree));
-            } else {               
-                for (int i = 0; i < vhostAddressStrings.length; ++i) {
-                    vhostAddresses.add(HttpdAddressUtility.getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
-                        vhostServerName));
+            
+            if (configTree != null) {
+                ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+                if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(configTree));
+                } else {
+                    for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
+                            vhostServerName));
+                    }
+                }
+            } else {
+                Configuration pluginConfig = resourceContext.getPluginConfiguration();
+                URI uri = new URI(pluginConfig.getSimpleValue(URL_CONFIG_PROP, null));
+                String host = uri.getHost();
+                int port = uri.getPort();
+                if (port == -1) port = 80;
+                HttpdAddressUtility.Address addr = new HttpdAddressUtility.Address(host, port);
+                
+                if (addr != null) {
+                    vhostAddresses.add(addr);
                 }
             }
             
@@ -510,7 +537,6 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                 }
             }
         }
-        lastConfigurationTimeStamp = currentTimestamp;
         return snmpWwwServiceIndex;
     }
 
@@ -527,6 +553,18 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             
             if (addresses.contains(newCheck)) {
                 return true;
+            }
+        }
+        
+        //ok, try the hardest...
+        for(HttpdAddressUtility.Address listAddress: addresses) {
+            InetAddress[] listAddresses = InetAddress.getAllByName(listAddress.host);
+            for (InetAddress listInetAddr : listAddresses) {
+                for (InetAddress ip : ipAddresses) {
+                    if (ip.equals(listInetAddr) && addressToCheck.port == listAddress.port) {
+                        return true;
+                    }
+                }
             }
         }
         

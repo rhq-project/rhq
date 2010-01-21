@@ -55,7 +55,6 @@ public class WsRegistrationManagerTest extends WsUnitTestBase {
 
         // Note: randomPlatform calls #registerPlatform, which is why there's no explicit test for that
         Resource created = resourceUtil.randomPlatform();
-        service.importPlatform(admin, created);
 
         // Verify and Cleanup
         try {

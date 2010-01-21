@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<generic-plugin name="controls-test-name"
+                xmlns="urn:xmlns:rhq-serverplugin.generic"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+                xmlns:c="urn:xmlns:rhq-configuration"
+                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <serverplugin:plugin-component class="controls.plugin.component">
+        <serverplugin:control name="firstControl"/>
+        <serverplugin:control name="secondControl" displayName="2nd Control">
+            <serverplugin:parameters>
+                <c:simple-property name="argument2C" />
+            </serverplugin:parameters>
+        </serverplugin:control>
+        <serverplugin:control name="thirdControl" description="third control description">
+            <serverplugin:results>
+                <c:simple-property name="result3C" />
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="fourthControl" displayName="4th Control" description="fourth control description">
+            <serverplugin:parameters>
+                <c:simple-property name="argument4C" />
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="result4C" />
+            </serverplugin:results>
+        </serverplugin:control>
+    </serverplugin:plugin-component>
+</generic-plugin>

@@ -21,6 +21,9 @@ package org.rhq.plugins.virt;
 import java.lang.reflect.Field;
 import java.util.Set;
 
+import org.libvirt.DomainInterfaceStats;
+import org.libvirt.LibvirtException;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -33,11 +36,12 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 /**
  * @author Greg Hinkle
  */
-public class VirtualizationInterfaceComponent implements ResourceComponent<VirtualizationComponent>, MeasurementFacet {
+public class VirtualizationInterfaceComponent implements ResourceComponent<VirtualizationDomainComponent>,
+    MeasurementFacet {
 
-    ResourceContext<VirtualizationComponent> resourceContext;
+    ResourceContext<VirtualizationDomainComponent> resourceContext;
 
-    public void start(ResourceContext<VirtualizationComponent> virtualizationComponentResourceContext)
+    public void start(ResourceContext<VirtualizationDomainComponent> virtualizationComponentResourceContext)
         throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = virtualizationComponentResourceContext;
     }
@@ -49,13 +53,13 @@ public class VirtualizationInterfaceComponent implements ResourceComponent<Virtu
         return resourceContext.getParentResourceComponent().getAvailability();
     }
 
-    private LibVirtConnection getConnection() {
+    private LibVirtConnection getConnection() throws LibvirtException {
         return this.resourceContext.getParentResourceComponent().getConnection();
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
 
-        LibVirt.VirDomainInterfaceStats stats = getConnection().getDomainInterfaceStats(
+        DomainInterfaceStats stats = getConnection().getDomainInterfaceStats(
             this.resourceContext.getParentResourceComponent().getDomainName(), this.resourceContext.getResourceKey());
 
         for (MeasurementScheduleRequest request : metrics) {

@@ -22,7 +22,6 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.EmailNotification;
@@ -35,7 +34,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 /**
@@ -94,9 +93,10 @@ public interface AlertNotificationManagerLocal {
      * @param user subject of the caller
      * @param alertDefinitionId Id of the alert definition
      * @param senderName shortName of the {@link AlertSender}
+     * @param alertName name of the new {@link AlertNotification}
      * @param configuration Properties for this alert sender.
      */
-    void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration);
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration);
 
     /**
      * Return notifications for a certain alertDefinitionId
@@ -110,6 +110,13 @@ public interface AlertNotificationManagerLocal {
      *
      */
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
+
+    /**
+     * Persist changes to the passed {@link AlertNotification}
+     *
+     * @param notification
+     */
+    void updateAlertNotification(AlertNotification notification);
 
     AlertSenderInfo getAlertInfoForSender(String shortName);
 
@@ -126,5 +133,16 @@ public interface AlertNotificationManagerLocal {
      * @param shortName name of a sender
      * @return an initialized BackingBean or null in case of error
      */
-    AlertBackingBean getBackingBeanForSender(String shortName);
+    Object getBackingBeanForSender(String shortName);
+
+    String getBackingBeanNameForSender(String shortName);
+
+    /**
+     * Add the passed 'transient' notifications onto the alert definitions contained. The old
+     * notifications are removed.
+     * This method is mainly used when migrating alerts from an old format to the current.
+     * @param subject Subject of the caller
+     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
+     */
+    void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications);
 }

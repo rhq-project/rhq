@@ -29,8 +29,8 @@ public class CronScheduleType extends AbstractScheduleType {
 
     private final String cronExpression;
 
-    public CronScheduleType(boolean concurrent, String cronExpression) {
-        super(concurrent, TYPE_NAME);
+    public CronScheduleType(boolean concurrent, boolean clustered, String cronExpression) {
+        super(concurrent, clustered, TYPE_NAME);
         this.cronExpression = cronExpression;
     }
 

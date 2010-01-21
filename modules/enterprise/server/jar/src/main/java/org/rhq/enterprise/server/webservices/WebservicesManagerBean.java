@@ -216,6 +216,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return advisoryManager.createAdvisoryPackage(user, advisory, pkg);
     }
 
+    public CVE getCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
+        return advisoryManager.getCVE(user, cveId);
+    }
+
     public void deleteCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
         advisoryManager.deleteAdvisoryCVE(user, cveId);
     }

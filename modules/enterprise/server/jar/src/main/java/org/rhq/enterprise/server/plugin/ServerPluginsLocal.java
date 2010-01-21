@@ -8,10 +8,13 @@ import javax.ejb.Local;
 import javax.persistence.NoResultException;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.core.domain.plugin.PluginStatusType;
 import org.rhq.core.domain.plugin.ServerPlugin;
+import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
+import org.rhq.enterprise.server.xmlschema.ControlDefinition;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
 
 /**
@@ -227,4 +230,30 @@ public interface ServerPluginsLocal {
      * @return keys of all enabled and disabled plugins, keyed on their types
      */
     Map<ServerPluginType, List<PluginKey>> getInstalledServerPluginsGroupedByType();
+
+    /**
+     * Returns the metadata for all control operations for the given plugin.
+     * If there are no control operations, an empty list is returned.
+     * 
+     * @param pluginKey
+     * @return list of control definitions that are defined for the given plugin
+     * @throws Exception if failed to determine a plugin's control definitions
+     */
+    List<ControlDefinition> getServerPluginControlDefinitions(PluginKey pluginKey) throws Exception;
+
+    /**
+     * Invokes a control operation on a given plugin and returns the results. This method blocks until
+     * the plugin component completes the invocation.
+     * 
+     * @param pluginKey identifies the plugin whose control operation is to be invoked
+     * @param controlName identifies the name of the control operation to invoke
+     * @param params parameters to pass to the control operation; may be <code>null</code>
+     * @return the results of the invocation
+     * 
+     * @throws if failed to obtain the plugin component and invoke the control. This usually means an
+     *         abnormal error occurred - if the control operation merely failed to do what it needed to do,
+     *         the error will be reported in the returned results, not as a thrown exception.
+     */
+    ControlResults invokeServerPluginControl(PluginKey pluginKey, String controlName, Configuration params)
+        throws Exception;
 }

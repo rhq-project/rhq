@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.scheduler;
 
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -30,7 +29,6 @@ import javax.management.MBeanServerInvocationHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Calendar;
-import org.quartz.CronTrigger;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
@@ -39,7 +37,6 @@ import org.quartz.SchedulerContext;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerListener;
 import org.quartz.SchedulerMetaData;
-import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 import org.quartz.TriggerListener;
 import org.quartz.UnableToInterruptJobException;
@@ -78,43 +75,9 @@ public class SchedulerBean implements SchedulerLocal {
      */
     public void scheduleRepeatingJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, long initialDelay, long interval) throws SchedulerException {
-        SchedulerServiceMBean scheduler = getSchedulerService();
 
-        try {
-            // see if the job is already scheduled and if so,
-            // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            if (scheduler.getJobDetail(name, groupName) != null) {
-                if (rescheduleIfExists) {
-                    log.debug("Looks like repeating job [" + name + ':' + groupName
-                        + "] is already scheduled - removing it so it can be rescheduled");
-
-                    scheduler.deleteJob(name, groupName);
-                } else {
-                    log.debug("Looks like repeating job [" + name + ':' + groupName
-                        + "] is already scheduled - leaving the original job as-is");
-                    return;
-                }
-            }
-        } catch (SchedulerException ignore) {
-            // probably just not scheduled yet - fall thru to try and schedule it
-        }
-
-        JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, false, false);
-
-        if (jobData != null) {
-            job.setJobDataMap(jobData);
-        }
-
-        Date start = new Date(System.currentTimeMillis() + initialDelay);
-        SimpleTrigger trigger = new SimpleTrigger(name, groupName, start, null, SimpleTrigger.REPEAT_INDEFINITELY,
-            interval);
-        trigger.setVolatility(isVolatile);
-
-        Date next = scheduler.scheduleJob(job, trigger);
-
-        log.info("Scheduled job [" + name + ':' + groupName + "] to fire next at [" + next + "] and repeat every ["
-            + interval + "] milliseconds");
-
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleRepeatingJob(name, groupName, jobData, jobClass,
+            rescheduleIfExists, isVolatile, initialDelay, interval);
         return;
     }
 
@@ -123,48 +86,9 @@ public class SchedulerBean implements SchedulerLocal {
      */
     public void scheduleCronJob(String name, String groupName, JobDataMap jobData, Class<? extends Job> jobClass,
         boolean rescheduleIfExists, boolean isVolatile, String cronString) throws SchedulerException {
-        SchedulerServiceMBean scheduler = getSchedulerService();
 
-        try {
-            // see if the job is already scheduled and if so,
-            // either remove it so we can reschedule it or keep it (based on rescheduleIfExists)
-            if (scheduler.getJobDetail(name, groupName) != null) {
-                if (rescheduleIfExists) {
-                    log.debug("Looks like cron job [" + name + ':' + groupName
-                        + "] is already scheduled - removing it so it can be rescheduled");
-
-                    scheduler.deleteJob(name, groupName);
-                } else {
-                    log.debug("Looks like cron job [" + name + ':' + groupName
-                        + "] is already scheduled - leaving the original job as-is");
-                    return;
-                }
-            }
-        } catch (SchedulerException ignore) {
-            // probably just not scheduled yet - fall thru to try and schedule it
-        }
-
-        JobDetail job = new JobDetail(name, groupName, jobClass, isVolatile, false, false);
-
-        if (jobData != null) {
-            job.setJobDataMap(jobData);
-        }
-
-        CronTrigger trigger;
-
-        try {
-            trigger = new CronTrigger(name, groupName, name, groupName, cronString);
-        } catch (ParseException e) {
-            throw new SchedulerException(e);
-        }
-
-        trigger.setVolatility(isVolatile);
-
-        Date next = scheduler.scheduleJob(job, trigger);
-
-        log.info("Scheduled cron job [" + name + ':' + groupName + "] to fire next at [" + next
-            + "] with the cronString of [" + cronString + "]");
-
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleCronJob(name, groupName, jobData, jobClass,
+            rescheduleIfExists, isVolatile, cronString);
         return;
     }
 
@@ -173,8 +97,10 @@ public class SchedulerBean implements SchedulerLocal {
      */
     public void scheduleSimpleRepeatingJob(Class<? extends Job> jobClass, boolean rescheduleIfExists,
         boolean isVolatile, long initialDelay, long interval) throws SchedulerException {
-        scheduleRepeatingJob(jobClass.getName(), jobClass.getName(), null, jobClass, rescheduleIfExists, isVolatile,
-            initialDelay, interval);
+
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleSimpleRepeatingJob(jobClass, rescheduleIfExists,
+            isVolatile, initialDelay, interval);
+        return;
     }
 
     /**
@@ -182,8 +108,10 @@ public class SchedulerBean implements SchedulerLocal {
      */
     public void scheduleSimpleCronJob(Class<? extends Job> jobClass, boolean rescheduleIfExists, boolean isVolatile,
         String cronString) throws SchedulerException {
-        scheduleCronJob(jobClass.getName(), jobClass.getName(), null, jobClass, rescheduleIfExists, isVolatile,
-            cronString);
+
+        new EnhancedSchedulerImpl(getSchedulerService()).scheduleSimpleCronJob(jobClass, rescheduleIfExists,
+            isVolatile, cronString);
+        return;
     }
 
     public Properties getQuartzProperties() {

@@ -55,7 +55,18 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class CobblerServerPluginComponent implements ServerPluginComponent, ControlFacet {
     private static Log log = LogFactory.getLog(CobblerServerPluginComponent.class);
 
+    /**
+     * This string is placed at the start of all distro comments created in Cobbler.
+     * When we see this marker at the start of a distro comment, we know its a distro we created.
+     */
+    private static final String COMMENT_MARKER = "[rhq]";
+
     private ServerPluginContext context;
+
+    /**
+     * Used to avoid having an operation running at the same time as a sync.
+     */
+    private boolean syncInProgress;
 
     public void initialize(ServerPluginContext context) throws Exception {
         this.context = context;
@@ -77,53 +88,76 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
     public ControlResults invoke(String name, Configuration parameters) {
         ControlResults controlResults = new ControlResults();
 
-        if (name.equals("getCobblerDistros")) {
-            String searchRegex = parameters.getSimpleValue("searchRegex", null);
-            Pattern pattern = null;
-            if (searchRegex != null) {
-                pattern = Pattern.compile(searchRegex);
-            }
-
-            Configuration results = controlResults.getComplexResults();
-            PropertyList list = new PropertyList("distros");
-            results.put(list);
-
-            Collection<Distro> distros = getAllCobblerDistros().values();
-            for (Distro d : distros) {
-                if (pattern == null || pattern.matcher(d.getName()).matches()) {
-                    PropertyMap map = new PropertyMap("distro");
-                    map.put(new PropertySimple("name", d.getName()));
-                    map.put(new PropertySimple("breed", d.getBreed()));
-                    map.put(new PropertySimple("osversion", d.getOsVersion()));
-                    map.put(new PropertySimple("arch", d.getArch()));
-                    map.put(new PropertySimple("initrd", d.getInitrd()));
-                    map.put(new PropertySimple("kernel", d.getKernel()));
-                    list.add(map);
+        try {
+            if (name.equals("getCobblerDistros")) {
+                String searchRegex = parameters.getSimpleValue("searchRegex", null);
+                Pattern pattern = null;
+                if (searchRegex != null) {
+                    pattern = Pattern.compile(searchRegex);
                 }
-            }
-        } else if (name.equals("getCobblerProfiles")) {
-            String searchRegex = parameters.getSimpleValue("searchRegex", null);
-            Pattern pattern = null;
-            if (searchRegex != null) {
-                pattern = Pattern.compile(searchRegex);
-            }
 
-            Configuration results = controlResults.getComplexResults();
-            PropertyList list = new PropertyList("profiles");
-            results.put(list);
+                Configuration results = controlResults.getComplexResults();
+                PropertyList list = new PropertyList("distros");
+                results.put(list);
 
-            List<Profile> profiles = getAllCobblerProfiles();
-            for (Profile p : profiles) {
-                if (pattern == null || pattern.matcher(p.getName()).matches()) {
-                    PropertyMap map = new PropertyMap("profile");
-                    map.put(new PropertySimple("name", p.getName()));
-                    map.put(new PropertySimple("distro", p.getDistro()));
-                    map.put(new PropertySimple("kickstart", p.getKickstart()));
-                    list.add(map);
+                Collection<Distro> distros = getAllCobblerDistros().values();
+                for (Distro d : distros) {
+                    if (pattern == null || pattern.matcher(d.getName()).matches()) {
+                        PropertyMap map = new PropertyMap("distro");
+                        map.put(new PropertySimple("name", d.getName()));
+                        map.put(new PropertySimple("breed", d.getBreed()));
+                        map.put(new PropertySimple("osversion", d.getOsVersion()));
+                        map.put(new PropertySimple("arch", d.getArch()));
+                        map.put(new PropertySimple("initrd", d.getInitrd()));
+                        map.put(new PropertySimple("kernel", d.getKernel()));
+                        list.add(map);
+                    }
                 }
+            } else if (name.equals("getCobblerProfiles")) {
+                String searchRegex = parameters.getSimpleValue("searchRegex", null);
+                Pattern pattern = null;
+                if (searchRegex != null) {
+                    pattern = Pattern.compile(searchRegex);
+                }
+
+                Configuration results = controlResults.getComplexResults();
+                PropertyList list = new PropertyList("profiles");
+                results.put(list);
+
+                List<Profile> profiles = getAllCobblerProfiles();
+                for (Profile p : profiles) {
+                    if (pattern == null || pattern.matcher(p.getName()).matches()) {
+                        PropertyMap map = new PropertyMap("profile");
+                        map.put(new PropertySimple("name", p.getName()));
+                        map.put(new PropertySimple("distro", p.getDistro()));
+                        map.put(new PropertySimple("kickstart", p.getKickstart()));
+                        list.add(map);
+                    }
+                }
+            } else if (name.equals("removeCobblerDistros")) {
+                String searchRegex = parameters.getSimpleValue("searchRegex", null);
+                Pattern pattern = null;
+                if (searchRegex != null) {
+                    pattern = Pattern.compile(searchRegex);
+                }
+
+                if (!this.syncInProgress) {
+                    Collection<Distro> distros = getAllCobblerDistros().values();
+                    for (Distro d : distros) {
+                        if (pattern == null || pattern.matcher(d.getName()).matches()) {
+                            if (d.getComment().startsWith(COMMENT_MARKER)) {
+                                d.remove();
+                            }
+                        }
+                    }
+                } else {
+                    controlResults.setError("A synchronize is currently in progress - please wait for it to finish");
+                }
+            } else {
+                controlResults.setError("Unknown operation name: " + name);
             }
-        } else {
-            controlResults.setError("Unknown operation name: " + name);
+        } catch (Exception e) {
+            controlResults.setError(e);
         }
 
         return controlResults;
@@ -133,6 +167,8 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
         log.info("Synchronizing content to the local Cobbler server: " + this);
 
         try {
+            this.syncInProgress = true;
+
             Server server = LookupUtil.getServerManager().getServer();
             String rootUrl = "http://" + server.getAddress() + ":" + server.getPort() + "/content/";
 
@@ -149,15 +185,15 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
 
                     Distro cobblerDistro = cobblerDistros.get(distribution.getLabel());
                     if (cobblerDistro == null) {
+                        String distroRootUrl = rootUrl + repoName + "/distributions/" + distribution.getLabel();
+
                         cobblerDistro = new Distro(conn);
                         cobblerDistro.setName(distribution.getLabel());
-                        cobblerDistro.setComment("[rhq] " + distribution.getLabel());
-                        cobblerDistro.setKernel(rootUrl + repoName + "/distributions/" + distribution.getLabel()
-                            + "/images/pxeboot/vmlinuz");
-                        cobblerDistro.setInitrd(rootUrl + repoName + "/distributions/" + distribution.getLabel()
-                            + "/images/pxeboot/initrd.img");
+                        cobblerDistro.setComment(COMMENT_MARKER + " " + distribution.getLabel());
+                        cobblerDistro.setKernel(distroRootUrl + "/images/pxeboot/vmlinuz"); // TODO what about other arches
+                        cobblerDistro.setInitrd(distroRootUrl + "/images/pxeboot/initrd.img"); // TODO what about other arches
                         Map<String, String> ksmeta = new HashMap<String, String>();
-                        ksmeta.put("tree", "http://foo/releases/12/Fedora/x86_64/os/");
+                        ksmeta.put("tree", distroRootUrl);
                         cobblerDistro.setKsMeta(ksmeta);
                         cobblerDistro.commit();
                         log.info("Added distro to Cobbler: [" + distribution.getLabel() + "]");
@@ -170,7 +206,7 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
 
             // now remove those RHQ distros that we no longer have, only remove RHQ distros though
             for (Distro doomed : cobblerDistros.values()) {
-                if (doomed.getComment().startsWith("[rhq]")) {
+                if (doomed.getComment().startsWith(COMMENT_MARKER)) {
                     doomed.remove();
                     log.info("Removed distro from Cobbler: [" + doomed.getName() + "]");
                 }
@@ -178,6 +214,8 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
         } catch (Throwable t) {
             // TODO what should we do?
             t.printStackTrace();
+        } finally {
+            this.syncInProgress = false;
         }
     }
 

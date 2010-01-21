@@ -248,7 +248,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     /**
      * find list of Packages Versions associated to an advisory
-     * @param pkgId packageId
      * @return list of PackageVersion objects
      */
     @SuppressWarnings("unchecked")
@@ -350,7 +349,7 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         if (adv.getAdvisory() == null || adv.getAdvisory().trim().equals("")) {
             throw new AdvisoryException("A valid Advisory tree is required");
         }
-        System.out.println("Advisory validating done " + adv);
+        log.debug("Advisory validating done " + adv);
     }
 
 }

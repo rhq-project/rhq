@@ -21,6 +21,7 @@ package org.rhq.core.gui.table.renderer;
 import com.sun.faces.util.MessageUtils;
 import org.ajax4jsf.component.UIDataAdaptor;
 import org.ajax4jsf.model.ExtendedDataModel;
+import org.ajax4jsf.resource.InternetResource;
 import org.jetbrains.annotations.NotNull;
 import org.rhq.core.gui.table.component.RowSelectorComponent;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -46,6 +47,10 @@ import java.util.Set;
  * @author Ian Springer
  */
 public class RowSelectorRenderer extends AbstractRenderer {    
+    private static final String TABLE_SCRIPT = "/org/rhq/core/gui/table/renderer/js/table.js";
+
+    private InternetResource[] scripts; // Could this be made static?
+
     @Override
     @SuppressWarnings("unchecked")
     public void decode(FacesContext context, UIComponent component) {
@@ -234,4 +239,16 @@ public class RowSelectorRenderer extends AbstractRenderer {
         }
         return data;
     }
+
+    /* (non-Javadoc)
+     * @see org.ajax4jsf.renderkit.HeaderResourcesRendererBase#getScripts()
+     */
+    protected InternetResource[] getScripts() {
+    	synchronized (this) {
+        	if (scripts == null) {
+    			scripts = new InternetResource[] { getResource(TABLE_SCRIPT) };				    			 			
+    		}
+		}
+    	return scripts;
+	}
 }

@@ -9,6 +9,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
+import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
@@ -34,6 +35,7 @@ import org.rhq.enterprise.server.system.SystemManagerRemote;
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
 public interface WebservicesRemote extends //
+    AdvisoryManagerRemote, //
     AlertManagerRemote, //
     AlertDefinitionManagerRemote, //
     AvailabilityManagerRemote,//
@@ -56,7 +58,7 @@ public interface WebservicesRemote extends //
     ResourceManagerRemote,//
     ResourceTypeManagerRemote,//
     RoleManagerRemote,//
-    SubjectManagerRemote,//   
+    SubjectManagerRemote,//
     SupportManagerRemote,//
     SystemManagerRemote, //
     RegistrationManagerRemote {

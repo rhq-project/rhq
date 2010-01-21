@@ -108,6 +108,11 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         return advpkg;
     }
 
+    public CVE getCVE(Subject user, int cveId) {
+        CVE cve = entityManager.find(CVE.class, cveId);
+        return cve;
+    }
+
     public void deleteCVE(Subject user, int cveId) {
         log.debug("User [" + user + "] is deleting CVE [" + cveId + "]");
 

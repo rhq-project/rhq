@@ -89,6 +89,15 @@ public interface AdvisoryManagerRemote {
         @WebParam(name = "pkg") PackageVersion pkg) throws AdvisoryException;
 
     /**
+     * returns an existing CVE object
+     * @param user
+     * @param cveId
+     * @return
+     */    
+    CVE getCVE(@WebParam(name = "subject") Subject user,
+        @WebParam(name = "cveId")int cveId);
+
+    /**
      * deletes specified cve object
      * @param user
      * @param cveId

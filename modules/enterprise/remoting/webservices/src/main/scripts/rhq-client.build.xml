@@ -21,6 +21,7 @@
    <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
    <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
    <property name="DataAccessManager" value="org.rhq.enterprise.server.report.DataAccessManagerBean" />
+   <property name="DistributionManager" value="org.rhq.enterprise.server.content.DistributionManagerBean"/>
    <property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
    <property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
    <property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />

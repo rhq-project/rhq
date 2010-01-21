@@ -54,6 +54,8 @@ import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.CVE;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
@@ -112,6 +114,8 @@ import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgres
 import org.rhq.enterprise.server.content.AdvisoryException;
 import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.DistributionException;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -172,6 +176,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //removed as it is problematic for WS clients having XMLAny for Object.
     //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+    private DistributionManagerLocal distributionManager = LookupUtil.getDistributionManagerLocal();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -557,6 +562,44 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
+
+    //DISTRIBUTION: START ------------------------------------
+
+    public DistributionType getDistributionTypeByName(@WebParam(name = "name") String name) {
+        return distributionManager.getDistributionTypeByName(name);
+    }
+
+    public void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject,
+                                                @WebParam(name = "distid") int distid) {
+        distributionManager.deleteDistributionByDistId(subject, distid);
+    }
+
+    public List<DistributionFile> getDistributionFilesByDistId(@WebParam(name = "distid") int distid) {
+        return distributionManager.getDistributionFilesByDistId(distid);
+    }
+
+    public Distribution getDistributionByPath(@WebParam(name = "basepath") String basepath) {
+        return distributionManager.getDistributionByPath(basepath);
+    }
+
+    public Distribution getDistributionByLabel(@WebParam(name = "kslabel") String kslabel) {
+        return distributionManager.getDistributionByLabel(kslabel);
+    }
+
+    public void deleteDistributionByDistId(@WebParam(name = "subject") Subject subject,
+                                           @WebParam(name = "distId") int distId) throws Exception {
+        distributionManager.deleteDistributionByDistId(subject, distId);
+    }
+
+    public Distribution createDistribution(@WebParam(name = "subject") Subject subject,
+                                           @WebParam(name = "kslabel") String kslabel,
+                                           @WebParam(name = "basepath") String basepath,
+                                           @WebParam(name = "disttype") DistributionType disttype)
+        throws DistributionException {
+        return distributionManager.createDistribution(subject, kslabel, basepath, disttype);
+    }
+
+    //DISTRIBUTION: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {

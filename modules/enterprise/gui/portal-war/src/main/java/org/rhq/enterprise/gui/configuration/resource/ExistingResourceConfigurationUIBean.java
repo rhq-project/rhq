@@ -307,9 +307,20 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editCurrent() {
-        String changedContents = getCurrentContents();
+        RawConfiguration editedRaw = getCurrent();
+        RawConfiguration originalRaw = raws.get(editedRaw.getPath());
+
+        if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
+            RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
+            rawUIBean.setModified(false);
+        }
         return null;
     }
+
+//    public String getComponentsToRerenderOnEdit() {
+//        RawConfiguration editedRaw = getCurrent();
+//        RawConfiguration
+//    }
 
     public void undoEdit(String path) {
         modified.remove(path);
@@ -319,7 +330,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             bean.setModified(false);
             bean.setIcon("/images/blank.png");
         }
-
 
     }
 

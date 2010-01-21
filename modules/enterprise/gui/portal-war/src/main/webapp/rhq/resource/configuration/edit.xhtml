@@ -130,7 +130,13 @@ THIS TEXT WILL BE REMOVED.
                     <h:inputTextarea id="fileContents"
                                      style="width:100%"
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
-                                     readonly="false"/>
+                                     readonly="false">
+                      <a4j:support event="onkeypress"
+                                   ignoreDupeResponses="true"
+                                   reRender="fileMenu"
+                                   requestDelay="1000"
+                                   action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
+                    </h:inputTextarea>
                   </rich:panel>
                 </h:panelGrid>
               </h:panelGrid>
@@ -280,14 +286,11 @@ THIS TEXT WILL BE REMOVED.
                                      style="width:100%"
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
                                      readonly="false">
-                      <ui:remove>
-                      <a4j:support event="onkeydown"
-                                   onsubmit="return !currentFileModified;"
-                                   oncomplete="currentFileModified = true;"
+                      <a4j:support event="onkeypress"
+                                   ignoreDupeResponses="true"
                                    reRender="fileMenu"
-                                   requestDelay="3000"
+                                   requestDelay="1000"
                                    action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
-                      </ui:remove>
                     </h:inputTextarea>
                   </rich:panel>
                 </h:panelGrid>

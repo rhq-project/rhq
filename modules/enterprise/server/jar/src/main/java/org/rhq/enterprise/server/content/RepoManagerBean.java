@@ -1050,7 +1050,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return syncCount;
     }
 
-    @Override
     public void cancelSync(Subject subject, int repoId) throws ContentException {
         ContentServerPluginContainer pc;
         try {

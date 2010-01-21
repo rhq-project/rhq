@@ -34,7 +34,7 @@ THIS TEXT WILL BE REMOVED.
         document.body.style.cursor = 'default';
       }
 
-      var currentFileModifed = false;
+      var currentFileModified = false;
 
       function setCurrentFileModified() {
         currentFileModified = true;
@@ -147,6 +147,7 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
+          <ui:include src="upload-modal.xhtml"/>
           <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
 
@@ -279,10 +280,14 @@ THIS TEXT WILL BE REMOVED.
                                      style="width:100%"
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
                                      readonly="false">
+                      <ui:remove>
                       <a4j:support event="onkeydown"
+                                   onsubmit="return !currentFileModified;"
+                                   oncomplete="currentFileModified = true;"
                                    reRender="fileMenu"
                                    requestDelay="3000"
                                    action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
+                      </ui:remove>
                     </h:inputTextarea>
                   </rich:panel>
                 </h:panelGrid>

@@ -677,8 +677,10 @@
                   <h:outputText styleClass="headerText"
                     value="Last Modified" />
                 </f:facet>
-                <h:outputText value="#{dist.lastModifiedDate}" />
-
+                <h:outputText value="#{dist.lastModifiedDate}">
+					<f:converter converterId="UserDateTimeConverter" />
+				</h:outputText> 
+                
               </rich:column>
 
 

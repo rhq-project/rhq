@@ -79,6 +79,12 @@ public class WsDistributionManagerTest extends WsUnitTestBase {
 
         Distribution afterDelete = service.getDistributionByLabel(label);
         assert afterDelete == null;
+
+        // Cleanup
+        service.deleteDistributionTypeByName(admin, type.getName());
+        DistributionType typeAfterDelete = service.getDistributionTypeByName(type.getName());
+
+        assert typeAfterDelete == null;
     }
 
 }

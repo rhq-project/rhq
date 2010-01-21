@@ -89,6 +89,16 @@ public interface DistributionManagerLocal {
     void deleteDistributionFilesByDistId(Subject subject, int distid);
 
     /**
+     * Deletes all distribution types with the given name.
+     * <p/>
+     * This should only be needed for testing purposes.
+     *
+     * @param subject
+     * @param name
+     */
+    void deleteDistributionTypeByName(Subject subject, String name);
+
+    /**
      * Returns a DistributionType for given name
      * @param name name of distribution type
      * @return distribution type from db

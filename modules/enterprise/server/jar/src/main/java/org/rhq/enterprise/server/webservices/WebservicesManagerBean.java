@@ -591,6 +591,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         distributionManager.deleteDistributionByDistId(subject, distId);
     }
 
+    public void deleteDistributionTypeByName(@WebParam(name = "subject") Subject subject,
+                                             @WebParam(name = "name") String name) {
+        distributionManager.deleteDistributionTypeByName(subject, name);
+    }
+
     public Distribution createDistribution(@WebParam(name = "subject") Subject subject,
                                            @WebParam(name = "kslabel") String kslabel,
                                            @WebParam(name = "basepath") String basepath,

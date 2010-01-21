@@ -79,7 +79,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         if (loaded != null) {
             disttype = loaded;
         }
-        
+
         Distribution kstree = new Distribution(kslabel, basepath, disttype);
 
         validateDistTree(kstree);
@@ -215,6 +215,14 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         } else {
             log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteDistributionTypeByName(Subject subject, String name) {
+        Query query = entityManager.createNamedQuery(DistributionType.QUERY_DELETE_BY_NAME);
+        query.setParameter("name", name);
+
+        query.executeUpdate();
     }
 
     /**

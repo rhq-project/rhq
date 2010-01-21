@@ -34,8 +34,14 @@ THIS TEXT WILL BE REMOVED.
         document.body.style.cursor = 'default';
       }
 
-      function open_modal_editor() {
+      var currentFileModifed = false;
 
+      function setCurrentFileModified() {
+        currentFileModified = true;
+      }
+
+      function resetCurrentFile() {
+        currentFileModified;
       }
     </script>
 
@@ -111,9 +117,9 @@ THIS TEXT WILL BE REMOVED.
                                 startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
                                 stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
                     <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
-                    <h:commandLink value="Upload New">
-                      <h:graphicImage value="/images/upload.png"/>
-                    </h:commandLink>
+
+                    <a href="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</a>
+                    
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
@@ -261,11 +267,6 @@ THIS TEXT WILL BE REMOVED.
                     <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
 
                     <a href="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</a>
-                    <ui:remove>
-                    <h:commandLink value="Upload New">
-                      <h:graphicImage value="/images/upload.png"/>
-                    </h:commandLink>
-                    </ui:remove>
 
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
@@ -278,9 +279,9 @@ THIS TEXT WILL BE REMOVED.
                                      style="width:100%"
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
                                      readonly="false">
-                      <a4j:support event="onchange"
+                      <a4j:support event="onkeydown"
                                    reRender="fileMenu"
-                                   requestDelay="1000"
+                                   requestDelay="3000"
                                    action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
                     </h:inputTextarea>
                   </rich:panel>

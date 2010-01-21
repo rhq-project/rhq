@@ -221,8 +221,7 @@ THIS TEXT WILL BE REMOVED.
                                              expanded="true"
                                              selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
                           <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                            <rich:panelMenuItem id="menuItem_#{rawConfigUIBean.rawConfiguration.sha256}"
-                                                label="#{rawConfigUIBean.fileName}"
+                            <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
                                                 icon="#{rawConfigUIBean.icon}"
                                                 binding="#{rawConfigUIBean.panelMenuItem}"
                                                 onclick="cursor_wait();"
@@ -233,7 +232,13 @@ THIS TEXT WILL BE REMOVED.
                               <h:panelGroup>
                                 <h:outputText value="#{#rawConfigUIBean.fileName}"/>
                                 <c:if test="#{rawConfigUIBean.modified}">
-                                  <h:commandButton value="Undo" styleClass="buttonmed"/>
+                                  <h:commandButton value="Undo" styleClass="buttonmed">
+                                    <a4j:support event="onclick"
+                                                 onsumbit="cursor_wait()"
+                                                 oncomplete="cursor_clear()"
+                                                 action="#{ExistingResourceConfigurationUIBean.undoEdit(rawConfigUIBean.path)}"
+                                                 reRender="fileMenu"/>
+                                  </h:commandButton>
                                 </c:if>
                               </h:panelGroup>
                             </rich:panelMenuItem>
@@ -255,20 +260,29 @@ THIS TEXT WILL BE REMOVED.
                                 stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
                     <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
 
+                    <a href="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</a>
+                    <ui:remove>
                     <h:commandLink value="Upload New">
                       <h:graphicImage value="/images/upload.png"/>
                     </h:commandLink>
+                    </ui:remove>
+
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
                     </h:commandLink>
                   </h:panelGrid>
 
-                  <rich:panel style="margin-left:1px; border: none;">
+                  <rich:panel id="fileContentsPanel" style="margin-left:1px; border: none;">
                     <h:inputTextarea id="fileContents"
                                      style="width:100%"
                                      value="#{ExistingResourceConfigurationUIBean.currentContents}"
-                                     readonly="false"/>
+                                     readonly="false">
+                      <a4j:support event="onchange"
+                                   reRender="fileMenu"
+                                   requestDelay="1000"
+                                   action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
+                    </h:inputTextarea>
                   </rich:panel>
                 </h:panelGrid>
               </h:panelGrid>
@@ -286,39 +300,11 @@ THIS TEXT WILL BE REMOVED.
             </rich:tab>
           </rich:tabPanel>
 
+          <ui:include src="upload-modal.xhtml"/>
           <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
       </c:choose>
 
-    </h:form>
-
-    <!--
-      Here I tried the file upload in a separate form. It has resulted in javascript errors. The latest error in the
-      firefox error console is,
-
-          Error: form.dispatchEvent is not a function
-          Source File: http://localhost:7080/a4j/g/3_3_2.SR1org/ajax4jsf/javascript/scripts/form.js.xhtml
-          Line: 6
-    -->
-    <h:form id="uploadForm" enctype="multipart/form-data">
-      <rich:panel id="uploadPanel" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
-
-        <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
-
-        <rich:fileUpload id="fileUpload"
-                         listHeight="50px"
-                         fileUploadListener="#{fileUploader.fileUploadListener}"
-                         addControlLabel="Browse"
-                         immediateUpload="false"
-                         allowFlash="auto">
-          <f:facet name="label">
-            <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}" />
-          </f:facet>
-          <a4j:support event="onuploadcomplete"
-                       reRender="fileUpload,fileContents,menuItem_#{ExistingResourceConfigurationUIBean.current.sha256}"/>
-        </rich:fileUpload>
-
-      </rich:panel>
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

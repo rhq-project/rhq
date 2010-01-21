@@ -26,6 +26,7 @@ package org.rhq.enterprise.gui.configuration.resource;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.richfaces.component.html.HtmlPanelMenuItem;
 
+import javax.faces.component.NamingContainer;
 import java.io.File;
 
 public class RawConfigUIBean {
@@ -75,6 +76,10 @@ public class RawConfigUIBean {
         return rawConfiguration.getPath();
     }
 
+    public String getPathAsId() {
+        return rawConfiguration.getPath().replace('/', NamingContainer.SEPARATOR_CHAR);
+    }
+
     public String getFileName() {
         File file = new File(rawConfiguration.getPath());
         return file.getName();
@@ -86,5 +91,9 @@ public class RawConfigUIBean {
         }
 
         return "/images/blank.png";
+    }
+
+    public void setIcon(String icon) {
+        panelMenuItem.setIcon(icon);
     }
 }

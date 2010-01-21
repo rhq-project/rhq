@@ -291,8 +291,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         LookupUtil.getConfigurationManager().updateResourceConfiguration(subject, getResourceId(),
             getMergedConfiguration());
 
-        nullify();
-
         return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
     }
 
@@ -308,36 +306,21 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfiguration();
     }
 
-    public void undoEdit() {
-        
+    public String editCurrent() {
+        String changedContents = getCurrentContents();
+        return null;
     }
 
-    public String discard() {
-        nullify();
-        return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
-    }
+    public void undoEdit(String path) {
+        modified.remove(path);
+        RawConfigUIBean bean = findRawConfigUIBeanByPath(path);
 
-    public void fileUploadListener(UploadEvent event) throws Exception {
-        File uploadFile;
-        log.error("fileUploadListener called");
-        uploadFile = event.getUploadItem().getFile();
-        if (uploadFile != null) {
-            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
-            log.debug("content type is " + event.getUploadItem().getContentType());
-            if (uploadFile != null) {
-                try {
-                    FileReader fileReader = new FileReader(uploadFile);
-                    char[] buff = new char[1024];
-                    StringBuffer stringBuffer = new StringBuffer();
-                    for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
-                        stringBuffer.append(buff, 0, count);
-                    }
-                    setCurrentContents(stringBuffer.toString());
-                } catch (IOException e) {
-                    log.error("problem reading uploaded file", e);
-                }
-            }
+        if (bean != null) {
+            bean.setModified(false);
+            bean.setIcon("/images/blank.png");
         }
+
+
     }
 
     public int getConfigId() {
@@ -363,23 +346,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getCurrentContents() {
-        try {
-            if (fileUploader.getFileItem() != null) {
-                UploadItem fileItem = fileUploader.getFileItem();
-                if (fileItem.isTempFile()) {
-                    setCurrentContents(FileUtils.readFileToString(fileItem.getFile()));
-                }
-                else {
-                    setCurrentContents(new String(fileItem.getData()));
-                }
-                fileUploader.clear();
-            }
-
-            return new String(getCurrent().getContents());
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return new String(getCurrent().getContents());
     }
 
     public String getCurrentPath() {
@@ -470,10 +437,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return isRawSupported() || (isStructuredAndRawSupported() && isRawMode());
     }
 
-    void nullify() {
-
-    }
-
     /**
      * Indicates which of the raw configuration files is currently selected.
      * @param s
@@ -497,14 +460,21 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     private void markCurrentRawConfigUIBeanModified() {
+        RawConfigUIBean bean = findRawConfigUIBeanByPath(current.getPath());
+        if (bean != null) {
+            bean.setModified(true);
+        }
+    }
+
+    private RawConfigUIBean findRawConfigUIBeanByPath(String path) {
         for (RawConfigDirectory dir : rawConfigDirectories) {
             for (RawConfigUIBean bean : dir.getRawConfigUIBeans()) {
                 if (bean.getPath().equals(current.getPath())) {
-                    bean.setModified(true);
-                    return;
+                    return bean;
                 }
             }
         }
+        return null;
     }
 
     public void setCurrentPath(String path) {
@@ -549,7 +519,23 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String completeUpload() {
-        return null;
+        try {
+            if (fileUploader.getFileItem() != null) {
+                UploadItem fileItem = fileUploader.getFileItem();
+                if (fileItem.isTempFile()) {
+                    setCurrentContents(FileUtils.readFileToString(fileItem.getFile()));
+                }
+                else {
+                    setCurrentContents(new String(fileItem.getData()));
+                }
+                fileUploader.clear();
+            }
+
+            return null;    
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void dumpProperties(Configuration conf, Log log) {

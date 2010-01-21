@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TemplateEngine {
-    public final Map<String, String> tokens;
+    private final Map<String, String> tokens;
 
     /**
      * In English, the open delimiter <%

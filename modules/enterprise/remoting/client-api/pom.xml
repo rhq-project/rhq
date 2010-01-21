@@ -168,12 +168,6 @@
       </dependency>
 
       <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-core-gui</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
          <groupId>jboss</groupId>
          <artifactId>jboss-remoting</artifactId>
       </dependency>

@@ -64,7 +64,6 @@ import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataMan
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -599,7 +598,10 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             def.getAlertNotifications().clear();
 
         for (AlertNotification notif : template.getNotifications()) {
-            def.addAlertNotification(notif.copy(false)); // Attach a copy, as the ones in the template should not be shared
+            AlertNotification notification = notif.copyWithAlertDefintion(def, true);
+            entityManager.persist(notification.getConfiguration());
+            entityManager.persist(notification);
+            def.addAlertNotification(notification); // Attach a copy, as the ones in the template should not be shared
         }
     }
 

@@ -154,6 +154,15 @@ public class AlertNotification implements Serializable {
         return results;
     }
 
+    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
+        Configuration config;
+        if (cloneConfiguration)
+            config = this.configuration.deepCopy(false);
+        else
+            config = this.configuration;
+        return new AlertNotification(alertDefinition,config);
+    }
+
     protected AlertNotification copy() {
         return new AlertNotification(this.alertDefinition,this.configuration);
     }

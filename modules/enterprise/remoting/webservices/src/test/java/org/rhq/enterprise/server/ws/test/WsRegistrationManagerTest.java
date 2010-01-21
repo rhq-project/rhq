@@ -43,6 +43,7 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
  *
  * @author Jason Dobies
  */
+@Test(groups = "ws")
 public class WsRegistrationManagerTest extends AssertJUnit implements TestPropertiesInterface {
 
     private static final boolean TESTS_ENABLED = true;

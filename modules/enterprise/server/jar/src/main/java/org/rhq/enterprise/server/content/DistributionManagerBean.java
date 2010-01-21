@@ -75,6 +75,11 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public Distribution createDistribution(Subject user, String kslabel, String basepath, DistributionType disttype)
         throws DistributionException {
 
+        DistributionType loaded = distributionManager.getDistributionTypeByName(disttype.getName());
+        if (loaded != null) {
+            disttype = loaded;
+        }
+        
         Distribution kstree = new Distribution(kslabel, basepath, disttype);
 
         validateDistTree(kstree);

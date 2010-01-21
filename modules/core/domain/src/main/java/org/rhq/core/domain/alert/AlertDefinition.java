@@ -352,9 +352,9 @@ public class AlertDefinition implements Serializable {
     private Set<AlertCondition> conditions = new LinkedHashSet<AlertCondition>(1); // Most alerts will only have one condition.
 
     @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
-    @OrderBy
+    @OrderBy("order asc")
     @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
-    private Set<AlertNotification> alertNotifications = new HashSet<AlertNotification>();
+    private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 
     @JoinColumn(name = "OPERATION_DEF_ID", nullable = true)
     @ManyToOne
@@ -665,11 +665,11 @@ public class AlertDefinition implements Serializable {
         this.alerts.add(alert);
     }
 
-    public Set<AlertNotification> getAlertNotifications() {
+    public List<AlertNotification> getAlertNotifications() {
         return alertNotifications;
     }
 
-    public void setAlertNotifications(Set<AlertNotification> alertNotifications) {
+    public void setAlertNotifications(List<AlertNotification> alertNotifications) {
         this.alertNotifications = alertNotifications;
     }
 

@@ -42,6 +42,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -65,6 +66,11 @@ public class AlertNotification implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
 
+    @Transient
+    transient int alertDefinitionId;
+    @Transient
+    transient int alertNotificationId;
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
     @Id
@@ -80,6 +86,12 @@ public class AlertNotification implements Serializable {
 
     @Column(name = "ALERT_SENDER_NAME")
     private String senderName;
+
+    @Column(name = "ALERT_ORDER")
+    private int order;
+
+    @Column(name = "NAME")
+    private String name;
 
     protected AlertNotification() {
     } // JPA spec
@@ -101,7 +113,15 @@ public class AlertNotification implements Serializable {
         this.configuration = config.deepCopy();
     }
 
-
+    /**
+     * Constructor only for transient usage
+     * @param alertDefinitionId
+     * @param alertNotificationId
+     */
+    public AlertNotification(int alertDefinitionId, int alertNotificationId) {
+        this.alertDefinitionId = alertDefinitionId;
+        this.alertNotificationId = alertNotificationId;
+    }
 
     public int getId() {
         return id;
@@ -146,5 +166,29 @@ public class AlertNotification implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAlertDefinitionId() {
+        return alertDefinitionId;
+    }
+
+    public int getAlertNotificationId() {
+        return alertNotificationId;
     }
 }

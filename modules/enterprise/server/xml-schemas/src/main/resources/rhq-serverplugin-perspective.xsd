@@ -441,16 +441,14 @@
    <xs:complexType
       name="ResourceActivatorsType">
       <xs:annotation>
-         <xs:documentation>If any of the activator conditions evaluate to true then the resource activator is active. In
-            other words, there is an implicit OR operation applied. For AND logic it is typical to declare several
-            "activators" elements in the declaring element. In addition to the activators common to global and resource
-            level activators, several additional resource level activators can be specified. These are evaluated against
-            the resource in context. Facet Activators ensure the specified facet is implemented by the resource type of
-            the resource in context. Resource-permission activators ensure the user has the specified permission on the
-            resource in context. Trait Activators ensure that the specified trait value satisfies the specified pattern
-            for the resource in context. Resource-type Activators can be used if the extension is active for one or more
-            different resource types. In this situation resource-permission and trait activators can be set in a
-            fine-grained way, differing for each resource type, if necessary.
+         <xs:documentation>A set of activators that must evaluate to true for the resource-level extension to be active.
+            In addition to the activators common to global and resource-level activatation, several more can be
+            evaluated against the the resource in context. Facet Activators ensure the specified facet is implemented by
+            the resource type of the resource in context. Resource-permission activators ensure the user has the
+            specified permission on the resource in context. Trait Activators ensure that the specified trait value
+            satisfies the specified pattern for the resource in context. Resource-type Activators can be used if the
+            extension is active for one or more different resource types. In this situation resource-permission and
+            trait activators can be set in a fine-grained way, differing for each resource type, if necessary.
          </xs:documentation>
       </xs:annotation>
       <xs:complexContent>
@@ -533,8 +531,6 @@
       </xs:complexContent>
    </xs:complexType>
 
-   <!-- Subject Activators
--->
    <xs:complexType
       name="GlobalPermissionActivatorType">
       <xs:annotation>
@@ -590,6 +586,8 @@
       </xs:complexContent>
    </xs:complexType>
 
+   <!--  Resource Activators
+-->
    <xs:complexType
       name="FacetActivatorType">
       <xs:annotation>
@@ -661,6 +659,113 @@
       </xs:complexContent>
    </xs:complexType>
 
+   <!-- Global Content Activators
+-->
+   <xs:complexType
+      name="ContentProviderActivatorType">
+      <xs:annotation>
+         <xs:documentation>The specified Content Provider Type must be installed in order to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The required Content Provider Type's internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+<!-- Under Construction
+ 
+   <xs:complexType
+      name="ContentProviderActivatorType">
+      <xs:annotation>
+         <xs:documentation>The specified Content Provider Type must be installed in order to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The required Content Provider Type's internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+ -->
+
+   <!-- Contextual Content Activators
+
+   Under Construction
+
+   <xs:complexType
+      name="ContentActivatorType">
+      <xs:annotation>
+         <xs:documentation>The content context must satisfy the following conditions to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="providerType"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider's type. The internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="provider"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="product"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider's product. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="repo"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context repo. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="package-type"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context package's type. The internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>                                    
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+-->
+
    <!-- =========================================== Helper Types =============================================
 -->
 
@@ -706,6 +811,7 @@
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
+
 
    <xs:complexType
       name="PositionType">

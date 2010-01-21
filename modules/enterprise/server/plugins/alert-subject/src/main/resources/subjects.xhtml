@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:a4j="https://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+    <body>
+        <rich:panel id="subject_config_panel">
+            <f:facet name="header">
+                <h:outputText>Select the subjects to add:</h:outputText>
+            </f:facet>
+            <h:selectManyMenu id="mySenderList" value="#{subjectsBean.currentSubjects}">
+                <f:selectItems value="#{subjectsBean.subjectMap}"/>
+            </h:selectManyMenu>
+            <br/>
+            <h:commandButton
+                    id="subjects_submit"
+                    value="Add Subjects"
+                    type="submit"
+                    action="#{subjectsBean.submit}"
+                    />
+        </rich:panel>
+    </body>
+</html>

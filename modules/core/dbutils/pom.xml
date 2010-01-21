@@ -92,13 +92,13 @@
                 if (!project.properties.dbreset) {
                   return
                 }
- 
+
                 database = project.properties['rhq.test.ds.db-name']
                 project.properties.dbsetup = 'true'
 
                 sql = Sql.newInstance(
-                    "jdbc:postgresql://127.0.0.1:5432/postgres", 
-                    "postgres", 
+                    "jdbc:postgresql://127.0.0.1:5432/postgres",
+                    "postgres",
                     "postgres",
                     "org.postgresql.Driver")
 

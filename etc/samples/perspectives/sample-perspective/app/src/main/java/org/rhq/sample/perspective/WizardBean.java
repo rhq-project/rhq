@@ -18,6 +18,8 @@
  */
 package org.rhq.sample.perspective;
 
+import java.util.Map;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
@@ -33,6 +35,8 @@ import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.perspective.AbstractPerspectiveUIBean;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
+import org.rhq.enterprise.server.perspective.PerspectiveTarget;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 
@@ -141,6 +145,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     private boolean enableLogin = true;
 
     private PageList<Resource> resources;
+    private Map<Integer, String> resourceUrlMap;
 
     //// STEP N:
 
@@ -164,6 +169,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
         switch (this.currentStep) {
         case One: //create Group for visibility
+
             ResourceGroup rg = new ResourceGroup(groupName);
             rg.setDescription(groupDescription);
             rg.setLocation(groupLocation);
@@ -244,10 +250,16 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
             this.resources = resourceManager.findResourcesByCriteria(subject, criteria);
             int[] resourceIds = new int[resources.size()];
+
             for (int i = 0; i < resources.size(); i++) {
-                resourceIds[i] = resources.get(i).getId();
+                int id = resources.get(i).getId();
+                resourceIds[i] = id;
             }
             groupManager.addResourcesToGroup(subject, this.resourceGroup.getId(), resourceIds);
+
+            PerspectiveManagerRemote perspectiveManager = remoteClient.getPerspectiveManagerRemote();
+            this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, resourceIds,
+                false, false);
 
             RoleManagerRemote roleManager = remoteClient.getRoleManagerRemote();
             this.role = roleManager.createRole(subject, this.role);
@@ -629,4 +641,30 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     public PageList<Resource> getResources() {
         return resources;
     }
+
+    public String getResourceUrl(int resourceId) {
+        String url = this.resourceUrlMap.get(resourceId);
+        return url;
+    }
+
+    public String getGroupsUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(getSubject(),
+            ((Group.valueOf(this.groupType) == Group.Mixed) ? "groups.mixedGroups" : "groups.compatibleGroups"), false,
+            false);
+        return url;
+    }
+
+    public String getRolesUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(getSubject(), "administration.security.roles", false, false);
+        return url;
+    }
+
+    public String getUsersUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(getSubject(), "administration.security.users", false, false);
+        return url;
+    }
+
 }

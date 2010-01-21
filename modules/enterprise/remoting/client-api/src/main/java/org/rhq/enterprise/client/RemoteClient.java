@@ -28,7 +28,6 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.client.RemoteClientProxy;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
@@ -46,6 +45,7 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -82,6 +82,7 @@ public class RemoteClient {
         MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), // 
         MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
         OperationManager(OperationManagerRemote.class), //
+        PerspectiveManager(PerspectiveManagerRemote.class), //
         ResourceManager(ResourceManagerRemote.class), //
         ResourceFactoryManager(ResourceFactoryManagerRemote.class), //
         ResourceGroupManager(ResourceGroupManagerRemote.class), //
@@ -366,6 +367,10 @@ public class RemoteClient {
 
     public OperationManagerRemote getOperationManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.OperationManager);
+    }
+
+    public PerspectiveManagerRemote getPerspectiveManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.PerspectiveManager);
     }
 
     public ResourceManagerRemote getResourceManagerRemote() {

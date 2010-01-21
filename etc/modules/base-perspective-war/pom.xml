@@ -30,6 +30,7 @@
     <seam.version>2.1.0.SP1</seam.version>    
     <jboss-el.version>1.0_02.CR5</jboss-el.version>    
     <richfaces.version>3.3.2.SR1</richfaces.version>
+    <rhq.version>1.4.0-SNAPSHOT</rhq.version>
   </properties>
 
   <dependencyManagement>
@@ -106,6 +107,12 @@
          <version>${jsf.version}</version>
       </dependency>
             
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-gui</artifactId>
+         <version>${rhq.version}</version>
+      </dependency>
+            
     </dependencies>
 
   </dependencyManagement>
@@ -172,6 +179,11 @@
          <groupId>javax.faces</groupId>
          <artifactId>jsf-api</artifactId>
          <scope>provided</scope>
+      </dependency>
+            
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-gui</artifactId>
       </dependency>
             
   </dependencies>

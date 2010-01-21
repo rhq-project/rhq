@@ -134,7 +134,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public Distribution getDistributionByPath(String basepath) {
         Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_PATH);
 
-        query.setParameter("base_path", basepath);
+        query.setParameter("path", basepath);
         List<Distribution> results = query.getResultList();
 
         if (results.size() > 0) {

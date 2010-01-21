@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -62,15 +63,6 @@ public interface RepoManagerLocal {
      * @return the list of subscriptions
      */
     PageList<RepoComposite> findResourceSubscriptions(Subject subject, int resourceId, PageControl pc);
-
-    /**
-     * Gets all repos that are subscribed to by the given resource.
-     * @param subject
-     * @param resourceId
-     * @param pc
-     * @return
-     */
-    PageList<SubscribedRepo> findSubscriptions(Subject subject, int resourceId, PageControl pc);
 
     /**
      * Gets all repos that aren't subscribed to for the given resource.
@@ -390,4 +382,19 @@ public interface RepoManagerLocal {
      */
     RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId);
 
+    /**
+     * Gets all repos that are subscribed to by the given resource.
+     * @param subject
+     * @param resourceId
+     * @return
+     */
+    List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
+
+    /**
+     * Get a list of entitlement certificates for the specified resources.
+     * @param subject    The logged in user's subject.
+     * @param resourceId The resource id.
+     * @return
+     */
+    List<EntitlementCertificate> getCertificates(Subject subject, int resourceId);
 }

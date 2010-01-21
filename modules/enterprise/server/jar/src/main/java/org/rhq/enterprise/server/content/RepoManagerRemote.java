@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.util.List;
+
 import javax.ejb.Remote;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
@@ -31,6 +33,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -284,9 +287,26 @@ public interface RepoManagerRemote {
     int synchronizeRepos(@WebParam(name = "subject") Subject subject, @WebParam(name = "repoIds") Integer[] repoIds)
         throws Exception;
 
+    /**
+     * Get a list of truncated Repo objects that represent the
+     * subscriptions for the specified resource.
+     * @param subject    The logged in user's subject.
+     * @param resourceId The id of the resource.
+     * @return A list of repos.
+     */
     @WebMethod
-    PageList<SubscribedRepo> findSubscriptions( //
+    List<SubscribedRepo> findSubscriptions( //
         @WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "resourceId") int resourceId, //
-        @WebParam(name = "resource") PageControl pc);
+        @WebParam(name = "resourceId") int resourceId);
+
+    /**
+     * Get a list of entitlement certificates for the specified resources.
+     * @param subject    The logged in user's subject.
+     * @param resourceId The resource id.
+     * @return
+     */
+    @WebMethod
+    List<EntitlementCertificate> getCertificates( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "resourceId") int resourceId);
 }

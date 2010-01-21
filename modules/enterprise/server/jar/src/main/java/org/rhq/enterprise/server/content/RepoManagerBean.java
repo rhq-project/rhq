@@ -60,6 +60,7 @@ import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
@@ -233,12 +234,24 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public PageList<SubscribedRepo> findSubscriptions(Subject subject, int resourceId, PageControl pc) {
-        PageList<SubscribedRepo> list = new PageList<SubscribedRepo>();
+    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        List<SubscribedRepo> list = new ArrayList<SubscribedRepo>();
+        PageControl pc = new PageControl();
         for (RepoComposite repoComposite : findResourceSubscriptions(subject, resourceId, pc)) {
             Repo repo = repoComposite.getRepo();
             SubscribedRepo summary = new SubscribedRepo(repo.getId(), repo.getName());
             list.add(summary);
+        }
+        return list;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
+        List<EntitlementCertificate> list = new ArrayList<EntitlementCertificate>();
+        if (resourceId % 2 == 0) {
+            list.add(EntitlementCertificate.getEven());
+        } else {
+            list.add(EntitlementCertificate.getOdd());
         }
         return list;
     }

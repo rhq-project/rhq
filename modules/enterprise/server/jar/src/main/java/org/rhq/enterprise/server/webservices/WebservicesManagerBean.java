@@ -62,6 +62,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
@@ -1076,8 +1077,11 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findAssociatedAdvisory(subject, repoId, pc);
     }
 
-    public PageList<SubscribedRepo> findSubscriptions(Subject subject, int resourceId,
-        PageControl pc) {
-        return repoManager.findSubscriptions(subject, resourceId, pc);
+    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        return repoManager.findSubscriptions(subject, resourceId);
+    }
+
+    public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
+        return repoManager.getCertificates(subject, resourceId);
     }
 }

@@ -51,6 +51,11 @@ import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ContentHTTPServlet extends DefaultServlet {
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
+
     private final Log log = LogFactory.getLog(ContentHTTPServlet.class);
 
     protected static final String CONTENT_URI = "/content/";
@@ -124,6 +129,15 @@ public class ContentHTTPServlet extends DefaultServlet {
             renderRepoList(request, response);
             return;
         }
+
+        // validate entitlement
+        try {
+            ContentFilter x509Filter = new ContentFilter();
+            x509Filter.filter(request, repo.getId());
+        } catch (EntitlementException e) {
+            throw new ServletException(e);
+        }
+
         // Check if type of content has been specified
         String typeOfContent = getTypeOfContent(request.getRequestURI());
         if (StringUtils.isBlank(typeOfContent)) {

@@ -162,7 +162,7 @@
                   <h:outputText styleClass="headerText" value="Name"/>
                </f:facet>
 
-               <h:outputLink value="/rhq/admin/plugin/plugin-details-view.xhtml" rendered="#{serverPlugin.status eq 'INSTALLED'}">
+               <h:outputLink value="/rhq/admin/plugin/plugin-details.xhtml" rendered="#{serverPlugin.status eq 'INSTALLED'}">
                   <f:param name="plugin" value="#{serverPlugin.name}"/>
                   <f:param name="deployment" value="SERVER"/>
                   <f:param name="pluginType" value="#{serverPlugin.type}"/>

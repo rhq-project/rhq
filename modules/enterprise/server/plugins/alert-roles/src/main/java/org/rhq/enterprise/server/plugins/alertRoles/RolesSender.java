@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
 import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
@@ -39,6 +40,9 @@ public class RolesSender extends AlertSender {
 
     @Override
     public SenderResult send(Alert alert) {
+
+        PropertySimple subjectIdProp = alertParameters.getSimple("roleId");
+
         return new SenderResult(ResultState.FAILURE,"Not yet implemented");
     }
 }

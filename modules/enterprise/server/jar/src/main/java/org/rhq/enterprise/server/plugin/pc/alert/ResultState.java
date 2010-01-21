@@ -24,8 +24,10 @@ package org.rhq.enterprise.server.plugin.pc.alert;
  * @see SenderResult
  */
 public enum ResultState {
-    /** Success  */
+    /** Success: sending of the notification was a success  */
     SUCCESS,
-    /** Failure */
+    /** Deferred_email: this sender itself was successful, but l8er email sending may fail */
+    DEFERRED_EMAIL,
+    /** Failure: sending of the notification failed */
     FAILURE
 }

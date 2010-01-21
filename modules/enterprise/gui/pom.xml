@@ -36,6 +36,7 @@
         <module>installer-war</module>
         <module>webdav-war</module>
         <module>content_http-war</module>
+        <module>alert-migration</module>
       </modules>
     </profile>
 

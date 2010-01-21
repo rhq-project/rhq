@@ -33,9 +33,9 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * @author Greg Hinkle
  */
-public class VirtualizationBlockDeviceDiscoveryComponent implements ResourceDiscoveryComponent<VirtualizationComponent> {
+public class VirtualizationBlockDeviceDiscoveryComponent implements ResourceDiscoveryComponent<VirtualizationDomainComponent> {
     public Set<DiscoveredResourceDetails> discoverResources(
-        ResourceDiscoveryContext<VirtualizationComponent> discoveryContext) throws InvalidPluginConfigurationException,
+        ResourceDiscoveryContext<VirtualizationDomainComponent> discoveryContext) throws InvalidPluginConfigurationException,
         Exception {
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
 

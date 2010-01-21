@@ -16,4 +16,12 @@
         </component>
     </tag>
 
+    <tag>
+        <tag-name>allRowsSelector</tag-name>
+        <component>
+            <component-type>org.rhq.AllRowsSelector</component-type>
+            <renderer-type>org.rhq.AllRowsSelector</renderer-type>
+        </component>
+    </tag>
+
 </facelet-taglib>

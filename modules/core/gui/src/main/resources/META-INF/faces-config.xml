@@ -14,6 +14,15 @@
        </component-extension>
     </component>
 
+    <component>
+       <component-type>org.rhq.AllRowsSelector</component-type>
+       <component-class>org.rhq.core.gui.table.component.AllRowsSelectorComponent</component-class>
+       <component-extension>
+          <component-family>org.rhq.AllRowsSelector</component-family>
+          <renderer-type>org.rhq.AllRowsSelector</renderer-type>
+       </component-extension>
+    </component>
+
    <render-kit>
 
       <renderer>
@@ -23,6 +32,13 @@
          <renderer-type>org.rhq.RowSelector</renderer-type>
          <renderer-class>org.rhq.core.gui.table.renderer.RowSelectorRenderer</renderer-class>
       </renderer>
+
+       <renderer>
+          <description>renders a checkbox, which the user can select in order to select all rows in a data table</description>
+          <component-family>org.rhq.AllRowsSelector</component-family>
+          <renderer-type>org.rhq.AllRowsSelector</renderer-type>
+          <renderer-class>org.rhq.core.gui.table.renderer.AllRowsSelectorRenderer</renderer-class>
+       </renderer>
 
    </render-kit>
 

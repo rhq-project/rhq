@@ -21,31 +21,31 @@ package org.rhq.core.gui.table.renderer;
 import com.sun.faces.util.MessageUtils;
 import org.ajax4jsf.component.UIDataAdaptor;
 import org.ajax4jsf.model.ExtendedDataModel;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.NotNull;
 import org.rhq.core.gui.table.component.RowSelectorComponent;
+import org.rhq.core.gui.util.FacesComponentUtility;
 
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIViewRoot;
+import javax.faces.component.UIData;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
 import javax.faces.model.DataModel;
-import javax.faces.render.Renderer;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * An HTML renderer for {@link RowSelectorComponent}s (i.e. rhq:rowSelector).
  *
  * @author Ian Springer
  */
-public class RowSelectorRenderer extends Renderer {
-    private final Log log = LogFactory.getLog(this.getClass());
-
+public class RowSelectorRenderer extends AbstractRenderer {    
     @Override
     @SuppressWarnings("unchecked")
     public void decode(FacesContext context, UIComponent component) {
@@ -53,27 +53,24 @@ public class RowSelectorRenderer extends Renderer {
 
         RowSelectorComponent rowSelector = (RowSelectorComponent) component;
 
-        UIDataAdaptor dataAdaptor = getEnclosingDataAdaptor(rowSelector);
+        UIData data = getEnclosingData(rowSelector);
 
-        List selectedDataObjects = getSelectedDataObjects(context, dataAdaptor);
-        
+        // We store the List of selected data objects in a request context attribute and add to it as the data table's
+        // rows are iterated during the updateModelValues phase. If the row is selected, we add the corresponding
+        // data object to the List.
+        List selectedDataObjects = getSelectedRowDataObjects(context, data);
+
         // Always set the submitted value, so that, even if no rows were selected, the setter on the managed bean will
         // still be passed an empty List, rather than null.
         rowSelector.setSubmittedValue(selectedDataObjects);
 
-        Map<String, String> requestParamMap = context.getExternalContext().getRequestParameterMap();
-        String requestParamName = rowSelector.getClientId(context);
-        String selectedRowKey = requestParamMap.get(requestParamName);
+        Set<String> selectedRowKeys = getSelectedRowKeys(context, data, rowSelector);
 
-        if (selectedRowKey != null) {
-            Object rowKey = dataAdaptor.getRowKey();
-            Converter rowKeyConverter = dataAdaptor.getRowKeyConverter();
-            String rowKeyString = (rowKeyConverter != null) ? rowKeyConverter.getAsString(context, component, rowKey) :
-                    String.valueOf(rowKey);            
-            if (selectedRowKey.equals(rowKeyString)) {
-                Object rowData = dataAdaptor.getRowData();
-                selectedDataObjects.add(rowData);
-            }
+        String rowKeyString = getRowKeyAsString(context, component, data);
+        if (selectedRowKeys.contains(rowKeyString)) {
+            // The current row is selected - add the row's data object to our List.
+            Object rowData = data.getRowData();
+            selectedDataObjects.add(rowData);
         }
     }
 
@@ -81,7 +78,7 @@ public class RowSelectorRenderer extends Renderer {
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         validateParameters(context, component);
 
-        RowSelectorComponent rowSelector = (RowSelectorComponent) component;        
+        RowSelectorComponent rowSelector = (RowSelectorComponent) component;
 
         ResponseWriter writer = context.getResponseWriter();
         writer.startElement("input", component);
@@ -95,8 +92,9 @@ public class RowSelectorRenderer extends Renderer {
         String clientId = component.getClientId(context);
         writer.writeAttribute("name", clientId, "clientId");
 
-        UIDataAdaptor dataAdaptor = getEnclosingDataAdaptor(rowSelector);
-        Object rowKey = getRowKey(dataAdaptor);
+
+        UIData data = getEnclosingData(rowSelector);
+        Object rowKey = getRowKey(data);
         writer.writeAttribute("value", rowKey, null);
 
         // TODO: Write 'checked' attribute to allow checkbox to be selected by default? Probably overkill.
@@ -107,6 +105,7 @@ public class RowSelectorRenderer extends Renderer {
             onclick += "; " + userSpecifiedOnclick;
         }
         rowSelector.getAttributes().put("onclick", onclick);
+        writer.writeAttribute("onclick", onclick, "onclick");
         // TODO: Add support for all the other common HTML attributes.
         //RenderKitUtils.renderPassThruAttributes(writer, component, ATTRIBUTES);
 
@@ -139,27 +138,59 @@ public class RowSelectorRenderer extends Renderer {
         }
     }
 
-    private List getSelectedDataObjects(FacesContext context, UIDataAdaptor dataAdaptor) {
+    @NotNull
+    private List getSelectedRowDataObjects(FacesContext context, UIData data) {
         Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
-        String selectedDataObjectsRequestAttributeName = dataAdaptor.getId() + ":" + "selectedDataObjects";
-        List selectedDataObjects = (List) requestMap.get(selectedDataObjectsRequestAttributeName);
+        initializeComponentId(context, data);
+        String selectedRowDataObjectsRequestAttributeName = data.getId() + ":" + "selectedRowDataObjects";
+        List selectedDataObjects = (List) requestMap.get(selectedRowDataObjectsRequestAttributeName);
         if (selectedDataObjects == null) {
             selectedDataObjects = new ArrayList();
-            requestMap.put(selectedDataObjectsRequestAttributeName, selectedDataObjects);
+            requestMap.put(selectedRowDataObjectsRequestAttributeName, selectedDataObjects);
         }
         return selectedDataObjects;
     }
 
-    private Object getRowKey(UIDataAdaptor dataAdaptor) {
+    @NotNull
+    private Set<String> getSelectedRowKeys(FacesContext context, UIData data, RowSelectorComponent rowSelector) {
+        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+        initializeComponentId(context, data);
+        String selectedRowKeysRequestAttributeName = data.getId() + ":" + "selectedRowKeys";
+        Set<String> selectedRowKeys = (Set<String>) requestMap.get(selectedRowKeysRequestAttributeName);
+        if (selectedRowKeys == null) {
+            Map<String, String[]> requestParamMap = context.getExternalContext().getRequestParameterValuesMap();
+            String requestParamName = rowSelector.getClientId(context);
+            String[] selectedRowKeyArray = requestParamMap.get(requestParamName);
+            selectedRowKeys = new HashSet<String>(selectedRowKeyArray.length);
+            Collections.addAll(selectedRowKeys, selectedRowKeyArray);
+        }
+        return selectedRowKeys;
+    }
+
+    private Object getRowKey(UIData data) {
         Object rowKey;
-        DataModel dataModel = (DataModel) dataAdaptor.getAttributes().get("dataModel");
-        if (dataModel instanceof ExtendedDataModel) {
+        DataModel dataModel = (DataModel) data.getAttributes().get("dataModel");
+        if (data instanceof UIDataAdaptor && dataModel instanceof ExtendedDataModel) {
+            UIDataAdaptor dataAdaptor = (UIDataAdaptor) data;
             rowKey = dataAdaptor.getRowKey();
         } else {
-            Object rowData = dataAdaptor.getRowData();
+            Object rowData = data.getRowData();
             rowKey = getPrimaryKey(rowData);
         }
         return rowKey;
+    }
+
+    private String getRowKeyAsString(FacesContext context, UIComponent component, UIData data) {
+        String rowKeyString;
+        Object rowKey = getRowKey(data);
+        if (data instanceof UIDataAdaptor) {
+            UIDataAdaptor dataAdaptor = (UIDataAdaptor) data;
+            Converter rowKeyConverter = dataAdaptor.getRowKeyConverter();
+            rowKeyString = rowKeyConverter.getAsString(context, component, rowKey);
+        } else {
+            rowKeyString = String.valueOf(rowKey);
+        }
+        return rowKeyString;
     }
 
     /**
@@ -186,44 +217,13 @@ public class RowSelectorRenderer extends Renderer {
         }
     }
 
-    private UIDataAdaptor getEnclosingDataAdaptor(UIComponent component) {
-        UIComponent current = component;
-        while ((current = current.getParent()) != null) {
-            if (current instanceof UIDataAdaptor) {
-                return (UIDataAdaptor) current;
-            }
+    @NotNull
+    private UIData getEnclosingData(UIComponent component) {
+        UIData data = FacesComponentUtility.getAncestorOfType(component, UIData.class);
+        if (data == null) {
+            throw new IllegalStateException("Enclosing UIData component (i.e. h:dataTable or rich:*dataTable) not found for component "
+                    + component + ".");
         }
-        throw new IllegalStateException("Enclosing UIDataAdaptor component (i.e. rich:*dataTable) not found for component "
-                + component + ".");
-    }
-
-    /**
-     * @param component the component of interest
-     *
-     * @return true if this renderer should render an id attribute.
-     */
-    protected boolean shouldWriteIdAttribute(UIComponent component) {
-        String id;
-        return (null != (id = component.getId()) &&
-                    !id.startsWith(UIViewRoot.UNIQUE_ID_PREFIX));
-
-    }
-
-    protected String writeIdAttributeIfNecessary(FacesContext context,
-                                                 ResponseWriter writer,
-                                                 UIComponent component) {
-        String id = null;
-        if (shouldWriteIdAttribute(component)) {
-            try {
-                writer.writeAttribute("id", id = component.getClientId(context),
-                                      "id");
-            } catch (IOException e) {
-                String message = MessageUtils.getExceptionMessageString
-                      (MessageUtils.CANT_WRITE_ID_ATTRIBUTE_ERROR_MESSAGE_ID,
-                       e.getMessage());
-                log.warn(message);
-            }
-        }
-        return id;
+        return data;
     }
 }

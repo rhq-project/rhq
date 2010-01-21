@@ -58,10 +58,10 @@
          placement="after" />
    </menu-item>
 
-   <!-- Add Sample menu-item to Core Menu -->
+   <!-- Add Sample Perspective menu-item to Core Menu -->
    <menu-item
       name="sample"
-      displayName="Sample">
+      displayName="Sample Perspective">
       <position
          name="help"
          placement="after" />
@@ -89,6 +89,15 @@
       url="randomResource.seam">
       <position
          name="sample.child2"
+         placement="after" />
+   </menu-item>
+   <menu-item
+      name="sample.child4"
+      displayName="Browse Resources"
+      application="sample"
+      url="browseResources.seam">
+      <position
+         name="sample.child3"
          placement="after" />
    </menu-item>
    <menu-item

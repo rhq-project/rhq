@@ -35,6 +35,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
+import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
@@ -66,10 +67,11 @@ import org.rhq.enterprise.server.system.SystemManagerRemote;
 public class RemoteClient {
 
     public enum Manager {
+        AdvisoryManager(AdvisoryManagerRemote.class), //
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
-        CallTimeDataManager(CallTimeDataManagerRemote.class), // 
+        CallTimeDataManager(CallTimeDataManagerRemote.class), //
         RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
         //ContentHelperManager(ContentHelperRemote.class), //
@@ -79,7 +81,7 @@ public class RemoteClient {
         EventManager(EventManagerRemote.class), //
         MeasurementBaselineManager(MeasurementBaselineManagerRemote.class), //
         MeasurementDataManager(MeasurementDataManagerRemote.class), //
-        MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), // 
+        MeasurementDefinitionManager(MeasurementDefinitionManagerRemote.class), //
         MeasurementScheduleManager(MeasurementScheduleManagerRemote.class), //
         OperationManager(OperationManagerRemote.class), //
         ResourceManager(ResourceManagerRemote.class), //
@@ -133,7 +135,7 @@ public class RemoteClient {
      * Creates a client that will communicate with the server running on the given host
      * listening on the given port. This constructor will not attempt to connect or login
      * to the remote server - use {@link #login(String, String)} for that.
-     * 
+     *
      * @param host
      * @param port
      */
@@ -146,7 +148,7 @@ public class RemoteClient {
      * listening on the given port over the given transport.
      * This constructor will not attempt to connect or login
      * to the remote server - use {@link #login(String, String)} for that.
-     * 
+     *
      * @param transport valid values are "servlet" and "sslservlet" - if <code>null</code>,
      *                  sslservlet will be used for ports that end with "443", servlet otherwise
      * @param host
@@ -167,7 +169,7 @@ public class RemoteClient {
      * Connects to the remote server and logs in with the given credentials.
      * After successfully executing this, {@link #isLoggedIn()} will be <code>true</code>
      * and {@link #getSubject()} will return the subject that this method returns.
-     * 
+     *
      * @param user
      * @param password
      *
@@ -211,10 +213,10 @@ public class RemoteClient {
     /**
      * Connects to the remote server but does not establish a user session. This can be used
      * with the limited API that does not require a Subject.
-     * 
+     *
      * After successfully executing this, {@link #isConnected()} will be <code>true</code>
      * and {@link #getSubject()} will return the subject that this method returns.
-     * 
+     *
      * @param user
      * @param password
      *
@@ -249,7 +251,7 @@ public class RemoteClient {
     /**
      * Returns <code>true</code> if and only if this client successfully connected
      * to the remote server and the user successfully logged in.
-     * 
+     *
      * @return if the user was able to connect and log into the server
      */
     public boolean isLoggedIn() {
@@ -259,7 +261,7 @@ public class RemoteClient {
     /**
      * Returns <code>true</code> if and only if this client successfully connected
      * to the remote server.
-     * 
+     *
      * @return if the user was able to connect and log into the server
      */
     public boolean isConnected() {
@@ -269,7 +271,7 @@ public class RemoteClient {
     /**
      * Returns the information on the user that is logged in.
      * May be <code>null</code> if the user never logged in successfully.
-     * 
+     *
      * @return user information or <code>null</code>
      */
     public Subject getSubject() {
@@ -301,11 +303,15 @@ public class RemoteClient {
      * be set appropriately for the {@link #getPort()} (e.g. a secure transport
      * will be used for ports that end with 443, a non-secure transport will be
      * used for all other ports).
-     * 
+     *
      * @param transport
      */
     public void setTransport(String transport) {
         this.transport = transport;
+    }
+
+    public AdvisoryManagerRemote getAdvisoryManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.AdvisoryManager);
     }
 
     public AlertManagerRemote getAlertManagerRemote() {
@@ -407,7 +413,7 @@ public class RemoteClient {
     /**
      * Returns the map of all remote managers running in the server that this
      * client can talk to.
-     * 
+     *
      * @return Map K=manager name V=remote proxy
      */
     public Map<String, Object> getManagers() {
@@ -431,9 +437,9 @@ public class RemoteClient {
     /**
      * Returns the internal JBoss/Remoting client used to perform the low-level
      * comm with the server.
-     * 
+     *
      * This is package-scoped so the proxy can use it.
-     * 
+     *
      * @return remoting client used to talk to the server
      */
     Client getRemotingClient() {
@@ -509,7 +515,7 @@ public class RemoteClient {
      * Looks up the prop name in system properties and puts the value in the map. If the property
      * isn't set, the given default is used. If the given default is null and the property isn't
      * set, then the map is not populated.
-     * 
+     *
      * @param configMap
      * @param propName
      * @param defaultValue

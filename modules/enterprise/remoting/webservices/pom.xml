@@ -160,7 +160,7 @@
                <excludes>
                   <exclude>com/**/*.java</exclude>
                </excludes>
-               <excludedGroups>${rhq.testng.excludedGroups},ws</excludedGroups>
+               <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                <systemProperties>
                   <property>
                      <name>deploymentDirectory</name>

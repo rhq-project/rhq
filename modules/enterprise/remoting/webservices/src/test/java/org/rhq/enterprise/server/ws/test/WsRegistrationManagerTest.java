@@ -51,8 +51,6 @@ public class WsRegistrationManagerTest extends AssertJUnit implements TestProper
     private WebservicesRemote service;
     private ObjectFactory objectFactory;
 
-    private Subject subject;
-
     @BeforeClass
     public void setup() throws Exception {
 
@@ -65,16 +63,6 @@ public class WsRegistrationManagerTest extends AssertJUnit implements TestProper
         service = jws.getWebservicesManagerBeanPort();
 
         objectFactory = new ObjectFactory();
-
-        // Establish a new user in the system
-        WsSubjectUtility subjectUtil = new WsSubjectUtility(service);
-        subject = subjectUtil.createOrLoginUser("reg-manager-test", "reg-manager-test");
-    }
-
-    @AfterClass
-    public void teardown() throws Exception {
-        WsSubjectUtility subjectUtil = new WsSubjectUtility(service);
-        subjectUtil.deleteUser(subject.getId());
     }
 
     @Test(enabled = TESTS_ENABLED)

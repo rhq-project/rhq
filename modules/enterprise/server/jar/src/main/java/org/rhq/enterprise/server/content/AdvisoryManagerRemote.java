@@ -44,7 +44,7 @@ public interface AdvisoryManagerRemote {
      * Creates a new advisory in the system. If the advisory does not exist, it will be created.
      * If a advisory exists with the specified version ID, a new one will not be created and the
      * existing advisory will be returned.
-     * @param subject
+     * @param user
      * @param advisory advisory label
      * @param advisoryType adv type
      * @return newly created advisory object
@@ -52,7 +52,7 @@ public interface AdvisoryManagerRemote {
     @WebMethod
     Advisory createAdvisory(@WebParam(name = "subject") Subject user, @WebParam(name = "advisory") String advisory, //
         @WebParam(name = "advisoryType") String advisoryType, //
-        @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException;
+        @WebParam(name = "advisoryName") String synopsis) throws AdvisoryException;
 
     /**
      * creates a cve instance for a given cve name
@@ -65,14 +65,14 @@ public interface AdvisoryManagerRemote {
         @WebParam(name = "cvename") String cvename) throws AdvisoryException;
 
     /**
-     * creates a AdvisoryCVE relationship object 
+     * creates a AdvisoryCVE relationship object
      * @param user
      * @param advisory
      * @param cve
      * @return AdvisoryCVE object
      * @throws AdvisoryException
      */
-    AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user, // 
+    AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user, //
         @WebParam(name = "advisory") Advisory advisory, //
         @WebParam(name = "cve") CVE cve) throws AdvisoryException;
 
@@ -183,7 +183,7 @@ public interface AdvisoryManagerRemote {
     /**
      *  find AdvisoryPackage object for given advId and packageVersion id
      * @param overlord
-     * @param advId 
+     * @param advId
      * @param pkgVerId
      */
     @WebMethod

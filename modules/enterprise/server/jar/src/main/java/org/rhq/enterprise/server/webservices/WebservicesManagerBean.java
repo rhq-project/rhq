@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -47,7 +48,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
 import org.rhq.core.domain.content.Advisory;
+import org.rhq.core.domain.content.AdvisoryBuglist;
+import org.rhq.core.domain.content.AdvisoryCVE;
+import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.CVE;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
@@ -104,6 +109,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
+import org.rhq.enterprise.server.content.AdvisoryException;
+import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -142,8 +149,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /** The purpose of this class is to aggregate all the EJB remote implementation into one
  *  class that can be annotated by JBossWS.  Each annotated SLSB causes a full WSDL compile and
- *  publish by JBossWS which is very costly in terms of time.  Deploy times went from 2 mins to 12 mins. 
- * 
+ *  publish by JBossWS which is very costly in terms of time.  Deploy times went from 2 mins to 12 mins.
+ *
  * @author Simeon Pinder
  *
  */
@@ -154,6 +161,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class WebservicesManagerBean implements WebservicesRemote {
 
     //Lookup the required beans as local references
+    private AdvisoryManagerLocal advisoryManager = LookupUtil.getAdvisoryManagerLocal();
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
@@ -181,6 +189,94 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+
+    //ADVISORYMANAGER: BEGIN ------------------------------------------
+
+    public Advisory createAdvisory(@WebParam(name = "subject") Subject user,
+                                   @WebParam(name = "advisory") String advisory,
+                                   @WebParam(name = "advisoryType") String advisoryType,
+                                   @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException {
+        return advisoryManager.createAdvisory(user, advisory, advisoryType, advisoryName);
+    }
+
+    public CVE createCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cvename") String cvename)
+        throws AdvisoryException {
+        return advisoryManager.createCVE(user, cvename);
+    }
+
+    public AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user,
+                                         @WebParam(name = "advisory") Advisory advisory,
+                                         @WebParam(name = "cve") CVE cve) throws AdvisoryException {
+        return advisoryManager.createAdvisoryCVE(user, advisory, cve);
+    }
+
+    public AdvisoryPackage createAdvisoryPackage(@WebParam(name = "subject") Subject user,
+                                                 @WebParam(name = "advisory") Advisory advisory,
+                                                 @WebParam(name = "pkg") PackageVersion pkg) throws AdvisoryException {
+        return advisoryManager.createAdvisoryPackage(user, advisory, pkg);
+    }
+
+    public void deleteCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
+        advisoryManager.deleteAdvisoryCVE(user, cveId);
+    }
+
+    public void deleteAdvisoryCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryCVE(user, advId);
+    }
+
+    public void deleteAdvisoryByAdvId(@WebParam(name = "subject") Subject subject,
+                                      @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryByAdvId(subject, advId);
+    }
+
+    public Advisory getAdvisoryByName(@WebParam(name = "advlabel") String advlabel) {
+        return advisoryManager.getAdvisoryByName(advlabel);
+    }
+
+    public List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject,
+                                                       @WebParam(name = "advId") int advId,
+                                                       @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.findPackageByAdvisory(subject, advId, pc);
+    }
+
+    public PackageVersion findPackageVersionByPkgId(@WebParam(name = "subject") Subject subject,
+                                                    @WebParam(name = "rpmName") String rpmName,
+                                                    @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.findPackageVersionByPkgId(subject, rpmName, pc);
+    }
+
+    public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(@WebParam(name = "subject") Subject subject,
+                                                       @WebParam(name = "advId") int advId,
+                                                       @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.getAdvisoryCVEByAdvId(subject, advId, pc);
+    }
+
+    public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject,
+                                                           @WebParam(name = "advId") int advId) {
+        return advisoryManager.getAdvisoryBuglistByAdvId(subject, advId);
+    }
+
+    public void deleteAdvisoryBugList(@WebParam(name = "subject") Subject overlord, @WebParam(name = "advId") int id) {
+        advisoryManager.deleteAdvisoryBugList(overlord, id);
+    }
+
+    public void deleteAdvisoryPackage(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryPackage(user, advId);
+    }
+
+    public AdvisoryPackage findAdvisoryPackage(@WebParam(name = "subject") Subject overlord,
+                                               @WebParam(name = "advId") int advId,
+                                               @WebParam(name = "pkgVerId") int pkgVerId) {
+        return advisoryManager.findAdvisoryPackage(overlord, advId, pkgVerId);
+    }
+
+    public AdvisoryBuglist getAdvisoryBuglist(@WebParam(name = "subject") Subject subject,
+                                              @WebParam(name = "advId") int advId,
+                                              @WebParam(name = "buginfo") String buginfo) {
+        return advisoryManager.getAdvisoryBuglist(subject, advId, buginfo);
+    }
+
+    //ADVISORYMANAGER: END ------------------------------------------
 
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
@@ -443,7 +539,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //DATAACCESSMANAGER: END ----------------------------------
 
-    //DISCOVERYBOSS: BEGIN ------------------------------------    
+    //DISCOVERYBOSS: BEGIN ------------------------------------
     public void ignoreResources(Subject subject, Integer[] resourceIds) {
         discoveryBoss.ignoreResources(subject, resourceIds);
     }
@@ -636,7 +732,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
-        long delay, long repeatInterval, int repeatCount, int timeout,// 
+        long delay, long repeatInterval, int repeatCount, int timeout,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration parameters, String description) throws ScheduleException {
         return operationManager.scheduleResourceOperation(subject, resourceId, operationName, delay, repeatInterval,
@@ -774,7 +870,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //RESOURCEGROUPMANAGER: END ----------------------------------
 
-    //RESOURCETYPEMANAGER: BEGIN ------------------------------------    
+    //RESOURCETYPEMANAGER: BEGIN ------------------------------------
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         return resourceTypeManager.findResourceTypesByCriteria(subject, criteria);
     }
@@ -904,12 +1000,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //SUPPORTMANAGER: END ------------------------------------
 
-    //SYSTEMMANAGER: BEGIN ------------------------------------    
+    //SYSTEMMANAGER: BEGIN ------------------------------------
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         return systemManager.getServerVersion(subject);
     }
 
-    //SYSTEMMANAGER: END ------------------------------------    
+    //SYSTEMMANAGER: END ------------------------------------
 
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {

@@ -38,6 +38,7 @@ import org.rhq.enterprise.server.alert.AlertManagerBean;
 import org.rhq.enterprise.server.auth.SubjectManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
+import org.rhq.enterprise.server.content.AdvisoryManagerBean;
 import org.rhq.enterprise.server.content.ContentManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
@@ -64,7 +65,8 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 public class RemoteAPIValidator {
 
     private static Class<?>[] beans = new Class[] { //
-    AlertDefinitionManagerBean.class, //
+        AdvisoryManagerBean.class, //
+        AlertDefinitionManagerBean.class, //
         AlertManagerBean.class,//
         AvailabilityManagerBean.class,//
         CallTimeDataManagerBean.class, //
@@ -93,8 +95,8 @@ public class RemoteAPIValidator {
 
     private static Set<String> finderMethodExceptions = new HashSet<String>();
     static {
-        /* 
-         * unless otherwise noted, all of the below methods return data considered to 
+        /*
+         * unless otherwise noted, all of the below methods return data considered to
          * be single, logical objects even though they are implemented as list structures
          */
         finderMethodExceptions.add("translateInstallationSteps");

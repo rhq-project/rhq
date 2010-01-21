@@ -781,17 +781,24 @@
           placement="firstChild" />
     </tab>
 
-    <tab name="Content.New" displayName="New" url="/rhq/resource/content/deploy.xhtml">
+    <tab name="Content.New" displayName="Install" url="/rhq/resource/content/deploy.xhtml">
         <position
            
            name="Content.Deployed"
+           placement="after" />
+    </tab>
+
+     <tab name="Content.Update" displayName="Update" url="/rhq/resource/content/update.xhtml">
+        <position
+
+           name="Content.New"
            placement="after" />
     </tab>            
 
     <tab name="Content.Subscriptions" displayName="Subscriptions" url="/rhq/resource/content/subscription.xhtml">
         <position
            
-           name="Content.New"
+           name="Content.Update"
            placement="after" />
     </tab>            
 

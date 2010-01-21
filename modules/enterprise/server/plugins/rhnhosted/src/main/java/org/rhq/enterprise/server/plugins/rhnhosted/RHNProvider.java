@@ -33,6 +33,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
@@ -227,7 +228,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizeAdvisory(String repoName, AdvisorySyncReport report,
-        Collection<AdvisoryDetails> existingAdvisory) throws SyncException {
+        Collection<AdvisoryDetails> existingAdvisory) throws SyncException, InterruptedException {
 
         List<String> existingLabels = new ArrayList<String>();
         for (AdvisoryDetails ad : existingAdvisory) {
@@ -249,9 +250,12 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                         + "with cves" + adv.getCVEs() + "wiuth packages" + adv.getPkgs());
                     report.addAdvisory(adv);
                 }
+                ThreadUtil.checkInterrupted();
             }
-        } catch (Exception e) {
-            throw new SyncException("Error syncing advisory meta", e);
+        } catch (IOException ioe) {
+            throw new SyncException("IOException syncing advisory meta", ioe);
+        } catch (XmlRpcException x) {
+            throw new SyncException("XmlRpcException syncing advisory meta", x);
         }
 
         for (String adv : deletedAdvs) {

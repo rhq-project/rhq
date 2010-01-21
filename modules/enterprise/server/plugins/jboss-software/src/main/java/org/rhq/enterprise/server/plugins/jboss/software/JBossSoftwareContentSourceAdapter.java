@@ -115,7 +115,7 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         if (!active)
             return;
 

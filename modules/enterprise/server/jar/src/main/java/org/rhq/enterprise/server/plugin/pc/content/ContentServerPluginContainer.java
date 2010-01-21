@@ -19,16 +19,19 @@
 package org.rhq.enterprise.server.plugin.pc.content;
 
 import java.util.Date;
-import java.util.Set;
 
 import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+import org.quartz.Trigger;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
@@ -48,6 +51,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
     private static final String CONTENT_SRC_SYNC_JOB_GROUP_NAME = "syncContentSource";
     private static final String REPO_SYNC_JOB_GROUP_NAME = "syncRepo";
+    private static final String REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME = "syncRepoImmediate";
 
     private ContentProviderManager adapterManager;
 
@@ -138,24 +142,28 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * @throws SchedulerException if the job cannot be scheduled
      */
     public void syncRepoNow(Repo repo) throws SchedulerException {
-        JobDetail job = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME, RepoSyncJob.class,
-            false, false, false);
+        String jobName = RepoSyncJob.createJobName(repo);
+        JobDetail job = new JobDetail(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME, RepoSyncJob.class, false, false,
+            false);
 
         RepoSyncJob.createJobDataMap(job, repo);
-
-        SimpleTrigger trigger = new SimpleTrigger(job.getName(), job.getGroup());
-        trigger.setVolatility(false);
-
+        Date nextExecution;
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        Date next = scheduler.scheduleJob(job, trigger);
-
+        Trigger trigger = scheduler.getTrigger(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME);
+        if (trigger == null) {
+            trigger = new SimpleTrigger(jobName, job.getGroup());
+            trigger.setVolatility(false);
+            nextExecution = scheduler.scheduleJob(job, trigger);
+        } else {
+            nextExecution = scheduler.rescheduleJob(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME, trigger);
+        }
         getLog().info(
-            "Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + next
+            "Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + nextExecution
                 + "] for [" + repo + "]");
     }
 
-    public void cancelRepoSync(Repo repo) throws SchedulerException {
-        JobDetail jobDetail = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME,
+    public void cancelRepoSync(Subject subject, Repo repo) throws SchedulerException {
+        JobDetail jobDetail = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME,
             RepoSyncJob.class, false, false, false);
 
         RepoSyncJob.createJobDataMap(jobDetail, repo);
@@ -165,7 +173,7 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
 
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
 
-        boolean cancelled = scheduler.interrupt(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME);
+        boolean cancelled = scheduler.interrupt(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME);
 
         getLog().info("cancelled repo sync job [" + jobDetail.getName() + ':' + jobDetail.getGroup() + "] ");
     }
@@ -230,7 +238,9 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
                 try {
                     getLog().debug("scheduleSyncJobs :: Scheduling CP job: " + contentSource.getName());
                     scheduleProviderSyncJob(contentSource);
-                    Set<Repo> repos = contentSource.getRepos();
+                    ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+                    PageList<Repo> repos = contentSourceManager.getAssociatedRepos(LookupUtil.getSubjectManager()
+                        .getOverlord(), contentSource.getId(), PageControl.getUnlimitedInstance());
                     if (repos != null) {
                         for (Repo repo : repos) {
                             getLog().debug("scheduleSyncJobs :: Scheduling REPO job: " + repo.getName());

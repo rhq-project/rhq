@@ -95,11 +95,11 @@
               <c:when
                 test="#{RepoDetailsUIBean.percentComplete != '100'}">
                 <a4j:region>
-                  <a4j:poll id="poll" interval="1000"
+                  <a4j:poll id="statusPoll" interval="1000"
                     reRender="syncStatus" />
                   <h:outputText id="syncStatus"
                     value="#{RepoDetailsUIBean.syncStatus}" />
-                </a4j:region>
+                </a4j:region>                    
               </c:when>
               <c:otherwise>
                 <h:outputText id="syncStatus"
@@ -112,7 +112,7 @@
             <td align="left"><rich:progressBar
               value="#{RepoDetailsUIBean.percentComplete}"
               label="#{RepoDetailsUIBean.percentComplete} %"
-              interval="1000" minValue="0" maxValue="99">
+              interval="999" minValue="0" maxValue="99">
               <f:facet name="complete">
                 <h:outputText value="Synchronizing Complete" />
               </f:facet>
@@ -147,8 +147,14 @@
                     operation="hide" event="onclick" />
                 </h:panelGroup>
               </f:facet>
-              <PRE><h:outputText
+              <a4j:region>
+                  <a4j:poll id="resultsPoll" interval="2000"
+                    reRender="syncResults" />
+                  <PRE><h:outputText id="syncResults"
                 value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
+              </a4j:region>
+              
+              
             </rich:modalPanel></td>
           </tr>
         </table>

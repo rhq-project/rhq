@@ -132,7 +132,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
     *   @throws Exception On all errors.
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");
         try {

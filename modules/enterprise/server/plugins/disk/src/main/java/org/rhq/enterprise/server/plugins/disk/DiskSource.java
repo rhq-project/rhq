@@ -119,7 +119,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
 
         if (!isPackageSource) {
             return;

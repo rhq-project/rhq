@@ -108,6 +108,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     @EJB
     private SubjectManagerLocal subjectManager;
 
+    @EJB
+    private RepoManagerLocal repoManager;
+
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteRepo(Subject subject, int repoId) {
         log.debug("User [" + subject + "] is deleting repo [" + repoId + "]");
@@ -992,6 +995,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId) {
         Repo found = this.getRepo(subject, repoId);
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
@@ -1057,10 +1061,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
         Repo repo = this.getRepo(subject, repoId);
         try {
-            pc.cancelRepoSync(repo);
+            pc.cancelRepoSync(subject, repo);
+
         } catch (SchedulerException e) {
             throw new ContentException(e);
         }
+        RepoSyncResults results = this.getMostRecentSyncResults(subject, repo.getId());
+        results.setStatus(ContentSyncStatus.CANCELLING);
+        repoManager.mergeRepoSyncResults(results);
     }
 
     @SuppressWarnings("unchecked")

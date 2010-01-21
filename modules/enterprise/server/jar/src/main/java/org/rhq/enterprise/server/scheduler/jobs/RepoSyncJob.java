@@ -69,6 +69,8 @@ public class RepoSyncJob implements StatefulJob, InterruptableJob {
 
     private Thread executionThread;
 
+    private static ThreadLocal<Boolean> interruptMonitor = new ThreadLocal();
+
     /**
      * {@inheritDoc}
      */
@@ -226,4 +228,5 @@ public class RepoSyncJob implements StatefulJob, InterruptableJob {
             executionThread.interrupt();
         }
     }
+
 }

@@ -109,7 +109,7 @@ public class ProgressWatcher {
      * Reset the ProgressWatcher to zero.
      */
     public void resetToZero() {
-        start();
         stop();
+        start();
     }
 }

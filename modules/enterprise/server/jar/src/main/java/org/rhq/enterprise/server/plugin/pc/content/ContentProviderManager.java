@@ -34,7 +34,6 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.exception.GenericJDBCException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
@@ -263,7 +262,8 @@ public class ContentProviderManager {
      *             if the data required to perform the sync is missing or
      *             invalid
      */
-    public boolean synchronizeRepo(int repoId) throws InterruptedException {
+    public boolean synchronizeRepo(int repoId) {
+        log.debug("synchronizeRepo() :: start");
 
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -412,22 +412,19 @@ public class ContentProviderManager {
             tracker.setResults(progress.toString());
             tracker = updateSyncStatus(tracker, ContentSyncStatus.SUCCESS);
             log.debug("synchronizeRepo :: Success");
-        } catch (GenericJDBCException jdbc) {
-            log.debug("Caught GenericJDBCException");
-            progress.append("\n ** Cancelled syncing **");
-            tracker.getProgressWatcher().resetToZero();
-            tracker = updatePercentComplete(tracker, repoManager);
-            tracker.setResults(progress.toString());
-            tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED);
-            ie = jdbc;
-        } catch (InterruptedException ieinner) {
+        } catch (Exception e) {
+            RepoSyncResults recentResults = repoManager.getMostRecentSyncResults(overlord, repo.getId());
             log.debug("Caught InterruptedException");
             progress.append("\n ** Cancelled syncing **");
             tracker.setResults(progress.toString());
             tracker.getProgressWatcher().resetToZero();
             tracker = updatePercentComplete(tracker, repoManager);
-            tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED);
-            ie = ieinner;
+            try {
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED, false);
+            } catch (InterruptedException e1) {
+                throw new RuntimeException("Unexpected InterruptedException", e1);
+            }
+            ie = e;
         }
 
         if (tracker.getRepoSyncResults() != null) {
@@ -439,8 +436,7 @@ public class ContentProviderManager {
             log.debug("synchronizeRepo :: merging results.");
         }
         if (ie != null) {
-            log.debug("rethrowing the InterruptedException");
-            throw new InterruptedException(ie.toString());
+            return false;
         } else {
             return true;
         }
@@ -482,8 +478,20 @@ public class ContentProviderManager {
 
     }
 
-    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) {
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) throws InterruptedException {
+        return updateSyncStatus(tracker, status, true);
+    }
+
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status, boolean checkCancelling)
+        throws InterruptedException {
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
+        Subject overlord = subjMgr.getOverlord();
+        int repoId = tracker.getRepoId();
+        RepoSyncResults cancelCheck = repoManager.getMostRecentSyncResults(overlord, repoId);
+        if (cancelCheck.getStatus() == ContentSyncStatus.CANCELLING) {
+            throw new InterruptedException();
+        }
         RepoSyncResults results = tracker.getRepoSyncResults();
         results.setStatus(status);
         results = repoManager.mergeRepoSyncResults(results);

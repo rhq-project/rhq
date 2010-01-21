@@ -167,7 +167,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
         ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
         pc.syncRepoNow(repo);
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             RepoSyncResults res = getSyncResults(repo.getId());
             if (res != null) {
                 System.out.println("status: [" + res.getStatus() + "] CTRL+C to exit");
@@ -179,7 +179,7 @@ public class RepoSyncingTest extends AbstractEJB3Test {
             }
             Thread.sleep(1000);
             if (i == 5) {
-                pc.cancelRepoSync(repo);
+                pc.cancelRepoSync(LookupUtil.getSubjectManager().getOverlord(), repo);
             }
 
         }

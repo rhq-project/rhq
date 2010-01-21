@@ -131,7 +131,8 @@ public class AdvisorySourceSynchronizer {
         return tracker;
     }
 
-    private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails) {
+    private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails)
+        throws InterruptedException {
         AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
 
         for (Advisory d : advs) {
@@ -167,6 +168,7 @@ public class AdvisorySourceSynchronizer {
                 }
             }
             advDetails.add(detail);
+            ThreadUtil.checkInterrupted();
         }
     }
 }

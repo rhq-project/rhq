@@ -1,58 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
-      xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
-
-<ui:composition template="/rhq/layout/main.xhtml">
-
-    <ui:param name="pageTitle" value="List Alert Notifications for Resource '#{ResourceUIBean.name}'"/>
-
-    <ui:define name="metaHeaders">
-        <style>
-            .col1, .col2 {
-                vertical-align: top;
-                padding: 10px;
-            }
-
-            .col2 {
-                width: 100%;
-            }
-
-            #senderName {
-                display: none;
-            }
-        </style>
-    </ui:define>
-
-    <ui:define name="breadcrumbs">
-        <h:outputLink value="/alerts/Config.do">
-            <f:param name="mode" value="viewRoles"/>
-            <f:param name="id" value="#{param.id}"/>
-            <f:param name="ad" value="#{param.ad}"/>
-            <h:outputText>Alert Definitions</h:outputText>
-        </h:outputLink>
-        <h:outputText> &gt; </h:outputText>
-        <h:outputLink value="listAlertSender.xhtml">
-            Alert Notification Definitions
-        </h:outputLink>
-    </ui:define>
-
-    <ui:define name="body">
-        <br/>
-        <h:messages showDetail="true"
-                    globalOnly="true"
-                    infoClass="InfoBlock"
-                    warnClass="WarnBlock"
-                    errorClass="ErrorBlock"
-                    fatalClass="FatalBlock"
-                    layout="table"
-                    width="100%"/>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:h="http://java.sun.com/jsf/html"
+              xmlns:f="http://java.sun.com/jsf/core"
+              xmlns:ui="http://java.sun.com/jsf/facelets"
+              xmlns:c="http://java.sun.com/jstl/core"
+              xmlns:onc="http://jboss.org/on/component"
+              xmlns:a4j="http://richfaces.org/a4j"
+              xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
         <rich:panel id="existingAlertsPanel">
             <f:facet name="header">
@@ -107,9 +62,16 @@
                                          value="Remove Selected"
                                          action="#{alertNotificationsUIBean.removeSelected}"
                                          styleClass="buttonmed"/>
+                        
+                        <br /><br />
+                        <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
+                            <h:outputText value="Add New Alert Notification" />
+                            <rich:componentControl for="addAlertPanel" attachTo="addAlertLink" operation="show" event="onclick" />
+                        </h:outputLink>
                     </h:form>
                 </h:panelGroup>
 
+                <a4j:region>
                 <h:panelGroup>
                     <h:form id="alertConfig">
                         <input type="hidden" name="id" value="${param.id}"/>
@@ -132,10 +94,11 @@
                     <!-- Custom plugin UI -->
                     <div id="customContentArea"></div>
                 </h:panelGroup>
+                </a4j:region>
             </h:panelGrid>
         </rich:panel>
 
-        <rich:panel id="addAlertPanel">
+        <rich:modalPanel id="addAlertPanel" moveable="false" autosized="true">
             <f:facet name="header">
                 <h:outputText value="Add Alert Notification" />
             </f:facet>
@@ -170,8 +133,14 @@
                                  action="#{alertNotificationsUIBean.addAlertSender}"
                                  styleClass="buttonmed">
                 </h:commandButton>
+
+                <br /><br />
+                <h:outputLink id="notificationCancelLink" styleClass="buttonmed" value="#">
+                    <h:outputText value="Cancel" />
+                    <rich:componentControl for="addAlertPanel" attachTo="notificationCancelLink" operation="hide" event="onclick" />
+                </h:outputLink>
             </h:form>
-        </rich:panel>
+        </rich:modalPanel>
 
         <rich:panel id="addAlertFromTemplatePanel">
             <f:facet name="header">
@@ -191,7 +160,7 @@
                 <h:selectBooleanCheckbox title="clearExisting" value="#{alertNotificationsUIBean.clearExistingNotifications}"/>
                 <h:outputText value="Clear existing notifications"/>
 
-                <br/>
+                <br /><br />
 
                 <h:commandButton id="addTemplateButton"
                                  value="Add Alert Notification from Template"
@@ -209,15 +178,21 @@
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>
 
+        <a4j:region>
         <h:outputText id="senderName"
-                      value="#{alertNotificationsUIBean.activeNotification.senderName}" />
+                     style="display: none;"
+                     value="#{alertNotificationsUIBean.activeNotification.senderName}" />
+        </a4j:region>
+        
         <script>
             function updateCustomContent() {
                 var sender = $('senderName').innerHTML;
                 new Ajax.Updater('customContentArea',
-                                 'customContent.xhtml',
+                                 'notif/customContent.xhtml',
                                  { method: 'get',
-                                   parameters: {'senderName': sender}
+                                   parameters: {'senderName': sender,
+                                                'ad': #{param.ad},
+                                                'id': #{param.id}}
                                  });
             }
 
@@ -225,7 +200,4 @@
                 updateCustomContent();
             });
         </script>
-    </ui:define>
-</ui:composition>
-
-</html>
+</ui:component>

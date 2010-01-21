@@ -85,6 +85,8 @@ public class WsRegistrationManagerTest extends AssertJUnit implements TestProper
         Subject admin = subjectUtil.admin();
 
         // Test
+
+        // Note: randomPlatform calls #registerPlatform, which is why there's no explicit test for that
         Resource created = resourceUtil.randomPlatform();
         service.importPlatform(admin, created);
 

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.plugins.alertSubject;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -40,13 +41,13 @@ public class SubjectsBackingBean  {
     private final Log log = LogFactory.getLog(SubjectsBackingBean.class);
 
     private Map<String, String> subjectsMap;
-    private Set<String> currentSubjects;
+    private List<String> currentSubjects;
 
-    public Set<String> getCurrentSubjects() {
+    public List<String> getCurrentSubjects() {
         return currentSubjects;
     }
 
-    public void setCurrentSubjects(Set<String> currentSubjects) {
+    public void setCurrentSubjects(List<String> currentSubjects) {
         this.currentSubjects = currentSubjects;
     }
 

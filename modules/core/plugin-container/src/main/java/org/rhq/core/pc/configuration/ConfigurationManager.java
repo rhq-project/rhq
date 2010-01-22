@@ -33,6 +33,8 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -44,10 +46,12 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.template.TemplateEngine;
 
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -185,14 +189,38 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
+        TemplateEngine templateEngine = fetchTemplateEngine();
+        
+        
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
+                rawConfig.setContents(contents.getBytes());
+                
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
         }
+    }
+
+    private static TemplateEngine fetchTemplateEngine() {
+        Resource platformResource = PluginContainer.getInstance().getInventoryManager().getPlatform();
+        TreeMap<String, String> tokens = new TreeMap<String, String>();
+        tokens.put("rhq.hostname", platformResource.getName());
+        
+        for (Resource childResource : platformResource.getChildResources()) {
+            if (childResource.getResourceType().getName().equals("Network Adapter" )){
+                String key = "rhq.interfaces."+childResource.getName()+".mac";
+                tokens.put(key ,childResource.getDescription());                
+            }
+            
+        }
+        
+        
+        TemplateEngine templateEngine = new TemplateEngine(tokens);
+        return templateEngine;
     }
 
     private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {

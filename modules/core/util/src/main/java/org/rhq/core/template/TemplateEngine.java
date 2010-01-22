@@ -38,7 +38,8 @@ public class TemplateEngine {
             String next = matcher.group();
             Matcher keyMatcher = keyPattern.matcher(next);
             if (keyMatcher.find()) {
-                String value = tokens.get(keyMatcher.group());
+                String key = keyMatcher.group();
+                String value = tokens.get(key);
                 if (value != null) {
                     next = value;
                 }

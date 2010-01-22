@@ -57,7 +57,6 @@ public class AlertUIBean {
     private FacesMessages facesMessages;
     @In
     private AlertDescriber alertDescriber;
-    @DataModel
     private List<String> alertConditions;
     private AlertDefinition alertDefinition;
     private String alertDampening;
@@ -74,6 +73,9 @@ public class AlertUIBean {
         this.alertDefinition = alertDefinition;
     }
 
+    public List<String> getAlertConditions() {
+        return alertConditions;
+    }
 
     public List<SelectItem> getPriorities() {
         List<SelectItem> items = new ArrayList<SelectItem>();

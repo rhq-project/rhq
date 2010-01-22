@@ -61,7 +61,10 @@
                 <f:facet name="header">
                     <h:outputLabel for="id" value="Id" />
                 </f:facet>
-                <h:outputText id="id" value="#{resource.id}" />
+
+                <h:outputLink value="#{BrowseResourcesUIBean.getResourceUrl(resource.id)}" target="_top">
+                    <h:outputText id="id" value="#{resource.id}" />
+                </h:outputLink>
             </rich:column>
 
             <rich:column sortBy="#{r.name}" width="240">

@@ -18,11 +18,15 @@
  */
 package org.rhq.sample.perspective;
 
+import java.util.List;
+import java.util.Map;
+
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.international.StatusMessage;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -32,9 +36,9 @@ import org.rhq.core.gui.model.PagedDataModel;
 import org.rhq.core.gui.model.PagedDataProvider;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.perspective.AbstractPagedDataPerspectiveUIBean;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
+import org.rhq.enterprise.server.perspective.PerspectiveTarget;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
-
-import java.util.List;
 
 /**
  * A Seam component that utilizes the RHQ remote API to obtain a paged list of all inventoried Resources.
@@ -46,6 +50,7 @@ import java.util.List;
 public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
     private PagedDataModel<Resource> dataModel;
     private List<Resource> selectedResources;
+    private Map<Integer, String> resourceUrlMap;
 
     public BrowseResourcesUIBean() {
         return;
@@ -56,6 +61,7 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         if (this.dataModel == null) {
             this.dataModel = createDataModel();
         }
+
         return this.dataModel;
     }
 
@@ -124,7 +130,33 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         public PageList<Resource> getDataPage(PageControl pageControl) {
             ResourceCriteria resourceCriteria = new ResourceCriteria();
             resourceCriteria.setPageControl(pageControl);
-            return this.resourceManager.findResourcesByCriteria(this.subject, resourceCriteria);
+            PageList<Resource> resources = this.resourceManager.findResourcesByCriteria(this.subject, resourceCriteria);
+            setLinkBackUrls(resources);
+            return resources;
         }
     }
+
+    private void setLinkBackUrls(List<Resource> resources) {
+        int[] ids = new int[resources.size()];
+        for (int i = 0, size = resources.size(); (i < size); ++i) {
+            ids[i] = resources.get(i).getId();
+        }
+
+        try {
+            RemoteClient remoteClient = getRemoteClient();
+            Subject subject = getSubject();
+            PerspectiveManagerRemote perspectiveManager = remoteClient.getPerspectiveManagerRemote();
+            this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, ids, false,
+                false);
+        } catch (Exception e) {
+            // for the demo, just dump a stack in this unlikely case
+            e.printStackTrace();
+        }
+    }
+
+    public String getResourceUrl(int resourceId) {
+        String url = this.resourceUrlMap.get(resourceId);
+        return url;
+    }
+
 }

@@ -22,9 +22,14 @@
 */
 package org.rhq.enterprise.server.ws.test;
 
+import java.util.List;
+
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.ws.Advisory;
+import org.rhq.enterprise.server.ws.AdvisoryCVE;
+import org.rhq.enterprise.server.ws.Cve;
+import org.rhq.enterprise.server.ws.PageControl;
 import org.rhq.enterprise.server.ws.Subject;
 
 /**
@@ -42,7 +47,7 @@ public class WsAdvisoryManagerTest extends WsUnitTestBase {
 
         // Setup
         String label = "WsAdvisoryManagerTest.createGetDeleteAdvisory.label";
-        String synopsis = "WsAdvisoryManagerTest.createGetDeleteAdvisory.name";
+        String synopsis = "WsAdvisoryManagerTest.createGetDeleteAdvisory.synopsis";
         String type = "bugfix";
 
         Subject admin = subjectUtil.admin();
@@ -71,4 +76,43 @@ public class WsAdvisoryManagerTest extends WsUnitTestBase {
         assert retrieved == null;
     }
 
+    @Test(enabled = TESTS_ENABLED)
+    public void createMapDeleteCve() throws Exception {
+
+        // Setup
+        String advLabel = "WsAdvisoryManagerTest.createMapDeleteCve.label";
+        String advSynopsis = "WsAdvisoryManagerTest.createMapDeleteCve.synopsis";
+        String advType = "bugfix";
+
+        String cveName = "WsAdvisoryManagerTest.createMapDeleteCve.name";
+
+        Subject admin = subjectUtil.admin();
+
+        PageControl pc = objectFactory.createPageControl();
+
+        // Test & Verify
+        Advisory createdAdvisory = service.createAdvisory(admin, advLabel, advType, advSynopsis);
+        assert createdAdvisory != null;
+
+        Cve createdCve = service.createCVE(admin, cveName);
+        assert createdCve != null;
+
+        AdvisoryCVE createdMapping = service.createAdvisoryCVE(admin, createdAdvisory, createdCve);
+        assert createdMapping != null;
+
+        assert advLabel.equals(createdMapping.getAdvisory().getAdvisory());
+
+        List<AdvisoryCVE> cveList = service.getAdvisoryCVEByAdvId(admin, createdAdvisory.getId(), pc);
+        assert cveList.size() == 1 : "Found: " + cveList.size();
+
+        service.deleteAdvisoryCVE(admin, createdAdvisory.getId());
+
+        List<AdvisoryCVE> deletedMappings = service.getAdvisoryCVEByAdvId(admin, createdAdvisory.getId(), pc);
+        assert deletedMappings != null;
+        assert deletedMappings.size() == 0;
+
+        // Cleanup
+        service.deleteCVE(admin, createdCve.getId());
+        service.deleteAdvisoryByAdvId(admin, createdAdvisory.getId());
+    }
 }

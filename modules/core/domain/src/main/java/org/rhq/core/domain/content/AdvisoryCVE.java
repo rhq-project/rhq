@@ -66,7 +66,6 @@ public class AdvisoryCVE implements Serializable {
     @Id
     private int id;
 
-    @XmlTransient
     @ManyToOne
     @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false)
     private Advisory advisory;

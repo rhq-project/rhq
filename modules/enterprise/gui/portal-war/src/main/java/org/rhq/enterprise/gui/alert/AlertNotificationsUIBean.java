@@ -205,7 +205,7 @@ public class AlertNotificationsUIBean {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-        alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),alertDefinitionId,false);
+        alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),alertDefinitionId,getClearExistingNotifications());
 
         return SUCCESS_OUTCOME;
     }

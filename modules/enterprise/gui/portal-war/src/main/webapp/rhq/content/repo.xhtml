@@ -89,17 +89,18 @@
                 timeZone="#{ServerInfoUIBean.timeZone}" />
             </h:outputText></td>
           </tr>
+		
+		  <!-- ******* START AJAX REFRESH/POLLING BLOCK ****** -->
+          <a4j:region>
+          <a4j:poll id="statusPoll" interval="1005"
+            reRender="syncPercent,syncStatus" />
           <tr>
             <td align="right"><b>Synchronization Status:</b></td>
             <td align="left"><c:choose>
               <c:when
                 test="#{RepoDetailsUIBean.percentComplete != '100'}">
-                <a4j:region>
-                  <a4j:poll id="statusPoll" interval="1000"
-                    reRender="syncStatus" />
                   <h:outputText id="syncStatus"
                     value="#{RepoDetailsUIBean.syncStatus}" />
-                </a4j:region>                    
               </c:when>
               <c:otherwise>
                 <h:outputText id="syncStatus"
@@ -107,26 +108,21 @@
               </c:otherwise>
             </c:choose></td>
           </tr>
-          <!-- 
           <tr>
             <td align="right"><b>Raw Percentage :</b></td>
             <td align="left">
-                <a4j:region>
-                  <a4j:poll id="percentPoll" interval="1005"
-                    reRender="syncPercent" />
                   <h:outputText id="syncPercent"
                     value="#{RepoDetailsUIBean.percentComplete}" />
-                </a4j:region>                    
 			</td>
           </tr>
-           -->
+          <!-- 
           <tr>
-            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="right"><b>Synchronization Progress 1:</b></td>
             <td align="left">
               <c:choose>
                 <c:when
                   test="#{RepoDetailsUIBean.showProgressBar}">
-	              <rich:progressBar
+	              <rich:progressBar id="syncProgress"
 	                value="#{RepoDetailsUIBean.percentComplete}"
 	                label="#{RepoDetailsUIBean.percentComplete} %"
 	                interval="999" minValue="-1" maxValue="99">
@@ -139,6 +135,23 @@
 	            	Not Synching
 	            </c:otherwise>
 	          </c:choose>
+            </td>
+          </tr>
+           -->
+          <tr>
+            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="left">
+              <rich:progressBar id="syncProgress"
+                value="#{RepoDetailsUIBean.percentComplete}"
+                label="#{RepoDetailsUIBean.percentComplete} %"
+                interval="999" minValue="-1" maxValue="99">
+                <f:facet name="complete">
+                  <h:outputText value="Synchronizing Complete" />
+                </f:facet>
+                <f:facet name="initial">
+                  <h:outputText value="Not Synching" />
+                </f:facet>
+              </rich:progressBar>
             </td>
           </tr>
           <tr>
@@ -167,16 +180,11 @@
                     operation="hide" event="onclick" />
                 </h:panelGroup>
               </f:facet>
-              <a4j:region>
-                  <a4j:poll id="resultsPoll" interval="2000"
-                    reRender="syncResults" />
-                  <PRE><h:outputText id="syncResults"
-                value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
-              </a4j:region>
-              
-              
+                  <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
             </rich:modalPanel></td>
           </tr>
+          </a4j:region>
+          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
         </table>
       </rich:panel>
 

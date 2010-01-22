@@ -64,7 +64,9 @@ public class RepoDetailsUIBean {
     public String getSyncStatus() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-        return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+        String retval = LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+        System.out.println("getSyncStatus: " + retval);
+        return retval;
     }
 
     public RepoSyncResults getSyncResults() {
@@ -77,11 +79,14 @@ public class RepoDetailsUIBean {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         RepoSyncResults r = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+        String retval;
         if (r != null && r.getPercentComplete() != null) {
-            return r.getPercentComplete().toString();
+            retval = r.getPercentComplete().toString();
         } else {
-            return "0";
+            retval = "0";
         }
+        System.out.println("getPercentComplete: " + retval);
+        return retval;
     }
 
     public String sync() {

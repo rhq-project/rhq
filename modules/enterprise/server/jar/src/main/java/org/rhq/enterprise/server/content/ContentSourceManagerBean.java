@@ -847,23 +847,32 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
                     log.info("OutPutFile is located at: " + outputFile);
+                    boolean download = false;
+
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
                         // if the MD5's match, just ignore this download request and continue on
+                        // If they are different we re-download
                         String expectedMD5 = (pv.getMD5() != null) ? pv.getMD5() : "<unspecified MD5>";
                         String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
                         if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
-                            throw new Exception("Already have package bits for [" + pv + "] located at [" + outputFile
+                            log.error("Already have package bits for [" + pv + "] located at [" + outputFile
                                 + "] but the MD5 hashcodes do not match. Expected MD5=[" + expectedMD5
-                                + "], Actual MD5=[" + actualMD5 + "]");
+                                + "], Actual MD5=[" + actualMD5 + "] - redownloading package");
+                            download = true;
                         } else {
                             log.info("Asked to download package bits but we already have it at [" + outputFile
                                 + "] with matching MD5 of [" + actualMD5 + "]");
+                            download = false;
                         }
                     } else {
+                        download = true;
+                    }
+                    if (download) {
                         StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
                         bitsStream = null;
                     }
+
                 }
             } finally {
                 if (ps != null) {

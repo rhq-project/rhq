@@ -191,9 +191,6 @@
             </f:facet>
 
             <h:form id="newNotificationForm">
-                <input type="hidden" name="id" value="${param.id}"/>
-                <input type="hidden" name="ad" value="${param.ad}"/>
-                <input type="hidden" name="opMode" value="${param.opMode}"/>
 
                 <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
                 <br />
@@ -221,6 +218,12 @@
                                  action="#{notificationTemplateUIBean.addAlertSender}"
                                  styleClass="buttonmed">
                 </h:commandButton>
+
+                <a4j:support event="oncomplete"
+                         ignoreDupResponses="true"
+                         requestDelay="150"
+                         reRender="alertConfig,senderName"
+                         oncomplete="updateCustomContent();" />
             </h:form>
         </rich:panel>
 

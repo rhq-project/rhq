@@ -19,6 +19,7 @@
 package org.rhq.plugins.cobbler;
 
 import java.io.File;
+import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,7 +33,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 
@@ -56,10 +56,6 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public AvailabilityType getAvailability() {
         return super.getAvailability();
-    }
-
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        super.updateResourceConfiguration(report);
     }
 
     public Set<RawConfiguration> loadRawConfigurations() {
@@ -89,12 +85,13 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     }
 
-    private Augeas createAugeas(String lens, byte[] contents) {
+    private Augeas createAugeas(String lens, byte[] binary) {
         try {
             Augeas aug = new Augeas(getAugeasRootPath(), AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
             File fl = File.createTempFile("_rhq", null);
+            String contents = normalizeToUnix(binary);
             //write the 'to' file to disk 
-            FileUtils.writeByteArrayToFile(fl, contents);
+            FileUtils.writeStringToFile(fl, contents);
             aug.set("/augeas/load/CobblerTransform/lens", lens);
             aug.set("/augeas/load/CobblerTransform/incl", fl.getAbsolutePath());
             aug.load();
@@ -116,7 +113,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
             //apply structured changes
             if (SETTINGS_PATH.equals(to.getPath())) {
                 String server = from.getSimpleValue("settings/server", "");
-                aug.set("/files" + file + "/settings/server", server);
+                aug.set("/files" + file + "/server", server);
             }
             aug.save();
 
@@ -138,7 +135,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
                 lens = "CobblerSettings.lns";
                 Augeas aug = createAugeas(lens, from.getContents());
                 String file = aug.get("/augeas/load/CobblerTransform/incl");
-                to.put(new PropertySimple("settings/server", aug.get("/files" + file + "/settings/server")));
+                to.put(new PropertySimple("settings/server", aug.get("/files" + file + "/server")));
                 aug.close();
             }
         } catch (Exception e) {
@@ -149,7 +146,8 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
         try {
-            FileUtils.writeByteArrayToFile(new File(rawConfiguration.getPath()), rawConfiguration.getContents());
+            File f = new File(rawConfiguration.getPath());
+            FileUtils.writeStringToFile(f, normalizeToUnix(rawConfiguration.getContents()));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -169,5 +167,10 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public void validateStructuredConfiguration(Configuration configuration) {
         // TODO Auto-generated method stub
+    }
+
+    private String normalizeToUnix(byte[] contents) throws UnsupportedEncodingException {
+        String s = new String(contents, "UTF8");
+        return s.replaceAll("\r\n", "\n");
     }
 }

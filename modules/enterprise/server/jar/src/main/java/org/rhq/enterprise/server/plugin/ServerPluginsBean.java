@@ -454,9 +454,9 @@ public class ServerPluginsBean implements ServerPluginsLocal {
             if (pluginFile != null) {
                 entityManager.flush();
                 streamPluginFileContentToDatabase(plugin.getId(), pluginFile);
+                loadServerPluginInMasterContainer(pluginFile.toURI().toURL());
             }
 
-            loadServerPluginInMasterContainer(pluginFile.toURI().toURL());
             if (plugin.isEnabled()) {
                 enableServerPluginInMasterContainer(pluginKey);
             }

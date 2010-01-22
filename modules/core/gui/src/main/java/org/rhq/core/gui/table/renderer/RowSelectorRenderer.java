@@ -151,6 +151,9 @@ public class RowSelectorRenderer extends AbstractRenderer {
         return selectedDataObjects;
     }
 
+    /*
+     * Returns an immutable Set containing the String representations of the selected row keys.
+     */
     @NotNull
     private Set<String> getSelectedRowKeys(FacesContext context, UIData data, RowSelectorComponent rowSelector) {
         Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
@@ -161,8 +164,13 @@ public class RowSelectorRenderer extends AbstractRenderer {
             Map<String, String[]> requestParamMap = context.getExternalContext().getRequestParameterValuesMap();
             String requestParamName = rowSelector.getClientId(context);
             String[] selectedRowKeyArray = requestParamMap.get(requestParamName);
-            selectedRowKeys = new HashSet<String>(selectedRowKeyArray.length);
-            Collections.addAll(selectedRowKeys, selectedRowKeyArray);
+            if (selectedRowKeyArray != null) {
+                selectedRowKeys = new HashSet<String>(selectedRowKeyArray.length);
+                Collections.addAll(selectedRowKeys, selectedRowKeyArray);
+                selectedRowKeys = Collections.unmodifiableSet(selectedRowKeys);
+            } else {
+                selectedRowKeys = Collections.emptySet();
+            }
         }
         return selectedRowKeys;
     }

@@ -661,6 +661,7 @@
 
    <!-- Global Content Activators
 -->
+
    <xs:complexType
       name="ContentProviderActivatorType">
       <xs:annotation>
@@ -681,36 +682,11 @@
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
-
-<!-- Under Construction
- 
-   <xs:complexType
-      name="ContentProviderActivatorType">
-      <xs:annotation>
-         <xs:documentation>The specified Content Provider Type must be installed in order to activate the extension.
-         </xs:documentation>
-      </xs:annotation>
-      <xs:complexContent>
-         <xs:extension
-            base="perspective:ActivatorType">
-            <xs:attribute
-               name="name"
-               type="xs:string"
-               use="required">
-               <xs:annotation>
-                  <xs:documentation>The required Content Provider Type's internal name.</xs:documentation>
-               </xs:annotation>
-            </xs:attribute>
-         </xs:extension>
-      </xs:complexContent>
-   </xs:complexType>
-
- -->
 
    <!-- Contextual Content Activators
 
    Under Construction
-
+-->
    <xs:complexType
       name="ContentActivatorType">
       <xs:annotation>
@@ -719,7 +695,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension
-            base="perspective:ActivatorType">
+            base="perspective:CommonActivatorsType">
             <xs:attribute
                name="providerType"
                type="xs:string"
@@ -764,7 +740,6 @@
       </xs:complexContent>
    </xs:complexType>
 
--->
 
    <!-- =========================================== Helper Types =============================================
 -->

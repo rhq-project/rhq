@@ -46,7 +46,6 @@ THIS TEXT WILL BE REMOVED.
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" style="width:100%">
-        <h:outputText value="#{ResourceUIBean.name}"/>
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
           <h:panelGroup style="text-align:right">
             <h:commandButton value="Edit"
@@ -71,7 +70,7 @@ THIS TEXT WILL BE REMOVED.
                 <rich:panel style="width:100%">
                   <f:facet name="header">Files</f:facet>
                   <rich:panelMenu mode="ajax"
-                                  expandMode="client"
+                                  expandMode="client"   
                                   iconCollapsedGroup="/images/icn_tree_folder.gif"
                                   iconExpandedGroup="/images/icn_tree_folder.gif"
                                   limitToList="true"

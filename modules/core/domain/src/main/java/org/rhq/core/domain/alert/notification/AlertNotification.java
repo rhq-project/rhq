@@ -160,7 +160,11 @@ public class AlertNotification implements Serializable {
             config = this.configuration.deepCopy(false);
         else
             config = this.configuration;
-        return new AlertNotification(alertDefinition,config);
+        AlertNotification notification = new AlertNotification(alertDefinition, config);
+        notification.setName(this.name);
+        notification.setSenderName(this.senderName);
+        notification.setOrder(this.order);
+        return notification;
     }
 
     protected AlertNotification copy() {

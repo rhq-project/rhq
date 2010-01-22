@@ -124,7 +124,7 @@
         <column name="NAME" required="true" size="40" type="VARCHAR2"/>
         <column name="DESCRIPTION" required="false" size="250" type="VARCHAR2"/>
 
-    </table>    
+    </table>
 
     <table name="RHQ_ALERT_NOTIFICATION" tablespace="@@@LARGE_TABLESPACE_FOR_DATA@@@"
            storage-options="freelists 5" cache="true" logging="false">
@@ -135,10 +135,6 @@
         <column name="NOTIF_TEMPLATE_ID" required="false" type="INTEGER" references="RHQ_ALERT_NOTIF_TEMPL(ID)"/>
         <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE(ID)"/>
         <column name="SUBJECT_ID" type="INTEGER" references="RHQ_SUBJECT(ID)"/>
-        <column name="EMAIL_ADDRESS" size="100" type="VARCHAR2"/>
-        <column name="SNMP_HOST" size="100" type="VARCHAR2"/>
-        <column name="SNMP_PORT" type="INTEGER"/>
-        <column name="SNMP_OID" size="250" type="VARCHAR2"/>
         <column name="ALERT_CONFIG_ID" required="false" type="INTEGER" references="RHQ_CONFIG(ID)"/>
         <column name="ALERT_SENDER_NAME" required="false" size="100" type="VARCHAR2" /> <!-- TODO make required = true -->
         <column name="ALERT_ORDER" type="INTEGER" />

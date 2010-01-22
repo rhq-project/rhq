@@ -260,6 +260,8 @@ public class NotificationTemplatesUIBean implements Serializable {
         System.out.println("addAlertSender: activeNotification is " + activeNotification);
         alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
         this.notificationConverter.setAlertNotifications(alertNotifications);
+        selectedNotifications.clear();
+        selectedNotifications.add(activeNotification);
 
         return SUCCESS_OUTCOME;
     }

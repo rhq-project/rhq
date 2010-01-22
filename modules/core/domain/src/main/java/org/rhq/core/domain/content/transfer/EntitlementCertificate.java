@@ -25,17 +25,6 @@ public class EntitlementCertificate {
     }
 
     /**
-     *
-     * @param certificate
-     * @param key
-     */
-    public EntitlementCertificate(String certificate, String key) {
-        this.name = "client";
-        this.certificate = certificate;
-        this.key = key;
-    }
-
-    /**
      * @return the certificate
      */
     public String getCertificate() {

@@ -4,14 +4,22 @@ import java.security.cert.X509Extension;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.enterprise.server.content.EntitlementManagerBean;
+
 public class ContentFilter {
+
+    private final Log log = LogFactory.getLog(EntitlementManagerBean.class);
 
     static final String CERTS = "javax.servlet.request.X509Certificate";
 
     void filter(HttpServletRequest request, int repoId) throws EntitlementException {
         X509Extension[] certificates = (X509Extension[]) request.getAttribute(CERTS);
         if (certificates == null) {
-            throw new EntitlementException("client x.509 cert not passed");
+            log.warn("x509 client certificate not passed, not-checked.");
+            return;
         }
         String oid = objectIdentifier(repoId);
         for (X509Extension x509 : certificates) {

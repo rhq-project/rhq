@@ -25,59 +25,28 @@ public class EntitlementManagerBean implements EntitlementManagerLocal, Entitlem
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
         List<EntitlementCertificate> list = new ArrayList<EntitlementCertificate>();
-        if (resourceId % 2 == 0) {
-            list.add(getEven());
-        } else {
-            list.add(getOdd());
+        DummyLoader loader = new DummyLoader();
+        try {
+            list.add(loader.load(resourceId));
+        } catch (Exception ex) {
+            log.warn("x.509 cert for: " //
+                + resourceId //
+                + " not-found in: " //
+                + DummyLoader.dir);
         }
         return list;
-    }
-
-    /**
-     * Get certificate for even numbered resource ids.
-     * @return The cert.
-     * @note This is a prototype hack.
-     */
-    private EntitlementCertificate getOdd() {
-        DummyLoader loader = new DummyLoader();
-        try {
-            return loader.getOdd();
-        } catch (Exception ex) {
-            log.error("Certificate (ODD), not-found", ex);
-        }
-        return null;
-    }
-
-    /**
-     * Get certificate for odd numbered resource ids.
-     * @return The cert.
-     * @note This is a prototype hack.
-     */
-    private EntitlementCertificate getEven() {
-        DummyLoader loader = new DummyLoader();
-        try {
-            return loader.getEven();
-        } catch (Exception ex) {
-            log.error("Certificate (EVEN), not-found", ex);
-        }
-        return null;
     }
 }
 
 class DummyLoader {
 
-    private static final String dir = "/etc/pki/yum/rhq";
+    static final String dir = "/etc/pki/rhq";
 
-    EntitlementCertificate getOdd() throws IOException {
-        String key = read("odd.key");
-        String pem = read("odd.pem");
-        return new EntitlementCertificate(key, pem);
-    }
-
-    EntitlementCertificate getEven() throws IOException {
-        String key = read("even.key");
-        String pem = read("even.pem");
-        return new EntitlementCertificate(key, pem);
+    EntitlementCertificate load(int resourceId) throws IOException {
+        String name = String.valueOf(resourceId);
+        String key = read(name + ".key");
+        String pem = read(name + ".pem");
+        return new EntitlementCertificate(name, key, pem);
     }
 
     private String read(String fn) throws IOException {

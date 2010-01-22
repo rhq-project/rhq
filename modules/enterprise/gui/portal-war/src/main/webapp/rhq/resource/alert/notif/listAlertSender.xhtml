@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
 <ui:component xmlns="http://www.w3.org/1999/xhtml"
               xmlns:h="http://java.sun.com/jsf/html"
               xmlns:f="http://java.sun.com/jsf/core"
@@ -13,6 +17,8 @@
             <f:facet name="header">
                 <h:outputText>Existing notifications for Resource '#{ResourceUIBean.name}' and alert definition '#{alertNotificationsUIBean.alertDefinition.name}':</h:outputText>
             </f:facet>
+
+            <a4j:region renderRegionOnly="true">
             <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
                 <h:panelGroup>
                     <h:form id="notificationListForm">
@@ -71,7 +77,6 @@
                     </h:form>
                 </h:panelGroup>
 
-                <a4j:region>
                 <h:panelGroup>
                     <h:form id="alertConfig">
                         <input type="hidden" name="id" value="${param.id}"/>
@@ -94,8 +99,12 @@
                     <!-- Custom plugin UI -->
                     <div id="customContentArea"></div>
                 </h:panelGroup>
-                </a4j:region>
+
+                <h:outputText id="senderName"
+                              style="display: none;"
+                              value="#{alertNotificationsUIBean.activeNotification.senderName}" />
             </h:panelGrid>
+            </a4j:region>
         </rich:panel>
 
         <rich:modalPanel id="addAlertPanel" moveable="false" autosized="true">
@@ -178,11 +187,7 @@
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>
 
-        <a4j:region>
-        <h:outputText id="senderName"
-                     style="display: none;"
-                     value="#{alertNotificationsUIBean.activeNotification.senderName}" />
-        </a4j:region>
+        
         
         <script>
             function updateCustomContent() {

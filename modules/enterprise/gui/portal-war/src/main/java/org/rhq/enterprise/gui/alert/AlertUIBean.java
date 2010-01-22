@@ -19,10 +19,7 @@
 package org.rhq.enterprise.gui.alert;
 
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import javax.faces.model.SelectItem;
 import org.jboss.seam.Component;
@@ -60,29 +57,13 @@ public class AlertUIBean {
     private FacesMessages facesMessages;
     @In
     private AlertDescriber alertDescriber;
-    @DataModel(scope=ScopeType.PAGE)
+    @DataModel
     private List<String> alertConditions;
     private AlertDefinition alertDefinition;
     private String alertDampening;
-    private String dateCreated;
-    private String dateModified;
-
-    private DateFormat formatter;
-
-    public AlertUIBean() {
-        this.formatter = new SimpleDateFormat("M/d/yy h:mm:ss aa");
-    }
 
     public String getAlertDampening() {
         return this.alertDampening;
-    }
-
-    public String getDateCreated() {
-        return dateCreated;
-    }
-
-    public String getDateModified() {
-        return dateModified;
     }
 
     public AlertDefinition getAlertDefinition() {
@@ -128,14 +109,8 @@ public class AlertUIBean {
         // the defintion's values properly
         this.alertDefinition = (AlertDefinition) Component.getInstance("alertDefinition");
 
-        lookupDates();
         lookupAlertConditions();
         lookupAlertDampening();
-    }
-
-    private void lookupDates() {
-        this.dateCreated = formatDate(this.alertDefinition.getCtime());
-        this.dateModified = formatDate(this.alertDefinition.getMtime());
     }
 
     private void lookupAlertConditions() {
@@ -150,9 +125,5 @@ public class AlertUIBean {
     private void lookupAlertDampening() {
         AlertDampening dampening = this.alertDefinition.getAlertDampening();
         this.alertDampening = this.alertDescriber.describeDampening(dampening);
-    }
-
-    private String formatDate(long timestamp) {
-        return formatter.format(new Date(timestamp));
     }
 }

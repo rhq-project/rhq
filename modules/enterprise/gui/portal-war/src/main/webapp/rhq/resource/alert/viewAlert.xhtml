@@ -81,10 +81,14 @@
                         <h:outputText id="alertEnabled" value="#{alertDefinition.enabled}" />
 
                         <h:outputLabel for="alertDateCreated" value="Date Created:  " />
-                        <h:outputText id="alertDateCreated" value="#{alertUIBean.dateCreated}" />
+                        <h:outputText id="alertDateCreated" value="#{alertDefinition.ctime}">
+                            <f:converter converterId="UserDateTimeConverter" />
+                        </h:outputText>
 
-                        <h:outputLabel for="alertDateModified" value="Active:  " />
-                        <h:outputText id="alertDateModified" value="#{alertUIBean.dateModified}" />
+                        <h:outputLabel for="alertDateModified" value="Date Modified:  " />
+                        <h:outputText id="alertDateModified" value="#{alertDefinition.mtime}">
+                            <f:converter converterId="UserDateTimeConverter" />
+                        </h:outputText>
                     </h:panelGrid>
 
                     <br />

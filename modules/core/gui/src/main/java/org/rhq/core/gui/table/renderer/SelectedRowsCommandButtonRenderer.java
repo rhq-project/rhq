@@ -55,7 +55,20 @@ public class SelectedRowsCommandButtonRenderer extends AbstractButtonRenderer {
         UIData data = getTargetUIData(selectedRowsCommandButton);
         RowSelectorComponent rowSelector = getRowSelector(data);
         String rowSelectorClientId = rowSelector.getClientId(context);
-        writer.writeAttribute("target", rowSelectorClientId, null);
+        writer.writeAttribute("target", rowSelectorClientId, null);        
+    }
+
+    @Override
+    protected void renderBooleanAttributes(ResponseWriter writer, UIComponent component) throws IOException {
+        SelectedRowsCommandButtonComponent selectedRowsCommandButton = (SelectedRowsCommandButtonComponent) component;
+        
+        Integer minimum = selectedRowsCommandButton.getMinimum();
+        // If the minimum is > 0, which is the typical case, render the button as disabled.
+        // *NOTE* We are making the assumption that no rows are selected by default, which
+        // is how the RowSelectorRenderer renders things.
+        if (minimum > 0) {
+            writer.writeAttribute("disabled", true, "disabled");
+        }
     }
 
     @NotNull

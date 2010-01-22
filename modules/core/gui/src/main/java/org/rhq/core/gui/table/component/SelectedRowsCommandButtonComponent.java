@@ -33,7 +33,7 @@ import javax.faces.context.FacesContext;
  */
 public class SelectedRowsCommandButtonComponent extends HtmlCommandButton {
     private String dataTableId;
-    private Integer minimum;
+    private Integer minimum = DEFAULT_MINIMUM;
     private Integer maximum;
 
     public static final String COMPONENT_TYPE = "org.rhq.SelectedRowsCommandButton";
@@ -58,17 +58,28 @@ public class SelectedRowsCommandButtonComponent extends HtmlCommandButton {
         this.dataTableId = dataTableId;
     }
 
+    @NotNull
     public Integer getMinimum() {
         if (this.minimum != null) {
             return this.minimum;
         }
-        Integer value = (Integer) getBinding("minimum");
-        this.minimum = (value != null) ? value : DEFAULT_MINIMUM;
+        ValueExpression valueExpression = this.getValueExpression("minimum");
+        if (valueExpression != null) {
+            Object value = FacesExpressionUtility.getValue(valueExpression, Object.class);
+            // If the user explicitly specified null, this means there is no minimum. We store this internally as 0.
+            this.minimum = (value == null) ? 0 : minimum;
+        } else {
+            this.minimum = DEFAULT_MINIMUM;
+        }
         return this.minimum;
     }
 
     public void setMinimum(Integer minimum) {
-        this.minimum = minimum;
+        if (minimum != null && minimum < 0) {
+            throw new IllegalArgumentException("value of 'minimum' attribute is not >= 0.");
+        }
+        // If the user explicitly specified null, this means there is no minimum. We store this internally as 0.
+        this.minimum = (minimum == null) ? 0 : minimum;
     }
 
     public Integer getMaximum() {
@@ -80,6 +91,9 @@ public class SelectedRowsCommandButtonComponent extends HtmlCommandButton {
     }
 
     public void setMaximum(Integer maximum) {
+        if (maximum != null && maximum < 0) {
+            throw new IllegalArgumentException("value of 'maximum' attribute is not >= 0.");
+        }
         this.maximum = maximum;
     }
 

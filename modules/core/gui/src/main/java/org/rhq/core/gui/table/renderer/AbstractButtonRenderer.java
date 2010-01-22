@@ -136,7 +136,7 @@ public abstract class AbstractButtonRenderer extends AbstractRenderer {
         RenderKitUtils.renderPassThruAttributes(writer,
                                                 component,
                                                 ATTRIBUTES);
-        RenderKitUtils.renderXHTMLStyleBooleanAttributes(writer, component);
+        renderBooleanAttributes(writer, component);
 
         String styleClass = (String)
               component.getAttributes().get("styleClass");
@@ -151,6 +151,10 @@ public abstract class AbstractButtonRenderer extends AbstractRenderer {
         validateParameters(context, component);
         ResponseWriter writer = context.getResponseWriter();
         writer.endElement("input");
+    }
+
+    protected void renderBooleanAttributes(ResponseWriter writer, UIComponent component) throws IOException {
+        RenderKitUtils.renderXHTMLStyleBooleanAttributes(writer, component);
     }
 
     // --------------------------------------------------------- Private Methods

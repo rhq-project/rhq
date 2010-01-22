@@ -25,7 +25,6 @@ import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.international.StatusMessage;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -52,16 +51,11 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
     private List<Resource> selectedResources;
     private Map<Integer, String> resourceUrlMap;
 
-    public BrowseResourcesUIBean() {
-        return;
-    }
-
     @Begin(join = true)
     public PagedDataModel<Resource> getDataModel() throws Exception {
         if (this.dataModel == null) {
             this.dataModel = createDataModel();
         }
-
         return this.dataModel;
     }
 
@@ -74,11 +68,6 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
     }
 
     public void uninventorySelectedResources() throws Exception {
-        if (this.selectedResources.isEmpty()) {
-            getFacesMessages().add(StatusMessage.Severity.WARN, "You didn't select any Resources.");
-            return;
-        }
-
         RemoteClient remoteClient = getRemoteClient();
         Subject subject = getSubject();
 
@@ -92,7 +81,8 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         }
 
         resourceManager.uninventoryResources(subject, selectedResourceIds);
-        // TODO: i18n this bad boy.
+
+        // Add message to tell the user the uninventory was a success.
         String pluralizer = (this.selectedResources.size() == 1) ? "" : "s";
         getFacesMessages().add("Uninventoried " + this.selectedResources.size() + " Resource" + pluralizer + ".");
 

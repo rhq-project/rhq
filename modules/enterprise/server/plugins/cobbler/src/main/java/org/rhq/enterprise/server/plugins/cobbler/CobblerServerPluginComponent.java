@@ -183,23 +183,26 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
 
                 for (Distribution distribution : repoEntry.getValue().values()) {
 
-                    Distro cobblerDistro = cobblerDistros.get(distribution.getLabel());
-                    if (cobblerDistro == null) {
-                        String distroRootUrl = rootUrl + repoName + "/distributions/" + distribution.getLabel();
+                    Distro existingCobblerDistro = cobblerDistros.get(distribution.getLabel());
+                    Distro desiredCobblerDistro = instantiateCobblerDistro(conn, distribution, repoName, rootUrl);
 
-                        cobblerDistro = new Distro(conn);
-                        cobblerDistro.setName(distribution.getLabel());
-                        cobblerDistro.setComment(COMMENT_MARKER + " " + distribution.getLabel());
-                        cobblerDistro.setKernel(distroRootUrl + "/images/pxeboot/vmlinuz"); // TODO what about other arches
-                        cobblerDistro.setInitrd(distroRootUrl + "/images/pxeboot/initrd.img"); // TODO what about other arches
-                        Map<String, String> ksmeta = new HashMap<String, String>();
-                        ksmeta.put("tree", distroRootUrl);
-                        cobblerDistro.setKsMeta(ksmeta);
-                        cobblerDistro.commit();
-                        log.info("Added distro to Cobbler: [" + distribution.getLabel() + "]");
+                    if (existingCobblerDistro != null) {
+                        // cobbler already has a distro with the name we are looking for.
+                        // let's make sure its data is the same, otherwise, we need to upgrade it.
+                        // but first, we need to take it out of our map, because whatever is left in this map will be removed from Cobbler later.
+                        cobblerDistros.remove(existingCobblerDistro.getName());
+
+                        if (!compareCobblerDistros(existingCobblerDistro, desiredCobblerDistro)) {
+                            // the one Cobbler has is old and needs to be updated with the latest data.
+                            updateCobblerDistro(existingCobblerDistro, desiredCobblerDistro);
+                            existingCobblerDistro.commit();
+                            log.info("Updated existing Cobbler distro [" + distribution.getLabel() + "]");
+                        } else {
+                            log.debug("Cobbler already has distro [" + distribution.getLabel() + "]; keeping it");
+                        }
                     } else {
-                        cobblerDistros.remove(cobblerDistro.getName());
-                        log.debug("Cobbler already has distro [" + distribution.getLabel() + "]");
+                        desiredCobblerDistro.commit();
+                        log.info("Added new distro to Cobbler: [" + distribution.getLabel() + "]");
                     }
                 }
             }
@@ -208,15 +211,100 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
             for (Distro doomed : cobblerDistros.values()) {
                 if (doomed.getComment().startsWith(COMMENT_MARKER)) {
                     doomed.remove();
-                    log.info("Removed distro from Cobbler: [" + doomed.getName() + "]");
+                    log.info("Removed obsolete distro from Cobbler: [" + doomed.getName() + "]");
                 }
             }
         } catch (Throwable t) {
-            // TODO what should we do?
-            t.printStackTrace();
+            log.error("Failed to synchronize distributions to Cobbler server", t);
         } finally {
             this.syncInProgress = false;
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void updateCobblerDistro(Distro existingCobblerDistro, Distro desiredCobblerDistro) {
+        existingCobblerDistro.setName(desiredCobblerDistro.getName());
+        existingCobblerDistro.setComment(desiredCobblerDistro.getComment());
+        existingCobblerDistro.setKernel(desiredCobblerDistro.getKernel());
+        existingCobblerDistro.setInitrd(desiredCobblerDistro.getInitrd());
+
+        Map<String, String> ksMetaDesired = desiredCobblerDistro.getKsMeta();
+        if (ksMetaDesired != null) {
+            Map<String, String> ksMetaExisting = existingCobblerDistro.getKsMeta();
+            if (ksMetaExisting == null) {
+                ksMetaExisting = new HashMap<String, String>(ksMetaDesired.size());
+                existingCobblerDistro.setKsMeta(ksMetaExisting);
+            }
+            ksMetaExisting.clear();
+            ksMetaExisting.putAll(ksMetaDesired);
+        } else {
+            existingCobblerDistro.setKsMeta(null);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean compareCobblerDistros(Distro cobblerDistro1, Distro cobblerDistro2) {
+        if (!compareObjects(cobblerDistro1.getName(), cobblerDistro2.getName())) {
+            return false;
+        }
+        if (!compareObjects(cobblerDistro1.getComment(), cobblerDistro2.getComment())) {
+            return false;
+        }
+        if (!compareObjects(cobblerDistro1.getKernel(), cobblerDistro2.getKernel())) {
+            return false;
+        }
+        if (!compareObjects(cobblerDistro1.getInitrd(), cobblerDistro2.getInitrd())) {
+            return false;
+        }
+
+        Map<String, String> ksMeta1 = cobblerDistro1.getKsMeta();
+        Map<String, String> ksMeta2 = cobblerDistro2.getKsMeta();
+        String tree1 = null;
+        String tree2 = null;
+        if (ksMeta1 != null) {
+            tree1 = ksMeta1.get("tree");
+        }
+        if (ksMeta2 != null) {
+            tree2 = ksMeta2.get("tree");
+        }
+        if (!compareObjects(tree1, tree2)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Given a RHQ distribution domaon object, this instantiates a Cobbler Distro object
+     * that can allow Cobbler to access the distribution content.
+     * NOTE: this does NOT create the Distro on the Cobbler server, this only instantiates
+     * a Distro class object and returns it.
+     * 
+     * @param conn a connection to the Cobbler server
+     * @param distribution the RHQ distribution data
+     * @param repoName the name of the repository that the distribution is associated with
+     * @param rootUrl the root URL where the distribution content can be found
+     * @return an instance of a Cobbler Distro object
+     */
+    private Distro instantiateCobblerDistro(CobblerConnection conn, Distribution distribution, String repoName,
+        String rootUrl) {
+
+        Distro cobblerDistro;
+        String distroRootUrl = rootUrl + repoName + "/distributions/" + distribution.getLabel();
+        String kernel = distroRootUrl + "/images/pxeboot/vmlinuz"; // TODO what about other arches
+        String initrd = distroRootUrl + "/images/pxeboot/initrd.img"; // TODO what about other arches
+        String ksTree = distroRootUrl;
+
+        cobblerDistro = new Distro(conn);
+        cobblerDistro.setName(distribution.getLabel());
+        cobblerDistro.setComment(COMMENT_MARKER + " " + distribution.getLabel());
+        cobblerDistro.setKernel(kernel);
+        cobblerDistro.setInitrd(initrd);
+        Map<String, String> ksmeta = new HashMap<String, String>();
+        ksmeta.put("tree", ksTree);
+        cobblerDistro.setKsMeta(ksmeta);
+
+        return cobblerDistro;
     }
 
     @Override
@@ -344,5 +432,14 @@ public class CobblerServerPluginComponent implements ServerPluginComponent, Cont
             results = results + prop.getName() + "=" + prop.getStringValue();
         }
         return results;
+    }
+
+    private boolean compareObjects(Object o1, Object o2) {
+        // this ensures we don't throw an NPE if either is null
+        if (o1 != null) {
+            return o1.equals(o2);
+        } else {
+            return o2 == null;
+        }
     }
 }

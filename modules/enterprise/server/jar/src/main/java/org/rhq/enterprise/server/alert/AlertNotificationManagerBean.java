@@ -40,10 +40,8 @@ import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -140,69 +138,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         if (hasPermission == false) {
             throw new PermissionException(subject + " is not authorized to edit this alert definition");
         }
-    }
-
-    public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails) {
-        AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
-
-        int added = 0;
-        for (String emailAddress : emails) {
-            emailAddress = emailAddress.toLowerCase().trim();
-            if (emailAddress.equals("")) {
-                continue; // don't add empty addresses
-            }
-            EmailNotification notification = new EmailNotification(alertDefinition, emailAddress);
-
-            // only increment for non-duplicate additions
-            if (notifications.contains(notification) == false) {
-                added++;
-                notifications.add(notification); // cascading should take care of persisting
-            }
-        }
-
-        postProcessAlertDefinition(alertDefinition);
-
-        return added;
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<EmailNotification> getEmailNotifications(Integer alertDefinitionId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("en.emailAddress");
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            EmailNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            EmailNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID, pageControl);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<EmailNotification> results = query.getResultList();
-
-        return new PageList<EmailNotification>(results, (int) count, pageControl);
-    }
-
-    @SuppressWarnings("unchecked")
-    public PageList<EmailNotification> getEmailNotifications(Integer[] alertNotificationIds, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("en.emailAddress");
-
-        if ((alertNotificationIds == null) || (alertNotificationIds.length == 0)) {
-            return new PageList<EmailNotification>(Collections.EMPTY_LIST, 0, pageControl);
-        }
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager, EmailNotification.QUERY_FIND_BY_IDS);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, EmailNotification.QUERY_FIND_BY_IDS,
-            pageControl);
-
-        queryCount.setParameter("ids", alertNotificationIds);
-        query.setParameter("ids", alertNotificationIds);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<EmailNotification> results = query.getResultList();
-
-        return new PageList<EmailNotification>(results, (int) count, pageControl);
     }
 
     public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds) {
@@ -327,23 +262,6 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return new PageList<SubjectNotification>(results, (int) count, pageControl);
     }
 
-    @SuppressWarnings("unchecked")
-    public PageList<SnmpNotification> getSnmpNotifications(Integer alertDefinitionId, PageControl pageControl) {
-        pageControl.initDefaultOrderingField("sn.host");
-
-        Query queryCount = PersistenceUtility.createCountQuery(entityManager,
-            SnmpNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID);
-        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            SnmpNotification.QUERY_FIND_ALL_BY_ALERT_DEFINITION_ID, pageControl);
-
-        queryCount.setParameter("alertDefinitionId", alertDefinitionId);
-        query.setParameter("alertDefinitionId", alertDefinitionId);
-
-        long count = (Long) queryCount.getSingleResult();
-        List<SnmpNotification> results = query.getResultList();
-
-        return new PageList<SnmpNotification>(results, (int) count, pageControl);
-    }
 
     @SuppressWarnings("unchecked")
     public PageList<SubjectNotification> getSubjectNotifications(Integer[] alertNotificationIds, PageControl pageControl) {

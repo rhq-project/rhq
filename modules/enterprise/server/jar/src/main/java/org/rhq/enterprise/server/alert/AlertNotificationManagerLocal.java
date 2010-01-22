@@ -24,10 +24,8 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,21 +41,15 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 @Local
 public interface AlertNotificationManagerLocal {
-    int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails);
 
     int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds);
 
     int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
 
-    PageList<EmailNotification> getEmailNotifications(Integer alertDefinitionId, PageControl pageControl);
 
     PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl);
 
     PageList<SubjectNotification> getSubjectNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<SnmpNotification> getSnmpNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<EmailNotification> getEmailNotifications(Integer[] alertNotificationIds, PageControl pageControl);
 
     PageList<RoleNotification> getRoleNotifications(Integer[] alertNotificationIds, PageControl pageControl);
 

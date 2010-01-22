@@ -227,7 +227,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public void deleteCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
-        advisoryManager.deleteAdvisoryCVE(user, cveId);
+        advisoryManager.deleteCVE(user, cveId);
     }
 
     public void deleteAdvisoryCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {

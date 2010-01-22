@@ -65,7 +65,6 @@ public class RepoDetailsUIBean {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         String retval = LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
-        System.out.println("getSyncStatus: " + retval);
         return retval;
     }
 
@@ -85,7 +84,6 @@ public class RepoDetailsUIBean {
         } else {
             retval = "0";
         }
-        System.out.println("getPercentComplete: " + retval);
         return retval;
     }
 

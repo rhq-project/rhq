@@ -32,6 +32,8 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.annotation.IgnoreDependency;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -39,6 +41,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
@@ -55,6 +58,9 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
     @EJB
     @IgnoreDependency
     private ResourceManagerLocal resourceManager;
+    @EJB
+    @IgnoreDependency
+    private ConfigurationManagerLocal configManager;
     @EJB
     private SubjectManagerLocal subjectManager;
     @EJB
@@ -74,6 +80,13 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
             throw new IllegalStateException(e);
         }
 
+        ResourceType resourceType = platform.getResourceType();
+        ConfigurationDefinition configDefinition = configManager.getPluginConfigurationDefinitionForResourceType(user,
+            resourceType.getId());
+
+        Configuration platformConfig = configDefinition.getDefaultTemplate().getConfiguration();
+
+        platform.setPluginConfiguration(platformConfig);
         platform.setInventoryStatus(InventoryStatus.COMMITTED);
 
         Agent agent = createFakeAgent(platform);

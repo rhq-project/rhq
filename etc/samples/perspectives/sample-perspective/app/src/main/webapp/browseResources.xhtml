@@ -84,10 +84,13 @@
            <f:facet name="footer">
               <rich:columnGroup>
                  <rich:column colspan="8">
-                    <a4j:commandButton value="UNINVENTORY"
-                                       action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
-                                       reRender="resourcesDataTable, resourcesDataTableScroller" />
-
+                    <rhq:selectedRowsCommandButton
+                            value="UNINVENTORY"
+                            action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
+                            minimum="2" maximum="3">
+                        <a4j:support event="onclick" reRender="resourcesDataTable" />
+                    </rhq:selectedRowsCommandButton>
+                    
                     <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                         <ui:param name="dataTableName" value="resourcesDataTable"/>
                         <ui:param name="dataModel" value="#{BrowseResourcesUIBean.dataModel}"/>

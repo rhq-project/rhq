@@ -93,6 +93,15 @@
        <param-name>org.ajax4jsf.VIEW_HANDLERS</param-name>
        <param-value>com.sun.facelets.FaceletViewHandler</param-value>
     </context-param>
+
+    <!-- Uncomment the below context-param to disable compression of JavaScript files associated with RichFaces
+         components in order to debug those script files. -->        
+    <!--
+    <context-param>
+       <param-name>org.richfaces.LoadScriptStrategy</param-name>
+       <param-value>DEFAULT</param-value>
+    </context-param>
+    -->
     
     <welcome-file-list>
        <welcome-file>index.xhtml</welcome-file>

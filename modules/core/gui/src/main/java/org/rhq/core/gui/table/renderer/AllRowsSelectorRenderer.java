@@ -75,7 +75,6 @@ public class AllRowsSelectorRenderer extends AbstractRenderer {
         if (userSpecifiedOnclick != null) {
             onclick += "; " + userSpecifiedOnclick;
         }
-        rowSelector.getAttributes().put("onclick", onclick);
         writer.writeAttribute("onclick", onclick, "onclick");
         // TODO: Add support for all the other common HTML attributes.
         //RenderKitUtils.renderPassThruAttributes(writer, component, ATTRIBUTES);
@@ -124,20 +123,8 @@ public class AllRowsSelectorRenderer extends AbstractRenderer {
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         validateParameters(context, component);
-
         ResponseWriter writer = context.getResponseWriter();
-        writer.write("</input>");
+        writer.endElement("input");
     }
 
-    private void validateParameters(FacesContext context, UIComponent component) {
-        if (context == null) {
-            throw new NullPointerException(MessageUtils.getExceptionMessageString(
-                    MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "context"));
-        }
-
-        if (component == null) {
-            throw new NullPointerException(MessageUtils.getExceptionMessageString(
-                    MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "component"));
-        }
-    }
 }

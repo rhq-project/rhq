@@ -23,6 +23,15 @@
        </component-extension>
     </component>
 
+    <component>
+       <component-type>org.rhq.SelectedRowsCommandButton</component-type>
+       <component-class>org.rhq.core.gui.table.component.SelectedRowsCommandButtonComponent</component-class>
+       <component-extension>
+          <component-family>org.rhq.SelectedRowsCommandButton</component-family>
+          <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+       </component-extension>
+    </component>
+
    <render-kit>
 
       <renderer>
@@ -38,6 +47,14 @@
           <component-family>org.rhq.AllRowsSelector</component-family>
           <renderer-type>org.rhq.AllRowsSelector</renderer-type>
           <renderer-class>org.rhq.core.gui.table.renderer.AllRowsSelectorRenderer</renderer-class>
+       </renderer>
+
+       <renderer>
+          <description>renders a button, that is disabled if the specified minimum and/or maximum selected rows
+          are not satisfied for an associated data table</description>
+          <component-family>org.rhq.SelectedRowsCommandButton</component-family>
+          <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+          <renderer-class>org.rhq.core.gui.table.renderer.SelectedRowsCommandButtonRenderer</renderer-class>
        </renderer>
 
    </render-kit>

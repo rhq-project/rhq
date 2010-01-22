@@ -24,4 +24,12 @@
         </component>
     </tag>
 
+    <tag>
+        <tag-name>selectedRowsCommandButton</tag-name>
+        <component>
+            <component-type>org.rhq.SelectedRowsCommandButton</component-type>
+            <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+        </component>
+    </tag>
+
 </facelet-taglib>

@@ -42,6 +42,18 @@ public abstract class AbstractRenderer extends Renderer implements HeaderResourc
 
     private InternetResourceBuilder resourceBuilder;
 
+    protected void validateParameters(FacesContext context, UIComponent component) {
+        if (context == null) {
+            throw new NullPointerException(MessageUtils.getExceptionMessageString(
+                    MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "context"));
+        }
+
+        if (component == null) {
+            throw new NullPointerException(MessageUtils.getExceptionMessageString(
+                    MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "component"));
+        }
+    }
+
     protected void initializeComponentId(FacesContext context, UIComponent component) {
         if (component.getId() == null) {
             String id = context.getViewRoot().createUniqueId();

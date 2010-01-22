@@ -1,24 +1,17 @@
 /**
- * @param thisObj    the calling AllSelect object instance use to determine whether
+ * @param selectAllCheckbox    the calling AllSelect object instance use to determine whether
  *                   or select or deselect all of the objects with the name selectName
- * @param selectName name of the dom instances that should be checked / unchecked
+ * @param selectCheckboxName name of the dom instances that should be checked / unchecked
  */
-function selectAll(thisObj, selectName) {
-	var selects = document.getElementsByName(selectName);
-	var i;
-	var select;
-	for (i = 0; i < selects.length; i++) {
-		select = selects.item(i);
-		if (select.disabled) {
-			continue;
-		}
-		if (thisObj.checked) {
-			select.checked = true;
-		} else {
-			select.checked = false;
+function selectAll(selectAllCheckbox, selectCheckboxName) {
+	var selectedCheckboxes = document.getElementsByName(selectCheckboxName);
+	for (var i = 0; i < selectedCheckboxes.length; i++) {
+		var selectedCheckbox = selectedCheckboxes.item(i);
+		if (!selectedCheckbox.disabled) {
+			selectedCheckbox.checked = selectAllCheckbox.checked;
 		}
 	}
-	updateButtons(selectName);
+	updateButtons(selectCheckboxName);
 }
 
 /**
@@ -31,30 +24,34 @@ function selectAll(thisObj, selectName) {
  */
 // TODO: Make this robust enough to properly maintain CSS style when the button
 // is disabled (ips, 08/31/07).
-function updateButtons(targetName) {
-	var count = countSelected(targetName);
-	var buttons = document.getElementsByTagName("input");
-	var i;
-	var button;
-	for (i = 0; i < buttons.length; i++) {
-		button = buttons.item(i);
-		if (button.getAttribute("target") != null
-				&& button.getAttribute("target") == targetName) {
-			var low = button.getAttribute("low");
-			var high = button.getAttribute("high");
-			if (high != null) {
-				if (low <= count && count <= high) {
-					button.disabled = false;
-				} else {
-					button.disabled = true;
-				}
-			} else {
-				if (low <= count) {
-					button.disabled = false;
-				} else {
-					button.disabled = true;
-				}
-			}
+function updateButtons(rowSelectorCheckboxName) {
+	var selectedCheckboxCount = countSelectedCheckboxes(rowSelectorCheckboxName);
+	var inputs = document.getElementsByTagName("input");
+	for (var i = 0; i < inputs.length; i++) {
+		var input = inputs.item(i);
+        // TODO: Check if the input's type is submit, image, or reset.
+        var target = input.getAttribute("target");
+        if (target == rowSelectorCheckboxName) {
+            var min = input.getAttribute("minimum");
+            var max = input.getAttribute("maximum");
+            input.disabled = (min && selectedCheckboxCount < min) ||
+                             (max && selectedCheckboxCount > max);
 		}
 	}
+}
+
+/**
+ * Returns the number of checkboxes with the given name that are currently selected
+ *
+ * @param checkboxName name of the dom instances that should be counted for selections
+ */
+function countSelectedCheckboxes(checkboxName) {
+	var total = 0;
+	var selectedCheckBoxes = document.getElementsByName(checkboxName);
+	for (var i = 0; i < selectedCheckBoxes.length; i++) {
+		if (selectedCheckBoxes.item(i).checked) {
+			total += 1;
+		}
+	}
+	return (total);
 }

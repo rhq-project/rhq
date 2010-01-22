@@ -225,14 +225,14 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
         String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
+        PageControl unlimitedpc = PageControl.getUnlimitedInstance();
 
         Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, pc);
+            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
 
         queryInstalled.setParameter("resourceId", resourceId);
         queryInstalled.setParameter("packageTypeFilterId", null);
         queryInstalled.setParameter("packageVersionFilter", null);
-        queryInstalled.setParameter("search", null);
         queryInstalled.setParameter("search", null);
 
         List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
@@ -243,7 +243,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, pc);
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, unlimitedpc);
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS);
 
@@ -273,14 +273,14 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     public PageList<PackageVersionComposite> getUpdatePackageVersionCompositesByFilter(Subject user, int resourceId,
         String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
+        PageControl unlimitedpc = PageControl.getUnlimitedInstance();
 
         Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, pc);
+            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
 
         queryInstalled.setParameter("resourceId", resourceId);
         queryInstalled.setParameter("packageTypeFilterId", null);
         queryInstalled.setParameter("packageVersionFilter", null);
-        queryInstalled.setParameter("search", null);
         queryInstalled.setParameter("search", null);
 
         List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
@@ -291,7 +291,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, pc);
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, unlimitedpc);
         query.setParameter("resourceId", resourceId);
         query.setParameter("filter", filter);
 
@@ -303,7 +303,7 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         for (PackageVersionComposite result : results) {
             if (installedPackageNameAndVersion.get(result.getPackageName()) != null) {
 
-                packageName = installedPackageNameAndVersion.get(result.getPackageName());
+                packageName = result.getPackageName();
 
                 if (installedPackageNameAndVersion.get(packageName).compareTo(result.getPackageVersion().getVersion()) < 0) {
                     modifiedResults.add(result);

@@ -101,12 +101,14 @@ public class RpmPackageDiscoveryDelegate {
         BufferedReader rpmNameReader = new BufferedReader(new StringReader(capturedOutput));
 
         String rpmName;
+
         while ((rpmName = rpmNameReader.readLine()) != null) {
             String name = null;
             String version = null;
             String architectureName = null;
 
             try {
+
                 // Execute RPM query for each RPM
                 ProcessExecution rpmQuery = new ProcessExecution(rpmExecutable);
                 rpmQuery
@@ -179,8 +181,10 @@ public class RpmPackageDiscoveryDelegate {
                 log.error("Error creating resource package. RPM Name: " + rpmName + " Version: " + version
                     + " Architecture: " + architectureName);
             }
+
         }
 
         return packages;
+
     }
 }

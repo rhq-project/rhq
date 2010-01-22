@@ -29,12 +29,12 @@
             to enable more existing packages for deployment, use the subscriptions sub-tab to subscribe this resource
             to more repositories.</p>
 
-             <a4j:keepAlive beanName="ResourcePackageVersionsUIBean"/>
+             <a4j:keepAlive beanName="ResourceUpdatePackageVersionsUIBean"/>
 
-            <ui:param name="resourcePackageVersionsDataModel" value="#{ResourcePackageVersionsUIBean.dataModel}"/>
-            <rich:dataTable id="resourcePackageVersionsDataTable"
-                            rows="#{PageControl.ResourcePackageVersionsList.pageSize}"
-                            value="#{resourcePackageVersionsDataModel}"
+            <ui:param name="resourceUpdatePackageVersionsDataModel" value="#{ResourceUpdatePackageVersionsUIBean.dataModel}"/>
+            <rich:dataTable id="resourceUpdatePackageVersionsDataTable"
+                            rows="#{PageControl.ResourceUpdatePackageVersionsList.pageSize}"
+                            value="#{resourceUpdatePackageVersionsDataModel}"
                             var="item"
                             width="100%"
                             columnsWidth="1%, 15%, 10%, 10%, 10%, 54%"
@@ -44,7 +44,7 @@
                             onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
                <f:facet name="PageControlView">
-                  <onc:paginationControl id="ResourcePackageVersionsList" />
+                  <onc:paginationControl id="ResourceUpdatePackageVersionsList" />
                </f:facet>
 
                <rich:column>
@@ -115,9 +115,9 @@
                                                  rendered="${ResourceUIBean.permissions.content}"/>
 
                         <ui:include src="/rhq/resource/include/pagination.xhtml">
-                           <ui:param name="paginationDataTableName" value="resourcePackageVersionsDataTable"/>
-                           <ui:param name="paginationDataModel" value="#{resourcePackageVersionsDataModel}"/>
-                           <ui:param name="paginationPageControl" value="#{PageControl.ResourcePackageVersionsList}"/>
+                           <ui:param name="paginationDataTableName" value="resourceUpdatePackageVersionsDataTable"/>
+                           <ui:param name="paginationDataModel" value="#{resourceUpdatePackageVersionsDataModel}"/>
+                           <ui:param name="paginationPageControl" value="#{PageControl.ResourceUpdatePackageVersionsList}"/>
                         </ui:include>
                      </rich:column>
                   </rich:columnGroup>
@@ -126,9 +126,26 @@
             </rich:dataTable>
 
 
+         </rich:panel>
+
+         <rich:panel styleClass="BlockContent"
+                    rendered="${ResourceUIBean.permissions.content}">
+            <f:facet name="header"><h:outputText value="Upload New Package"/></f:facet>
+
+            <p>The following option will begin the workflow to upload a new package into the system. Once
+            the package information has been specified and the file uploaded, the workflow to deploy the newly
+            created package to this resource will resume.</p>
+
+         <h:panelGrid columns="1" styleClass="buttons-table" columnClasses="button-cell">
+         <h:commandButton action="uploadNew"
+          	           value="UPLOAD NEW PACKAGE" styleClass="buttonmed"/>
+         </h:panelGrid>
+          
+         <br/>
       </rich:panel>
 
-      </h:form>
+ 
+     </h:form>
 
 
    </ui:define>

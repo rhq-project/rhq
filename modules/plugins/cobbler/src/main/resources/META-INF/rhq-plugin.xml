@@ -35,10 +35,25 @@
 
       <resource-configuration configurationFormat="both">
                <c:simple-property name="settings/server" displayName="Server" type="string" required="true" activationPolicy="immediate"
-                                  description="The IP address of the cobbler server."/>      
+                                  description="The IP address of the cobbler server."/>
+
+               <c:simple-property name="modules.conf/authentication/module" displayName="Authentication Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that authenticates the allowable users that can log into the cobbler WebUI and Read-Write XMLRPC. Choose one of authn_denyall, authn_configfile, authn_passthru, authn_ldap, authn_spacewalk, authn_testing, or a user supplied authentication scheme."/>
+               <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
+               <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
+               <c:simple-property name="modules.conf/dns/module" displayName="DNS Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DNS management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns ">
+                   <c:property-options>
+                         <c:option value="manage_bind"/>
+                         <c:option value="manage_dnsmasq"/>
+                     </c:property-options>                   
+                </c:simple-property>
+                <c:simple-property name="modules.conf/dhcp/module" displayName="DHCP Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DHCP management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDhcp ">
+                       <c:property-options>
+                             <c:option value="manage_isc"/>
+                             <c:option value="manage_dnsmasq"/>
+                         </c:property-options>                   
+                </c:simple-property>
+                
+                
       </resource-configuration>
-
    </server>
-
 </plugin>
-        

@@ -1,8 +1,8 @@
 package org.rhq.core.domain.content.transfer;
 
-
 public class EntitlementCertificate {
 
+    private String name;
     private String certificate;
     private String key;
 
@@ -14,11 +14,23 @@ public class EntitlementCertificate {
     }
 
     /**
+    *
+    * @param certificate
+    * @param key
+    */
+    public EntitlementCertificate(String name, String certificate, String key) {
+        this.name = name;
+        this.certificate = certificate;
+        this.key = key;
+    }
+
+    /**
      *
      * @param certificate
      * @param key
      */
     public EntitlementCertificate(String certificate, String key) {
+        this.name = "client";
         this.certificate = certificate;
         this.key = key;
     }
@@ -35,6 +47,20 @@ public class EntitlementCertificate {
      */
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    /**
+     * @return the name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name the name to set
+     */
+    public void setName(String name) {
+        this.name = name;
     }
 
     /**

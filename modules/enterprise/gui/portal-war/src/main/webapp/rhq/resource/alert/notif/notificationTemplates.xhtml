@@ -45,68 +45,68 @@
                     layout="table"
                 />
 
-        <rich:panel id="existingNotificationsPanel">
-            <f:facet name="header">
-                <h:outputText>Existing notification templates</h:outputText>
-            </f:facet>
-            <h:form id="templatesListForm">
-                <rich:scrollableDataTable value="#{notificationTemplateUIBean.notificationTemplates}"
-                                   var="template"
-                                   first="0"
-                                   selection="#{notificationTemplateUIBean.selectedTemplates}"
-                                   height="150px"
-                        >
-                    <rich:column width="100px">
-                        <f:facet name="header">
-                            <h:outputText value="Name"/>
-                        </f:facet>
-                        <h:outputText value="#{template.name}"/>
-                    </rich:column>
+        <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
+            <rich:panel id="existingNotificationsPanel">
+                <f:facet name="header">
+                    <h:outputText>View / edit existing notification templates</h:outputText>
+                </f:facet>
+                <h:form id="templatesListForm">
+                    <rich:scrollableDataTable value="#{notificationTemplateUIBean.notificationTemplates}"
+                                       var="template"
+                                       first="0"
+                                       selection="#{notificationTemplateUIBean.selectedTemplates}"
+                                       height="150px"
+                                       width="400px"
+                            >
+                        <rich:column width="150px">
+                            <f:facet name="header">
+                                <h:outputText value="Name"/>
+                            </f:facet>
+                            <h:outputText value="#{template.name}"/>
+                        </rich:column>
 
-                    <rich:column>
-                        <f:facet name="header">
-                            <h:outputText value="Description"/>
-                        </f:facet>
-                        <h:outputText value="#{template.description}"/>
-                    </rich:column>
+                        <rich:column width="250px">
+                            <f:facet name="header">
+                                <h:outputText value="Description"/>
+                            </f:facet>
+                            <h:outputText value="#{template.description}"/>
+                        </rich:column>
 
-                </rich:scrollableDataTable>
-                <h:commandButton id="editTemplateButton"
-                                 value="Edit selected Template"
-                                 action="#{notificationTemplateUIBean.editNotificationTemplate}"
-                                 styleClass="buttonmed"/>
+                    </rich:scrollableDataTable>
+                    <h:commandButton id="editTemplateButton"
+                                     value="Edit selected Template"
+                                     action="#{notificationTemplateUIBean.editNotificationTemplate}"
+                                     styleClass="buttonmed"/>
 
-                <h:commandButton id="deleteTemplateButton"
-                                 value="Delete selected Template"
-                                 action="#{notificationTemplateUIBean.deleteNotificationTemplate}"
-                                 styleClass="buttonmed"/>
+                    <h:commandButton id="deleteTemplateButton"
+                                     value="Delete selected Template"
+                                     action="#{notificationTemplateUIBean.deleteNotificationTemplate}"
+                                     styleClass="buttonmed"/>
 
 
-            </h:form>
-        </rich:panel>
+                </h:form>
+            </rich:panel>
+            <rich:panel id="createNewTempaltePanel">
+                <f:facet name="header">
+                    <h:outputText><b>Create new Template</b></h:outputText>
+                </f:facet>
+                <h:form id="createNewTemplateForm">
+                    <h:outputText>Name</h:outputText>
+                    <br/>
+                    <h:inputText id="newTemplateNameInput" required="true" maxlength="100" value="#{notificationTemplateUIBean.newTemplateName}"/>
+                    <p/>
+                    <h:outputText>Description</h:outputText>
+                    <br/>
+                    <h:inputText id="newTemplateDescriptionInput" required="false" maxlength="100" value="#{notificationTemplateUIBean.newTemplateDescription}"/>
 
-        <rich:panel id="createNewTemplatePanel">
-            <f:facet name="header">
-                <h:outputText><b>Create new Template</b></h:outputText>
-            </f:facet>
-            <h:form id="createNewTemplateForm">
-                <h:outputText>Name</h:outputText>
-                <br/>
-                <h:inputText id="newTemplateNameInput" required="true" maxlength="100" value="#{notificationTemplateUIBean.newTemplateName}"/>
-                <p/>
-                <h:outputText>Description</h:outputText>
-                <br/>
-                <h:inputText id="newTemplateDescriptionInput" required="false" maxlength="100" value="#{notificationTemplateUIBean.newTemplateDescription}"/>
-
-                <p/>
-                <h:commandButton id="newTemplateButton"
-                                 value="Create new Template"
-                                 action="#{notificationTemplateUIBean.createNoticationTemplate}"
-                                 styleClass="buttonmed"/>
-            </h:form>
-        </rich:panel>
-
-        <h:outputText value="#{notificationTemplateUIBean.opMode}"/>
+                    <p/>
+                    <h:commandButton id="newTemplateButton"
+                                     value="Create new Template"
+                                     action="#{notificationTemplateUIBean.createNoticationTemplate}"
+                                     styleClass="buttonmed"/>
+                </h:form>
+            </rich:panel>
+        </h:panelGrid>
 
         <rich:panel id="existingAlertsPanel" rendered="#{notificationTemplateUIBean.opMode == 'EDIT'}">
             <f:facet name="header">
@@ -115,8 +115,6 @@
             <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
                 <h:panelGroup>
                     <h:form id="notificationListForm">
-                        <input type="hidden" name="id" value="${param.id}"/>
-                        <input type="hidden" name="ad" value="${param.ad}"/>
 
                         <rich:orderingList value="#{notificationTemplateUIBean.alertNotifications}"
                                            var="alertNotification"
@@ -166,9 +164,6 @@
 
                 <h:panelGroup>
                     <h:form id="alertConfig">
-                        <input type="hidden" name="id" value="${param.id}"/>
-                        <input type="hidden" name="ad" value="${param.ad}"/>
-                        <input type="hidden" name="opMode" value="${param.opMode}"/>
 
                         <rich:panel rendered="#{not empty notificationTemplateUIBean.activeNotification.configuration.map}">
                             <f:facet name="header">

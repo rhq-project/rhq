@@ -182,4 +182,8 @@ public interface AlertNotificationManagerLocal {
      * @return the new AlertNotification
      */
     AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration);
+
+    int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds);
+
+    List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId);
 }

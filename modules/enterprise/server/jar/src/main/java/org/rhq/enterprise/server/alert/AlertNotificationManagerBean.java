@@ -413,6 +413,30 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         return removed;
     }
 
+    public int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds) {
+        if ((notificationIds == null) || (notificationIds.length == 0)) {
+            return 0;
+        }
+
+        NotificationTemplate templ = entityManager.find(NotificationTemplate.class,templateId);
+        Set<Integer> notificationIdSet = new HashSet<Integer>(Arrays.asList(notificationIds));
+        List<AlertNotification> notifications = templ.getNotifications();
+        List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>();
+
+        int removed = 0;
+        for (AlertNotification notification : notifications) {
+            if (notificationIdSet.contains(notification.getId())) {
+                toBeRemoved.add(notification);
+                removed--;
+            }
+        }
+
+        templ.getNotifications().removeAll(toBeRemoved);
+
+        return removed;
+
+    }
+
     public int purgeOrphanedAlertNotifications() {
         Query purgeQuery = entityManager.createNamedQuery(AlertNotification.QUERY_DELETE_ORPHANED);
         return purgeQuery.executeUpdate();
@@ -657,6 +681,22 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         return alertNotification;
 
+    }
+
+    public List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId) {
+
+        NotificationTemplate template = entityManager.find(NotificationTemplate.class,templateId);
+       if (template==null) {
+            LOG.error("DId not find notification template for id [" + templateId+ "]");
+            return new ArrayList<AlertNotification>();
+        }
+
+        List<AlertNotification> notifications = template.getNotifications();
+        for (AlertNotification notification : notifications) {
+            notification.getConfiguration().getProperties().size();  // eager load
+        }
+
+        return notifications;
     }
 
     /**

@@ -55,6 +55,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Scope(ScopeType.PAGE)
 @Name("notificationTemplateUIBean")
+@SuppressWarnings("unused")
 public class NotificationTemplatesUIBean implements Serializable {
 
     private final static String SUCCESS_OUTCOME = "success";
@@ -134,6 +135,7 @@ public class NotificationTemplatesUIBean implements Serializable {
     }
 
     public void setActiveNotification(AlertNotification activeNotification) {
+        System.out.println("setActiveNotification: " + activeNotification);
         this.activeNotification = activeNotification;
 
         lookupActiveConfigDefinition();
@@ -188,6 +190,8 @@ public class NotificationTemplatesUIBean implements Serializable {
     }
 
     private void lookupActiveConfigDefinition() {
+        System.out.println("lookupActiveConfigDef: activeNotification is " + activeNotification);
+
         if (this.activeNotification != null) {
             String senderName = this.activeNotification.getSenderName();
             this.activeConfigDefinition = this.alertNotificationManager.getConfigurationDefinitionForSender(senderName);
@@ -206,10 +210,11 @@ public class NotificationTemplatesUIBean implements Serializable {
         this.alertNotificationManager = LookupUtil.getAlertNotificationManager();
         Subject subject = EnterpriseFacesContextUtility.getSubject();
 
-//        this.alertNotifications = this.alertNotificationManager.getNotificationsForAlertDefinition(subject, alertDefinitionId);
+//        this.alertNotifications = this.alertNotificationManager.getNotificationsForAlertDefinition(subject, alertDefinitionId)
+        this.alertNotifications = new ArrayList<AlertNotification>(); // TODO ?
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();
-//        this.notificationConverter.setAlertNotifications(alertNotifications);
+        this.notificationConverter.setAlertNotifications(alertNotifications);
 
         selectActiveNotification();
     }
@@ -251,22 +256,15 @@ public class NotificationTemplatesUIBean implements Serializable {
             newSenderConfig = new Configuration();
         }
 
-        if (opMode.equals("define")) {
+        this.activeNotification = alertNotificationManager.addAlertNotificationToTemplate(subject,selectedTemplate.getName(),selectedNewSender,newAlertName,newSenderConfig);
+        System.out.println("addAlertSender: activeNotification is " + activeNotification);
 
-            System.out.println("in addAlertSender , mode=define");
-            AlertNotification alertNotification = new AlertNotification(newAlertName,selectedNewSender);
-            List<AlertNotification> list = new ArrayList<AlertNotification>();
-            list.add(alertNotification);
-
-        } else {
-
-//            this.activeNotification = this.alertNotificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newAlertName, newSenderConfig);
-            this.activeNotification = alertNotificationManager.addAlertNotificationToTemplate(subject,selectedTemplate.getName(),selectedNewSender,newAlertName,newSenderConfig);
-        }
         return SUCCESS_OUTCOME;
     }
 
     public String saveConfiguration() {
+        System.out.println("saveConfiguration: activeNotification is " + activeNotification);
+
         if (this.activeNotification != null) {
             this.alertNotificationManager.updateAlertNotification(this.activeNotification);
         }
@@ -277,8 +275,9 @@ public class NotificationTemplatesUIBean implements Serializable {
     public String removeSelected() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         List<Integer> ids = getSelectedIds(this.selectedNotifications);
+        System.out.println("removeSelected: " + ids);
 
-        alertNotificationManager.removeNotifications(subject, alertDefinitionId, toArray(ids));
+        alertNotificationManager.removeNotificationsFromTemplate(subject, selectedTemplate.getId(), toArray(ids));
 
         return SUCCESS_OUTCOME;
     }
@@ -332,6 +331,8 @@ public class NotificationTemplatesUIBean implements Serializable {
 
         NotificationTemplate templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList());
         // TODO do something with templ
+        selectedTemplate = templ;
+        alertNotifications = selectedTemplate.getNotifications();
 
 
         return SUCCESS_OUTCOME;
@@ -346,13 +347,15 @@ public class NotificationTemplatesUIBean implements Serializable {
 
     public String editNotificationTemplate() {
 
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
         System.out.println("in edit Template");
-        System.out.println("selection size is " + selectedTemplates.size());
         Iterator<Object> iter = selectedTemplates.getKeys();
         if (iter.hasNext()) {
             Integer row = (Integer) iter.next();
             System.out.println("selected row is " + row);
             selectedTemplate = listOfTemplates.get(row);
+            alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
+            this.notificationConverter.setAlertNotifications(alertNotifications);
             System.out.println("Selected template is " + selectedTemplate);
         }
         if (selectedTemplates.size()==1)

@@ -218,4 +218,19 @@ public class AlertNotification implements Serializable {
     public int getAlertNotificationId() {
         return alertNotificationId;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("AlertNotification");
+        sb.append("{alertDefinitionId=").append(alertDefinitionId);
+        sb.append(", alertNotificationId=").append(alertNotificationId);
+        sb.append(", id=").append(id);
+        sb.append(", notificationTemplate=").append(notificationTemplate);
+        sb.append(", senderName='").append(senderName).append('\'');
+        sb.append(", order=").append(order);
+        sb.append(", name='").append(name).append('\'');
+        sb.append('}');
+        return sb.toString();
+    }
 }

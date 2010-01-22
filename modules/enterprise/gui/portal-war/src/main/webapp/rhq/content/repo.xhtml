@@ -107,19 +107,39 @@
               </c:otherwise>
             </c:choose></td>
           </tr>
+          <!-- 
           <tr>
-            <td align="right"><b>Synchronization Complete:</b></td>
-            <td align="left"><rich:progressBar
-              value="#{RepoDetailsUIBean.percentComplete}"
-              label="#{RepoDetailsUIBean.percentComplete} %"
-              interval="999" minValue="0" maxValue="99">
-              <f:facet name="complete">
-                <h:outputText value="Synchronizing Complete" />
-              </f:facet>
-              <f:facet name="initial">
-                <h:outputText value="Synching Not Started" />
-              </f:facet>
-            </rich:progressBar></td>
+            <td align="right"><b>Raw Percentage :</b></td>
+            <td align="left">
+                <a4j:region>
+                  <a4j:poll id="percentPoll" interval="1005"
+                    reRender="syncPercent" />
+                  <h:outputText id="syncPercent"
+                    value="#{RepoDetailsUIBean.percentComplete}" />
+                </a4j:region>                    
+			</td>
+          </tr>
+           -->
+          <tr>
+            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="left">
+              <c:choose>
+                <c:when
+                  test="#{RepoDetailsUIBean.showProgressBar}">
+	              <rich:progressBar
+	                value="#{RepoDetailsUIBean.percentComplete}"
+	                label="#{RepoDetailsUIBean.percentComplete} %"
+	                interval="999" minValue="-1" maxValue="99">
+	                <f:facet name="complete">
+	                  <h:outputText value="Synchronizing Complete" />
+	                </f:facet>
+	              </rich:progressBar>
+	            </c:when>
+	            <c:otherwise>
+	            	Not Synching
+	            </c:otherwise>
+	          </c:choose>
+            </td>
           </tr>
           <tr>
             <td align="right"><b>Synchronization Results:</b></td>

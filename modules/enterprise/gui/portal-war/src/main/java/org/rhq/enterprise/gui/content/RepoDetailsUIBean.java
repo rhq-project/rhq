@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -45,6 +46,19 @@ public class RepoDetailsUIBean {
 
     public String edit() {
         return "edit";
+    }
+
+    public boolean getShowProgressBar() {
+        String syncStatus = getSyncStatus();
+        if (!syncStatus.equals(ContentSyncStatus.SUCCESS.toString())
+            && !syncStatus.equals(ContentSyncStatus.FAILURE.toString())
+            && !syncStatus.equals(ContentSyncStatus.NONE.toString())
+            && !syncStatus.equals(ContentSyncStatus.CANCELLED.toString())
+            && !syncStatus.equals(ContentSyncStatus.CANCELLING.toString())) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public String getSyncStatus() {

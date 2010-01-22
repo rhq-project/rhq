@@ -288,6 +288,7 @@ public class ContentProviderManager {
         tracker.setResults(progress.toString());
         tracker.setRepoSyncResults(repoManager.persistRepoSyncResults(tracker.getRepoSyncResults()));
         log.debug("synchronizeRepo :: inProgress");
+        tracker = updatePercentComplete(tracker, repoManager);
 
         if (tracker.getRepoSyncResults() == null) {
             log.info("Repository [" + repo.getName()

@@ -16,14 +16,14 @@
       url="/"
       iconUrl="/images/JBossLogo_small.png">
       <position
-         
+
          placement="firstChild" />
    </menuItem>
    <menuItem
       name="overview"
       displayName="Overview">
       <position
-         
+
          name="logo"
          placement="after" />
    </menuItem>
@@ -31,7 +31,7 @@
       name="resources"
       displayName="Resources">
       <position
-         
+
          name="overview"
          placement="after" />
    </menuItem>
@@ -39,7 +39,7 @@
       name="groups"
       displayName="Groups">
       <position
-         
+
          name="resources"
          placement="after" />
    </menuItem>
@@ -47,26 +47,26 @@
       name="administration"
       displayName="Administration">
       <position
-         
+
          name="groups"
          placement="after" />
    </menuItem>
    <menuItem
       name="debug"
       displayName="Debug">
-      <position         
+      <position
          name="administration"
          placement="after" />
        <activators>
           <debugMode/>
           <superuser/>
-       </activators>       
+       </activators>
    </menuItem>
    <menuItem
       name="help"
       displayName="Help">
       <position
-         
+
          name="debug"
          placement="after" />
    </menuItem>
@@ -76,7 +76,7 @@
       name="overview.subsystemViews"
       displayName="Subsystem Views">
       <position
-         
+
          name="overview"
          placement="firstChild" />
    </menuItem>
@@ -85,7 +85,7 @@
       displayName="Auto Discovery Queue"
       url="/rhq/discovery/queue.xhtml">
       <position
-         
+
          name="overview.subsystemViews"
          placement="after" />
    </menuItem>
@@ -94,7 +94,7 @@
       displayName="Dashboard"
       url="/Dashboard.do">
       <position
-         
+
          name="overview.autoDiscoveryQueue"
          placement="after" />
    </menuItem>
@@ -106,7 +106,7 @@
       iconUrl="/images/icons/Platform_up_16.png"
       url="/ResourceHub.do?resourceCategory=PLATFORM">
       <position
-         
+
          name="resources"
          placement="firstChild" />
    </menuItem>
@@ -116,7 +116,7 @@
       iconUrl="/images/icons/Server_up_16.png"
       url="/ResourceHub.do?resourceCategory=SERVER">
       <position
-         
+
          name="resources.platforms"
          placement="after" />
    </menuItem>
@@ -126,7 +126,7 @@
       iconUrl="/images/icons/Service_up_16.png"
       url="/ResourceHub.do?resourceCategory=SERVICE">
       <position
-         
+
          name="resources.servers"
          placement="after" />
    </menuItem>
@@ -136,7 +136,7 @@
       feature="resourceFavorites"
       iconUrl="/images/icons/Favorite_16.png">
       <position
-         
+
          name="resources.services"
          placement="after" />
    </menuItem>
@@ -176,7 +176,7 @@
       iconUrl="/images/icons/Group_up_16.png"
       url="/GroupHub.do?groupCategory=MIXED">
       <position
-         
+
          name="groups.compatibleGroups"
          placement="after" />
    </menuItem>
@@ -186,7 +186,7 @@
       iconUrl="/images/GroupDefinition_16.png"
       url="/rhq/definition/group/list.xhtml">
       <position
-         
+
          name="groups.mixedGroups"
          placement="after" />
    </menuItem>
@@ -196,7 +196,7 @@
       url="/resource/group/Inventory.do?mode=new"
       addBreak="true">
       <position
-         
+
          name="groups.groupDefinitions"
          placement="after"/>
        <activators>
@@ -208,7 +208,7 @@
       displayName="New Group Definition"
       url="/rhq/definition/group/new.xhtml">
       <position
-         
+
          name="groups.newGroup"
          placement="after" />
        <activators>
@@ -221,7 +221,7 @@
       feature="groupFavorites"
       iconUrl="/images/icons/Favorite_16.png"
       addBreak="true">
-      <position         
+      <position
          name="groups.newGroupDefinition"
          placement="after"
           />
@@ -231,7 +231,7 @@
       displayName="Recently Viewed Groups"
       feature="groupRecentlyViewed"
       iconUrl="/images/icons/History_16.png">
-      <position         
+      <position
          name="groups.favoriteGroups"
          placement="after" />
    </menuItem>
@@ -241,7 +241,7 @@
       feature="groupSearch"
       iconUrl="/images/icons/Search_16.png"
       addBreak="true">
-      <position         
+      <position
          name="groups.recentlyViewedGroups"
          placement="after"/>
    </menuItem>
@@ -251,14 +251,14 @@
       name="administration.security"
       displayName="Security">
       <position
-         
+
          name="administration"
          placement="firstChild" />
    </menuItem>
    <menuItem
       name="administration.systemConfiguration"
       displayName="System Configuration">
-      <position         
+      <position
          name="administration.security"
          placement="after" />
    </menuItem>
@@ -488,12 +488,23 @@
       displayName="Templates"
       url="/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all">
       <position
-         
+
          name="administration.systemConfiguration.plugins"
          placement="after" />
        <activators>
           <globalPermission
              name="MANAGE_INVENTORY" />
+       </activators>
+   </menuItem>
+   <menuItem
+      name="administration.systemConfiguration.notifcationTemplates"
+      displayName="Alert Notification Templates"
+      url="/rhq/resource/alert/notif/notificationTemplates.xhtml">
+       <position name="administration.systemConfiguration.templates"
+                 placement="after"/>
+       <activators>
+           <globalPermission
+               name="MANAGE_SETTINGS"/>
        </activators>
    </menuItem>
 
@@ -503,7 +514,7 @@
       displayName="Content Providers"
       url="/rhq/content/listContentProviders.xhtml">
       <position
-         
+
          name="administration.content"
          placement="firstChild" />
    </menuItem>
@@ -512,7 +523,7 @@
       displayName="Repositories"
       url="/rhq/content/listRepos.xhtml">
       <position
-         
+
          name="administration.content.contentProviders"
          placement="after" />
    </menuItem>
@@ -523,7 +534,7 @@
       displayName="Servers"
       url="/rhq/ha/listServers.xhtml">
       <position
-         
+
          name="administration.highAvailability"
          placement="firstChild" />
    </menuItem>
@@ -532,7 +543,7 @@
       displayName="Agents"
       url="/rhq/ha/listAgents.xhtml">
       <position
-         
+
          name="administration.highAvailability.servers"
          placement="after" />
    </menuItem>
@@ -541,7 +552,7 @@
       displayName="Affinity Groups"
       url="/rhq/ha/listAffinityGroups.xhtml">
       <position
-         
+
          name="administration.highAvailability.agents"
          placement="after" />
    </menuItem>
@@ -550,7 +561,7 @@
       displayName="Partition Events"
       url="/rhq/ha/listPartitionEvents.xhtml">
       <position
-         
+
          name="administration.highAvailability.affinityGroups"
          placement="after" />
    </menuItem>
@@ -561,7 +572,7 @@
       displayName="Servers"
       url="/rhq/admin/report/resourceInstallReport.xhtml">
       <position
-         
+
          name="administration.reports"
          placement="firstChild" />
    </menuItem>
@@ -570,7 +581,7 @@
     <!-- Top-level Tabs -->
     <tab name="Summary" displayName="Summary" iconUrl="/images/icons/Service_up_16.png">
        <position
-          
+
           placement="firstChild" />
     </tab>
 
@@ -600,7 +611,7 @@
 
     <tab name="Configuration" displayName="Configuration" iconUrl="/images/icons/Configure_grey_16.png">
         <position
-           
+
            name="Alert"
            placement="after" />
         <activators>
@@ -610,7 +621,7 @@
 
     <tab name="Operations" displayName="Operations" iconUrl="/images/icons/Operation_grey_16.png">
         <position
-           
+
            name="Configuration"
            placement="after" />
         <activators>
@@ -652,42 +663,42 @@
     <!-- Monitor Subtabs -->
     <tab name="Monitor.Graphs" displayName="Graphs" url="/rhq/resource/monitor/graphs.xhtml">
        <position
-          
+
           name="Monitor"
           placement="firstChild" />
     </tab>
 
     <tab name="Monitor.Tables" displayName="Tables" url="/rhq/resource/monitor/tables.xhtml">
         <position
-           
+
            name="Monitor.Graphs"
            placement="after" />
     </tab>
 
     <tab name="Monitor.Traits" displayName="Traits" url="/rhq/resource/monitor/traits.xhtml">
        <position
-          
+
           name="Monitor.Tables"
           placement="after" />
     </tab>
 
     <tab name="Monitor.Availability" displayName="Availability" url="/rhq/resource/monitor/availabilityHistory.xhtml">
         <position
-           
+
            name="Monitor.Traits"
            placement="after" />
     </tab>
 
     <tab name="Monitor.Schedules" displayName="Schedules" url="/rhq/resource/monitor/schedules.xhtml">
        <position
-          
+
           name="Monitor.Availability"
           placement="after" />
     </tab>
 
     <tab name="Monitor.Response" displayName="Response" url="/rhq/resource/monitor/response.xhtml">
         <position
-           
+
            name="Monitor.Schedules"
            placement="after" />
         <activators>
@@ -704,7 +715,7 @@
 
     <tab name="Inventory.Connection" displayName="Connection" url="/rhq/resource/inventory/view-connection.xhtml">
         <position
-           
+
            name="Inventory.Overview"
            placement="after" />
         <activators>
@@ -717,7 +728,7 @@
            name="Inventory.Connection"
            placement="after" />
     </tab>
-    
+
     <!-- Alert Subtabs -->
     <tab name="Alert.Definitions" displayName="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
        <position
@@ -730,7 +741,7 @@
            name="Alert.Definitions"
            placement="after" />
     </tab>
-    
+
     <!-- Configuration Subtabs -->
     <tab name="Configuration.Current" displayName="Current" url="/rhq/resource/configuration/view.xhtml">
        <position
@@ -743,7 +754,7 @@
            name="Configuration.Current"
            placement="after" />
     </tab>
-    
+
     <!-- Operations Subtabs -->
     <tab name="Operations.New" displayName="New" url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml">
        <position
@@ -762,11 +773,11 @@
            name="Operations.Schedules"
            placement="after" />
     </tab>
-    
+
     <!-- Events Subtabs -->
     <tab name="Events.History" displayName="History" url="/rhq/resource/events/history.xhtml">
        <position
-          
+
           name="Events"
           placement="firstChild" />
     </tab>
@@ -774,30 +785,30 @@
     <!-- Content Subtabs -->
     <tab name="Content.Deployed" displayName="Deployed" url="/rhq/resource/content/view.xhtml">
        <position
-          
+
           name="Content"
           placement="firstChild" />
     </tab>
 
     <tab name="Content.New" displayName="New" url="/rhq/resource/content/deploy.xhtml">
         <position
-           
+
            name="Content.Deployed"
            placement="after" />
-    </tab>            
+    </tab>
 
     <tab name="Content.Subscriptions" displayName="Subscriptions" url="/rhq/resource/content/subscription.xhtml">
         <position
-           
+
            name="Content.New"
            placement="after" />
-    </tab>            
+    </tab>
 
     <tab name="Content.History" displayName="History" url="/rhq/resource/content/history.xhtml">
         <position
-           
+
            name="Content.Subscriptions"
            placement="after" />
-    </tab>            
-    
+    </tab>
+
 </perspectivePlugin>

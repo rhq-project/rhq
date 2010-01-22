@@ -498,8 +498,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public String download() {
         try {
+            File file = new File(getCurrentPath());
+
             HttpServletResponse response = FacesContextUtility.getResponse();
-            response.setHeader("Content-Disposition", "attachment;filename=" + getCurrentPath());
+            response.setHeader("Content-Disposition", "attachment;filename=" + file.getName());
             OutputStream ostream = response.getOutputStream();
             ostream.write(getCurrentContents().getBytes());
             ostream.flush();

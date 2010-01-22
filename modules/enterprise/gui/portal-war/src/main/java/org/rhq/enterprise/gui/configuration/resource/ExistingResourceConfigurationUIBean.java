@@ -317,11 +317,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return null;
     }
 
-//    public String getComponentsToRerenderOnEdit() {
-//        RawConfiguration editedRaw = getCurrent();
-//        RawConfiguration
-//    }
-
     public void undoEdit(String path) {
         modified.remove(path);
         RawConfigUIBean bean = findRawConfigUIBeanByPath(path);

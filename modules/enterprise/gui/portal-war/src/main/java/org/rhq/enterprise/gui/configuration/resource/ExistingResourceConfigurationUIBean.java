@@ -148,7 +148,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         }
         current = null;
         setConfiguration(configuration);
-//        updateModifiedCache();
+        updateModifiedCache();
         mode = RAW_MODE;
         return null;
     }

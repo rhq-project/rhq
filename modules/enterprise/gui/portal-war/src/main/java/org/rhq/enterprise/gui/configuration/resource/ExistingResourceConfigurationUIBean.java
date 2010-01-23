@@ -148,7 +148,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         }
         current = null;
         setConfiguration(configuration);
-        updateModifiedCache();
+//        updateModifiedCache();
         mode = RAW_MODE;
         return null;
     }
@@ -313,6 +313,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
             RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
             rawUIBean.setModified(false);
+            getModified().remove(editedRaw.getPath());
         }
         return null;
     }
@@ -420,6 +421,30 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public boolean isRawMode() {
         return mode == RAW_MODE;
+    }
+
+    public boolean isDisplayChangedFilesLabel() {
+        if (isStructuredMode()) {
+            return false;
+        }
+
+        if (isRawSupported()) {
+            return true;
+        }
+
+        return isRawMode();
+    }
+
+    public String getModifiedFilesMsg() {
+        if (!isDisplayChangedFilesLabel() || getModified().size() == 0) {
+            return "";
+        }
+
+        if (getModified().size() == 1) {
+            return "1 file changed in this configuration";
+        }
+
+        return getModified().size() + " files changed in this configuration";
     }
 
     public boolean isModified(String path) {

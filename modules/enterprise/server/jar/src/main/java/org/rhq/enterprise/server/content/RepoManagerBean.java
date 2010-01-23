@@ -38,6 +38,7 @@ import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -1030,6 +1031,8 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    // TEMPORARY TIMEOUT DEFINED WHILE WE PROPERLY FIGURE OUT TIMEOUTS
+    @TransactionTimeout(86400)
     public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws InterruptedException {
         ContentServerPluginContainer pc;
         try {

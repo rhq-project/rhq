@@ -121,7 +121,7 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void setPageSize(int pageSize) {
-        this.pageNumber = (pageSize != 0) ? (getStartRow() / pageSize) : 0;
+        this.pageNumber = (pageSize != 0 && pageSize != SIZE_UNLIMITED) ? (getStartRow() / pageSize) : 0;
         this.pageSize = pageSize;
     }    
 

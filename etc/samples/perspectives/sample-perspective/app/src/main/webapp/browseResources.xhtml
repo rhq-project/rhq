@@ -1,108 +1,89 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<?xml version="1.0"?>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
-      xmlns:h="http://java.sun.com/jsf/html"
+<ui:composition
+      template="/WEB-INF/templates/mainTemplate.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
       xmlns:a4j="http://richfaces.org/a4j"
       xmlns:rich="http://richfaces.org/rich"
-      xmlns:rhq="http://rhq-project.org/rhq">
-<ui:remove>
-    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
-  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
-  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
-  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
-  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
-</ui:remove>
+      xmlns:rhq="http://rhq-project.org/rhq"
+      xmlns:onc="http://jboss.org/on/component">
 
-    <head>        
-        <title>
-            Browse Resources
-        </title>
-    </head>
+    <ui:param name="pageTitle" value="Browse Resources"/>
     
-    <body style="background-color: #FFF">
+    <ui:define name="body">
 
-    <f:view contentType="text/html; charset=UTF-8">
-
-        <h2>Browse Resources</h2>
-
-        <style type="text/css">
-            .infoBlock {
-                background-color: #BFF1B5; /* light green */
-                border-top-color: #00AC3D; /* medium green */
-            }
-
-            .warnBlock {
-                background-color: #FFFD99; /* light yellow */
-                border-top-color: #FF9C15; /* medium orange */
-             }
-        </style>
-        <rich:messages globalOnly="true" infoClass="infoBlock" warnClass="warnBlock"/>
-
-        <ui:remove><!-- The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
+        <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
         <h:form>
-        <rich:dataTable id="resourcesDataTable"
-                        value="#{BrowseResourcesUIBean.dataModel}" var="resource"
-                        first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
-                        rows="#{BrowseResourcesUIBean.pageControl.pageSize}"
-                        sortMode="multi"
-                        width="100%">
+            <rich:dataTable id="resourcesDataTable"
+                            value="#{BrowseResourcesUIBean.dataModel}" var="resource"
+                            first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
+                            rows="#{BrowseResourcesUIBean.pageControl.pageSize}"
+                            sortMode="multi"
+                            width="100%">
 
-            <rich:column width="20">
-                <f:facet name="header">
-                    <rhq:allRowsSelector/>
+                <rich:column width="20">
+                    <f:facet name="header">
+                        <rhq:allRowsSelector/>
+                    </f:facet>
+                    <rhq:rowSelector value="#{BrowseResourcesUIBean.selectedResources}"/>
+                </rich:column>
+
+                <rich:column width="55" sortBy="r.id">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.id">
+                            <h:outputText value="Id"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputLink value="#{BrowseResourcesUIBean.resourceUrlMap[resource.id]}" target="_top">
+                        <h:outputText value="#{resource.id}"/>
+                    </h:outputLink>
+                </rich:column>
+
+                <rich:column sortBy="r.name" width="235">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.name">
+                            <h:outputText value="Name"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{resource.name}"/>
+                </rich:column>
+
+                <rich:column sortBy="r.description">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.description">
+                            <h:outputText value="Description"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{resource.description}"/>
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="4">
+                            <rhq:selectedRowsCommandButton
+                                    value="UNINVENTORY"
+                                    action="#{BrowseResourcesUIBean.uninventorySelectedResources}">
+                                <a4j:support event="onclick" reRender="resourcesDataTable"/>
+                            </rhq:selectedRowsCommandButton>
+
+                            <ui:include src="/WEB-INF/includes/pageControls.xhtml">
+                                <ui:param name="pagedDataUIBean" value="#{BrowseResourcesUIBean}"/>
+                                <ui:param name="dataTableName" value="resourcesDataTable"/>                                
+                            </ui:include>
+                        </rich:column>
+                    </rich:columnGroup>
                 </f:facet>
-                <rhq:rowSelector mode="multi" value="#{BrowseResourcesUIBean.selectedResources}"/>
-            </rich:column>
-
-            <rich:column sortBy="#{r.id}" width="60">
-                <f:facet name="header">
-                    <h:outputLabel for="id" value="Id" />
-                </f:facet>
-
-                <h:outputLink value="#{BrowseResourcesUIBean.getResourceUrl(resource.id)}" target="_top">
-                    <h:outputText id="id" value="#{resource.id}" />
-                </h:outputLink>
-            </rich:column>
-
-            <rich:column sortBy="#{r.name}" width="240">
-                <f:facet name="header">
-                    <h:outputLabel for="name" value="Name" />
-                </f:facet>
-                <h:outputText id="name" value="#{resource.name}" />
-            </rich:column>
-            
-            <rich:column sortBy="#{r.description}">
-                <f:facet name="header">
-                    <h:outputLabel for="description" value="Description" />
-                </f:facet>
-                <h:outputText id="description" value="#{resource.description}" />
-            </rich:column>
-
-           <f:facet name="footer">
-              <rich:columnGroup>
-                 <rich:column colspan="8">
-                    <rhq:selectedRowsCommandButton
-                            value="UNINVENTORY"
-                            action="#{BrowseResourcesUIBean.uninventorySelectedResources}">
-                        <a4j:support event="onclick" reRender="resourcesDataTable" />
-                    </rhq:selectedRowsCommandButton>
-                    
-                    <ui:include src="/WEB-INF/includes/pageControls.xhtml">
-                        <ui:param name="dataTableName" value="resourcesDataTable"/>
-                        <ui:param name="dataModel" value="#{BrowseResourcesUIBean.dataModel}"/>
-                        <ui:param name="pageControl" value="#{BrowseResourcesUIBean.pageControl}"/>
-                    </ui:include>
-                 </rich:column>
-              </rich:columnGroup>
-           </f:facet>
-        </rich:dataTable>
+            </rich:dataTable>
         </h:form>
 
-    </f:view>
+    </ui:define>
 
-    </body>
-
-</html>
+</ui:composition>

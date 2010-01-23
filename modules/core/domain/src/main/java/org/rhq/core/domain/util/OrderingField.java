@@ -22,6 +22,8 @@
   */
 package org.rhq.core.domain.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 /**
@@ -53,6 +55,7 @@ public class OrderingField implements Serializable {
         this.field = field;
     }
 
+    @NotNull
     public PageOrdering getOrdering() {
         return ordering;
     }

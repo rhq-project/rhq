@@ -125,17 +125,20 @@ THIS TEXT WILL BE REMOVED.
 
                 <h:panelGrid columns="1" style="width:100%;">
                   <h:panelGrid columns="4" style="width:100%;">
-                    <a4j:status id="selectedFileHeader"
-                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
-                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
-                    <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
+                    <h:outputLabel value=" "/>
 
-                    <a href="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</a>
+                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+
+                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
                     </h:commandLink>
+
+                    <a4j:status id="selectedFileHeader"
+                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
+                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
                   </h:panelGrid>
 
                   <rich:panel style="margin-left:1px; border: none;">
@@ -282,17 +285,20 @@ THIS TEXT WILL BE REMOVED.
 
                 <h:panelGrid columns="1" style="width:100%;">
                   <h:panelGrid columns="4" style="width:100%;">
-                    <a4j:status id="selectedFileHeader"
-                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
-                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
-                    <a href="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</a>
+                    <h:outputLabel value=" "/>
 
-                    <a href="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</a>
+                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+
+                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
                     </h:commandLink>
+
+                    <a4j:status id="selectedFileHeader"
+                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
+                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
                   </h:panelGrid>
 
                   <rich:panel id="fileContentsPanel" style="margin-left:1px; border: none;">

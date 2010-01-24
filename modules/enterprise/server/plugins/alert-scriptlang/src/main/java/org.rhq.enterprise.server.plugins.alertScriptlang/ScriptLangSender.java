@@ -21,9 +21,12 @@ package org.rhq.enterprise.server.plugins.alertScriptlang;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.script.CompiledScript;
 import javax.script.Invocable;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
@@ -32,6 +35,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jruby.embed.jsr223.JRubyEngineFactory;
 
+import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -57,6 +61,9 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
         String language = alertParameters.getSimpleValue("language", "jruby");
 
         ScriptEngine engine = pluginComponent.getEngineByLanguage(language);
+//        ScriptEngineManager manager = new ScriptEngineManager(serverPluginEnvironement.getPluginClassLoader());
+//        engine = manager.getEngineByName(language);
+
 
 
         if (engine==null) {
@@ -72,6 +79,18 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
         Object result;
         try {
             BufferedReader br = new BufferedReader(new FileReader(file));
+
+            Map<String,String> preferencesMap = new HashMap<String, String>();
+            for (String key: preferences.getSimpleProperties().keySet())
+                preferencesMap.put(key,preferences.getSimple(key).getStringValue());
+
+            Map<String,String> parameterMap = new HashMap<String, String>();
+            for (String key: alertParameters.getSimpleProperties().keySet())
+                parameterMap.put(key,alertParameters.getSimple(key).getStringValue());
+
+            ScriptContext sc = engine.getContext();
+            sc.setAttribute("alertPreferences",preferencesMap,ScriptContext.ENGINE_SCOPE);
+            sc.setAttribute("alertParameters",parameterMap,ScriptContext.ENGINE_SCOPE);
             engine.eval(br);
 
             AlertManagerLocal alertManager = LookupUtil.getAlertManager();

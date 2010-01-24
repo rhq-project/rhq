@@ -18,14 +18,10 @@
  */
 package org.rhq.enterprise.server.plugins.alertScriptlang;
 
-import java.io.File;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.script.CompiledScript;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -38,10 +34,12 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
 public class ScriptLangComponent implements ServerPluginComponent {
 
     Map<String, ScriptEngine> engineByName = new HashMap<String, ScriptEngine>();
+    ServerPluginContext context ;
 
     String baseDir = System.getProperty("jboss.home.dir") + "/../alert-scripts/";
 
     public void initialize(ServerPluginContext context) throws Exception {
+        this.context = context;
         // TODO: Customise this generated block
     }
 

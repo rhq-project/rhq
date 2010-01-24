@@ -77,6 +77,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     private String modalEditorContents;
 
+    private int numberOfModifiedFiles;
+
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
@@ -311,9 +313,13 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         RawConfiguration originalRaw = raws.get(editedRaw.getPath());
 
         if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
+            --numberOfModifiedFiles;
             RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
             rawUIBean.setModified(false);
             getModified().remove(editedRaw.getPath());
+        }
+        else {
+            ++numberOfModifiedFiles;
         }
         return null;
     }
@@ -436,15 +442,15 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String getModifiedFilesMsg() {
-        if (!isDisplayChangedFilesLabel() || getModified().size() == 0) {
+        if (!isDisplayChangedFilesLabel() || numberOfModifiedFiles == 0) {
             return "";
         }
 
-        if (getModified().size() == 1) {
+        if (numberOfModifiedFiles == 1) {
             return "1 file changed in this configuration";
         }
 
-        return getModified().size() + " files changed in this configuration";
+        return numberOfModifiedFiles + " files changed in this configuration";
     }
 
     public boolean isModified(String path) {

@@ -229,7 +229,7 @@ THIS TEXT WILL BE REMOVED.
             </rich:tab>
             <rich:tab id="rawTab"
                       label="Advanced Mode"
-                      reRender="fileUpload,upperCommitPanel"
+                      reRender="fileUpload,upperCommitPanel,lowerCommitPanel"
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();">
               <h:panelGrid columns="2"
@@ -254,7 +254,7 @@ THIS TEXT WILL BE REMOVED.
                             <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
                                                 icon="#{rawConfigUIBean.icon}"
                                                 binding="#{rawConfigUIBean.panelMenuItem}"
-                                                onclick="cursor_wait(); selectedFile = #{rawConfigUIBean.path};"
+                                                onclick="cursor_wait();"
                                                 oncomplete="cursor_clear();"
                                                 action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
                                                 limitToList="true"
@@ -308,7 +308,7 @@ THIS TEXT WILL BE REMOVED.
                                      readonly="false">
                       <a4j:support event="onkeyup"
                                    ignoreDupeResponses="true"
-                                   reRender="fileMenu,upperCommitPanel"
+                                   reRender="fileMenu,upperCommitPanel,lowerCommitPanel"
                                    requestDelay="1000"
                                    action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
                     </h:inputTextarea>
@@ -317,7 +317,7 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                <h:panelGroup style="text-align:right">
+                <h:panelGroup id="lowerCommitPanel" style="text-align:right">
                   <h:outputText value="#{ExistingResourceConfigurationUIBean.modifiedFilesMsg}"
                                 rendered="#{ExistingResourceConfigurationUIBean.rawMode}"
                                 style="padding-right:10px"/>

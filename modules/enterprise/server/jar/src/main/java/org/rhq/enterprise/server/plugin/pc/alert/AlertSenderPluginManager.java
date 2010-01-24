@@ -218,6 +218,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
 
         sender.pluginComponent = getServerPluginComponent(key.getPluginName());
+        sender.serverPluginEnvironment = pluginEnvByName.get(senderName);
 
         return sender;
     }

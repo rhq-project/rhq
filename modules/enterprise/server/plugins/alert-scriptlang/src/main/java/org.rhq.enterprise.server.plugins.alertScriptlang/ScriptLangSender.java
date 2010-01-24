@@ -24,18 +24,13 @@ import java.io.FileReader;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.script.CompiledScript;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
-import javax.script.ScriptEngineManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jruby.embed.jsr223.JRubyEngineFactory;
 
-import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -61,7 +56,7 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
         String language = alertParameters.getSimpleValue("language", "jruby");
 
         ScriptEngine engine = pluginComponent.getEngineByLanguage(language);
-//        ScriptEngineManager manager = new ScriptEngineManager(serverPluginEnvironement.getPluginClassLoader());
+//        ScriptEngineManager manager = new ScriptEngineManager(serverPluginEnvironment.getPluginClassLoader());
 //        engine = manager.getEngineByName(language);
 
 

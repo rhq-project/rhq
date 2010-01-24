@@ -34,26 +34,64 @@
       </plugin-configuration>
 
       <resource-configuration configurationFormat="both">
+             <c:group name ="Basic Settings">
                <c:simple-property name="settings/server" displayName="Server" type="string" required="true" activationPolicy="immediate"
                                   description="The IP address of the cobbler server."/>
+               <c:simple-property name="settings/http_port" displayName="Http Port" type="string" required="true" activationPolicy="immediate"
+                                                        description="The default port to use to download Kickstart Files."/>
+               <c:simple-property name="settings/default_kickstart" displayName="Default Kickstart Template" type="string" required="true" activationPolicy="immediate" description="The path to the kicktart template that will be used if no kickstart file is provided to a kickstart profile."/>
+                <c:simple-property name="settings/snippetsdir" displayName="Snippets Directory" type="string" required="true" activationPolicy="immediate"
+                                description="The directory of files that cobbler uses to make templating of kickstarts easier. For more information check https://fedorahosted.org/cobbler/wiki/KickstartSnippets"/>
+                                
+                                     
+                <c:simple-property name="settings/kernel_options" displayName="Kernel Options" type="longString" required="true" activationPolicy="immediate"
+                                 description="The kernel options that should be present in every cobbler installation. The kernel options can also be applied at the distro/profile/system level. Each option is separated by a new line"/>
+                                 
+                <c:simple-property name="modules.conf/authentication/module" displayName="Authentication Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that authenticates the allowable users that can log into the cobbler WebUI and Read-Write XMLRPC. Choose one of authn_denyall, authn_configfile, authn_passthru, authn_ldap, authn_spacewalk, authn_testing, or a user supplied authentication scheme."/>
+                <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
+            </c:group>
 
-               <c:simple-property name="modules.conf/authentication/module" displayName="Authentication Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that authenticates the allowable users that can log into the cobbler WebUI and Read-Write XMLRPC. Choose one of authn_denyall, authn_configfile, authn_passthru, authn_ldap, authn_spacewalk, authn_testing, or a user supplied authentication scheme."/>
-               <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
-               <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
-               <c:simple-property name="modules.conf/dns/module" displayName="DNS Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DNS management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns ">
-                   <c:property-options>
-                         <c:option value="manage_bind"/>
-                         <c:option value="manage_dnsmasq"/>
-                     </c:property-options>                   
+             
+             <c:group name = "DHCP Management">
+                 <c:simple-property name="enableDhcp" displayName="Enable DHCP" type="boolean" required="true" activationPolicy="immediate"
+                            description="True if dhcp management is to be enabled. Note the DHCP module must be appropriately selected. "/>                 
+                 <c:simple-property name="modules.conf/dhcp/module" displayName="DHCP Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DHCP management engine if manage_dhcp is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDhcp ">
+                        <c:property-options>
+                              <c:option value="manage_isc"/>
+                              <c:option value="manage_dnsmasq"/>
+                          </c:property-options>                   
+                 </c:simple-property>
+                 
+                 <c:simple-property name="settings/next_server" displayName="Next Server for PXE" type="string" required="true" activationPolicy="immediate"
+                                    description="The IP address of the cobbler server which will be used by guests who are booting via PXE."/>            
+             </c:group>
+            <c:group name = "DNS Management">
+                <c:simple-property name="enableDns" displayName="Enable DNS" type="boolean" required="true" activationPolicy="immediate"
+                            description="True if dns management is to be enabled. Note the DNS module must be appropriately selected. "/>
+                <c:simple-property name="modules.conf/dns/module" displayName="DNS Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DNS management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns">
+                                   <c:property-options>
+                                         <c:option value="manage_bind"/>
+                                         <c:option value="manage_dnsmasq"/>
+                                     </c:property-options>
                 </c:simple-property>
-                <c:simple-property name="modules.conf/dhcp/module" displayName="DHCP Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DHCP management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDhcp ">
-                       <c:property-options>
-                             <c:option value="manage_isc"/>
-                             <c:option value="manage_dnsmasq"/>
-                         </c:property-options>                   
-                </c:simple-property>
-                
-                
+                <c:simple-property name="settings/manage_forward_zones" displayName="Forward Zones" type="string" required="false" activationPolicy="immediate"
+                            description="If using BIND (named) for DNS management, this is a list of zone that are to be managed. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns"/>
+                <c:simple-property name="settings/manage_reverse_zones" displayName="Reverse Zones" type="string" required="false" activationPolicy="immediate"
+                                        description="If using BIND (named) for DNS management, this is a list of zone that are to be managed. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns"/>
+            </c:group>
+            <c:group name="Default Virtualization Settings">
+                <c:simple-property name="settings/default_virt_bridge" displayName="Bridge" type="string" required="true" activationPolicy="immediate" description="The default virtualization brige to use if no value is specified in the profile/system record. For EL 4/5 hosts this should be xenbr0. For fedora try virbr0"/>
+                <c:simple-property name="settings/default_virt_file_size" displayName="File Size" type="string" required="true" activationPolicy="immediate" description="Default disk size for virt guests (GB)."/>
+                <c:simple-property name="settings/default_virt_ram" displayName="Memory" type="string" required="true" activationPolicy="immediate" description="Default memory size for virt guests (MB)."/>
+                <c:simple-property name="settings/default_virt_type" displayName="Virtualization Type" type="string" required="true" activationPolicy="immediate" description="Default virtualization type if no  virt type is specified in the profile/system. ">
+                    <c:property-options>
+                          <c:option value="xenpv"/>
+                          <c:option value="xenfv"/>
+                          <c:option value="qemu"/>
+                          <c:option value="vmware"/>
+                      </c:property-options>
+               </c:simple-property>
+            </c:group>            
       </resource-configuration>
    </server>
 </plugin>

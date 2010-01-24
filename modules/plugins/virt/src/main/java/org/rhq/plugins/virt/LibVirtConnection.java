@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.sun.jna.Pointer;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libvirt.Connect;
@@ -32,7 +30,6 @@ import org.libvirt.DomainBlockStats;
 import org.libvirt.DomainInterfaceStats;
 import org.libvirt.LibvirtException;
 import org.libvirt.Network;
-import org.libvirt.jna.virError;
 
 /**
  * Represents a connection, via libVirt to domain management.
@@ -55,7 +52,7 @@ public class LibVirtConnection {
             //Connect.setErrorCallback(null);
             connection = new Connect(uri);
             connected = true;
-            connection.setConnectionErrorCallback(Logger.INSTANCE);
+            //connection.setConnectionErrorCallback(Logger.INSTANCE);
         } catch (LibvirtException e) {
             log.warn("Can not obtain an instance of libvirt");
             connection = null;
@@ -69,7 +66,7 @@ public class LibVirtConnection {
                 throw ie;
             }*/
         } finally {
-            Connect.setErrorCallback(null);
+            //Connect.setErrorCallback(null);
         }
     }
 
@@ -319,7 +316,8 @@ public class LibVirtConnection {
         }
     }
 }
-
+//TODO Put the callbacks in
+/* Comment this out untilt he callbacks get in
 class Logger extends org.libvirt.ErrorCallback {
 
     // Make this static so the callback will always have an object
@@ -332,4 +330,4 @@ class Logger extends org.libvirt.ErrorCallback {
     public void errorCallback(Pointer arg0, virError arg1) {
         log.warn(arg1.message);
     }
-}
+}    */

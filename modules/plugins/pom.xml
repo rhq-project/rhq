@@ -103,6 +103,7 @@
       <module>augeas</module>
       <module>cron</module>
       <module>script</module>
+      <module>script2</module>
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
       <module>hosts</module>

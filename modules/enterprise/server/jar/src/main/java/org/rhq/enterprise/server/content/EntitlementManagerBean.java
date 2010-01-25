@@ -28,6 +28,7 @@ public class EntitlementManagerBean implements EntitlementManagerLocal, Entitlem
         DummyLoader loader = new DummyLoader();
         try {
             list.add(loader.load(resourceId));
+
         } catch (Exception ex) {
             log.warn("x.509 cert for: " //
                 + resourceId //
@@ -44,6 +45,12 @@ class DummyLoader {
 
     EntitlementCertificate load(int resourceId) throws IOException {
         String name = String.valueOf(resourceId);
+        EntitlementCertificate x509 = load("client");
+        x509.setName(name);
+        return x509;
+    }
+
+    EntitlementCertificate load(String name) throws IOException {
         String key = read(name + ".key");
         String pem = read(name + ".pem");
         return new EntitlementCertificate(name, key, pem);

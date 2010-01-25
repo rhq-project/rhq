@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,6 +33,9 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 
+/**
+ * Looks for koan on the machine so that it can do kickstart installations.
+ */
 public class KickstartDiscoveryComponent implements ResourceDiscoveryComponent {
     private final Log log = LogFactory.getLog(KickstartDiscoveryComponent.class);
 

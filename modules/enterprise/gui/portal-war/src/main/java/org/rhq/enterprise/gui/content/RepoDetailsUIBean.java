@@ -48,7 +48,7 @@ public class RepoDetailsUIBean {
         return "edit";
     }
 
-    public boolean getShowProgressBar() {
+    public boolean getCurrentlySyncing() {
         String syncStatus = getSyncStatus();
         if (!syncStatus.equals(ContentSyncStatus.SUCCESS.toString())
             && !syncStatus.equals(ContentSyncStatus.FAILURE.toString())

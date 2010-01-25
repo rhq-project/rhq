@@ -115,13 +115,12 @@
                     value="#{RepoDetailsUIBean.percentComplete}" />
 			</td>
           </tr>
-          <!-- 
           <tr>
-            <td align="right"><b>Synchronization Progress 1:</b></td>
+            <td align="right"><b>Synchronization Progress :</b></td>
             <td align="left">
               <c:choose>
                 <c:when
-                  test="#{RepoDetailsUIBean.showProgressBar}">
+                  test="#{RepoDetailsUIBean.currentlySyncing}">
 	              <rich:progressBar id="syncProgress"
 	                value="#{RepoDetailsUIBean.percentComplete}"
 	                label="#{RepoDetailsUIBean.percentComplete} %"
@@ -137,7 +136,7 @@
 	          </c:choose>
             </td>
           </tr>
-           -->
+          <!-- 
           <tr>
             <td align="right"><b>Synchronization Progress:</b></td>
             <td align="left">
@@ -154,6 +153,7 @@
               </rich:progressBar>
             </td>
           </tr>
+           -->
           <tr>
             <td align="right"><b>Synchronization Results:</b></td>
             <td align="left"><h:outputLink
@@ -196,7 +196,7 @@
         <h:commandButton rendered="${mode ne 'edit'}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
-        <h:commandButton rendered="${mode ne 'edit'}"
+        <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"
           value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
           alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
         <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"

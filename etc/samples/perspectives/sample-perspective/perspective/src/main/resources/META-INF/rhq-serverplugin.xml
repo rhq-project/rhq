@@ -248,4 +248,19 @@
          placement="after" />
    </tab>
 
+   <!-- Page extensions -->
+
+   <page
+      name="createContentProvider">
+      <page-link
+         name="RHNSource"
+         application="sample"
+         url="createContentProviderRHN.xhtml" />
+      <page-link
+         name="JBossASPatchSource"
+         application="sample"
+         url="createContentProviderJBossASPatch.xhtml" />
+   </page>
+
+
 </perspective-plugin>

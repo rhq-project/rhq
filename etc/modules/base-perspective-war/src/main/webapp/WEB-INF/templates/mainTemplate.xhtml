@@ -55,7 +55,11 @@ Firefox and other Gecko-based browsers to render the page in "Almost Standards" 
 
 <h1>#{(!empty pageTitle) ? pageTitle : defaultPageTitle}</h1>
 
-<rich:messages globalOnly="true" infoClass="InfoBlock" warnClass="WarnBlock" errorClass="ErrorBlock" fatalClass="FatalBlock" />
+<rich:messages globalOnly="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock" />
 
 <ui:insert name="body"/>
 

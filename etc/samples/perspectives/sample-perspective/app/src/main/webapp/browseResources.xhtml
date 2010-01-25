@@ -1,24 +1,25 @@
 <?xml version="1.0"?>
 
 <ui:composition
-      template="/WEB-INF/templates/mainTemplate.xhtml"
-      xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
-      xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.org/rich"
-      xmlns:rhq="http://rhq-project.org/rhq"
-      xmlns:onc="http://jboss.org/on/component">
+        template="/WEB-INF/templates/mainTemplate.xhtml"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+        xmlns:a4j="http://richfaces.org/a4j"
+        xmlns:rich="http://richfaces.org/rich"
+        xmlns:rhq="http://rhq-project.org/rhq"
+        xmlns:onc="http://jboss.org/on/component">
 
     <ui:param name="pageTitle" value="Browse Resources"/>
-    
+
     <ui:define name="body">
 
         <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
-        <a4j:form ajaxSubmit="true" ajaxSingle="true">
+        <a4j:form ajaxSubmit="true" reRender="resourcesDataTable">
+
             <rich:dataTable id="resourcesDataTable"
                             value="#{BrowseResourcesUIBean.dataModel}" var="resource"
                             first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
@@ -76,7 +77,7 @@
 
                             <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                                 <ui:param name="pagedDataUIBean" value="#{BrowseResourcesUIBean}"/>
-                                <ui:param name="dataTableName" value="resourcesDataTable"/>                                
+                                <ui:param name="dataTableName" value="resourcesDataTable"/>
                             </ui:include>
                         </rich:column>
                     </rich:columnGroup>
@@ -84,7 +85,7 @@
             </rich:dataTable>
         </a4j:form>
 
-        <a4j:form ajaxSubmit="true" ajaxSingle="true">
+        <a4j:form ajaxSubmit="true" reRender="resources2Panel">
             <rich:dataTable id="resources2DataTable"
                             value="#{BrowseResources2UIBean.dataModel}" var="resource"
                             first="#{BrowseResources2UIBean.pageControl.pageNumber}"
@@ -148,7 +149,7 @@
                     </rich:columnGroup>
                 </f:facet>
             </rich:dataTable>
-        </a4j:form>        
+        </a4j:form>
 
     </ui:define>
 

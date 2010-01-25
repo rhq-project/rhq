@@ -127,9 +127,9 @@ THIS TEXT WILL BE REMOVED.
                   <h:panelGrid columns="4" style="width:100%;">
                     <h:outputLabel value=" "/>
 
-                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
 
-                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
@@ -170,8 +170,6 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
-          <ui:include src="upload-modal.xhtml"/>
-          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredSupported}">
@@ -287,9 +285,9 @@ THIS TEXT WILL BE REMOVED.
                   <h:panelGrid columns="4" style="width:100%;">
                     <h:outputLabel value=" "/>
 
-                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
 
-                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
@@ -330,12 +328,11 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
-
-          <ui:include src="upload-modal.xhtml"/>
-          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
       </c:choose>
 
+      <ui:include src="upload-modal.xhtml"/>
+      <ui:include src="view-raw-modal.xhtml"/>
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

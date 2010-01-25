@@ -86,6 +86,7 @@ THIS TEXT WILL BE REMOVED.
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"
+                                              limitToList="true"
                                               reRender="fileContents,selectedFileHeader,modalEditor"/>
                         </c:forEach>
                       </rich:panelMenuGroup>
@@ -97,9 +98,9 @@ THIS TEXT WILL BE REMOVED.
                   <h:panelGrid columns="4" style="width:100%;">
                     <h:outputLabel value=" "/>
 
-                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
 
-                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationViewUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
@@ -217,6 +218,7 @@ THIS TEXT WILL BE REMOVED.
                                               onclick="cursor_wait();"
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"
+                                              limitToList="true"
                                               reRender="fileContents,selectedFileHeader,modalEditor"/>
                         </c:forEach>
                       </rich:panelMenuGroup>
@@ -228,9 +230,9 @@ THIS TEXT WILL BE REMOVED.
                   <h:panelGrid columns="4" style="width:100%;">
                     <h:outputLabel value=" "/>
 
-                    <h:outputLink onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
 
-                    <h:outputLink onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
+                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
                     <h:commandLink action="#{ExistingResourceConfigurationViewUIBean.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>

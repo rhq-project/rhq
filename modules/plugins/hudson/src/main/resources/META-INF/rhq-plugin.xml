@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <plugin name="hudson"
-        displayName="hudson"
+        displayName="Hudson"
         package="org.rhq.plugins.hudson"
         description="Monitoring of Hudson integration build servers"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

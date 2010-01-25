@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import org.jboss.seam.annotations.In;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.gui.model.DefaultPageControlSettingsUIBean;
+import org.jboss.seam.Component;
+import org.jboss.seam.annotations.Create;
+import org.rhq.core.gui.table.bean.AbstractPagedDataUIBean;
 
 /**
  * A base class for Seam components that utilize the RHQ remote API to retrieve a paged data set of objects, which are
@@ -28,24 +28,11 @@ import org.rhq.core.gui.model.DefaultPageControlSettingsUIBean;
  *
  * @author Ian Springer
  */
-public class AbstractPagedDataPerspectiveUIBean extends AbstractPerspectiveUIBean {
-    @In(value = "DefaultPageControlSettingsUIBean", create = true)
-    private DefaultPageControlSettingsUIBean defaultPageControlSettings;
+public abstract class AbstractPerspectivePagedDataUIBean extends AbstractPagedDataUIBean {
+    protected PerspectiveClientUIBean perspectiveClient;
 
-    private PageControl pageControl;
-
-    public PageControl getPageControl() {
-        if (this.pageControl == null) {
-            this.pageControl = getDefaultPageControl();
-        }
-        return pageControl;
-    }
-
-    public void setPageControl(PageControl pageControl) {
-        this.pageControl = pageControl;
-    }
-
-    protected PageControl getDefaultPageControl() {
-        return new PageControl(0, this.defaultPageControlSettings.getDefaultPageSize());
+    @Create
+    public void init() {
+        this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class, true);
     }
 }

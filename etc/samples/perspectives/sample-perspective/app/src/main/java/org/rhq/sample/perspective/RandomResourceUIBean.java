@@ -43,21 +43,17 @@ public class RandomResourceUIBean extends AbstractPerspectiveUIBean {
 
     private Resource randomResource;
 
-    public RandomResourceUIBean() {
-        return;
-    }
-
     public Resource getRandomResource() throws Exception {
         if (this.randomResource == null) {
             this.randomResource = createRandomResource();
-            log.info("Retrieved random Resource " + this.randomResource);
+            log.debug("Retrieved random Resource " + this.randomResource);
         }
         return this.randomResource;
     }
 
     private Resource createRandomResource() throws Exception {
-        RemoteClient remoteClient = getRemoteClient();
-        Subject subject = getSubject();
+        RemoteClient remoteClient = this.perspectiveClient.getRemoteClient();
+        Subject subject = this.perspectiveClient.getSubject();
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
         ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
         ResourceCriteria resourceCriteria = new ResourceCriteria();            

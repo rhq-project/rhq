@@ -206,11 +206,13 @@
          resizeable="false"
          width="320"
          height="250">
+
          <f:facet name="header">
             <h:panelGroup>
                <h:outputText value="#{msg['about.Title']}" />
             </h:panelGroup>
          </f:facet>
+
          <f:facet name="controls">
             <h:panelGroup>
                <h:graphicImage
@@ -225,10 +227,26 @@
             </h:panelGroup>
          </f:facet>
 
-         <p><span class="DisplaySubhead"><h:outputText value="#{msg['footer.aboutLink']}" /></span><br />
+         <p>
+         <span class="DisplaySubhead">
+             <a href="http://rhq-project.org/">#{msg['footer.aboutLink']}</a>
+         </span><br />
          <span class="DisplayLabel"><h:outputText value="#{msg['footer.version']}: #{msg['product.version']}" /></span><br />
          <span class="DisplayLabel"><h:outputText
             value="#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}" /></span></p>
+
+         <rich:panel rendered="#{ServerInfoUIBean.debugModeEnabled}">
+             <h:panelGrid columns="2" border="0">
+               <h:panelGroup style="font-weight: bold">JSF RI Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.facesVersion}</h:panelGroup>
+
+               <h:panelGroup style="font-weight: bold">Seam Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.seamVersion}</h:panelGroup>
+
+               <h:panelGroup style="font-weight: bold">RichFaces Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.richFacesVersion}</h:panelGroup>
+             </h:panelGrid>
+         </rich:panel>
 
          <p><a href="http://jboss.org/"> <img
             src="/images/jboss_logo.png"
@@ -240,15 +258,14 @@
             <h:outputText value="#{msg['footer.copyright']}" />
          </f:verbatim> <h:outputText value="#{msg['about.Copyright.Content']}" /></p>
 
-         <p><a href="http://jboss.org/jopr"> <h:graphicImage
-            value="/images/logo_icon.png"
-            style="vertical-align:middle" /> Jopr Project </a> <ui:remove>
+                   
+         <ui:remove>
             <!--<h:outputText value="#{msg['about.MoreInfo.Label']}"/><br/>-->
             <!--
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/></a><br/>
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/></a>
         -->
-         </ui:remove></p>
+         </ui:remove>
 
          <input
             type="button"

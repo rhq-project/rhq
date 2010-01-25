@@ -39,12 +39,12 @@ import javax.faces.context.FacesContext;
  * @author Ian Springer
  */
 public class RowSelectorComponent extends UIInput {
-    private Mode mode;
-
     public static final String COMPONENT_TYPE = "org.rhq.RowSelector";
     public static final String COMPONENT_FAMILY = "org.rhq.RowSelector";
 
     private static final Mode DEFAULT_MODE = Mode.multi;
+
+    private Mode mode;
 
     @Override
     public String getFamily() {

@@ -18,12 +18,14 @@
  */
 package org.rhq.sample.perspective;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 
+import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -145,7 +147,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     private boolean enableLogin = true;
 
     private PageList<Resource> resources;
-    private Map<Integer, String> resourceUrlMap;
+    private Map<Integer, String> resourceUrlMap = new HashMap<Integer, String>();
 
     //// STEP N:
 
@@ -163,9 +165,15 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
         String stepCompleted = "(incomplete)";
 
-        //retrieve remote client references
-        RemoteClient remoteClient = getRemoteClient();
-        Subject subject = getSubject();
+        RemoteClient remoteClient;
+        Subject subject;
+        try {
+            remoteClient = this.perspectiveClient.getRemoteClient();
+            subject = this.perspectiveClient.getSubject();
+        } catch (Exception e) {
+            this.facesMessages.add(StatusMessage.Severity.FATAL, "Failed to connect to RHQ Server - cause: " + e);
+            return null;
+        }
 
         switch (this.currentStep) {
         case One: //create Group for visibility
@@ -642,28 +650,27 @@ public class WizardBean extends AbstractPerspectiveUIBean {
         return resources;
     }
 
-    public String getResourceUrl(int resourceId) {
-        String url = this.resourceUrlMap.get(resourceId);
-        return url;
+    public Map<Integer, String> getResourceUrlMap() {
+        return this.resourceUrlMap;
     }
 
     public String getGroupsUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(getSubject(),
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(),
             ((Group.valueOf(this.groupType) == Group.Mixed) ? "groups.mixedGroups" : "groups.compatibleGroups"), false,
             false);
         return url;
     }
 
     public String getRolesUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(getSubject(), "administration.security.roles", false, false);
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.roles", false, false);
         return url;
     }
 
     public String getUsersUrl() throws Exception {
-        PerspectiveManagerRemote perspectiveManager = getRemoteClient().getPerspectiveManagerRemote();
-        String url = perspectiveManager.getMenuItemUrl(getSubject(), "administration.security.users", false, false);
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.users", false, false);
         return url;
     }
 

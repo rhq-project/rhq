@@ -6,6 +6,15 @@
   version="1.2">
 
     <component>
+       <component-type>org.rhq.SortableColumnHeader</component-type>
+       <component-class>org.rhq.core.gui.table.component.SortableColumnHeaderComponent</component-class>
+       <component-extension>
+          <component-family>org.rhq.SortableColumnHeader</component-family>
+          <renderer-type>org.rhq.SortableColumnHeader</renderer-type>
+       </component-extension>
+    </component>
+
+    <component>
        <component-type>org.rhq.RowSelector</component-type>
        <component-class>org.rhq.core.gui.table.component.RowSelectorComponent</component-class>
        <component-extension>
@@ -23,7 +32,23 @@
        </component-extension>
     </component>
 
+    <component>
+       <component-type>org.rhq.SelectedRowsCommandButton</component-type>
+       <component-class>org.rhq.core.gui.table.component.SelectedRowsCommandButtonComponent</component-class>
+       <component-extension>
+          <component-family>org.rhq.SelectedRowsCommandButton</component-family>
+          <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+       </component-extension>
+    </component>
+
    <render-kit>
+
+       <renderer>
+          <description>TODO</description>
+          <component-family>org.rhq.SortableColumnHeader</component-family>
+          <renderer-type>org.rhq.SortableColumnHeader</renderer-type>
+          <renderer-class>org.rhq.core.gui.table.renderer.SortableColumnHeaderRenderer</renderer-class>
+       </renderer>
 
       <renderer>
          <description>renders either one radio button or one checkbox per data table row, which the user can select in
@@ -38,6 +63,14 @@
           <component-family>org.rhq.AllRowsSelector</component-family>
           <renderer-type>org.rhq.AllRowsSelector</renderer-type>
           <renderer-class>org.rhq.core.gui.table.renderer.AllRowsSelectorRenderer</renderer-class>
+       </renderer>
+
+       <renderer>
+          <description>renders a button, that is disabled if the specified minimum and/or maximum selected rows
+          are not satisfied for an associated data table</description>
+          <component-family>org.rhq.SelectedRowsCommandButton</component-family>
+          <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+          <renderer-class>org.rhq.core.gui.table.renderer.SelectedRowsCommandButtonRenderer</renderer-class>
        </renderer>
 
    </render-kit>

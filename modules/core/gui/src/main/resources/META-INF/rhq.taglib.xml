@@ -9,6 +9,14 @@
     <namespace>http://rhq-project.org/rhq</namespace>
 
     <tag>
+        <tag-name>sortableColumnHeader</tag-name>
+        <component>
+            <component-type>org.rhq.SortableColumnHeader</component-type>
+            <renderer-type>org.rhq.SortableColumnHeader</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
         <tag-name>rowSelector</tag-name>
         <component>
             <component-type>org.rhq.RowSelector</component-type>
@@ -21,6 +29,14 @@
         <component>
             <component-type>org.rhq.AllRowsSelector</component-type>
             <renderer-type>org.rhq.AllRowsSelector</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>selectedRowsCommandButton</tag-name>
+        <component>
+            <component-type>org.rhq.SelectedRowsCommandButton</component-type>
+            <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
         </component>
     </tag>
 

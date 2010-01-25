@@ -102,7 +102,7 @@
    </menu-item>
    <menu-item
       name="sample.child4"
-      displayName="Create EJB3 Admin User"
+      displayName="EJB Admin Wizard"
       application="sample"
       url="wizard.seam">
       <position
@@ -176,6 +176,17 @@
       </activators>
    </menu-item>
 
+    <!-- A tab that is always displayed -->
+    <tab
+       name="Sample"
+       displayName="Sample"
+       iconUrl="/images/icons/Favorite_16.png"
+       application="sample"
+       url="currentResource.seam">
+       <position
+          name="Content"
+          placement="after" />
+    </tab>
 
    <!--  A tab that shows up whenever the RT implements the Support Facet and user can execute operations -->
    <tab
@@ -185,7 +196,7 @@
       application="sample"
       url="currentResource.seam">
       <position
-         name="Content"
+         name="Sample"
          placement="after" />
       <activators>
          <facet

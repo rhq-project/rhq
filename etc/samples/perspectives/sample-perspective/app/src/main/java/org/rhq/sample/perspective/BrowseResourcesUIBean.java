@@ -18,24 +18,24 @@
  */
 package org.rhq.sample.perspective;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.Begin;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.international.StatusMessage;
 
+import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.gui.model.PagedDataModel;
 import org.rhq.core.gui.model.PagedDataProvider;
+import org.rhq.core.gui.table.model.PagedListDataModel;
 import org.rhq.enterprise.client.RemoteClient;
-import org.rhq.enterprise.server.perspective.AbstractPagedDataPerspectiveUIBean;
+import org.rhq.enterprise.server.perspective.AbstractPerspectivePagedDataUIBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
 import org.rhq.enterprise.server.perspective.PerspectiveTarget;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
@@ -47,23 +47,9 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  */
 @Name("BrowseResourcesUIBean")
 @Scope(ScopeType.CONVERSATION)
-public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
-    private PagedDataModel<Resource> dataModel;
+public class BrowseResourcesUIBean extends AbstractPerspectivePagedDataUIBean {
     private List<Resource> selectedResources;
-    private Map<Integer, String> resourceUrlMap;
-
-    public BrowseResourcesUIBean() {
-        return;
-    }
-
-    @Begin(join = true)
-    public PagedDataModel<Resource> getDataModel() throws Exception {
-        if (this.dataModel == null) {
-            this.dataModel = createDataModel();
-        }
-
-        return this.dataModel;
-    }
+    private Map<Integer, String> resourceUrlMap = new HashMap<Integer, String>();
 
     public List<Resource> getSelectedResources() {
         return this.selectedResources;
@@ -74,14 +60,16 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
     }
 
     public void uninventorySelectedResources() throws Exception {
-        if (this.selectedResources.isEmpty()) {
-            getFacesMessages().add(StatusMessage.Severity.WARN, "You didn't select any Resources.");
+        RemoteClient remoteClient;
+        Subject subject;
+        try {
+            remoteClient = this.perspectiveClient.getRemoteClient();
+            subject = this.perspectiveClient.getSubject();
+        } catch (Exception e) {
+            this.facesMessages.add(StatusMessage.Severity.FATAL, "Failed to connect to RHQ Server - cause: " + e);
             return;
         }
-
-        RemoteClient remoteClient = getRemoteClient();
-        Subject subject = getSubject();
-
+        
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
         ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
 
@@ -92,12 +80,14 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         }
 
         resourceManager.uninventoryResources(subject, selectedResourceIds);
-        // TODO: i18n this bad boy.
+
+        // Add message to tell the user the uninventory was a success.
         String pluralizer = (this.selectedResources.size() == 1) ? "" : "s";
-        getFacesMessages().add("Uninventoried " + this.selectedResources.size() + " Resource" + pluralizer + ".");
+        this.facesMessages.add("Uninventoried " + this.selectedResources.size() + " Resource" + pluralizer + ".");
 
         // Reset the data model, so the current page will get refreshed to reflect the Resources we just uninventoried.
-        this.dataModel = null;
+        // This is essential, since we are CONVERSATION-scoped and will live on beyond this request.
+        setDataModel(null);
     }
 
     @Override
@@ -107,15 +97,45 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         return defaultPageControl;
     }
 
-    private PagedDataModel<Resource> createDataModel() throws Exception {
-        RemoteClient remoteClient = getRemoteClient();
-        Subject subject = getSubject();
+    public DataModel createDataModel() {
+        RemoteClient remoteClient;
+        Subject subject;
+        try {
+            remoteClient = this.perspectiveClient.getRemoteClient();
+            subject = this.perspectiveClient.getSubject();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to connect to RHQ Server.", e);
+        }
 
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
         ResourceManagerRemote resourceManager = remoteClient.getResourceManagerRemote();
 
-        ResourcesDataProvider dataProvider = new ResourcesDataProvider(subject, resourceManager);
-        return new PagedDataModel<Resource>(dataProvider);
+        //ResourcesDataProvider dataProvider = new ResourcesDataProvider(subject, resourceManager);
+        //return new PagedDataModel<Resource>(dataProvider);
+        return new DataModel(subject, resourceManager);
+
+    }
+
+    private void setLinkBackUrls(List<Resource> resources) {
+        int[] ids = new int[resources.size()];
+        for (int i = 0, size = resources.size(); (i < size); ++i) {
+            ids[i] = resources.get(i).getId();
+        }
+
+        try {
+            RemoteClient remoteClient = this.perspectiveClient.getRemoteClient();
+            Subject subject = this.perspectiveClient.getSubject();
+            PerspectiveManagerRemote perspectiveManager = remoteClient.getPerspectiveManagerRemote();
+            this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, ids, false,
+                false);
+        } catch (Exception e) {
+            // for the demo, just dump a stack in this unlikely case
+            e.printStackTrace();
+        }
+    }
+
+    public Map<Integer, String> getResourceUrlMap() {
+        return this.resourceUrlMap;
     }
 
     private class ResourcesDataProvider implements PagedDataProvider<Resource> {
@@ -136,27 +156,23 @@ public class BrowseResourcesUIBean extends AbstractPagedDataPerspectiveUIBean {
         }
     }
 
-    private void setLinkBackUrls(List<Resource> resources) {
-        int[] ids = new int[resources.size()];
-        for (int i = 0, size = resources.size(); (i < size); ++i) {
-            ids[i] = resources.get(i).getId();
+    private class DataModel extends PagedListDataModel<Resource> {
+        private Subject subject;
+        private ResourceManagerRemote resourceManager;
+
+        private DataModel(Subject subject, ResourceManagerRemote resourceManager) {
+            super(BrowseResourcesUIBean.this);
+            this.subject = subject;
+            this.resourceManager = resourceManager;
         }
 
-        try {
-            RemoteClient remoteClient = getRemoteClient();
-            Subject subject = getSubject();
-            PerspectiveManagerRemote perspectiveManager = remoteClient.getPerspectiveManagerRemote();
-            this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, ids, false,
-                false);
-        } catch (Exception e) {
-            // for the demo, just dump a stack in this unlikely case
-            e.printStackTrace();
+        @Override
+        public PageList<Resource> fetchPage(PageControl pageControl) {
+            ResourceCriteria resourceCriteria = new ResourceCriteria();
+            resourceCriteria.setPageControl(pageControl);
+            PageList<Resource> resources = this.resourceManager.findResourcesByCriteria(this.subject, resourceCriteria);
+            setLinkBackUrls(resources);
+            return resources;
         }
     }
-
-    public String getResourceUrl(int resourceId) {
-        String url = this.resourceUrlMap.get(resourceId);
-        return url;
-    }
-
 }

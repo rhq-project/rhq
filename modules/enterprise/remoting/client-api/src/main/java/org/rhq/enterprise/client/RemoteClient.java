@@ -56,7 +56,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
 import org.rhq.enterprise.server.system.SystemManagerRemote;
 
 /**
- * A remote access client with transparent proxies to RHQ servers.
+ * A remote access client that provides transparent servlet-based proxies to an RHQ Server.
  *
  * @author Greg Hinkle
  * @author Simeon Pinder
@@ -154,13 +154,13 @@ public class RemoteClient {
      * @param port
      */
     public RemoteClient(String transport, String host, int port) {
-        this.transport = transport;
-        this.host = host;
-        this.port = port;
+        this(transport, host, port, null);
     }
 
     public RemoteClient(String transport, String host, int port, String subsystem) {
-        this(null, host, port);
+        this.transport = (transport != null) ? transport : guessTransport(port);
+        this.host = host;
+        this.port = port;
         this.subsystem = subsystem;
     }
 
@@ -216,11 +216,6 @@ public class RemoteClient {
      * After successfully executing this, {@link #isConnected()} will be <code>true</code>
      * and {@link #getSubject()} will return the subject that this method returns.
      * 
-     * @param user
-     * @param password
-     *
-     * @return the logged in user
-     *
      * @throws Exception if failed to connect to the server or log in
      */
     public void connect() throws Exception {
@@ -286,13 +281,11 @@ public class RemoteClient {
     }
 
     public String getTransport() {
-        if (this.transport != null) {
-            return this.transport;
-        } else if (String.valueOf(this.port).endsWith("443")) {
-            return SECURE_TRANSPORT;
-        } else {
-            return NONSECURE_TRANSPORT;
-        }
+        return transport;
+    }
+
+    protected String guessTransport(int port) {
+        return String.valueOf(port).endsWith("443") ? SECURE_TRANSPORT : NONSECURE_TRANSPORT;
     }
 
     /**
@@ -433,6 +426,13 @@ public class RemoteClient {
         return this.managers;
     }
 
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[" + "transport=" + transport + ", host=" + host + ", port=" + port
+            + ", subsystem=" + subsystem + ", connected=" + connected + ", loggedIn=" + loggedIn + ", subject="
+            + subject + ']';
+    }
+
     /**
      * Returns the internal JBoss/Remoting client used to perform the low-level
      * comm with the server.
@@ -458,7 +458,7 @@ public class RemoteClient {
     }
 
     private void doConnect() throws Exception {
-        String locatorURI = getTransport() + "://" + this.host + ":" + this.port
+        String locatorURI = this.transport + "://" + this.host + ":" + this.port
             + "/jboss-remoting-servlet-invoker/ServerInvokerServlet";
         InvokerLocator locator = new InvokerLocator(locatorURI);
 

@@ -24,9 +24,11 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
-      <jsf-facelets.version>1.1.14</jsf-facelets.version>
+      <jsf-facelets.version>1.1.15</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
-      <jetty-jspc.version>7.0.0.RC6</jetty-jspc.version>
+
+      <!-- plugin versions --> 
+      <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>
 
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
@@ -359,14 +361,6 @@
          <version>1.1.2</version>
       </dependency>
 
-      <!--  new jetty based jsp compiler -->
-      <dependency>
-         <groupId>org.mortbay.jetty</groupId>
-         <artifactId>jetty-jspc-maven-plugin</artifactId>
-         <version>${jetty-jspc.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
       <dependency>
          <groupId>xalan</groupId>
          <artifactId>xalan</artifactId>
@@ -542,7 +536,6 @@
          </build>
       </profile>
 
-      <!--
       <profile>
          <id>dist</id>
 
@@ -550,13 +543,13 @@
             <plugins>
 
                <plugin>
-                  //  See http://jetty.mortbay.org/jspc-maven-plugin/
+                  <!-- See http://jetty.mortbay.org/jspc-maven-plugin/ -->
                   <groupId>org.mortbay.jetty</groupId>
                   <artifactId>jetty-jspc-maven-plugin</artifactId>
-                  <version>${jetty-jspc.version}</version>
+                  <version>${jetty-jspc-maven-plugin.version}</version>
                   <configuration>
                      <keepSources>false</keepSources>
-                     <validateXml>false</validateXml>  // TODO: set to true
+                     <validateXml>false</validateXml>
                      <generatedClasses>${project.build.outputDirectory}</generatedClasses>
                   </configuration>
                   <executions>
@@ -567,7 +560,6 @@
             </plugins>
          </build>
       </profile>
-       -->
 
    </profiles>
 

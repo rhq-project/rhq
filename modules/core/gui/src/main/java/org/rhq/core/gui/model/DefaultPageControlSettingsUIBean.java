@@ -40,7 +40,7 @@ public class DefaultPageControlSettingsUIBean {
     private static final int MINIMUM_PAGE_SIZE = PAGE_SIZES[0];
     private static final int DEFAULT_PAGE_SIZE = PAGE_SIZES[0];
     
-    /** Limit to 7 pages until e find a general fix for RHQ-1813. */
+    /** Limit to 7 pages until we find a general fix for RHQ-1813. */
     private static final int MAXIMUM_PAGES = 7;    
 
     public SelectItem[] getPageSizeSelectItems() {

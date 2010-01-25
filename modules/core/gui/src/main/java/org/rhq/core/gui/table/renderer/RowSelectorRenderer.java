@@ -18,9 +18,9 @@
  */
 package org.rhq.core.gui.table.renderer;
 
-import com.sun.faces.util.MessageUtils;
 import org.ajax4jsf.component.UIDataAdaptor;
 import org.ajax4jsf.model.ExtendedDataModel;
+import org.ajax4jsf.resource.InternetResource;
 import org.jetbrains.annotations.NotNull;
 import org.rhq.core.gui.table.component.RowSelectorComponent;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -46,6 +46,10 @@ import java.util.Set;
  * @author Ian Springer
  */
 public class RowSelectorRenderer extends AbstractRenderer {    
+    private static final String TABLE_SCRIPT = "/org/rhq/core/gui/table/renderer/js/table.js";
+
+    private InternetResource[] scripts; // Could this be made static?
+
     @Override
     @SuppressWarnings("unchecked")
     public void decode(FacesContext context, UIComponent component) {
@@ -92,7 +96,6 @@ public class RowSelectorRenderer extends AbstractRenderer {
         String clientId = component.getClientId(context);
         writer.writeAttribute("name", clientId, "clientId");
 
-
         UIData data = getEnclosingData(rowSelector);
         Object rowKey = getRowKey(data);
         writer.writeAttribute("value", rowKey, null);
@@ -103,8 +106,7 @@ public class RowSelectorRenderer extends AbstractRenderer {
         String userSpecifiedOnclick = (String) rowSelector.getAttributes().get("onclick");
         if (userSpecifiedOnclick != null) {
             onclick += "; " + userSpecifiedOnclick;
-        }
-        rowSelector.getAttributes().put("onclick", onclick);
+        }        
         writer.writeAttribute("onclick", onclick, "onclick");
         // TODO: Add support for all the other common HTML attributes.
         //RenderKitUtils.renderPassThruAttributes(writer, component, ATTRIBUTES);
@@ -121,21 +123,8 @@ public class RowSelectorRenderer extends AbstractRenderer {
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         validateParameters(context, component);
-
         ResponseWriter writer = context.getResponseWriter();
-        writer.write("</input>");
-    }
-
-    private void validateParameters(FacesContext context, UIComponent component) {
-        if (context == null) {
-            throw new NullPointerException(MessageUtils.getExceptionMessageString(
-                MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "context"));
-        }
-
-        if (component == null) {
-            throw new NullPointerException(MessageUtils.getExceptionMessageString(
-                MessageUtils.NULL_PARAMETERS_ERROR_MESSAGE_ID, "component"));
-        }
+        writer.endElement("input");
     }
 
     @NotNull
@@ -234,4 +223,16 @@ public class RowSelectorRenderer extends AbstractRenderer {
         }
         return data;
     }
+
+    /* (non-Javadoc)
+     * @see org.ajax4jsf.renderkit.HeaderResourcesRendererBase#getScripts()
+     */
+    protected InternetResource[] getScripts() {
+    	synchronized (this) {
+        	if (scripts == null) {
+    			scripts = new InternetResource[] { getResource(TABLE_SCRIPT) };				    			 			
+    		}
+		}
+    	return scripts;
+	}
 }

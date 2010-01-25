@@ -19,6 +19,8 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -266,6 +268,15 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
             }
         }
 
+        Collections.sort(modifiedResults, new Comparator() {
+
+            public int compare(Object o1, Object o2) {
+                PackageVersionComposite p1 = (PackageVersionComposite) o1;
+                PackageVersionComposite p2 = (PackageVersionComposite) o2;
+                return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
+            }
+        });
+
         return new PageList<PackageVersionComposite>(modifiedResults, (int) count, pc);
     }
 
@@ -342,6 +353,15 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
                 count++;
             }
         }
+
+        Collections.sort(finalResults, new Comparator() {
+
+            public int compare(Object o1, Object o2) {
+                PackageVersionComposite p1 = (PackageVersionComposite) o1;
+                PackageVersionComposite p2 = (PackageVersionComposite) o2;
+                return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
+            }
+        });
 
         return new PageList<PackageVersionComposite>(finalResults, (int) count, pc);
     }

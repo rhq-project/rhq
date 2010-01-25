@@ -46,7 +46,9 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.enterprise.client.proxy.ResourceClientProxy.Measurement;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -205,17 +207,22 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
     }
 
-    private static TemplateEngine fetchTemplateEngine() {
+    private TemplateEngine fetchTemplateEngine() {
         Resource platformResource = PluginContainer.getInstance().getInventoryManager().getPlatform();
         TreeMap<String, String> tokens = new TreeMap<String, String>();
         tokens.put("rhq.hostname", platformResource.getName());
+        
+
+        MeasurementFacet facet = componentService.getComponent(platformResource.getId(), MeasurementFacet.class,
+            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+
+        
         
         for (Resource childResource : platformResource.getChildResources()) {
             if (childResource.getResourceType().getName().equals("Network Adapter" )){
                 String key = "rhq.interfaces."+childResource.getName()+".mac";
                 tokens.put(key ,childResource.getDescription());                
-            }
-            
+            }            
         }
         
         

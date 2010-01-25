@@ -30,7 +30,7 @@
                              default="/etc/cobbler/settings|/etc/cobbler/modules.conf" required="true" readOnly="true"
                              description="the absolute paths of the configuration files, delimited with pipe characters; wildcards are permitted in the last component of the path (e.g. /etc/cron.d/*)"/>
            <c:simple-property name="resourceConfigurationRootNode" required="true" readOnly="true"
-                              default="/files/etc/cobbler/"/>                             
+                              default="/files/etc/cobbler/"/> 
       </plugin-configuration>
 
       <resource-configuration configurationFormat="both">
@@ -43,17 +43,13 @@
                 <c:simple-property name="settings/snippetsdir" displayName="Snippets Directory" type="string" required="true" activationPolicy="immediate"
                                 description="The directory of files that cobbler uses to make templating of kickstarts easier. For more information check https://fedorahosted.org/cobbler/wiki/KickstartSnippets"/>
                                 
-                                     
-                <c:simple-property name="settings/kernel_options" displayName="Kernel Options" type="longString" required="true" activationPolicy="immediate"
-                                 description="The kernel options that should be present in every cobbler installation. The kernel options can also be applied at the distro/profile/system level. Each option is separated by a new line"/>
-                                 
                 <c:simple-property name="modules.conf/authentication/module" displayName="Authentication Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that authenticates the allowable users that can log into the cobbler WebUI and Read-Write XMLRPC. Choose one of authn_denyall, authn_configfile, authn_passthru, authn_ldap, authn_spacewalk, authn_testing, or a user supplied authentication scheme."/>
                 <c:simple-property name="modules.conf/authorization/module" displayName="Authorization Module" type="string" required="true" activationPolicy="immediate" description="The name of the module that specifies the operations an authenticated user can do in cobbler. Choose one of authz_allowall, authz_ownership,  or a user supplied authentication scheme."/>
             </c:group>
 
              
              <c:group name = "DHCP Management">
-                 <c:simple-property name="enableDhcp" displayName="Enable DHCP" type="boolean" required="true" activationPolicy="immediate"
+                 <c:simple-property name="settings/manage_dhcp" displayName="Enable DHCP" type="boolean" required="true" activationPolicy="immediate"
                             description="True if dhcp management is to be enabled. Note the DHCP module must be appropriately selected. "/>                 
                  <c:simple-property name="modules.conf/dhcp/module" displayName="DHCP Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DHCP management engine if manage_dhcp is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDhcp ">
                         <c:property-options>
@@ -66,7 +62,7 @@
                                     description="The IP address of the cobbler server which will be used by guests who are booting via PXE."/>            
              </c:group>
             <c:group name = "DNS Management">
-                <c:simple-property name="enableDns" displayName="Enable DNS" type="boolean" required="true" activationPolicy="immediate"
+                <c:simple-property name="settings/manage_dns" displayName="Enable DNS" type="boolean" required="true" activationPolicy="immediate"
                             description="True if dns management is to be enabled. Note the DNS module must be appropriately selected. "/>
                 <c:simple-property name="modules.conf/dns/module" displayName="DNS Module" type="string" required="true" activationPolicy="immediate" description="Chooses the DNS management engine if manage_dns is enabled in /etc/cobbler/settings. For more information check  https://fedorahosted.org/cobbler/wiki/ManageDns">
                                    <c:property-options>

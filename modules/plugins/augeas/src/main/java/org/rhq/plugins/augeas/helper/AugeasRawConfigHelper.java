@@ -31,7 +31,7 @@ import net.augeas.Augeas;
 import org.apache.commons.io.FileUtils;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
 
 /**
@@ -42,14 +42,16 @@ public class AugeasRawConfigHelper {
     private String rootPath;
     private String loadPath;
     private String rootNodePath;
+    private AugeasTranslator translator;
     private Map<String, List<String>> nodePaths = new HashMap<String, List<String>>();
     private final String transformPrefix = "/augeas/load/custom" + System.currentTimeMillis();
     private Map<String, String> configMap = new HashMap<String, String>();
 
-    public AugeasRawConfigHelper(String augeasRootPath, String augeasLoadPath, String rootNode) {
+    public AugeasRawConfigHelper(String augeasRootPath, String augeasLoadPath, String rootNode, AugeasTranslator t) {
         rootPath = augeasRootPath;
         loadPath = augeasLoadPath;
         rootNodePath = rootNode;
+        translator = t;
     }
 
     public void addLens(String lensName, String configFilePath) {
@@ -73,7 +75,8 @@ public class AugeasRawConfigHelper {
             for (String pathSuffix : nodePaths.get(existingConfig.getPath())) {
                 String propName = ("/files" + existingConfig.getPath() + "/" + pathSuffix).substring(rootNodePath
                     .length());
-                String propValue = from.getSimpleValue(propName, "");
+                String propValue = translator.getPropertyValue(propName, from);
+
                 aug.set("/files" + file + "/" + pathSuffix, propValue);
             }
             aug.save();
@@ -95,7 +98,9 @@ public class AugeasRawConfigHelper {
             String file = getFile(aug);
             for (String pathSuffix : nodePaths.get(from.getPath())) {
                 String propName = ("/files" + from.getPath() + "/" + pathSuffix).substring(rootNodePath.length());
-                toUpdate.put(new PropertySimple(propName, aug.get("/files" + file + "/" + pathSuffix)));
+                String augeasPath = "/files" + file + "/" + pathSuffix;
+                Property property = translator.createProperty(propName, augeasPath, aug);
+                toUpdate.put(property);
             }
         } finally {
             if (aug != null) {

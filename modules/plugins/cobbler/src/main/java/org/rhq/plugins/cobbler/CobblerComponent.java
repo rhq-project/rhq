@@ -19,7 +19,6 @@
 package org.rhq.plugins.cobbler;
 
 import java.io.File;
-import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,20 +29,26 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasNode;
 import org.rhq.plugins.augeas.helper.AugeasRawConfigHelper;
+import org.rhq.plugins.augeas.helper.AugeasTranslator;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
  *
  * @author Ian Springer
  */
-public class CobblerComponent extends AugeasConfigurationComponent implements ResourceConfigurationFacet {
+public class CobblerComponent extends AugeasConfigurationComponent implements AugeasTranslator,
+    ResourceConfigurationFacet {
     private static final String MODULES_PATH = "/etc/cobbler/modules.conf";
     private static final String SETTINGS_PATH = "/etc/cobbler/settings";
     private final Log log = LogFactory.getLog(this.getClass());
@@ -53,7 +58,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
         super.start(resourceContext);
         rawConfigHelper = new AugeasRawConfigHelper(getAugeasRootPath(), AUGEAS_LOAD_PATH,
-            getResourceConfigurationRootPath());
+            getResourceConfigurationRootPath(), this);
         rawConfigHelper.addLens("CobblerSettings.lns", SETTINGS_PATH);
         rawConfigHelper.addLens("CobblerModules.lns", MODULES_PATH);
 
@@ -63,8 +68,8 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         rawConfigHelper.addNode(SETTINGS_PATH, "default_kickstart");
         rawConfigHelper.addNode(SETTINGS_PATH, "snippetsdir");
 
-        //        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dhcp");
-        //        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dns");
+        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dhcp");
+        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dns");
         rawConfigHelper.addNode(SETTINGS_PATH, "manage_reverse_zones");
         rawConfigHelper.addNode(SETTINGS_PATH, "manage_forward_zones");
 
@@ -78,6 +83,27 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         rawConfigHelper.addNode(MODULES_PATH, "dhcp/module");
         rawConfigHelper.addNode(MODULES_PATH, "dns/module");
 
+    }
+
+    @Override
+    protected Object toPropertyValue(PropertyDefinitionSimple propDefSimple, Augeas augeas, AugeasNode node) {
+        if ("manage_dhcp".equals(node.getName()) || "manage_dns".equals(node.getName())) {
+            return "1".equals(augeas.get(node.getPath()));
+        }
+        return super.toPropertyValue(propDefSimple, augeas, node);
+    }
+
+    @Override
+    protected String toNodeValue(Augeas augeas, AugeasNode node, PropertyDefinitionSimple propDefSimple,
+        PropertySimple propSimple) {
+        if ("manage_dhcp".equals(node.getName()) || "manage_dns".equals(node.getName())) {
+            if (propSimple.getBooleanValue()) {
+                return "1";
+            }
+            return "0";
+        }
+
+        return super.toNodeValue(augeas, node, propDefSimple, propSimple);
     }
 
     @Override
@@ -161,8 +187,24 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         // TODO Auto-generated method stub
     }
 
-    private String normalizeToUnix(byte[] contents) throws UnsupportedEncodingException {
-        String s = new String(contents, "UTF8");
-        return s.replaceAll("\r\n", "\n");
+    @Override
+    public Property createProperty(String propName, String augeasPath, Augeas aug) {
+        if ("settings/manage_dhcp".equals(propName) || "settings/manage_dns".equals(propName)) {
+            return new PropertySimple(propName, "1".equals(aug.get(augeasPath)));
+        }
+        return new PropertySimple(propName, aug.get(augeasPath));
+    }
+
+    @Override
+    public String getPropertyValue(String propName, Configuration from) {
+        if ("settings/manage_dhcp".equals(propName) || "settings/manage_dns".equals(propName)) {
+            PropertySimple prop = (PropertySimple) from.get(propName);
+            if (prop.getBooleanValue()) {
+                return "1";
+            }
+            return "0";
+        }
+
+        return from.getSimpleValue(propName, "");
     }
 }

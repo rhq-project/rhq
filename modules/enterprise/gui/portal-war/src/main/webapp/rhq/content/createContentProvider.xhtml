@@ -70,9 +70,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/rhq/content/createContentProvider.xhtml">
-                     <f:param name="typeName" value="#{item.name}" />
-                     <f:param name="mode" value="new"/>
+                  <h:outputLink value="#{CreateContentSourceUIBean.getCreateContentProviderPageLink(item.name)}">
+                     <!--  note, do not use f:param with perspectives -->
 
                      <h:outputText value="#{item.displayName}" />
                      <h:outputText value=" *" rendered="#{(not empty param.typeName) and (param.typeName eq item.name)}"/>

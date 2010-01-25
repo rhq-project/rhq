@@ -18,6 +18,14 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import org.jboss.seam.Component;
+import org.rhq.core.util.maven.MavenArtifactNotFoundException;
+import org.rhq.core.util.maven.MavenArtifactProperties;
+import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+import javax.faces.component.UIComponent;
 import java.util.TimeZone;
 
 /**
@@ -26,7 +34,44 @@ import java.util.TimeZone;
  * @author Ian Springer
  */
 public class ServerInfoUIBean {
+    private static final String UNKNOWN_VERSION = "UNKNOWN";
+
     public TimeZone getTimeZone() {
         return TimeZone.getDefault();
+    }
+
+    public boolean isDebugModeEnabled() {
+        SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+        return Boolean.valueOf(systemManager.getSystemConfiguration().getProperty(RHQConstants.EnableDebugMode));
+    }
+
+    public String getFacesVersion() {
+        return getVersion(UIComponent.class);
+    }
+
+    public String getSeamVersion() {
+        return getVersion(Component.class);
+    }
+
+    public String getRichFacesVersion() {
+        MavenArtifactProperties richFacesMavenProps;
+        try {
+            richFacesMavenProps = MavenArtifactProperties.getInstance("org.richfaces.framework", "richfaces-api");
+        } catch (MavenArtifactNotFoundException e) {
+            // This really should never happen. TODO: Log an error.
+            richFacesMavenProps = null;
+        }
+        String richFacesVersion = (richFacesMavenProps != null) ? richFacesMavenProps.getVersion() : UNKNOWN_VERSION;
+        return (richFacesVersion != null) ? richFacesVersion : UNKNOWN_VERSION;
+    }
+
+    private static String getVersion(Class clazz) {
+        String version = null;
+        try {
+            return clazz.getPackage().getImplementationVersion();
+        }
+        catch (Exception e) {
+            return UNKNOWN_VERSION;
+        }
     }
 }

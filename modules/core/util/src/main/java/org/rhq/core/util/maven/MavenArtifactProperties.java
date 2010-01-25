@@ -78,27 +78,58 @@ public class MavenArtifactProperties {
     }
 
     /**
-     * Returns a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id,
-     * or null if no such artifact is in the this class loader.
+     * Returns a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id.
+     * First tries to load the pom.properties file for the artifact using the context class loader. If that
+     * fails, then tries to load it using our class loader.
      *
      * @param groupId the group id of the Maven artifact
      * @param artifactId the artifact id of the Maven artifact
      *
-     * @return a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id,
-     *         or null if no such artifact is in the this class loader
+     * @return a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id
+     *
+     * @throws MavenArtifactNotFoundException if a pom.properties file for the artifact could not be found in the context
+     *         class loader or in our class loader
      */
     @Nullable
-    public static MavenArtifactProperties getInstance(String groupId, String artifactId) {
+    public static MavenArtifactProperties getInstance(String groupId, String artifactId)
+            throws MavenArtifactNotFoundException {
+        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+        MavenArtifactProperties instance;
+        try {
+            instance = getInstance(groupId, artifactId, contextClassLoader);
+        } catch (MavenArtifactNotFoundException e) {
+            ClassLoader ourClassLoader = MavenArtifactProperties.class.getClassLoader();
+            instance = getInstance(groupId, artifactId, ourClassLoader);
+        }
+        return instance;
+    }
+
+    /**
+     * Returns a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id.
+     * Tries to load the pom.properties file for the artifact using the specified class loader.
+     *
+     * @param groupId the group id of the Maven artifact
+     * @param artifactId the artifact id of the Maven artifact
+     * @param classLoader the class loader in which to look for the artifact
+     *
+     * @return a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id
+     *
+     * @throws MavenArtifactNotFoundException if a pom.properties file for the artifact could not be found in the
+     *         specified class loader
+     */
+    @Nullable
+    public static MavenArtifactProperties getInstance(String groupId, String artifactId, ClassLoader classLoader)
+            throws MavenArtifactNotFoundException {
         String cacheKey = groupId + ":" + artifactId;
         MavenArtifactProperties instance = INSTANCE_CACHE.get(cacheKey);
         if (instance != null) {
             return instance;
         }
-        ClassLoader classLoader = MavenArtifactProperties.class.getClassLoader();
-        String resourcePath = "META-INF/maven/" + groupId + "/" + artifactId + "pom.properties";
+
+        String resourcePath = "META-INF/maven/" + groupId + "/" + artifactId + "/pom.properties";
         InputStream inputStream = classLoader.getResourceAsStream(resourcePath);
         if (inputStream == null) {
-            return null;
+            throw new MavenArtifactNotFoundException(cacheKey);
         }
         Properties props = new Properties();
         try {
@@ -107,6 +138,9 @@ public class MavenArtifactProperties {
             LOG.error("Failed to load resource " + resourcePath + " into Properties object.", e);
             return null;
         }
-        return new MavenArtifactProperties(props);
+        instance = new MavenArtifactProperties(props);
+
+        INSTANCE_CACHE.put(cacheKey, instance);
+        return instance;
     }
 }

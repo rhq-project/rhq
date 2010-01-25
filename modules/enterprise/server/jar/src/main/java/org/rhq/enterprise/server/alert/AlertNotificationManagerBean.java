@@ -66,6 +66,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPlu
 
 /**
  * @author Joseph Marques
+ * @author Heiko W. Rupp
  */
 
 @Stateless
@@ -575,6 +576,30 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
         }
         return templ;
+    }
+
+    /**
+     * Delete the passed Notification Templates
+     * @param subject subject of the caller
+     * @param templateIds ids of the templates to delete
+     * @return number of templates deleted
+     */
+    public int deleteNotificationTemplates(Subject subject, Integer[] templateIds) {
+        if (templateIds.length==0)
+            return 0;
+
+        int num=0;
+        for (int id : templateIds) {
+            NotificationTemplate templ = entityManager.find(NotificationTemplate.class, id);
+            if (templ==null) {
+                LOG.warn("No notification template found with id [" + id +"]");
+                continue;
+            }
+            entityManager.remove(templ);
+            num++;
+        }
+
+        return num;
     }
 
     /**

@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.alert;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -28,6 +29,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.faces.application.FacesMessage;
+
 import org.richfaces.model.selection.Selection;
 
 import org.jboss.seam.ScopeType;
@@ -35,6 +38,7 @@ import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
+import org.jboss.seam.faces.FacesMessages;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -42,6 +46,7 @@ import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
@@ -333,18 +338,39 @@ public class NotificationTemplatesUIBean implements Serializable {
 
     public String createNoticationTemplate() {
 
-        NotificationTemplate templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList());
-        // TODO do something with templ
-        selectedTemplate = templ;
-        alertNotifications = selectedTemplate.getNotifications();
+        NotificationTemplate templ;
 
+        try {
+            templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList());
+
+            selectedTemplate = templ;
+            alertNotifications = selectedTemplate.getNotifications();
+        } catch (IllegalArgumentException iae) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,"Creation of template failed: " + iae.getMessage());
+        }
 
         return SUCCESS_OUTCOME;
     }
 
     public String deleteNotificationTemplate() {
 
-        System.out.println("in Delete"); // TODO
+        List<Integer> ids = new ArrayList<Integer>(selectedTemplates.size());
+
+        Iterator<Object> iter = selectedTemplates.getKeys();
+        while (iter.hasNext()) {
+            Integer row = (Integer) iter.next();
+            NotificationTemplate templ = listOfTemplates.get(row);
+            ids.add(templ.getId());
+        }
+
+
+        int num = alertNotificationManager.deleteNotificationTemplates(EnterpriseFacesContextUtility.getSubject(),
+                ids.toArray(new Integer[]{}));
+
+        String summary = "Deleted " + num + " templates";
+        if (num!=1)
+            summary+="s";
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, summary);
 
         return SUCCESS_OUTCOME;
     }
@@ -354,20 +380,16 @@ public class NotificationTemplatesUIBean implements Serializable {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         System.out.println("in edit Template");
         Iterator<Object> iter = selectedTemplates.getKeys();
-        if (iter.hasNext()) {
+        if (selectedTemplates.size()==1) {
             Integer row = (Integer) iter.next();
-            System.out.println("selected row is " + row);
             selectedTemplate = listOfTemplates.get(row);
             alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
             this.notificationConverter.setAlertNotifications(alertNotifications);
             System.out.println("Selected template is " + selectedTemplate);
-        }
-        if (selectedTemplates.size()==1)
             opMode = EDIT;
+        }
         else
             opMode = "";
-
-
 
         return SUCCESS_OUTCOME;
 

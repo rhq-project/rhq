@@ -178,4 +178,12 @@ public interface AlertNotificationManagerLocal {
     int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds);
 
     List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId);
+
+    /**
+     * Delete the passed Notification Templates
+     * @param subject subject of the caller
+     * @param templateIds ids of the templates to delete
+     * @return number of templates deleted
+     */
+    int deleteNotificationTemplates(Subject subject, Integer[] templateIds);
 }

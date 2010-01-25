@@ -18,7 +18,7 @@
     <ui:define name="body">
 
         <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
-        <h:form>
+        <a4j:form ajaxSubmit="true" ajaxSingle="true">
             <rich:dataTable id="resourcesDataTable"
                             value="#{BrowseResourcesUIBean.dataModel}" var="resource"
                             first="#{BrowseResourcesUIBean.pageControl.pageNumber}"
@@ -82,7 +82,73 @@
                     </rich:columnGroup>
                 </f:facet>
             </rich:dataTable>
-        </h:form>
+        </a4j:form>
+
+        <a4j:form ajaxSubmit="true" ajaxSingle="true">
+            <rich:dataTable id="resources2DataTable"
+                            value="#{BrowseResources2UIBean.dataModel}" var="resource"
+                            first="#{BrowseResources2UIBean.pageControl.pageNumber}"
+                            rows="#{BrowseResources2UIBean.pageControl.pageSize}"
+                            sortMode="multi"
+                            width="100%">
+
+                <rich:column width="20">
+                    <f:facet name="header">
+                        <rhq:allRowsSelector/>
+                    </f:facet>
+                    <rhq:rowSelector value="#{BrowseResources2UIBean.selectedResources}"/>
+                </rich:column>
+
+                <rich:column width="55" sortBy="r.id">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.id">
+                            <h:outputText value="Id"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputLink value="#{BrowseResources2UIBean.resourceUrlMap[resource.id]}" target="_top">
+                        <h:outputText value="#{resource.id}"/>
+                    </h:outputLink>
+                </rich:column>
+
+                <rich:column sortBy="r.name" width="235">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.name">
+                            <h:outputText value="Name"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{resource.name}"/>
+                </rich:column>
+
+                <rich:column sortBy="r.description">
+                    <f:facet name="header">
+                        <rhq:sortableColumnHeader sortBy="r.description">
+                            <h:outputText value="Description"/>
+                        </rhq:sortableColumnHeader>
+                    </f:facet>
+
+                    <h:outputText value="#{resource.description}"/>
+                </rich:column>
+
+                <f:facet name="footer">
+                    <rich:columnGroup>
+                        <rich:column colspan="4">
+                            <rhq:selectedRowsCommandButton
+                                    value="UNINVENTORY"
+                                    action="#{BrowseResources2UIBean.uninventorySelectedResources}">
+                                <a4j:support event="onclick" reRender="resources2DataTable"/>
+                            </rhq:selectedRowsCommandButton>
+
+                            <ui:include src="/WEB-INF/includes/pageControls.xhtml">
+                                <ui:param name="pagedDataUIBean" value="#{BrowseResources2UIBean}"/>
+                                <ui:param name="dataTableName" value="resources2DataTable"/>
+                            </ui:include>
+                        </rich:column>
+                    </rich:columnGroup>
+                </f:facet>
+            </rich:dataTable>
+        </a4j:form>        
 
     </ui:define>
 

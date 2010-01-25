@@ -27,15 +27,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import org.jetbrains.annotations.NotNull;
-
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.server.perspective.activator.InventoryActivator;
 import org.rhq.enterprise.server.perspective.activator.ResourceConditionSet;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.GlobalActivatorsType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.InventoryActivatorType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemFeatureType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PageLinkType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourcePermissionActivatorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TraitActivatorType;
@@ -43,52 +40,17 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Tr
 /**
  * An item in the RHQ GUI's menu.
  */
-public class MenuItem extends RenderedExtension implements Serializable, Cloneable {
+public class PageLink extends Extension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
-    private MenuItemFeatureType feature;
-    private boolean newWindow;
-    private boolean addBreak;
-    private List<MenuItem> children;
+    private String pageName;
 
-    public MenuItem(MenuItemType rawMenuItem, String perspectiveName) {
-        super(rawMenuItem, perspectiveName, rawMenuItem.getUrl());
-        this.feature = rawMenuItem.getFeature();
-        this.newWindow = rawMenuItem.isNewWindow();
-        this.addBreak = rawMenuItem.isAddBreak();
-        this.children = new ArrayList<MenuItem>();
+    public PageLink(PageLinkType rawPageLink, String perspectiveName, String pageName, String url) {
+        super(rawPageLink, perspectiveName, url);
 
-        initActivators(rawMenuItem.getActivators());
-    }
+        this.pageName = pageName;
 
-    public MenuItemFeatureType getFeature() {
-        return feature;
-    }
-
-    public boolean isNewWindow() {
-        return newWindow;
-    }
-
-    public boolean isAddBreak() {
-        return addBreak;
-    }
-
-    @NotNull
-    public List<MenuItem> getChildren() {
-        return children;
-    }
-
-    public void setChildren(List<MenuItem> children) {
-        this.children = (children != null) ? children : new ArrayList<MenuItem>();
-    }
-
-    public boolean isMenuGroup() {
-        return (null != this.children && this.children.size() > 0);
-    }
-
-    public boolean isGraphic() {
-        String displayName = getDisplayName();
-        return (null == displayName || "".equals(displayName.trim()));
+        initActivators(rawPageLink.getActivators());
     }
 
     private void initActivators(GlobalActivatorsType rawActivators) {
@@ -131,12 +93,10 @@ public class MenuItem extends RenderedExtension implements Serializable, Cloneab
     }
 
     /**
-     * Note that this will clone the children list but not the child MenuItem objects themselves.
-     * @see java.lang.Object#clone()
+     * @return the pageName
      */
-    @Override
-    protected Object clone() throws CloneNotSupportedException {
-        return super.clone();
+    public String getPageName() {
+        return pageName;
     }
 
 }

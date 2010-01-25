@@ -91,6 +91,22 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return filteredTabs;
     }
 
+    public String getPageLink(Subject subject, String pageName, String linkName, String defaultValue) {
+        CacheEntry cacheEntry = getCacheEntry(subject);
+        List<PageLink> pageLinks = cacheEntry.getPageLinks();
+
+        String result = defaultValue;
+
+        for (PageLink pageLink : pageLinks) {
+            if (pageLink.getPageName().equals(pageName) && pageLink.getName().equals(linkName)) {
+                result = pageLink.getUrl();
+                break;
+            }
+        }
+
+        return result;
+    }
+
     /**
      * Recursively applies activators, based on the specified contexts, to a menu, and returns a
      * filtered, deep copy of the menu. The supplied <menu> is unmodified.
@@ -142,6 +158,23 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return filteredTabs;
     }
 
+    /**
+     * Applies activators, based on the specified contexts, to a list of PageLinks, and returns a
+     * filtered list. The supplied <List> is unmodified.
+     */
+    private List<PageLink> applyActivatorsToPageLinks(ActivationContext context,
+        EnumSet<ActivationContextScope> scopes, List<PageLink> pageLinks) {
+
+        List<PageLink> filteredPageLinks = new ArrayList<PageLink>();
+        for (PageLink pageLink : pageLinks) {
+            if (isActive(context, scopes, pageLink)) {
+                filteredPageLinks.add(pageLink);
+            }
+        }
+
+        return filteredPageLinks;
+    }
+
     @SuppressWarnings("unchecked")
     private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
         List<Activator> activators = extension.getActivators();
@@ -170,7 +203,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             List<Tab> baseTabs = getPluginMetadataManager().getResourceTabs();
             List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, baseTabs);
 
-            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs);
+            List<PageLink> basePageLinks = getPluginMetadataManager().getPageLinks();
+            List<PageLink> filteredPageLinks = applyActivatorsToPageLinks(context, scopes, basePageLinks);
+
+            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs, filteredPageLinks);
             CACHE.put(sessionId, cacheEntry);
         }
         return cacheEntry;
@@ -223,10 +259,16 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         // We cache it because the variables used by the global activators do not change very often.
         private List<Tab> tabs;
 
-        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs) {
+        // This is a list of references into the base pageLinks that has had all global-scoped activators
+        // already applied to it. We cache it because the variables used by the global activators do not
+        // change very often.
+        private List<PageLink> pageLinks;
+
+        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs, List<PageLink> pageLinks) {
             this.metadataLastModifiedTime = metadataLastModifiedTime;
             this.menu = menu;
             this.tabs = tabs;
+            this.pageLinks = pageLinks;
         }
 
         public long getMetadataLastModifiedTime() {
@@ -239,6 +281,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
         public List<Tab> getTabs() {
             return tabs;
+        }
+
+        public List<PageLink> getPageLinks() {
+            return pageLinks;
         }
     }
 

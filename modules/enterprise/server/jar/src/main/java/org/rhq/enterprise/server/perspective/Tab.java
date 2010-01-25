@@ -49,19 +49,17 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Tr
  *  
  * @author Ian Springer
  */
-public class Tab extends Extension implements Serializable, Cloneable {
+public class Tab extends RenderedExtension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     private String name;
     private String qualifiedName;
-    private String url;
     private List<Tab> children;
 
     public Tab(TabType rawTab, String perspectiveName) {
         super(rawTab, perspectiveName, rawTab.getUrl());
         this.name = getSimpleName(rawTab.getName());
         this.qualifiedName = rawTab.getName();
-        this.url = rawTab.getUrl();
         if (rawTab.getApplication() != null) {
             this.url += "&tab=" + this.qualifiedName;
         }
@@ -84,10 +82,6 @@ public class Tab extends Extension implements Serializable, Cloneable {
 
     public String getName() {
         return name;
-    }
-
-    public String getUrl() {
-        return url;
     }
 
     private static String getSimpleName(String qualifiedName) {

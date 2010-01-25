@@ -50,6 +50,17 @@ public interface PerspectiveManagerLocal {
     List<Tab> getResourceTabs(Subject subject, Resource resource);
 
     /**
+     * Return the url for the given page and name, if one is defined.
+     *
+     * @param subject a user
+     * @param pageName, a valid page extension point
+     * @param linkName, the link that should be replaced  
+     * @param defaultValue, if no perspective link is defined for the pageName+linkName, the value to return 
+     * @return the page link extenstion's url. defaultValue if not found
+     */
+    String getPageLink(Subject subject, String pageName, String linkName, String defaultValue);
+
+    /**
      * Given a targetUrlKey parameter value, as set in the extension, resolve that key into the targetUrl
      * for the extension's content.
      * 

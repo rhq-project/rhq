@@ -83,6 +83,12 @@
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
+               <xs:element
+                  name="page"
+                  type="perspective:PageType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
@@ -156,23 +162,6 @@
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
-         name="displayName"
-         type="perspective:DisplayNameType"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The display name for this extension.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="iconUrl"
-         type="xs:anyURI"
-         use="optional">
-         <xs:annotation>
-            <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
-               displayed. Required if displayName is an empty string.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
          name="application"
          type="xs:string"
          use="optional">
@@ -182,14 +171,11 @@
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
-         name="action"
-         type="perspective:ActionType"
-         use="optional"
-         default="add">
+         name="url"
+         type="xs:anyURI"
+         use="optional">
          <xs:annotation>
-            <xs:documentation>Add the extension or remove an extension with the given name and position that was defined
-               by the Core perspective. For removal, all but the name attribute are ignored. The default is add. Note, a
-               Remove followed by an Add can be used to replace an extension from the Core perspective.
+            <xs:documentation>The request URL for this extension. Typically kicks off a wizard or similar workflow.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -197,19 +183,56 @@
    </xs:complexType>
 
    <xs:complexType
-      name="TaskType">
+      name="RenderedExtensionType"
+      abstract="true">
+      <xs:annotation>
+         <xs:documentation>All rendered extensions extend this type.</xs:documentation>
+      </xs:annotation>
       <xs:complexContent>
          <xs:extension
             base="perspective:ExtensionType">
+
             <xs:attribute
-               name="url"
-               type="xs:anyURI"
+               name="displayName"
+               type="perspective:DisplayNameType"
                use="required">
                <xs:annotation>
-                  <xs:documentation>The request URL for this task. Typically kicks off a wizard or similar workflow.
-                  </xs:documentation>
+                  <xs:documentation>The display name for this extension.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute
+               name="iconUrl"
+               type="xs:anyURI"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
+                     displayed. Required if displayName is an empty string.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="action"
+               type="perspective:ActionType"
+               use="optional"
+               default="add">
+               <xs:annotation>
+                  <xs:documentation>Add the extension or remove an extension with the given name and position that was
+                     defined
+                     by the Core perspective. For removal, all but the name attribute are ignored. The default is
+                     add. Note, a
+                     Remove followed by an Add can be used to replace an extension from the Core
+                     perspective.
+            </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="TaskType">
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:RenderedExtensionType">
             <xs:attribute
                name="category"
                type="xs:string"
@@ -273,7 +296,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension
-            base="perspective:ExtensionType">
+            base="perspective:RenderedExtensionType">
             <xs:sequence>
                <xs:element
                   name="position"
@@ -294,16 +317,6 @@
                </xs:element>
             </xs:sequence>
 
-            <xs:attribute
-               name="url"
-               type="xs:anyURI"
-               use="optional">
-               <xs:annotation>
-                  <xs:documentation>The request URL for this menu item. Typically kicks off a wizard or similar
-                     workflow.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:attribute>
             <xs:attribute
                name="feature"
                type="perspective:MenuItemFeatureType"
@@ -344,7 +357,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension
-            base="perspective:ExtensionType">
+            base="perspective:RenderedExtensionType">
             <xs:sequence>
                <xs:element
                   name="position"
@@ -365,20 +378,61 @@
                   </xs:annotation>
                </xs:element>
             </xs:sequence>
-
-            <xs:attribute
-               name="url"
-               type="xs:anyURI"
-               use="optional">
-               <xs:annotation>
-                  <xs:documentation>The request URL for this tab. Typically kicks off a wizard or similar workflow.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
 
+   <xs:complexType
+      name="PageType">
+      <xs:annotation>
+         <xs:documentation>A page extension that injects perspective links into a core page.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element
+            name="page-link"
+            type="perspective:PageLinkType"
+            minOccurs="1"
+            maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>A replacement url for a named link on a given page.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+
+      <xs:attribute
+         name="name"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>The page extension point name.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType
+      name="PageLinkType">
+      <xs:annotation>
+         <xs:documentation>A page link extension for a named link in a page extension point.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ExtensionType">
+            <xs:sequence>
+               <xs:element
+                  name="activators"
+                  type="perspective:GlobalActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this page link extension to be active.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
 
 
    <!-- =========================================== Activators =============================================
@@ -735,7 +789,7 @@
                <xs:annotation>
                   <xs:documentation>The in-context package's type. The internal name.</xs:documentation>
                </xs:annotation>
-            </xs:attribute>                                    
+            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>

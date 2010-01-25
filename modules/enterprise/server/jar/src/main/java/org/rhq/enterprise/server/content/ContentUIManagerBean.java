@@ -295,7 +295,6 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         query.setParameter("resourceId", resourceId);
         query.setParameter("filter", filter);
 
-        long count = 0;
         List<PackageVersionComposite> results = query.getResultList();
         List<PackageVersionComposite> modifiedResults = new ArrayList<PackageVersionComposite>();
         String packageName = new String();
@@ -307,12 +306,44 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
                 if (installedPackageNameAndVersion.get(packageName).compareTo(result.getPackageVersion().getVersion()) < 0) {
                     modifiedResults.add(result);
-                    count++;
                 }
-
             }
         }
-        return new PageList<PackageVersionComposite>(modifiedResults, (int) count, pc);
+
+        List<PackageVersionComposite> testResults = new ArrayList<PackageVersionComposite>();
+        for (PackageVersionComposite result : modifiedResults) {
+            testResults.add(result);
+        }
+
+        List<PackageVersionComposite> latestResults = new ArrayList<PackageVersionComposite>();
+
+        PackageVersionComposite latestPackage = null;
+
+        for (PackageVersionComposite newPackage : modifiedResults) {
+            latestPackage = newPackage;
+
+            for (PackageVersionComposite pack : testResults) {
+                if (pack.getPackageName().equals(latestPackage.getPackageName())
+                    && latestPackage.getPackageVersion().getVersion().compareTo(pack.getPackageVersion().getVersion()) < 0) {
+                    latestPackage = pack;
+                }
+            }
+            latestResults.add(latestPackage);
+        }
+
+        List<PackageVersionComposite> finalResults = new ArrayList<PackageVersionComposite>();
+
+        long count = 0;
+        for (PackageVersionComposite pack : latestResults) {
+            if (finalResults.contains(pack)) {
+                continue;
+            } else {
+                finalResults.add(pack);
+                count++;
+            }
+        }
+
+        return new PageList<PackageVersionComposite>(finalResults, (int) count, pc);
     }
 
     public PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId) {

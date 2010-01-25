@@ -26,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -35,17 +34,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 
 /**
- * This can be the start of your own custom plugin's server component. Review the javadoc for {@link ResourceComponent}
- * and all the facet interfaces to learn what you can do in your resource component. This component has a lot of methods
- * in it because it implements all possible facets. If your resource does not support, for example, configuration, you
- * can remove the {@link ConfigurationFacet} from the <code>implements</code> clause and remove all method
- * implementations that that facet required.
- *
- * <p>You should not only read the javadoc in each of this class' methods, but you should also read the javadocs linked
- * by their "see" javadoc tags since those additional javadocs will contain a good deal of additional information you
- * will need to know.</p>
- *
- * @author John Mazzitelli
+ * Uses koan to actually do kickstarts on this machine.
  */
 public class KickstartServerComponent implements ResourceComponent, OperationFacet {
     private final Log log = LogFactory.getLog(KickstartServerComponent.class);

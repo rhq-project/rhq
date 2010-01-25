@@ -22,11 +22,14 @@
  */
 package org.rhq.core.util.maven;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -34,71 +37,57 @@ import java.util.Set;
 /**
  * @author Ian Springer
  */
-public class MavenArtifactProperties extends HashMap<String, String> {
+public class MavenArtifactProperties {
+    private static final Log LOG = LogFactory.getLog(MavenArtifactProperties.class);
+
     private static final Map<String, MavenArtifactProperties> INSTANCE_CACHE =
             new HashMap<String, MavenArtifactProperties>();
 
+    private Properties props;
+    private Set<String> propNames;
+
     private MavenArtifactProperties(Properties props) {
-        super();
-        for (Object key : props.keySet()) {
-            Object value = get(key);
-            if (key instanceof String && value instanceof String) {
-	            put((String)key, (String)value);
+        this.props = props;
+    }
+
+    public String getGroupId() {
+        return getProperty("groupId");
+    }
+
+    public String getArtifactId() {
+        return getProperty("artifactId");
+    }
+
+    public String getVersion() {
+        return getProperty("version");
+    }
+
+    public String getProperty(String propName) {
+        return this.props.getProperty(propName);
+    }
+
+    public Set<String> getPropertyNames() {
+        if (this.propNames == null) {
+            this.propNames = new LinkedHashSet<String>(this.props.size());
+            Set<Object> keys = this.props.keySet();
+            for (Object key : keys) {
+                this.propNames.add((String) key);
             }
         }
+        return this.propNames;
     }
 
-    @Override
-    public void putAll(Map<? extends String, ? extends String> m) {
-        throw new UnsupportedOperationException("This object is immutable.");
-    }
-
-    @Override
-    public String put(String key, String value) {
-        throw new UnsupportedOperationException("This object is immutable.");
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("This object is immutable.");
-    }
-
-    @Override
-    public String remove(Object key) {
-        throw new UnsupportedOperationException("This object is immutable.");
-    }
-
-	private transient Map<String,String> unmodifiableMap;
-
-    @Override
-	public Set<String> keySet() {
-	    if (this.unmodifiableMap == null) {
-		    this.unmodifiableMap = Collections.unmodifiableMap(this);
-        }
-	    return this.unmodifiableMap.keySet();
-	}
-
-    @Override
-	public Set<Map.Entry<String,String>> entrySet() {
-        if (this.unmodifiableMap == null) {
-		    this.unmodifiableMap = Collections.unmodifiableMap(this);
-        }
-	    return this.unmodifiableMap.entrySet();
-	}
-
-    @Override
-	public Collection<String> values() {
-	    if (this.unmodifiableMap == null) {
-		    this.unmodifiableMap = Collections.unmodifiableMap(this);
-        }
-	    return this.unmodifiableMap.values();
-	}
     /**
-     * TODO
-     * @param groupId
-     * @param artifactId
-     * @return
+     * Returns a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id,
+     * or null if no such artifact is in the this class loader.
+     *
+     * @param groupId the group id of the Maven artifact
+     * @param artifactId the artifact id of the Maven artifact
+     *
+     * @return a MavenArtifactProperties for the Maven artifact with the specified group id and artifact id,
+     *         or null if no such artifact is in the this class loader
      */
+    @Nullable
     public static MavenArtifactProperties getInstance(String groupId, String artifactId) {
         String cacheKey = groupId + ":" + artifactId;
         MavenArtifactProperties instance = INSTANCE_CACHE.get(cacheKey);
@@ -115,7 +104,7 @@ public class MavenArtifactProperties extends HashMap<String, String> {
         try {
             props.load(inputStream);
         } catch (IOException e) {
-            //("Failed to load resource " + resourcePath + " into Properties object.", e);
+            LOG.error("Failed to load resource " + resourcePath + " into Properties object.", e);
             return null;
         }
         return new MavenArtifactProperties(props);

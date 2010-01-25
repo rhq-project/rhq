@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.alert;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,7 +37,6 @@ import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
-import org.jboss.seam.faces.FacesMessages;
 
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -261,12 +259,17 @@ public class NotificationTemplatesUIBean implements Serializable {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = alertNotificationManager.addAlertNotificationToTemplate(subject,selectedTemplate.getName(),selectedNewSender,newAlertName,newSenderConfig);
-        System.out.println("addAlertSender: activeNotification is " + activeNotification);
-        alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
-        this.notificationConverter.setAlertNotifications(alertNotifications);
-        selectedNotifications.clear();
-        selectedNotifications.add(activeNotification);
+        try {
+            this.activeNotification = alertNotificationManager.addAlertNotificationToTemplate(subject,selectedTemplate.getName(),selectedNewSender,newAlertName,newSenderConfig);
+            System.out.println("addAlertSender: activeNotification is " + activeNotification);
+            alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
+            this.notificationConverter.setAlertNotifications(alertNotifications);
+            selectedNotifications.clear();
+            selectedNotifications.add(activeNotification);
+        }
+        catch (IllegalArgumentException iae) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,"Adding the sender failed: " + iae.getMessage() );
+        }
 
         return SUCCESS_OUTCOME;
     }
@@ -341,7 +344,7 @@ public class NotificationTemplatesUIBean implements Serializable {
         NotificationTemplate templ;
 
         try {
-            templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList());
+            templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList<AlertNotification>());
 
             selectedTemplate = templ;
             alertNotifications = selectedTemplate.getNotifications();
@@ -365,7 +368,7 @@ public class NotificationTemplatesUIBean implements Serializable {
 
 
         int num = alertNotificationManager.deleteNotificationTemplates(EnterpriseFacesContextUtility.getSubject(),
-                ids.toArray(new Integer[]{}));
+                ids.toArray(new Integer[ids.size()]));
 
         String summary = "Deleted " + num + " templates";
         if (num!=1)

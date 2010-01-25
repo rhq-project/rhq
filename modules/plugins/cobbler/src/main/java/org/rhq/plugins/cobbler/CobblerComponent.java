@@ -30,11 +30,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.helper.AugeasRawConfigHelper;
 
 /**
  * The ResourceComponent for the "Cobbler File" ResourceType.
@@ -45,6 +47,38 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
     private static final String MODULES_PATH = "/etc/cobbler/modules.conf";
     private static final String SETTINGS_PATH = "/etc/cobbler/settings";
     private final Log log = LogFactory.getLog(this.getClass());
+    private AugeasRawConfigHelper rawConfigHelper;
+
+    @Override
+    public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
+        super.start(resourceContext);
+        rawConfigHelper = new AugeasRawConfigHelper(getAugeasRootPath(), AUGEAS_LOAD_PATH,
+            getResourceConfigurationRootPath());
+        rawConfigHelper.addLens("CobblerSettings.lns", SETTINGS_PATH);
+        rawConfigHelper.addLens("CobblerModules.lns", MODULES_PATH);
+
+        rawConfigHelper.addNode(SETTINGS_PATH, "server");
+        rawConfigHelper.addNode(SETTINGS_PATH, "next_server");
+        rawConfigHelper.addNode(SETTINGS_PATH, "http_port");
+        rawConfigHelper.addNode(SETTINGS_PATH, "default_kickstart");
+        rawConfigHelper.addNode(SETTINGS_PATH, "snippetsdir");
+
+        //        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dhcp");
+        //        rawConfigHelper.addNode(SETTINGS_PATH, "manage_dns");
+        rawConfigHelper.addNode(SETTINGS_PATH, "manage_reverse_zones");
+        rawConfigHelper.addNode(SETTINGS_PATH, "manage_forward_zones");
+
+        rawConfigHelper.addNode(SETTINGS_PATH, "default_virt_bridge");
+        rawConfigHelper.addNode(SETTINGS_PATH, "default_virt_file_size");
+        rawConfigHelper.addNode(SETTINGS_PATH, "default_virt_ram");
+        rawConfigHelper.addNode(SETTINGS_PATH, "default_virt_type");
+
+        rawConfigHelper.addNode(MODULES_PATH, "authentication/module");
+        rawConfigHelper.addNode(MODULES_PATH, "authorization/module");
+        rawConfigHelper.addNode(MODULES_PATH, "dhcp/module");
+        rawConfigHelper.addNode(MODULES_PATH, "dns/module");
+
+    }
 
     @Override
     protected void setupAugeasModules(Augeas augeas) {
@@ -82,46 +116,12 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-    }
-
-    private Augeas createAugeas(String lens, byte[] binary) {
-        try {
-            Augeas aug = new Augeas(getAugeasRootPath(), AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
-            File fl = File.createTempFile("_rhq", null);
-            String contents = normalizeToUnix(binary);
-            //write the 'to' file to disk 
-            FileUtils.writeStringToFile(fl, contents);
-            aug.set("/augeas/load/CobblerTransform/lens", lens);
-            aug.set("/augeas/load/CobblerTransform/incl", fl.getAbsolutePath());
-            aug.load();
-            return aug;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
     }
 
     public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
         try {
-            String lens = "CobblerModules.lns";
-            if (SETTINGS_PATH.equals(to.getPath())) {
-                lens = "CobblerSettings.lns";
-            }
-            Augeas aug = createAugeas(lens, to.getContents());
-            String file = aug.get("/augeas/load/CobblerTransform/incl");
-            //apply structured changes
-            if (SETTINGS_PATH.equals(to.getPath())) {
-                String server = from.getSimpleValue("settings/server", "");
-                aug.set("/files" + file + "/server", server);
-            }
-            aug.save();
-
-            //FInally create a new configuration
             RawConfiguration config = new RawConfiguration();
-            config.setPath(to.getPath());
-            config.setContents(FileUtils.readFileToByteArray(new File(file)));
-            aug.close();
+            rawConfigHelper.mergeRawConfig(from, to, config);
             return config;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -130,14 +130,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
         try {
-            String lens = "CobblerModules.lns";
-            if (SETTINGS_PATH.equals(from.getPath())) {
-                lens = "CobblerSettings.lns";
-                Augeas aug = createAugeas(lens, from.getContents());
-                String file = aug.get("/augeas/load/CobblerTransform/incl");
-                to.put(new PropertySimple("settings/server", aug.get("/files" + file + "/server")));
-                aug.close();
-            }
+            rawConfigHelper.mergeStructured(from, to);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -146,8 +139,7 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Re
 
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
         try {
-            File f = new File(rawConfiguration.getPath());
-            FileUtils.writeStringToFile(f, normalizeToUnix(rawConfiguration.getContents()));
+            rawConfigHelper.save(rawConfiguration);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

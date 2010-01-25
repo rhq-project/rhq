@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.client;
 
-import java.lang.Override;
-import java.lang.String;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -282,6 +280,10 @@ public class RemoteClient {
         return this.port;
     }
 
+    public String getTransport() {
+        return transport;
+    }
+
     protected String guessTransport(int port) {
         return String.valueOf(port).endsWith("443") ? SECURE_TRANSPORT : NONSECURE_TRANSPORT;
     }
@@ -426,15 +428,9 @@ public class RemoteClient {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" +
-                "transport=" + transport +
-                ", host=" + host +
-                ", port=" + port +
-                ", subsystem=" + subsystem +
-                ", connected=" + connected +
-                ", loggedIn=" + loggedIn +
-                ", subject=" + subject +
-                ']';
+        return this.getClass().getSimpleName() + "[" + "transport=" + transport + ", host=" + host + ", port=" + port
+            + ", subsystem=" + subsystem + ", connected=" + connected + ", loggedIn=" + loggedIn + ", subject="
+            + subject + ']';
     }
 
     /**

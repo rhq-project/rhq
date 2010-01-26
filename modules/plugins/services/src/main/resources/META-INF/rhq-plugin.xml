@@ -8,8 +8,8 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <service name="Services File"
-            description="the local file used for mapping host names to IP addresses"
+   <service name="Services Manager"
+            description="the list of services"
             discovery="ServicesDiscoveryComponent"
             class="ServicesComponent"
             supportsManualAdd="true">

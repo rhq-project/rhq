@@ -22,17 +22,19 @@
   */
 package org.rhq.core.pc.inventory;
 
-import java.util.concurrent.Callable;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
-import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
-import org.rhq.core.domain.resource.DeleteResourceStatus;
-import org.rhq.core.domain.util.ReportUtils;
-import org.rhq.core.pc.PluginContainer;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+ import org.rhq.core.clientapi.agent.inventory.DeleteResourceResponse;
+ import org.rhq.core.clientapi.server.inventory.ResourceFactoryServerService;
+ import org.rhq.core.domain.resource.DeleteResourceStatus;
+ import org.rhq.core.pc.PluginContainer;
+ import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+ import org.rhq.core.util.exception.ThrowableUtil;
 
-/**
+ import org.apache.commons.logging.Log;
+ import org.apache.commons.logging.LogFactory;
+
+ import java.util.concurrent.Callable;
+
+ /**
  * Runnable implementation to thread delete resource requests.
  *
  * @author Jason Dobies
@@ -106,7 +108,7 @@ public class DeleteResourceRunner implements Callable, Runnable {
 
             status = DeleteResourceStatus.SUCCESS;
         } catch (Throwable t) {
-            errorMessage = ReportUtils.getErrorMessageFromThrowable(t);
+            errorMessage = ThrowableUtil.getStackAsString(t);
             status = DeleteResourceStatus.FAILURE;
         }
 

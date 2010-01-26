@@ -36,6 +36,7 @@ import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -181,7 +182,7 @@ public class GroupOperationJob extends OperationJob {
                         }
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
-                        groupHistory.setErrorMessageFromThrowable(e);
+                        groupHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
                         groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
                             getUserWithSession(user, true), groupHistory);
 
@@ -197,7 +198,7 @@ public class GroupOperationJob extends OperationJob {
                         invokeOperationOnResource(composite, operationManager);
                     } catch (Exception e) {
                         // failed to even send to the agent, immediately mark the job as failed
-                        groupHistory.setErrorMessageFromThrowable(e);
+                        groupHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
                         groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
                             getUserWithSession(user, true), groupHistory);
 

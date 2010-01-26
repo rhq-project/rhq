@@ -94,6 +94,6 @@ public abstract class Constraint implements Serializable {
 
     @Override
     public String toString() {
-        return getClass().getSimpleName() + "[details=" + getDetails() + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[details=" + getDetails() + "]";
     }
 }

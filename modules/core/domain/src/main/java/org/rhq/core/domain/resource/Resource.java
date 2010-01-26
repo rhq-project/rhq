@@ -22,16 +22,12 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -80,9 +76,7 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.EntitySerializer;
 import org.rhq.core.domain.util.Summary;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 /**
  * Represents a JON managed resource (i.e. a platform, server, or service).
@@ -729,7 +723,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @Table(name = "RHQ_RESOURCE")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-public class Resource implements Comparable<Resource>, Externalizable {
+public class Resource implements Comparable<Resource>, Serializable {
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT = "Resource.findProblemResourcesAlert";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT = "Resource.findProblemResourcesAlertCount";
@@ -865,7 +859,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     private int id;
 
     @Column(name = "UUID")
-    private String uuid = UUID.randomUUID().toString();
+    private String uuid;
 
     @Column(name = "RESOURCE_KEY")
     private String resourceKey;
@@ -1018,7 +1012,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     private ProductVersion productVersion;
 
     public Resource() {
-        this.uuid = UUID.randomUUID().toString();
+
     }
 
     /**
@@ -1612,7 +1606,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        buffer.append(Resource.class.getSimpleName()).append("[");
+        buffer.append("Resource").append("[");
         buffer.append("id=").append(this.id);
         String typeName = (this.resourceType != null) ? this.resourceType.getName() : "<null>";
         buffer.append(", type=").append(typeName);
@@ -1635,7 +1629,7 @@ public class Resource implements Comparable<Resource>, Externalizable {
         return buffer.toString();
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
+  /*  public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
 
@@ -1797,9 +1791,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
         currentAvailability = (ResourceAvailability) in.readObject();
         resourceErrors = (List<ResourceError>) in.readObject();
         productVersion = (ProductVersion) in.readObject();
-    }
+    }*/
 
-    public void afterUnmarshal(Unmarshaller u, Object parent) {
+    public void afterUnmarshal(Object u, Object parent) {
         this.parentResource = (Resource) parent;
     }
 

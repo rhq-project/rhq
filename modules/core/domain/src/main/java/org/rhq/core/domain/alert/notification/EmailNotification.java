@@ -104,7 +104,7 @@ public class EmailNotification extends AlertNotification {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + getId() + ", " + "emailAddress=" + this.emailAddress
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + getId() + ", " + "emailAddress=" + this.emailAddress
             + ", " + "]";
     }
 

@@ -278,11 +278,6 @@ public class ServerPlugin extends AbstractPlugin {
         setDeployment(PluginDeploymentType.SERVER);
     }
 
-    public ServerPlugin(String name, String path, byte[] content) {
-        super(name, path, content);
-        setDeployment(PluginDeploymentType.SERVER);
-    }
-
     public ServerPlugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
         String description, String help, String md5, String version, String ampsVersion, Configuration pluginConfig,
         Configuration scheduledJobsConfig, String type, long ctime, long mtime) {

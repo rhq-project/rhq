@@ -22,10 +22,7 @@
  */
 package org.rhq.core.domain.event;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -60,7 +57,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = EventSource.QUERY_BY_EVENT_DEFINITION, query = "SELECT evs FROM EventSource evs WHERE evs.eventDefinition = :definition") })
 @Table(name = EventSource.TABLE_NAME)
 @SequenceGenerator(name = "idGenerator", sequenceName = EventSource.TABLE_NAME + "_ID_SEQ", allocationSize = 100)
-public class EventSource implements Externalizable {
+public class EventSource implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String TABLE_NAME = "RHQ_EVENT_SOURCE";
@@ -161,12 +158,12 @@ public class EventSource implements Externalizable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + this.id + ", " + "eventDefinition.name="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + this.id + ", " + "eventDefinition.name="
             + ((this.eventDefinition != null) ? this.eventDefinition.getName() : "null") + ", " + "resource.name="
             + ((this.resource != null) ? this.resource.getName() : "null") + ", " + "location=" + this.location + "]";
 
     }
-
+/*
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeObject(this.eventDefinition);
         out.writeInt((this.resource != null) ? this.resource.getId() : 0);
@@ -179,5 +176,5 @@ public class EventSource implements Externalizable {
         int resourceId = in.readInt();
         this.resource = new Resource(resourceId);
         this.location = in.readUTF();
-    }
+    }*/
 }

@@ -244,14 +244,14 @@ public class CreateResourceHistory implements Serializable {
             setStatus(CreateResourceStatus.FAILURE);
         }
     }
-
-    /**
+/*TODO: GWT
+    *//**
      * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
      * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
      * {@link #setErrorMessage(String)}.
      *
      * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
+     *//*
     public void setErrorMessageFromThrowable(Throwable t) {
         if (t != null) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -260,7 +260,7 @@ public class CreateResourceHistory implements Serializable {
         } else {
             setErrorMessage(null);
         }
-    }
+    }*/
 
     public String getSubjectName() {
         return subjectName;

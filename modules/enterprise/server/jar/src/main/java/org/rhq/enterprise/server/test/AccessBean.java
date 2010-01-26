@@ -48,7 +48,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Id;
 import javax.persistence.PersistenceContext;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.core.domain.util.PersistenceUtility;
+
 import org.hibernate.Hibernate;
 
 /**

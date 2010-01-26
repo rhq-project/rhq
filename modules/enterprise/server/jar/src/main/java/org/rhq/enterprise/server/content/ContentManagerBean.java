@@ -50,7 +50,13 @@ import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesRequest;
+import org.rhq.core.clientapi.server.content.RemoveIndividualPackageResponse;
+import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
@@ -67,17 +73,11 @@ import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeletePackagesRequest;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
+import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
+import org.rhq.core.clientapi.server.content.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesRequest;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.resource.Agent;
@@ -1038,7 +1038,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
         ContentServiceRequest persistedRequest = (ContentServiceRequest) query.getSingleResult();
         Resource resource = persistedRequest.getResource();
 
-        persistedRequest.setErrorMessageFromThrowable(error);
+        persistedRequest.setErrorMessage(ThrowableUtil.getStackAsString(error));
         persistedRequest.setStatus(ContentRequestStatus.FAILURE);
 
         // This should only be called as the result of an exception during the user initiated action. As such,
@@ -1049,7 +1049,7 @@ public class ContentManagerBean implements ContentManagerLocal, ContentManagerRe
             InstalledPackageHistory failedEntry = new InstalledPackageHistory();
             failedEntry.setContentServiceRequest(persistedRequest);
             failedEntry.setDeploymentConfigurationValues(history.getDeploymentConfigurationValues());
-            failedEntry.setErrorMessageFromThrowable(error);
+            failedEntry.setErrorMessage(ThrowableUtil.getStackAsString(error));
             failedEntry.setPackageVersion(history.getPackageVersion());
             failedEntry.setResource(resource);
             failedEntry.setStatus(InstalledPackageHistoryStatus.FAILED);

@@ -26,7 +26,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.server.ExternalizableStrategy;
 import org.rhq.enterprise.communications.Ping;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;

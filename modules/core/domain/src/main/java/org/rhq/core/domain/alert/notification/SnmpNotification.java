@@ -139,7 +139,7 @@ public class SnmpNotification extends AlertNotification {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + getId() + ", " + "host=" + this.host + ", " + "port="
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + getId() + ", " + "host=" + this.host + ", " + "port="
             + this.port + ", " + "oid=" + this.oid + ", " + "]";
     }
 }

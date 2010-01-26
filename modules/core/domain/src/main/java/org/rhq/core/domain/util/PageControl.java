@@ -256,8 +256,7 @@ public class PageControl implements Serializable, Cloneable {
         return buf.toString();
     }
 
-    @Override
-    public Object clone() throws CloneNotSupportedException {
+    public Object clone() {
         return new PageControl(pageNumber, pageSize, getOrderingFieldsAsArray());
     }
 }

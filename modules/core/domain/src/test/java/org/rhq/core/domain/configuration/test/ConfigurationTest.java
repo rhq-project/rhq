@@ -46,6 +46,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 public class ConfigurationTest extends AbstractEJB3Test {
     @Test(groups = "integration.ejb3")
@@ -79,7 +80,7 @@ public class ConfigurationTest extends AbstractEJB3Test {
             assert copy.getConfiguration().getSimple("first").getStringValue().equals("firstValue") : copy;
 
             // let's pretend we failed the update
-            cur.setErrorMessageFromThrowable(new Exception("update error here"));
+            cur.setErrorMessage(ThrowableUtil.getStackAsString((new Exception("update error here")));
             assert copy.getStatus().equals(ConfigurationUpdateStatus.FAILURE) : copy; // setting the error message also sets status to failure
 
             copy = em.find(AbstractResourceConfigurationUpdate.class, cur.getId());

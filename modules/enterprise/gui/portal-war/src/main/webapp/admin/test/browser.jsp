@@ -1,7 +1,7 @@
 <%@page contentType="text/html"%>
 <%@page pageEncoding="UTF-8"%>
 <%@ page import="org.hibernate.engine.SessionFactoryImplementor" %>
-<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
+<%@ page import="org.rhq.core.server.PersistenceUtility" %>
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils" %>
 <%@ page import="org.rhq.enterprise.server.util.LookupUtil" %>
 <%@ page import="javax.naming.InitialContext" %>

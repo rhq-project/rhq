@@ -80,7 +80,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -1050,7 +1050,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             // and set its error message field.
             if (null != update) {
                 update.setStatus(ConfigurationUpdateStatus.FAILURE);
-                update.setErrorMessageFromThrowable(e);
+                update.setErrorMessage(ThrowableUtil.getStackAsString(e));
 
                 // here we call ourself, but we do so via the EJB interface so we pick up the REQUIRES_NEW semantics
                 this.configurationManager.mergeConfigurationUpdate(update);

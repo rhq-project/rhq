@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -22,10 +22,11 @@
   */
 package org.rhq.core.domain.measurement;
 
-import java.io.Serializable;
-import java.text.DateFormat;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+
+import java.io.Serializable;
+import java.util.Date;
 
 @Embeddable
 public class MeasurementDataPK implements Serializable {
@@ -88,7 +89,7 @@ public class MeasurementDataPK implements Serializable {
 
     @Override
     public String toString() {
-        return "MeasurementDataPK: " + "timestamp=[" + DateFormat.getInstance().format(timestamp) + "], scheduleId=["
+        return "MeasurementDataPK: " + "timestamp=[" + new Date(timestamp).toString() + "], scheduleId=["
             + scheduleId + "]";
     }
 }

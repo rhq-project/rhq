@@ -22,23 +22,21 @@
  */
 package org.rhq.core.domain.criteria;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.util.PageControl;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+
 import java.io.Serializable;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageOrdering;
 
 /**
  * @author Joseph Marques
@@ -46,9 +44,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 public abstract class Criteria implements Serializable {
 
-    private static final Log LOG = LogFactory.getLog(Criteria.class);
-
-    private enum Type {
+    public enum Type {
         FILTER, FETCH, SORT;
     }
 
@@ -94,42 +90,6 @@ public abstract class Criteria implements Serializable {
         return persistentClass;
     }
 
-    private List<Field> getFields(Type fieldType) {
-        String prefix = fieldType.name().toLowerCase();
-        List<Field> results = new ArrayList<Field>();
-
-        Class<?> currentLevelClass = this.getClass();
-        while (currentLevelClass.equals(Criteria.class) == false) {
-            for (Field field : currentLevelClass.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (field.getName().startsWith(prefix)) {
-                    results.add(field);
-                }
-            }
-            currentLevelClass = currentLevelClass.getSuperclass();
-        }
-
-        return results;
-    }
-
-    public Map<String, Object> getFilterFields() {
-        Map<String, Object> results = new HashMap<String, Object>();
-        for (Field filterField : getFields(Type.FILTER)) {
-            Object filterFieldValue = null;
-            try {
-                filterFieldValue = filterField.get(this);
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException(iae);
-            }
-            if (filterFieldValue != null) {
-                results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
-            }
-        }
-        for (Map.Entry<String, Object> entries : results.entrySet()) {
-            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
-        }
-        return results;
-    }
 
     public String getJPQLFilterOverride(String fieldName) {
         return filterOverrides.get(fieldName);
@@ -142,30 +102,7 @@ public abstract class Criteria implements Serializable {
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
     }
-
-    public List<String> getFetchFields() {
-        List<String> results = new ArrayList<String>();
-        for (Field fetchField : getFields(Type.FETCH)) {
-            Object fetchFieldValue = null;
-            try {
-                fetchField.setAccessible(true);
-                fetchFieldValue = fetchField.get(this);
-            } catch (IllegalAccessException iae) {
-                throw new RuntimeException(iae);
-            }
-            if (fetchFieldValue != null) {
-                boolean shouldFetch = ((Boolean) fetchFieldValue).booleanValue();
-                if (shouldFetch) {
-                    results.add(getCleansedFieldName(fetchField, 5));
-                }
-            }
-        }
-        for (String entry : results) {
-            LOG.info("Fetch: (" + entry + ")");
-        }
-        return results;
-    }
-
+    
     protected void addSortField(String fieldName) {
         orderingFieldNames.add("sort" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
     }
@@ -266,6 +203,7 @@ public abstract class Criteria implements Serializable {
                 pc = new PageControl(pageNumber, pageSize);
             }
             for (String fieldName : orderingFieldNames) {
+                /* TODO: GWT
                 for (Field sortField : getFields(Type.SORT)) {
                     if (sortField.getName().equals(fieldName) == false) {
                         continue;
@@ -281,15 +219,11 @@ public abstract class Criteria implements Serializable {
                         pc.addDefaultOrderingField(getCleansedFieldName(sortField, 4), pageOrdering);
                     }
                 }
+                */
             }
         }
-        LOG.info("Page Control: " + pc);
         return pc;
     }
 
-    private String getCleansedFieldName(Field field, int leadingCharsToStrip) {
-        String fieldNameFragment = field.getName().substring(leadingCharsToStrip);
-        String fieldName = Character.toLowerCase(fieldNameFragment.charAt(0)) + fieldNameFragment.substring(1);
-        return fieldName;
-    }
+
 }

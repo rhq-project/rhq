@@ -188,11 +188,6 @@ public class Plugin extends AbstractPlugin {
         setDeployment(PluginDeploymentType.AGENT);
     }
 
-    public Plugin(String name, String path, byte[] content) {
-        super(name, path, content);
-        setDeployment(PluginDeploymentType.AGENT);
-    }
-
     public Plugin(int id, String name, String path, String displayName, boolean enabled, PluginStatusType status,
         String description, String help, String md5, String version, String ampsVersion, long ctime, long mtime) {
 

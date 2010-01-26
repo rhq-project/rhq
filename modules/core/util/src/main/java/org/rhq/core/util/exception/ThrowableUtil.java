@@ -22,6 +22,8 @@
   */
 package org.rhq.core.util.exception;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -222,5 +224,12 @@ public class ThrowableUtil {
      */
     public static String[] getAllSqlExceptionMessagesArray(SQLException t) {
         return getAllSqlExceptionMessagesArray(t, true);
+    }
+
+
+    public static String getStackAsString(Throwable t) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        t.printStackTrace(new PrintStream(baos));
+        return baos.toString();
     }
 }

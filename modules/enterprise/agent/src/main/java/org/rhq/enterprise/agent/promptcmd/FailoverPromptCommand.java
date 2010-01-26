@@ -142,7 +142,7 @@ public class FailoverPromptCommand implements AgentPromptCommand {
     private void showFailoverList(AgentMain agent, PrintWriter out) {
         FailoverListComposite failoverList = agent.getServerFailoverList();
         if (failoverList != null && failoverList.size() > 0) {
-            failoverList.print(out);
+            out.println(failoverList.writeAsText());
         } else {
             out.println("<>");
         }

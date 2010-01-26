@@ -1,4 +1,4 @@
- /*
+/*
   * RHQ Management Platform
   * Copyright (C) 2005-2008 Red Hat, Inc.
   * All rights reserved.
@@ -22,39 +22,36 @@
   */
 package org.rhq.core.domain.measurement;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import org.rhq.core.domain.measurement.calltime.CallTimeData;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import java.io.Serializable;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * A report of measurement information. When a plugin collects measurement data that is emitted from a monitored
  * resource, it will store that measurement data in an instance of this type.
- *
+ * <p/>
  * <p>This report has an optimized serialization strategy.</p>
  *
  * @author Greg Hinkle
  * @author Ian Springer
  */
-public class MeasurementReport implements Externalizable {
+public class MeasurementReport implements Serializable {
     private static final long serialVersionUID = 1;
 
-    private static final Log LOG = LogFactory.getLog(MeasurementReport.class);
-
-    private Set<MeasurementDataNumeric> measurementNumericData = Collections
-        .synchronizedSet(new LinkedHashSet<MeasurementDataNumeric>());
-    private Set<MeasurementDataTrait> measurementTraitData = Collections
-        .synchronizedSet(new LinkedHashSet<MeasurementDataTrait>());
+    /* TODO: GWT
+    private Set<MeasurementDataNumeric> measurementNumericData = Collections.synchronizedSet(new LinkedHashSet<MeasurementDataNumeric>());
+    private Set<MeasurementDataTrait> measurementTraitData = Collections.synchronizedSet(new LinkedHashSet<MeasurementDataTrait>());
     private Set<CallTimeData> callTimeData = Collections.synchronizedSet(new LinkedHashSet<CallTimeData>());
+    */
+
+    private Set<MeasurementDataNumeric> measurementNumericData = new LinkedHashSet<MeasurementDataNumeric>();
+    private Set<MeasurementDataTrait> measurementTraitData = new LinkedHashSet<MeasurementDataTrait>();
+    private Set<CallTimeData> callTimeData = new LinkedHashSet<CallTimeData>();
+
 
     private long collectionTime;
 
@@ -67,7 +64,7 @@ public class MeasurementReport implements Externalizable {
      */
     public void addData(MeasurementDataNumeric value) {
         if (!measurementNumericData.add(value)) {
-            LOG.info("Measurement collected twice, second value ignored: " + value);
+            // TODO: GWT   LOG.info("Measurement collected twice, second value ignored: " + value);
         }
     }
 
@@ -80,7 +77,7 @@ public class MeasurementReport implements Externalizable {
      */
     public void addData(MeasurementDataTrait value) {
         if (!measurementTraitData.add(value)) {
-            LOG.info("Measurement collected twice, second value ignored: " + value);
+            // TODO: GWT   LOG.info("Measurement collected twice, second value ignored: " + value);
         }
     }
 
@@ -147,6 +144,7 @@ public class MeasurementReport implements Externalizable {
         this.collectionTime += collectionTime;
     }
 
+    /* TODO: GWT
     public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(measurementNumericData.size());
         for (MeasurementDataNumeric datum : measurementNumericData) {
@@ -193,5 +191,5 @@ public class MeasurementReport implements Externalizable {
         }
 
         this.callTimeData = (Set<CallTimeData>) in.readObject();
-    }
+    }*/
 }

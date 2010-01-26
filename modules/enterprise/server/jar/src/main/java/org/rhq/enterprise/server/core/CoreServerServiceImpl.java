@@ -22,6 +22,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -70,6 +72,8 @@ public class CoreServerServiceImpl implements CoreServerService {
     private PartitionEventManagerLocal partitionEventManager;
     private ServerManagerLocal serverManager;
     private SubjectManagerLocal subjectManager;
+
+    private SecureRandom random;
 
     /**
      * @see CoreServerService#registerAgent(AgentRegistrationRequest)
@@ -176,7 +180,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             agentByName.setRemoteEndpoint(request.getRemoteEndpoint());
 
             if (request.getRegenerateToken()) {
-                agentByName.setAgentToken(Agent.generateRandomToken(request.getName()));
+                agentByName.setAgentToken(generateAgentToken());
             }
 
             try {
@@ -192,7 +196,7 @@ public class CoreServerServiceImpl implements CoreServerService {
             // the agent does not yet exist, we need to create it
             try {
                 agentByName = new Agent(request.getName(), request.getAddress(), request.getPort(), request
-                    .getRemoteEndpoint(), Agent.generateRandomToken(request.getName()));
+                    .getRemoteEndpoint(), generateAgentToken());
 
                 agentByName.setServer(registeringServer);
                 agentManager.createAgent(agentByName);
@@ -437,6 +441,21 @@ public class CoreServerServiceImpl implements CoreServerService {
         log.debug("A new agent has passed its endpoint verification test: " + endpoint);
 
         return;
+    }
+
+
+    private synchronized String generateAgentToken() {
+        if (random == null) {
+            try {
+                random = SecureRandom.getInstance("SHA1PRNG");
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException("Could not load SecureRandom algorithm",e);
+            }
+        }
+
+        byte[] tokenBytes = new byte[50];
+        random.nextBytes(tokenBytes);
+        return new String(tokenBytes);
     }
 
 }

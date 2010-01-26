@@ -18,6 +18,9 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.byteman.agent.submit.Submit;
 
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+import org.rhq.core.clientapi.server.content.DeployIndividualPackageResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -26,12 +29,9 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
+import org.rhq.core.clientapi.server.content.RemoveIndividualPackageResponse;
+import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -461,7 +461,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                 // everything is OK
                 individualResponse.setResult(ContentResponseResult.SUCCESS);
             } catch (Exception e) {
-                individualResponse.setErrorMessageFromThrowable(e);
+                individualResponse.setErrorMessage(ThrowableUtil.getStackAsString(e));
                 individualResponse.setResult(ContentResponseResult.FAILURE);
             }
         }
@@ -516,7 +516,7 @@ public class BytemanAgentComponent implements ResourceComponent<BytemanAgentComp
                     individualResponse.setResult(ContentResponseResult.FAILURE);
                 }
             } catch (Exception e) {
-                individualResponse.setErrorMessageFromThrowable(e);
+                individualResponse.setErrorMessage(ThrowableUtil.getStackAsString(e));
                 individualResponse.setResult(ContentResponseResult.FAILURE);
             }
         }

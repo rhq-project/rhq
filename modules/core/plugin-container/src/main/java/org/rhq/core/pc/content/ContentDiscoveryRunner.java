@@ -25,9 +25,10 @@ package org.rhq.core.pc.content;
 import java.util.concurrent.Callable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
 
-/**
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
+
+ /**
  * Thread run by the {@link ContentManager} to perform content discoveries. Much of the logic in these discoveries takes
  * place in that manager; this is largely just a <code>Runnable</code> implementation in order to thread the
  * discoveries.

@@ -201,13 +201,28 @@
          <scope>test</scope>
       </dependency>
 
+
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>2.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
    </dependencies>
 
    <build>
 
       <finalName>rhq-core-domain-ejb3</finalName>
 
-      <testResources>
+       <resources>
+           <resource>
+               <directory>src/main/java</directory>
+           </resource>
+       </resources>
+
+
+       <testResources>
          <testResource>
             <directory>src/test/resources</directory>
             <filtering>true</filtering>
@@ -216,7 +231,29 @@
 
       <plugins>
 
-         <plugin>
+
+          <plugin>
+              <groupId>org.codehaus.mojo</groupId>
+              <artifactId>gwt-maven-plugin</artifactId>
+              <version>1.2.0-11137</version>
+              <configuration>
+                  <inplace>true</inplace>
+                  <logLevel>INFO</logLevel>
+                  <runTarget>RHQDomain.html</runTarget>
+                  <warSourceDirectory>war</warSourceDirectory>
+                  <extraJvmArgs>-Xmx512m</extraJvmArgs>
+              </configuration>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>compile</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
+
+
+          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <systemProperties>
@@ -328,6 +365,7 @@
 
          <build>
             <plugins>
+
                <plugin>
                   <artifactId>maven-javadoc-plugin</artifactId>
 

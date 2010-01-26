@@ -630,7 +630,7 @@ public class ResourceGroup extends Group {
     @Override
     public String toString() {
         StringBuilder buffer = new StringBuilder();
-        buffer.append(ResourceGroup.class.getSimpleName()).append("[");
+        buffer.append("ResourceGroup").append("[");
         buffer.append("id=").append(this.id);
         buffer.append(", name=").append(this.getName());
         buffer.append(", category=").append(groupCategory.name());

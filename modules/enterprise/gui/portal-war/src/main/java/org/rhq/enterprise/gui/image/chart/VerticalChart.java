@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.gui.image.data.IDataPoint;
 import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
 import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;

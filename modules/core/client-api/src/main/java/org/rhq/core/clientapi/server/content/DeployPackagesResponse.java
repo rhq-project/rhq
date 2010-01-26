@@ -22,6 +22,8 @@
   */
  package org.rhq.core.clientapi.server.content;
 
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.Serializable;

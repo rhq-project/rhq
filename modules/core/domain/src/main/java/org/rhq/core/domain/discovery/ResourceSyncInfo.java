@@ -22,10 +22,7 @@
  */
 package org.rhq.core.domain.discovery;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
+import java.io.*;
 import java.util.Collection;
 import java.util.Set;
 
@@ -43,14 +40,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.resource.InventoryStatus;
-import org.rhq.core.domain.util.serial.HibernateUtil;
 
 /**
  * @author Ian Springer
  */
 @Entity
 @Table(name = "RHQ_RESOURCE")
-public class ResourceSyncInfo implements Externalizable {
+public class ResourceSyncInfo implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
@@ -108,7 +104,8 @@ public class ResourceSyncInfo implements Externalizable {
         return childSyncInfos;
     }
 
-    public void writeExternal(ObjectOutput out) throws IOException {
+  /*  TODO: GWT
+      public void writeExternal(ObjectOutput out) throws IOException {
         out.writeInt(id);
         out.writeUTF(uuid);
         out.writeLong(mtime);
@@ -123,5 +120,5 @@ public class ResourceSyncInfo implements Externalizable {
         mtime = in.readLong();
         inventoryStatus = InventoryStatus.values()[in.readInt()];
         childSyncInfos = (Set<ResourceSyncInfo>) in.readObject();
-    }
+    }*/
 }

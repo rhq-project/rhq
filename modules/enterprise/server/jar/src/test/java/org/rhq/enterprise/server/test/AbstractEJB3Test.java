@@ -45,7 +45,7 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.content.ContentSourceManagerBean;

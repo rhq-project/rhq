@@ -25,10 +25,10 @@ package org.rhq.core.pc.content;
 import java.io.InputStream;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
+import org.rhq.core.clientapi.server.content.RetrievePackageBitsRequest;
 import org.rhq.core.domain.content.ContentRequestStatus;
-import org.rhq.core.domain.content.transfer.RetrievePackageBitsRequest;
 
-/**
+ /**
  * Runnable implementation to allow threaded requests to get a package content.
  *
  * @author Jason Dobies

@@ -22,20 +22,9 @@
  */
 package org.rhq.core.domain.configuration;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
+import org.hibernate.annotations.Cascade;
+import org.hibernate.annotations.CascadeType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -51,7 +40,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElementRef;
@@ -59,12 +47,13 @@ import javax.xml.bind.annotation.XmlElementRefs;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.Cascade;
-import org.hibernate.annotations.CascadeType;
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.util.EntitySerializer;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import java.io.Serializable;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This is the root object for the storage of a hierarchical value set of data. This data may represent configurations
@@ -131,7 +120,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @Table(name = "RHQ_CONFIG")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
-public class Configuration implements Externalizable, Cloneable, AbstractPropertyMap {
+public class Configuration implements Serializable, Cloneable, AbstractPropertyMap {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_GET_PLUGIN_CONFIG_BY_RESOURCE_ID = "Configuration.getPluginConfigByResourceId";
@@ -499,8 +488,11 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
      *
      * @see    #deepCopy()
      */
-    @Override
-    public Configuration clone() throws CloneNotSupportedException {
+    public Configuration clone() {
+        return deepCopy();
+
+/*      TODO: GWT
+
         // TODO GH: This may be a performance problem when it comes to runtime scans...
         // do some profiling
         Object obj = null;
@@ -522,7 +514,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
             cnfe.printStackTrace();
         }
 
-        return (Configuration) obj;
+        return (Configuration) obj;*/
     }
 
     /**
@@ -591,6 +583,7 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         }
         return builder.append("]").toString();
     }
+/*
 
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
@@ -620,9 +613,11 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
                strategy == ExternalizableStrategy.Subsystem.REMOTEAPI.id();
     }
 
-    /**
+    */
+/**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
-     */
+     *//*
+
     public void writeExternalAgentOrRemote(ObjectOutput out) throws IOException {
         Configuration copy = deepCopyWithoutProxies();
 
@@ -655,9 +650,11 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         return copy;
     }
 
-    /**
+    */
+/**
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-     */
+     *//*
+
     @SuppressWarnings("unchecked")
     public void readExternalAgentOrRemote(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
@@ -668,12 +665,13 @@ public class Configuration implements Externalizable, Cloneable, AbstractPropert
         ctime = in.readLong();
         mtime = in.readLong();
     }
+*/
 
     /**
      * This listener runs after jaxb unmarshalling and reconnects children properties to their parent configurations (as
      * we don't send them avoiding cyclic references).
      */
-    public void afterUnmarshal(Unmarshaller u, Object parent) {
+    public void afterUnmarshal(Object u, Object parent) {
         for (Property p : this.properties.values()) {
             p.setConfiguration(this);
         }

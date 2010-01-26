@@ -25,6 +25,8 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
+import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
+import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -33,10 +35,8 @@ import org.rhq.core.domain.content.Package;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
-import org.rhq.core.domain.content.transfer.ContentDiscoveryReport;
+import org.rhq.core.clientapi.server.content.ContentDiscoveryReport;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.criteria.InstalledPackageCriteria;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
@@ -101,21 +101,21 @@ public interface ContentManagerLocal {
 
     /**
      * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#mergeDiscoveredPackages(org.rhq.core.domain.content.transfer.ContentDiscoveryReport)}
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#mergeDiscoveredPackages(org.rhq.core.clientapi.server.content.ContentDiscoveryReport)}
      * .
      */
     void mergeDiscoveredPackages(ContentDiscoveryReport report);
 
     /**
      * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.domain.content.transfer.DeployPackagesResponse)}
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.clientapi.server.content.DeployPackagesResponse)}
      * .
      */
     void completeDeployPackageRequest(DeployPackagesResponse response);
 
     /**
      * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.domain.content.transfer.RemovePackagesResponse)}
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.clientapi.server.content.RemovePackagesResponse)}
      * .
      */
     void completeDeletePackageRequest(RemovePackagesResponse response);

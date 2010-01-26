@@ -22,16 +22,11 @@
  */
 package org.rhq.core.domain.cloud.composite;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.PrintWriter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * @author Joseph Marques
@@ -155,14 +150,9 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
     }
 
     public void remove() {
-        throw new IllegalAccessError(getClass().getSimpleName() + " are immutable lists, removal is disallowed");
+        throw new UnsupportedOperationException(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + " are immutable lists, removal is disallowed");
     }
 
-    public void print(PrintWriter writer) {
-        for (int i = 0; i < size(); i++) {
-            writer.println(servers.get(i) + (i == nextIndex ? " (next)" : ""));
-        }
-    }
 
     /**
      * Used to "serialize" this list in a human-readable form (useful for storing the list
@@ -190,10 +180,13 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
     public static FailoverListComposite readAsText(String text) {
         List<ServerEntry> servers = new ArrayList<ServerEntry>();
 
-        StringTokenizer rowTokenizer = new StringTokenizer(text, "\n");
-        while (rowTokenizer.hasMoreTokens()) {
+        String[] failoverListArray = text.split(".");
+        // TODO: GWT (Check to make sure this works)
+        //StringTokenizer rowTokenizer = new StringTokenizer(text, "\n");
+        //while (rowTokenizer.hasMoreTokens()) {
+        for (String row : failoverListArray) {
             try {
-                String row = rowTokenizer.nextToken();
+                //String row = rowTokenizer.nextToken();
                 String[] addressPorts = row.split(":");
                 String[] ports = addressPorts[1].split("/");
                 servers.add(new ServerEntry(addressPorts[0], Integer.parseInt(ports[0]), Integer.parseInt(ports[1])));
@@ -204,7 +197,8 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
         return new FailoverListComposite(servers);
     }
 
-    private void writeObject(ObjectOutputStream out) throws IOException {
+   /* TODO: GWT
+   private void writeObject(ObjectOutputStream out) throws IOException {
         out.writeInt(size());
         for (ServerEntry entry : servers) {
             out.writeUTF(entry.address);
@@ -224,13 +218,13 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
             entries.add(new ServerEntry(address, port, securePort));
         }
 
-        /*
+        *//*
          * no need to wrap 'entries' in a new list before putting them into the immutable wrapper;
          * as long as the 'entries' reference does not escape this method, we can be assured that
          * 'servers' is correctly immutable.
-         */
+         *//*
         servers = Collections.unmodifiableList(entries);
-    }
+    }*/
 
     @Override
     public String toString() {

@@ -189,10 +189,11 @@ public class ResourceError implements Serializable {
             throw new IllegalArgumentException("t == null");
         }
 
+        /* TODO: GWT
         StringWriter stringWriter = new StringWriter();
         t.printStackTrace(new PrintWriter(stringWriter));
         String stackTrace = stringWriter.toString();
-        setDetail(stackTrace);
+        setDetail(stackTrace);*/
     }
 
     public long getTimeOccurred() {

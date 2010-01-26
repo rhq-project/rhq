@@ -26,14 +26,10 @@ package org.rhq.core.domain.configuration;
 import static org.testng.Assert.*;
 
 import org.testng.annotations.Test;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.server.ExternalizableStrategy;
 
 import java.util.Random;
 import java.util.Set;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ObjectInputStream;
 
 /**
  * This class has tests for Configuration just like org.rhq.core.domain.configuration.test.ConfigurationTest. These

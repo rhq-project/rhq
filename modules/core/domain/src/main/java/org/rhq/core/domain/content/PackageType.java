@@ -127,7 +127,7 @@ public class PackageType implements Serializable {
     @XmlTransient
     private ResourceType resourceType;
 
-    public void afterUnmarshal(Unmarshaller u, Object resourceType) {
+    public void afterUnmarshal(Object u, Object resourceType) {
         this.resourceType = (ResourceType) resourceType;
     }
 

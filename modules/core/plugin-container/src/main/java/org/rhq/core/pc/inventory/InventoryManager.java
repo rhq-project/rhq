@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -54,9 +55,9 @@ import org.rhq.core.clientapi.agent.discovery.InvalidPluginConfigurationClientEx
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.server.discovery.DiscoveryServerService;
 import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
+import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.discovery.AvailabilityReport;
-import org.rhq.core.domain.discovery.InventoryReport;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.Availability;
@@ -729,6 +730,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     static Resource createNewResource(DiscoveredResourceDetails details) {
         Resource resource = new Resource();
+        resource.setUuid(UUID.randomUUID().toString());
         resource.setResourceKey(details.getResourceKey());
         resource.setName(details.getResourceName());
         resource.setVersion(details.getResourceVersion());

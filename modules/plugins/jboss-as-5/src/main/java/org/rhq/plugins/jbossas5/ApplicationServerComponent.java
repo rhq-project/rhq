@@ -55,6 +55,8 @@ import org.jetbrains.annotations.Nullable;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.support.metadata.InternalVMTypeDescriptor;
 
+import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
+import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -63,8 +65,6 @@ import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.DataType;

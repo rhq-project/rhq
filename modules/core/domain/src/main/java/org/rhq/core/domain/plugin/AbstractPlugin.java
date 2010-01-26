@@ -148,13 +148,6 @@ public class AbstractPlugin implements Serializable {
         this.name = name;
         this.path = path;
         this.content = content;
-
-        try {
-            ByteArrayInputStream stream = new ByteArrayInputStream(content);
-            this.md5 = MessageDigestGenerator.getDigestString(stream);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot determine plugin's MD5!", e);
-        }
     }
 
     /**

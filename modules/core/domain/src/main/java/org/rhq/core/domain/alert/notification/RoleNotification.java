@@ -124,6 +124,6 @@ public class RoleNotification extends AlertNotification {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + "id=" + getId() + ", " + "role=" + this.role + ", " + "]";
+        return this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1) + "[" + "id=" + getId() + ", " + "role=" + this.role + ", " + "]";
     }
 }

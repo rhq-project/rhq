@@ -24,8 +24,9 @@
 
 import java.io.Serializable;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 
-/**
+ /**
  * @author Jason Dobies
  */
 public class RemoveIndividualPackageResponse implements Serializable {

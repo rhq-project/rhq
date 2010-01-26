@@ -22,8 +22,8 @@
  */
 package org.rhq.core.domain.content;
 
-import java.io.Serializable;
-import java.util.Set;
+import org.hibernate.annotations.NamedQueries;
+import org.hibernate.annotations.NamedQuery;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -40,8 +40,8 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
+import java.io.Serializable;
+import java.util.Set;
 
 /**
  *
@@ -161,7 +161,7 @@ public class Distribution implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Distribution [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
+        return "Distribution [label=" + label + ", Type=" + distributionType + ", basePath=" + base_path + "]";
     }
 
     @Override

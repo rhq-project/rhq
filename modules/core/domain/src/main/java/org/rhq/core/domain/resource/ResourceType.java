@@ -22,15 +22,12 @@
  */
 package org.rhq.core.domain.resource;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.event.EventDefinition;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.util.Summary;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -61,14 +58,18 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.event.EventDefinition;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.util.EntitySerializer;
-import org.rhq.core.domain.util.Summary;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import java.io.Externalizable;
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Defines a type of {@link Resource} (e.g. a Linux platform, a JBossAS server, or a Datasource service).
@@ -234,7 +235,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
-public class ResourceType implements Externalizable, Comparable<ResourceType> {
+public class ResourceType implements Serializable, Comparable<ResourceType> {
     private static final long serialVersionUID = 1L;
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
@@ -784,6 +785,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
             + this.plugin + /*", parents=" + parents +*/"]";
     }
 
+
+/*
+TODO: GWT
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
@@ -861,5 +865,6 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.ctime = in.readLong();
         this.mtime = in.readLong();
     }
+*/
 
 }

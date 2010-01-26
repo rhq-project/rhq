@@ -22,6 +22,8 @@
   */
  package org.rhq.core.clientapi.server.content;
 
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
+
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;

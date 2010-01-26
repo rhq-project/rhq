@@ -22,21 +22,22 @@
   */
 package org.rhq.core.domain.util.units.test;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+ import org.rhq.core.domain.measurement.MeasurementUnits;
+ import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
+ import org.rhq.core.domain.measurement.util.MeasurementConversionException;
+ import org.rhq.core.domain.test.AbstractEJB3Test;
+ import org.rhq.core.server.MeasurementConverter;
+ import org.rhq.core.server.MeasurementParser;
 
-import org.testng.annotations.Test;
+ import org.testng.annotations.Test;
 
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
-import org.rhq.core.domain.measurement.util.MeasurementConversionException;
-import org.rhq.core.domain.measurement.util.MeasurementConverter;
-import org.rhq.core.domain.test.AbstractEJB3Test;
+ import java.text.DecimalFormat;
+ import java.text.NumberFormat;
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Locale;
 
-public class MeasurementConverterTest extends AbstractEJB3Test {
+ public class MeasurementConverterTest extends AbstractEJB3Test {
     private final double POSITIVE = 300;
     private final double NEGATIVE = -42;
 
@@ -103,7 +104,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
             if (expected.contains(".") && (!Locale.getDefault().equals(Locale.US))) {
                 Locale defaultLocale = Locale.getDefault();
                 Locale.setDefault(Locale.US);
-                MeasurementNumericValueAndUnits vu = MeasurementConverter.parse(expected, expectedUnits);
+                MeasurementNumericValueAndUnits vu = MeasurementParser.parse(expected, expectedUnits);
                 Locale.setDefault(defaultLocale);
                 expected = MeasurementConverter.format(vu.getValue(), expectedUnits, false, null, 4);
             }
@@ -283,7 +284,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
     private void validateFormatConvert(double passedValue, double expectedValue, MeasurementUnits units) {
         try {
             String intermediate = MeasurementConverter.format(passedValue, units, false);
-            MeasurementNumericValueAndUnits results = MeasurementConverter.parse(intermediate, units);
+            MeasurementNumericValueAndUnits results = MeasurementParser.parse(intermediate, units);
 
             assert (Math.abs(results.getValue() - expectedValue) < 1e-9 && results.getUnits() == units) : "double input was '"
                 + passedValue
@@ -326,7 +327,7 @@ public class MeasurementConverterTest extends AbstractEJB3Test {
 
     private void validateConvert(double passedValue, double expectedValue, String intermediate, MeasurementUnits units) {
         try {
-            MeasurementNumericValueAndUnits results = MeasurementConverter.parse(intermediate, units);
+            MeasurementNumericValueAndUnits results = MeasurementParser.parse(intermediate, units);
 
             assert (Math.abs(results.getValue() - expectedValue) < 1e-9 && results.getUnits() == units) : "double input was '"
                 + passedValue

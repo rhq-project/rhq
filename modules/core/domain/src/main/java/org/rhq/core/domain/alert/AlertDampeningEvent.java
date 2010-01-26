@@ -23,7 +23,7 @@
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -172,6 +172,6 @@ public class AlertDampeningEvent implements Serializable {
     @Override
     public String toString() {
         return "org.rhq.core.domain.alert.AlertDampeningEvent" + "[ " + "id=" + id + ", " + "eventType=" + eventType
-            + ", " + "eventTime=" + new SimpleDateFormat("MMM d, hh:mm:ss a").format(eventTime) + " ]";
+            + ", " + "eventTime=" + new Date(eventTime) + " ]";
     }
 }

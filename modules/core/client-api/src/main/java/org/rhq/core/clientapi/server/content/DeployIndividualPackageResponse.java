@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.ContentResponseResult;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 
  /**

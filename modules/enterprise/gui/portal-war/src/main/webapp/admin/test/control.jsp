@@ -2,7 +2,7 @@
 <%@ page import="java.io.PrintStream" %>
 
 <%@ page import="org.rhq.core.domain.auth.Subject" %>
-<%@ page import="org.rhq.core.domain.util.PersistenceUtility" %>
+<%@ page import="org.rhq.core.server.PersistenceUtility" %>
 
 <%@ page import="org.rhq.enterprise.gui.legacy.util.SessionUtils"%>
 <%@ page import="org.rhq.enterprise.gui.util.WebUtility"%>
@@ -17,7 +17,6 @@
 <%@ page import="org.rhq.enterprise.server.test.SubjectRoleTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.test.AlertTemplateTestLocal" %>
 <%@ page import="org.rhq.enterprise.server.cloud.instance.ServerManagerLocal" %>
-<%@ page import="org.rhq.enterprise.server.test.ResourceGroupTestBeanLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal" %>
 <%@ page import="org.rhq.enterprise.server.core.AgentManagerLocal" %>

@@ -23,7 +23,6 @@
 package org.rhq.core.domain.measurement;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 
 /**
  * Subclass for numerical measurement data
@@ -80,7 +79,7 @@ public class MeasurementDataNumeric extends MeasurementData implements Serializa
 
     @Override
     public String toString() {
-        return "MeasurementDataNumeric[" + "value=[" + new DecimalFormat("0.00").format(this.value) + "], "
+        return "MeasurementDataNumeric[" + "value=[" + value + "], "
             + super.toString() + "]";
     }
 }

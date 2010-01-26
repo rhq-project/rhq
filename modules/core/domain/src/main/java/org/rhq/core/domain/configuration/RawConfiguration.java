@@ -23,8 +23,6 @@
 
 package org.rhq.core.domain.configuration;
 
-import org.rhq.core.util.MessageDigestGenerator;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -36,6 +34,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+
 import java.io.Serializable;
 
 /**
@@ -131,9 +130,10 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     }
 
     private void updateSha256() {
+        /* TODO: GWT
         MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
         sha256Generator.add(contents);
-        sha256 = sha256Generator.getDigestString();
+        sha256 = sha256Generator.getDigestString();*/
     }
 
     /** @return A SHA-256 hash of the bytes for this raw configuration, which can be accessed via {@link #getContents()} */
@@ -231,7 +231,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @Override
     public String toString() {
         return new StringBuilder()
-            .append(getClass().getSimpleName())
+            .append(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1))
             .append("[id=").append(id)
             .append(", path=").append(path)
             .append(", sha256=").append(sha256)

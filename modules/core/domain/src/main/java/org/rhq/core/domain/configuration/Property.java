@@ -22,12 +22,8 @@
  */
 package org.rhq.core.domain.configuration;
 
-import java.io.ByteArrayOutputStream;
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.io.PrintStream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -49,11 +45,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import org.rhq.core.domain.util.EntitySerializer;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import java.io.Serializable;
 
 /**
  * The abstract base class for all {@link Configuration} value property types. A property is associated with a specific
@@ -93,7 +85,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 @XmlSeeAlso( { PropertySimple.class, PropertyList.class, PropertyMap.class })
-public class Property implements Externalizable, DeepCopyable<Property> {
+public class Property implements Serializable, DeepCopyable<Property> {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_DELETE_BY_PROPERTY_IDS = "Property.deleteByPropertyIds";
@@ -255,13 +247,14 @@ public class Property implements Externalizable, DeepCopyable<Property> {
      * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
      */
     public void setErrorMessageFromThrowable(Throwable t) {
+        /*  TODO: GWT
         if (t != null) {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             t.printStackTrace(new PrintStream(baos));
             setErrorMessage(baos.toString());
         } else {
             setErrorMessage(null);
-        }
+        }*/
     }
 
     @Override
@@ -291,7 +284,7 @@ public class Property implements Externalizable, DeepCopyable<Property> {
         return null;
     }
 
-    // It's not clear to me why this class implements Externalizable.  It seems to write out every field
+ /*   // It's not clear to me why this class implements Externalizable.  It seems to write out every field
     // using standard serialization. Also, it's sub-classes seem to write out every field. To be safe I'm leaving
     // it as is and also applying the new strategy logic, in case there are (future) differences between agent and
     // remoteAPI serialization. 
@@ -319,9 +312,9 @@ public class Property implements Externalizable, DeepCopyable<Property> {
         }
     }
 
-    /**
+    *//**
      * @see java.io.Externalizable#writeExternal(java.io.ObjectOutput)
-     */
+     *//*
     public void writeExternalAgent(ObjectOutput out) throws IOException {
         out.writeInt(id);
         out.writeObject(configuration);
@@ -331,9 +324,9 @@ public class Property implements Externalizable, DeepCopyable<Property> {
         out.writeObject(errorMessage);
     }
 
-    /**
+    *//**
      * @see java.io.Externalizable#readExternal(java.io.ObjectInput)
-     */
+     *//*
     public void readExternalAgent(ObjectInput in) throws IOException, ClassNotFoundException {
         id = in.readInt();
         configuration = (Configuration) in.readObject();
@@ -360,11 +353,11 @@ public class Property implements Externalizable, DeepCopyable<Property> {
         errorMessage = (String) in.readObject();
         parentList = (PropertyList) in.readObject();
         parentMap = (PropertyMap) in.readObject();
-    }
+    }*/
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(getClass().getSimpleName());
+        StringBuilder str = new StringBuilder(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".")+1));
         str.append("[id=").append(getId());
         str.append(", name=").append(getName());
         appendToStringInternals(str); // ask subclasses if they have anything else to add

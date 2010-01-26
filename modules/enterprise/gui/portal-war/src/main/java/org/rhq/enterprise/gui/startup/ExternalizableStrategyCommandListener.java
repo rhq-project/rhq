@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.startup;
 
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.server.ExternalizableStrategy;
 import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;

@@ -22,12 +22,11 @@
  */
 package org.rhq.core.domain.auth;
 
-import java.io.Externalizable;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
-import java.util.HashSet;
-import java.util.Set;
+import org.rhq.core.domain.alert.notification.SubjectNotification;
+import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.Configuration;
+
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -47,16 +46,13 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
-import org.jetbrains.annotations.NotNull;
-
-import org.rhq.core.domain.alert.notification.SubjectNotification;
-import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.util.EntitySerializer;
-import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Greg Hinkle
+ * 
  */
 @Entity
 @NamedQueries( {
@@ -186,7 +182,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-public class Subject implements Externalizable {
+public class Subject implements Serializable {
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Subject.findByName";
@@ -451,7 +447,7 @@ public class Subject implements Externalizable {
 
         return true;
     }
-
+/*
     public void writeExternal(ObjectOutput out) throws IOException {
         ExternalizableStrategy.Subsystem strategy = ExternalizableStrategy.getStrategy();
         out.writeChar(strategy.id());
@@ -525,6 +521,6 @@ public class Subject implements Externalizable {
         this.configuration = (Configuration) in.readObject();
         this.roles = (Set<Role>) in.readObject();
         this.sessionId = in.readInt();
-    }
+    }*/
 
 }

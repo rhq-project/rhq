@@ -2248,6 +2248,7 @@ ul.radio-group .unspecified {
     font-weight: normal;
     font-family: tahoma, verdana, sans-serif;
     font-size: 11px;
+    cursor: pointer;
 }
 
 .availLinkUp {
@@ -2326,4 +2327,13 @@ ul.radio-group .unspecified {
 .rich-tree-node-highlighted {
    text-decoration: none; 
    color: #000;
+}
+
+.rich-tree-node-selected {
+   border-color:#D4CFC7;
+   background: #E5E5E5;
+}
+
+.rich-tree-h-ic-img, .rich-tree-node-handleicon-collapsed, .rich-tree-node-handleicon-expanded {
+   cursor:pointer;
 }

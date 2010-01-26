@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import com.sun.facelets.Facelet;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.jboss.seam.Component;
 import org.rhq.core.util.maven.MavenArtifactNotFoundException;
 import org.rhq.core.util.maven.MavenArtifactProperties;
@@ -36,6 +39,8 @@ import java.util.TimeZone;
 public class ServerInfoUIBean {
     private static final String UNKNOWN_VERSION = "UNKNOWN";
 
+    private final Log log = LogFactory.getLog(this.getClass());
+
     public TimeZone getTimeZone() {
         return TimeZone.getDefault();
     }
@@ -46,11 +51,15 @@ public class ServerInfoUIBean {
     }
 
     public String getFacesVersion() {
-        return getVersion(UIComponent.class);
+        return getManifestVersion(UIComponent.class);
+    }
+
+    public String getFaceletsVersion() {
+        return getManifestVersion(Facelet.class);
     }
 
     public String getSeamVersion() {
-        return getVersion(Component.class);
+        return getManifestVersion(Component.class);
     }
 
     public String getRichFacesVersion() {
@@ -58,20 +67,27 @@ public class ServerInfoUIBean {
         try {
             richFacesMavenProps = MavenArtifactProperties.getInstance("org.richfaces.framework", "richfaces-api");
         } catch (MavenArtifactNotFoundException e) {
-            // This really should never happen. TODO: Log an error.
+            log.error("Could not ascertain RichFaces version.", e);
             richFacesMavenProps = null;
         }
-        String richFacesVersion = (richFacesMavenProps != null) ? richFacesMavenProps.getVersion() : UNKNOWN_VERSION;
+        String richFacesVersion = (richFacesMavenProps != null) ? richFacesMavenProps.getVersion() : null;
         return (richFacesVersion != null) ? richFacesVersion : UNKNOWN_VERSION;
     }
 
-    private static String getVersion(Class clazz) {
+    private String getManifestVersion(Class clazz) {
         String version = null;
         try {
-            return clazz.getPackage().getImplementationVersion();
+            Package pkg = clazz.getPackage();
+            if (pkg != null) {
+                version = pkg.getImplementationVersion();
+                if (version == null) {
+                   version = pkg.getSpecificationVersion();
+                }
+            }
         }
         catch (Exception e) {
-            return UNKNOWN_VERSION;
+            log.error("Error while looking up manifest version for " + clazz + ".", e);
         }
+        return version;
     }
 }

@@ -18,7 +18,7 @@
     <ui:define name="body">
 
         <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
-        <a4j:form ajaxSubmit="true" reRender="resourcesDataTable">
+        <a4j:form ajaxSubmit="false" reRender="resourcesDataTable">
 
             <rich:dataTable id="resourcesDataTable"
                             value="#{BrowseResourcesUIBean.dataModel}" var="resource"
@@ -37,6 +37,8 @@
                 <rich:column width="55" sortBy="r.id">
                     <f:facet name="header">
                         <rhq:sortableColumnHeader sortBy="r.id">
+                            <a4j:support event="onclick"
+                                         actionListener="#{BrowseResourcesUIBean.ajaxSortListener}"/>
                             <h:outputText value="Id"/>
                         </rhq:sortableColumnHeader>
                     </f:facet>
@@ -49,6 +51,8 @@
                 <rich:column sortBy="r.name" width="235">
                     <f:facet name="header">
                         <rhq:sortableColumnHeader sortBy="r.name">
+                            <a4j:support event="onclick"
+                                         actionListener="#{BrowseResourcesUIBean.ajaxSortListener}"/>
                             <h:outputText value="Name"/>
                         </rhq:sortableColumnHeader>
                     </f:facet>
@@ -59,6 +63,8 @@
                 <rich:column sortBy="r.description">
                     <f:facet name="header">
                         <rhq:sortableColumnHeader sortBy="r.description">
+                            <a4j:support event="onclick"
+                                         actionListener="#{BrowseResourcesUIBean.ajaxSortListener}"/>
                             <h:outputText value="Description"/>
                         </rhq:sortableColumnHeader>
                     </f:facet>
@@ -71,9 +77,7 @@
                         <rich:column colspan="4">
                             <rhq:selectedRowsCommandButton
                                     value="UNINVENTORY"
-                                    action="#{BrowseResourcesUIBean.uninventorySelectedResources}">
-                                <a4j:support event="onclick" reRender="resourcesDataTable"/>
-                            </rhq:selectedRowsCommandButton>
+                                    action="#{BrowseResourcesUIBean.uninventorySelectedResources}"/>
 
                             <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                                 <ui:param name="pagedDataUIBean" value="#{BrowseResourcesUIBean}"/>
@@ -85,7 +89,7 @@
             </rich:dataTable>
         </a4j:form>
 
-        <a4j:form ajaxSubmit="true" reRender="resources2Panel">
+        <a4j:form ajaxSubmit="true" reRender="resources2DataTable" rendered="#{not empty param['t2']}">
             <rich:dataTable id="resources2DataTable"
                             value="#{BrowseResources2UIBean.dataModel}" var="resource"
                             first="#{BrowseResources2UIBean.pageControl.pageNumber}"

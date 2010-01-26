@@ -44,7 +44,7 @@ public abstract class AbstractPagedDataUIBean<T> {
 
     /** The number of specific pages to display on the data scroller - limit to 7 pages until we find a general fix for
      *  RHQ-1813. */
-    private static final int MAXIMUM_PAGES = 7;
+    private static final int DATA_SCROLLER_MAX_PAGES = 7;
 
     @In
     protected FacesMessages facesMessages;
@@ -68,8 +68,18 @@ public abstract class AbstractPagedDataUIBean<T> {
         return DEFAULT_PAGE_SIZE;
     }
 
-    public int getMaximumPages() {
-        return MAXIMUM_PAGES;
+    public int getDataScrollerMaxPages() {
+        return DATA_SCROLLER_MAX_PAGES;
+    }
+
+    public int getDataScrollerPage() {
+        // rich:dataScroller expects its 'page' attribute to be 1-indexed, not 0-indexed.
+        return getPageControl().getPageNumber() + 1;
+    }
+
+    public void setDataScrollerPage(int i) {
+        // rich:dataScroller expects its 'page' attribute to be 1-indexed, not 0-indexed.
+        getPageControl().setPageNumber(i - 1);
     }
 
     @NotNull

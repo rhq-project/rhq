@@ -49,7 +49,9 @@
                               <pathelement location="../alert-mobicents/target/alert-mobicents-${project.version}.jar" />
                               <pathelement location="../alert-roles/target/alert-roles-${project.version}.jar" />
                               <pathelement location="../alert-snmp/target/alert-snmp-${project.version}.jar" />
-                              <pathelement location="../perspectives/core/target/rhq-core-perspective-${project.version}.jar" />                              
+                              <pathelement location="../alert-subject/target/alert-subject-${project.version}.jar" />
+                              <pathelement location="../cobbler/target/cobbler-${project.version}.jar" />
+                              <pathelement location="../perspectives/core/target/rhq-core-perspective-${project.version}.jar" />
                            </classpath>
                            <sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
                            <sysproperty key="rhq.test.serverplugins" value="${rhq.test.serverplugins}" />

@@ -19,9 +19,12 @@
 package org.rhq.enterprise.server.content.metadata.test;
 
 import java.util.List;
+
 import javax.persistence.EntityManager;
+
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
+
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.content.ContentSourceType;
@@ -43,8 +46,8 @@ public class ContentSourcePluginHandlingTest extends TestBase {
         getTransactionManager().begin();
 
         EntityManager em = getEntityManager();
-        List<ContentSourceType> list = em.createQuery("select c from ContentSourceType c where c.name like 'test%'")
-            .getResultList();
+        List<ContentSourceType> list = em.createQuery(
+            "select c from ContentSourceType c where c.name like 'testCSPHT%'").getResultList();
 
         for (ContentSourceType doomed : list) {
             em.remove(doomed);
@@ -62,10 +65,10 @@ public class ContentSourcePluginHandlingTest extends TestBase {
 
         try {
             registerPlugin("./test/metadata/content-source-update-v1.xml");
-            type1 = getContentSourceType("testContentSourceType1");
-            type2 = getContentSourceType("testContentSourceType2");
-            type3 = getContentSourceType("testContentSourceType3");
-            type4 = getContentSourceType("testContentSourceType4");
+            type1 = getContentSourceType("testCSPHT1");
+            type2 = getContentSourceType("testCSPHT2");
+            type3 = getContentSourceType("testCSPHT3");
+            type4 = getContentSourceType("testCSPHT4");
 
             assert type1 != null;
             assert type2 != null;
@@ -73,7 +76,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert type4 != null;
 
             assert type1.getId() > 0;
-            assert type1.getName().equals("testContentSourceType1");
+            assert type1.getName().equals("testCSPHT1");
             assert type1.getDisplayName().equals("displayName1");
             assert type1.getDescription().equals("description1");
             assert type1.getContentSourceApiClass().equals("org.abc.ApiClass1");
@@ -83,7 +86,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop1").isRequired() == true;
 
             assert type2.getId() > 0;
-            assert type2.getName().equals("testContentSourceType2");
+            assert type2.getName().equals("testCSPHT2");
             assert type2.getDisplayName().equals("displayName2");
             assert type2.getDescription().equals("description2");
             assert type2.getContentSourceApiClass().equals("org.abc.ApiClass2");
@@ -93,7 +96,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop2").isRequired() == false;
 
             assert type4.getId() > 0;
-            assert type4.getName().equals("testContentSourceType4");
+            assert type4.getName().equals("testCSPHT4");
             assert type4.getDisplayName().equals("displayName4");
             assert type4.getDescription().equals("description4");
             assert type4.getContentSourceApiClass().equals("org.abc.ApiClass4");
@@ -104,10 +107,10 @@ public class ContentSourcePluginHandlingTest extends TestBase {
 
             // now hot deploy a new version of that plugin
             registerPlugin("./test/metadata/content-source-update-v2.xml");
-            type1 = getContentSourceType("testContentSourceType1");
-            type2 = getContentSourceType("testContentSourceType2");
-            type3 = getContentSourceType("testContentSourceType3");
-            type4 = getContentSourceType("testContentSourceType4");
+            type1 = getContentSourceType("testCSPHT1");
+            type2 = getContentSourceType("testCSPHT2");
+            type3 = getContentSourceType("testCSPHT3");
+            type4 = getContentSourceType("testCSPHT4");
 
             assert type1 != null;
             assert type2 == null;
@@ -115,7 +118,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert type4 != null;
 
             assert type1.getId() > 0;
-            assert type1.getName().equals("testContentSourceType1");
+            assert type1.getName().equals("testCSPHT1");
             assert type1.getDisplayName().equals("displayName1");
             assert type1.getDescription().equals("description1");
             assert type1.getContentSourceApiClass().equals("org.abc.ApiClass1");
@@ -125,7 +128,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop1").isRequired() == true;
 
             assert type3.getId() > 0;
-            assert type3.getName().equals("testContentSourceType3");
+            assert type3.getName().equals("testCSPHT3");
             assert type3.getDisplayName().equals("displayName3");
             assert type3.getDescription().equals("description3");
             assert type3.getContentSourceApiClass().equals("org.abc.ApiClass3");
@@ -135,7 +138,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop3").isRequired() == true;
 
             assert type4.getId() > 0;
-            assert type4.getName().equals("testContentSourceType4");
+            assert type4.getName().equals("testCSPHT4");
             assert type4.getDisplayName().equals("displayName4changed");
             assert type4.getDescription().equals("description4changed");
             assert type4.getContentSourceApiClass().equals("org.abc.ApiClass4changed");
@@ -148,10 +151,10 @@ public class ContentSourcePluginHandlingTest extends TestBase {
 
             // Now try the other way round - our first set of asserts from before should again pass
             registerPlugin("./test/metadata/content-source-update-v1.xml");
-            type1 = getContentSourceType("testContentSourceType1");
-            type2 = getContentSourceType("testContentSourceType2");
-            type3 = getContentSourceType("testContentSourceType3");
-            type4 = getContentSourceType("testContentSourceType4");
+            type1 = getContentSourceType("testCSPHT1");
+            type2 = getContentSourceType("testCSPHT2");
+            type3 = getContentSourceType("testCSPHT3");
+            type4 = getContentSourceType("testCSPHT4");
 
             assert type1 != null;
             assert type2 != null;
@@ -159,7 +162,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert type4 != null;
 
             assert type1.getId() > 0;
-            assert type1.getName().equals("testContentSourceType1");
+            assert type1.getName().equals("testCSPHT1");
             assert type1.getDisplayName().equals("displayName1");
             assert type1.getDescription().equals("description1");
             assert type1.getContentSourceApiClass().equals("org.abc.ApiClass1");
@@ -169,7 +172,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop1").isRequired() == true;
 
             assert type2.getId() > 0;
-            assert type2.getName().equals("testContentSourceType2");
+            assert type2.getName().equals("testCSPHT2");
             assert type2.getDisplayName().equals("displayName2");
             assert type2.getDescription().equals("description2");
             assert type2.getContentSourceApiClass().equals("org.abc.ApiClass2");
@@ -179,7 +182,7 @@ public class ContentSourcePluginHandlingTest extends TestBase {
             assert def.getPropertyDefinitionSimple("prop2").isRequired() == false;
 
             assert type4.getId() > 0;
-            assert type4.getName().equals("testContentSourceType4");
+            assert type4.getName().equals("testCSPHT4");
             assert type4.getDisplayName().equals("displayName4");
             assert type4.getDescription().equals("description4");
             assert type4.getContentSourceApiClass().equals("org.abc.ApiClass4");

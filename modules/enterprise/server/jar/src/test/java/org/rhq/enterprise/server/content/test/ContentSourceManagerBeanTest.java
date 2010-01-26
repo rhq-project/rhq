@@ -28,6 +28,7 @@ import java.util.Set;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -636,16 +637,18 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
     @Test(enabled = TESTS_ENABLED)
     public void testDeleteContentSource() throws Exception {
         PageControl pc = PageControl.getUnlimitedInstance();
-
+        // getTransactionManager().begin();
         try {
             ContentSourceType type = null;
             ContentSource contentSource = null;
 
             int csTypeCount = contentSourceManager.getAllContentSourceTypes().size();
+            List csList = contentSourceManager.getAllContentSources(overlord, pc);
             int csCount = contentSourceManager.getAllContentSources(overlord, pc).size();
 
             // create the content source type
-            type = new ContentSourceType("testDeleteContentSourceCST");
+            type = new ContentSourceType("testDel-" + RandomStringUtils.randomAlphanumeric(6));
+
             Set<ContentSourceType> types = new HashSet<ContentSourceType>();
             types.add(type);
             contentSourceMetadataManager.registerTypes(types); // this blows away any previous existing types
@@ -657,7 +660,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert (csTypeCount + 1) == contentSourceManager.getAllContentSourceTypes().size();
 
             // create the content source
-            contentSource = new ContentSource("testDeleteContentSource", type);
+            contentSource = new ContentSource("testDel-" + RandomStringUtils.randomAlphanumeric(6), type);
             contentSource = contentSourceManager.simpleCreateContentSource(overlord, contentSource);
             assert contentSource != null;
             int contentSourceId = contentSource.getId();
@@ -667,7 +670,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert (csCount + 1) == contentSourceManager.getAllContentSources(overlord, pc).size();
 
             // create a repo and associate the new content source with it
-            Repo repo = new Repo("testDeleteContentSourceRepo");
+            Repo repo = new Repo("testDel-" + RandomStringUtils.randomAlphanumeric(6));
             repoManager.createRepo(overlord, repo);
             repoManager.addContentSourcesToRepo(overlord, repo.getId(), new int[] { contentSourceId });
 
@@ -713,7 +716,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert loaded != null : "should exist";
             assert loaded.getDescription() == null;
             loaded.setDescription("new updated description");
-            loaded = contentSourceManager.updateContentSource(overlord, loaded);
+            loaded = contentSourceManager.updateContentSource(overlord, loaded, false);
             assert loaded != null : "should have been updated";
             loaded = contentSourceManager.getContentSource(overlord, contentSourceId);
             assert loaded.getDescription().equals("new updated description");
@@ -723,7 +726,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             Configuration config = new Configuration();
             config.put(new PropertySimple("updateCSName", "updateCSValue"));
             loaded.setConfiguration(config);
-            loaded = contentSourceManager.updateContentSource(overlord, loaded);
+            loaded = contentSourceManager.updateContentSource(overlord, loaded, false);
             assert loaded != null : "should have been updated";
             config = loaded.getConfiguration();
             assert config != null : "should have a config now";
@@ -772,7 +775,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
             assert loaded.getConfiguration() != null;
             assert loaded.getConfiguration().getSimple("updateCSName").getStringValue().equals("updateCSValue");
             loaded.getConfiguration().getSimple("updateCSName").setStringValue("UPDATED");
-            loaded = contentSourceManager.updateContentSource(overlord, loaded);
+            loaded = contentSourceManager.updateContentSource(overlord, loaded, false);
             assert loaded != null : "should have been updated";
             assert loaded.getConfiguration() != null;
             assert loaded.getConfiguration().getSimple("updateCSName").getStringValue().equals("UPDATED");
@@ -783,7 +786,7 @@ public class ContentSourceManagerBeanTest extends AbstractEJB3Test {
 
             // now delete its config
             loaded.setConfiguration(null);
-            loaded = contentSourceManager.updateContentSource(overlord, loaded);
+            loaded = contentSourceManager.updateContentSource(overlord, loaded, false);
             assert loaded != null : "should have been updated";
             assert loaded.getConfiguration() == null : "config should be null -> " + loaded.getConfiguration();
 

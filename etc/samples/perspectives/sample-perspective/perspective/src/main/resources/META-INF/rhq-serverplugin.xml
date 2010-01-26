@@ -4,7 +4,7 @@
    apiVersion="1.0"
    version="1.0"
    description="A Sample Perspective Utilizing Every Extension Point and Filter"
-   displayName="Sample Perspective"
+   displayName="Perspective:Sample"
    name="SamplePerspective"
    package="org.rhq.perspective.sample"
    xmlns="urn:xmlns:rhq-serverplugin.perspective"
@@ -18,7 +18,7 @@
       name="sample"
       baseUrl="/rhq-sample-perspective/" />
 
-   <!--  replace the coreMenu log with a new one -->
+   <!--  replace the coreMenu logo with a new one -->
    <menu-item
       action="remove"
       name="logo"
@@ -58,10 +58,10 @@
          placement="after" />
    </menu-item>
 
-   <!-- Add Sample menu-item to Core Menu -->
+   <!-- Add Sample Perspective menu-item to Core Menu -->
    <menu-item
       name="sample"
-      displayName="Sample">
+      displayName="Sample Perspective">
       <position
          name="help"
          placement="after" />
@@ -93,7 +93,16 @@
    </menu-item>
    <menu-item
       name="sample.child4"
-      displayName="Create EJB3 Admin User"
+      displayName="Browse Resources"
+      application="sample"
+      url="browseResources.seam">
+      <position
+         name="sample.child3"
+         placement="after" />
+   </menu-item>
+   <menu-item
+      name="sample.child4"
+      displayName="EJB Admin Wizard"
       application="sample"
       url="wizard.seam">
       <position
@@ -167,6 +176,17 @@
       </activators>
    </menu-item>
 
+    <!-- A tab that is always displayed -->
+    <tab
+       name="Sample"
+       displayName="Sample"
+       iconUrl="/images/icons/Favorite_16.png"
+       application="sample"
+       url="currentResource.seam">
+       <position
+          name="Content"
+          placement="after" />
+    </tab>
 
    <!--  A tab that shows up whenever the RT implements the Support Facet and user can execute operations -->
    <tab
@@ -176,7 +196,7 @@
       application="sample"
       url="currentResource.seam">
       <position
-         name="Content"
+         name="Sample"
          placement="after" />
       <activators>
          <facet
@@ -238,5 +258,20 @@
          name="Monitor.Tables"
          placement="after" />
    </tab>
+
+   <!-- Page extensions -->
+
+   <page
+      name="createContentProvider">
+      <page-link
+         name="RHNSource"
+         application="sample"
+         url="createContentProviderRHN.xhtml" />
+      <page-link
+         name="JBossASPatchSource"
+         application="sample"
+         url="createContentProviderJBossASPatch.xhtml" />
+   </page>
+
 
 </perspective-plugin>

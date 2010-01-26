@@ -103,9 +103,11 @@
       <module>augeas</module>
       <module>cron</module>
       <module>script</module>
+      <module>script2</module>
       <module>grub</module>
       <!-- not behaving       <module>hardware</module> -->
       <module>hosts</module>
+      <module>cobbler</module>
       <module>sudoers</module>
       <module>hudson</module>
       <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
@@ -120,7 +122,8 @@
       <module>snmptrapd</module>
       <module>sshd</module>
       <module>twitter</module>
-      <!--<module>virt</module>-->
+      <module>virt</module>
+      <module>kickstart</module>
 
       <!-- this is just for testing raw config -->
       <module>raw-config-test</module>

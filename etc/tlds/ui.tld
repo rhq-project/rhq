@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE taglib PUBLIC "-//Sun Microsystems, Inc.//DTD JSP Tag Library 1.2//EN"
+    "http://java.sun.com/dtd/web-jsptaglibrary_1_2.dtd">
+<taglib>
+  <tlib-version>1.0</tlib-version>
+  <jsp-version>1.2</jsp-version>
+  <short-name>ui</short-name>
+  <uri>http://java.sun.com/jsf/facelets</uri>
+  <description>
+  </description>
+
+  <tag>
+    <name>component</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The component tag and the composition tag behave exactly the same, except the component tag will insert a new UIComponent
+      instance into the tree as the root of all the child components/fragments it has.
+    </description>
+    <attribute>
+      <name>id</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>A unique id may be provided, otherwise Facelets will automatically assign one under the same logic it uses for all
+        UIComponents.
+      </description>
+    </attribute>
+    <attribute>
+      <name>binding</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>This binding attribute is used the same as with any other UIComponent such that it allows you to reference them as a
+        property of a JavaBean. If that target property did not have a UIComponent instance assigned already, JavaServer Faces will lazily
+        create an instance for you and set it on your JavaBean before continuing with building the tree.
+      </description>
+    </attribute>
+    <attribute>
+      <name>rendered</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>composition</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>
+<![CDATA[
+Defines a composition that optionally uses a template, as outlined in the description of the ui tag library. Multiple compositions can use the same template, thus encapsulating and reusing layout. JSF disregards everything outside of the composition, which lets developers embed compositions in well-formed XHTML pages that can be viewed in an XHTML viewer, such as Dreamweaver or a browser, without including extraneous elements such as head and body.
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+   xmlns:ui="http://java.sun.com/jsf/facelets">
+
+  <body>
+
+    THIS LINE, AND EVERYTHING ABOVE IT IS DISREGARDED BY JSF
+    <ui:composition template="/layout.xhtml">
+
+      <ui:define name="title">#{msgs.contactsWindowTitle}</ui:define>
+      <ui:define name="heading">#{msgs.contactsHeading}</ui:define>
+
+      <ui:define name="content">
+        <ui:include src="contactsTable.xhtml" />
+      </ui:define>
+
+    </ui:composition>
+    THIS LINE, AND EVERYTHING BELOW IT IS DISREGARDED BY JSF
+
+  </body>
+</html>
+
+]]>
+    </description>
+    <attribute>
+      <name>template</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The resolvable URI of the template to use. The content within the composition tag will be used in populating the template
+        specified.
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>debug</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The debug tag will capture the component tree and variables when it is encoded, storing the data for retrieval later. You
+      may launch the debug window at any time from your browser by pressing 'CTRL' + 'SHIFT' + 'D' (by default). The debug tag doesn't need
+      to be used with the facelet.DEVELOPMENT parameter. The best place to put this tag is in your site's main template where it can be
+      enabled/disabled across your whole application. If your application uses multiple windows, you might want to assign different hot keys
+      to each one.
+    </description>
+    <attribute>
+      <name>hotkey</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The hot key to use in combination with 'CTRL' + 'SHIFT' to launch the debug window. By default, when the debug tag is
+        used, you may launch the debug window with 'CTRL' + 'SHIFT' + 'D'. This value cannot be an EL expression.
+      </description>
+    </attribute>
+    <attribute>
+      <name>rendered</name>
+      <required>false</required>
+      <rtexprvalue>true</rtexprvalue>
+      <description>
+        Controls whether the debug component is rendered. Valid values for this attribute are either the strings "true" or "false" or an EL expression that evaluates to either "true" or "false".
+
+If this attribute's value is "false" or the value is an EL expression that evaluates to "false", the debug component is not rendered in the page, the hotkey attribute is disregarded, and users cannot open the debugging information window with a hotkey.
+
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>decorate</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The decorate tag acts the same as a composition tag, but it will not trim everything outside of it. This is useful in cases
+      where you have a list of items in a document, which you would like to be decorated or framed. The sum of it all is that you can take
+      any element in the document and decorate it with some external logic as provided by the template.
+    </description>
+    <attribute>
+      <name>template</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The resolvable URI of the template to use. The content within the decorate tag will be used in populating the template
+        specified.
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>define</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The define tag can be used within tags that allow templating. This includes composition and decorate tags.</description>
+    <attribute>
+      <name>name</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The literal name for this definition. This name will match up with a &lt;ui:insert/&gt; tag in a target template.
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>fragment</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>Just like composition has decorate as a non-trimming version of the same behavior, component has fragment. This allows you
+      to logically insert a UIComponent into the tree and possibly bind this fragment to a JavaBean property or Map for management. The
+      fragment tag was also added to Facelets to get around some of the optimizations used in handling text within your document. If you are
+      using components such as &lt;f:panelGrid/&gt;, which renders its children, you may want more control over the building process that
+      Facelets does and using a fragment tag will help guarantee parent/child relationships for you.
+    </description>
+    <attribute>
+      <name>id</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>A unique id may be provided, otherwise Facelets will automatically assign one under the same logic it uses for all
+        UIComponents.
+      </description>
+    </attribute>
+    <attribute>
+      <name>binding</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>This binding attribute is used the same as with any other UIComponent such that it allows you to reference them as a
+        property of a JavaBean. If that target property did not have a UIComponent instance assigned already, JavaServer Faces will lazily
+        create an instance for you and set it on your JavaBean before continuing with building the tree.
+      </description>
+    </attribute>
+    <attribute>
+      <name>rendered</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>include</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The include tag can point at any Facelet which might use the composition tag, component tag, or simply be straight
+      XHTML/XML. It should be noted that the src path does allow relative path names, but they will always be resolved against the original
+      Facelet requested. The include tag can be used in conjunction with multiple &lt;ui:param/&gt; tags to pass EL expressions/values to
+      the target page.
+    </description>
+    <attribute>
+      <name>src</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>A literal or EL expression that specifies the target Facelet that you would like to include into your document.
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>insert</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The insert tag is used within your templates to declare spots of replacable data.</description>
+    <attribute>
+      <name>name</name>
+      <required>false</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The optional name attribute matches the associated &lt;ui:define/&gt; tag in this template's client. If no name is
+        specified, it's expected that the whole template client will be inserted.
+      </description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>param</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description></description>
+    <attribute>
+      <name>name</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The name of the variable to pass to the included Facelet.</description>
+    </attribute>
+    <attribute>
+      <name>value</name>
+      <required>true</required>
+      <rtexprvalue>false</rtexprvalue>
+      <description>The literal or EL expression value to assign to the named variable.</description>
+    </attribute>
+  </tag>
+
+  <tag>
+    <name>remove</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>The remove tag does not have any attributes and is used to remove chunks of XML content from a Facelet at compilation time.
+      The remove tag is often used in conjunction with the jsfc feature.
+    </description>
+  </tag>
+
+  <tag>
+    <name>repeat</name>
+    <tag-class></tag-class>
+    <tei-class></tei-class>
+    <body-content>JSP</body-content>
+    <description>
+      <![CDATA[
+      The repeat tag should be used in almost all cases instead of the c:forEach to iterate over content with JSF.
+      The repeat tag is often used in conjunction with the jsfc feature.
+      ]]>
+    </description>
+    <attribute>
+        <name>id</name>
+        <required>false</required>
+        <rtexprvalue>false</rtexprvalue>
+        <description></description>
+      </attribute>
+    <attribute>
+        <name>value</name>
+        <required>true</required>
+        <rtexprvalue>false</rtexprvalue>
+        <description>The name of a collection of items that this tag iterates over. The collection may be a List, array, java.sql.ResultSet, or an individual java Object. If the collection is null, this tag does nothing.</description>
+      </attribute>
+    <attribute>
+        <name>var</name>
+        <required>true</required>
+        <rtexprvalue>false</rtexprvalue>
+        <description>The literal name of the variable to use while iterating.</description>
+      </attribute>
+
+  </tag>
+
+
+</taglib>

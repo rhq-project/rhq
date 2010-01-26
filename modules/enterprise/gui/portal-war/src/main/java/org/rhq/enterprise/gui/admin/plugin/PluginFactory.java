@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.admin.plugin;
 
-import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Factory;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.web.RequestParameter;
@@ -47,7 +46,7 @@ public class PluginFactory {
     @RequestParameter("pluginType")
     private String pluginType;
 
-    @Factory(value = "plugin", autoCreate = true, scope = ScopeType.EVENT)
+    @Factory(value = "plugin", autoCreate = true)
     public AbstractPlugin lookupPlugin() {
         if (this.deployment == PluginDeploymentType.AGENT) {
             return LookupUtil.getResourceMetadataManager().getPlugin(this.name);

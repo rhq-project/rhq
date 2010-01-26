@@ -71,17 +71,21 @@ public class IrcAlertComponent implements ServerPluginComponent {
     public void start() {
         this.ircBot = new RhqAlertBot(this.nick, this.cannedResponse);
 
-        try {
-            this.ircBot.connect(server, port);
-            log.info("Connected to server " + server + ":" + port);
-        } catch (Exception e) {
-            log.error("Error joining IRC: " + e.getMessage());
+        if (this.server != null && this.server.length() > 0) {
+            try {
+                this.ircBot.connect(server, port);
+                log.info("Connected to server " + server + ":" + port);
+            } catch (Exception e) {
+                log.error("Error joining IRC: " + e.getMessage());
 
-            return;
-        }
+                return;
+            }
 
-        for (String channel : channels) {
-            this.ircBot.joinChannel(channel);
+            for (String channel : channels) {
+                this.ircBot.joinChannel(channel);
+            }
+        } else {
+            log.info("IRC Server not specified -- skipping connection.");
         }
     }
 

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -35,7 +36,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -61,10 +61,9 @@ import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginDescriptorType;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -145,7 +144,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         int added = 0;
         for (String emailAddress : emails) {
@@ -208,7 +207,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Role> roles = roleManager.findRolesByIds(roleIds, PageControl.getUnlimitedInstance());
 
@@ -290,7 +289,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
     public int addSubjectNotifications(Subject user, Integer alertDefinitionId, Integer[] subjectIds) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId);
-        Set<AlertNotification> notifications = alertDefinition.getAlertNotifications();
+        Collection<AlertNotification> notifications = alertDefinition.getAlertNotifications();
 
         List<Subject> subjects = subjectManager.findSubjectsById(subjectIds, PageControl.getUnlimitedInstance());
 
@@ -396,8 +395,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         }
 
         Set<Integer> notificationIdSet = new HashSet<Integer>(Arrays.asList(notificationIds));
-        List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition
-            .getAlertNotifications());
+        List<AlertNotification> notifications = alertDefinition.getAlertNotifications();
         List<AlertNotification> toBeRemoved = new ArrayList<AlertNotification>();
 
         int removed = 0;
@@ -489,39 +487,40 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
 
     /**
-     * Return the backing bean for the AlertSender with the passed shortNama
+     * Return the backing bean for the AlertSender with the passed shortName
      * @param shortName name of a sender
      * @return an initialized BackingBean or null in case of error
      */
-    public AlertBackingBean getBackingBeanForSender(String shortName) {
+    public Object getBackingBeanForSender(String shortName) {
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
-        AlertBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
-        return bean;
+        return pluginmanager.getBackingBeanForSender(shortName);
+    }
 
+    public String getBackingBeanNameForSender(String shortName) {
+        AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
+        return pluginmanager.getBackingBeanNameForSender(shortName);
     }
 
     /**
-     * Add a new AlertNotification to the passed definition
-     * @param user subject of the caller
-     * @param alertDefinitionId Id of the alert definition
-     * @param senderName shortName of the {@link AlertSender}
-     * @param configuration Properties for this alert sender.
+     * {@inheritDoc}
      */
-    public void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration) {
+    public AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(user,alertDefinitionId);
         if (definition==null) {
             LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
-            return;
+            return null;
         }
 
         entityManager.persist(configuration);
         AlertNotification notif = new AlertNotification(definition);
         notif.setSenderName(senderName);
+        notif.setName(alertName);
         notif.setConfiguration(configuration);
         entityManager.persist(notif);
         definition.getAlertNotifications().add(notif);
 
+        return notif;
     }
 
     /**
@@ -541,15 +540,23 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             LOG.error("DId not find definition for id [" + alertDefinitionId+ "]");
             return new ArrayList<AlertNotification>();
         }
-        Set<AlertNotification> notifs = definition.getAlertNotifications();
-        List<AlertNotification> result = new ArrayList<AlertNotification>();
-        for (AlertNotification notif : notifs) {
-            if (notif.getSenderName()!=null) {
-                notif.getConfiguration().getProperties().size(); // Eager load
-                result.add(notif);
-            }
+
+        List<AlertNotification> notifications = definition.getAlertNotifications();
+        for (AlertNotification notification : notifications) {
+            notification.getConfiguration().getProperties().size();  // eager load
         }
-        return result;
+
+        return notifications;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void updateAlertNotification(AlertNotification notification) {
+        notification = entityManager.merge(notification);
+
+        entityManager.persist(notification);
+        entityManager.flush();
     }
 
     /**
@@ -567,5 +574,39 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             def.addAlertNotification(notif.copy(false)); // Attach a copy, as the ones in the template should not be shared
         }
 
+    }
+
+    /**
+     * Add the passed 'transient' notifications onto the alert definitions contained. The old
+     * notifications are removed.
+     * This method is mainly used when migrating alerts from an old format to the current.
+     * @param subject Subject of the caller
+     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
+     */
+    public void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications) {
+
+        // Clear out old notifications
+        for (AlertNotification n : notifications) {
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
+            if (def==null) {
+                LOG.error("Alert Definition with id " + n.getAlertDefinitionId() + "does not exist for notification " + n);
+                continue;
+            }
+            def.getAlertNotifications().clear();
+        }
+
+        // add the new ones
+        for (AlertNotification n : notifications) {
+            AlertDefinition def = alertDefinitionManager.getAlertDefinitionById(subject,n.getAlertDefinitionId());
+            if (def==null)
+                continue;
+
+            AlertNotification alNo = new AlertNotification(def,n.getConfiguration());
+            alNo.setSenderName(n.getSenderName());
+            alNo.setName(n.getName());
+            alNo.setOrder(n.getOrder());
+            entityManager.persist(alNo);
+            def.addAlertNotification(alNo);
+        }
     }
 }

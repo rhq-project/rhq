@@ -43,7 +43,7 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Tr
 /**
  * An item in the RHQ GUI's menu.
  */
-public class MenuItem extends Extension implements Serializable, Cloneable {
+public class MenuItem extends RenderedExtension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
     private MenuItemFeatureType feature;

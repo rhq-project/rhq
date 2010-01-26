@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -38,6 +39,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.HelpType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.ServerPluginComponentType;
@@ -57,6 +59,69 @@ public class ServerPluginDescriptorUtilTest {
     @AfterMethod(alwaysRun = true)
     public void afterMethod() {
         deleteAllTestPluginJars();
+    }
+
+    public void testPluginDescriptorControls() throws Exception {
+        File jar = createPluginJar("test-serverplugin-controls.jar", "test-serverplugin-controls.xml");
+        URL url = jar.toURI().toURL();
+        ServerPluginDescriptorType descriptor = ServerPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
+        assert descriptor != null;
+        assert descriptor instanceof GenericPluginDescriptorType;
+        assert descriptor.getApiVersion() == null;
+        assert descriptor.getVersion() == null;
+        assert descriptor.getName().equals("controls-test-name");
+        assert descriptor.getDisplayName() == null;
+        assert descriptor.getDescription() == null;
+        assert descriptor.getPackage() == null;
+        assert descriptor.isDisabledOnDiscovery() == false; // the default
+        assert descriptor.getHelp() == null;
+
+        ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
+        assert pluginComponent.getClazz().equals("controls.plugin.component");
+
+        List<ScheduledJobDefinition> scheduledJobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(descriptor);
+        assert scheduledJobs.size() == 0;
+
+        List<ControlDefinition> controls = ServerPluginDescriptorMetadataParser.getControlDefinitions(descriptor);
+        assert controls != null;
+        assert controls.size() == 4;
+
+        Iterator<ControlDefinition> iterator = controls.iterator();
+        ControlDefinition def;
+
+        def = iterator.next();
+        assert def.getName().equals("firstControl");
+        assert def.getDisplayName().equals("First Control");
+        assert def.getDescription() == null;
+        assert def.getParameters() == null;
+        assert def.getResults() == null;
+
+        def = iterator.next();
+        assert def.getName().equals("secondControl");
+        assert def.getDisplayName().equals("2nd Control");
+        assert def.getDescription() == null;
+        assert def.getParameters() != null;
+        assert def.getResults() == null;
+        assert def.getParameters().get("argument2C") instanceof PropertyDefinitionSimple;
+
+        def = iterator.next();
+        assert def.getName().equals("thirdControl");
+        assert def.getDisplayName().equals("Third Control");
+        assert def.getDescription().equals("third control description");
+        assert def.getParameters() == null;
+        assert def.getResults() != null;
+        assert def.getResults().get("result3C") instanceof PropertyDefinitionSimple;
+
+        def = iterator.next();
+        assert def.getName().equals("fourthControl");
+        assert def.getDisplayName().equals("4th Control");
+        assert def.getDescription().equals("fourth control description");
+        assert def.getParameters() != null;
+        assert def.getResults() != null;
+        assert def.getParameters().get("argument4C") instanceof PropertyDefinitionSimple;
+        assert def.getResults().get("result4C") instanceof PropertyDefinitionSimple;
+
+        assert !iterator.hasNext(); // just making sure we are done
     }
 
     public void testGenericPluginDescriptorInJar() throws Exception {
@@ -83,6 +148,10 @@ public class ServerPluginDescriptorUtilTest {
         ServerPluginComponentType pluginComponent = descriptor.getPluginComponent();
         assert pluginComponent.getClazz().equals("generic.plugin.component");
 
+        List<ControlDefinition> controls = ServerPluginDescriptorMetadataParser.getControlDefinitions(descriptor);
+        assert controls != null;
+        assert controls.isEmpty();
+
         List<ScheduledJobDefinition> scheduledJobs = ServerPluginDescriptorMetadataParser.getScheduledJobs(descriptor);
         assert scheduledJobs.size() == 3;
 
@@ -93,9 +162,10 @@ public class ServerPluginDescriptorUtilTest {
         assert jobItem.getMethodName().equals("methodNameFoo");
         assert !jobItem.isEnabled();
         assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType().isClustered();
         assert jobItem.getScheduleType() instanceof CronScheduleType;
         assert ((CronScheduleType) jobItem.getScheduleType()).getCronExpression().equals("0 15 10 ? * MON-FRI");
-        assert jobItem.getCallbackData().size() == 7 : jobItem.getCallbackData();
+        assert jobItem.getCallbackData().size() == 8 : jobItem.getCallbackData();
         assert jobItem.getCallbackData().getProperty("custom1").equals("true");
         assert jobItem.getCallbackData().getProperty("anothercustom2").equals("12345");
         assert jobItem.getCallbackData().getProperty("methodName").equals("methodNameFoo"); // just proves we get the built-in data, too
@@ -105,15 +175,17 @@ public class ServerPluginDescriptorUtilTest {
         assert jobItem.getMethodName().equals("anotherMethod");
         assert jobItem.isEnabled();
         assert jobItem.getScheduleType().isConcurrent();
+        assert !jobItem.getScheduleType().isClustered();
         assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
         assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 59999L;
-        assert jobItem.getCallbackData().size() == 3 : jobItem.getCallbackData();
+        assert jobItem.getCallbackData().size() == 4 : jobItem.getCallbackData();
 
         jobItem = scheduledJobs.get(2);
         assert jobItem.getJobId().equals("allDefaultsJob");
         assert jobItem.getMethodName().equals("allDefaultsJob");
         assert jobItem.isEnabled();
         assert !jobItem.getScheduleType().isConcurrent();
+        assert jobItem.getScheduleType().isClustered() : "when not specified, the default clustered value should be true";
         assert jobItem.getScheduleType() instanceof PeriodicScheduleType;
         assert ((PeriodicScheduleType) jobItem.getScheduleType()).getPeriod() == 600000L;
         assert jobItem.getCallbackData().size() == 0 : jobItem.getCallbackData();

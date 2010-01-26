@@ -43,20 +43,16 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Su
  */
 @SuppressWarnings("unchecked")
 public abstract class Extension {
-    private String perspectiveName;
-    private String name;
-    private String displayName;
-    private String url;
-    private String iconUrl;
-    private boolean debugMode;
+    protected String perspectiveName;
+    protected String name;
+    protected String url;
+    protected boolean debugMode;
     private List<Activator> activators;
 
     public Extension(ExtensionType rawExtension, String perspectiveName, String url) {
         this.perspectiveName = perspectiveName;
         this.name = rawExtension.getName();
-        this.displayName = rawExtension.getDisplayName();
         this.url = url;
-        this.iconUrl = rawExtension.getIconUrl();
         this.activators = new ArrayList<Activator>();
     }
 
@@ -68,16 +64,8 @@ public abstract class Extension {
         return name;
     }
 
-    public String getDisplayName() {
-        return displayName;
-    }
-
     public String getUrl() {
         return url;
-    }
-
-    public String getIconUrl() {
-        return iconUrl;
     }
 
     public boolean isDebugMode() {
@@ -143,7 +131,6 @@ public abstract class Extension {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[name=" + this.name + ", displayName=" + this.displayName + ", url="
-            + this.url + ", iconUrl=" + this.iconUrl + "]";
+        return this.getClass().getSimpleName() + "[name=" + this.name + ", url=" + this.url + "]";
     }
 }

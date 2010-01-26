@@ -83,6 +83,12 @@
                   minOccurs="0"
                   maxOccurs="unbounded">
                </xs:element>
+               <xs:element
+                  name="page"
+                  type="perspective:PageType"
+                  minOccurs="0"
+                  maxOccurs="unbounded">
+               </xs:element>
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
@@ -156,23 +162,6 @@
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
-         name="displayName"
-         type="perspective:DisplayNameType"
-         use="required">
-         <xs:annotation>
-            <xs:documentation>The display name for this extension.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
-         name="iconUrl"
-         type="xs:anyURI"
-         use="optional">
-         <xs:annotation>
-            <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
-               displayed. Required if displayName is an empty string.</xs:documentation>
-         </xs:annotation>
-      </xs:attribute>
-      <xs:attribute
          name="application"
          type="xs:string"
          use="optional">
@@ -182,14 +171,11 @@
          </xs:annotation>
       </xs:attribute>
       <xs:attribute
-         name="action"
-         type="perspective:ActionType"
-         use="optional"
-         default="add">
+         name="url"
+         type="xs:anyURI"
+         use="optional">
          <xs:annotation>
-            <xs:documentation>Add the extension or remove an extension with the given name and position that was defined
-               by the Core perspective. For removal, all but the name attribute are ignored. The default is add. Note, a
-               Remove followed by an Add can be used to replace an extension from the Core perspective.
+            <xs:documentation>The request URL for this extension. Typically kicks off a wizard or similar workflow.
             </xs:documentation>
          </xs:annotation>
       </xs:attribute>
@@ -197,19 +183,56 @@
    </xs:complexType>
 
    <xs:complexType
-      name="TaskType">
+      name="RenderedExtensionType"
+      abstract="true">
+      <xs:annotation>
+         <xs:documentation>All rendered extensions extend this type.</xs:documentation>
+      </xs:annotation>
       <xs:complexContent>
          <xs:extension
             base="perspective:ExtensionType">
+
             <xs:attribute
-               name="url"
-               type="xs:anyURI"
+               name="displayName"
+               type="perspective:DisplayNameType"
                use="required">
                <xs:annotation>
-                  <xs:documentation>The request URL for this task. Typically kicks off a wizard or similar workflow.
-                  </xs:documentation>
+                  <xs:documentation>The display name for this extension.</xs:documentation>
                </xs:annotation>
             </xs:attribute>
+            <xs:attribute
+               name="iconUrl"
+               type="xs:anyURI"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The request URL for the icon displayed for this extension. If omitted, no icon is
+                     displayed. Required if displayName is an empty string.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="action"
+               type="perspective:ActionType"
+               use="optional"
+               default="add">
+               <xs:annotation>
+                  <xs:documentation>Add the extension or remove an extension with the given name and position that was
+                     defined
+                     by the Core perspective. For removal, all but the name attribute are ignored. The default is
+                     add. Note, a
+                     Remove followed by an Add can be used to replace an extension from the Core
+                     perspective.
+            </xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType
+      name="TaskType">
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:RenderedExtensionType">
             <xs:attribute
                name="category"
                type="xs:string"
@@ -273,7 +296,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension
-            base="perspective:ExtensionType">
+            base="perspective:RenderedExtensionType">
             <xs:sequence>
                <xs:element
                   name="position"
@@ -294,16 +317,6 @@
                </xs:element>
             </xs:sequence>
 
-            <xs:attribute
-               name="url"
-               type="xs:anyURI"
-               use="optional">
-               <xs:annotation>
-                  <xs:documentation>The request URL for this menu item. Typically kicks off a wizard or similar
-                     workflow.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:attribute>
             <xs:attribute
                name="feature"
                type="perspective:MenuItemFeatureType"
@@ -344,7 +357,7 @@
       </xs:annotation>
       <xs:complexContent>
          <xs:extension
-            base="perspective:ExtensionType">
+            base="perspective:RenderedExtensionType">
             <xs:sequence>
                <xs:element
                   name="position"
@@ -365,20 +378,61 @@
                   </xs:annotation>
                </xs:element>
             </xs:sequence>
-
-            <xs:attribute
-               name="url"
-               type="xs:anyURI"
-               use="optional">
-               <xs:annotation>
-                  <xs:documentation>The request URL for this tab. Typically kicks off a wizard or similar workflow.
-                  </xs:documentation>
-               </xs:annotation>
-            </xs:attribute>
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
 
+   <xs:complexType
+      name="PageType">
+      <xs:annotation>
+         <xs:documentation>A page extension that injects perspective links into a core page.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:sequence>
+         <xs:element
+            name="page-link"
+            type="perspective:PageLinkType"
+            minOccurs="1"
+            maxOccurs="unbounded">
+            <xs:annotation>
+               <xs:documentation>A replacement url for a named link on a given page.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+
+      <xs:attribute
+         name="name"
+         type="xs:string"
+         use="required">
+         <xs:annotation>
+            <xs:documentation>The page extension point name.</xs:documentation>
+         </xs:annotation>
+      </xs:attribute>
+   </xs:complexType>
+
+   <xs:complexType
+      name="PageLinkType">
+      <xs:annotation>
+         <xs:documentation>A page link extension for a named link in a page extension point.</xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ExtensionType">
+            <xs:sequence>
+               <xs:element
+                  name="activators"
+                  type="perspective:GlobalActivatorsType"
+                  minOccurs="0"
+                  maxOccurs="1">
+                  <xs:annotation>
+                     <xs:documentation>An optional set of activators. If present, all of them must evaluate to true in
+                        order for this page link extension to be active.</xs:documentation>
+                  </xs:annotation>
+               </xs:element>
+            </xs:sequence>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
 
 
    <!-- =========================================== Activators =============================================
@@ -441,16 +495,14 @@
    <xs:complexType
       name="ResourceActivatorsType">
       <xs:annotation>
-         <xs:documentation>If any of the activator conditions evaluate to true then the resource activator is active. In
-            other words, there is an implicit OR operation applied. For AND logic it is typical to declare several
-            "activators" elements in the declaring element. In addition to the activators common to global and resource
-            level activators, several additional resource level activators can be specified. These are evaluated against
-            the resource in context. Facet Activators ensure the specified facet is implemented by the resource type of
-            the resource in context. Resource-permission activators ensure the user has the specified permission on the
-            resource in context. Trait Activators ensure that the specified trait value satisfies the specified pattern
-            for the resource in context. Resource-type Activators can be used if the extension is active for one or more
-            different resource types. In this situation resource-permission and trait activators can be set in a
-            fine-grained way, differing for each resource type, if necessary.
+         <xs:documentation>A set of activators that must evaluate to true for the resource-level extension to be active.
+            In addition to the activators common to global and resource-level activatation, several more can be
+            evaluated against the the resource in context. Facet Activators ensure the specified facet is implemented by
+            the resource type of the resource in context. Resource-permission activators ensure the user has the
+            specified permission on the resource in context. Trait Activators ensure that the specified trait value
+            satisfies the specified pattern for the resource in context. Resource-type Activators can be used if the
+            extension is active for one or more different resource types. In this situation resource-permission and
+            trait activators can be set in a fine-grained way, differing for each resource type, if necessary.
          </xs:documentation>
       </xs:annotation>
       <xs:complexContent>
@@ -533,8 +585,6 @@
       </xs:complexContent>
    </xs:complexType>
 
-   <!-- Subject Activators
--->
    <xs:complexType
       name="GlobalPermissionActivatorType">
       <xs:annotation>
@@ -590,6 +640,8 @@
       </xs:complexContent>
    </xs:complexType>
 
+   <!--  Resource Activators
+-->
    <xs:complexType
       name="FacetActivatorType">
       <xs:annotation>
@@ -661,6 +713,88 @@
       </xs:complexContent>
    </xs:complexType>
 
+   <!-- Global Content Activators
+-->
+
+   <xs:complexType
+      name="ContentProviderActivatorType">
+      <xs:annotation>
+         <xs:documentation>The specified Content Provider Type must be installed in order to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:ActivatorType">
+            <xs:attribute
+               name="name"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The required Content Provider Type's internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <!-- Contextual Content Activators
+
+   Under Construction
+-->
+   <xs:complexType
+      name="ContentActivatorType">
+      <xs:annotation>
+         <xs:documentation>The content context must satisfy the following conditions to activate the extension.
+         </xs:documentation>
+      </xs:annotation>
+      <xs:complexContent>
+         <xs:extension
+            base="perspective:CommonActivatorsType">
+            <xs:attribute
+               name="providerType"
+               type="xs:string"
+               use="required">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider's type. The internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="provider"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="product"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context content provider's product. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="repo"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context repo. The name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+            <xs:attribute
+               name="package-type"
+               type="xs:string"
+               use="optional">
+               <xs:annotation>
+                  <xs:documentation>The in-context package's type. The internal name.</xs:documentation>
+               </xs:annotation>
+            </xs:attribute>
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+
    <!-- =========================================== Helper Types =============================================
 -->
 
@@ -706,6 +840,7 @@
          </xs:extension>
       </xs:complexContent>
    </xs:complexType>
+
 
    <xs:complexType
       name="PositionType">

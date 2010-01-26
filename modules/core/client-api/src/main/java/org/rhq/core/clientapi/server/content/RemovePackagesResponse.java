@@ -20,10 +20,8 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.domain.content.transfer;
+ package org.rhq.core.clientapi.server.content;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -90,23 +88,6 @@ public class RemovePackagesResponse implements Serializable {
 
     public void addPackageResponse(RemoveIndividualPackageResponse response) {
         packageResponses.add(response);
-    }
-
-    /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setOverallRequestErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setOverallRequestErrorMessage(baos.toString());
-        } else {
-            setOverallRequestErrorMessage(null);
-        }
     }
 
     public String toString() {

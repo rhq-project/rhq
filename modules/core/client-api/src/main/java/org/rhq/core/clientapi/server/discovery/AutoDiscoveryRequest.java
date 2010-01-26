@@ -20,7 +20,9 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.domain.state.discovery;
+ package org.rhq.core.clientapi.server.discovery;
+
+import org.rhq.core.domain.state.discovery.AutoDiscoveryScanType;
 
 import java.io.Serializable;
 import java.util.ArrayList;

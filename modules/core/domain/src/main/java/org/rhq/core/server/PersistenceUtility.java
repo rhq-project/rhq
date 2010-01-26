@@ -20,7 +20,12 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.core.domain.util;
+package org.rhq.core.server;
+
+import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -62,7 +67,7 @@ public class PersistenceUtility {
     public static final String HIBERNATE_STATISTICS_MBEAN_OBJECTNAME = "Hibernate:type=statistics,application=RHQ";
 
     /**
-     * Used to create queries to use with the {@link PageControl} objects. The query will already have its sort column
+     * Used to create queries to use with the {@link org.rhq.core.domain.util.PageControl} objects. The query will already have its sort column
      * and order appended as well as having its first result and max results set according to the page control data.
      *
      * @param  entityManager your entity manager

@@ -20,7 +20,7 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.domain.content.transfer;
+ package org.rhq.core.clientapi.server.content;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

@@ -20,16 +20,15 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.domain.content.transfer;
+ package org.rhq.core.clientapi.server.content;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.ArrayList;
 import org.rhq.core.domain.content.PackageDetailsKey;
+import org.rhq.core.domain.content.transfer.DeployPackageStep;
 
-/**
+ /**
  * Contains the data necessary to describe the result of deploying a single package. The overall result of the package
  * installation and any error message (if there is one) will convey whether or not the package was successfully
  * installed. Additionally, if installation steps were determined for this package, they and their respective
@@ -106,22 +105,5 @@ public class DeployIndividualPackageResponse implements Serializable {
             this.deploymentSteps = new ArrayList<DeployPackageStep>(1);
 
         this.deploymentSteps.add(step);
-    }
-
-    /**
-     * Convienence method that sets the error message to the given throwable's stack trace dump. If the given throwable
-     * is <code>null</code>, the error message will be set to <code>null</code> as if passing <code>null</code> to
-     * {@link #setErrorMessage(String)}.
-     *
-     * @param t throwable whose message and stack trace will make up the error message (may be <code>null</code>)
-     */
-    public void setErrorMessageFromThrowable(Throwable t) {
-        if (t != null) {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            t.printStackTrace(new PrintStream(baos));
-            setErrorMessage(baos.toString());
-        } else {
-            setErrorMessage(null);
-        }
     }
 }

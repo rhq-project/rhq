@@ -20,33 +20,43 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
-package org.rhq.core.domain.content.transfer;
+ package org.rhq.core.clientapi.server.content;
+
+import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 
 import java.io.Serializable;
+import java.util.Set;
 
 /**
- * Transfer object used to carry information about a request to retrieve package contents from a resource.
+ * Transfer object used to carry information about a request to deploy packages to a resource.
  *
  * @author Jason Dobies
  * @author John Mazzitelli
  */
+public class DeployPackagesRequest implements Serializable {
+    // Constants  --------------------------------------------
 
-public class RetrievePackageBitsRequest implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    // Attributes  --------------------------------------------
 
     private final int requestId;
     private final int resourceId;
-    private final ResourcePackageDetails packageDetails;
+    private final Set<ResourcePackageDetails> packages;
 
-    public RetrievePackageBitsRequest(int requestId, int resourceId, ResourcePackageDetails packageDetails) {
-        if (packageDetails == null) {
-            throw new IllegalArgumentException("packageDetails cannot be null");
+    // Constructors  --------------------------------------------
+
+    public DeployPackagesRequest(int requestId, int resourceId, Set<ResourcePackageDetails> packages) {
+        if (packages == null) {
+            throw new IllegalArgumentException("packages cannot be null");
         }
 
         this.requestId = requestId;
         this.resourceId = resourceId;
-        this.packageDetails = packageDetails;
+        this.packages = packages;
     }
+
+    // Public  --------------------------------------------
 
     public int getRequestId() {
         return requestId;
@@ -56,13 +66,13 @@ public class RetrievePackageBitsRequest implements Serializable {
         return resourceId;
     }
 
-    public ResourcePackageDetails getPackageDetails() {
-        return packageDetails;
+    public Set<ResourcePackageDetails> getPackages() {
+        return packages;
     }
 
     @Override
     public String toString() {
-        return "RetrievePackageBitsRequest[RequestId=" + requestId + ", ResourceId=" + resourceId + ", Package="
-            + packageDetails;
+        return "DeployPackagesRequest[RequestId=" + requestId + ", ResourceId=" + resourceId + ", NumPackages="
+            + packages.size();
     }
 }

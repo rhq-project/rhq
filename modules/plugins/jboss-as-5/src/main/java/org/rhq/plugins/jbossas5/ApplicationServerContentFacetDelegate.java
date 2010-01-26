@@ -164,7 +164,7 @@ public class ApplicationServerContentFacetDelegate extends AbstractJBossASConten
             log.error("Error deploying package: " + packageDetails, throwable);
             DeployIndividualPackageResponse response = new DeployIndividualPackageResponse(packageDetails.getKey(),
                 ContentResponseResult.FAILURE);
-            response.setErrorMessage(ThrowableUtil.getStackAsString(throwable);
+            response.setErrorMessage(ThrowableUtil.getStackAsString(throwable));
             individualResponses.add(response);
             overallResult = ContentResponseResult.FAILURE;
         }

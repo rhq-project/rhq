@@ -1930,20 +1930,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return update;
     }
 
-    public Collection<RawConfiguration> findRawConfigurationsByConfigurationId(int configId) {
-        Configuration config = entityManager.find(Configuration.class, configId);
-
-        if (config == null) {
-            return Collections.EMPTY_LIST;
-        }
-
-        return config.getRawConfigurations();
-    }
-
-    public RawConfiguration findRawConfigurationById(int rawConfigId) {
-        return entityManager.find(RawConfiguration.class, rawConfigId);
-    }
-
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) {
 

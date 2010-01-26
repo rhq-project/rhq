@@ -77,7 +77,7 @@ public class ConfigManagementTest extends JMockTest {
 
     RawConfiguration createRawConfiguration(String path) {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(randomBytes());
+        rawConfig.setContents(new String(randomBytes()));
         rawConfig.setPath(path);
 
         return rawConfig;
@@ -103,11 +103,6 @@ public class ConfigManagementTest extends JMockTest {
             actualConfig.getRawConfigurations(),
             "The raw configs were not loaded correctly."
         );
-//        assertEquals(
-//            actualConfig.getRawConfigurations(),
-//            expectedRaws,
-//            "The raw configs were not loaded correctly."
-//        );
     }
 
     void assertStructuredLoaded(Configuration expectedConfig, Configuration actualConfig) {
@@ -116,12 +111,6 @@ public class ConfigManagementTest extends JMockTest {
             actualConfig.getProperties(),
             "The structured configuration was not loaded correctly."
         );
-
-//        assertEquals(
-//            actualConfig.getAllProperties(),
-//            expectedConfig.getAllProperties(),
-//            "The structured configuration was not loaded correctly."
-//        );
     }
 
     void assertNotesSetToDefault(Configuration loadedConfig) {

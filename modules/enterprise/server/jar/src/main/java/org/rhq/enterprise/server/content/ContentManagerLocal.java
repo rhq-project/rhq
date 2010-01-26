@@ -25,8 +25,8 @@ import java.util.Set;
 import javax.ejb.Local;
 
 import org.rhq.core.clientapi.server.content.ContentServiceResponse;
-import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
-import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -108,14 +108,14 @@ public interface ContentManagerLocal {
 
     /**
      * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.clientapi.server.content.DeployPackagesResponse)}
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeployPackageRequest(org.rhq.core.domain.content.transfer.DeployPackagesResponse)}
      * .
      */
     void completeDeployPackageRequest(DeployPackagesResponse response);
 
     /**
      * For documentation, see
-     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.clientapi.server.content.RemovePackagesResponse)}
+     * {@link org.rhq.core.clientapi.server.content.ContentServerService#completeDeletePackageRequest(org.rhq.core.domain.content.transfer.RemovePackagesResponse)}
      * .
      */
     void completeDeletePackageRequest(RemovePackagesResponse response);

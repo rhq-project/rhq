@@ -28,10 +28,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.server.content.ContentServerService;
 import org.rhq.core.clientapi.server.content.DeletePackagesRequest;
-import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.clientapi.server.content.RemoveIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.RemoveIndividualPackageResponse;
 import org.rhq.core.util.exception.ThrowableUtil;
 
  /**

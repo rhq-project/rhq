@@ -46,9 +46,9 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.jboss.on.plugins.tomcat.helper.TomcatApplicationDeployer;
 
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.clientapi.server.content.DeployIndividualPackageResponse;
-import org.rhq.core.clientapi.server.content.DeployPackagesResponse;
-import org.rhq.core.clientapi.server.content.RemovePackagesResponse;
+import org.rhq.core.domain.content.transfer.DeployIndividualPackageResponse;
+import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
+import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageType;

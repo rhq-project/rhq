@@ -20,24 +20,16 @@
   * if not, write to the Free Software Foundation, Inc.,
   * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
   */
- package org.rhq.core.clientapi.server.content;
+ package org.rhq.core.domain.content.transfer;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.ArrayList;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.ContentResponseResult;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
 
  /**
- * Contains the data necessary to describe the result of deploying a single package. The overall result of the package
- * installation and any error message (if there is one) will convey whether or not the package was successfully
- * installed. Additionally, if installation steps were determined for this package, they and their respective
- * success/failure flags, will be contained in this object as well.
- *
  * @author Jason Dobies
  */
-public class DeployIndividualPackageResponse implements Serializable {
+public class RemoveIndividualPackageResponse implements Serializable {
     // Constants  --------------------------------------------
 
     private static final long serialVersionUID = 1L;
@@ -49,15 +41,13 @@ public class DeployIndividualPackageResponse implements Serializable {
     private ContentResponseResult result;
     private String errorMessage;
 
-    private List<DeployPackageStep> deploymentSteps;
-
     // Constructors  --------------------------------------------
 
-    public DeployIndividualPackageResponse(PackageDetailsKey key) {
+    public RemoveIndividualPackageResponse(PackageDetailsKey key) {
         this.key = key;
     }
 
-    public DeployIndividualPackageResponse(PackageDetailsKey key, ContentResponseResult result) {
+    public RemoveIndividualPackageResponse(PackageDetailsKey key, ContentResponseResult result) {
         if (key == null) {
             throw new IllegalArgumentException("key cannot be null");
         }
@@ -91,20 +81,5 @@ public class DeployIndividualPackageResponse implements Serializable {
 
     public void setErrorMessage(String errorMessage) {
         this.errorMessage = errorMessage;
-    }
-
-    public List<DeployPackageStep> getDeploymentSteps() {
-        return deploymentSteps;
-    }
-
-    public void setDeploymentSteps(List<DeployPackageStep> deploymentSteps) {
-        this.deploymentSteps = deploymentSteps;
-    }
-
-    public void addDeploymentStep(DeployPackageStep step) {
-        if (this.deploymentSteps == null)
-            this.deploymentSteps = new ArrayList<DeployPackageStep>(1);
-
-        this.deploymentSteps.add(step);
     }
 }

@@ -28,8 +28,8 @@ import org.rhq.core.gui.table.bean.AbstractPagedDataUIBean;
 import javax.faces.model.DataModel;
 
 /**
- * @author Joseph Marques
  * @author Ian Springer
+ * @author Joseph Marques 
  *
  * @param <T> the data object type
  */
@@ -86,7 +86,7 @@ public abstract class PagedListDataModel<T> extends DataModel {
      */
     @Override
     public int getRowCount() {
-        return getPage().getTotalSize();
+        return getCurrentPage().getTotalSize();
     }
 
     /**
@@ -95,10 +95,17 @@ public abstract class PagedListDataModel<T> extends DataModel {
      *
      * @return the current page
      */
-    private PageList<T> getPage() {
+    private PageList<T> getCurrentPage() {
         // ensure page exists - first time going to this view
         if (this.pageList == null) {
             this.pageList = getDataPage();
+        } else {
+            PageControl currentPageControl = this.pagedDataBean.getPageControl();
+            PageControl lastUsedPageControl = this.pageList.getPageControl();
+            if (!currentPageControl.equals(lastUsedPageControl)) {
+                // One or more paging/sorting settings have been updated - we need to load a new page.
+                this.pageList = getDataPage();
+            }
         }
         return this.pageList;
     }
@@ -113,67 +120,24 @@ public abstract class PagedListDataModel<T> extends DataModel {
      */
     @Override
     public Object getRowData() {
-        if (this.currentRowIndex < 0) {
-            throw new IllegalArgumentException("Invalid rowIndex for PagedListDataModel; not within page");
-        }
-
-        PageControl pageControl = this.pagedDataBean.getPageControl();
-
-        int startRow = pageControl.getStartRow();
-        int endRow;
-
-        if (pageControl.getPageSize() == PageControl.SIZE_UNLIMITED) {
-            endRow = Integer.MAX_VALUE;
-        } else {
-            int nRows = pageControl.getPageSize();
-            endRow = startRow + nRows - 1;
-        }
-
-        // paging backwards - will we ever get in this if-statement if pageControl.getPageSize == SIZE_UNLIMITED?
-        if (currentRowIndex < startRow) {
-            int rowsBack = startRow - currentRowIndex;
-            int pagesBack = (int) Math.ceil(rowsBack / (double) pageControl.getPageSize());
-            int newPage = pageControl.getPageNumber() - pagesBack;
-
-            if (newPage < 0) {
-                newPage = 0;
-            }
-
-            pageControl.setPageNumber(newPage);
-            pageList = getDataPage();
-            startRow = pageControl.getStartRow();
-        }
-
-        // paging forwards
-        else if (currentRowIndex > endRow) {
-            int rowsForward = currentRowIndex - endRow;
-            int pagesForward = (int) Math.ceil(rowsForward / (double) pageControl.getPageSize());
-            int newPage = pageControl.getPageNumber() + pagesForward;
-
-            pageControl.setPageNumber(newPage);
-            pageList = getDataPage();
-            startRow = pageControl.getStartRow();
-        }
-
-        /*
-         * March 11, 2009 - the only currently known way this can fail is if the countQuery returned 0 but the
-         * actual data query returned nothing; generally, this is a programming error, but it's possible that
-         * the facelet changed (new columns shown, other columns removed) or the query itself changed (and perhaps
-         * the sortable columns are different); in either case, let's be paranoid and try it all over again with
-         * a default PageControl object.
-         */
-        int getIndex = currentRowIndex - startRow;
-        if (getIndex < 0 || getIndex >= pageList.size()) {
-            // getting the default will repersist the new PageControl too
+        getCurrentPage();
+        if (!isRowAvailable()) {
+            /*
+             * March 11, 2009 - the only currently known way this can fail is if the countQuery returned 0 but the
+             * actual data query returned nothing; generally, this is a programming error, but it's possible that
+             * the facelet changed (new columns shown, other columns removed) or the query itself changed (and perhaps
+             * the sortable columns are different); in either case, let's be paranoid and try it all over again with
+             * a default PageControl object.
+             */
+            // Reset back to the default page control, which will also persist the default page control.
             this.pagedDataBean.resetPageControl();
-            this.pageList = getDataPage();
-
-            // pageControl startRow should now be zero
-            this.currentRowIndex = 0; // and tell the framework to start back at 0
-            getIndex = 0; // now the getIndex should be 0
+            getCurrentPage();            
+            // Tell the framework to start back at the first row in the page.
+            this.currentRowIndex = 0;
         }
+        int pageIndex = this.currentRowIndex - getPageControl().getStartRow();
 
-        return pageList.get(getIndex);
+        return this.pageList.get(pageIndex);
     }
 
     @Override
@@ -191,19 +155,10 @@ public abstract class PagedListDataModel<T> extends DataModel {
      */
     @Override
     public boolean isRowAvailable() {
-        PageList<T> page = getPage();
-        if (page == null) {
-            return false;
-        }
-
-        int rowIndex = getRowIndex();
-        if (rowIndex < 0) {
-            return false;
-        } else if (rowIndex >= page.getTotalSize()) {
-            return false;
-        } else {
-            return true;
-        }
+        getCurrentPage();
+        return (this.pageList != null &&
+                this.currentRowIndex >= 0 &&
+                this.currentRowIndex < pageList.getTotalSize());
     }
 
     private PageList<T> getDataPage() {

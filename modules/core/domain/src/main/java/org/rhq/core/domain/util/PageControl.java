@@ -237,6 +237,28 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PageControl that = (PageControl) o;
+
+        if (pageNumber != that.pageNumber) return false;
+        if (pageSize != that.pageSize) return false;
+        if (!orderingFields.equals(that.orderingFields)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pageNumber;
+        result = 31 * result + pageSize;
+        result = 31 * result + orderingFields.hashCode();
+        return result;
+    }
+
+    @Override
     public String toString() {
         StringBuilder buf = new StringBuilder("PageControl[");
         buf.append("page=").append(pageNumber).append(", ");

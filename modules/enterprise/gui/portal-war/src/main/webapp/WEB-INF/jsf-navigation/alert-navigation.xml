@@ -106,5 +106,29 @@
         </navigation-case>
 
     </navigation-rule>
+
+    <navigation-rule>
+        <from-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>continue</from-outcome>
+            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml?nid=#{notificationTemplateUIBean.activeNotification.id}&amp;tid=#{notificationTemplateUIBean.selectedTemplate.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+
+    <navigation-rule>
+        <from-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>new</from-outcome>
+            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
    
 </faces-config>

@@ -53,6 +53,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     private Map<String, ServerPluginEnvironment> pluginEnvByName = new HashMap<String, ServerPluginEnvironment>();
     private Map<String, AlertSenderInfo> senderInfoByName = new HashMap<String, AlertSenderInfo>();
     private Map<String, String> backingBeanByName = new HashMap<String, String>();
+    private Map<String, String> backingBeanNameByName = new HashMap<String, String>();
 
     public AlertSenderPluginManager(AbstractTypeServerPluginContainer pc) {
         super(pc);
@@ -63,10 +64,10 @@ public class AlertSenderPluginManager extends ServerPluginManager {
      * in the super class.
      * Here we verify that the passed &lt;plugin-class&gt; is valid and build the
      * list of plugins that can be queried by the UI etc.
-     * 
+     *
      * @param env the environment of the plugin to be loaded
      * @param enabled if <code>true</code>, the plugin is to be enabled and will be started soon
-     * 
+     *
      * @throws Exception if the alert plugin could not be loaded due to errors such as the alert class being invalid
      */
     @Override
@@ -121,8 +122,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                     throw e;
                 }
 
-                // Get the backing bean class
-                className = customUI.getBackingBeanName();
+                className = customUI.getBackingBeanClass();
                 try {
                     loadPluginClass(env, className, true); // TODO how make this available to Seam and the Web-CL ?
                     backingBeanByName.put(shortName, className);
@@ -131,12 +131,20 @@ public class AlertSenderPluginManager extends ServerPluginManager {
                     log.error(errMsg);
                     throw new Exception(errMsg, t);
                 }
+
+                String beanName = customUI.getBackingBeanName();
+
+                // Default to <backing-bean-class> value if name is not provided
+                if (beanName == null || beanName.length() == 0) {
+                    beanName = className;
+                }
+
+                backingBeanNameByName.put(shortName, beanName);
             }
 
             AlertSenderInfo info = new AlertSenderInfo(shortName, type.getDescription(), env.getPluginKey());
             info.setUiSnippetUrl(uiSnippetUrl);
             senderInfoByName.put(shortName, info);
-
             pluginEnvByName.put(shortName, env);
         }
     }
@@ -210,6 +218,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
 
         sender.pluginComponent = getServerPluginComponent(key.getPluginName());
+        sender.serverPluginEnvironment = pluginEnvByName.get(senderName);
 
         return sender;
     }
@@ -226,15 +235,26 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         return senderInfoByName.get(shortName);
     }
 
-    public AlertBackingBean getBackingBeanForSender(String shortName) {
+    public Object getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
+
+        if (className == null) {
+            return null;
+        }
+
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
-        AlertBackingBean bean = null;
+        Object bean = null;
+
         try {
-            bean = (AlertBackingBean) instantiatePluginClass(env, className);
+            bean = instantiatePluginClass(env, className);
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
+
         return bean;
+    }
+
+    public String getBackingBeanNameForSender(String shortName) {
+        return backingBeanNameByName.get(shortName);
     }
 }

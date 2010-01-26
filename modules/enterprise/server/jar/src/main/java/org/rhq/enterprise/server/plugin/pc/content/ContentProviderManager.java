@@ -481,8 +481,7 @@ public class ContentProviderManager {
             ContentProvider adapter = getIsolatedContentSourceAdapter(contentSource);
             adapter.initialize(contentSource.getConfiguration());
         } catch (Exception e) {
-            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]", e);
-
+            log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]");
             // The adapter is put in the adapter cache when it is instantiated. If it failed to start, remove it
             // from the cache so we don't immediately return at the start of this method.
             this.adapters.remove(contentSource);

@@ -56,7 +56,7 @@ public class SnmpSender extends AlertSender {
         if (host==null) {
             return new SenderResult(ResultState.FAILURE,"no host given");
         }
-        String portS = alertParameters.getSimpleValue("port","161");
+        String portS = alertParameters.getSimpleValue("port","162");
         Integer port = Integer.valueOf(portS);
 
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();

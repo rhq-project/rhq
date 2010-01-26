@@ -75,6 +75,7 @@ public class PostfixComponentTest extends AbstractAugeasConfigurationComponentTe
         config.put(new PropertySimple("myhostname", "virtual.domain.com"));
         config.put(new PropertySimple("myorigin", "$myhostname"));
         config.put(new PropertySimple("mynetworks", "168.100.189.0/28"));
+        config.put(new PropertySimple("mydestination", "$myhostname"));
         config.put(new PropertySimple("inet_interfaces", "$myhostname, localhost.$mydomain, localhost, $mydomain"));
         config.put(new PropertySimple("smtpd_banner", "$myhostname ESMTP"));
         config.put(new PropertySimple("disable_vrfy_command", false));

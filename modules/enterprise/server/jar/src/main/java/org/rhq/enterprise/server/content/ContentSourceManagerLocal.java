@@ -193,10 +193,12 @@ public interface ContentSourceManagerLocal {
      *
      * @param  subject       wanting to update the ContentSource
      * @param  contentSource to be updated
+     * @param  syncNow if you wish to resync the ContentSource after updating
      *
      * @return the ContentSource that was updated
      */
-    ContentSource updateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+    ContentSource updateContentSource(Subject subject, ContentSource contentSource, boolean syncNow)
+        throws ContentSourceException;
 
     /**
      * Given a content source ID, this will test that the adapter responsible for pulling data from the content source's
@@ -429,24 +431,24 @@ public interface ContentSourceManagerLocal {
 
     void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
-    RepoSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo,
-        PackageSyncReport report, Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        RepoSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress);
 
     RepoSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        RepoSyncResults syncResults, StringBuilder progress, int addCount);
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress, int addCount);
 
     RepoSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress);
+
+    RepoSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
         RepoSyncResults syncResults, StringBuilder progress);
 
-    RepoSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource,
-        DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress);
-
-    RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, RepoSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
 
     RepoSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
         RepoSyncResults syncResults, StringBuilder progress);

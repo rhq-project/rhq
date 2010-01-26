@@ -5,7 +5,7 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
    <!-- #1 -->
-   <contentSourceType name="testContentSourceType1"
+   <contentSourceType name="testCSPHT1"
                       displayName="displayName1"
                       description="description1"
                       lazyLoad="false"
@@ -20,7 +20,7 @@
    <!-- missing #3 -->
 
    <!-- #2 -->
-   <contentSourceType name="testContentSourceType2"
+   <contentSourceType name="testCSPHT2"
                       displayName="displayName2"
                       description="description2"
                       lazyLoad="false"
@@ -33,7 +33,7 @@
    </contentSourceType>
    
    <!-- #4.1 -->
-   <contentSourceType name="testContentSourceType4"
+   <contentSourceType name="testCSPHT4"
                       displayName="displayName4"
                       description="description4"
                       lazyLoad="true"

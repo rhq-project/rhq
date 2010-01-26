@@ -31,22 +31,26 @@ package org.rhq.enterprise.server.xmlschema;
 public abstract class AbstractScheduleType {
     private final String typeName;
     private final boolean concurrent;
+    private final boolean clustered;
 
     /**
      * Factory method that creates a concrete schedule type object based on the given parameters.
      * 
      * @param concurrent if true, multiple jobs can run concurrently.
+     * @param clustered if true, the job may be executed by a server other than the one where the job was scheduled
      * @param scheduleType the name of the concrete schedule type
      * @param scheduleTrigger the string form of the schedule's trigger
      * 
      * @return a new instance of the desired schedule type
      */
-    public static final AbstractScheduleType create(boolean concurrent, String scheduleType, String scheduleTrigger) {
+    public static final AbstractScheduleType create(boolean concurrent, boolean clustered, String scheduleType,
+        String scheduleTrigger) {
+
         AbstractScheduleType scheduleTypeObj = null;
         if (PeriodicScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleType)) {
-            scheduleTypeObj = new PeriodicScheduleType(concurrent, Long.parseLong(scheduleTrigger));
+            scheduleTypeObj = new PeriodicScheduleType(concurrent, clustered, Long.parseLong(scheduleTrigger));
         } else if (CronScheduleType.TYPE_NAME.equalsIgnoreCase(scheduleType)) {
-            scheduleTypeObj = new CronScheduleType(concurrent, scheduleTrigger);
+            scheduleTypeObj = new CronScheduleType(concurrent, clustered, scheduleTrigger);
         }
         return scheduleTypeObj;
     }
@@ -56,11 +60,13 @@ public abstract class AbstractScheduleType {
      * 
      * @param concurrent if true, multiple jobs can run concurrently. If false, only one
      *                   scheduled job will run at any one time across the RHQ Server cloud.
+     * @param clustered if true, the job may be executed by a server other than the one where the job was scheduled
      * @param typeName the name of the concrete schedule type (subclasses must provide this)
      */
-    public AbstractScheduleType(boolean concurrent, String typeName) {
+    public AbstractScheduleType(boolean concurrent, boolean clustered, String typeName) {
         this.typeName = typeName;
         this.concurrent = concurrent;
+        this.clustered = clustered;
     }
 
     /**
@@ -82,6 +88,25 @@ public abstract class AbstractScheduleType {
      */
     public boolean isConcurrent() {
         return this.concurrent;
+    }
+
+    /**
+     * If <code>true</code>, the job may be executed on a server other than the one where the job was scheduled.
+     * If <code>false</code>, the job will always be executed on the server where it was scheduled (it will be
+     * considered a non-clustered job).
+     * If this is <code>false</code>, {@link #isConcurrent()} only affects the scheduler where the job is scheduled
+     * and to be executed. This means a non-clustered job may run at the same time on different machines, even
+     * if {@link #isConcurrent()} is <code>false</code>. When {@link #isConcurrent()} is <code>false</code>,
+     * and {@link #isClustered()} is <code>false</code>, it means that job will not run concurrently on the box
+     * where it was scheduled. But if the job was scheduled multiple times on different boxes, those multiple jobs
+     * can run concurrently because they are on different boxes.
+     * 
+     * A job should not be clustered if it must run on all servers at the same regular schedule.
+     * 
+     * @return clustered flag
+     */
+    public boolean isClustered() {
+        return this.clustered;
     }
 
     /**

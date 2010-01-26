@@ -25,7 +25,8 @@ package org.rhq.enterprise.server.plugin.pc;
  * which tells quartz that it can run multiple jobs concurrently.
  * 
  * Note that server plugin developers do not extend this class. Instead, developers
- * need to have their plugin components implement {@link ScheduledJob}.
+ * have their plugin components or their job class POJOs implement no-arg methods,
+ * or methods that take {@link ScheduledJobInvocationContext} as a single argument.
  *  
  * @author John Mazzitelli
  */

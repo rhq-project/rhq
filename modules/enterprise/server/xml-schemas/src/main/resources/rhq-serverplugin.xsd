@@ -86,7 +86,16 @@
                               RHQ Server in the system, and this is false, you can be assured that only
                               a single server will handle the invocation at any one time (i.e. multiple servers
                               will not run invocations at the same time).
-                           4) has an optional simple property called "class" of type string that is the
+                           4) has a simple property called "clustered" of type boolean to indicate if
+                              invocations of the scheduled job are allowed to occur on different
+                              machines from where the job was scheduled. If true, a clustered job
+                              will be allowed to be invoked on any machine in the server cluster.
+                              If false, the job will always be triggered on the machine where it was
+                              scheduled. Set this to false if you have a job that must be run on
+                              all machines on the configured schedule (since all plugins are registered
+                              on all server cluster nodes, a non-clustered job will run on each
+                              server as a standalone job).
+                           5) has an optional simple property called "class" of type string that is the
                               name of class to be instantiated as the target of the job invocation.
                               If not defined, the target of the job invocation is the stateful plugin component
                               itself. Whatever class is used as the target, it must have a method as defined
@@ -94,7 +103,7 @@
                               Typically, plugin developers don't use this class property because you normally
                               want to target the stateful plugin component; however, this class property provides
                               the plugin developer a way to declare stateless jobs if that is needed.
-                           5) has any other simple properties that will be used as custom callback data properties.
+                           6) has any other simple properties that will be used as custom callback data properties.
                         You may additionally define one list-of-maps property which can be used to allow a user
                         to define their own custom jobs. The list-of-maps must contain a map property definition
                         that follows the same rules as described above.
@@ -182,14 +191,24 @@
     </xs:complexType>
 
     <xs:complexType name="ServerPluginComponentType">
-        <xs:sequence></xs:sequence>
-        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+        <xs:sequence>
+            <xs:element name="control" type="serverplugin:ControlType" minOccurs="0" maxOccurs="unbounded">
                 <xs:annotation>
                     <xs:documentation>
-                        The class that will be instantiated. This is a stateful object, once initialized, the same
-                        instance will be notified when the plugin is started, stopped or when schedules are triggered.
+                        Defines operations a user can invoke on the plugin component.
+                        Typically, a user interface will allow a user to invoke these operations to
+                        control the server plugin component during runtime. 
                     </xs:documentation>
                 </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="class" type="serverplugin:classNameType" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The class that will be instantiated. This is a stateful object, once initialized, the same
+                    instance will be notified when the plugin is started, stopped or when schedules are triggered.
+                </xs:documentation>
+            </xs:annotation>
         </xs:attribute>
     </xs:complexType>
 
@@ -208,4 +227,43 @@
         </xs:sequence>
     </xs:complexType>
 
+    <xs:complexType name="ControlType">
+        <xs:sequence>
+            <xs:element name="parameters" type="config:configuration" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the parameters the user can pass in to the control operation.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+            <xs:element name="results" type="config:configuration" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                    <xs:documentation>
+                        Defines the results the control operation can return.
+                    </xs:documentation>
+                </xs:annotation>
+            </xs:element>
+        </xs:sequence>
+        <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>
+                    The name of the control operation being defined.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="displayName" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    The name of the control operation that is shown to the user in user interfaces.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+        <xs:attribute name="description" type="xs:string" use="optional">
+            <xs:annotation>
+                <xs:documentation>
+                    A short description that describes what the control operation does.
+                </xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
+    </xs:complexType>
 </xs:schema>

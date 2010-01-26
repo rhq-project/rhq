@@ -8,6 +8,7 @@
         xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
         package="org.rhq.enterprise.server.plugins.alertIrc"
         description="Alert sender plugin that sends alert notifications via IRC"
+        disabledOnDiscovery="true"
         >
 
     <serverplugin:help>
@@ -19,9 +20,9 @@
 
     <!-- Global preferences -->
     <serverplugin:plugin-configuration>
-        <c:simple-property name="nick" type="string" default="rhq_alerts" />
-        <c:simple-property name="server" type="string" />
-        <c:simple-property name="port" type="integer" default="6667" required="false" />
+        <c:simple-property name="nick" type="string" default="rhq_alerts" description="Irc user (nick) name of this alert sender" />
+        <c:simple-property name="server" type="string" description="Irc server to connect to e.g. irc.freenode.net" />
+        <c:simple-property name="port" type="integer" default="6667" required="false" description="Port number on the irc server"/>
         <c:simple-property name="initialChannels"
                            type="string"
                            description="A comma-delimited list of channels that the irc bot will initially join (even if no alerts have fired)."

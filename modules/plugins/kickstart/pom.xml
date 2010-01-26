@@ -16,7 +16,7 @@
    <artifactId>rhq-kickstart-plugin</artifactId>
    <packaging>jar</packaging>
 
-   <name>Kickstart Plugin</name>
+   <name>RHQ Kickstart Plugin</name>
    <description>Exposes kickstart functionality for machine reinstalls and virt guests</description>
 
 

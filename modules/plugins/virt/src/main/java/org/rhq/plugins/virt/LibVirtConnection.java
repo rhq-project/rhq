@@ -110,25 +110,35 @@ public class LibVirtConnection {
     }
 
     public DomainInfo getDomainInfo(String domainName) throws LibvirtException {
-        Domain domain = connection.domainLookupByName(domainName);
+        try {
+            Domain domain = connection.domainLookupByName(domainName);
 
-        DomainInfo info = new DomainInfo();
-        info.domainInfo = domain.getInfo();
-        info.name = domainName;
-        info.uuid = domain.getUUIDString();
+            DomainInfo info = new DomainInfo();
+            info.domainInfo = domain.getInfo();
+            info.name = domainName;
+            info.uuid = domain.getUUIDString();
 
-        return info;
+            return info;
+        } catch (LibvirtException e) {
+            log.error("Error looking up domain with name " + domainName, e);
+            throw e;
+        }
     }
 
     public DomainInfo getDomainInfo(int id) throws LibvirtException {
-        Domain domain = connection.domainLookupByID(id);
+        try {
+            Domain domain = connection.domainLookupByID(id);
 
-        DomainInfo info = new DomainInfo();
-        info.domainInfo = domain.getInfo();
-        info.name = domain.getName();
-        info.uuid = domain.getUUIDString();
+            DomainInfo info = new DomainInfo();
+            info.domainInfo = domain.getInfo();
+            info.name = domain.getName();
+            info.uuid = domain.getUUIDString();
 
-        return info;
+            return info;
+        } catch (LibvirtException e) {
+            log.error("Error looking up domain with id " + id, e);
+            throw e;
+        }
     }
 
     public String getDomainXML(String domainName) throws LibvirtException {

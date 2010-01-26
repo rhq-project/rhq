@@ -45,9 +45,7 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
@@ -118,9 +116,7 @@ public class QueryAllTest extends AbstractEJB3Test {
         AlertDefinition.class.getSimpleName(),
         AlertNotification.class.getSimpleName(),
         RoleNotification.class.getSimpleName(),
-        SnmpNotification.class.getSimpleName(),
         SubjectNotification.class.getSimpleName(),
-        EmailNotification.class.getSimpleName(),
 
         // measurement stuff
         MeasurementDataTrait.class.getSimpleName(),

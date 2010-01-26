@@ -69,7 +69,7 @@ public class RawConfigUIBean {
 
     public void setModified(boolean modified) {
         this.modified = modified;
-//        panelMenuItem.setIcon(getIcon());
+        panelMenuItem.setIcon(getIcon());
     }
 
     public String getPath() {

@@ -77,6 +77,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     private String modalEditorContents;
 
+    private int numberOfModifiedFiles;
+
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
@@ -307,7 +309,18 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String editCurrent() {
-        String changedContents = getCurrentContents();
+        RawConfiguration editedRaw = getCurrent();
+        RawConfiguration originalRaw = raws.get(editedRaw.getPath());
+
+        if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
+            --numberOfModifiedFiles;
+            RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
+            rawUIBean.setModified(false);
+            getModified().remove(editedRaw.getPath());
+        }
+        else {
+            ++numberOfModifiedFiles;
+        }
         return null;
     }
 
@@ -319,7 +332,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             bean.setModified(false);
             bean.setIcon("/images/blank.png");
         }
-
 
     }
 
@@ -417,6 +429,30 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return mode == RAW_MODE;
     }
 
+    public boolean isDisplayChangedFilesLabel() {
+        if (isStructuredMode()) {
+            return false;
+        }
+
+        if (isRawSupported()) {
+            return true;
+        }
+
+        return isRawMode();
+    }
+
+    public String getModifiedFilesMsg() {
+        if (!isDisplayChangedFilesLabel() || numberOfModifiedFiles == 0) {
+            return "";
+        }
+
+        if (numberOfModifiedFiles == 1) {
+            return "1 file changed in this configuration";
+        }
+
+        return numberOfModifiedFiles + " files changed in this configuration";
+    }
+
     public boolean isModified(String path) {
         return getModified().keySet().contains(path);
     }
@@ -493,8 +529,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public String download() {
         try {
+            File file = new File(getCurrentPath());
+
             HttpServletResponse response = FacesContextUtility.getResponse();
-            response.setHeader("Content-Disposition", "attachment;filename=" + getCurrentPath());
+            response.setHeader("Content-Disposition", "attachment;filename=" + file.getName());
             OutputStream ostream = response.getOutputStream();
             ostream.write(getCurrentContents().getBytes());
             ostream.flush();

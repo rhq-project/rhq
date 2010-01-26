@@ -27,15 +27,16 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.registration.ReleaseRepoMapping;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class RegistrationBeanTest extends AbstractEJB3Test {
     private RegistrationManagerLocal registrationManager;
+    private ResourceTypeManagerLocal resourceTypeManager;
     private ResourceType platformType;
     private Agent agent;
     private int parentId = -1;
@@ -44,6 +45,7 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
     @BeforeClass
     public void beforeClass() throws Exception {
         this.registrationManager = LookupUtil.getRegistrationManager();
+        this.resourceTypeManager = LookupUtil.getResourceTypeManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -52,10 +54,10 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
         try {
-            createResourceTypes(em);
             createAgent(em);
             em.flush();
 
+            platformType = getPlatformResourceType();
             Resource platform = new Resource("alpha", "platform", platformType);
 
             registrationManager.registerPlatform(overlord, platform, parentId);
@@ -87,10 +89,9 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
         em.persist(agent);
     }
 
-    private void createResourceTypes(EntityManager entityManager) {
-        platformType = new ResourceType("test platform", "test", ResourceCategory.PLATFORM, null);
+    private ResourceType getPlatformResourceType() {
 
-        entityManager.persist(platformType);
+        return resourceTypeManager.getResourceTypeByNameAndPlugin(overlord, "Linux", "Platforms");
     }
 
 }

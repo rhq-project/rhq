@@ -55,6 +55,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.bundle.BundleManagerBean;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerBean;
@@ -101,8 +103,8 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
+import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
@@ -312,6 +314,10 @@ public final class LookupUtil {
 
     public static AvailabilityManagerLocal getAvailabilityManager() {
         return lookupLocal(AvailabilityManagerBean.class);
+    }
+
+    public static BundleManagerLocal getBundleManager() {
+        return lookupLocal(BundleManagerBean.class);
     }
 
     public static CallTimeDataManagerLocal getCallTimeDataManager() {

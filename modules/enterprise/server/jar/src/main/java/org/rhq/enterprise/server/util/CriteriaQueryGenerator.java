@@ -302,7 +302,7 @@ public final class CriteriaQueryGenerator {
             Object fetchFieldValue = null;
             try {
                 fetchField.setAccessible(true);
-                fetchFieldValue = fetchField.get(this);
+                fetchFieldValue = fetchField.get(criteria);
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException(iae);
             }
@@ -349,7 +349,7 @@ public final class CriteriaQueryGenerator {
         for (Field filterField : getFields(criteria, Criteria.Type.FILTER)) {
             Object filterFieldValue = null;
             try {
-                filterFieldValue = filterField.get(this);
+                filterFieldValue = filterField.get(criteria);
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException(iae);
             }

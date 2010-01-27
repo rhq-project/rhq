@@ -68,6 +68,12 @@ public class RHQPortal implements EntryPoint {
             }
 
             public void onSuccess(PageList<Resource> result) {
+                mainPanel.clear();
+
+                for (Resource res : result) {
+                    mainPanel.add(new Label(res.getName() + " (" + res.getId() + ")"));
+                }
+
                 Window.alert("Loaded resources " + result.size());
             }
         });

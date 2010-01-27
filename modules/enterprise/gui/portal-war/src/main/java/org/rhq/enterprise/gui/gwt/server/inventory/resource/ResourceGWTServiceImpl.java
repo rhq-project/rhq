@@ -27,6 +27,7 @@ import org.rhq.enterprise.gui.gwt.client.inventory.resource.ResourceGWTService;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -38,7 +39,15 @@ public class ResourceGWTServiceImpl extends RemoteServiceServlet implements Reso
     public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-        return resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+        try {
+            PageList<Resource> result = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+            HibernateDetachUtility.nullOutUninitializedFields(result,
+                    HibernateDetachUtility.SerializationType.SERIALIZATION);
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            throw new RuntimeException(e);
+        }
     }
 
 

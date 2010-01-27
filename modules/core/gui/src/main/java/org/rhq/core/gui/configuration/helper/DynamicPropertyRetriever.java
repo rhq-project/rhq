@@ -24,6 +24,7 @@ package org.rhq.core.gui.configuration.helper;
 
 import java.util.List;
 
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 
 /**
@@ -32,7 +33,7 @@ import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
  * <p/>
  * <strong>In order to associate implementations of this interface with the rendering code, calls must be made to
  * {@link PropertyRenderingUtility#putDynamicPropertyRetriever(org.rhq.core.domain.configuration.PropertyDynamicType,
- * DynamicPropertyRetriever)} to map the property type to the instance.</strong> 
+ * DynamicPropertyRetriever)} to map the property type to the instance.</strong>
  * <p/>
  * This functionality is abstracted out to prevent the core-gui module from having to make non-core
  * dependencies. Modules using core-gui can implement this interface using whatever means available,
@@ -48,5 +49,5 @@ public interface DynamicPropertyRetriever {
      * @param propertyDefinition cannot be <code>null</code>
      * @return list of values to use as both the name and value of the UI inputs; empty list if none are found
      */
-    List<String> loadValues(PropertyDefinitionDynamic propertyDefinition);
+    List<DynamicConfigurationPropertyValue> loadValues(PropertyDefinitionDynamic propertyDefinition);
 }

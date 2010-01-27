@@ -13,7 +13,7 @@ import org.rhq.core.domain.content.transfer.EntitlementCertificate;
  *
  */
 @Local
-public interface EntitlementManagerLocal {
+public interface EntitlementStuffManagerLocal {
 
     /**
      * Get a list of entitlement certificates for the specified resources.

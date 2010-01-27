@@ -117,7 +117,7 @@ import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.DistributionException;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.EntitlementManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -196,7 +196,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
-    private EntitlementManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
+    private EntitlementStuffManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
 
     //ADVISORYMANAGER: BEGIN ------------------------------------------
 

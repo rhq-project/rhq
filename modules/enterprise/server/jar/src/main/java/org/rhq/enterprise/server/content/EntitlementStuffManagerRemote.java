@@ -15,7 +15,7 @@ import org.rhq.enterprise.server.system.ServerVersion;
 @SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
 @WebService(targetNamespace = ServerVersion.namespace)
 @Remote
-public interface EntitlementManagerRemote {
+public interface EntitlementStuffManagerRemote {
     /**
      * Get a list of entitlement certificates for the specified resources.
      * @param subject    The logged in user's subject.

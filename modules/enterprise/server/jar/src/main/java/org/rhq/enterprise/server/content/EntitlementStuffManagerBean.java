@@ -14,9 +14,9 @@ import org.rhq.core.domain.content.transfer.EntitlementCertificate;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 
 @Stateless
-public class EntitlementManagerBean implements EntitlementManagerLocal, EntitlementManagerRemote {
+public class EntitlementStuffManagerBean implements EntitlementStuffManagerLocal, EntitlementStuffManagerRemote {
 
-    private final Log log = LogFactory.getLog(EntitlementManagerBean.class);
+    private final Log log = LogFactory.getLog(EntitlementStuffManagerBean.class);
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {

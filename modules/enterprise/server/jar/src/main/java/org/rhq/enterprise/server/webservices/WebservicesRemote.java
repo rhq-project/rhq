@@ -12,7 +12,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.DistributionManagerRemote;
-import org.rhq.enterprise.server.content.EntitlementManagerRemote;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
 import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
 import org.rhq.enterprise.server.event.EventManagerRemote;
@@ -43,7 +43,7 @@ public interface WebservicesRemote extends //
     AvailabilityManagerRemote,//
     CallTimeDataManagerRemote,//
     RepoManagerRemote,//
-    EntitlementManagerRemote, //
+    EntitlementStuffManagerRemote, //
     ConfigurationManagerRemote,//
     ContentManagerRemote,//
     //Removed as it was problematic for WS clients. Not sure if this well be re-enabled.

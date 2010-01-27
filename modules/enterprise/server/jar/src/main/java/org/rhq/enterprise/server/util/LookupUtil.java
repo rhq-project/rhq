@@ -87,8 +87,8 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
-import org.rhq.enterprise.server.content.EntitlementManagerBean;
-import org.rhq.enterprise.server.content.EntitlementManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerBean;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
@@ -101,6 +101,7 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
@@ -344,7 +345,7 @@ public final class LookupUtil {
         return lookupLocal(EmailManagerBean.class);
     }
 
-    public static EntitlementManagerLocal getEntitlementManagerBean() {
+    public static EntitlementStuffManagerLocal getEntitlementManagerBean() {
         return lookupLocal(EntitlementManagerBean.class);
     }
 
@@ -432,8 +433,8 @@ public final class LookupUtil {
         return lookupLocal(RepoManagerBean.class);
     }
 
-    public static EntitlementManagerLocal getEntitlementManager() {
-        return lookupLocal(EntitlementManagerBean.class);
+    public static EntitlementStuffManagerLocal getEntitlementManager() {
+        return lookupLocal(EntitlementStuffManagerBean.class);
     }
 
     public static DistributionManagerLocal getDistributionManagerLocal() {

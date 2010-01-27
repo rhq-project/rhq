@@ -28,6 +28,8 @@
       <seam.version>2.1.0.SP1</seam.version>
       <jetty-jspc.version>7.0.0.RC6</jetty-jspc.version>
 
+      <gwt.version>2.0.0</gwt.version>
+
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
       <product.fullName>RHQ</product.fullName>
@@ -40,7 +42,22 @@
 
    <dependencies>
 
-      <!-- Internal Deps -->
+
+       <dependency>
+           <groupId>com.google.gwt</groupId>
+           <artifactId>gwt-servlet</artifactId>
+           <version>${gwt.version}</version>
+           <scope>compile</scope>
+       </dependency>
+       <dependency>
+           <groupId>com.google.gwt</groupId>
+           <artifactId>gwt-user</artifactId>
+           <version>${gwt.version}</version>
+           <scope>provided</scope>
+       </dependency>
+
+
+       <!-- Internal Deps -->
 
       <dependency>
          <groupId>org.rhq</groupId>
@@ -360,12 +377,12 @@
       </dependency>
 
       <!--  new jetty based jsp compiler -->
-      <dependency>
+      <!--<dependency>
          <groupId>org.mortbay.jetty</groupId>
          <artifactId>jetty-jspc-maven-plugin</artifactId>
          <version>${jetty-jspc.version}</version>
          <scope>provided</scope>
-      </dependency>
+      </dependency>-->
 
       <dependency>
          <groupId>xalan</groupId>
@@ -381,11 +398,32 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+
    </dependencies>
 
    <build>
       <finalName>rhq-portal</finalName>
       <plugins>
+
+
+           <plugin>
+               <groupId>org.codehaus.mojo</groupId>
+               <artifactId>gwt-maven-plugin</artifactId>
+               <version>1.2.0-11137</version>
+               <configuration>
+                   <inplace>true</inplace>
+                   <logLevel>INFO</logLevel>
+                   <runTarget>RHQPortal.html</runTarget>
+                   <extraJvmArgs>-Xmx512m</extraJvmArgs>
+               </configuration>
+               <executions>
+                   <execution>
+                       <goals>
+                           <goal>compile</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
 
          <plugin>
             <artifactId>maven-war-plugin</artifactId>

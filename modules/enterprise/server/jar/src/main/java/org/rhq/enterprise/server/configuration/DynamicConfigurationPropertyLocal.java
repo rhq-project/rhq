@@ -24,6 +24,8 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.List;
 
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
+
 /**
  * Responsible for retrieving configuration property values from the database.
  *
@@ -39,6 +41,6 @@ public interface DynamicConfigurationPropertyLocal {
      *            in {@link PropertyExpressionEvaluator}
      * @return list of values matching the requested key; empty list if the key is not supported
      */
-    List<String> lookupValues(String key);
+    List<DynamicConfigurationPropertyValue> lookupValues(String key);
 
 }

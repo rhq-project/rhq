@@ -101,6 +101,7 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
@@ -345,7 +346,7 @@ public final class LookupUtil {
         return lookupLocal(EmailManagerBean.class);
     }
 
-    public static EntitlementStuffManagerLocal getEntitlementManagerBean() {
+    public static EntitlementManagerLocal getEntitlementManagerBean() {
         return lookupLocal(EntitlementManagerBean.class);
     }
 

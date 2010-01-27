@@ -50,6 +50,13 @@ import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleConfig;
+import org.rhq.core.domain.bundle.BundleDeployment;
+import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleVersionRepo;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.content.Architecture;
@@ -140,8 +147,14 @@ public class QueryAllTest extends AbstractEJB3Test {
         ContentSource.class.getSimpleName(), ContentSourceType.class.getSimpleName(),
         InstalledPackage.class.getSimpleName(), Package.class.getSimpleName(), PackageBits.class.getSimpleName(),
         PackageInstallationStep.class.getSimpleName(), PackageType.class.getSimpleName(),
-        PackageVersion.class.getSimpleName(), PackageVersionContentSource.class.getSimpleName(),
+        PackageVersion.class.getSimpleName(),
+        PackageVersionContentSource.class.getSimpleName(),
         ContentSourceSyncResults.class.getSimpleName(),
+
+        // bundle stuff
+        BundleType.class.getSimpleName(), Bundle.class.getSimpleName(), BundleVersion.class.getSimpleName(),
+        BundleVersionRepo.class.getSimpleName(), BundleConfig.class.getSimpleName(), BundleFile.class.getSimpleName(),
+        BundleDeployment.class.getSimpleName(),
 
         // group stuff
         GroupDefinition.class.getSimpleName(), ResourceGroup.class.getSimpleName(),

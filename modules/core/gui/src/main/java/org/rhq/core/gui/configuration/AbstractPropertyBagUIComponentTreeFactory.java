@@ -44,6 +44,7 @@ import org.richfaces.component.html.HtmlModalPanel;
 
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -284,9 +285,67 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
             addListProperty(parent, (PropertyDefinitionList) propertyDefinition, rowStyleClass);
         } else if (propertyDefinition instanceof PropertyDefinitionMap) {
             addMapProperty(parent, (PropertyDefinitionMap) propertyDefinition, rowStyleClass);
-        } else {
+        } else if (propertyDefinition instanceof PropertyDefinitionDynamic) {
+            addDynamicProperty(parent, (PropertyDefinitionDynamic) propertyDefinition, rowStyleClass);
+        }
+        else {
             throw new IllegalStateException("Unsupported subclass of " + PropertyDefinition.class.getName() + ".");
         }
+    }
+
+    /**
+     * Adds a new property to the UI based on a dynamic property definition.
+     *
+     * @param parent                    owner in which the UI rendering of the property will live
+     * @param propertyDefinitionDynamic describes the property being rendered
+     * @param rowStyleClass             indicates the CSS style (i.e. background color) of this row in the property list
+     */
+    private void addDynamicProperty(UIComponent parent, PropertyDefinitionDynamic propertyDefinitionDynamic,
+                                    String rowStyleClass) {
+        addDebug(parent, true, ".addDynamicProperty()");
+
+        FacesComponentUtility.addVerbatimText(parent, "\n\n<tr class='" + rowStyleClass + "'>");
+
+        PropertySimple propertySimple = this.propertyMap.getSimple(propertyDefinitionDynamic.getName());
+        ValueExpression propertyValueExpression = createPropertyValueExpression(propertySimple.getName(),
+            this.valueExpressionFormat);
+
+        UIInput input = null;
+        if (!this.isGroup || (propertySimple.getOverride() != null && propertySimple.getOverride())) {
+            // We need to create the input component ahead of when we need to add it to the component tree, since we
+            // need to know the input component's id in order to render the unset control.
+            input = PropertyRenderingUtility.createInputForDynamicProperty(propertyDefinitionDynamic, propertySimple,
+                propertyValueExpression, getListIndex(), this.isGroup, this.config.isReadOnly(), this.config
+                    .isFullyEditable(), this.config.isPrevalidate());
+        }
+
+        FacesComponentUtility
+            .addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DISPLAY_NAME_CELL + "'>");
+        PropertyRenderingUtility.addPropertyDisplayName(parent, propertyDefinitionDynamic, propertySimple, this.config
+            .isReadOnly());
+        FacesComponentUtility.addVerbatimText(parent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
+        if (!propertyDefinitionDynamic.isRequired())
+            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionDynamic.isRequired(),
+                propertyDefinitionDynamic.isReadOnly(), propertySimple, this.config.getListIndex(), input, this.isGroup,
+                this.config.isReadOnly(), this.config.isFullyEditable());
+        FacesComponentUtility.addVerbatimText(parent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");
+        addPropertySimpleValue(parent, input, propertyValueExpression);
+        FacesComponentUtility.addVerbatimText(parent, "<br/>");
+        if (input != null)
+            PropertyRenderingUtility.addMessageComponentForInput(parent, input);
+        FacesComponentUtility.addVerbatimText(parent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_DESCRIPTION_CELL + "'>");
+        PropertyRenderingUtility.addPropertyDescription(parent, propertyDefinitionDynamic);
+        FacesComponentUtility.addVerbatimText(parent, "</td>");
+
+        FacesComponentUtility.addVerbatimText(parent, "</tr>");
+
+        addDebug(parent, false, ".addSimpleProperty()");
     }
 
     private void addSimpleProperty(UIComponent parent, PropertyDefinitionSimple propertyDefinitionSimple,
@@ -323,8 +382,9 @@ public abstract class AbstractPropertyBagUIComponentTreeFactory {
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_ENABLED_CELL + "'>");
         if (!propertyDefinitionSimple.isRequired())
-            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple, propertySimple, this.config
-                .getListIndex(), input, this.isGroup, this.config.isReadOnly(), this.config.isFullyEditable());
+            PropertyRenderingUtility.addUnsetControl(parent, propertyDefinitionSimple.isRequired(),
+                propertyDefinitionSimple.isReadOnly(), propertySimple, this.config.getListIndex(), input, this.isGroup,
+                this.config.isReadOnly(), this.config.isFullyEditable());
         FacesComponentUtility.addVerbatimText(parent, "</td>");
 
         FacesComponentUtility.addVerbatimText(parent, "<td class='" + CssStyleClasses.PROPERTY_VALUE_CELL + "'>");

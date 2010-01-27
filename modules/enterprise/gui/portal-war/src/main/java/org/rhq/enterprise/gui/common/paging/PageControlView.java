@@ -53,6 +53,7 @@ import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.RepoUnsubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ResourceReposUIBean;
+import org.rhq.enterprise.gui.content.ResourceUpdatePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
@@ -159,6 +160,8 @@ public enum PageControlView {
     AvailableResourceReposList(AvailableResourceReposUIBean.class),
     /** */
     ResourcePackageVersionsList(ResourcePackageVersionsUIBean.class),
+    /** */
+    ResourceUpdatePackageVersionsList(ResourceUpdatePackageVersionsUIBean.class),
     /** */
     PackagesToDeployList(DeployPackagesUIBean.class),
     /** */

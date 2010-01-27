@@ -289,10 +289,7 @@ public class AgentMain {
     private boolean m_advancedSetup = false;
 
     /**
-     * If the agent was told to setup (via a command line option), this will be trueneeds to be setup when it is first
-     * initialized, by default the basic setup will run which asks the user for some basic, minimal information
-     * necessary to get the agent started. However, if this flag is <code>true</code>, the advanced setup will run as
-     * opposed to the basic setup.
+     * If the agent was told to setup (via a command line option), this will be true.
      */
     private boolean m_forcedSetup = false;
 

@@ -44,6 +44,10 @@
 
         <!-- only simple properties (not lists and maps) have this -->
         <column name="UNITS" type="SMALLINT" required="false"/>
+
+        <!-- only dynamic properties (not simple) have this -->
+        <column name="DYNAMIC_TYPE" type="VARCHAR2" size="20" required="false"/>
+        <column name="DYNAMIC_KEY" type="VARCHAR2" size="128" required="false"/>
     </table>
 
     <table name="RHQ_CONF_PROP_DEF_ENUM">

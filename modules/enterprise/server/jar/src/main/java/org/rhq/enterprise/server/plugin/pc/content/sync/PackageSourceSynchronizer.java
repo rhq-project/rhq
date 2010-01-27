@@ -50,6 +50,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -82,7 +83,7 @@ public class PackageSourceSynchronizer {
         repoManager = LookupUtil.getRepoManagerLocal();
     }
 
-    public SyncTracker synchronizePackageMetadata(SyncTracker tracker) throws Exception {
+    public SyncTracker synchronizePackageMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof PackageSource)) {
             return tracker;
         }
@@ -133,7 +134,8 @@ public class PackageSourceSynchronizer {
         return tracker;
     }
 
-    public SyncTracker synchronizePackageBits(SyncTracker tracker, ContentProvider provider) throws Exception {
+    public SyncTracker synchronizePackageBits(SyncTracker tracker, ContentProvider provider)
+        throws InterruptedException, SyncException {
         SyncProgressWeight sw = provider.getSyncProgressWeight();
 
         // Determine if the sync even needs to take place
@@ -207,8 +209,7 @@ public class PackageSourceSynchronizer {
                 String errorMsg = "Failed to load package bits for package version [" + pk.getPackageVersion()
                     + "] from content source [" + pk.getContentSource() + "] at location [" + item.getLocation() + "]."
                     + "No more packages will be downloaded for this content source.";
-
-                throw new Exception(errorMsg, e);
+                throw new SyncException(errorMsg, e);
             }
         }
 

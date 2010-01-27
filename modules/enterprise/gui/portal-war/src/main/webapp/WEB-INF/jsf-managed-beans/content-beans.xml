@@ -177,6 +177,11 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>
+      <managed-bean-name>ResourceUpdatePackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ResourceUpdatePackageVersionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
       <managed-bean-name>AvailableResourceReposUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.AvailableResourceReposUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

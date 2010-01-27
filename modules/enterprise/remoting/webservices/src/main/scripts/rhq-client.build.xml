@@ -9,9 +9,10 @@
    <property name="wsprovide.home" location="${project.build.outputDirectory}/wsprovide-output" />
    <property name="include.client.jar" value="true" />
 
-   <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate 
+   <!-- load all the Stateless Session Bean for WS exposure as properties. Must add bean as separate
    		property AND in the "ws-list" below for successful inclusion. ##TODO SP: collapse these to one list. -->
    <property name="PropertyBagManager" value="org.rhq.enterprise.server.jaxb.PropertyBagManagerBean" />
+   <property name="AdvisoryManager" value="org.rhq.enterprise.server.content.AdvisoryManagerBean"/>
    <property name="AlertManager" value="org.rhq.enterprise.server.alert.AlertManagerBean" />
    <property name="AlertDefinitionManager" value="org.rhq.enterprise.server.alert.AlertDefinitionManagerBean" />
    <property name="AvailabilityManager" value="org.rhq.enterprise.server.measurement.AvailabilityManagerBean" />
@@ -20,6 +21,7 @@
    <property name="ConfigurationManager" value="org.rhq.enterprise.server.configuration.ConfigurationManagerBean" />
    <property name="ContentManager" value="org.rhq.enterprise.server.content.ContentManagerBean" />
    <property name="DataAccessManager" value="org.rhq.enterprise.server.report.DataAccessManagerBean" />
+   <property name="DistributionManager" value="org.rhq.enterprise.server.content.DistributionManagerBean"/>
    <property name="EventManager" value="org.rhq.enterprise.server.event.EventManagerBean" />
    <property name="MeasurementDefinitionManager" value="org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerBean" />
    <property name="MeasurementBaselineManager" value="org.rhq.enterprise.server.measurement.MeasurementBaselineManagerBean" />
@@ -79,9 +81,9 @@
          </patternset>
       </unzip>
 
-      <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS: 
-             i) pull upgrade bundle 
-            ii) unzip 
+      <!-- Run JBossWS 3.1.1 upgrade script on the JBossAS:
+             i) pull upgrade bundle
+            ii) unzip
            iii) run it on JBossAS instance (4.2.3) to 3.1.1.
            These upgrade steps should be revisited when moving JBossAS version beyond 4.2.3 -->
 

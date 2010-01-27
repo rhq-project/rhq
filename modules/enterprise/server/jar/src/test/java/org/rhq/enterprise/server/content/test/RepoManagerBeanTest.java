@@ -25,7 +25,6 @@ import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.transaction.TransactionManager;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
@@ -64,25 +63,23 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
     @BeforeMethod
     public void setupBeforeMethod() throws Exception {
 
-        TransactionManager tx = getTransactionManager();
-        tx.begin();
+        overlord = LookupUtil.getSubjectManager().getOverlord();
+        prepareScheduler();
 
         repoManager = LookupUtil.getRepoManagerLocal();
         contentSourceManager = LookupUtil.getContentSourceManager();
         contentSourceMetadataManager = LookupUtil.getContentSourceMetadataManager();
 
         TestContentServerPluginService pluginService = new TestContentServerPluginService(this);
-        overlord = LookupUtil.getSubjectManager().getOverlord();
+        getTransactionManager().begin();
+
     }
 
     @AfterMethod
     public void tearDownAfterMethod() throws Exception {
         unprepareServerPluginService();
-
-        TransactionManager tx = getTransactionManager();
-        if (tx != null) {
-            tx.rollback();
-        }
+        unprepareScheduler();
+        getTransactionManager().rollback();
     }
 
     @Test(enabled = ENABLED)
@@ -466,4 +463,27 @@ public class RepoManagerBeanTest extends AbstractEJB3Test {
 
         assert reposWithOldName.size() == 0;
     }
+
+    @Test(enabled = ENABLED)
+    public void updateSyncSchedule() {
+        Repo repo = new Repo("updateSyncSchedule");
+        repo.setSyncSchedule("NOT A VALID CRON");
+        boolean failed = false;
+        try {
+            repo = repoManager.createRepo(overlord, repo);
+        } catch (RepoException e) {
+            failed = true;
+        }
+        assert failed;
+
+        failed = false;
+        repo.setSyncSchedule("0 0 3 * * ?");
+        try {
+            repo = repoManager.createRepo(overlord, repo);
+        } catch (RepoException e) {
+            failed = true;
+        }
+        assert !failed;
+    }
+
 }

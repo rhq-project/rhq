@@ -505,6 +505,7 @@
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
+        <column name="ACTION" type="BLOB" required="true"/>
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
         <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
     </table>

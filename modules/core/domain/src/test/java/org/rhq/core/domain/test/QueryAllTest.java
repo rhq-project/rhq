@@ -52,6 +52,9 @@ import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Principal;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.content.Architecture;
@@ -146,6 +149,9 @@ public class QueryAllTest extends AbstractEJB3Test {
         PackageInstallationStep.class.getSimpleName(), PackageType.class.getSimpleName(),
         PackageVersion.class.getSimpleName(), PackageVersionContentSource.class.getSimpleName(),
         ContentSourceSyncResults.class.getSimpleName(),
+
+        // bundle stuff
+        BundleType.class.getSimpleName(), Bundle.class.getSimpleName(), BundleVersion.class.getSimpleName(),
 
         // group stuff
         GroupDefinition.class.getSimpleName(), ResourceGroup.class.getSimpleName(),

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -49,7 +50,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Scope(ScopeType.PAGE)
 @Name("alertNotificationsUIBean")
-public class AlertNotificationsUIBean {
+public class AlertNotificationsUIBean implements Serializable {
 
     private final static String SUCCESS_OUTCOME = "success";
     @RequestParameter("ad")

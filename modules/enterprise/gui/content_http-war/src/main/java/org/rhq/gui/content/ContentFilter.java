@@ -7,11 +7,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.enterprise.server.content.EntitlementManagerBean;
-
 public class ContentFilter {
 
-    private final Log log = LogFactory.getLog(EntitlementManagerBean.class);
+    private final Log log = LogFactory.getLog(ContentFilter.class);
 
     static final String CERTS = "javax.servlet.request.X509Certificate";
 

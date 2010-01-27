@@ -33,7 +33,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
@@ -106,9 +105,6 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 AlertCondition ac = new AlertCondition(ad, AlertConditionCategory.AVAILABILITY);
                 ac.setComparator("==");
                 em.persist(ac);
-
-                EmailNotification an = new EmailNotification(ad, "foo@bar.com");
-                em.persist(an);
 
                 AlertConditionLog acl = new AlertConditionLog(ac, now);
                 em.persist(acl);

@@ -18,13 +18,15 @@
  */
 package org.rhq.enterprise.server.plugins.alertRoles;
 
-import java.util.HashMap;
-import java.util.Map;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -35,13 +37,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class RolesBackingBean {
 
     private Map<String, String> rolesMap;
-    private Set<String> currentRoles;
+    private List<String> currentRoles;
 
-    public Set<String> getCurrentRoles() {
+    public List<String> getCurrentRoles() {
         return currentRoles;
     }
 
-    public void setCurrentRoles(Set<String> currentRoles) {
+    public void setCurrentRoles(List<String> currentRoles) {
         this.currentRoles = currentRoles;
     }
 
@@ -50,10 +52,10 @@ public class RolesBackingBean {
             this.rolesMap = new HashMap<String, String>();
 
             RoleManagerLocal mgr = LookupUtil.getRoleManager();
-            PageList<Role> roles = mgr.findRoles(new PageControl());
+            PageList<Role> rolesList = mgr.findRoles(new PageControl());
 
-            for (Role role : roles) {
-                this.rolesMap.put(role.getName(), role.getName());
+            for (Role role : rolesList) {
+                this.rolesMap.put(role.getName(), role.getId().toString());
             }
         }
 
@@ -69,8 +71,11 @@ public class RolesBackingBean {
             System.out.println(role);
         }
 
+
+
         // TODO: Customise this generated block
 
         return "ALERT_NOTIFICATIONS";
     }
+
 }

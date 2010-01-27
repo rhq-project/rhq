@@ -27,24 +27,35 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 /**
  * A template that consists of multiple notifications. This can be used to create
  * 'bundles' of preconfigured alert notifications which can then be applied to
  * AlertDefinitions directly or via AlertTemplates.
+ *
  * @author Heiko W. Rupp
  */
+
+@NamedQueries({
+        @NamedQuery(name = NotificationTemplate.FIND_BY_NAME, query = "SELECT t FROM NotificationTemplate t WHERE t.name = :name"),
+        @NamedQuery(name = NotificationTemplate.FIND_ALL, query = "SELECT t FROM NotificationTemplate t LEFT JOIN FETCH t.notifications")
+})
 @Entity
 @Table(name="RHQ_ALERT_NOTIF_TEMPL")
-@SequenceGenerator(name="RHQ_ALERT_NOTIF_SEQ", sequenceName = "RHQ_ALERT_NOTIF_SEQ")
+@SequenceGenerator(name="RHQ_ALERT_NOTIF_TEMPL_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
 public class NotificationTemplate implements Serializable {
 
+    public static final String FIND_BY_NAME = "NotificationTemplate.findByName";
+    public static final String FIND_ALL = "NotificationTemplate.findAll";
+
+
     @Column(name="ID", nullable = false)
-    @GeneratedValue(generator = "RHQ_ALERT_NOTIF_SEQ")
+    @GeneratedValue(generator = "RHQ_ALERT_NOTIF_TEMPL_ID_SEQ")
     @Id
     private int id;
 
@@ -55,10 +66,10 @@ public class NotificationTemplate implements Serializable {
     private String description;
 
 
- //   @OneToMany(cascade = CascadeType.ALL)
-    @Transient
+    @OneToMany(mappedBy = "notificationTemplate", cascade = CascadeType.ALL)
     List<AlertNotification> notifications = new ArrayList<AlertNotification>();
 
+    @SuppressWarnings("unused")
     protected NotificationTemplate() {
         // for JPA
     }
@@ -108,10 +119,10 @@ public class NotificationTemplate implements Serializable {
 
         NotificationTemplate that = (NotificationTemplate) o;
 
-        if (description != null ? !description.equals(that.description) : that.description != null) return false;
-        if (!name.equals(that.name)) return false;
+        if (description != null ? !description.equals(that.description) : that.description != null)
+            return false;
+        return name.equals(that.name);
 
-        return true;
     }
 
     @Override
@@ -119,5 +130,16 @@ public class NotificationTemplate implements Serializable {
         int result = name.hashCode();
         result = 31 * result + (description != null ? description.hashCode() : 0);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("NotificationTemplate");
+        sb.append("{id=").append(id);
+        sb.append(", name='").append(name).append('\'');
+        sb.append(", description='").append(description).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

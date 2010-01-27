@@ -73,6 +73,11 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     }
 
     public AvailabilityType getAvailability() {
+        /*try {
+            System.out.println("In get Availability " + virt.getConnectionURI());
+        } catch (Exception e) {
+            System.out.println("WOIERUOIWUROIEWUROWUROIEUROIEUOIR");
+        }*/
         if (virt.isConnected()) {
             try {
                 virt.getHVInfo();
@@ -143,6 +148,11 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
 
     // TODO 
     public CreateResourceReport createResource(CreateResourceReport report) {
+        /*try {
+            System.out.println(virt.getConnectionURI());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }*/
         /*String xml = DomainConfigurationEditor.getXml(report.getResourceConfiguration());
 
         log.info("Defining new domain");
@@ -162,4 +172,5 @@ public class VirtualizationHostComponent implements ResourceComponent, Measureme
     public LibVirtConnection getConnection() throws LibvirtException {
         return virt;
     }
+
 }

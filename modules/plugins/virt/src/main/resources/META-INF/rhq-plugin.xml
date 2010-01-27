@@ -11,7 +11,8 @@
     <server name="Virtual Host"
             description="Virtual Domain Host"
             discovery="VirtualizationHostDiscoveryComponent"
-            class="VirtualizationHostComponent">
+            class="VirtualizationHostComponent"
+            supportsManualAdd="true">
 
         <plugin-configuration>
             <c:simple-property name="connectionURI" required="true" default=""

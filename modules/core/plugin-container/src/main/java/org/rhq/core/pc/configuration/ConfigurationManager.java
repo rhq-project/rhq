@@ -24,7 +24,6 @@ package org.rhq.core.pc.configuration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -33,8 +32,6 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -46,14 +43,12 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
-import org.rhq.enterprise.client.proxy.ResourceClientProxy.Measurement;
 
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
@@ -73,8 +68,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private static final String SENDER_THREAD_POOL_NAME = "ConfigurationManager.threadpool";
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
-
-    private static final ComparableVersion NON_LEGACY_VERSION = new ComparableVersion("2.1");
 
     private PluginContainerConfiguration pluginContainerConfiguration;
     private ScheduledExecutorService threadPool;
@@ -191,15 +184,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
-        TemplateEngine templateEngine = fetchTemplateEngine();
-        
+        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
         
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
                 String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
-                rawConfig.setContents(contents.getBytes());
+                rawConfig.setContents(contents);
                 
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
@@ -207,29 +199,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
     }
 
-    private TemplateEngine fetchTemplateEngine() {
-        Resource platformResource = PluginContainer.getInstance().getInventoryManager().getPlatform();
-        TreeMap<String, String> tokens = new TreeMap<String, String>();
-        tokens.put("rhq.hostname", platformResource.getName());
-        
-
-        MeasurementFacet facet = componentService.getComponent(platformResource.getId(), MeasurementFacet.class,
-            FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
-
-        
-        
-        for (Resource childResource : platformResource.getChildResources()) {
-            if (childResource.getResourceType().getName().equals("Network Adapter" )){
-                String key = "rhq.interfaces."+childResource.getName()+".mac";
-                tokens.put(key ,childResource.getDescription());                
-            }            
-        }
-        
-        
-        TemplateEngine templateEngine = new TemplateEngine(tokens);
-        return templateEngine;
-    }
-
+    
     private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {
         config.getAllProperties().clear();
         for (Property property : latestStructured.getProperties()) {

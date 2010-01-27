@@ -24,7 +24,6 @@ package org.rhq.core.pc.configuration;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
@@ -44,6 +43,8 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.template.TemplateEngine;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -67,8 +68,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private static final String SENDER_THREAD_POOL_NAME = "ConfigurationManager.threadpool";
 
     private static final int FACET_METHOD_TIMEOUT = 60 * 1000; // 60 seconds
-
-    private static final ComparableVersion NON_LEGACY_VERSION = new ComparableVersion("2.1");
 
     private PluginContainerConfiguration pluginContainerConfiguration;
     private ScheduledExecutorService threadPool;
@@ -185,16 +184,22 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
+        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
+        
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
+                String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
+                rawConfig.setContents(contents);
+                
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
         }
     }
 
+    
     private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {
         config.getAllProperties().clear();
         for (Property property : latestStructured.getProperties()) {

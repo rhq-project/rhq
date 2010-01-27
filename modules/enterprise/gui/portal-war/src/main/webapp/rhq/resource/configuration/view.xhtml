@@ -204,9 +204,7 @@ THIS TEXT WILL BE REMOVED.
                   <rich:panelMenu mode="ajax"
                                   expandMode="client"
                                   iconCollapsedGroup="/images/icn_tree_folder.gif"
-                                  iconExpandedGroup="/images/icn_tree_folder.gif"
-                                  limitToList="true"
-                                  reRender="fileContents">
+                                  iconExpandedGroup="/images/icn_tree_folder.gif">
                     <c:forEach items="#{rawConfigDirectories}"
                                var="rawConfigDir">
                       <rich:panelMenuGroup label="#{rawConfigDir.path}"
@@ -219,7 +217,7 @@ THIS TEXT WILL BE REMOVED.
                                               oncomplete="cursor_clear();"
                                               action="#{ExistingResourceConfigurationViewUIBean.select(rawConfigUIBean.path)}"
                                               limitToList="true"
-                                              reRender="fileContents,selectedFileHeader,modalEditor"/>
+                                              reRender="fileContents,selectedFileHeader,modalEditor,fileMenu"/>
                         </c:forEach>
                       </rich:panelMenuGroup>
                     </c:forEach>
@@ -241,7 +239,7 @@ THIS TEXT WILL BE REMOVED.
 
                     <a4j:status id="selectedFileHeader"
                                 startText="Loading #{ExistingResourceConfigurationViewUIBean.current.path} ..."
-                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
+                                stopText="#{ExistingResourceConfigurationViewUIBean.current.path}"/>
                   </h:panelGrid>
 
                   <rich:panel style="margin-left:1px; border: none;">

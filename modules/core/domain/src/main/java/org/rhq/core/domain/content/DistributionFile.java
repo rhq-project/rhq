@@ -37,6 +37,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
  * This is the many-to-many entity that correlates a distribution with its associated files.
@@ -67,6 +68,7 @@ public class DistributionFile {
     @Id
     private int id;
 
+    @XmlTransient
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(cascade = { CascadeType.MERGE, CascadeType.PERSIST })
     private Distribution distribution;

@@ -2757,6 +2757,243 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.75">
+                <schema-addColumn table="RHQ_REPO" column="SYNC_SCHEDULE" columnType="VARCHAR2" precision="64" />
+            </schemaSpec>
+
+            <schemaSpec version="2.76">
+                <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_TYPE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_CONFIG_PROP_DEF" column="DYNAMIC_KEY" columnType="VARCHAR2" precision="128" />
+            </schemaSpec>
+
+            <schemaSpec version="2.76.1">
+                <!-- RHQ_BUNDLE_TYPE -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_TYPE">
+                        CREATE TABLE RHQ_BUNDLE_TYPE ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_TYPE" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_BUNDLE_TYPE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_TYPE">
+                        ALTER TABLE RHQ_BUNDLE_TYPE ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_TYPE" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-alterColumn table="RHQ_BUNDLE_TYPE" column="NAME" nullable="FALSE" />
+
+                <!-- RHQ_BUNDLE -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE">
+                        CREATE TABLE RHQ_BUNDLE ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_BUNDLE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE">
+                        ALTER TABLE RHQ_BUNDLE ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-alterColumn table="RHQ_BUNDLE" column="NAME" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE" column="BUNDLE_TYPE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE" column="BUNDLE_TYPE_ID" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE foreign key relation to RHQ_BUNDLE_TYPE">
+                        ALTER TABLE RHQ_BUNDLE
+                        ADD CONSTRAINT RHQ_BUNDLE_TYPE_ID_FK
+                        FOREIGN KEY (BUNDLE_TYPE_ID)
+                        REFERENCES RHQ_BUNDLE_TYPE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- RHQ_BUNDLE_VERSION -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_VERSION">
+                        CREATE TABLE RHQ_BUNDLE_VERSION ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_BUNDLE_VERSION_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_VERSION">
+                        ALTER TABLE RHQ_BUNDLE_VERSION ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="NAME" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="VERSION" columnType="VARCHAR2" precision="500" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="VERSION" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="ACTION" columnType="BLOB" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="ACTION" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="BUNDLE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="BUNDLE_ID" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_BUNDLE">
+                        ALTER TABLE RHQ_BUNDLE_VERSION
+                        ADD CONSTRAINT RHQ_BUNDLE_ID_FK
+                        FOREIGN KEY (BUNDLE_ID)
+                        REFERENCES RHQ_BUNDLE (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="DISTRIBUTION_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_DISTRIBUTION">
+                        ALTER TABLE RHQ_BUNDLE_VERSION
+                        ADD CONSTRAINT RHQ_DISTRIBUTION_ID_FK
+                        FOREIGN KEY (DISTRIBUTION_ID)
+                        REFERENCES RHQ_DISTRIBUTION (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- RHQ_BUNDLE_VERSION_REPO -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_VERSION_REPO">
+                        CREATE TABLE RHQ_BUNDLE_VERSION_REPO ( BUNDLE_VERSION_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION_REPO" column="BUNDLE_VERSION_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE_VERSION_REPO" column="REPO_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_VERSION_REPO" column="REPO_ID" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_VERSION_REPO">
+                        ALTER TABLE RHQ_BUNDLE_VERSION_REPO ADD PRIMARY KEY ( BUNDLE_VERSION_ID, REPO_ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION_REPO foreign key relation to RHQ_BUNDLE_VERSION">
+                        ALTER TABLE RHQ_BUNDLE_VERSION_REPO
+                        ADD CONSTRAINT RHQ_BUNDLE_VERSION_ID_FK
+                        FOREIGN KEY (BUNDLE_VERSION_ID)
+                        REFERENCES RHQ_BUNDLE_VERSION (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION_REPO foreign key relation to RHQ_REPO">
+                        ALTER TABLE RHQ_BUNDLE_VERSION_REPO
+                        ADD CONSTRAINT RHQ_REPO_ID_FK
+                        FOREIGN KEY (REPO_ID)
+                        REFERENCES RHQ_REPO (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- RHQ_BUNDLE_FILE -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_FILE">
+                        CREATE TABLE RHQ_BUNDLE_FILE ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_FILE" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_BUNDLE_FILE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_FILE">
+                        ALTER TABLE RHQ_BUNDLE_FILE ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_FILE" column="BUNDLE_VERSION_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_FILE" column="BUNDLE_VERSION_ID" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_FILE foreign key relation to RHQ_BUNDLE_VERSION">
+                        ALTER TABLE RHQ_BUNDLE_FILE
+                        ADD CONSTRAINT RHQ_BUNDLE_VERSION_ID_FK
+                        FOREIGN KEY (BUNDLE_VERSION_ID)
+                        REFERENCES RHQ_BUNDLE_VERSION (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_FILE foreign key relation to RHQ_PACKAGE_VERSION">
+                        ALTER TABLE RHQ_BUNDLE_FILE
+                        ADD CONSTRAINT RHQ_PACKAGE_VERSION_ID_FK
+                        FOREIGN KEY (PACKAGE_VERSION_ID)
+                        REFERENCES RHQ_PACKAGE_VERSION (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_FILE foreign key relation to RHQ_PACKAGE">
+                        ALTER TABLE RHQ_BUNDLE_FILE
+                        ADD CONSTRAINT RHQ_PACKAGE_ID_FK
+                        FOREIGN KEY (PACKAGE_ID)
+                        REFERENCES RHQ_PACKAGE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- RHQ_BUNDLE_CONFIG -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_CONFIG">
+                        CREATE TABLE RHQ_BUNDLE_CONFIG ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_CONFIG" column="ID" nullable="FALSE" />
+                <schema-createSequence name="RHQ_BUNDLE_CONFIG_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_CONFIG">
+                        ALTER TABLE RHQ_BUNDLE_CONFIG ADD PRIMARY KEY ( ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_CONFIG" column="CONFIG_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_CONFIG foreign key relation to RHQ_CONFIG">
+                        ALTER TABLE RHQ_BUNDLE_CONFIG
+                        ADD CONSTRAINT RHQ_CONFIG_ID_FK
+                        FOREIGN KEY (CONFIG_ID)
+                        REFERENCES RHQ_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_CONFIG" column="BUNDLE_VERSION_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_CONFIG foreign key relation to RHQ_BUNDLE_VERSION">
+                        ALTER TABLE RHQ_BUNDLE_CONFIG
+                        ADD CONSTRAINT RHQ_BUNDLE_VERSION_ID_FK
+                        FOREIGN KEY (BUNDLE_VERSION_ID)
+                        REFERENCES RHQ_BUNDLE_VERSION (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_CONFIG" column="BUNDLE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_CONFIG foreign key relation to RHQ_BUNDLE">
+                        ALTER TABLE RHQ_BUNDLE_CONFIG
+                        ADD CONSTRAINT RHQ_BUNDLE_ID_FK
+                        FOREIGN KEY (BUNDLE_ID)
+                        REFERENCES RHQ_BUNDLE (ID)
+                    </statement>
+                </schema-directSQL>
+
+                <!-- RHQ_BUNDLE_DEPLOYMENT -->
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_BUNDLE_DEPLOYMENT">
+                        CREATE TABLE RHQ_BUNDLE_DEPLOYMENT ( BUNDLE_CONFIG_ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-alterColumn table="RHQ_BUNDLE_DEPLOYMENT" column="BUNDLE_CONFIG_ID" nullable="FALSE" />
+                <schema-addColumn table="RHQ_BUNDLE_DEPLOYMENT" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_BUNDLE_DEPLOYMENT" column="RESOURCE_ID" nullable="FALSE" />
+                <schema-directSQL>
+                    <statement desc="Creating primary key for RHQ_BUNDLE_DEPLOYMENT">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT ADD PRIMARY KEY ( BUNDLE_CONFIG_ID, RESOURCE_ID )
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_BUNDLE_CONFIG">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
+                        ADD CONSTRAINT RHQ_BUNDLE_CONFIG_ID_FK
+                        FOREIGN KEY (BUNDLE_CONFIG_ID)
+                        REFERENCES RHQ_BUNDLE_CONFIG (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_DEPLOYMENT foreign key relation to RHQ_RESOURCE">
+                        ALTER TABLE RHQ_BUNDLE_DEPLOYMENT
+                        ADD CONSTRAINT RHQ_RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
             <schemaSpec version="2.77">
                 <schema-addColumn table="RHQ_ALERT_NOTIFICATION" column="NOTIF_TEMPLATE_ID" columnType="INTEGER"/>
                 <schema-directSQL>
@@ -2780,3 +3017,4 @@
         </dbupgrade>
     </target>
 </project>
+

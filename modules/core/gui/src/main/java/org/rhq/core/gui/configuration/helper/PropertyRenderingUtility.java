@@ -19,7 +19,9 @@
 package org.rhq.core.gui.configuration.helper;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.el.ValueExpression;
@@ -43,6 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
+import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionEnumeration;
@@ -56,7 +60,7 @@ import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
 
 /**
- * A class that provides methods for rendering RHQ {@link Property}s. 
+ * A class that provides methods for rendering RHQ {@link Property}s.
  *
  * @author Ian Springer
  */
@@ -72,6 +76,14 @@ public class PropertyRenderingUtility {
 
     private static final String UNIQUE_ID_PREFIX = "rhq_id";
 
+    /**
+     * Holds a mapping from dynamic property backing type (i.e. database, server-side-plugin) to the
+     * {@link DynamicPropertyRetriever} instance that should be called to retrieve the values. Code using
+     * this class as a core UI dependency
+     */
+    private static final Map<PropertyDynamicType, DynamicPropertyRetriever> DYNAMIC_PROPERTY_RETRIEVERS =
+        new HashMap<PropertyDynamicType, DynamicPropertyRetriever>();
+
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple,
         PropertySimple propertySimple, ValueExpression propertyValueExpression, Integer listIndex,
@@ -81,8 +93,9 @@ public class PropertyRenderingUtility {
         if (propertySimple != null)
             addTitleAttribute(input, propertySimple.getStringValue());
 
-        boolean isUnset = isUnset(propertyDefinitionSimple, propertySimple, isGroupConfig);
-        boolean isReadOnly = isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable);
+        boolean isUnset = isUnset(propertyDefinitionSimple.isRequired(), propertySimple, isGroupConfig);
+        boolean isReadOnly = isReadOnly(propertyDefinitionSimple.isReadOnly(), propertyDefinitionSimple.isRequired(),
+            propertySimple, configReadOnly, configFullyEditable);
 
         String propertyId = PropertyIdGeneratorUtility.getIdentifier(propertySimple, listIndex);
         input.setId(propertyId);
@@ -96,6 +109,61 @@ public class PropertyRenderingUtility {
 
         addErrorMessages(input, propertyDefinitionSimple, propertySimple, prevalidate);
         return input;
+    }
+
+    public static UIInput createInputForDynamicProperty(PropertyDefinitionDynamic propertyDefinitionDynamic,
+        PropertySimple property, ValueExpression valueExpression, Integer listIndex, boolean isGroupConfig,
+        boolean configReadOnly, boolean configFullyEditable, boolean prevalidate) {
+
+        // Simply use a drop down in all cases
+        UISelectOne input = FacesComponentUtility.createComponent(HtmlSelectOneMenu.class, null);
+
+        // Determine where to retrieve the values from
+        PropertyDynamicType propertyType = propertyDefinitionDynamic.getDynamicType();
+        DynamicPropertyRetriever retriever = DYNAMIC_PROPERTY_RETRIEVERS.get(propertyType);
+
+        if (retriever == null) {
+            throw new IllegalStateException("Attempt to render a dynamic property but no retrievers are " +
+                "configured for the type. Dynamic property type: " + propertyType + ", Definition: " +
+                propertyDefinitionDynamic);
+        }
+
+        // Retrieve the values and load them into UI options
+        List<String> values = retriever.loadValues(propertyDefinitionDynamic);
+        for (String option : values) {
+            UISelectItem selectItem = FacesComponentUtility.createComponent(UISelectItem.class, null);
+            selectItem.setItemLabel(option);
+            selectItem.setItemValue(option);
+            input.getChildren().add(selectItem);
+        }
+
+        boolean isUnset = isUnset(propertyDefinitionDynamic.isRequired(), property, isGroupConfig);
+        boolean isReadOnly = isReadOnly(propertyDefinitionDynamic.isReadOnly(), propertyDefinitionDynamic.isRequired(),
+            property, configReadOnly, configFullyEditable);
+
+        String propertyId = PropertyIdGeneratorUtility.getIdentifier(property, listIndex);
+        input.setId(propertyId);
+
+        // Revert to the previously selected value
+        input.setValueExpression("value", valueExpression);
+
+        FacesComponentUtility.setUnset(input, isUnset);
+        FacesComponentUtility.setReadonly(input, isReadOnly);
+
+        // If there is a PC-detected error associated with the property, associate it with the input.
+        addPluginContainerDetectedErrorMessage(input, property);
+
+        return input;
+    }
+
+    /**
+     * Sets the object used to retrieve property values for dynamic properties of the given type.
+     *
+     * @param type      each type in the enum will only have one retriever associated with it at any given time
+     * @param retriever may not be <code>null</code>
+     */
+    public static void putDynamicPropertyRetriever(PropertyDynamicType type, DynamicPropertyRetriever retriever) {
+        DYNAMIC_PROPERTY_RETRIEVERS.put(type, retriever);
     }
 
     public static UIInput createInput(PropertyDefinitionSimple propertyDefinitionSimple) {
@@ -156,7 +224,7 @@ public class PropertyRenderingUtility {
     }
 
     public static HtmlSelectBooleanCheckbox addUnsetControl(UIComponent parent,
-        PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple, Integer listIndex,
+        boolean isRequired, boolean isReadOnly, PropertySimple propertySimple, Integer listIndex,
         UIInput valueInput, boolean isGroupConfig, boolean configReadOnly, boolean configFullyEditable) {
 
         HtmlSelectBooleanCheckbox unsetCheckbox = FacesComponentUtility.createComponent(
@@ -166,8 +234,8 @@ public class PropertyRenderingUtility {
             unsetCheckbox.setId(unsetCheckboxId);
         }
         parent.getChildren().add(unsetCheckbox);
-        unsetCheckbox.setValue(isUnset(propertyDefinitionSimple, propertySimple, isGroupConfig));
-        if (isReadOnly(propertyDefinitionSimple, propertySimple, configReadOnly, configFullyEditable)
+        unsetCheckbox.setValue(isUnset(isRequired, propertySimple, isGroupConfig));
+        if (isReadOnly(isReadOnly, isRequired, propertySimple, configReadOnly, configFullyEditable)
             || isGroupConfigWithDifferingValues(propertySimple, isGroupConfig)) {
             FacesComponentUtility.setDisabled(unsetCheckbox, true);
         } else {
@@ -292,8 +360,10 @@ public class PropertyRenderingUtility {
         Property property, boolean configReadOnly) {
         String displayName = (propertyDefinition != null) ? propertyDefinition.getDisplayName() : property.getName();
         FacesComponentUtility.addOutputText(parent, null, displayName, CssStyleClasses.PROPERTY_DISPLAY_NAME_TEXT);
-        if (!configReadOnly && propertyDefinition != null && propertyDefinition.isRequired()
-            && (propertyDefinition instanceof PropertyDefinitionSimple)) {
+        if (!configReadOnly && propertyDefinition != null &&
+            propertyDefinition.isRequired() &&
+               (propertyDefinition instanceof PropertyDefinitionSimple ||
+                propertyDefinition instanceof PropertyDefinitionDynamic) ) {
             // Print a required marker next to required simples.
             // Ignore the required field for maps and lists, as it is has no significance for them.
             FacesComponentUtility.addOutputText(parent, null, " * ", CssStyleClasses.REQUIRED_MARKER_TEXT);
@@ -456,33 +526,34 @@ public class PropertyRenderingUtility {
         }
     }
 
-    private static boolean isUnset(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
+    private static boolean isUnset(boolean isRequired, PropertySimple propertySimple,
         boolean isGroupConfig) {
         if (isGroupConfigWithDifferingValues(propertySimple, isGroupConfig))
             // Properties from group configs that have differing values should not be marked unset.
             return false;
         if (propertySimple == null)
             return false;
-        return ((propertyDefinitionSimple == null || !propertyDefinitionSimple.isRequired()) && propertySimple
-            .getStringValue() == null);
+
+        return (!isRequired && propertySimple.getStringValue() == null);
     }
 
-    public static boolean isReadOnly(PropertyDefinitionSimple propertyDefinitionSimple, PropertySimple propertySimple,
+    public static boolean isReadOnly(boolean isReadOnly, boolean isRequired, PropertySimple propertySimple,
         boolean configReadOnly, boolean configFullyEditable) {
         // A fully editable config overrides any other means of setting read-only.
-        return (!configFullyEditable && (configReadOnly || ((propertyDefinitionSimple != null && propertyDefinitionSimple
-            .isReadOnly()) && (propertySimple == null || !isInvalidRequiredProperty(propertyDefinitionSimple,
-            propertySimple)))));
+        return (!configFullyEditable && //
+                    (configReadOnly || //
+                     isReadOnly && //
+                        (propertySimple == null || //
+                         !isInvalidRequiredProperty(isRequired, propertySimple))));
     }
 
     public static boolean isGroupConfigWithDifferingValues(PropertySimple propertySimple, boolean isGroupConfig) {
         return isGroupConfig && (propertySimple.getOverride() == null || !propertySimple.getOverride());
     }
 
-    private static boolean isInvalidRequiredProperty(PropertyDefinitionSimple propertyDefinitionSimple,
-        PropertySimple propertySimple) {
+    private static boolean isInvalidRequiredProperty(boolean isRequired, PropertySimple propertySimple) {
         boolean isInvalidRequiredProperty = false;
-        if (propertyDefinitionSimple.isRequired()) {
+        if (isRequired) {
             String errorMessage = propertySimple.getErrorMessage();
             if ((null == propertySimple.getStringValue()) || "".equals(propertySimple.getStringValue())
                 || ((null != errorMessage) && (!"".equals(errorMessage.trim())))) {

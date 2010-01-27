@@ -501,7 +501,7 @@ rhq.communications.multicast-detector.port=16162
 # Server-side SSL Security Configuration for HTTPS thru Tomcat
 # These are used for browser https: access and for incoming messages from agents over sslservlet transport
 # [you cannot use ${x} variables - see https://jira.jboss.org/jira/browse/JBWEB-74]
-rhq.server.tomcat.security.client-auth-mode=false
+rhq.server.tomcat.security.client-auth-mode=want
 rhq.server.tomcat.security.secure-socket-protocol=TLS
 rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ

@@ -71,6 +71,26 @@
 
    </navigation-rule>
 
+
+   <navigation-rule>
+      <from-view-id>/rhq/resource/content/update.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>uploadNew</from-outcome>
+         <to-view-id>/rhq/resource/content/create.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+      <navigation-case>
+         <from-action>#{CreateNewPackageUIBean.deployExisting}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/content/confirm-create.xhtml</to-view-id>
+      </navigation-case>
+
+   </navigation-rule>
+
+
+   
    <navigation-rule>
       <from-view-id>/rhq/resource/content/history.xhtml</from-view-id>
 

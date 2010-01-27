@@ -51,4 +51,14 @@ public class ProgressWatcherTest extends TestCase {
         assertTrue(pw.getPercentComplete() == 98);
     }
 
+    public void testResetToZero() {
+        ProgressWatcher pw = new ProgressWatcher();
+        pw.start();
+        pw.setTotalWork(102);
+        pw.finishWork(100);
+        pw.resetToZero();
+        assertTrue(pw.getPercentComplete() == 0);
+
+    }
+
 }

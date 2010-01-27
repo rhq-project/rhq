@@ -48,8 +48,7 @@ public interface PackageSource {
      *                   source cannot be connected to.
      */
     void synchronizePackages(String repoName, PackageSyncReport report,
-                             Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception;
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException;
 
     /**
      * Get an input stream for the specified package.

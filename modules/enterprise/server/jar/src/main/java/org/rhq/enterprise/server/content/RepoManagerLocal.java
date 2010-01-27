@@ -32,6 +32,7 @@ import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -320,7 +321,15 @@ public interface RepoManagerLocal {
      * @return number of repos successfully syncced
      * @throws Exception if any errors occur
      */
-    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception;
+    int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws InterruptedException;
+
+    /**
+     * Cancel any running sync job for the given repo
+     *
+     * @param repoId you want to cancel the sync for
+     * @return boolean if it was cancelled or not
+     */
+    void cancelSync(Subject subject, int repoId) throws ContentException;
 
     /**
      * Creates a new sync results object. Note that this will return <code>null</code> if the given results object has a
@@ -372,4 +381,11 @@ public interface RepoManagerLocal {
      */
     RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId);
 
+    /**
+     * Gets all repos that are subscribed to by the given resource.
+     * @param subject
+     * @param resourceId
+     * @return
+     */
+    List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId);
 }

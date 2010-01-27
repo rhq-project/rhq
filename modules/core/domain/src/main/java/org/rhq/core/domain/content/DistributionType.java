@@ -23,22 +23,16 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
 /**
  * Defines a type of (@link Distribution)
@@ -48,9 +42,10 @@ import javax.persistence.ManyToOne;
  */
 
 @Entity
-@NamedQueries(
-    @NamedQuery(name = DistributionType.QUERY_FIND_BY_NAME, query = "SELECT dt FROM DistributionType dt WHERE dt.name = :name")
-)
+@NamedQueries({
+    @NamedQuery(name = DistributionType.QUERY_FIND_BY_NAME, query = "SELECT dt FROM DistributionType dt WHERE dt.name = :name"),
+    @NamedQuery(name = DistributionType.QUERY_DELETE_BY_NAME, query = "DELETE FROM DistributionType dt where dt.name = :name")
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_TYPE_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION_TYPE")
 public class DistributionType implements Serializable {
@@ -58,6 +53,7 @@ public class DistributionType implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_BY_NAME = "DistributionType.findByName";
+    public static final String QUERY_DELETE_BY_NAME = "DistributionType.deleteByName";
 
     // Attributes  --------------------------------------------
 

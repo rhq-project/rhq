@@ -55,7 +55,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL AND an.notificationTemplate IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -79,6 +79,10 @@ public class AlertNotification implements Serializable {
     @JoinColumn(name = "ALERT_DEFINITION_ID")
     @ManyToOne
     private AlertDefinition alertDefinition;
+
+    @JoinColumn(name = "NOTIF_TEMPLATE_ID")
+    @ManyToOne
+    private NotificationTemplate notificationTemplate;
 
     @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
@@ -123,6 +127,12 @@ public class AlertNotification implements Serializable {
         this.alertNotificationId = alertNotificationId;
     }
 
+
+    public AlertNotification(String name, String sender) {
+        this.name = name;
+        this.senderName = sender;
+    }
+
     public int getId() {
         return id;
     }
@@ -142,6 +152,19 @@ public class AlertNotification implements Serializable {
             results.id = this.id;
         }
         return results;
+    }
+
+    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
+        Configuration config;
+        if (cloneConfiguration)
+            config = this.configuration.deepCopy(false);
+        else
+            config = this.configuration;
+        AlertNotification notification = new AlertNotification(alertDefinition, config);
+        notification.setName(this.name);
+        notification.setSenderName(this.senderName);
+        notification.setOrder(this.order);
+        return notification;
     }
 
     protected AlertNotification copy() {
@@ -184,11 +207,34 @@ public class AlertNotification implements Serializable {
         this.name = name;
     }
 
+    public NotificationTemplate getNotificationTemplate() {
+        return notificationTemplate;
+    }
+
+    public void setNotificationTemplate(NotificationTemplate notificationTemplate) {
+        this.notificationTemplate = notificationTemplate;
+    }
+
     public int getAlertDefinitionId() {
         return alertDefinitionId;
     }
 
     public int getAlertNotificationId() {
         return alertNotificationId;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("AlertNotification");
+        sb.append("{alertDefinitionId=").append(alertDefinitionId);
+        sb.append(", alertNotificationId=").append(alertNotificationId);
+        sb.append(", id=").append(id);
+        sb.append(", notificationTemplate=").append(notificationTemplate);
+        sb.append(", senderName='").append(senderName).append('\'');
+        sb.append(", order=").append(order);
+        sb.append(", name='").append(name).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

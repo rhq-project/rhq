@@ -18,6 +18,7 @@
  */
 package org.rhq.core.gui.table.component;
 
+import org.ajax4jsf.event.AjaxSource;
 import org.jetbrains.annotations.NotNull;
 import org.rhq.core.gui.util.FacesExpressionUtility;
 

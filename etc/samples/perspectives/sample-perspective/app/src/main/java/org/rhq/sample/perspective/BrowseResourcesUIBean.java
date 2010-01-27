@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.ajax4jsf.event.AjaxEvent;
+import org.ajax4jsf.event.AjaxListener;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
@@ -33,12 +35,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.model.PagedDataProvider;
+import org.rhq.core.gui.table.component.SortableColumnHeaderComponent;
 import org.rhq.core.gui.table.model.PagedListDataModel;
+import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.perspective.AbstractPerspectivePagedDataUIBean;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
 import org.rhq.enterprise.server.perspective.PerspectiveTarget;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+
+import javax.faces.component.UIData;
 
 /**
  * A Seam component that utilizes the RHQ remote API to obtain a paged list of all inventoried Resources.
@@ -47,7 +53,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerRemote;
  */
 @Name("BrowseResourcesUIBean")
 @Scope(ScopeType.CONVERSATION)
-public class BrowseResourcesUIBean extends AbstractPerspectivePagedDataUIBean {
+public class BrowseResourcesUIBean extends AbstractPerspectivePagedDataUIBean implements AjaxListener {
     private List<Resource> selectedResources;
     private Map<Integer, String> resourceUrlMap = new HashMap<Integer, String>();
 
@@ -129,13 +135,30 @@ public class BrowseResourcesUIBean extends AbstractPerspectivePagedDataUIBean {
             this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, ids, false,
                 false);
         } catch (Exception e) {
-            // for the demo, just dump a stack in this unlikely case
-            e.printStackTrace();
+            throw new RuntimeException("Failed to retrieve Resource URLs.", e);
         }
     }
 
     public Map<Integer, String> getResourceUrlMap() {
         return this.resourceUrlMap;
+    }
+
+    public AjaxListener getAjaxSortListener() {
+        return this;
+    }
+
+    public void processAjax(AjaxEvent ajaxEvent) {
+        SortableColumnHeaderComponent sortableColumnHeader = (SortableColumnHeaderComponent)ajaxEvent.getComponent();
+        String sortBy = sortableColumnHeader.getSortBy();
+
+        UIData data = FacesComponentUtility.getAncestorOfType(sortableColumnHeader, UIData.class);
+        PagedListDataModel<?> model = (PagedListDataModel<?>) data.getValue();
+
+        PageControl pageControl = model.getPageControl();
+        pageControl.sortBy(sortBy);
+        // Even though its the same PageControl instance, call setPageControl() so the updated version gets
+        // persisted.
+        model.setPageControl(pageControl);
     }
 
     private class ResourcesDataProvider implements PagedDataProvider<Resource> {

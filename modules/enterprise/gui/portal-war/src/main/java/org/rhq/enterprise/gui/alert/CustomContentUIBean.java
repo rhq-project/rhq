@@ -55,7 +55,7 @@ public class CustomContentUIBean {
             this.contentUrl = info.getUiSnippetUrl().toString();
         }
 
-        String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(senderName);
+        String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
         Object backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName);
 
         if (backingBeanName != null && backingBean != null) {
@@ -65,9 +65,9 @@ public class CustomContentUIBean {
 
     /**
      * We are just getting an Object from the plugin manager which acts as our backing bean.
-     * This method is used instead of @Out or @Factory because we need to be able to look
-     * at the @Name annotation on the backing bean dynamically so that the plugin
-     * author can set the name of bean, but this class is not an "official" seam component.
+     * This method is used instead of @Out or @Factory because we need to be able to 
+     * dynamically assign the component's name so that the plugin author can define the
+     * name of bean, but this class is not an "official" seam component.
      */
     private void outjectBean(String name, Object bean) {
         Context pageContext = Contexts.getPageContext();

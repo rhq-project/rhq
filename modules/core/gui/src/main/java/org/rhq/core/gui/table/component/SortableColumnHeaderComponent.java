@@ -18,6 +18,9 @@
  */
 package org.rhq.core.gui.table.component;
 
+import org.ajax4jsf.event.AjaxEvent;
+import org.ajax4jsf.event.AjaxListener;
+import org.ajax4jsf.event.AjaxSource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.gui.table.model.PagedListDataModel;
 import org.rhq.core.gui.util.FacesComponentUtility;
@@ -29,23 +32,26 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Ian Springer
  * @author Joseph Marques 
  */
-public class SortableColumnHeaderComponent extends HtmlCommandLink {
+public class SortableColumnHeaderComponent extends HtmlCommandLink implements AjaxSource {
     public static final String COMPONENT_TYPE = "org.rhq.SortableColumnHeader";
     public static final String COMPONENT_FAMILY = "org.rhq.SortableColumnHeader";
 
     private String sortBy;
+    private List<AjaxListener> ajaxListeners;
 
     public SortableColumnHeaderComponent() {
         super();
-        addActionListener(new SortableColumnHeaderActionListener());
-
-        // TODO - Do we need this? I don't think so.
-        //setActionExpression(FacesExpressionUtility.createMethodExpression("#{TableSorter.obtainFromOutcome}", String.class, new Class[] {}));
+        SortableColumnHeaderListener listener = new SortableColumnHeaderListener();
+        addActionListener(listener);
+        this.ajaxListeners = new ArrayList<AjaxListener>(1);
+        addAjaxListener(listener);
     }
 
     public String getSortBy() {
@@ -62,6 +68,19 @@ public class SortableColumnHeaderComponent extends HtmlCommandLink {
 
     public String getFamily() {
         return COMPONENT_FAMILY;
+    }
+
+
+    public void addAjaxListener(AjaxListener listener) {
+        this.ajaxListeners.add(listener);
+    }
+
+    public AjaxListener[] getAjaxListeners() {
+        return this.ajaxListeners.toArray(new AjaxListener[this.ajaxListeners.size()]);
+    }
+
+    public void removeAjaxListener(AjaxListener listener) {
+        this.ajaxListeners.remove(listener);
     }
 
     private Object[] values;
@@ -88,23 +107,29 @@ public class SortableColumnHeaderComponent extends HtmlCommandLink {
         this.sortBy = (String) values[1];
     }
 
-    private class SortableColumnHeaderActionListener implements ActionListener {
+
+    public class SortableColumnHeaderListener implements ActionListener, AjaxListener {
         public void processAction(ActionEvent event) throws AbortProcessingException {            
             SortableColumnHeaderComponent sortableColumnHeader = (SortableColumnHeaderComponent)event.getComponent();
+            sort(sortableColumnHeader);
+        }
+
+        public void processAjax(AjaxEvent event) {
+            SortableColumnHeaderComponent sortableColumnHeader = (SortableColumnHeaderComponent)event.getComponent();
+            sort(sortableColumnHeader);
+        }
+
+        private void sort(SortableColumnHeaderComponent sortableColumnHeader) {
             String sortBy = sortableColumnHeader.getSortBy();
 
-            UIData table = FacesComponentUtility.getAncestorOfType(sortableColumnHeader, UIData.class);
-            PagedListDataModel<?> model = (PagedListDataModel<?>) table.getValue();
-
-            // work-around to bypass stale data model caused by a4j:keepAlive for the PagedDataTableUIBean
-            //PageControlView pageControlView = model.getPageControlView();
-            //PagedDataTableUIBean pagedDataTableUIBean = pageControlView.getPagedDataTableUIBean();
-            //pagedDataTableUIBean.setDataModel(null);
+            UIData data = FacesComponentUtility.getAncestorOfType(sortableColumnHeader, UIData.class);
+            PagedListDataModel<?> model = (PagedListDataModel<?>) data.getValue();
 
             PageControl pageControl = model.getPageControl();
             pageControl.sortBy(sortBy);
+            // Even though its the same PageControl instance, call setPageControl() so the updated version gets
+            // persisted.
             model.setPageControl(pageControl);
-
         }
     }
 }

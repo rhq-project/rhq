@@ -97,6 +97,14 @@
     </tag>
 
     <tag>
+        <tag-name>resourcePartialLineage</tag-name>
+        <component>
+            <component-type>org.jboss.on.ResourcePartialLineage</component-type>
+            <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
         <tag-name>sortableColumnHeader</tag-name>
         <component>
             <component-type>org.jboss.on.SortableColumnHeader</component-type>

@@ -56,7 +56,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
@@ -648,11 +647,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 } else if (alertNotification instanceof SubjectNotification) {
                     SubjectNotification subjectNotification = (SubjectNotification) alertNotification;
                     String emailAddress = subjectNotification.getSubject().getEmailAddress();
-
-                    processEmailAddress(alert, emailAddress, emailAddresses);
-                } else if (alertNotification instanceof EmailNotification) {
-                    EmailNotification emailNotification = (EmailNotification) alertNotification;
-                    String emailAddress = emailNotification.getEmailAddress();
 
                     processEmailAddress(alert, emailAddress, emailAddresses);
                 }

@@ -35,6 +35,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -58,12 +59,12 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
     @Test(enabled = ENABLED)
     public void invalidKey() throws Exception {
         // Test
-        List<String> stringList = bean.lookupValues("foo");
+        List<DynamicConfigurationPropertyValue> stringList = bean.lookupValues("foo");
 
-        // Verify
-        assert stringList != null;
+        //Verify
+        assert stringList !=null;
         assert stringList.size() == 0;
-    }
+   }
 
     @Test(enabled = ENABLED)
     public void user() throws Exception {
@@ -71,20 +72,22 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
         int existingUserCount = countForQuery(Subject.QUERY_FIND_ALL);
 
         // Test
-        List<String> users = bean.lookupValues(PropertyExpressionEvaluator.KEY_USERS);
+        List<DynamicConfigurationPropertyValue> users =
+            bean.lookupValues(PropertyExpressionEvaluator.KEY_USERS);
 
         // Verify
         outputList(users);
         assert users.size() == existingUserCount : "Expected: " + existingUserCount + ", Found: " + users.size();
-    }
+  }
 
     @Test(enabled = ENABLED)
-    public void roles() throws Exception {
+    public void roles() throws Exception{
         // Setup
         int existingRoleCount = countForQuery(Role.QUERY_FIND_ALL);
 
         // Test
-        List<String> roles = bean.lookupValues(PropertyExpressionEvaluator.KEY_ROLES);
+        List<DynamicConfigurationPropertyValue> roles =
+            bean.lookupValues(PropertyExpressionEvaluator.KEY_ROLES);
 
         // Verify
         outputList(roles);
@@ -117,7 +120,8 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
         assert existingPackageTypes > 0 : "Package type created in setup was not written correctly";
 
         // Test
-        List<String> types = bean.lookupValues(PropertyExpressionEvaluator.KEY_PACKAGE_TYPES);
+        List<DynamicConfigurationPropertyValue> types =
+            bean.lookupValues(PropertyExpressionEvaluator.KEY_PACKAGE_TYPES);
 
         // Verify
         assert types.size() == existingPackageTypes : "Expected: " + existingPackageTypes + ", Found: " + types.size();
@@ -155,9 +159,9 @@ public class DynamicConfigurationPropertyBeanTest extends AbstractEJB3Test {
         return count;
     }
 
-    private void outputList(List<String> items) {
+    private void outputList(List<DynamicConfigurationPropertyValue> items) {
         System.out.println("Items returned from lookupValues:");
-        for (String item : items) {
+        for (DynamicConfigurationPropertyValue item : items) {
             System.out.println(item);
         }
     }

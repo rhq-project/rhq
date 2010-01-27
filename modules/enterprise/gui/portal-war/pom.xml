@@ -24,7 +24,7 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
-      <jsf-facelets.version>1.1.15</jsf-facelets.version>
+      <jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
 
       <!-- plugin versions --> 

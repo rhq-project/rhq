@@ -81,6 +81,11 @@ public class ResourceGroupCriteria extends Criteria {
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return ResourceGroup.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

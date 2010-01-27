@@ -28,6 +28,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.OperationHistory;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -64,6 +65,11 @@ public abstract class OperationHistoryCriteria extends Criteria {
     protected OperationHistoryCriteria(Class<? extends OperationHistory> clazz) {
         super(clazz);
         init();
+    }
+
+    @Override
+    public Class getPersistentClass() {
+        return ResourceOperationHistory.class;
     }
 
     private void init() {

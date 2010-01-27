@@ -88,6 +88,11 @@ public class AlertCriteria extends Criteria {
         sortOverrides.put("priority", "alertDefinition.priority");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Alert.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

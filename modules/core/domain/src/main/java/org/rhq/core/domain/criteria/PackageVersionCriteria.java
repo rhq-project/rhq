@@ -51,6 +51,11 @@ public class PackageVersionCriteria extends Criteria {
             + "   WHERE ip.resource.id = ? )");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return PackageVersion.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

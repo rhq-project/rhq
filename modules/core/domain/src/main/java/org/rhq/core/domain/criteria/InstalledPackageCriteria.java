@@ -34,6 +34,11 @@ public class InstalledPackageCriteria extends Criteria {
         filterOverrides.put("userId", "user.id = ? ");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return InstalledPackage.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

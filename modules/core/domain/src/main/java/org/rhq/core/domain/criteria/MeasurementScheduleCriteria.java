@@ -76,6 +76,11 @@ public class MeasurementScheduleCriteria extends Criteria {
         sortOverrides.put("name", "definition.name");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return MeasurementSchedule.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

@@ -64,16 +64,12 @@ public abstract class Criteria implements Serializable {
 
     private List<String> orderingFieldNames;
 
-    private Class<?> persistentClass;
-
     //added no args constructor for bean and JAXB requirement
     @SuppressWarnings("unused")
-    private Criteria() {
+    public Criteria() {
     }
 
     public Criteria(Class<?> persistentClass) {
-        this.persistentClass = persistentClass;
-
         filterOverrides = new HashMap<String, String>();
         sortOverrides = new HashMap<String, String>();
 
@@ -86,9 +82,8 @@ public abstract class Criteria implements Serializable {
         setPaging(0, 200);
     }
 
-    public Class<?> getPersistentClass() {
-        return persistentClass;
-    }
+    public abstract Class getPersistentClass();
+
 
 
     public String getJPQLFilterOverride(String fieldName) {

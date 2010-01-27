@@ -75,6 +75,11 @@ public class ResourceTypeCriteria extends Criteria {
         sortOverrides.put("pluginName", "plugin");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return ResourceType.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

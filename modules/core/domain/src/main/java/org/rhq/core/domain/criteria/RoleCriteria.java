@@ -51,6 +51,11 @@ public class RoleCriteria extends Criteria {
         super(Role.class);
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Role.class;
+    }
+
     public Integer getFilterId() {
         return this.filterId;
     }

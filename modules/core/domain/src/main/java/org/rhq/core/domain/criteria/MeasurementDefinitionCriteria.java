@@ -75,6 +75,11 @@ public class MeasurementDefinitionCriteria extends Criteria {
         sortOverrides.put("resourceTypeName", "resourceType.name");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return MeasurementDefinition.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

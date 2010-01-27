@@ -73,6 +73,11 @@ public class OperationDefinitionCriteria extends Criteria {
             + "    WHERE group.id = ? ) ");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return OperationDefinition.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

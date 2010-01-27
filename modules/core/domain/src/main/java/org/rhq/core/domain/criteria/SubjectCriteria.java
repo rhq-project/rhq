@@ -62,6 +62,11 @@ public class SubjectCriteria extends Criteria {
         super(Subject.class);
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Subject.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

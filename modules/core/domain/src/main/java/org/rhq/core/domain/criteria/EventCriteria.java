@@ -77,6 +77,11 @@ public class EventCriteria extends Criteria {
             + "   WHERE parent.id = ? )");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Event.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

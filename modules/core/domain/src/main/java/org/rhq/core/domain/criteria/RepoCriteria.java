@@ -64,6 +64,11 @@ public class RepoCriteria extends Criteria {
             "WHERE rcs.contentSource.id IN ( ? ))");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Repo.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

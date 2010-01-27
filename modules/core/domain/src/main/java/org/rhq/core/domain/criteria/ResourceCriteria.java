@@ -110,6 +110,11 @@ public class ResourceCriteria extends Criteria {
         sortOverrides.put("currentAvailability", "currentAvailability.availabilityType");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return Resource.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

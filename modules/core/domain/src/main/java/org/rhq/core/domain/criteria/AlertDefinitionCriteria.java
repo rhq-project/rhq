@@ -71,6 +71,11 @@ public class AlertDefinitionCriteria extends Criteria {
         filterOverrides.put("operationName", "operationDefinition.name like ?");
     }
 
+    @Override
+    public Class getPersistentClass() {
+        return AlertDefinition.class;
+    }
+
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
     }

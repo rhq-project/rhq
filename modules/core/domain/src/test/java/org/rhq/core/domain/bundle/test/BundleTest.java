@@ -23,6 +23,7 @@
 package org.rhq.core.domain.bundle.test;
 
 import java.util.Arrays;
+import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -32,12 +33,91 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.BundleVersionRepo;
+import org.rhq.core.domain.bundle.BundleVersionRepoPK;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 @Test
 public class BundleTest extends AbstractEJB3Test {
+    public void testBundleVersionRepo() throws Throwable {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+        try {
+            int id;
+
+            String name = "BundleTest-testBundleVersionRepo";
+            byte[] action = "action/script/recipe is here".getBytes();
+
+            Repo repo1 = new Repo(name + "-Repo1");
+            Repo repo2 = new Repo(name + "-Repo2");
+            em.persist(repo1);
+            em.persist(repo2);
+            assert repo1.getId() > 0;
+            assert repo2.getId() > 0;
+
+            Query q = em.createNamedQuery(BundleVersionRepo.QUERY_FIND_BY_REPO_ID_NO_FETCH);
+            q.setParameter("id", repo1.getId());
+            assert q.getResultList().size() == 0 : "should not have repo1 mapping in the db yet";
+            q.setParameter("id", repo2.getId());
+            assert q.getResultList().size() == 0 : "should not have repo2 mapping in the db yet";
+
+            BundleType bundleType = new BundleType(name + "-Type");
+            Bundle bundle = new Bundle(name + "-Bundle", bundleType);
+            em.persist(bundle);
+            BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle);
+            bundleVersion.setAction(action);
+            em.persist(bundleVersion);
+            id = bundleVersion.getId();
+            assert id > 0;
+            assert bundleVersion.getBundle().getId() != 0 : "bundle should have been cascade persisted too";
+            assert bundleVersion.getBundle().getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
+
+            BundleVersionRepo bvr1 = new BundleVersionRepo(bundleVersion, repo1);
+            BundleVersionRepo bvr2 = new BundleVersionRepo(bundleVersion, repo2);
+            em.persist(bvr1);
+            em.persist(bvr2);
+
+            q = em.createNamedQuery(BundleVersionRepo.QUERY_FIND_BY_REPO_ID_NO_FETCH);
+            q.setParameter("id", repo1.getId());
+            assert q.getResultList().size() == 1;
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion().equals(
+                bundleVersion);
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getRepo().equals(repo1);
+
+            q.setParameter("id", repo2.getId());
+            assert q.getResultList().size() == 1;
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getBundleVersion().equals(
+                bundleVersion);
+            assert ((BundleVersionRepo) q.getSingleResult()).getBundleVersionRepoPK().getRepo().equals(repo2);
+
+            q = em.createNamedQuery(BundleVersionRepo.QUERY_FIND_BY_BUNDLE_VERSION_ID_NO_FETCH);
+            q.setParameter("id", bundleVersion.getId());
+            List<BundleVersionRepo> resultList = q.getResultList();
+            assert resultList.size() == 2;
+            BundleVersionRepoPK pk1 = new BundleVersionRepoPK(bundleVersion, repo1);
+            BundleVersionRepoPK pk2 = new BundleVersionRepoPK(bundleVersion, repo2);
+            if (resultList.get(0).getBundleVersionRepoPK().getRepo().equals(repo1)) {
+                assert bvr1.equals(resultList.get(0));
+                assert bvr2.equals(resultList.get(1));
+                assert pk1.equals(resultList.get(0).getBundleVersionRepoPK());
+                assert pk2.equals(resultList.get(1).getBundleVersionRepoPK());
+            } else {
+                assert bvr1.equals(resultList.get(1));
+                assert bvr2.equals(resultList.get(0));
+                assert pk1.equals(resultList.get(1).getBundleVersionRepoPK());
+                assert pk2.equals(resultList.get(0).getBundleVersionRepoPK());
+            }
+        } catch (Throwable t) {
+            t.printStackTrace();
+            throw t;
+        } finally {
+            getTransactionManager().rollback();
+        }
+    }
+
     public void testBundleVersion() throws Throwable {
         boolean done = false;
         getTransactionManager().begin();

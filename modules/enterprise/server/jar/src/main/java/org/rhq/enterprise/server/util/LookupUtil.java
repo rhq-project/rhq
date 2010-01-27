@@ -345,7 +345,7 @@ public final class LookupUtil {
     }
 
     public static EntitlementManagerLocal getEntitlementManagerBean() {
-        return lookupLocal(EntitlementManagerLocal.class);
+        return lookupLocal(EntitlementManagerBean.class);
     }
 
     public static EntityManagerFacadeLocal getEntityManagerFacade() {

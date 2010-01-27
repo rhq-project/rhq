@@ -101,7 +101,6 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
-import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;

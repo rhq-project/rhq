@@ -61,9 +61,15 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
             String virtName = configuration.getSimpleValue("name", "Guest " + System.currentTimeMillis());
             String profile = configuration.getSimpleValue("profile", "profile");
             String server = configuration.getSimpleValue("server", "localhost");
-            ProcessExecutionResults pr = this.execute(command, "--virt", "--server", server, "--profile", profile,
-                "--virt-name", virtName);
-            res.setSimpleResult(pr.getExitCode().toString());
+            String[] argsString = { "--virt", "--server", server, "--profile", profile, "--virt-name", virtName };
+            ProcessExecutionResults pr = this.execute(command, argsString);
+            if (pr.getExitCode() > 0) {
+                log.error("Error executing command: " + this.buildCommandString(command, argsString));
+                res.setErrorMessage(pr.getCapturedOutput());
+            } else {
+                res.setSimpleResult(pr.getCapturedOutput());
+            }
+
         }
 
         return res;
@@ -72,10 +78,7 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
     public ProcessExecutionResults execute(String process, String... args) {
         List<String> argsList = Arrays.asList(args);
         if (log.isDebugEnabled()) {
-            String argsString = "";
-            for (String arg : argsList)
-                argsString = argsString + " " + arg;
-            log.debug("Executing command " + process + argsString);
+            log.debug("Executing command " + this.buildCommandString(process, args));
         }
         ProcessExecution pe = new ProcessExecution(process);
         pe.setCaptureOutput(true);
@@ -84,5 +87,13 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
         ProcessExecutionResults pr = resourceContext.getSystemInformation().executeProcess(pe);
         log.debug("Result " + pr.getExitCode());
         return pr;
+    }
+
+    private String buildCommandString(String process, String... argsList) {
+        String argsString = process;
+        for (String arg : argsList)
+            argsString = argsString + " " + arg;
+        return process;
+
     }
 }

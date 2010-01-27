@@ -30,6 +30,7 @@ import org.rhq.core.util.progresswatch.ProgressWatcher;
  */
 public class SyncTracker {
 
+    private int repoId;
     private RepoSyncResults repoSyncResults;
     private ProgressWatcher progressWatcher;
     private int packageSyncCount;
@@ -40,6 +41,7 @@ public class SyncTracker {
      */
     public SyncTracker(RepoSyncResults repoSyncResultsIn, ProgressWatcher progressWatcherIn) {
         super();
+        this.repoId = repoSyncResultsIn.getRepo().getId();
         this.repoSyncResults = repoSyncResultsIn;
         this.progressWatcher = progressWatcherIn;
         this.progressWatcher.start();
@@ -125,4 +127,12 @@ public class SyncTracker {
         this.packageSyncCount = packageSyncCount;
     }
 
+    /**
+     * RepoId we are tracking
+     * @return int repoId
+     */
+    public int getRepoId() {
+
+        return this.repoId;
+    }
 }

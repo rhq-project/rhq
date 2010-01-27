@@ -46,6 +46,7 @@ import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
@@ -143,32 +144,43 @@ public class Repo implements Serializable, Taggable {
     @Column(name = "IS_CANDIDATE", nullable = false)
     private boolean candidate;
 
+    @Column(name = "SYNC_SCHEDULE", nullable = true)
+    private String syncSchedule = "0 0 3 * * ?";
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoContentSource> repoContentSources;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoTag> repoTags;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @OrderBy("startTime DESC")
     // latest appears first, oldest last
     private List<RepoSyncResults> syncResults;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoDistribution> repoDistributions;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoAdvisory> repoAdvisories;
 
@@ -251,6 +263,25 @@ public class Repo implements Serializable, Taggable {
 
     public void setCandidate(boolean candidate) {
         this.candidate = candidate;
+    }
+
+    /**
+     * Periodically, the Repo will be asked to synchronize with the remote ContentProviders associated with it
+     * This attribute defines the schedule, as a cron string. The default will be set for everyday at
+     * 3:00am local time. If this content source should never automatically sync, this should be null, but
+     * an empty string would also indicate this, too.
+     *
+     * @return sync schedule as a cron string or null if the sync should not automatically occur
+     */
+    public String getSyncSchedule() {
+        return syncSchedule;
+    }
+
+    public void setSyncSchedule(String syncSchedule) {
+        if (syncSchedule != null && syncSchedule.trim().length() == 0) {
+            syncSchedule = null;
+        }
+        this.syncSchedule = syncSchedule;
     }
 
     /**
@@ -360,13 +391,13 @@ public class Repo implements Serializable, Taggable {
 
     /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
-     * 
+     *
      * There is a weight to the status since this returns the most 'relevant' status:
-     * 
+     *
      * 1) ContentSourceSyncStatus.FAILURE
      * 2) ContentSourceSyncStatus.INPROGRESS
      * 3) ContentSourceSyncStatus.SUCCESS
-     * 
+     *
      * @return String summary of the status of this Repository
      */
     @Transient
@@ -731,7 +762,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     public void setRepoTags(Set<RepoTag> tags) {
-        this.repoTags = repoTags;
+        this.repoTags = tags;
     }
 
     public boolean hasTag(Tag tag) {
@@ -797,7 +828,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
-     * Removes association with a tag, if it exists. 
+     * Removes association with a tag, if it exists.
      */
     public void removeTag(Tag tag) {
         if ((this.repoTags == null) || (tag == null)) {

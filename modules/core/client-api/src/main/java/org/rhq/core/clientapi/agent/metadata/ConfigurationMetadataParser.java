@@ -34,6 +34,7 @@ import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationTemplateDescriptor;
 import org.rhq.core.clientapi.descriptor.configuration.ConstraintType;
+import org.rhq.core.clientapi.descriptor.configuration.DynamicProperty;
 import org.rhq.core.clientapi.descriptor.configuration.FloatConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.IntegerConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.ListProperty;
@@ -44,8 +45,9 @@ import org.rhq.core.clientapi.descriptor.configuration.PropertyOptions;
 import org.rhq.core.clientapi.descriptor.configuration.PropertyType;
 import org.rhq.core.clientapi.descriptor.configuration.RegexConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.SimpleProperty;
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationFormat;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
+import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -81,7 +83,7 @@ public class ConfigurationMetadataParser {
         configurationDefinition.setConfigurationFormat(getConfigurationFormat(descriptor));
 
         if (configurationDefinition.getConfigurationFormat() == RAW) {
-            return configurationDefinition;            
+            return configurationDefinition;
         }
 
         for (ConfigurationTemplateDescriptor templateDescriptor : descriptor.getTemplate()) {
@@ -195,6 +197,8 @@ public class ConfigurationMetadataParser {
             property = parseListProperty((ListProperty) uncastedProperty);
         } else if (uncastedProperty instanceof MapProperty) {
             property = parseMapProperty((MapProperty) uncastedProperty, defaultConfigurationParentMap);
+        } else if (uncastedProperty instanceof DynamicProperty) {
+            property = parseDynamicProperty((DynamicProperty) uncastedProperty);
         }
 
         if (property != null) {
@@ -230,6 +234,24 @@ public class ConfigurationMetadataParser {
         if (simpleProperty.getPropertyOptions() != null) {
             parsePropertyOptions(property, simpleProperty.getPropertyOptions());
         }
+
+        return property;
+    }
+
+    private static PropertyDefinitionDynamic parseDynamicProperty(DynamicProperty dynamicProperty)
+        throws InvalidPluginDescriptorException {
+        String description = parseMultiValue(dynamicProperty.getDescription(), dynamicProperty.getLongDescription());
+        String displayName = (dynamicProperty.getDisplayName() != null) ? dynamicProperty.getDisplayName() : StringUtils
+            .deCamelCase(dynamicProperty.getName());
+
+        PropertyDefinitionDynamic property = new PropertyDefinitionDynamic(dynamicProperty.getName(), description,
+            dynamicProperty.isRequired(), PropertyDynamicType.DATABASE,
+            dynamicProperty.getDatabaseBacking().getKey().value());
+
+        property.setReadOnly(dynamicProperty.isReadOnly());
+        property.setSummary(dynamicProperty.isSummary());
+        property.setDisplayName(displayName);
+        property.setActivationPolicy(translateActivationPolicy(dynamicProperty.getActivationPolicy()));
 
         return property;
     }

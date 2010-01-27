@@ -23,22 +23,25 @@ import org.rhq.enterprise.server.ws.utility.WsUtility;
 /**
  * These tests can not be executed in our standard unit test fashion as they
  * require a running RHQ Server with our web services deployed.
- * 
- * This is still in development and has the current restrictions: - add
- * [dev_root
- * ]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices
- * -{version}.jar to TOP of eclipse classpath to run from your IDE(actually need
- * to use classpath setup from bin/jbossas/bin/wsrunclient.sh to take advantage
- * of type substitution correctly) - Server running on localhost. - ws-test user
- * defined in database with full permissions - Non RHQ Server JBossAS in
- * inventory. - The -Ptest-ws profile specified when running mvn test from
- * webservices dir - Perftest plugin installed and agent started as described in
- * modules/enterprise/remoting/scripts/README.txt
- * 
+ *
+ * This is still in development and has the current restrictions:
+ * <ul>
+ * <li>add [dev_root]/modules/enterprise/remoting/webservices/target/rhq-remoting-webservices-{version}.jar to TOP of
+ * eclipse classpath to run from your IDE(actually need to use classpath setup from bin/jbossas/bin/wsrunclient.sh to
+ * take advantage of type substitution correctly)</li>
+ * <li>Server running on localhost</li>
+ * <li>ws-test user defined in database with full permissions</li>
+ * <li>Non RHQ Server JBossAS in inventory</li>
+ * <li>The -Ptest-ws profile specified when running mvn test from webservices dir</li>
+ * <li>Perftest plugin installed and agent started as described in modules/enterprise/remoting/scripts/README.txt</li>
+ * </ul>
+ *
  * @author Jay Shaughnessy, Simeon Pinder
  */
 @Test(groups = "ws")
 public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInterface {
+
+    private static final boolean TESTS_ENABLED = true;
 
     // Test variables
     private static ObjectFactory WS_OBJECT_FACTORY;
@@ -222,7 +225,7 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         }
     }
 
-    @Test(enabled = TESTS_ENABLED)
+    @Test(enabled = false)
     void testDeploy() throws InterruptedException, IOException, ResourceTypeNotFoundException_Exception,
         RepoException_Exception {
 
@@ -232,8 +235,8 @@ public class WsRepoManagerTest extends AssertJUnit implements TestPropertiesInte
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.strict = true;
         // criteria.setFilterName("Tomcat (");
-        criteria.setFilterName("Tomcat VHost (localhost)");
-        // criteria.setFilterName("Tomcat");
+//        criteria.setFilterName("Tomcat VHost (localhost)");
+         criteria.setFilterName("Tomcat (8080)");
         criteria.setFilterCurrentAvailability(AvailabilityType.UP);
         // criteria.setFilterCurrentAvailability(AvailabilityType.DOWN);
         List<Resource> tomcatServers = WEBSERVICE_REMOTE.findResourcesByCriteria(subject, criteria);

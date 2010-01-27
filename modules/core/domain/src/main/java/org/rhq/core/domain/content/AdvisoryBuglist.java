@@ -36,9 +36,10 @@ import javax.persistence.NamedQuery;
 import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlTransient;
 
 /**
- * This is the entity mapping that correlates an advisory with associated bugid. 
+ * This is the entity mapping that correlates an advisory with associated bugid.
  *
  * @author Pradeep Kilambi
  */
@@ -68,6 +69,7 @@ public class AdvisoryBuglist implements Serializable {
     @Id
     private int id;
 
+    @XmlTransient
     @ManyToOne
     @JoinColumn(name = "ADVISORY_ID", referencedColumnName = "ID", nullable = false)
     private Advisory advisory;

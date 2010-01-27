@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
+import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelFamilyType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnChannelType;
 import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnErratumBugType;
@@ -115,10 +116,11 @@ public class RHNHelper {
     }
 
     public List<AdvisoryDetails> getAdvisoryMetadata(List<String> advisoryList, String repoName)
-        throws XmlRpcException, IOException {
+        throws XmlRpcException, IOException, InterruptedException {
         List<AdvisoryDetails> erratadetails = new ArrayList<AdvisoryDetails>();
         List<RhnErratumType> errata = rhndata.getErrataMetadata(this.systemid, advisoryList);
         for (RhnErratumType erratum : errata) {
+            ThreadUtil.checkInterrupted();
             log.debug("Forming AdvisoryDetails(" + erratum.getAdvisory());
             AdvisoryDetails details = new AdvisoryDetails(erratum.getAdvisory(), erratum.getRhnErratumAdvisoryType(),
                 erratum.getRhnErratumSynopsis());
@@ -158,27 +160,27 @@ public class RHNHelper {
             String pkgs = erratum.getPackages();
             String[] pkgIds = pkgs.split(" ");
 
-            try {
-                List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
-                List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
-                for (RhnPackageType pkgd : pkgdetails) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<"
-                            + pkgd + ">");
-                    }
-                    String name = pkgd.getName();
-                    String version = pkgd.getVersion();
-                    String arch = pkgd.getPackageArch();
-                    String release = pkgd.getRelease();
-                    String rpmname = constructRpmDisplayName(name, version, release, arch);
-                    AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
-                    apkgdetails.add(apkgd);
+            //try {
+            List<AdvisoryPackageDetails> apkgdetails = new ArrayList<AdvisoryPackageDetails>();
+            List<RhnPackageType> pkgdetails = rhndata.getPackageMetadata(this.systemid, Arrays.asList(pkgIds));
+            for (RhnPackageType pkgd : pkgdetails) {
+                if (log.isDebugEnabled()) {
+                    log.debug("RHNHelper::getAdvisoryMetaData<Advisory=" + erratum.getAdvisory() + "> Package<" + pkgd
+                        + ">");
                 }
-                details.addPkgs(apkgdetails);
-
-            } catch (Exception e) {
-                e.printStackTrace();
+                String name = pkgd.getName();
+                String version = pkgd.getVersion();
+                String arch = pkgd.getPackageArch();
+                String release = pkgd.getRelease();
+                String rpmname = constructRpmDisplayName(name, version, release, arch);
+                AdvisoryPackageDetails apkgd = new AdvisoryPackageDetails(name, version, arch, rpmname);
+                apkgdetails.add(apkgd);
             }
+            details.addPkgs(apkgdetails);
+
+            //} catch (Exception e) {
+            //    e.printStackTrace();
+            // }
 
             erratadetails.add(details);
         }

@@ -44,15 +44,15 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
     }
 
     public ConfigManagement getStrategy(int resourceId) throws PluginContainerException {
-        ConfigManagement loadConfig = createStrategy(resourceId);
-        initStrategyDependencies(loadConfig);
+        ConfigManagement configManagement = createStrategy(resourceId);
+        initStrategyDependencies(configManagement);
 
-        return loadConfig;
+        return configManagement;
     }
 
-    private void initStrategyDependencies(ConfigManagement loadConfig) {
-        loadConfig.setComponentService(componentService);
-        loadConfig.setConfigurationUtilityService(configUtilityService);
+    private void initStrategyDependencies(ConfigManagement configManagement) {
+        configManagement.setComponentService(componentService);
+        configManagement.setConfigurationUtilityService(configUtilityService);
     }
 
     private ConfigManagement createStrategy(int resourceId) throws PluginContainerException {
@@ -70,16 +70,16 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
             return new StructuredAndRawConfigManagement();
         case STRUCTURED:
         default:
-                boolean daemonOnly = true;
-                boolean onlyIfStarted = true;
-                ResourceComponent resourceComponent = componentService.getComponent(resourceId,
-                    ResourceComponent  .class, FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT,
-                    daemonOnly, onlyIfStarted);
-                if (resourceComponent instanceof ResourceConfigurationFacet){
-                    return new StructuredConfigManagement();
-                }else{
-                    return new LegacyConfigManagement();
-                }
+            boolean daemonOnly = true;
+            boolean onlyIfStarted = true;
+            ResourceComponent resourceComponent = componentService.getComponent(resourceId,
+                ResourceComponent.class, FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT,
+                daemonOnly, onlyIfStarted);
+            if (resourceComponent instanceof ResourceConfigurationFacet){
+                return new StructuredConfigManagement();
+            } else{
+                return new LegacyConfigManagement();
+            }
         }
     }
 }

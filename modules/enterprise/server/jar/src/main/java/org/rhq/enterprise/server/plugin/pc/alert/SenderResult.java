@@ -37,9 +37,23 @@ public class SenderResult {
     /** A list of email addresses that should be notified */
     private List<String> emails = new ArrayList<String>();
 
+    /**
+     * Default constructor. State is FAILURE by default
+     */
+    public SenderResult() {
+        this.message = "No message set";
+        this.state = ResultState.FAILURE;
+    }
+
     public SenderResult(ResultState state, String message) {
         this.message = message;
         this.state = state;
+    }
+
+    public SenderResult(ResultState state, String message, List<String> emails) {
+        this.message = message;
+        this.state = state;
+        this.emails = emails;
     }
 
     public String getMessage() {

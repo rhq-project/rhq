@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugin.pc.alert;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 
 /**
  * Abstract base class for all Alert senders. In order to implement your
@@ -44,6 +45,9 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
 
     /** Global component holding persistent resources */
     protected T pluginComponent;
+
+    /** Environement of the plugin to e.g. get the classloader */
+    protected ServerPluginEnvironment serverPluginEnvironment;
 
     /**
      * This method is called to actually send an alert notification.

@@ -16,7 +16,23 @@
        It also demonstrates several jobs using different types of schedules.
     ]]></serverplugin:help>
 
-    <serverplugin:plugin-component class="MyLifecycleListener" />
+    <serverplugin:plugin-component class="MyLifecycleListener">
+        <serverplugin:control name="testControl" description="A test control operation">
+            <serverplugin:parameters>
+                <c:simple-property name="paramProp" required="true" description="Set to 'fail' to simulate an error"/>
+            </serverplugin:parameters>
+            <serverplugin:results>
+                <c:simple-property name="resultProp" required="false"/>
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="testControlWithNoParams" description="A test control operation that has no parameters">
+            <serverplugin:results>
+                <c:simple-property name="result" required="false"/>
+            </serverplugin:results>
+        </serverplugin:control>
+        <serverplugin:control name="testControlWithNoParamsOrResults">
+        </serverplugin:control>
+    </serverplugin:plugin-component>
 
     <serverplugin:scheduled-jobs>
         <!-- notice that we use the map name as the methodName -->
@@ -30,6 +46,7 @@
             </c:simple-property>
             <c:simple-property name="scheduleTrigger" type="string" required="true" default="0 0/5 * * * ?" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
             <c:simple-property name="concurrent" type="boolean" required="false" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+            <c:simple-property name="clustered" type="boolean" required="true" default="true" summary="true" description="Whether or not the job can be run on any machine in the server cluster. If false, it will always run on all machines where this plugin is deployed."/>
         </c:map-property>
         
         <!-- notice we only want this job to be periodic - do not allow for cron -->
@@ -66,6 +83,7 @@
                 </c:simple-property>
                 <c:simple-property name="scheduleTrigger" type="string" required="true" default="600000" summary="true" description="Based on the schedule type, this is either the period, in milliseconds, or the cron expression"/>
                 <c:simple-property name="concurrent" type="boolean" required="true" default="false" summary="true" description="Whether or not the job can be run multiple times concurrently"/>
+                <c:simple-property name="clustered" type="boolean" required="true" default="true" summary="true" description="Whether or not the job can be run on any machine in the server cluster. If false, it will always run on all machines where this plugin is deployed."/>
             </c:map-property>
         </c:list-property>
     </serverplugin:scheduled-jobs>

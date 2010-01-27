@@ -31,7 +31,7 @@
 
    <!-- a size-based rolling file appender -->
    <appender name="FILE" class="org.jboss.logging.appender.RollingFileAppender">
-      <param name="File" value="./test-log4j.log"/>
+      <param name="File" value="target/test-log4j.log"/>
       <param name="Append" value="true"/>
       <param name="MaxFileSize" value="5MB"/>
       <param name="MaxBackupIndex" value="5"/>

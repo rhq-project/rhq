@@ -88,6 +88,9 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         // Note: The type "kickstart" should already be in the database from installation
 
+        /* Note: The md5 sums below will be used to determine if the file needs to be loaded through
+           a call to getPackageBits. I set these to an invalid MD5 so they will *always* be downloaded.
+         */
         DistributionDetails dis1 = new DistributionDetails(DISTRIBUTION_1_LABEL, "kickstart");
         dis1.setDistributionPath("/kstrees");
         DistributionFileDetails file11 = new DistributionFileDetails("dist1file1", System.currentTimeMillis(),
@@ -107,6 +110,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         DISTRIBUTIONS.put(dis2.getLabel(), dis2);
     }
+
+    public static final int PACKAGE_COUNT_FOR_BITS = PACKAGES.size() + 3; // packages + number of distro files
 
     /**
      * If <code>true</code>, the call to {@link #testConnection()} will throw an exception.
@@ -329,7 +334,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         return null;
     }
-
 
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;

@@ -22,20 +22,17 @@ import java.util.List;
 
 import javax.ejb.Local;
 
-import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SnmpNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
+import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 /**
@@ -44,21 +41,15 @@ import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 
 @Local
 public interface AlertNotificationManagerLocal {
-    int addEmailNotifications(Subject subject, Integer alertDefinitionId, String[] emails);
 
     int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds);
 
     int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
 
-    PageList<EmailNotification> getEmailNotifications(Integer alertDefinitionId, PageControl pageControl);
 
     PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl);
 
     PageList<SubjectNotification> getSubjectNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<SnmpNotification> getSnmpNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<EmailNotification> getEmailNotifications(Integer[] alertNotificationIds, PageControl pageControl);
 
     PageList<RoleNotification> getRoleNotifications(Integer[] alertNotificationIds, PageControl pageControl);
 
@@ -94,9 +85,10 @@ public interface AlertNotificationManagerLocal {
      * @param user subject of the caller
      * @param alertDefinitionId Id of the alert definition
      * @param senderName shortName of the {@link AlertSender}
+     * @param alertName name of the new {@link AlertNotification}
      * @param configuration Properties for this alert sender.
      */
-    void addAlertNotification(Subject user, int alertDefinitionId, String senderName, Configuration configuration);
+    AlertNotification addAlertNotification(Subject user, int alertDefinitionId, String senderName, String alertName, Configuration configuration);
 
     /**
      * Return notifications for a certain alertDefinitionId
@@ -110,6 +102,13 @@ public interface AlertNotificationManagerLocal {
      *
      */
     List<AlertNotification> getNotificationsForAlertDefinition(Subject user, int alertDefinitionId);
+
+    /**
+     * Persist changes to the passed {@link AlertNotification}
+     *
+     * @param notification
+     */
+    void updateAlertNotification(AlertNotification notification);
 
     AlertSenderInfo getAlertInfoForSender(String shortName);
 
@@ -126,5 +125,65 @@ public interface AlertNotificationManagerLocal {
      * @param shortName name of a sender
      * @return an initialized BackingBean or null in case of error
      */
-    AlertBackingBean getBackingBeanForSender(String shortName);
+    Object getBackingBeanForSender(String shortName);
+
+    String getBackingBeanNameForSender(String shortName);
+
+    /**
+     * Add the passed 'transient' notifications onto the alert definitions contained. The old
+     * notifications are removed.
+     * This method is mainly used when migrating alerts from an old format to the current.
+     * @param subject Subject of the caller
+     * @param notifications list of AlertNotifications that have the alert definition id encoded in a transient field
+     */
+    void mergeTransientAlertNotifications(Subject subject, List<AlertNotification> notifications);
+
+    /**
+     * Create a new NotificationTemplate from the passed parameters. The passed AlertNotification objects need to have the
+     * name and sender and any configuration properties already set; alert definitions must not be set.
+     * @param name name of this notification template. Must be unique
+     * @param description description of the template
+     * @param notifications notifications that make up the template
+     * @return the newly created template
+     * @throws IllegalArgumentException when a template with the passed name already exists
+     */
+    NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException;
+
+    /**
+     * Get all defined notification templates in the system along with their AlertNotifications
+     * @param user Subject of the caller
+     * @return List of all defined alert notification templates
+     */
+    List<NotificationTemplate> listNotificationTemplates(Subject user);
+
+    /**
+     * Take the passed NotificationTemplate and apply its Notifications to the passed AlertDefinition
+     * @param templateName name of a pre-defined alert NotificationTemplate
+     * @param alertDefinitionId id of an AlertDefinition on which the template should be applied
+     * @param removeOldNotifications Shall old Notifications on the Definition be removed?
+     */
+    void applyNotificationTemplateToAlertDefinition(String templateName, int alertDefinitionId, boolean removeOldNotifications);
+
+    /**
+     * Add a new alert Notification to a template
+     * @param user subject of the caller
+     * @param templateName name of the NotificationTemplate to use
+     * @param sender the alert sender to use
+     * @param notificationName the name of this notification
+     * @param notificationConfiguration the configuration of this AlertNotification
+     * @return the new AlertNotification
+     */
+    AlertNotification addAlertNotificationToTemplate(Subject user,String templateName,String sender, String notificationName, Configuration notificationConfiguration);
+
+    int removeNotificationsFromTemplate(Subject subject, int templateId, Integer[] notificationIds);
+
+    List<AlertNotification> getNotificationsForTemplate(Subject subject, int templateId);
+
+    /**
+     * Delete the passed Notification Templates
+     * @param subject subject of the caller
+     * @param templateIds ids of the templates to delete
+     * @return number of templates deleted
+     */
+    int deleteNotificationTemplates(Subject subject, Integer[] templateIds);
 }

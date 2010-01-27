@@ -109,10 +109,10 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
 
   Set<RawConfiguration> loadRawConfigurations() {
     def rawConfigs = new HashSet<RawConfiguration>()
-    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
-    rawConfigs.add(new RawConfiguration(path: rawConfig2.absolutePath, contents: rawConfig2.readBytes()))
-    rawConfigs.add(new RawConfiguration(path: rawConfig3.absolutePath, contents: rawConfig3.readBytes()))
-    rawConfigs.add(new RawConfiguration(path: rawConfig4.absolutePath, contents: rawConfig4.readBytes()))
+    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig2.absolutePath, contents: rawConfig2.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig3.absolutePath, contents: rawConfig3.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig4.absolutePath, contents: rawConfig4.text))
 
     return rawConfigs
   }
@@ -130,17 +130,16 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
       rawPropertiesConfig.setProperty(propertyName, property.stringValue)
     }
 
-    def stream = new ByteArrayOutputStream()
-    rawPropertiesConfig.save(stream)
-    rawConfiguration.contents = stream.toByteArray()
+    def writer = new StringWriter()
+    rawPropertiesConfig.save(writer)
+    rawConfiguration.contents = writer.toString()
 
     return rawConfiguration
   }
 
   def loadRawPropertiesConfiguration(rawConfig) {
-    def stream = new ByteArrayInputStream(rawConfig.contents)
     def rawPropertiesConfig = new PropertiesConfiguration()
-    rawPropertiesConfig.load(stream)
+    rawPropertiesConfig.load(new StringReader(rawConfig.contents))
 
     return rawPropertiesConfig
   }
@@ -186,7 +185,7 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   void validateStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
     if (failValidation.getBooleanValue()) {
-      throw new RuntimeException("Validation failed for $configuration");
+      throw new RuntimeException("Validation failed for $confi153guration");
     }
   }
 

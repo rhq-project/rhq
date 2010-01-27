@@ -351,7 +351,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             } else {
                 current = new RawConfiguration();
                 current.setPath("/dev/null");
-                current.setContents("".getBytes());
+                current.setContents("");
             }
         }
         return current;
@@ -488,7 +488,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
-            current.setContents(updated.getBytes());
+            current.setContents(updated);
 
             markCurrentRawConfigUIBeanModified();
             getModified().put(current.getPath(), current);

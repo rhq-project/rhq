@@ -18,51 +18,64 @@
  */
 package org.rhq.enterprise.server.plugins.alertRoles;
 
+
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-
-import javax.annotation.PostConstruct;
-import javax.ejb.Stateless;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.jboss.seam.annotations.Name;
-
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
-import org.rhq.enterprise.server.plugin.pc.alert.AlertBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * // TODO: Document this
  * @author Heiko W. Rupp
  */
-public class RolesBackingBean implements AlertBackingBean {
+public class RolesBackingBean {
 
-    private final Log log = LogFactory.getLog(RolesBackingBean.class);
+    private Map<String, String> rolesMap;
+    private List<String> currentRoles;
 
-    public String getString() {
-        return "Hello BackingBean";
+    public List<String> getCurrentRoles() {
+        return currentRoles;
     }
 
-    public Map<String,String> getMap() {
-        Map<String,String> map =  new HashMap();
+    public void setCurrentRoles(List<String> currentRoles) {
+        this.currentRoles = currentRoles;
+    }
 
-        RoleManagerLocal mgr = LookupUtil.getRoleManager();
-        PageList<Role> roles = mgr.findRoles(new PageControl());
+    public Map<String, String> getRolesMap() {
+        if (this.rolesMap == null) {
+            this.rolesMap = new HashMap<String, String>();
 
-        for (Role role : roles) {
-            map.put(role.getName(),role.getName());
+            RoleManagerLocal mgr = LookupUtil.getRoleManager();
+            PageList<Role> rolesList = mgr.findRoles(new PageControl());
+
+            for (Role role : rolesList) {
+                this.rolesMap.put(role.getName(), role.getId().toString());
+            }
         }
-        return map;
+
+        return this.rolesMap;
     }
 
-    public void submit() {
+    public String submit() {
 
         System.out.println("In Submit");
+
+        System.out.println("Selected roles:  ");
+        for (String role : currentRoles) {
+            System.out.println(role);
+        }
+
+
+
         // TODO: Customise this generated block
+
+        return "ALERT_NOTIFICATIONS";
     }
+
 }

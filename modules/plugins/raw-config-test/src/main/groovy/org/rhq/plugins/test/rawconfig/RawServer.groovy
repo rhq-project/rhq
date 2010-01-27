@@ -14,10 +14,6 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File rawConfigDir
 
-//  File rawConfig1
-//  File rawConfig2
-//  File rawConfig3
-
   List rawConfigs = []
 
   def ant = new AntBuilder()
@@ -34,15 +30,11 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
     def index = 1
 
     numberOfConfigFiles.times { rawConfigs << new File(rawConfigDir, "raw-test-${it + index++}.txt") }
-//    rawConfig1 = new File(rawConfigDir, "raw-test-1.txt")
-//    rawConfig2 = new File(rawConfigDir, "raw-test-2.txt")
-//    rawConfig3 = new File(rawConfigDir, "raw-test-3.txt")
 
     createRawConfigDir()
 
     index = 1
     rawConfigs.each { rawConfig -> createConfigFile(rawConfig, index++) }
-//    createConfigFile()
   }
 
   def createRawConfigDir() {
@@ -75,14 +67,9 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
   Set<RawConfiguration> loadRawConfigurations() {
     def rawConfigSet = new HashSet()
-    rawConfigs.each { rawConfigSet.add(new RawConfiguration(path: it.absolutePath, contents: it.readBytes())) }
+    rawConfigs.each { rawConfigSet.add(new RawConfiguration(path: it.absolutePath, contents: it.text)) }
 
     return rawConfigSet
-
-//    def rawConfigs = new HashSet()
-//    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
-//
-//    return rawConfigs
   }
 
   RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {

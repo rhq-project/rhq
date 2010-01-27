@@ -190,9 +190,6 @@
       <form-bean name="AddAlertRolesForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesForm"/>
 
-      <form-bean name="AddAlertOthersForm"
-                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersForm"/>
-
       <form-bean name="EditMetricBaselineForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditMetricBaselineForm"/>
 
@@ -2585,13 +2582,6 @@
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionSyslogActionAction"/>
 
-      <action path="/alerts/ViewNotificationsOthers"
-              name="RemoveNotificationsForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsEmailsAction">
-         <set-property property="title" value="View+Alert+Detail"/>
-      </action>
-
       <action path="/alerts/ViewNotificationsRoles"
               name="RemoveNotificationsForm"
               scope="request"
@@ -2604,15 +2594,6 @@
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsUsersAction">
          <set-property property="title" value="View+Alert+Detail"/>
-      </action>
-
-      <action path="/alerts/RemoveOthers"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveOthersAction"
-              name="RemoveNotificationsForm"
-              scope="request"
-              input="/alerts/Config.do?mode=viewOthers">
-         <forward name="success" path="/alerts/Config.do?mode=viewOthers" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=viewOthers" redirect="true"/>
       </action>
 
       <action path="/alerts/RemoveRoles"
@@ -2701,9 +2682,10 @@
          <forward name="reset" path="/alerts/Config.do?mode=new"
                   redirect="true"/>
          <forward name="failure" path="/alerts/Config.do?mode=new"/>
-         <forward name="success" path="/alerts/Config.do?mode=viewRoles"/>
          <forward name="add" path="/alerts/Config.do?mode=new"/>
          <forward name="remove" path="/alerts/Config.do?mode=new"/>
+
+         <forward name="success" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
       </action>
 
       <action path="/alerts/EditPropertiesFormPrepare"
@@ -2736,12 +2718,13 @@
               name="EditAlertDefinitionConditionsForm"
               scope="request"
               input="/alerts/Config.do?mode=editConditions">
-         <forward name="cancel" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
          <forward name="reset" path="/alerts/Config.do?mode=editConditions" redirect="true"/>
-         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
          <forward name="failure" path="/alerts/Config.do?mode=editConditions"/>
          <forward name="add" path="/alerts/Config.do?mode=editConditions"/>
          <forward name="remove" path="/alerts/Config.do?mode=editConditions"/>
+
+         <forward name="cancel" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
+         <forward name="success" path="/rhq/resource/alert/viewAlert.xhtml" redirect="true" />
       </action>
 
       <action path="/alerts/EditControlActionFormPrepare"
@@ -2828,26 +2811,6 @@
               name="AddAlertRolesForm"
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesFormPrepareAction">
-         <set-property property="title" value="Edit+Alert+Add+Notification"/>
-      </action>
-
-      <action path="/alerts/config/AddOthers"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersAction"
-              name="AddAlertOthersForm"
-              scope="request"
-              input="/alerts/Config.do?mode=addOthers">
-         <forward name="cancel" path="/alerts/Config.do?mode=viewOthers"
-                  redirect="true"/>
-         <forward name="reset" path="/alerts/Config.do?mode=addOthers"
-                  redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=addOthers"/>
-         <forward name="success" path="/alerts/Config.do?mode=viewOthers"/>
-      </action>
-
-      <action path="/events/config/AddOthersFormPrepare"
-              name="AddAlertOthersForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddOthersFormPrepareAction">
          <set-property property="title" value="Edit+Alert+Add+Notification"/>
       </action>
 

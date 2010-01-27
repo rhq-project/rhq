@@ -40,7 +40,7 @@ public class RawConfigurationIntegrationTest extends AbstractEJB3Test {
 
             RawConfiguration rawConfig = new RawConfiguration();
             rawConfig.setConfiguration(config);
-            rawConfig.setContents(new byte[] {1, 2, 3, 4, 5});
+            rawConfig.setContents("contents");
             rawConfig.setPath("/tmp/foo.txt");
 
             entityMgr.persist(rawConfig);

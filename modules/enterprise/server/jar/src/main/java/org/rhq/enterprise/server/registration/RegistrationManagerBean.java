@@ -34,6 +34,7 @@ import org.jboss.annotation.IgnoreDependency;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -84,7 +85,14 @@ public class RegistrationManagerBean implements RegistrationManagerLocal, Regist
         ConfigurationDefinition configDefinition = configManager.getPluginConfigurationDefinitionForResourceType(user,
             resourceType.getId());
 
-        Configuration platformConfig = configDefinition.getDefaultTemplate().getConfiguration();
+        Configuration platformConfig = null;
+        if (configDefinition != null) {
+            ConfigurationTemplate template = configDefinition.getDefaultTemplate();
+
+            if (template != null) {
+                 platformConfig = template.getConfiguration();
+            }
+        }
 
         platform.setPluginConfiguration(platformConfig);
         platform.setInventoryStatus(InventoryStatus.COMMITTED);

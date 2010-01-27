@@ -21,12 +21,14 @@ package org.rhq.enterprise.server.registration.test;
 
 import javax.persistence.EntityManager;
 
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.registration.ReleaseRepoMapping;
@@ -47,9 +49,29 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
         this.registrationManager = LookupUtil.getRegistrationManager();
         this.resourceTypeManager = LookupUtil.getResourceTypeManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
+
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+
+        platformType = new ResourceType("RegistrationBeanTest.testRegisterPlatform",
+            "RegistrationBeanTest.testRegisterPlatform", ResourceCategory.PLATFORM, null);
+        em.persist(platformType);
+
+        getTransactionManager().commit();
     }
 
-    @Test(groups = "integration.ejb3")
+    @AfterClass
+    public void afterClass() throws Exception {
+        getTransactionManager().begin();
+        EntityManager em = getEntityManager();
+
+        platformType = em.find(ResourceType.class, platformType.getId());
+        em.remove(platformType);
+
+        getTransactionManager().commit();
+    }
+
+    @Test
     public void testRegisterPlatform() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -57,7 +79,6 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
             createAgent(em);
             em.flush();
 
-            platformType = getPlatformResourceType();
             Resource platform = new Resource("alpha", "platform", platformType);
 
             registrationManager.registerPlatform(overlord, platform, parentId);
@@ -73,25 +94,20 @@ public class RegistrationBeanTest extends AbstractEJB3Test {
         String arch = "x86_64";
         ReleaseRepoMapping repomap = new ReleaseRepoMapping(release, version, arch);
         String repo = repomap.getCompatibleRepo();
-        assert (repo == "rhel-x86_64-server-5");
+        assert repo.equals("rhel-x86_64-server-5");
 
         String release2 = "5Client";
         String arch2 = "x86_64";
         String version2 = "5.4.0";
         ReleaseRepoMapping repomap2 = new ReleaseRepoMapping(release2, version2, arch2);
         String repo2 = repomap2.getCompatibleRepo();
-        assert (repo2 == "rhel-x86_64-client-5");
+        assert repo2.equals("rhel-x86_64-client-5");
 
     }
 
     private void createAgent(EntityManager em) {
         agent = new Agent("TestAgent-dbbt", "0.0.0.0", 1, "http://here", "tok");
         em.persist(agent);
-    }
-
-    private ResourceType getPlatformResourceType() {
-
-        return resourceTypeManager.getResourceTypeByNameAndPlugin(overlord, "Linux", "Platforms");
     }
 
 }

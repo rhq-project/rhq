@@ -2826,7 +2826,7 @@
                 <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="NAME" nullable="FALSE" />
                 <schema-addColumn table="RHQ_BUNDLE_VERSION" column="VERSION" columnType="VARCHAR2" precision="500" />
                 <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="VERSION" nullable="FALSE" />
-                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="ACTION" columnType="BLOB" />
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="ACTION" columnType="CLOB" />
                 <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="ACTION" nullable="FALSE" />
                 <schema-addColumn table="RHQ_BUNDLE_VERSION" column="BUNDLE_ID" columnType="INTEGER" />
                 <schema-alterColumn table="RHQ_BUNDLE_VERSION" column="BUNDLE_ID" nullable="FALSE" />

@@ -247,11 +247,11 @@ public class AlertSenderPluginManager extends ServerPluginManager {
 
         try {
             bean = (CustomAlertSenderBackingBean) instantiatePluginClass(env, className);
+            bean.alertParameters = new Configuration(); // Just to be sure
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
 
-        bean.alertParameters = new Configuration(); // TODO fix me
 
         return bean;
     }

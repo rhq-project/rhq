@@ -343,10 +343,12 @@ public class SystemInfoFactory {
 
     public static TemplateEngine fetchTemplateEngine() {
 
+        try{
         SystemInfo systemInfo = createSystemInfo();
 
         Map<String, String> tokens = new HashMap<String, String>();
         tokens.put(TOKEN_PREFIX+"hostname", systemInfo.getHostname());
+        
         tokens.put(TOKEN_PREFIX+"os.name", systemInfo.getOperatingSystemName());
         tokens.put(TOKEN_PREFIX+"os.version", systemInfo.getOperatingSystemVersion());
         tokens.put(TOKEN_PREFIX+"os.type", systemInfo.getOperatingSystemType().toString());
@@ -366,7 +368,10 @@ public class SystemInfoFactory {
                 tokens.put(key + ".multicast.address", networkAdapter.getMulticastAddresses().get(0).getHostAddress());
             }
         }
-        TemplateEngine templateEngine = new TemplateEngine(tokens);
+        TemplateEngine templateEngine = new TemplateEngine(tokens);        
         return templateEngine;
+        }catch(Exception e){
+            return new TemplateEngine(new HashMap());
+        }
     }
 }

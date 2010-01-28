@@ -217,15 +217,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
+        TemplateEngine  templateEngine = SystemInfoFactory.fetchTemplateEngine();
         
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
-
-            //TODO bypass validation of structured config for template values
-            mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));            
             if (mergedRaw != null) {
+                //TODO bypass validation of structured config for template values
+                mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }

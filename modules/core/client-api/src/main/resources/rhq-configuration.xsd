@@ -245,6 +245,7 @@
           <xs:enumeration value="roles"/>
           <xs:enumeration value="package-types"/>
           <xs:enumeration value="resource-type-with-plugin"/>
+          <xs:enumeration value="package-architectures"/>
        </xs:restriction>
    </xs:simpleType>
 

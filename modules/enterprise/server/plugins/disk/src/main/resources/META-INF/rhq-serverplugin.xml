@@ -38,10 +38,10 @@
                 </c:dynamic-property>
                 <c:simple-property name="architectureName" required="true" summary="true" default="noarch"
                                    description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
-                <c:simple-property name="resourceTypeName" required="true" summary="true"
-                                   description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
-                <c:simple-property name="resourceTypePluginName" required="true" summary="true"
-                                   description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
+                <c:dynamic-property name="resourceType" required="true" summary="true"
+                                    description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')">
+                    <c:database-backing key="resource-type-with-plugin"/>
+                </c:dynamic-property>
             </c:group>
 
             <c:group name="Repo Source">

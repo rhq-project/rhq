@@ -72,7 +72,7 @@ public class BundleVersion implements Serializable {
     private String version;
 
     @Column(name = "ACTION", nullable = false)
-    private byte[] action;
+    private String action;
 
     @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -116,11 +116,11 @@ public class BundleVersion implements Serializable {
         this.version = version;
     }
 
-    public byte[] getAction() {
+    public String getAction() {
         return action;
     }
 
-    public void setAction(byte[] action) {
+    public void setAction(String action) {
         this.action = action;
     }
 

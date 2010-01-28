@@ -164,12 +164,12 @@
                     <input type="hidden" name="ad" value="#{param.ad}" />
                     <input type="hidden" name="id" value="#{param.id}" />
 
-                    <h:panelGrid columns="2" border="1" cellpadding="5">
+                    <h:panelGrid columns="2" border="1" cellpadding="5" style="margin: 15px;">
                         <h:outputLabel for="alertNameInput" value="Name:  " />
-                        <h:inputText id="alertNameInput" value="#{alertUIBean.alertDefinition.name}" />
+                        <h:inputText id="alertNameInput" value="#{alertUIBean.alertDefinition.name}" style="width: 300px;" />
 
                         <h:outputLabel for="alertDescriptionInput" value="Description:  " />
-                        <h:inputTextarea id="alertDescriptionInput" value="#{alertUIBean.alertDefinition.description}" />
+                        <h:inputTextarea id="alertDescriptionInput" value="#{alertUIBean.alertDefinition.description}" style="width: 300px;" />
 
                         <h:outputLabel for="alertPriorityInput" value="Priority:  " />
                         <h:selectOneMenu id="alertPriorityInput" value="#{alertUIBean.alertDefinition.priority}">
@@ -180,14 +180,14 @@
                         <h:selectBooleanCheckbox id="alertEnabledInput" value="#{alertUIBean.alertDefinition.enabled}" />
                     </h:panelGrid>
 
+                    <h:outputLink id="cancelLink" styleClass="buttonmed" value="#" style="float: right;">
+                        <h:outputText value="Cancel" />
+                        <rich:componentControl for="editAlertDefinitionPanel" attachTo="cancelLink" operation="hide" event="onclick" />
+                    </h:outputLink>
+
                     <h:commandButton id="saveButton" value="Save Changes" styleClass="buttonmed" action="#{alertUIBean.saveAlertDefinition}" />
                 </h:form>
-
-                <br />
-                <h:outputLink id="cancelLink" styleClass="buttonmed" value="#">
-                    <h:outputText value="Cancel" />
-                    <rich:componentControl for="editAlertDefinitionPanel" attachTo="cancelLink" operation="hide" event="onclick" />
-                </h:outputLink>
+                
             </rich:modalPanel>
 
         </ui:define>

@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.bundle.test;
 
-import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -49,7 +48,7 @@ public class BundleTest extends AbstractEJB3Test {
             int id;
 
             String name = "BundleTest-testBundleVersionRepo";
-            byte[] action = "action/script/recipe is here".getBytes();
+            String action = "action/script/recipe is here";
 
             Repo repo1 = new Repo(name + "-Repo1");
             Repo repo2 = new Repo(name + "-Repo2");
@@ -126,7 +125,7 @@ public class BundleTest extends AbstractEJB3Test {
             int id;
 
             String name = "BundleTest-testBundleVersion";
-            byte[] action = "action/script/recipe is here".getBytes();
+            String action = "action/script/recipe is here";
 
             BundleType bundleType = new BundleType(name + "-Type");
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
@@ -155,7 +154,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert bvFind.getId() == bv.getId();
             assert bvFind.getName().equals(bv.getName());
             assert bvFind.getVersion().equals(bv.getVersion());
-            assert Arrays.equals(bvFind.getAction(), bv.getAction());
+            assert bvFind.getAction().equals(bv.getAction());
             assert bvFind.getBundle().equals(bv.getBundle());
             assert bvFind.equals(bv);
             assert bvFind.hashCode() == bv.hashCode();

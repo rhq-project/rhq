@@ -117,6 +117,7 @@ import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
@@ -850,7 +851,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("subject", user);
         }
 
-        searchString = PersistenceUtility.formatSearchParameter(searchString);
+        searchString = QueryUtility.formatSearchParameter(searchString);
 
         query.setParameter("category", category);
         queryCount.setParameter("category", category);
@@ -1448,7 +1449,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("excludeIds", excludeList);
         }
 
-        nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
+        nameFilter = QueryUtility.formatSearchParameter(nameFilter);
 
         queryCount.setParameter("groupId", groupId);
         query.setParameter("groupId", groupId);
@@ -1485,7 +1486,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         queryCount.setParameter("repoId", repoId);
         query.setParameter("repoId", repoId);
 
-        search = PersistenceUtility.formatSearchParameter(search);
+        search = QueryUtility.formatSearchParameter(search);
         queryCount.setParameter("search", search);
         query.setParameter("search", search);
 

@@ -50,12 +50,12 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceTypeTemplateCountComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -222,7 +222,7 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         }
 
         query.setParameter("category", category);
-        query.setParameter("nameFilter", PersistenceUtility.formatSearchParameter(nameFilter));
+        query.setParameter("nameFilter", QueryUtility.formatSearchParameter(nameFilter));
         query.setParameter("pluginName", pluginName);
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
 

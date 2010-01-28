@@ -241,10 +241,24 @@ public class RHNHelper {
 
         String name = p.getName();
         String version = p.getVersion();
+        String release = p.getRelease();
+        String epoch = p.getEpoch();
         String arch = p.getPackageArch();
         String downloadName = constructRpmDownloadName(name, version, p.getRelease(), p.getEpoch(), arch);
         String displayName = constructRpmDisplayName(name, version, p.getRelease(), arch);
-        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, version, "rpm", arch,
+        //
+        // RHQ doesn't have the concept of Epoch or Release, this is causing us to lose packages which have
+        // the same version but different release or epoch.  Look at the hashcode() definition for PackageDetailsKey
+        // and the PackageReport's use of a Set<ContentProviderPackageDetails> to see the problem.
+        // The solution we are targetting here is to store the package version inside of RHQ as a conglomerate of 
+        // epoch:version-release
+        //
+        String rhqVersion = version + "-" + release;
+        if (!StringUtils.isBlank(epoch)) {
+            rhqVersion = epoch + ":" + rhqVersion;
+        }
+
+        ContentProviderPackageDetailsKey key = new ContentProviderPackageDetailsKey(name, rhqVersion, "rpm", arch,
             "Linux", "Platforms");
         ContentProviderPackageDetails pkg = new ContentProviderPackageDetails(key);
 

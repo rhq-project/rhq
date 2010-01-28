@@ -28,6 +28,7 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -105,6 +106,7 @@ public class RpmPackageDiscoveryDelegate {
         while ((rpmName = rpmNameReader.readLine()) != null) {
             String name = null;
             String version = null;
+            String epoch = null;
             String architectureName = null;
 
             try {
@@ -115,7 +117,7 @@ public class RpmPackageDiscoveryDelegate {
                     .setArguments(new String[] {
                         "-q",
                         "--qf",
-                        "%{NAME}\\n%{VERSION}.%{RELEASE}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}",
+                        "%{NAME}\\n%{VERSION}.%{RELEASE}\\n{EPOCH}\\n%{ARCH}\\n%{INSTALLTIME}\\n%{FILEMD5S}\\n%{GROUP}\\n%{FILENAMES}\\n%{SIZE}\\n%{LICENSE}\\n%{DESCRIPTION}",
                         rpmName });
                 rpmQuery.setCaptureOutput(true);
 
@@ -126,6 +128,7 @@ public class RpmPackageDiscoveryDelegate {
 
                 name = rpmDataReader.readLine();
                 version = rpmDataReader.readLine();
+                epoch = rpmDataReader.readLine();
                 architectureName = rpmDataReader.readLine();
                 String installTimeString = rpmDataReader.readLine();
                 String md5 = rpmDataReader.readLine();
@@ -166,6 +169,9 @@ public class RpmPackageDiscoveryDelegate {
                     continue;
                 }
 
+                if (!StringUtils.isBlank(version)) {
+                    version = epoch + ":" + version;
+                }
                 PackageDetailsKey key = new PackageDetailsKey(name, version, "rpm", architectureName);
                 ResourcePackageDetails packageDetails = new ResourcePackageDetails(key);
                 packageDetails.setClassification(category);

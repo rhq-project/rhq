@@ -27,6 +27,8 @@ import org.rhq.core.db.DatabaseTypeFactory;
 public class QueryUtility {
 
     private static String ESCAPE_CHARACTER = null;
+    private static String ESCAPED_PERCENT = null;
+    private static String ESCAPED_UNDERSCORE = null;
 
     /**
      * Given the settings for the current DatabaseType, properly handle escaping special SQL characters.
@@ -39,12 +41,13 @@ public class QueryUtility {
             return null;
         }
 
-        boolean handleEscapedBackslash = "\\\\".equals(getEscapeCharacter());
-
-        if (handleEscapedBackslash) {
-            value = ((String) value).replaceAll("\\_", "\\\\_");
-            value = ((String) value).replaceAll("\\%", "\\\\%");
+        if (null == ESCAPED_UNDERSCORE) {
+            ESCAPED_UNDERSCORE = getEscapeCharacter() + "_";
+            ESCAPED_PERCENT = getEscapeCharacter() + "%";
         }
+
+        value = value.replaceAll("_", ESCAPED_UNDERSCORE);
+        value = value.replaceAll("%", ESCAPED_PERCENT);
 
         return value;
     }
@@ -76,6 +79,26 @@ public class QueryUtility {
         }
 
         return ESCAPE_CHARACTER;
+    }
+
+    /**
+     * If the current DatabaseType requires double escaping then ensure it is set correctly. This may be useful
+     * if the search string has been constructed outside of QueryUtil.formatSearchParameter(String).
+     * 
+     * @param value single escaped search string value
+     * @return The double escaped string
+     */
+    public static String handleDoubleEscaping(String value) {
+        if (null == ESCAPE_CHARACTER) {
+            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+        }
+
+        if ("\\\\".equals(ESCAPE_CHARACTER)) {
+            value = value.replaceAll("\\\\_", ESCAPED_UNDERSCORE);
+            value = value.replaceAll("\\\\%", ESCAPED_PERCENT);
+        }
+
+        return value;
     }
 
 }

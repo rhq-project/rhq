@@ -369,7 +369,7 @@ public final class CriteriaQueryGenerator {
                  * Double escape backslashes if they are not treated as string literals by the db vendor
                  * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
                  */
-                formattedValue = QueryUtility.escapeSearchParameter(formattedValue);
+                formattedValue = QueryUtility.handleDoubleEscaping(formattedValue);
 
                 if (wantsFuzzyMatching) {
                     // append '%' onto edges that don't already have '%' explicitly set from the caller
@@ -378,7 +378,9 @@ public final class CriteriaQueryGenerator {
                 }
                 value = formattedValue;
             }
-            LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            }
             query.setParameter(critField.getKey(), value);
         }
         if (null != this.authorizationPermsFragment) {

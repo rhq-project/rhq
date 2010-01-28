@@ -244,6 +244,7 @@
           <xs:enumeration value="users"/>
           <xs:enumeration value="roles"/>
           <xs:enumeration value="package-types"/>
+          <xs:enumeration value="resource-type-with-plugin"/>
        </xs:restriction>
    </xs:simpleType>
 

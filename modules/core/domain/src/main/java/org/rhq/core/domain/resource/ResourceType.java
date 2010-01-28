@@ -185,7 +185,10 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  SELECT rt.name " //
         + "    FROM ResourceType rt " //
         + "GROUP BY rt.name " //
-        + "  HAVING COUNT(rt.name) > 1") })
+        + "  HAVING COUNT(rt.name) > 1"),
+    @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" )
+})
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
@@ -231,7 +234,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
-        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) })
+        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY)
+    })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
@@ -268,6 +272,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
     public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";
     public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
+
+    public static final String QUERY_DYNAMIC_CONFIG_WITH_PLUGIN = "ResourceType.dynamicConfigWithPlugin";
 
     @Id
     @Column(name = "ID", nullable = false)

@@ -44,6 +44,7 @@ import org.rhq.enterprise.server.plugin.pc.content.DistributionDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionFileDetails;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSource;
 import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -75,7 +76,7 @@ public class DistributionSourceSynchronizer {
         subjectManager = LookupUtil.getSubjectManager();
     }
 
-    public SyncTracker synchronizeDistributionMetadata(SyncTracker tracker) throws Exception {
+    public SyncTracker synchronizeDistributionMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof DistributionSource)) {
             return tracker;
         }
@@ -118,7 +119,7 @@ public class DistributionSourceSynchronizer {
         return tracker;
     }
 
-    public SyncTracker synchronizeDistributionBits(SyncTracker tracker) throws Exception {
+    public SyncTracker synchronizeDistributionBits(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof DistributionSource)) {
             return tracker;
         }

@@ -31,6 +31,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
@@ -131,7 +132,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
     *   @throws Exception On all errors.
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");
         try {
@@ -157,7 +158,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
             }
         } catch (Exception e) {
             summary.errors.add(e.toString());
-            throw e;
+            throw new SyncException("error synching synchronizePackages", e);
         } finally {
             repo.disconnect();
             summary.markEnded();
@@ -191,7 +192,6 @@ public class RepoProvider implements ContentProvider, PackageSource {
         return path;
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

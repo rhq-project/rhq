@@ -160,18 +160,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             if (parent == null) {
                 throw new ResourceNotFoundException("Intended parent for new resource does not exist.");
             }
-        }
 
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parent.getId())) {
-            throw new PermissionException("You do not have permission to add this resource as a child.");
-        }
+            if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parent.getId())) {
+                throw new PermissionException("You do not have permission to add this resource as a child.");
+            }
 
-        if (getResourceByParentAndKey(user, parent, resource.getResourceKey(), resource.getResourceType().getPlugin(),
-            resource.getResourceType().getName()) != null) {
-            throw new ResourceAlreadyExistsException("Resource with key '" + resource.getResourceKey()
-                + "' already exists.");
+            if (getResourceByParentAndKey(user, parent, resource.getResourceKey(), resource.getResourceType()
+                .getPlugin(), resource.getResourceType().getName()) != null) {
+                throw new ResourceAlreadyExistsException("Resource with key '" + resource.getResourceKey()
+                    + "' already exists.");
+            }
         }
-
         if (parent != Resource.ROOT) {
             // Only set the relationships if this is not a root resource.
             // The cardinal rule is to add the relationship in both directions,
@@ -181,7 +180,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-
+        log.error("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();
         updateImplicitMembership(overlord, resource);

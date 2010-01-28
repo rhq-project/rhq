@@ -30,6 +30,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
@@ -557,6 +558,56 @@ public interface ContentSourceManagerLocal {
      */
     long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
         PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+
+    /**
+     * Requests the bits of a package be streamed down to the caller over the given output stream. 
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param packageVersion    packageVersion to fetch 
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream);
+
+    /**
+     * Requests a range of bits from a package.  This range of bits will be streamed down to the caller over the given 
+     * output stream.  This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param packageVersion    packageVersion to fetch 
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     * @param startByte         start index
+     * @param endByte           end index
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream, long startByte, long endByte);
+
+    /**
+     * Requests the bits of a distribution file be streamed down to the caller over the given output stream.
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility.
+     *
+     * @param distFile          distribution file to fetch
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputDistributionFileBits(DistributionFile distFile, OutputStream outputStream);
 
     /**
      * Adds the specified content source to the database but does not attempt to create or start

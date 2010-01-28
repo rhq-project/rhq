@@ -90,7 +90,10 @@ import org.rhq.core.domain.auth.Subject;
         + "  FROM Role r" //
         + " WHERE r.id NOT IN ( SELECT rn.role.id " //
         + "                       FROM RoleNotification rn" //
-        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) ") })
+        + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) "), //
+    @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
+        + "SELECT r.name FROM Role AS r")
+})
 @SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {
@@ -100,6 +103,8 @@ public class Role implements Serializable {
     public static final String QUERY_FIND_AVAILABLE_ROLES = "Role.findAvailableRoles";
     public static final String QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION_WITH_EXCLUDES = "Role.findAvailableRolesForAlertDefinitionWithExcludes";
     public static final String QUERY_FIND_AVAILABLE_ROLES_FOR_ALERT_DEFINITION = "Role.findAvailableRolesForAlertDefinition";
+
+    public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Role.dynamicConfigValues";
 
     private static final long serialVersionUID = 1L;
 

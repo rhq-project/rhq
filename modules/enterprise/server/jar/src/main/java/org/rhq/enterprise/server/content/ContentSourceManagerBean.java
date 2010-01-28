@@ -847,23 +847,32 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
                     // store content to local file system
                     File outputFile = getPackageBitsLocalFileAndCreateParentDir(pv.getId(), pv.getFileName());
                     log.info("OutPutFile is located at: " + outputFile);
+                    boolean download = false;
+
                     if (outputFile.exists()) {
                         // hmmm... it already exists, maybe we already have it?
                         // if the MD5's match, just ignore this download request and continue on
+                        // If they are different we re-download
                         String expectedMD5 = (pv.getMD5() != null) ? pv.getMD5() : "<unspecified MD5>";
                         String actualMD5 = MessageDigestGenerator.getDigestString(outputFile);
                         if (!expectedMD5.trim().toLowerCase().equals(actualMD5.toLowerCase())) {
-                            throw new Exception("Already have package bits for [" + pv + "] located at [" + outputFile
+                            log.error("Already have package bits for [" + pv + "] located at [" + outputFile
                                 + "] but the MD5 hashcodes do not match. Expected MD5=[" + expectedMD5
-                                + "], Actual MD5=[" + actualMD5 + "]");
+                                + "], Actual MD5=[" + actualMD5 + "] - redownloading package");
+                            download = true;
                         } else {
                             log.info("Asked to download package bits but we already have it at [" + outputFile
                                 + "] with matching MD5 of [" + actualMD5 + "]");
+                            download = false;
                         }
                     } else {
+                        download = true;
+                    }
+                    if (download) {
                         StreamUtil.copy(bitsStream, new FileOutputStream(outputFile), true);
                         bitsStream = null;
                     }
+
                 }
             } finally {
                 if (ps != null) {
@@ -1737,6 +1746,39 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
             packageVersionId);
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream) {
+        // Used by export of content through http
+
+        PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
+            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
+            .getArchitecture().toString());
+
+        int resourceId = 0; //set to dummy value
+
+        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, 0, -1, packageVersion
+            .getId());
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream, long startByte,
+        long endByte) {
+        // Used by export of content through http
+
+        PackageDetailsKey packageDetailsKey = new PackageDetailsKey(packageVersion.getDisplayName(), packageVersion
+            .getDisplayVersion(), packageVersion.getGeneralPackage().getPackageType().toString(), packageVersion
+            .getArchitecture().toString());
+
+        int resourceId = 0; //set to dummy value
+
+        log.info("Calling outputPackageVersionBitsRangeHelper() with package details: " + packageDetailsKey);
+        return outputPackageVersionBitsRangeHelper(resourceId, packageDetailsKey, outputStream, startByte, endByte,
+            packageVersion.getId());
+    }
+
     @SuppressWarnings("unchecked")
     private long outputPackageVersionBitsRangeHelper(int resourceId, PackageDetailsKey packageDetailsKey,
         OutputStream outputStream, long startByte, long endByte, int packageVersionId) {
@@ -1861,12 +1903,10 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
 
             // the magic happens here - outputStream is probably a remote stream down to the agent
             long bytesRetrieved;
-
             if (endByte < 0) {
                 if (startByte > 0) {
                     bitsStream.skip(startByte);
                 }
-
                 bytesRetrieved = StreamUtil.copy(bitsStream, outputStream, false);
             } else {
                 BufferedInputStream bis = new BufferedInputStream(bitsStream);
@@ -2051,5 +2091,34 @@ public class ContentSourceManagerBean implements ContentSourceManagerLocal {
         }
 
         return packageBitsFile;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionTimeout(45 * 60)
+    public long outputDistributionFileBits(DistributionFile distFile, OutputStream outputStream) {
+
+        long numBytes = 0;
+        InputStream bitStream = null;
+        try {
+            Distribution dist = distFile.getDistribution();
+            log.info("Distribution has a basePath of " + dist.getBasePath());
+            String distFilePath = dist.getBasePath() + "/" + distFile.getRelativeFilename();
+            File f = getDistributionFileBitsLocalFilesystemFile(dist.getLabel(), distFilePath);
+            log.info("Fetching: " + distFilePath + " on local file store from: " + f.getAbsolutePath());
+            bitStream = new FileInputStream(f);
+            numBytes = StreamUtil.copy(bitStream, outputStream);
+
+        } catch (Exception e) {
+            log.info(e);
+        } finally {
+            // close our stream but leave the output stream open
+            try {
+                bitStream.close();
+            } catch (Exception closeError) {
+                log.warn("Failed to close the bits stream", closeError);
+            }
+        }
+        log.debug("Retrieved and sent [" + numBytes + "] bytes for [" + distFile.getRelativeFilename() + "]");
+        return numBytes;
     }
 }

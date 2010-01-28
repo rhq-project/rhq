@@ -60,7 +60,7 @@ public interface AdvisoryManagerLocal {
     CVE createCVE(Subject user, String cvename) throws AdvisoryException;
 
     /**
-     * creates a AdvisoryCVE relationship object 
+     * creates a AdvisoryCVE relationship object
      * @param user
      * @param advisory
      * @param cve
@@ -78,6 +78,14 @@ public interface AdvisoryManagerLocal {
      * @throws AdvisoryException
      */
     AdvisoryPackage createAdvisoryPackage(Subject user, Advisory advisory, PackageVersion pkg) throws AdvisoryException;
+
+    /**
+     * returns an existing CVE object
+     * @param user
+     * @param cveId
+     * @return
+     */
+    CVE getCVE(Subject user, int cveId);
 
     /**
      * deletes specified cve object
@@ -159,7 +167,7 @@ public interface AdvisoryManagerLocal {
     /**
      *  find AdvisoryPackage object for given advId and packageVersion id
      * @param overlord
-     * @param advId 
+     * @param advId
      * @param pkgVerId
      */
     AdvisoryPackage findAdvisoryPackage(Subject overlord, int advId, int pkgVerId);

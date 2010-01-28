@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.content.ContentSyncStatus;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -47,10 +48,24 @@ public class RepoDetailsUIBean {
         return "edit";
     }
 
+    public boolean getCurrentlySyncing() {
+        String syncStatus = getSyncStatus();
+        if (!syncStatus.equals(ContentSyncStatus.SUCCESS.toString())
+            && !syncStatus.equals(ContentSyncStatus.FAILURE.toString())
+            && !syncStatus.equals(ContentSyncStatus.NONE.toString())
+            && !syncStatus.equals(ContentSyncStatus.CANCELLED.toString())
+            && !syncStatus.equals(ContentSyncStatus.CANCELLING.toString())) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public String getSyncStatus() {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
-        return LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+        String retval = LookupUtil.getRepoManagerLocal().calculateSyncStatus(subject, id);
+        return retval;
     }
 
     public RepoSyncResults getSyncResults() {
@@ -63,11 +78,13 @@ public class RepoDetailsUIBean {
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         Integer id = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         RepoSyncResults r = LookupUtil.getRepoManagerLocal().getMostRecentSyncResults(subject, id);
+        String retval;
         if (r != null && r.getPercentComplete() != null) {
-            return r.getPercentComplete().toString();
+            retval = r.getPercentComplete().toString();
         } else {
-            return "0";
+            retval = "0";
         }
+        return retval;
     }
 
     public String sync() {
@@ -99,6 +116,21 @@ public class RepoDetailsUIBean {
         } catch (ContentException ce) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
             return "edit"; // stay in edit mode on failure
+        }
+
+        return "success";
+    }
+
+    public String cancelSync() {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        RepoManagerLocal manager = LookupUtil.getRepoManagerLocal();
+        Integer repoId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        try {
+            manager.cancelSync(subject, repoId);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The synchronization has been cancelled.");
+        } catch (Exception ce) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Error: " + ce.getMessage());
+            return "success"; // stay in edit mode on failure
         }
 
         return "success";

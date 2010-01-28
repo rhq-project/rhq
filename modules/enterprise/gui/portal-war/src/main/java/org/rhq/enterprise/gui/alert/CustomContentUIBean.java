@@ -29,6 +29,7 @@ import org.jboss.seam.contexts.Contexts;
 import org.jboss.seam.log.Log;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 @Scope(ScopeType.PAGE)
@@ -40,6 +41,10 @@ public class CustomContentUIBean {
 
     @RequestParameter
     private String senderName;
+
+    @RequestParameter
+    private Integer notificationId;
+
     private String contentUrl;
 
     public String getContentUrl() {
@@ -56,7 +61,8 @@ public class CustomContentUIBean {
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
-        Object backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName);
+        CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName,
+                notificationId);
 
         if (backingBeanName != null && backingBean != null) {
             outjectBean(backingBeanName, backingBean);
@@ -65,7 +71,7 @@ public class CustomContentUIBean {
 
     /**
      * We are just getting an Object from the plugin manager which acts as our backing bean.
-     * This method is used instead of @Out or @Factory because we need to be able to 
+     * This method is used instead of @Out or @Factory because we need to be able to
      * dynamically assign the component's name so that the plugin author can define the
      * name of bean, but this class is not an "official" seam component.
      */

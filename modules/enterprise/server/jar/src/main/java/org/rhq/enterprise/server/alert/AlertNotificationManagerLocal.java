@@ -34,6 +34,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 /**
  * @author Joseph Marques
@@ -123,9 +124,10 @@ public interface AlertNotificationManagerLocal {
     /**
      * Return the backing bean for the AlertSender with the passed shortNama
      * @param shortName name of a sender
+     * @param alertNotificationId
      * @return an initialized BackingBean or null in case of error
      */
-    Object getBackingBeanForSender(String shortName);
+    CustomAlertSenderBackingBean getBackingBeanForSender(String shortName, Integer alertNotificationId);
 
     String getBackingBeanNameForSender(String shortName);
 
@@ -144,10 +146,12 @@ public interface AlertNotificationManagerLocal {
      * @param name name of this notification template. Must be unique
      * @param description description of the template
      * @param notifications notifications that make up the template
+     * @param copyNotifications
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
-    NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException;
+    NotificationTemplate createNotificationTemplate(String name, String description,
+                                                    List<AlertNotification> notifications, boolean copyNotifications) throws IllegalArgumentException;
 
     /**
      * Get all defined notification templates in the system along with their AlertNotifications

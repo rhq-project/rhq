@@ -62,6 +62,7 @@ import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataMan
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert.AlertPluginDescriptorType;
 
 /**
@@ -432,11 +433,22 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     /**
      * Return the backing bean for the AlertSender with the passed shortName
      * @param shortName name of a sender
+     * @param alertNotificationId
      * @return an initialized BackingBean or null in case of error
      */
-    public Object getBackingBeanForSender(String shortName) {
+    public CustomAlertSenderBackingBean getBackingBeanForSender(String shortName, Integer alertNotificationId) {
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
-        return pluginmanager.getBackingBeanForSender(shortName);
+        CustomAlertSenderBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
+
+        if (alertNotificationId!=null) {
+            AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
+            if (notification!=null && bean != null) {
+                Configuration config = notification.getConfiguration(); // TODO clone?
+                config.getAllProperties().size(); // Eager load
+                bean.setAlertParameters(config);
+            }
+        }
+        return bean;
     }
 
     public String getBackingBeanNameForSender(String shortName) {
@@ -554,11 +566,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * @param name name of this notification template. Must be unique
      * @param description description of the template
      * @param notifications notifications that make up the template
+     * @param copyNotifications
      * @return the newly created template
      * @throws IllegalArgumentException when a template with the passed name already exists
      */
     @SuppressWarnings("unchecked")
-    public NotificationTemplate createNotificationTemplate(String name, String description, List<AlertNotification> notifications) throws IllegalArgumentException {
+    public NotificationTemplate createNotificationTemplate(String name, String description,
+                                                           List<AlertNotification> notifications,
+                                                           boolean copyNotifications) throws IllegalArgumentException {
 
         Query q = entityManager.createNamedQuery(NotificationTemplate.FIND_BY_NAME);
         q.setParameter("name",name);
@@ -570,9 +585,14 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
         NotificationTemplate templ = new NotificationTemplate(name,description);
         entityManager.persist(templ);
         for (AlertNotification n : notifications) {
-            n.setNotificationTemplate(templ);
-            templ.addNotification(n);
-            entityManager.persist(n);
+            if (copyNotifications) {
+//                AlertNotification alNo = n.copyWithAlertDefintion() TODO implement / fix this
+            }
+            else {
+                n.setNotificationTemplate(templ);
+                templ.addNotification(n);
+                entityManager.persist(n);
+            }
 
         }
         return templ;

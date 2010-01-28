@@ -41,19 +41,19 @@
                             <a4j:support event="onclick"
                                          ignoreDupResponses="true"
                                          requestDelay="25"
-                                         reRender="alertConfig,senderName"
+                                         reRender="alertConfig,senderName,notificationId"
                                          oncomplete="updateCustomContent();"
                                          onsubmit="showLoadConfig();" />
                             <a4j:support event="onkeyup"
                                          ignoreDupResponses="true"
                                          requestDelay="150"
-                                         reRender="alertConfig,senderName"
+                                         reRender="alertConfig,senderName,notificationId"
                                          oncomplete="updateCustomContent();"
                                          onsubmit="showLoadConfig();" />
                             <a4j:support event="onorderchanged"
                                          ignoreDupResponses="true"
                                          requestDelay="250"
-                                         reRender="senderName" />
+                                         reRender="senderName,notificationId" />
                         </rich:orderingList>
                     </h:form>
 
@@ -70,7 +70,7 @@
                                          value="Remove Selected"
                                          action="#{alertNotificationsUIBean.removeSelected}"
                                          styleClass="buttonmed"/>
-                        
+
                         <br /><br />
                         <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
                             <h:outputText value="Add New Alert Notification" />
@@ -111,6 +111,9 @@
                 <h:outputText id="senderName"
                               style="display: none;"
                               value="#{alertNotificationsUIBean.activeNotification.senderName}" />
+                <h:outputText id="notificationId"
+                              style="display: none;"
+                              value="#{alertNotificationsUIBean.activeNotification.id}" />
             </h:panelGrid>
             </a4j:region>
         </rich:panel>
@@ -156,7 +159,7 @@
                         </h:commandButton>
                     </h:form>
                 </rich:panel>
-                
+
                 <rich:panel id="addAlertFromTemplatePanel">
                     <f:facet name="header">
                         <h:outputText value="Add Alert Notifications from template"/>
@@ -199,15 +202,18 @@
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>
 
-        
-        
+
+
         <script type="text/javascript">
             function updateCustomContent() {
                 var sender = $('senderName').innerHTML;
+                var notificationId = $('notificationId').innerHTML;
                 new Ajax.Updater('customContentArea',
                                  'notif/customContent.xhtml',
                                  { method: 'get',
-                                   parameters: {'senderName': sender, 'ad': #{param.ad}, 'id': #{param.id}}
+                                   parameters: {'senderName': sender, 'ad': #{param.ad}, 'id': #{param.id},
+                                                'notificationId' : notificationId
+                                                }
                                  });
 
                 hideLoadConfig();

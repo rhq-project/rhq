@@ -349,7 +349,8 @@ public class NotificationTemplatesUIBean implements Serializable {
         NotificationTemplate templ;
 
         try {
-            templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList<AlertNotification>());
+            templ = alertNotificationManager.createNotificationTemplate(newTemplateName,newTemplateDescription,new ArrayList<AlertNotification>(),
+                    true);
 
             selectedTemplate = templ;
             alertNotifications = selectedTemplate.getNotifications();

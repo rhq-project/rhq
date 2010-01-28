@@ -43,6 +43,7 @@ public class QueryUtility {
 
         if (handleEscapedBackslash) {
             value = ((String) value).replaceAll("\\_", "\\\\_");
+            value = ((String) value).replaceAll("\\%", "\\\\%");
         }
 
         return value;

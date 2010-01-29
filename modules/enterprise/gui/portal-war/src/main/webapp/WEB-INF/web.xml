@@ -398,14 +398,6 @@
       </init-param>
       <load-on-startup>2</load-on-startup>
    </servlet>
-    <servlet>
-        <servlet-name>org.rhq.enterprise.gui.gwt.RHQPortal ResourceGroupGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.gwt.server.inventory.group.ResourceGroupGWTServiceImpl</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>org.rhq.enterprise.gui.gwt.RHQPortal ResourceGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.gwt.server.inventory.resource.ResourceGWTServiceImpl</servlet-class>
-    </servlet>
 
     <!-- The endpoints to the agent update servlet -->
    <servlet-mapping>
@@ -476,14 +468,7 @@
       <servlet-name>action</servlet-name>
       <url-pattern>*.do</url-pattern>
    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.gwt.RHQPortal ResourceGroupGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.gwt.RHQPortal/ResourceGroupGWTService</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.gwt.RHQPortal ResourceGWTService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.gwt.RHQPortal/ResourceGWTService</url-pattern>
-    </servlet-mapping>
+
     <session-config>
       <session-timeout>30</session-timeout>
    </session-config>

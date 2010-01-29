@@ -28,8 +28,6 @@
       <seam.version>2.1.0.SP1</seam.version>
       <jetty-jspc.version>7.0.0.RC6</jetty-jspc.version>
 
-      <gwt.version>2.0.0</gwt.version>
-
       <product.shortName>RHQ</product.shortName>
       <product.name>RHQ</product.name>
       <product.fullName>RHQ</product.fullName>
@@ -41,21 +39,6 @@
    </properties>
 
    <dependencies>
-
-
-       <dependency>
-           <groupId>com.google.gwt</groupId>
-           <artifactId>gwt-servlet</artifactId>
-           <version>${gwt.version}</version>
-           <scope>compile</scope>
-       </dependency>
-       <dependency>
-           <groupId>com.google.gwt</groupId>
-           <artifactId>gwt-user</artifactId>
-           <version>${gwt.version}</version>
-           <scope>provided</scope>
-       </dependency>
-
 
        <!-- Internal Deps -->
 
@@ -405,26 +388,6 @@
       <finalName>rhq-portal</finalName>
       <plugins>
 
-
-           <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>gwt-maven-plugin</artifactId>
-               <version>1.2.0-11137</version>
-               <configuration>
-                   <inplace>true</inplace>
-                   <logLevel>INFO</logLevel>
-                   <runTarget>RHQPortal.html</runTarget>
-                   <extraJvmArgs>-Xmx512m</extraJvmArgs>
-               </configuration>
-               <executions>
-                   <execution>
-                       <goals>
-                           <goal>compile</goal>
-                       </goals>
-                   </execution>
-               </executions>
-           </plugin>
-
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <version>2.1-alpha-1</version>
@@ -610,6 +573,7 @@
    </profiles>
 
    <repositories>
+
       <repository>
          <id>java.net-m1-releases</id>
          <name>Java.net Maven1 Repository - for javax.faces, javax.el, com.sun.el, and com.sun.facelets releases</name>

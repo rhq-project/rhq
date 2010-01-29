@@ -38,7 +38,9 @@ public class FailoverListComposite implements Iterator<FailoverListComposite.Ser
     private List<ServerEntry> servers;
     private int nextIndex = 0;
 
-    public static class ServerEntry {
+    public static class ServerEntry implements Serializable {
+
+        private static final long serialVersionUID = 1L;
 
         public final int serverId;
         public final String address;

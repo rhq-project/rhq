@@ -1,0 +1,19 @@
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 1.6//EN"
+        "http://google-web-toolkit.googlecode.com/svn/releases/1.6/distro-source/core/src/gwt-module.dtd">
+<module>
+
+
+    <inherits name='com.google.gwt.user.User'/>
+    <inherits name='org.rhq.core.RHQDomain'/>
+
+    <inherits name='com.smartgwt.SmartGwt' />
+
+
+    <set-property name="user.agent" value="safari"/>
+
+    <entry-point class='org.rhq.enterprise.gui.coregui.client.CoreGUI'/>
+
+    <servlet path="/ResourceGroupGWTService" class="org.rhq.enterprise.gui.coregui.server.inventory.group.ResourceGroupGWTServiceImpl"/>
+    <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.inventory.resource.ResourceGWTServiceImpl"/>
+
+</module>

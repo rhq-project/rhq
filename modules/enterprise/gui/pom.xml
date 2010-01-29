@@ -36,6 +36,7 @@
         <module>installer-war</module>
         <module>webdav-war</module>
         <module>alert-migration</module>
+        <module>coregui</module>
       </modules>
     </profile>
 

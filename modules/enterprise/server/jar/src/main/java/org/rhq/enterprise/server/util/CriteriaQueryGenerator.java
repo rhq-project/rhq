@@ -313,9 +313,9 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
-        for (String entry : results) {
-            LOG.info("Fetch: (" + entry + ")");
-        }
+//        for (String entry : results) {
+//            LOG.info("Fetch: (" + entry + ")");
+//        }
         return results;
     }
 
@@ -357,9 +357,9 @@ public final class CriteriaQueryGenerator {
                 results.put(getCleansedFieldName(filterField, 6), filterFieldValue);
             }
         }
-        for (Map.Entry<String, Object> entries : results.entrySet()) {
-            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
-        }
+//        for (Map.Entry<String, Object> entries : results.entrySet()) {
+//            LOG.info("Filter: (" + entries.getKey() + ", " + entries.getValue() + ")");
+//        }
         return results;
     }
 

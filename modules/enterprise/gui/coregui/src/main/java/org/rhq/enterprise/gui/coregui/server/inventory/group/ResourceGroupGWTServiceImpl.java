@@ -16,22 +16,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.gwt.client.inventory.resource;
+package org.rhq.enterprise.gui.coregui.server.inventory.group;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
+import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import org.rhq.enterprise.gui.coregui.client.inventory.group.ResourceGroupGWTService;
 
 
 
 /**
  * @author Greg Hinkle
  */
-public interface ResourceGWTServiceAsync {
-
-
-    void findResourcesByCriteria(ResourceCriteria criteria, AsyncCallback<PageList<Resource>> callback);
-
+public class ResourceGroupGWTServiceImpl extends RemoteServiceServlet implements ResourceGroupGWTService {
 }

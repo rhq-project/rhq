@@ -16,27 +16,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.gwt.client.inventory.group;
+package org.rhq.enterprise.gui.coregui.client.inventory.resource;
+
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 import com.google.gwt.core.client.GWT;
 
 
-
 /**
  * @author Greg Hinkle
  */
-@RemoteServiceRelativePath("ResourceGroupGWTService")
-public interface ResourceGroupGWTService extends RemoteService {
+@RemoteServiceRelativePath("ResourceGWTService")
+public interface ResourceGWTService extends RemoteService {
+
+    PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
+
     /**
      * Utility/Convenience class.
-     * Use ResourceGroupGWTService.App.getInstance() to access static instance of ResourceGroupGWTServiceAsync
+     * Use ResourceGWTService.App.getInstance() to access static instance of ResourceGWTServiceAsync
      */
     public static class App {
-        private static final ResourceGroupGWTServiceAsync ourInstance = (ResourceGroupGWTServiceAsync) GWT.create(ResourceGroupGWTService.class);
+        private static final ResourceGWTServiceAsync ourInstance = (ResourceGWTServiceAsync) GWT.create(ResourceGWTService.class);
 
-        public static ResourceGroupGWTServiceAsync getInstance() {
+        public static ResourceGWTServiceAsync getInstance() {
             return ourInstance;
         }
     }

@@ -967,7 +967,6 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         for (RepoAdvisory result : results) {
             advs.add(result.getAdvisory());
         }
-        log.debug("list of Advisory : " + advs + " associated to the repo: " + repoid);
         long count = getAdvisoryCountFromRepo(subject, repoid);
 
         return new PageList<Advisory>(advs, (int) count, pc);

@@ -415,7 +415,7 @@ public class ContentProviderManager {
             log.debug("synchronizeRepo :: Success");
         } catch (Exception e) {
             RepoSyncResults recentResults = repoManager.getMostRecentSyncResults(overlord, repo.getId());
-            log.debug("Caught InterruptedException");
+            log.debug("Caught Exception: ", e);
             progress.append("\n ** Cancelled syncing **");
             tracker.setResults(progress.toString());
             tracker.getProgressWatcher().resetToZero();

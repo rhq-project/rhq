@@ -142,6 +142,9 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
+                    <!-- Memory Performance Testing 
+                    <argLine> -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.port=9000 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -agentlib:hprof=heap=dump,file=/tmp/hprof.bin,format=b,depth=10 </argLine>
+                    -->
                     <!--
                         <argLine>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
                     -->
@@ -169,8 +172,17 @@
                                 be deleted after use.
                             -->
                             <name>RhnXmlrpcSaveTempFiles</name>
+                            <value>true</value>
+                        </property>
+                        <property>
+                            <!--
+                                set this to true if you want to run a package metadata sync through RHNProvider.
+                            -->
+                            <name>RunTestPerfPackageMetadata</name>
                             <value>false</value>
                         </property>
+
+
                         <property>
                             <name>log4j.configuration</name>
                             <value>test-log4j.xml</value>

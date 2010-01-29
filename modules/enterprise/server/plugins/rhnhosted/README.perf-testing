@@ -1,0 +1,20 @@
+Steps for running a test of the download/parse of package metadata from RHN Hosted.
+
+1. Build this project. 
+ mvn compile
+
+2. Run the standalone class, "DownloadPackageMetadataTool"
+ Chose either approach "a" or "b"
+
+ a. Use script "downloadMetadata.sh"
+  Example: "./downloadMetadata.sh rhel-i386-server-5"
+ 
+ -- OR --
+
+ b. Run through maven as:
+ mvn -e exec:java -Dexec.mainClass="org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.DownloadPackageMetadataTool" -Drhn.channel=$1 -Dexec.args="" -Dlog4j.configuration="file://${PWD}/src/test/resources/test-log4j.xml"
+
+ Change -Drhn.channel= to the channel you want to download metadata for.
+
+
+

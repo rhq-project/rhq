@@ -117,6 +117,7 @@ public class TestPerfPackageMetadata {
             assert false;
         }
         Set<ContentProviderPackageDetails> newPkgs = report.getNewPackages();
+        log.info("Fetched metadata for " + newPkgs.size() + " packages.");
         provider.shutdown();
     }
 }

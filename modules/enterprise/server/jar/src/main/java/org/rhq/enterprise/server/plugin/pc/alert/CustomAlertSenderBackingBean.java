@@ -18,13 +18,8 @@
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
-import javax.persistence.EntityManager;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -47,11 +42,8 @@ public class CustomAlertSenderBackingBean {
 
     protected Configuration persistConfiguration(Configuration config) {
 
-//        AlertNotificationManagerLocal alNo = LookupUtil.getAlertNotificationManager();
-//        alNo.updateConfiguration(config);
-
-        EntityManager em = LookupUtil.getEntityManager();
-        config = em.merge(config);
+        ConfigurationManagerLocal mgr = LookupUtil.getConfigurationManager();
+        config = mgr.mergeConfiguration(config);
 
         return config;
 

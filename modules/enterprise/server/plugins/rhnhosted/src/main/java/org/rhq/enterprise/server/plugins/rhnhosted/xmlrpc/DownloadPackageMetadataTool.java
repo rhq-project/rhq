@@ -50,6 +50,9 @@ public class DownloadPackageMetadataTool {
     private final Log log = LogFactory.getLog(DownloadPackageMetadataTool.class);
 
     public static final String CHANNEL_PROP_NAME = "rhn.channel";
+    public static final String START_INDEX_PROP = "rhn.index.start";
+    public static final String END_INDEX_PROP = "rhn.index.end";
+    public static final String SAVE_FILE_PATH_PROP = "rhn.save.file.path";
     //String rhnURL = "http://satellite.rhn.stage.redhat.com";
     String rhnURL = "http://satellite.rhn.redhat.com";
     String certLoc = "./entitlement-cert.xml";
@@ -137,9 +140,12 @@ public class DownloadPackageMetadataTool {
      * 
      * @param channelName channel name to sync
      * @param saveFilePath where to save the raw xml data
+     * @param start the index to start fetching package metadata from
+     * @param end the index to stop fetching package metadata for, use -1 if you want all packages
      * @throws Exception
      */
-    public List<RhnPackageType> saveMetadata(String channelName, String saveFilePath) throws Exception {
+    public List<RhnPackageType> saveMetadata(String channelName, String saveFilePath, int start, int end)
+        throws Exception {
 
         // Setting up a XmlRpcClient to only use for fetching of package metadata.
         XmlRpcClient client = getClient(true, saveFilePath);
@@ -152,11 +158,11 @@ public class DownloadPackageMetadataTool {
          * We might want to only process a slice of the packages later, so breaking it out now
          * eg. might only want to get metadata for packages 2300 - 2700
          */
-        int startIndex = 0;
+        int startIndex = start;
         if ((startIndex < 0) || (startIndex > pkgIds.length)) {
             startIndex = 0;
         }
-        int endIndex = pkgIds.length;
+        int endIndex = end;
         if ((endIndex > pkgIds.length) || (endIndex < 0)) {
             endIndex = pkgIds.length;
         }
@@ -167,9 +173,12 @@ public class DownloadPackageMetadataTool {
         }
         // Fetch metadata
         Object[] params = new Object[] { getSystemId(), reqPackages };
+        log.info("Calling 'dump.packages' on " + reqPackages.size() + " packages");
         long startTime = System.currentTimeMillis();
         JAXBElement<RhnSatelliteType> result = (JAXBElement) client.execute("dump.packages", params);
         long endTime = System.currentTimeMillis();
+        log.info("Finished reading data/parsing from 'dump.packages'.");
+
         RhnSatelliteType sat = result.getValue();
         List<RhnPackageType> pkgs = sat.getRhnPackages().getRhnPackage();
         log.info("Fetch of package metadata for " + pkgs.size() + " packages took " + (endTime - startTime) + "ms");
@@ -185,10 +194,30 @@ public class DownloadPackageMetadataTool {
             System.exit(-1);
         }
 
-        String saveFilePath = System.getProperty("java.io.tmpdir") + File.separator + channelName
-            + "-package-metadata.xml";
+        String startRange = System.getProperty(START_INDEX_PROP);
+        if (StringUtils.isBlank(startRange)) {
+            System.out.println("No property set for " + START_INDEX_PROP + " so default to 0");
+            startRange = "0";
+        }
+        int start = Integer.parseInt(startRange);
+
+        String endRange = System.getProperty(END_INDEX_PROP);
+        if (StringUtils.isBlank(endRange)) {
+            System.out.println("No property set for " + END_INDEX_PROP + " so default to -1");
+            endRange = "-1";
+        }
+        int end = Integer.parseInt(endRange);
+
+        String saveFilePath = System.getProperty(SAVE_FILE_PATH_PROP);
+        if (StringUtils.isBlank(saveFilePath)) {
+            saveFilePath = System.getProperty("java.io.tmpdir") + File.separator + channelName
+                + "-package-metadata.xml";
+            System.out.println("Setting saveFilePath to " + saveFilePath);
+        }
+        System.out.println("saveFilePath = " + saveFilePath);
+
         System.out.println("Will fetch package metadata for: " + channelName + " and save it to: " + saveFilePath);
-        pkgMetadata.saveMetadata(channelName, saveFilePath);
+        pkgMetadata.saveMetadata(channelName, saveFilePath, start, end);
         System.out.println("Package metadata for channel {" + channelName + "} written to " + saveFilePath);
     }
 }

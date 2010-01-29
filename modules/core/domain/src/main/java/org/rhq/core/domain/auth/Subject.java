@@ -184,7 +184,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND s.fsystem = FALSE " //
         + "   AND s.factive = TRUE"), //
     @NamedQuery(name = Subject.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT s.name FROM Subject AS s WHERE s.fsystem = false")
+        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false")
 })
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")

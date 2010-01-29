@@ -28,9 +28,10 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertNull;
 
 public class StructuredConfigManagementTest extends ConfigManagementTest {
 
@@ -74,8 +75,6 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
 
     @Test
     public void nullShouldBeReturnedWhenStructuredIsNull() throws Exception {
-        final Configuration config = null;
-
         context.checking(new Expectations() {{
             atLeast(1).of(componentService).getComponent(resourceId,
                                                          ResourceConfigurationFacet.class,
@@ -117,8 +116,48 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
 
     @Test
     public void facetShouldBeCalledToUpdateStructured() throws Exception {
-        final Configuration structuredConfig = new Configuration();
+        final Configuration config = new Configuration();
 
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config);
+
+            oneOf(configFacet).persistStructuredConfiguration(config);
+        }});
+
+        structuredMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenValidationFails() throws Exception {
+        final Configuration config = new Configuration();
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config); will(throwException(new RuntimeException()));
+        }});
+
+        structuredMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenUpdateFails() throws Exception {
+        final Configuration config = new Configuration();
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config);
+
+            oneOf(configFacet).persistStructuredConfiguration(config); will(throwException(new RuntimeException()));
+        }});
+
+        structuredMgmt.executeUpdate(resourceId, config);
+    }
+
+    private void addDefaultExpectationsForUpdate() throws Exception {
         final boolean isDaemonThread = false;
 
         context.checking(new Expectations() {{
@@ -129,11 +168,7 @@ public class StructuredConfigManagementTest extends ConfigManagementTest {
                                                          isDaemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));
-
-            oneOf(configFacet).persistStructuredConfiguration(structuredConfig);
         }});
-
-        structuredMgmt.executeUpdate(resourceId, structuredConfig);
     }
 
 }

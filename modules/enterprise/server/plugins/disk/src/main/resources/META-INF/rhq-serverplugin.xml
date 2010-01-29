@@ -25,21 +25,6 @@
             <c:group name="General">
                 <c:simple-property name="rootDirectory" type="directory" required="true"
                                    description="The root directory that contains all content that is to be served by this content provider. In an HA environment, this must be on a distributed file system that all servers can access."/>
-
-                <c:dynamic-property name="users" displayName="User Display Name" description="TEST - List of all users in the system."
-                                    required="true" activationPolicy="shutdown">
-                    <c:database-backing key="users"/>
-                </c:dynamic-property>
-
-                <c:dynamic-property name="roles" description="TEST - List of all roles in the system."
-                                    readOnly="true" required="false">
-                    <c:database-backing key="roles"/>
-                </c:dynamic-property>
-
-                <c:dynamic-property name="packageTypes" description="TEST - List of all package types in the system."
-                                    required="false" summary="true">
-                    <c:database-backing key="package-types"/>
-                </c:dynamic-property>
             </c:group>
 
             <c:group name="Package Source">
@@ -47,14 +32,18 @@
                                    type="boolean" description="Indicates if this instance of the plugin should act as a package source"/>
                 <c:simple-property name="filenameFilter" required="true" summary="true" default=".*"
                                    description="A regular expression that identifies a file of this package type (e.g. '.*\.jar', '.*/i686/.*\.rpm$')"/>
-                <c:simple-property name="packageTypeName" required="true" summary="true"
-                                   description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')"/>
-                <c:simple-property name="architectureName" required="true" summary="true" default="noarch"
-                                   description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
-                <c:simple-property name="resourceTypeName" required="true" summary="true"
-                                   description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
-                <c:simple-property name="resourceTypePluginName" required="true" summary="true"
-                                   description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
+                <c:dynamic-property name="packageTypeName" required="true" summary="true"
+                                   description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')">
+                    <c:database-backing key="package-types"/>
+                </c:dynamic-property>
+                <c:dynamic-property name="architectureName" required="true" summary="true"
+                                    description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')">
+                    <c:database-backing key="package-architectures"/>
+                </c:dynamic-property>
+                <c:dynamic-property name="resourceType" required="true" summary="true"
+                                    description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')">
+                    <c:database-backing key="resource-type-with-plugin"/>
+                </c:dynamic-property>
             </c:group>
 
             <c:group name="Repo Source">

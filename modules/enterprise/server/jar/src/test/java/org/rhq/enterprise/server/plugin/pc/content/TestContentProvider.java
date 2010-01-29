@@ -282,10 +282,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         return "foo";
     }
 
-    public SyncProgressWeight getSyncProgressWeight() {
-        return SyncProgressWeight.DEFAULT_WEIGHTS;
-    }
-
     /**
      * Returns a list of repo names that were used to all calls to
      * {@link #synchronizePackages(String, PackageSyncReport, Collection)}
@@ -342,6 +338,10 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         }
 
         return null;
+    }
+
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 
 }

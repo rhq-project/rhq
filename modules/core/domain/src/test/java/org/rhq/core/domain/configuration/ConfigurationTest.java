@@ -417,14 +417,14 @@ public class ConfigurationTest {
     }
 
     private RawConfiguration createRawConfiguration(String path) {
-        byte[] contents = new byte[10];
+        byte[] bytes = new byte[10];
 
         Random random = new Random();
-        random.nextBytes(contents);
+        random.nextBytes(bytes);
 
         RawConfiguration rawConfig = new RawConfiguration();
         rawConfig.setPath(path);
-        rawConfig.setContents(contents);
+        rawConfig.setContents(new String(bytes));
 
         return rawConfig;
     }

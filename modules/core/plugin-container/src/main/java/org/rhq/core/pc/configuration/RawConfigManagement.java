@@ -28,10 +28,8 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 
 import java.util.Set;
 
@@ -65,10 +63,21 @@ public class RawConfigManagement extends ConfigManagementSupport {
         throws PluginContainerException {
 
         ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+        StringBuilder errors = new StringBuilder();
 
         for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-            facet.persistRawConfiguration(rawConfig);
+            try {
+                facet.validateRawConfiguration(rawConfig);
+                facet.persistRawConfiguration(rawConfig);
+            }
+            catch (Throwable t) {
+                // TODO Might want to specify in the error detail whether the validate or update call failed
+                errors.append(t.getMessage()).append("\n\n");
+            }
         }
 
+        if (errors.length() > 0) {
+            throw new ConfigurationUpdateException(errors.toString());
+        }
     }
 }

@@ -123,12 +123,12 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Au
             Set<RawConfiguration> configs = new HashSet<RawConfiguration>();
             RawConfiguration modules = new RawConfiguration();
             modules.setPath(MODULES_PATH);
-            modules.setContents(FileUtils.readFileToByteArray(new File(MODULES_PATH)));
+            modules.setContents(FileUtils.readFileToString(new File(MODULES_PATH)));
             configs.add(modules);
 
             RawConfiguration settings = new RawConfiguration();
             settings.setPath(SETTINGS_PATH);
-            settings.setContents(FileUtils.readFileToByteArray(new File(SETTINGS_PATH)));
+            settings.setContents(FileUtils.readFileToString(new File(SETTINGS_PATH)));
             configs.add(settings);
             return configs;
         } catch (Exception e) {
@@ -187,7 +187,6 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Au
         // TODO Auto-generated method stub
     }
 
-    @Override
     public Property createProperty(String propName, String augeasPath, Augeas aug) {
         if ("settings/manage_dhcp".equals(propName) || "settings/manage_dns".equals(propName)) {
             return new PropertySimple(propName, "1".equals(aug.get(augeasPath)));
@@ -195,7 +194,6 @@ public class CobblerComponent extends AugeasConfigurationComponent implements Au
         return new PropertySimple(propName, aug.get(augeasPath));
     }
 
-    @Override
     public String getPropertyValue(String propName, Configuration from) {
         if ("settings/manage_dhcp".equals(propName) || "settings/manage_dns".equals(propName)) {
             PropertySimple prop = (PropertySimple) from.get(propName);

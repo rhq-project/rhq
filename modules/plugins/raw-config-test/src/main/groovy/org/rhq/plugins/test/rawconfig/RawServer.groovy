@@ -10,35 +10,46 @@ import groovy.util.AntBuilder
 
 class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
+  ResourceContext resourceContext
+
   File rawConfigDir
 
-  File rawConfig1
+  List rawConfigs = []
 
   def ant = new AntBuilder()
 
   void start(ResourceContext context) {
+    resourceContext = context;
+
+    def numberOfConfigFiles = 3
+
     ant = new AntBuilder()
 
     rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "raw-test-1.txt")
+
+    def index = 1
+
+    numberOfConfigFiles.times { rawConfigs << new File(rawConfigDir, "raw-test-${it + index++}.txt") }
 
     createRawConfigDir()
-    createConfigFile()
+
+    index = 1
+    rawConfigs.each { rawConfig -> createConfigFile(rawConfig, index++) }
   }
 
   def createRawConfigDir() {
     rawConfigDir.mkdirs()
   }
 
-  def createConfigFile() {
-    if (rawConfig1.exists()) {
+  def createConfigFile(rawConfig, index) {
+    if (rawConfig.exists()) {
       return null
     }
 
-    def properties = ["a": 1, "b": 2, "c": "3"]
+    def properties = ["raw${index}.a": 1, "raw${index}.b": 2, "raw${index}.c": "3"]
 
-    rawConfig1.createNewFile()
-    rawConfig1.withWriter { writer ->
+    rawConfig.createNewFile()
+    rawConfig.withWriter { writer ->
       properties.each { key, value -> writer.writeLine("${key}=${value}") }
     }
   }
@@ -55,10 +66,10 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   Set<RawConfiguration> loadRawConfigurations() {
-    def rawConfigs = new HashSet()
-    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
+    def rawConfigSet = new HashSet()
+    rawConfigs.each { rawConfigSet.add(new RawConfiguration(path: it.absolutePath, contents: it.text)) }
 
-    return rawConfigs
+    return rawConfigSet
   }
 
   RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
@@ -72,6 +83,11 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failUpdate")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Update failed for ${rawConfiguration.path}");
+    }
+
     ant.copy(file: rawConfiguration.path, tofile: "${rawConfiguration.path}.orig")
     ant.delete(file: rawConfiguration.path)
 
@@ -84,6 +100,10 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
   }
 
   void validateRawConfiguration(RawConfiguration rawConfiguration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new IllegalArgumentException("Validation failed for ${rawConfiguration.path}");
+    }
   }
 
 }

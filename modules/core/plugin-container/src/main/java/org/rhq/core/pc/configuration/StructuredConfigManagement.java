@@ -68,8 +68,13 @@ public class StructuredConfigManagement extends ConfigManagementSupport {
     }
 
     public void executeUpdate(int resourceId, Configuration configuration) throws PluginContainerException {
-        ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
-
-        facet.persistStructuredConfiguration(configuration);
+        try {
+            ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
+            facet.validateStructuredConfiguration(configuration);
+            facet.persistStructuredConfiguration(configuration);
+        }
+        catch (Throwable t) {
+            throw new ConfigurationUpdateException(t.getMessage());
+        }
     }
 }

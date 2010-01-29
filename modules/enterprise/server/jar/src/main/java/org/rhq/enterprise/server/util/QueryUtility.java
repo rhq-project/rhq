@@ -46,8 +46,10 @@ public class QueryUtility {
             ESCAPED_PERCENT = getEscapeCharacter() + "%";
         }
 
-        value = value.replaceAll("_", ESCAPED_UNDERSCORE);
-        value = value.replaceAll("%", ESCAPED_PERCENT);
+        // Now, escape LIKE's wildcard characters with escaped characters so that the user's input
+        // will be matched literally
+        value = value.replace("_", ESCAPED_UNDERSCORE);
+        value = value.replace("%", ESCAPED_PERCENT);
 
         return value;
     }
@@ -66,6 +68,15 @@ public class QueryUtility {
         }
 
         return "%" + escapeSearchParameter(value).toUpperCase() + "%";
+    }
+
+    /**
+     * Get the proper LIKE operator escape clause for the current DatabaseType.
+     * 
+     * @return The escape clause buffered with single spaces. For example: " ESCAPE '\' "
+     */
+    public static String getEscapeClause() {
+        return " ESCAPE '" + getEscapeCharacter() + "' ";
     }
 
     /**
@@ -94,8 +105,8 @@ public class QueryUtility {
         }
 
         if ("\\\\".equals(ESCAPE_CHARACTER)) {
-            value = value.replaceAll("\\\\_", ESCAPED_UNDERSCORE);
-            value = value.replaceAll("\\\\%", ESCAPED_PERCENT);
+            value = value.replace("\\_", ESCAPED_UNDERSCORE);
+            value = value.replace("\\%", ESCAPED_PERCENT);
         }
 
         return value;

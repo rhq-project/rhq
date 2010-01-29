@@ -116,7 +116,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
+            expression += QueryUtility.getEscapeClause();
         }
 
         return expression;
@@ -228,7 +228,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    fragment += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
+                    fragment += QueryUtility.getEscapeClause();
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }

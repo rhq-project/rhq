@@ -41,12 +41,9 @@ public class QueryUtility {
             return null;
         }
 
-        if (null == ESCAPED_UNDERSCORE) {
-            ESCAPED_UNDERSCORE = getEscapeCharacter() + "_";
-            ESCAPED_PERCENT = getEscapeCharacter() + "%";
-        }
+        init();
 
-        // Now, escape LIKE's wildcard characters with escaped characters so that the user's input
+        // Escape LIKE's wildcard characters with escaped characters so that the user's input
         // will be matched literally
         value = value.replace("_", ESCAPED_UNDERSCORE);
         value = value.replace("%", ESCAPED_PERCENT);
@@ -76,20 +73,9 @@ public class QueryUtility {
      * @return The escape clause buffered with single spaces. For example: " ESCAPE '\' "
      */
     public static String getEscapeClause() {
-        return " ESCAPE '" + getEscapeCharacter() + "' ";
-    }
+        init();
 
-    /**
-     * Get the proper escape character for the current DatabaseType.
-     * 
-     * @return The escape character(s)
-     */
-    public static String getEscapeCharacter() {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
-        }
-
-        return ESCAPE_CHARACTER;
+        return " ESCAPE '" + ESCAPE_CHARACTER + "' ";
     }
 
     /**
@@ -100,9 +86,7 @@ public class QueryUtility {
      * @return The double escaped string
      */
     public static String handleDoubleEscaping(String value) {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
-        }
+        init();
 
         if ("\\\\".equals(ESCAPE_CHARACTER)) {
             value = value.replace("\\_", ESCAPED_UNDERSCORE);
@@ -110,6 +94,25 @@ public class QueryUtility {
         }
 
         return value;
+    }
+
+    /**
+     * Get the proper escape character for the current DatabaseType.
+     * 
+     * @return The escape character(s)
+     */
+    public static String getEscapeCharacter() {
+        init();
+
+        return ESCAPE_CHARACTER;
+    }
+
+    private static void init() {
+        if (null == ESCAPE_CHARACTER) {
+            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+            ESCAPED_UNDERSCORE = ESCAPE_CHARACTER + "_";
+            ESCAPED_PERCENT = ESCAPE_CHARACTER + "%";
+        }
     }
 
 }

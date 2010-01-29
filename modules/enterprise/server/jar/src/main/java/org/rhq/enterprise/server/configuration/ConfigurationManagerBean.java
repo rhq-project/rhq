@@ -177,9 +177,9 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         configurationManager.completePluginConfigurationUpdate(update);
     }
 
-    /* 
+    /*
      * this method will not fire off the update asynchronously (like the completeResourceConfigurationUpdate method
-     * does); instead, it will block until an update response is retrieved from the agent-side resource 
+     * does); instead, it will block until an update response is retrieved from the agent-side resource
      */
     public void completePluginConfigurationUpdate(PluginConfigurationUpdate update) {
         // use EJB3 reference to ourself so that transaction semantics are correct
@@ -1202,7 +1202,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         update.setStatus(response.getStatus());
         update.setErrorMessage(response.getErrorMessage());
 
-        /* 
+        /*
          * instead of checking for completed group resource configuration updates here, let our caller (the
          * ConfigurationServerService) do it so that this transaction completes before the check begins
          */
@@ -1942,6 +1942,12 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             log.error("An error occurred while trying to translate the configuration.", e);
             return null;
         }
+    }
+
+    public Configuration mergeConfiguration(Configuration config) {
+
+        Configuration out = entityManager.merge(config);
+        return out;
     }
 
 }

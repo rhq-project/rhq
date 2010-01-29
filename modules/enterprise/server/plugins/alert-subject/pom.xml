@@ -24,6 +24,7 @@
 
     <properties>
         <scm.module.path>modules/enterprise/server/plugins/alert-subject/</scm.module.path>
+        <seam.version>2.1.0.SP1</seam.version>
     </properties>
 
     <dependencies>
@@ -34,13 +35,25 @@
            <version>${project.version}</version>
            <scope>provided</scope> <!-- by ear -->
         </dependency>
-        
+
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-enterprise-server</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
             <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.seam</groupId>
+            <artifactId>jboss-seam</artifactId>
+            <version>${seam.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 

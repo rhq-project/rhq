@@ -9,21 +9,29 @@
       xmlns:a4j="https://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-    <body>
-        <rich:panel id="subject_config_panel">
-            <f:facet name="header">
-                <h:outputText>Select the subjects to add:</h:outputText>
-            </f:facet>
-            <h:selectManyMenu id="mySenderList" value="#{subjectsBean.currentSubjects}">
-                <f:selectItems value="#{subjectsBean.subjectMap}"/>
-            </h:selectManyMenu>
-            <br/>
-            <h:commandButton
-                    id="subjects_submit"
-                    value="Add Subjects"
-                    type="submit"
-                    action="#{subjectsBean.submit}"
-                    />
-        </rich:panel>
-    </body>
+<body>
+<h:panelGrid columns="3">
+    <h:panelGroup>
+        <h:outputText>Select the subjects to add:</h:outputText>
+        <br/>
+        <h:selectManyListbox id="mySenderList" value="#{subjectsBean.currentSubjects}">
+            <f:selectItems value="#{subjectsBean.subjectsMap}"/>
+        </h:selectManyListbox>
+    </h:panelGroup>
+
+    <h:panelGroup>
+        <br/>
+        <h:commandButton
+                id="subjects_submit"
+                value="Add Subjects"
+                type="submit"
+                action="#{subjectsBean.submit}"
+                />
+    </h:panelGroup>
+
+    <h:panelGroup>
+        <h:outputText value="${subjectsBean.currentSubjects}"/>
+    </h:panelGroup>
+</h:panelGrid>
+</body>
 </html>

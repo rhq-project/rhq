@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
@@ -52,7 +53,6 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     private final String CALENDAR_SUFFIX = "InputDate";
 
     private ConfigurationSubsystemManagerLocal manager = LookupUtil.getConfigurationSubsystemManager();
-    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     
     private static String datePattern;
     private String resourceFilter;
@@ -136,13 +136,13 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<DisambiguationReport<ConfigurationUpdateComposite>> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<ConfigurationUpdateComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
         @Override
-        public PageList<DisambiguationReport<ConfigurationUpdateComposite>> fetchPage(PageControl pc) {
+        public PageList<ConfigurationUpdateComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -156,11 +156,14 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
             PageList<ConfigurationUpdateComposite> result;
             result = manager.getResourceConfigurationUpdates(getSubject(), resourceFilter, parentFilter, startMillis,
                 endMillis, status, pc);
-            ResourceNamesDisambiguationResult<ConfigurationUpdateComposite> disambiguation = 
-                resourceManager.disambiguate(result, true, RESOURCE_ID_EXTRACTOR);
-            return new PageList<DisambiguationReport<ConfigurationUpdateComposite>>(disambiguation.getResolution(), pc);
+
+            return result;
         }
 
+        protected IntExtractor<ConfigurationUpdateComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
+        }
+        
         private void getDataFromRequest() {
             SubsystemConfigurationUpdateUIBean outer = SubsystemConfigurationUpdateUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

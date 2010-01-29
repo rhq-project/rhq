@@ -28,7 +28,6 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -169,7 +168,7 @@ public class RpmPackageDiscoveryDelegate {
                     continue;
                 }
 
-                if (!StringUtils.isBlank(version)) {
+                if ((epoch != null) && (epoch.trim() != "")) {
                     version = epoch + ":" + version;
                 }
                 PackageDetailsKey key = new PackageDetailsKey(name, version, "rpm", architectureName);

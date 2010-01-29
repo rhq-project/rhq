@@ -90,6 +90,17 @@ public interface ServerPluginsLocal {
     List<ServerPlugin> getAllServerPluginsById(List<Integer> pluginIds);
 
     /**
+     * Given a plugin ID, this will return a timestamp (in epoch millis)
+     * that indicates the last time when the plugin's configuration changed.
+     * This looks at both plugin configuration and schedule job configuration.
+     * 
+     * @param pluginId
+     * @return time when the plugin's configuration was last updated; will be 0
+     *         if the plugin has no configuration to change.
+     */
+    long getLastConfigurationChangeTimestamp(int pluginId);
+
+    /**
      * Given a plugin key, returns the descriptor for that plugin.
      *
      * @param pluginKey

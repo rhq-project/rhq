@@ -229,6 +229,15 @@ import org.rhq.core.domain.configuration.Configuration;
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
 
+    // returns two epoch millis - when plugin config and schedule jobs were last changed
+    @NamedQuery(name = ServerPlugin.QUERY_GET_CONFIG_MTIMES, query = "" //
+        + " SELECT pc.mtime, " // 
+        + "        sjc.mtime " //
+        + "   FROM ServerPlugin AS p " //
+        + "        LEFT JOIN p.pluginConfiguration pc " //
+        + "        LEFT JOIN p.scheduledJobsConfiguration sjc " //
+        + "  WHERE p.id = :id"), //
+
     // this query is how you enable and disable plugins
     @NamedQuery(name = ServerPlugin.UPDATE_PLUGIN_ENABLED_BY_ID, query = "" //
         + "UPDATE ServerPlugin p " //
@@ -250,6 +259,7 @@ public class ServerPlugin extends AbstractPlugin {
     public static final String QUERY_FIND_ALL_INSTALLED = "ServerPlugin.findAllInstalled";
     public static final String QUERY_FIND_ALL_INSTALLED_KEYS = "ServerPlugin.findAllInstalledKeys";
     public static final String QUERY_FIND_KEYS_BY_IDS = "ServerPlugin.findKeysByIds";
+    public static final String QUERY_GET_CONFIG_MTIMES = "ServerPlugin.getConfigMTimes";
     public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "ServerPlugin.updatePluginEnabledById";
 
     @JoinColumn(name = "JOBS_CONFIG_ID", referencedColumnName = "ID")

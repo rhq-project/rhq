@@ -112,16 +112,13 @@ public class EditPluginConfigurationUIBean extends AbstractPluginConfigurationUI
             ServerPlugin plugin = serverPlugins.updateServerPluginExceptContent(subject, getPlugin());
             setPlugin(plugin);
 
-            // the config has changed. we would like to restart the plugin, but we would need to ensure
-            // ALL servers in the rhq server cloud restart. today we have no easy way to inform all servers
-            // that they should do this. So, for now, disable the plugin (since if it is running, it is doing
-            // so with a now-invalid configuration. Let the user go in and re-enable the plugin later.
-            // TODO: right now, if the user re-enables the plugin too fast, some of the other servers
-            // will not have seen the state change and won't restart the plugin. Need a way to do this...
-            // perhaps use the mtime column to denote that state changed (this would affect whether or not
-            // the plugin needs to be upgraded, so we need to be careful re-using the mtime column for this purpose).
+            // Since the config has changed, we can tell the server to re-load the plugin now
+            // in order for it to pick up the changes immediately. Any other servers in the HA Server Cloud
+            // will pick up these changes later, when they scan for changes in the database.
+            // Note that if the plugin is disabled, don't bother since the plugin isn't really running anyway.
             if (plugin.isEnabled()) {
-                serverPlugins.disableServerPlugins(subject, getPluginIdList());
+                // enabling an already enabled plugin forces the plugin to reload
+                serverPlugins.enableServerPlugins(subject, getPluginIdList());
             }
 
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration settings saved.");

@@ -144,6 +144,12 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         assert plugins.contains(p2) : plugins;
         assetLazyInitializationException(plugins.get(plugins.indexOf(p1)));
         assetLazyInitializationException(plugins.get(plugins.indexOf(p2)));
+
+        long lastTimestamp;
+        lastTimestamp = this.serverPluginsBean.getLastConfigurationChangeTimestamp(p1.getId());
+        assert lastTimestamp == getConfigurationLastModifiedTimestamp(p1);
+        lastTimestamp = this.serverPluginsBean.getLastConfigurationChangeTimestamp(p2.getId());
+        assert lastTimestamp == getConfigurationLastModifiedTimestamp(p2);
     }
 
     public void testUpdatePlugins() throws Exception {
@@ -392,5 +398,23 @@ public class ServerPluginsBeanTest extends AbstractEJB3Test {
         } finally {
             getTransactionManager().rollback();
         }
+    }
+
+    private long getConfigurationLastModifiedTimestamp(ServerPlugin plugin) {
+        // determine the last time the plugin config or schedule jobs changed
+        // return 0 value if plugin doesn't have any config whatsoever
+        long timestamp = 0;
+
+        Configuration config = plugin.getPluginConfiguration();
+        if (config != null) {
+            timestamp = config.getModifiedTime();
+        }
+
+        config = plugin.getScheduledJobsConfiguration();
+        if (config != null && config.getModifiedTime() > timestamp) {
+            timestamp = config.getModifiedTime();
+        }
+
+        return timestamp;
     }
 }

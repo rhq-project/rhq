@@ -443,8 +443,10 @@ public interface ResourceManagerLocal {
      * 
      * @param <T> the type of the result elements
      * @param results the results to disambiguate
+     * @param alwayIncludeParent if true, the parent disambiguation will always be included in the result
+     * even if the results wouldn't have to be disambiguated using parents.
      * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
      * @return the disambiguation result or null on error
      */
-    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor);
+    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwayIncludeParent, IntExtractor<? super T> resourceIdExtractor);
 }

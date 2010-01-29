@@ -113,7 +113,7 @@ public class ResourceSelectUIBean {
         result = resourceManager.findResourceComposites(EnterpriseFacesContextUtility.getSubject(), null, null, null,
             null, pref, true, pc);
 
-        return wrap(resourceManager.disambiguate(result, RESOURCE_ID_EXTRACTOR));
+        return wrap(resourceManager.disambiguate(result, false, RESOURCE_ID_EXTRACTOR));
     }
     
     private List<DisambiguationReportWrapper> wrap(ResourceNamesDisambiguationResult<ResourceComposite> result) {

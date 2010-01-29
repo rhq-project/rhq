@@ -49,6 +49,7 @@ public class ResourcePartialLineageComponent extends UIComponentBase {
 
     private Boolean renderLinks;
     private String separator;
+    private List<ResourceParentFlyweight> parents;
     
     public String getFamily() {
         return COMPONENT_FAMILY;
@@ -86,10 +87,20 @@ public class ResourcePartialLineageComponent extends UIComponentBase {
 
     @SuppressWarnings("unchecked")
     public List<ResourceParentFlyweight> getParents() {
-        return FacesComponentUtility.getExpressionAttribute(this, PARENTS_ATTRIBUTE, List.class);
+        if (parents == null) {
+            //do *NOT* store this value into the parents explicitly
+            //unless dynamic updates (if the expression is in loop for example)
+            //won't work.
+            return FacesComponentUtility.getExpressionAttribute(this, PARENTS_ATTRIBUTE, List.class);
+        } else {
+            return parents;
+        }
     }
 
-
+    public void setParents(List<ResourceParentFlyweight> parents) {
+        this.parents = parents;
+    }
+    
     public Object saveState(FacesContext facesContext) {
         Object[] state = new Object[3];
         state[0] = super.saveState(facesContext);

@@ -2112,7 +2112,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (findChildResources(subject, parentResource, pageControl));
     }
 
-    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, IntExtractor<? super T> extractor) {
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent, IntExtractor<? super T> extractor) {
         String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
         
         query = JDBCUtil.transformQueryForMultipleInParameters(query, "@@RESOURCE_IDS@@", results.size());
@@ -2137,6 +2137,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
         }
 
+        if (alwaysIncludeParent && disambiguationLevel == 0) {
+            disambiguationLevel = 1;
+        }
+        
         boolean typeResolutionNeeded = typeAndPluginCnt > 1;
         boolean pluginResolutionNeeded = typeAndPluginCnt > typeCnt;
         boolean parentResolutionNeeded = disambiguationLevel > 0;

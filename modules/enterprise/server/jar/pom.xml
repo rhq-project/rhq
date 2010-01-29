@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>3.0.0.B02</version>
+      <version>1.4.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -598,20 +598,38 @@
                         <phase>compile</phase>
                         <configuration>
                            <tasks>
-                              <property name="javadoc.outputDirectory" value="${javadoc.outputDirectory}" />
-                              <property name="project.dir" value="./src/main/java/org/rhq/enterprise/server" />
-                              <property name="maven.compile.classpath" refid="maven.compile.classpath" />
+                              <property
+                                 name="javadoc.outputDirectory"
+                                 value="${javadoc.outputDirectory}" />
+                              <property
+                                 name="project.dir"
+                                 value="./src/main/java/org/rhq/enterprise/server" />
+                              <property
+                                 name="maven.compile.classpath"
+                                 refid="maven.compile.classpath" />
 
-                              <javadoc destdir="${javadoc.outputDirectory}/remote-api" author="true" version="true" windowtitle="Remote API" noindex="false">
+                              <javadoc
+                                 destdir="${javadoc.outputDirectory}/remote-api"
+                                 author="true"
+                                 version="true"
+                                 windowtitle="Remote API"
+                                 noindex="false">
                                  <classpath>
-                                    <pathelement path="${maven.compile.classpath}" />
+                                    <pathelement
+                                       path="${maven.compile.classpath}" />
                                  </classpath>
-                                 <fileset dir="${project.dir}" defaultexcludes="yes">
-                                    <include name="**/*Remote.java" />
+                                 <fileset
+                                    dir="${project.dir}"
+                                    defaultexcludes="yes">
+                                    <include
+                                       name="**/*Remote.java" />
                                  </fileset>
-                                 <link href="../domain" />
-                                 <link href="../plugin-api" />
-                                 <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+                                 <link
+                                    href="../domain" />
+                                 <link
+                                    href="../plugin-api" />
+                                 <link
+                                    href="http://java.sun.com/j2se/1.5.0/docs/api/" />
                                  <bottom><![CDATA[Copyright &#169; 2008-2009 <a href="http://rhq-project.org/">Red Hat, Inc.</a>. All Rights Reserved.
 ]]></bottom>
                               </javadoc>

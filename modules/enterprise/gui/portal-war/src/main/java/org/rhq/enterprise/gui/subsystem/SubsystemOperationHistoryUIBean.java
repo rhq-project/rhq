@@ -31,10 +31,11 @@ import org.rhq.core.domain.operation.composite.ResourceOperationHistoryComposite
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.subsystem.OperationHistorySubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,6 +58,12 @@ public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
     private String statusFilter;
     private SelectItem[] statusFilterItems;
 
+    private static final IntExtractor<ResourceOperationHistoryComposite> RESOURCE_ID_EXTRATOR = new IntExtractor<ResourceOperationHistoryComposite>() {
+        public int extract(ResourceOperationHistoryComposite object) {
+            return object.getHistory().getResource().getId();
+        }
+    }; 
+    
     public SubsystemOperationHistoryUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
             .getDateTimeFormatTrigger();
@@ -125,13 +132,13 @@ public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<ResourceOperationHistoryComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<ResourceOperationHistoryComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
         @Override
-        public PageList<ResourceOperationHistoryComposite> fetchPage(PageControl pc) {
+        public PageList<ResourceOperationHistoryComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -148,6 +155,10 @@ public class SubsystemOperationHistoryUIBean extends PagedDataTableUIBean {
             return result;
         }
 
+        protected IntExtractor<ResourceOperationHistoryComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRATOR;
+        }
+        
         private void getDataFromRequest() {
             SubsystemOperationHistoryUIBean outer = SubsystemOperationHistoryUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

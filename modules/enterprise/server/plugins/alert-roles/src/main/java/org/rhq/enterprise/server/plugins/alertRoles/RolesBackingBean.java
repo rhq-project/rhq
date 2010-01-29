@@ -55,12 +55,14 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
         String rolesString = alertParameters.getSimpleValue("roleId","");
         String[] roles = rolesString.split(",");
         if (currentRoles==null)
-            currentRoles = new ArrayList();
+            currentRoles = new ArrayList<String>();
         for (String r : roles)
             currentRoles.add(r);
     }
 
     public List<String> getCurrentRoles() {
+        if (currentRoles==null)
+            fillRolesFromAlertParameters();
         return currentRoles;
     }
 
@@ -76,6 +78,7 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
             PageList<Role> rolesList = mgr.findRoles(new PageControl());
 
             for (Role role : rolesList) {
+                // TODO filter out all resources role
                 this.rolesMap.put(role.getName(), role.getId().toString());
             }
         }
@@ -84,8 +87,6 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public String submit() {
-
-        System.out.println("In Submit");
 
         System.out.println("Selected roles:  ");
         String roles="";
@@ -108,10 +109,6 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
         alertParameters = persistConfiguration(alertParameters);
 
         fillRolesFromAlertParameters();
-
-
-
-        // TODO: Customise this generated block
 
         return "ALERT_NOTIFICATIONS";
     }

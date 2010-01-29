@@ -9,10 +9,10 @@
       xmlns:a4j="https://richfaces.org/a4j"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
-    <body>
-        <h:panelGrid columns="3">
+<body>
+<h:panelGrid columns="3">
 
-        <h:panelGroup>
+    <h:panelGroup>
         <h:outputText value="Select the roles to add:" />
         <br/>
 
@@ -20,17 +20,19 @@
         <h:selectManyListbox id="mySenderList" value="#{rolesBean.currentRoles}">
             <f:selectItems value="#{rolesBean.rolesMap}"/>
         </h:selectManyListbox>
-        </h:panelGroup>
-        <h:panelGroup>
+    </h:panelGroup>
+
+    <h:panelGroup>
         <br />
         <h:commandButton id="roles_submit"
-                        value="Add Roles"
-                        type="submit"
-                        action="#{rolesBean.submit}" />
-         </h:panelGroup>
-         <h:panelGroup>
-             <h:outputText value="#{rolesBean.currentRoles}"/>
-         </h:panelGroup>
-    </h:panelGrid>
-    </body>
+                         value="Add Roles"
+                         type="submit"
+                         action="#{rolesBean.submit}" />
+    </h:panelGroup>
+
+    <h:panelGroup>
+        <h:outputText value="#{rolesBean.currentRoles}"/>
+    </h:panelGroup>
+</h:panelGrid>
+</body>
 </html>

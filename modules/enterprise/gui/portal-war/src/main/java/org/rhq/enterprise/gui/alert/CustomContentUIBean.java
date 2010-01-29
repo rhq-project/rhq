@@ -61,7 +61,7 @@ public class CustomContentUIBean {
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
-        CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName,
+        CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName, // TODO notificationId may be stale after removal of notification
                 notificationId);
 
         if (backingBeanName != null && backingBean != null) {
@@ -75,7 +75,7 @@ public class CustomContentUIBean {
      * dynamically assign the component's name so that the plugin author can define the
      * name of bean, but this class is not an "official" seam component.
      */
-    private void outjectBean(String name, Object bean) {
+    private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
         Context pageContext = Contexts.getPageContext();
         pageContext.set(name, bean);
     }

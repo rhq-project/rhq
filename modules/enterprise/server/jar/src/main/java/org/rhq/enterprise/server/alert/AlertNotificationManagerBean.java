@@ -431,21 +431,24 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
 
 
     /**
-     * Return the backing bean for the AlertSender with the passed shortName
+     * Return the backing bean for the AlertSender with the passed shortName. If a notificationId is passed,
+     * we try to load the configuration for this notification and pass it to the CustomAlertSenderBackingBean instance
      * @param shortName name of a sender
-     * @param alertNotificationId
+     * @param alertNotificationId id of the notification we assign this sender + its backing bean to
      * @return an initialized BackingBean or null in case of error
      */
     public CustomAlertSenderBackingBean getBackingBeanForSender(String shortName, Integer alertNotificationId) {
+
         AlertSenderPluginManager pluginmanager = alertManager.getAlertPluginManager();
         CustomAlertSenderBackingBean bean = pluginmanager.getBackingBeanForSender(shortName);
 
         if (alertNotificationId!=null) {
             AlertNotification notification = entityManager.find(AlertNotification.class, alertNotificationId);
             if (notification!=null && bean != null) {
-                Configuration config = notification.getConfiguration(); // TODO clone?
-                config.getAllProperties().size(); // Eager load
-                bean.setAlertParameters(config);
+                Configuration config = notification.getConfiguration();
+                Configuration config2 = config.deepCopy(true);
+
+                bean.setAlertParameters(config2);
             }
         }
         return bean;

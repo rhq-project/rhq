@@ -65,6 +65,8 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public List<String> getCurrentSubjects() {
+        if (currentSubjects==null)
+            fillSubjectsFromAlertParameters();
         return currentSubjects;
     }
 

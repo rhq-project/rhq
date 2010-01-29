@@ -18,30 +18,31 @@
  */
 package org.rhq.enterprise.client;
 
-import au.com.bytecode.opencsv.CSVWriter;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.measurement.ResourceAvailability;
-import org.rhq.enterprise.client.utility.LazyLoadScenario;
-import org.rhq.enterprise.client.utility.ShortOutput;
-
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.LinkedHashMap;
-import java.util.Arrays;
+
+import au.com.bytecode.opencsv.CSVWriter;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertyMap;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.measurement.ResourceAvailability;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.client.utility.LazyLoadScenario;
+import org.rhq.enterprise.client.utility.ShortOutput;
 
 /**
  * @author Greg Hinkle
@@ -95,7 +96,6 @@ public class TabularWriter {
         this.out = out;
     }
 
-
     public TabularWriter(PrintWriter out) {
         this.out = out;
     }
@@ -112,16 +112,14 @@ public class TabularWriter {
     public void print(Object object) {
 
         if (object instanceof Map) {
-            print((Map)object);
+            print((Map) object);
             return;
         }
-
 
         if (object instanceof Collection) {
             print((Collection) object);
             return;
         }
-
 
         if (object instanceof Configuration) {
             print((Configuration) object);
@@ -129,10 +127,9 @@ public class TabularWriter {
         }
 
         if (object != null && object.getClass().isArray()) {
-            print((Object[])object);
+            print((Object[]) object);
             return;
         }
-
 
         try {
 
@@ -145,12 +142,11 @@ public class TabularWriter {
             Map<String, PropertyInfo> properties = new LinkedHashMap<String, PropertyInfo>();
             int maxLength = 0;
 
-
             for (PropertyDescriptor pd : summaryFilter.getPropertyDescriptors(object, exportMode)) {
                 Method m = pd.getReadMethod();
                 Object val = null;
                 if (m != null) {
-                    val = invoke(object,m);
+                    val = invoke(object, m);
                 }
 
                 if (val != null) {
@@ -171,8 +167,7 @@ public class TabularWriter {
             e.printStackTrace();
         } catch (IllegalAccessException e) {
             e.printStackTrace();
-        }
-        catch (IntrospectionException e) {
+        } catch (IntrospectionException e) {
             e.printStackTrace();
         }
 
@@ -196,8 +191,7 @@ public class TabularWriter {
 
         if (exportMode || !String.class.equals(propertyInfo.type)) {
             out.println(propertyInfo.value);
-        }
-        else {
+        } else {
             out.println(abbreviate(propertyInfo.value, width - 12 - maxLength));
         }
     }
@@ -236,7 +230,7 @@ public class TabularWriter {
         }
 
         if ((offset + (maxWidth - 3)) < string.length()) {
-            return "..." + abbreviate(string.substring(offset), maxWidth - 3);            
+            return "..." + abbreviate(string.substring(offset), maxWidth - 3);
         }
 
         return "..." + string.substring(string.length() - (maxWidth - 3));
@@ -253,10 +247,9 @@ public class TabularWriter {
             data[i][1] = shortVersion(value);
             i++;
         }
-        this.headers = new String[] { "Key", "Value"};
+        this.headers = new String[] { "Key", "Value" };
         print(data);
     }
-
 
     public void print(Collection list) {
         // List of arbitrary objects
@@ -270,24 +263,20 @@ public class TabularWriter {
 
             String[][] data = null;
 
-
             if (!allOneType(list)) {
                 printStrings(list);
             } else {
 
-
                 Object firstObject = list.iterator().next();
                 try {
 
-
                     if (firstObject instanceof String) {
-                        headers = new String[]{"Value"};
+                        headers = new String[] { "Value" };
                         data = new String[list.size()][1];
                         int i = 0;
                         for (Object object : list) {
                             data[i++][0] = (String) object;
                         }
-
 
                     } else {
 
@@ -308,8 +297,9 @@ public class TabularWriter {
                                         if (m != null) {
                                             val = invoke(row, pd.getReadMethod());
                                         }
-                                        if ((val != null && !(val instanceof Collection)) ||
-                                                ((val != null && (val instanceof Collection) && !((Collection) val).isEmpty())))
+                                        if ((val != null && !(val instanceof Collection))
+                                            || ((val != null && (val instanceof Collection) && !((Collection) val)
+                                                .isEmpty())))
                                             allNull = false;
                                     }
                                     if (!allNull && !IGNORED_PROPS.contains(pd.getName())) {
@@ -319,7 +309,6 @@ public class TabularWriter {
                                     e.printStackTrace();
                                 }
                             }
-
 
                             headers = new String[pdList.size()];
                             data = new String[list.size()][pdList.size()];
@@ -339,13 +328,12 @@ public class TabularWriter {
                                 i++;
                             }
 
-
                             this.print(data);
 
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                    e.printStackTrace(); //To change body of catch statement use File | Settings | File Templates.
                 } finally {
                     headers = null;
                 }
@@ -354,9 +342,6 @@ public class TabularWriter {
         }
 
     }
-
-
-
 
     private boolean consistentMaps(Collection list) {
         List<String> keys = null;
@@ -369,18 +354,52 @@ public class TabularWriter {
             if (keys == null) {
                 keys = new ArrayList<String>();
 
-                for (Object key : ((Map) row).keySet()) {
-                    String headerKey = stringValueOf(key);
-                    keys.add(headerKey);
+                //insert check for PropertyMap as they are not instances of Map 
+                if (row instanceof PropertyMap) {
+                    //TODO: spinder 1/15/10. PropertyMap is arbitrarily complex. Only serialize simple props?
+                    for (Object key : ((PropertyMap) row).getMap().keySet()) {
+                        String headerKey = stringValueOf(key);
+                        keys.add(headerKey);
+                    }
+                } else {//else row is a Map
+                    for (Object key : ((Map) row).keySet()) {
+                        String headerKey = stringValueOf(key);
+                        keys.add(headerKey);
+                    }
+                }
+                //conditionally put order on the headers to mimic core gui listing style/order
+                //Ex. Pid   Name    Size    User Time       Kernel Time
+                if (keys.contains("pid")) {
+                    String[] processAttribute = { "pid", "name", "size", "userTime", "kernelTime" };
+                    List<String> newKeyOrder = new ArrayList<String>();
+                    for (String attribute : processAttribute) {
+                        newKeyOrder.add(attribute);
+                        keys.remove(attribute);
+                    }
+                    //postpend remaining keys if any to the newHeader list
+                    for (String key : keys) {
+                        newKeyOrder.add(key);
+                    }
+                    keys = newKeyOrder;
                 }
             }
 
             data[i] = new String[keys.size()];
-            for (Object key : ((Map) row).keySet()) {
-                if (!keys.contains(stringValueOf(key))) {
-                    return false;
+            if (row instanceof PropertyMap) {
+                for (String key : keys) {
+                    if (!keys.contains(stringValueOf(key))) {
+                        return false;
+                    }
+                    data[i][keys.lastIndexOf(stringValueOf(key))] = shortVersion(((PropertyMap) row).get(String
+                        .valueOf(key)));
                 }
-                data[i][keys.lastIndexOf(stringValueOf(key))] = shortVersion(((Map) row).get(key));
+            } else {//else row is a Map
+                for (Object key : ((Map) row).keySet()) {
+                    if (!keys.contains(stringValueOf(key))) {
+                        return false;
+                    }
+                    data[i][keys.lastIndexOf(stringValueOf(key))] = shortVersion(((Map) row).get(key));
+                }
             }
             i++;
         }
@@ -394,7 +413,6 @@ public class TabularWriter {
         }
 
     }
-
 
     public void print(Configuration config) {
         out.println("Configuration [" + config.getId() + "] - " + config.getNotes());
@@ -418,7 +436,6 @@ public class TabularWriter {
         out.println(indent(depth) + p.getName() + " [" + p.getList().size() + "] {");
         if (p.getList().get(0) instanceof PropertyMap) {
             consistentMaps(p.getList());
-
 
         } else {
             for (Property entry : p.getList()) {
@@ -446,7 +463,6 @@ public class TabularWriter {
         out.println(indent(depth) + "}");
     }
 
-
     private String indent(int x) {
         StringBuilder buf = new StringBuilder();
         for (int i = 0; i < x; i++) {
@@ -454,7 +470,6 @@ public class TabularWriter {
         }
         return buf.toString();
     }
-
 
     private void printStrings(Collection list) {
         for (Object object : list) {
@@ -563,7 +578,6 @@ public class TabularWriter {
         out.print(data.length + " rows\n");
     }
 
-
     private void printSpaced(PrintWriter out, String data, int length) {
         int dataLength = data.length();
         if (dataLength > length) {
@@ -608,12 +622,10 @@ public class TabularWriter {
         this.exportMode = exportMode;
     }
 
-
-
     private static String shortVersion(Object object) {
 
         if (object instanceof ShortOutput) {
-            return ((ShortOutput)object).getShortOutput();
+            return ((ShortOutput) object).getShortOutput();
         } else if (object instanceof PropertySimple) {
             return ((PropertySimple) object).getStringValue();
         } else if (object instanceof ResourceType) {
@@ -626,9 +638,6 @@ public class TabularWriter {
             return stringValueOf(object);
         }
     }
-
-
-
 
     private static Object invoke(Object o, Method m) throws IllegalAccessException, InvocationTargetException {
         boolean access = m.isAccessible();

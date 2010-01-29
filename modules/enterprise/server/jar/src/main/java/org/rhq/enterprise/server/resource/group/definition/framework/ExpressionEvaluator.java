@@ -40,6 +40,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
 
@@ -550,11 +551,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 String argumentValue = (String) whereReplacements.get(lastArgumentName);
 
                 if (nextToken.equals("startswith")) {
-                    argumentValue = argumentValue.replaceAll("\\_", "\\\\_") + "%";
+                    argumentValue = QueryUtility.escapeSearchParameter(argumentValue) + "%";
                 } else if (nextToken.equals("endswith")) {
-                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_");
+                    argumentValue = "%" + QueryUtility.escapeSearchParameter(argumentValue);
                 } else if (nextToken.equals("contains")) {
-                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_") + "%";
+                    argumentValue = "%" + QueryUtility.escapeSearchParameter(argumentValue) + "%";
                 } else {
                     throw new InvalidExpressionException("Unrecognized string function '" + nextToken
                         + "' at end of condition");

@@ -1,9 +1,31 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2009-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.sample.perspective;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 
+import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
@@ -14,6 +36,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.perspective.AbstractPerspectiveUIBean;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerRemote;
+import org.rhq.enterprise.server.perspective.PerspectiveTarget;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
 
@@ -80,7 +105,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     //define enumeration to enforce type restriction.
 
     enum Group {//Compatible == homogeneous AND mixed != homogeneous
-        Compatible, Mixed;
+        Compatible, Mixed
     }
 
     private String groupType = Group.Mixed.name(); //REQUIRED: defaults to mixed to all resources show up
@@ -122,6 +147,7 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     private boolean enableLogin = true;
 
     private PageList<Resource> resources;
+    private Map<Integer, String> resourceUrlMap = new HashMap<Integer, String>();
 
     //// STEP N:
 
@@ -139,12 +165,19 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
         String stepCompleted = "(incomplete)";
 
-        //retrieve remote client references
-        RemoteClient remoteClient = getRemoteClient();
-        Subject subject = getSubject();
+        RemoteClient remoteClient;
+        Subject subject;
+        try {
+            remoteClient = this.perspectiveClient.getRemoteClient();
+            subject = this.perspectiveClient.getSubject();
+        } catch (Exception e) {
+            this.facesMessages.add(StatusMessage.Severity.FATAL, "Failed to connect to RHQ Server - cause: " + e);
+            return null;
+        }
 
         switch (this.currentStep) {
         case One: //create Group for visibility
+
             ResourceGroup rg = new ResourceGroup(groupName);
             rg.setDescription(groupDescription);
             rg.setLocation(groupLocation);
@@ -225,10 +258,16 @@ public class WizardBean extends AbstractPerspectiveUIBean {
 
             this.resources = resourceManager.findResourcesByCriteria(subject, criteria);
             int[] resourceIds = new int[resources.size()];
+
             for (int i = 0; i < resources.size(); i++) {
-                resourceIds[i] = resources.get(i).getId();
+                int id = resources.get(i).getId();
+                resourceIds[i] = id;
             }
             groupManager.addResourcesToGroup(subject, this.resourceGroup.getId(), resourceIds);
+
+            PerspectiveManagerRemote perspectiveManager = remoteClient.getPerspectiveManagerRemote();
+            this.resourceUrlMap = perspectiveManager.getTargetUrls(subject, PerspectiveTarget.RESOURCE, resourceIds,
+                false, false);
 
             RoleManagerRemote roleManager = remoteClient.getRoleManagerRemote();
             this.role = roleManager.createRole(subject, this.role);
@@ -610,4 +649,29 @@ public class WizardBean extends AbstractPerspectiveUIBean {
     public PageList<Resource> getResources() {
         return resources;
     }
+
+    public Map<Integer, String> getResourceUrlMap() {
+        return this.resourceUrlMap;
+    }
+
+    public String getGroupsUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(),
+            ((Group.valueOf(this.groupType) == Group.Mixed) ? "groups.mixedGroups" : "groups.compatibleGroups"), false,
+            false);
+        return url;
+    }
+
+    public String getRolesUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.roles", false, false);
+        return url;
+    }
+
+    public String getUsersUrl() throws Exception {
+        PerspectiveManagerRemote perspectiveManager = this.perspectiveClient.getRemoteClient().getPerspectiveManagerRemote();
+        String url = perspectiveManager.getMenuItemUrl(this.perspectiveClient.getSubject(), "administration.security.users", false, false);
+        return url;
+    }
+
 }

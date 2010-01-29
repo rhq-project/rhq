@@ -107,6 +107,13 @@
       </dependency>
 
       <dependency>
+         <groupId>javax.faces</groupId>
+         <artifactId>jsf-impl</artifactId>
+         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <dependency>
          <groupId>org.richfaces.framework</groupId>
          <artifactId>richfaces-api</artifactId>
          <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
@@ -126,17 +133,17 @@
 
       <!-- == Seam Related Dependencies ================ -->
       
-        <dependency>
-            <groupId>org.jboss.seam</groupId>
-            <artifactId>jboss-seam</artifactId>
-            <version>${seam.version}</version>
-            <exclusions>
-                <exclusion>
-                  <groupId>xml-apis</groupId>
-                  <artifactId>xml-apis</artifactId>     
-                </exclusion>
-            </exclusions>
-        </dependency>
+      <dependency>
+        <groupId>org.jboss.seam</groupId>
+        <artifactId>jboss-seam</artifactId>
+        <version>${seam.version}</version>
+        <exclusions>
+            <exclusion>
+              <groupId>xml-apis</groupId>
+              <artifactId>xml-apis</artifactId>
+            </exclusion>
+        </exclusions>
+      </dependency>
 
    </dependencies>
 

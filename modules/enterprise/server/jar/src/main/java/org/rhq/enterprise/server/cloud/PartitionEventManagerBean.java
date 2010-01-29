@@ -50,6 +50,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * This session beans acts as the underlying implementation the distribution algorithm will
@@ -210,7 +211,7 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
             pageControl);
         Query countQuery = PersistenceUtility.createCountQuery(entityManager, PartitionEvent.QUERY_FIND_ALL);
 
-        details = PersistenceUtility.formatSearchParameter(details);
+        details = QueryUtility.formatSearchParameter(details);
 
         query.setParameter("type", type);
         countQuery.setParameter("type", type);

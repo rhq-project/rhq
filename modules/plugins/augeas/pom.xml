@@ -32,7 +32,11 @@
          <artifactId>rhq-platform-plugin</artifactId>
          <version>${project.version}</version>
       </dependency>
-
+ 	<dependency>
+        <groupId>commons-io</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>1.4</version>
+      </dependency>
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
@@ -162,6 +166,29 @@
 
                    </executions>
                </plugin>
+                    <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.0</version>
+                    <executions>
+                       <execution>
+                          <id>copy-commons-io-jar</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+                                <artifactItem>
+							        <groupId>commons-io</groupId>
+							         <artifactId>commons-io</artifactId>
+							         <version>1.4</version>
+                                </artifactItem>
+                             </artifactItems>
+                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+                          </configuration>
+                       </execution>
+            </executions>
+         </plugin>
 
             </plugins>
          </build>

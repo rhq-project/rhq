@@ -90,7 +90,7 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<Apach
         //TODO the can be simplified using augeas...
         String confPath = confPathProp.getStringValue();
         if (!confPath.startsWith("/")) { // TODO implement for Windows too
-            String basePath = context.getParentResourceComponent().getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
+            String basePath = context.getParentResourceComponent().getServerRoot().getAbsolutePath();
             confPath = basePath + "/" + confPath;
         }
 

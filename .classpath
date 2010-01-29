@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="etc/modules/base-perspective-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>
@@ -108,7 +109,10 @@
 	<classpathentry kind="src" path="modules/plugins/platform/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/hosts/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/cobbler/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/cobbler/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/virt/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/kickstart/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
@@ -185,9 +189,9 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5.jar" sourcepath="/M2_REPO/org/opensymphony/quartz/quartz/1.6.5/quartz-1.6.5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/mail/mail/1.3.1/mail-1.3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-fileupload/commons-fileupload/1.2/commons-fileupload-1.2.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-api/3.3.0.GA/richfaces-api-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-api/3.1.3.GA/richfaces-api-3.1.3.GA-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-api/3.3.2.SR1/richfaces-api-3.3.2.SR1.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-api/3.1.3.GA/richfaces-api-3.1.3.GA-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/framework/richfaces-impl/3.3.2.SR1/richfaces-impl-3.3.2.SR1.jar" sourcepath="/M2_REPO/org/richfaces/framework/richfaces-impl/3.3.0.GA/richfaces-impl-3.3.0.GA-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/richfaces/ui/richfaces-ui/3.3.2.SR1/richfaces-ui-3.3.2.SR1.jar" sourcepath="/M2_REPO/org/richfaces/ui/richfaces-ui/3.3.0.GA/richfaces-ui-3.3.0.GA-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/8.4-701.jdbc3/postgresql-8.4-701.jdbc3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP9/jboss-cache-1.4.1.SP9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.3.82/sigar-1.6.3.82-sources.jar"/>

@@ -5,7 +5,7 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
 
-  <display-name>RHQ Sample Perspective Webapp</display-name>  
+  <display-name>RHQ Perspective Webapp</display-name>  
 
    <!--=== Seam ===-->
 
@@ -62,27 +62,11 @@
       <url-pattern>*.xhtml</url-pattern>
    </servlet-mapping>     
 
-   <mime-mapping> 
-      <extension>jsf</extension> 
-      <mime-type>text/html</mime-type> 
-   </mime-mapping>
-
    <!-- the suffix for files containing JSF content (default is ".jsp") -->
    <context-param>
       <param-name>javax.faces.DEFAULT_SUFFIX</param-name>
       <param-value>.xhtml</param-value>
-   </context-param>
-
-   <!-- only need this if we want jsp's and facelets together, but we don't right now
-   <context-param>
-      <param-name>facelets.VIEW_MAPPINGS</param-name>
-      <param-value>*.xhtml</param-value>
-   </context-param>
-    -->
-
-    
-    
-    
+   </context-param>           
     
    <!-- see http://www.jroller.com/page/mert?entry=state_saving_method_client_side for an explanation of the below param -->
    <context-param>
@@ -109,10 +93,16 @@
        <param-name>org.ajax4jsf.VIEW_HANDLERS</param-name>
        <param-value>com.sun.facelets.FaceletViewHandler</param-value>
     </context-param>
+
+    <!-- Temporarily uncomment the below context-param to disable compression of JavaScript files associated with
+         RichFaces components in order to debug those script files. -->
+    <context-param>
+       <param-name>org.ajax4jsf.COMPRESS_SCRIPT</param-name>
+       <param-value>false</param-value>
+    </context-param>
     
     <welcome-file-list>
-       <welcome-file>index.html</welcome-file>
+       <welcome-file>index.xhtml</welcome-file>
     </welcome-file-list>
     
-
 </web-app>

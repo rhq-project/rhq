@@ -24,6 +24,7 @@ import java.util.List;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.TransactionManager;
 
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -33,6 +34,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -82,6 +85,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
                 em.remove(em.getReference(BundleType.class, ((BundleType) removeMe).getId()));
             }
 
+            q = em.createQuery("SELECT rt FROM ResourceType rt WHERE rt.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(ResourceType.class, ((ResourceType) removeMe).getId()));
+            }
+
             getTransactionManager().commit();
             em.close();
             em = null;
@@ -129,11 +138,24 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
-        BundleType bt = new BundleType(fullName);
+        BundleType bt = new BundleType(fullName, createResourceType(name));
         bt = bundleManagerBean.createBundleType(bt);
         assert bt.getId() > 0;
         assert bt.getName().endsWith(fullName);
         return bt;
+    }
+
+    private ResourceType createResourceType(String name) throws Exception {
+        final String fullName = TEST_PREFIX + "-resourcetype-" + name;
+        ResourceType rt = new ResourceType(fullName, "BundleManagerBeanTest", ResourceCategory.PLATFORM, null);
+
+        TransactionManager txMgr = getTransactionManager();
+        txMgr.begin();
+        EntityManager em = getEntityManager();
+        em.persist(rt);
+        em.close();
+        txMgr.commit();
+        return rt;
     }
 
     private Subject getOverlord() {

@@ -24,6 +24,7 @@ package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -39,6 +40,7 @@ import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.Distribution;
 
 /**
@@ -81,6 +83,10 @@ public class BundleVersion implements Serializable {
     @JoinColumn(name = "DISTRIBUTION_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(fetch = FetchType.LAZY)
     private Distribution distribution;
+
+    @JoinColumn(name = "CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
+    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private ConfigurationDefinition configurationDefinition;
 
     public BundleVersion() {
         // for JPA use
@@ -138,6 +144,22 @@ public class BundleVersion implements Serializable {
 
     public void setDistribution(Distribution distribution) {
         this.distribution = distribution;
+    }
+
+    /**
+     * Returns the metadata that describes the configuration that must be set in order for this
+     * bundle to be properly deployed. Think of this as "the questions that the user must answer"
+     * in order to provide values that are needed to deploy the content. This definition
+     * describes the {@link BundleConfig#getConfiguration() bundle config data}.
+     *
+     * @return defines the values that must be set in order for this bundle to be deployed properly
+     */
+    public ConfigurationDefinition getConfigurationDefinition() {
+        return configurationDefinition;
+    }
+
+    public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
+        this.configurationDefinition = configurationDefinition;
     }
 
     @Override

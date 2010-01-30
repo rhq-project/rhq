@@ -3014,6 +3014,27 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address"/>
             </schemaSpec>
+
+            <schemaSpec version="2.78">
+                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_CONFIG_DEF">
+                        ALTER TABLE RHQ_BUNDLE_VERSION
+                        ADD CONSTRAINT RHQ_CONFIG_DEF_ID_FK
+                        FOREIGN KEY (CONFIG_DEF_ID)
+                        REFERENCES RHQ_CONFIG_DEF (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_BUNDLE_TYPE foreign key relation to RHQ_RESOURCE_TYPE">
+                        ALTER TABLE RHQ_BUNDLE_TYPE
+                        ADD CONSTRAINT RHQ_RESOURCE_TYPE_ID_FK
+                        FOREIGN KEY (RESOURCE_TYPE_ID)
+                        REFERENCES RHQ_RESOURCE_TYPE (ID)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

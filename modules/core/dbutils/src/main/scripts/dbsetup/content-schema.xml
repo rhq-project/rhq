@@ -491,6 +491,7 @@
     <table name="RHQ_BUNDLE_TYPE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
+        <column name="RESOURCE_TYPE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE_TYPE"/>
     </table>
 
     <!-- BUNDLE is a named piece of content that can be versioned and installed somewhere -->
@@ -506,6 +507,7 @@
         <column name="NAME" size="200" type="VARCHAR2" required="true"/>
         <column name="VERSION" size="500" type="VARCHAR2" required="true"/>
         <column name="ACTION" type="CLOB" required="true"/>
+        <column name="CONFIG_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_DEF" />
         <column name="BUNDLE_ID" type="INTEGER" required="true" references="RHQ_BUNDLE"/>
         <column name="DISTRIBUTION_ID" type="INTEGER" required="false" references="RHQ_DISTRIBUTION"/>
     </table>

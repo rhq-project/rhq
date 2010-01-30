@@ -29,12 +29,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Defines a type of bundle that can exist in the system. Bundle types are used to determine
@@ -63,12 +67,17 @@ public class BundleType implements Serializable {
     @Column(name = "NAME", nullable = false)
     private String name;
 
+    @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne
+    private ResourceType resourceType;
+
     public BundleType() {
         // for JPA use
     }
 
-    public BundleType(String name) {
+    public BundleType(String name, ResourceType resourceType) {
         setName(name);
+        setResourceType(resourceType);
     }
 
     public int getId() {
@@ -85,6 +94,19 @@ public class BundleType implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Returns the resource type that is responsible for deploying and managing bundles of this bundle type.
+     * 
+     * @return resource type that supports this bundle type
+     */
+    public ResourceType getResourceType() {
+        return resourceType;
+    }
+
+    public void setResourceType(ResourceType resourceType) {
+        this.resourceType = resourceType;
     }
 
     @Override

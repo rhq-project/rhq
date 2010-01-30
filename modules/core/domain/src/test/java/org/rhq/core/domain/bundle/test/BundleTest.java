@@ -37,6 +37,8 @@ import org.rhq.core.domain.bundle.BundleVersionRepoPK;
 import org.rhq.core.domain.content.Distribution;
 import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.resource.ResourceCategory;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.test.AbstractEJB3Test;
 
 @Test
@@ -63,7 +65,7 @@ public class BundleTest extends AbstractEJB3Test {
             q.setParameter("id", repo2.getId());
             assert q.getResultList().size() == 0 : "should not have repo2 mapping in the db yet";
 
-            BundleType bundleType = new BundleType(name + "-Type");
+            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
             em.persist(bundle);
             BundleVersion bundleVersion = new BundleVersion(name, "1.0.0.BETA", bundle);
@@ -127,7 +129,7 @@ public class BundleTest extends AbstractEJB3Test {
             String name = "BundleTest-testBundleVersion";
             String action = "action/script/recipe is here";
 
-            BundleType bundleType = new BundleType(name + "-Type");
+            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
             Bundle bundle = new Bundle(name + "-Bundle", bundleType);
             em.persist(bundle);
             id = bundle.getId();
@@ -203,6 +205,8 @@ public class BundleTest extends AbstractEJB3Test {
             em.remove(bundleType);
             assert q.getResultList().size() == 0 : "didn't clean up test bundle";
             assert em.find(BundleType.class, bundleType.getId()) == null : "didn't clean up bundle type";
+
+            deleteResourceType(em, bundleType.getResourceType());
             em.close();
             getTransactionManager().commit();
 
@@ -226,7 +230,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             String name = "BundleTest-testBundle";
 
-            BundleType bundleType = new BundleType(name + "-Type");
+            BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
             Bundle b = new Bundle(name, bundleType);
 
             Query q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
@@ -274,6 +278,8 @@ public class BundleTest extends AbstractEJB3Test {
             BundleType bt = (BundleType) q.getSingleResult();
             em.remove(bt);
             assert q.getResultList().size() == 0 : "didn't clean up test bundle type";
+
+            deleteResourceType(em, bundleType.getResourceType());
             em.close();
             getTransactionManager().commit();
 
@@ -297,7 +303,7 @@ public class BundleTest extends AbstractEJB3Test {
 
             String name = "BundleTest-testBundleType";
 
-            BundleType bt = new BundleType(name);
+            BundleType bt = new BundleType(name, createResourceType(em));
 
             Query q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
             q.setParameter("name", bt.getName());
@@ -330,6 +336,8 @@ public class BundleTest extends AbstractEJB3Test {
             doomed = em.getReference(BundleType.class, doomed.getId());
             em.remove(doomed);
             assert q.getResultList().size() == 0 : "didn't remove the entity";
+
+            deleteResourceType(em, bt.getResourceType());
             em.close();
             getTransactionManager().commit();
             done = true;
@@ -341,5 +349,17 @@ public class BundleTest extends AbstractEJB3Test {
                 getTransactionManager().rollback();
             }
         }
+    }
+
+    private ResourceType createResourceType(EntityManager em) {
+        ResourceType rt = new ResourceType("BundleTest", "BundleTestPlugin", ResourceCategory.PLATFORM, null);
+        em.persist(rt);
+        return rt;
+    }
+
+    private ResourceType deleteResourceType(EntityManager em, ResourceType rt) {
+        rt = em.find(ResourceType.class, rt.getId());
+        em.remove(rt);
+        return rt;
     }
 }

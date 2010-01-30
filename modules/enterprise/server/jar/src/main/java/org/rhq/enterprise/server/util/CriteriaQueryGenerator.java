@@ -365,11 +365,6 @@ public final class CriteriaQueryGenerator {
                 if (wantCaseInsensitiveMatch) {
                     formattedValue = formattedValue.toLowerCase();
                 }
-                /* 
-                 * Double escape backslashes if they are not treated as string literals by the db vendor
-                 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
-                 */
-                formattedValue = QueryUtility.handleDoubleEscaping(formattedValue);
 
                 if (wantsFuzzyMatching) {
                     // append '%' onto edges that don't already have '%' explicitly set from the caller

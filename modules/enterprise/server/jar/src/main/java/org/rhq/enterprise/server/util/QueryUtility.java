@@ -27,6 +27,8 @@ import org.rhq.core.db.DatabaseTypeFactory;
 public class QueryUtility {
 
     private static String ESCAPE_CHARACTER = null;
+    private static String ESCAPE_CLAUSE_CHARACTER = null;
+    private static String ESCAPED_ESCAPE = null;
     private static String ESCAPED_PERCENT = null;
     private static String ESCAPED_UNDERSCORE = null;
 
@@ -45,6 +47,7 @@ public class QueryUtility {
 
         // Escape LIKE's wildcard characters with escaped characters so that the user's input
         // will be matched literally
+        value = value.replace(ESCAPE_CHARACTER, ESCAPED_ESCAPE);
         value = value.replace("_", ESCAPED_UNDERSCORE);
         value = value.replace("%", ESCAPED_PERCENT);
 
@@ -75,44 +78,34 @@ public class QueryUtility {
     public static String getEscapeClause() {
         init();
 
-        return " ESCAPE '" + ESCAPE_CHARACTER + "' ";
+        return " ESCAPE '" + ESCAPE_CLAUSE_CHARACTER + "' ";
     }
 
     /**
-     * If the current DatabaseType requires double escaping then ensure it is set correctly. This may be useful
-     * if the search string has been constructed outside of QueryUtil.formatSearchParameter(String).
-     * 
-     * @param value single escaped search string value
-     * @return The double escaped string
-     */
-    public static String handleDoubleEscaping(String value) {
-        init();
-
-        if ("\\\\".equals(ESCAPE_CHARACTER)) {
-            value = value.replace("\\_", ESCAPED_UNDERSCORE);
-            value = value.replace("\\%", ESCAPED_PERCENT);
-        }
-
-        return value;
-    }
-
-    /**
-     * Get the proper escape character for the current DatabaseType.
+     * Get the proper ESCAPE clause character for the current DatabaseType.
      * 
      * @return The escape character(s)
      */
     public static String getEscapeCharacter() {
         init();
 
-        return ESCAPE_CHARACTER;
+        return ESCAPE_CLAUSE_CHARACTER;
     }
 
     private static void init() {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+        if (null == ESCAPE_CLAUSE_CHARACTER) {
+            ESCAPE_CLAUSE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+
+            // The escape character should be a single character. In postgres and possibly other
+            // db types the character itself may need to be escaped for proper parsing of the ESCAPE value.
+            // (for example, ESCAPE '\\' in postgres because backslash in a string literal is
+            // escaped by default. In such a case assume the last character is the true escape character.
+            int len = ESCAPE_CLAUSE_CHARACTER.length();
+            ESCAPE_CHARACTER = (len > 1) ? ESCAPE_CLAUSE_CHARACTER.substring(len - 1) : ESCAPE_CLAUSE_CHARACTER;
+
+            ESCAPED_ESCAPE = ESCAPE_CHARACTER + ESCAPE_CHARACTER;
             ESCAPED_UNDERSCORE = ESCAPE_CHARACTER + "_";
             ESCAPED_PERCENT = ESCAPE_CHARACTER + "%";
         }
     }
-
 }

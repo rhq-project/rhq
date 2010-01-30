@@ -44,10 +44,10 @@
     <module>alert-irc</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
-<!--    <module>alert-roles</module> -->
+    <module>alert-roles</module>
     <module>alert-snmp</module>
-<!--    <module>alert-subject</module> -->
-<!--    <module>cobbler</module> -->
+    <module>alert-subject</module>
+    <module>cobbler</module>
     <module>validate-all-serverplugins</module>
   </modules>
 

@@ -225,6 +225,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/libvirt/libvirt/0.4.1/libvirt-0.4.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman/1.2.1/byteman-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/fedorahosted/cobbler/cobbler4j/0.1/cobbler4j-0.1.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.0.0/gwt-user-2.0.0.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.0.0/gwt-user-2.0.0.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

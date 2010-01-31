@@ -68,7 +68,6 @@
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
-    <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.11</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
@@ -727,13 +726,6 @@
                  Add a top level dependency if this profile is active to allow for db-required tests in any module.
                  The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
                  this profile should not be active by default. -->
-            <dependency>
-                <groupId>ojdbc14</groupId>
-                <artifactId>ojdbc14</artifactId>
-                <version>${ojdbc14.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc5</artifactId>

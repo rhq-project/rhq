@@ -62,8 +62,8 @@
                         <configuration>
                            <artifactItems>
                               <artifactItem>
-                                 <groupId>ojdbc14</groupId>
-                                 <artifactId>ojdbc14</artifactId>
+                                 <groupId>com.oracle</groupId>
+                                 <artifactId>ojdbc5</artifactId>
                               </artifactItem>
                            </artifactItems>
                            <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

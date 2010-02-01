@@ -38,14 +38,12 @@ import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
-import org.richfaces.event.UploadEvent;
 import org.richfaces.model.UploadItem;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
@@ -69,7 +67,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     private boolean mode = STRUCTURED_MODE;
 
-    @Out
+//    @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
     @Out

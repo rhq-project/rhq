@@ -27,31 +27,58 @@
       <scm.module.path>modules/enterprise/server/plugins/</scm.module.path>
    </properties>
 
-   <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
    <dependencies>
+      <!-- all server-side plugins have access to some of the server-side APIs, therefore, we need this dependency -->
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
          <version>${project.version}</version>
          <type>ejb</type>
       </dependency>
+
+      <!-- nearly all server-side plugins access some of the domain classes. therefore, pull up this dependency -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+         <type>ejb</type>
+      </dependency>
+
+      <!--
+         TODO: This is a fix for the Javac bug requiring annotations to be available when compiling dependent classes.
+         It is fixed in JDK 6
+      -->
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>1.0</version>
+         <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>jboss.jboss-embeddable-ejb3</groupId>
+         <artifactId>hibernate-all</artifactId>
+         <version>1.0.0.Alpha9</version>
+         <scope>provided</scope>
+         <!-- needed for referenced domain entities that use Hibernate annotations -->
+      </dependency>
    </dependencies>
-  <modules>
-    <module>disk</module>
-    <module>yum</module>
-    <module>url</module>
-    <module>rhnhosted</module>
-    <module>jboss-software</module>
-    <module>perspectives/core</module>
-    <module>alert-email</module>
-    <module>alert-irc</module>
-    <module>alert-mobicents</module>
-    <module>alert-microblog</module>
-    <module>alert-roles</module>
-    <module>alert-snmp</module>
-    <module>alert-subject</module>
-    <module>cobbler</module>
-    <module>validate-all-serverplugins</module>
-  </modules>
+   <modules>
+      <module>disk</module>
+      <module>yum</module>
+      <module>url</module>
+      <module>rhnhosted</module>
+      <module>jboss-software</module>
+      <module>perspectives/core</module>
+      <module>alert-email</module>
+      <module>alert-irc</module>
+      <module>alert-mobicents</module>
+      <module>alert-microblog</module>
+      <module>alert-roles</module>
+      <module>alert-snmp</module>
+      <module>alert-subject</module>
+      <module>cobbler</module>
+      <module>validate-all-serverplugins</module>
+   </modules>
 
 </project>

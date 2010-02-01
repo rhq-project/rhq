@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.configuration;
 
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
+
+import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -473,7 +475,7 @@ public interface ConfigurationManagerLocal {
 
     ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException,ConfigurationValidationException;
 
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 

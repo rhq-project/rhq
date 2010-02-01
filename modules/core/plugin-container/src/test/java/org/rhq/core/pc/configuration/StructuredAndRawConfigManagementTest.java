@@ -23,21 +23,21 @@
 
 package org.rhq.core.pc.configuration;
 
-import static org.testng.Assert.*;
-import static java.util.Collections.*;
-
-import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-import org.jmock.Expectations;
 
 import java.util.Set;
+
+import static java.util.Collections.EMPTY_SET;
+import static org.testng.Assert.assertNull;
 
 public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
 
@@ -189,6 +189,86 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
         config.addRawConfiguration(raw1);
         config.addRawConfiguration(raw2);
 
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config);
+            oneOf(configFacet).persistStructuredConfiguration(config);
+
+            oneOf(configFacet).validateRawConfiguration(raw1);
+            oneOf(configFacet).persistRawConfiguration(raw1);
+
+            oneOf(configFacet).validateRawConfiguration(raw2);
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenStructuredValidationFails() throws Exception {
+        final RawConfiguration raw = createRawConfiguration("/tmp/raw.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw);
+            oneOf(configFacet).persistRawConfiguration(raw);
+        }});
+
+        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenStructuredUpdateFails() throws Exception {
+        final RawConfiguration raw = createRawConfiguration("/tmp/raw.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config);
+            oneOf(configFacet).persistStructuredConfiguration(config); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw);
+            oneOf(configFacet).persistRawConfiguration(raw);
+        }});
+
+        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void structuredAndSecondRawShouldStillGetUpdatedWhenFirstRawValidationFails() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateStructuredConfiguration(config);
+            oneOf(configFacet).persistStructuredConfiguration(config);
+
+            oneOf(configFacet).validateRawConfiguration(raw1); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw2);
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
+    }
+
+    private void addDefaultExpectationsForUpdate() throws Exception {
         final boolean isDaemonThread = false;
 
         context.checking(new Expectations() {{
@@ -199,13 +279,7 @@ public class StructuredAndRawConfigManagementTest extends ConfigManagementTest {
                                                          isDaemonThread,
                                                          onlyIfStarted);
             will(returnValue(configFacet));
-
-            oneOf(configFacet).persistStructuredConfiguration(config);
-            oneOf(configFacet).persistRawConfiguration(raw1);
-            oneOf(configFacet).persistRawConfiguration(raw2);
         }});
-
-        structuredAndRawConfigManagement.executeUpdate(resourceId, config);
     }
 
 }

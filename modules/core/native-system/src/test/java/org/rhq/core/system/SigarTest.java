@@ -44,7 +44,7 @@ public class SigarTest {
         try {
             Sigar.load();
         } catch (Exception e) {
-            throw new IllegalStateException("Cannot initialize SIGAR");
+            throw new IllegalStateException("Cannot initialize SIGAR.", e);
         }
     }
 
@@ -58,38 +58,95 @@ public class SigarTest {
         for (long pid : pids) {
             printNow("*** Retrieving process info for PID [" + pid + "]...");
 
-            ProcExe exe = sigar.getProcExe(pid);
-            printNow("   exe:    " + exe.toMap());
+            SigarException sigarException = null;
 
-            ProcState state = sigar.getProcState(pid);
-            printNow("   state:  " + state.toMap());
+            ProcExe exe = null;
+            try {
+                exe = sigar.getProcExe(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   exe:    " + ((exe != null) ? exe.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            List<String> args = Arrays.asList(sigar.getProcArgs(pid));
-            printNow("   args:   " + args);
+            ProcState state = null;
+            try {
+                state = sigar.getProcState(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   state:  " + ((state != null) ? state.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            Map env = sigar.getProcEnv(pid);
-            printNow("   env:    " + env);
+            List<String> args = null;
+            try {
+                args = Arrays.asList(sigar.getProcArgs(pid));
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   args:   " + ((args != null) ? args : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcCpu cpu = sigar.getProcCpu(pid);
-            printNow("   cpu:    " + cpu.toMap());
+            Map env = null;
+            try {
+                env = sigar.getProcEnv(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   env:    " + ((env != null) ? env : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcCred cred = sigar.getProcCred(pid);
-            printNow("   cred:   " + cred.toMap());
+            ProcCpu cpu = null;
+            try {
+                cpu = sigar.getProcCpu(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   cpu:    " + ((cpu != null) ? cpu.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcFd fd = sigar.getProcFd(pid);
-            printNow("   fd:     " + fd.toMap());
+            ProcCred cred = null;
+            try {
+                cred = sigar.getProcCred(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   cred:   " + ((cred != null) ? cred.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcMem mem = sigar.getProcMem(pid);
-            printNow("   mem:    " + mem.toMap());
+            ProcFd fd = null;
+            try {
+                fd = sigar.getProcFd(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   fd:     " + ((fd != null) ? fd.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            List modules = sigar.getProcModules(pid);
-            printNow("   modules:" + modules);
+            ProcMem mem = null;
+            try {
+                mem = sigar.getProcMem(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   mem:    " + ((mem != null) ? mem.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcStat stat = sigar.getProcStat();
-            printNow("   stat:   " + stat.toMap());
+            List modules = null;
+            try {
+                modules = sigar.getProcModules(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   modules:" + ((modules != null) ? modules : ("<UNKNOWN: " + sigarException + ">")));
 
-            ProcTime time = sigar.getProcTime(pid);
-            printNow("   time:   " + time.toMap());
+            ProcStat stat = null;
+            try {
+                stat = sigar.getProcStat();
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   stat:   " + ((stat != null) ? stat.toMap() : ("<UNKNOWN: " + sigarException + ">")));
+
+            ProcTime time = null;
+            try {
+                time = sigar.getProcTime(pid);
+            } catch (SigarException e) {
+                sigarException = e;
+            }
+            printNow("   time:   " + ((time != null) ? time.toMap() : ("<UNKNOWN: " + sigarException + ">")));
 
             printNow("");
         }

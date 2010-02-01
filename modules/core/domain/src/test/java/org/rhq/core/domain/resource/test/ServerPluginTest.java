@@ -85,6 +85,12 @@ public class ServerPluginTest extends AbstractEJB3Test {
             assert plugin.getPluginConfiguration() == null : "there was no config that should have been here";
             assert plugin.getScheduledJobsConfiguration() == null : "there was no config that should have been here";
 
+            q = em.createNamedQuery(ServerPlugin.QUERY_GET_CONFIG_MTIMES);
+            q.setParameter("id", plugin.getId());
+            Object[] times = (Object[]) q.getSingleResult();
+            assert times[0] == null;
+            assert times[1] == null;
+
             q = em.createNamedQuery(ServerPlugin.QUERY_GET_STATUS_BY_NAME);
             q.setParameter("name", plugin.getName());
             assert ((PluginStatusType) q.getSingleResult()) == PluginStatusType.INSTALLED;
@@ -270,6 +276,7 @@ public class ServerPluginTest extends AbstractEJB3Test {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public void testPersistFull() throws Exception {
         getTransactionManager().begin();
         EntityManager em = getEntityManager();
@@ -409,6 +416,14 @@ public class ServerPluginTest extends AbstractEJB3Test {
             allKeys = query.getResultList();
             assert allKeys.size() == 1;
             assert allKeys.contains(new PluginKey(plugin));
+
+            query = em.createNamedQuery(ServerPlugin.QUERY_GET_CONFIG_MTIMES);
+            query.setParameter("id", plugin.getId());
+            Object[] times = (Object[]) query.getSingleResult();
+            assert times[0] != null;
+            assert times[1] != null;
+            assert ((Long) times[0]).longValue() > 0;
+            assert ((Long) times[1]).longValue() > 0;
 
             // mark a plugin deleted - all of our queries should then never see it
             plugin.setStatus(PluginStatusType.DELETED);

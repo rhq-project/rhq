@@ -23,18 +23,18 @@
 
 package org.rhq.core.pc.configuration;
 
-import static java.util.Collections.EMPTY_SET;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
 import java.util.Set;
+
+import static java.util.Collections.EMPTY_SET;
 
 public class StructuredAndRawConfigManagement extends ConfigManagementSupport {
 
@@ -87,9 +87,28 @@ public class StructuredAndRawConfigManagement extends ConfigManagementSupport {
     public void executeUpdate(int resourceId, Configuration configuration) throws PluginContainerException {
         ResourceConfigurationFacet facet = loadResourceConfigFacetWithWriteLock(resourceId);
 
-        facet.persistStructuredConfiguration(configuration);
+        StringBuilder errors = new StringBuilder();
+
+        try {
+            facet.validateStructuredConfiguration(configuration);
+            facet.persistStructuredConfiguration(configuration);
+        }
+        catch (Throwable t) {
+            errors.append(t.getMessage());
+        }
+
         for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-            facet.persistRawConfiguration(rawConfig);
+            try {
+                facet.validateRawConfiguration(rawConfig);
+                facet.persistRawConfiguration(rawConfig);
+            }
+            catch (Throwable t) {
+                errors.append(t.getMessage()).append("\n\n");
+            }
+        }
+
+        if (errors.length() > 0) {
+            throw new ConfigurationUpdateException(errors.toString());
         }
     }
 }

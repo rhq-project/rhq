@@ -932,72 +932,6 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
-    @Test
-    public void testFindRawConfigurationById() throws Exception {
-        Configuration config = persistNewConfigWithRawConfigs();
-
-        getTransactionManager().begin();
-        EntityManager entityMgr = getEntityManager();
-
-        try {
-            for (RawConfiguration rawConfig : config.getRawConfigurations()) {
-                assertNotNull(
-                    "Failed to find raw config by id[" + rawConfig.getId() + "]",
-                    entityMgr.find(RawConfiguration.class, rawConfig.getId())
-                );
-            }
-        }
-        finally {
-            getTransactionManager().rollback();
-
-            getTransactionManager().begin();
-            delete(config);
-            getTransactionManager().commit();
-        }
-    }
-
-    @Test
-    public void testFindRawConfigurationsByConfigurationId() throws Exception {
-        Configuration config = persistNewConfigWithRawConfigs();
-
-        getTransactionManager().begin();
-        
-        try {
-            Collection<RawConfiguration> rawConfigs = configurationManager.findRawConfigurationsByConfigurationId(
-                config.getId());
-
-            assertEquals("Failed to find raw configs for " + config, config.getRawConfigurations().size(), rawConfigs.size());
-        }
-        finally {
-            getTransactionManager().rollback();
-
-            getTransactionManager().begin();
-            delete(config);
-            getTransactionManager().commit();
-        }
-    }
-
-    Configuration persistNewConfigWithRawConfigs() throws Exception {
-        getTransactionManager().begin();
-
-        Configuration config = new Configuration();
-        config.addRawConfiguration(createRawConfiguration("12345"));
-        config.addRawConfiguration(createRawConfiguration("54321"));
-
-        persist(config);
-
-        getTransactionManager().commit();
-
-        return config;
-    }
-
-    RawConfiguration createRawConfiguration(String sha256) {
-        RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(new byte[] {});
-        
-        return rawConfig;
-    }
-
     void persist(Object entity) throws Exception {
         EntityManager entityMgr = getEntityManager();
         getEntityManager().persist(entity);
@@ -1152,6 +1086,9 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
 
         @Asynchronous(guaranteedDelivery = true)
         public void synchronizeInventory(ResourceSyncInfo syncInfo) {
+        }
+	public void validate(Configuration configuration, int resourceId, boolean isStructured)
+            throws PluginContainerException {
         }
     }
 }

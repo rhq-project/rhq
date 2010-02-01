@@ -30,7 +30,9 @@ import org.rhq.enterprise.communications.util.prefs.PromptInput;
  * will do the same as {@link #readLine()}).
  *
  * @author John Mazzitelli
+ * @deprecated
  */
+@Deprecated
 public class AgentNativePromptInfo implements PromptInput {
     private final SystemInfo systemInfo;
     private final AgentMain agent;

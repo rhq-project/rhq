@@ -58,6 +58,8 @@ import java.util.prefs.Preferences;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
+import jline.ConsoleReader;
+
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
 
@@ -206,7 +208,7 @@ public class AgentMain {
     /**
      * The stream where the commands are input.
      */
-    private BufferedReader m_input;
+    private ConsoleReader m_input;
 
     /**
      * Will be <code>true</code> if the input is coming directly from stdin; <code>false</code> if an input script file
@@ -461,7 +463,7 @@ public class AgentMain {
 
         m_agentHomeDirectory = null;
         m_daemonMode = false;
-        m_input = new BufferedReader(new InputStreamReader(System.in));
+        m_input = new ConsoleReader() ;
         m_output = new AgentPrintWriter(System.out, true);
         m_stdinInput = true;
         m_configuration = null;
@@ -802,7 +804,7 @@ public class AgentMain {
      *
      * @return the input stream or <code>null</code> if the agent is not currently accepting input
      */
-    public BufferedReader getIn() {
+    public ConsoleReader getIn() {
         return m_input;
     }
 
@@ -814,22 +816,7 @@ public class AgentMain {
      * @return object that can be used to read input with the typed data being echoed or not
      */
     public PromptInput getNativeIn() {
-        SystemInfo sysinfo = null;
-
-        // if we are not in daemon mode, we are running in a console and thus we can try to use
-        // the native library to get its input.
-        // If we are in daemon mode, we aren't running in a console so we need to pass null
-        // in for sysinfo thus causing the prompt info implementation to use our fallback buffered
-        // reader (which is either empty or is contents of an input file that was piped in via --input.
-        if (!m_daemonMode) {
-            // just in case the native stuff has a bug in the console stuff (JBNATIVE-42 as an example),
-            // be able to configure the agent to ignore the native console
-            if (Boolean.getBoolean("rhq.agent.do-not-use-native-console") == false) {
-                sysinfo = SystemInfoFactory.createSystemInfo();
-            }
-        }
-
-        return new AgentNativePromptInfo(sysinfo, this);
+        return new JlinePromptInfo(this) ;
     }
 
     /**
@@ -1091,14 +1078,14 @@ public class AgentMain {
             }
         } else if (!m_stdinInput) {
             // if we are processing a script, we hit the EOF, so close the input stream
-            try {
-                m_input.close();
-            } catch (IOException e1) {
-            }
+
 
             // if we are not in daemon mode, let's now start processing prompt commands coming in via stdin
             if (!m_daemonMode) {
-                m_input = new BufferedReader(new InputStreamReader(System.in));
+                try {
+                    m_input = new ConsoleReader() ;
+                } catch (IOException e1) {
+                }            
                 m_stdinInput = true;
                 input_string = "";
             } else {
@@ -2770,7 +2757,7 @@ public class AgentMain {
                 File script = new File(getopt.getOptarg());
 
                 try {
-                    m_input = new BufferedReader(new FileReader(script));
+                    m_input = new ConsoleReader(new FileInputStream(script), null);
                     m_stdinInput = false;
                 } catch (Exception e) {
                     throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_INPUT_FILE, script, e));

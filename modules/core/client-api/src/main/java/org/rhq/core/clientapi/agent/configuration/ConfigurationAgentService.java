@@ -98,4 +98,26 @@ public interface ConfigurationAgentService {
      */
     Configuration merge(Configuration configuration, int resourceId, boolean fromStructured)
         throws PluginContainerException;
+
+
+    /**
+     * If the <code>fromStructured</code> flag is <code>true</code>, then the s
+     * Configuration.properties</code>) is merged into the latest raw configura
+     * Configuration object returned will consist of the structured configurati
+     * configurations. If <code>fromStructured</code> is <code>false</code>, th
+     * Configuration.rawConfigurations</code>) is merged into the latest struct
+     * plugin. The returned Configuration will then consist of the raw configur
+     * configuration.
+     *
+     * @param configuration The Configuration with the changes to be merged
+     * @param resourceId The id of the resource to which the configuration belo
+     * @param A flag that if <code>true</code> indicates the Structured configu
+     * validates the raw
+     * @return The <strong>merged</strong> configuration, where a merge consist
+     * followed by the values of the side merging from being applied to the sid
+     * @throws PluginContainerException 
+     * @throws PluginContainerException if a runtime or plugin error occurs.
+     */
+    void validate(Configuration configuration, int resourceId, boolean isStructured) throws PluginContainerException;
+
 }

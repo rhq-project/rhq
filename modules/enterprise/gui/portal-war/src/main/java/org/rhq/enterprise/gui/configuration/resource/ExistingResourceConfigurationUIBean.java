@@ -18,22 +18,12 @@
  */
 package org.rhq.enterprise.gui.configuration.resource;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.TreeMap;
-
-import javax.faces.application.FacesMessage;
-
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jetbrains.annotations.Nullable;
-import org.richfaces.event.UploadEvent;
-
 import org.jboss.seam.annotations.Create;
-
+import org.jboss.seam.annotations.Out;
+import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
@@ -43,41 +33,163 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.rhq.enterprise.gui.configuration.AbstractConfigurationUIBean;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.event.UploadEvent;
+import org.richfaces.model.UploadItem;
 
-/**
- * @author Ian Springer
- */
-//@ Name(value = "ExistingResourceConfigurationUIBean")
-//@ Scope(ScopeType.PAGE)
+import javax.faces.application.FacesMessage;
+import javax.faces.event.ValueChangeEvent;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+
+// This class is temporarily decleared in components.xml since it is declared under two names - ViewUIBean and
+// UIBean. This class is undergoing some refactoring and part of that will include declaring the @Name and @Scope
+// annotations again.
+//
+//@Name(value = "ExistingResourceConfigurationViewUIBean")
+//@Scope(ScopeType.PAGE)
 public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUIBean {
     public static final String MANAGED_BEAN_NAME = "ExistingResourceConfigurationUIBean";
 
-    // =========== actions ===========
+    private static final boolean STRUCTURED_MODE = true;
+    private static final boolean RAW_MODE = false;
+
+    private boolean mode = STRUCTURED_MODE;
+
+    @Out
+    private Collection<RawConfigDirectory> rawConfigDirectories;
+
+    @Out
+    private FileUploadUIBean fileUploader = new FileUploadUIBean();
+
+    private String modalEditorContents;
+
+    private int numberOfModifiedFiles;
 
     public ExistingResourceConfigurationUIBean() {
         removeSessionScopedBeanIfInView("/rhq/resource/configuration/view.xhtml",
             ExistingResourceConfigurationUIBean.class);
     }
 
+    @Create
+    public void begin() {
+        if (isRawSupported() || isStructuredAndRawSupported()) {
+            initConfigDirectories();
+        }
+        else {
+            rawConfigDirectories = Collections.EMPTY_LIST;
+        }
+    }
+
+    private void initConfigDirectories() {
+        Map<String, RawConfigDirectory> dirs = new HashMap<String, RawConfigDirectory>();
+
+        for (RawConfiguration rawConfig : getConfiguration().getRawConfigurations()) {
+            String parentDirPath = getParentDir(rawConfig);
+            RawConfigDirectory dir = dirs.get(parentDirPath);
+
+            if (dir == null) {
+                dir = new RawConfigDirectory();
+                dir.setPath(parentDirPath);
+            }
+
+            dir.addRawConfig(rawConfig);
+            dirs.put(parentDirPath, dir);
+        }
+
+        rawConfigDirectories = dirs.values();
+    }
+
+    private String getParentDir(RawConfiguration rawConfig) {
+        File file = new File(rawConfig.getPath());
+        return file.getParentFile().getAbsolutePath();
+    }
+
     public String editConfiguration() {
+        mode = STRUCTURED_MODE;
         return SUCCESS_OUTCOME;
     }
 
     public String editRawConfiguration() {
+        mode = RAW_MODE;
         return SUCCESS_OUTCOME;
     }
 
-    public String switchToRaw() {
-        ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
-        int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-        this.configurationManager.translateResourceConfiguration(EnterpriseFacesContextUtility.getSubject(),
-            resourceId, getConfiguration(), true);
+    public void changeTabs(ValueChangeEvent event) {
+        if (event.getNewValue().equals("rawTab")) {
+            switchToRaw();
+            mode = RAW_MODE;
+        }
+        else if (event.getNewValue().equals("structuredTab")) {
+            switchToStructured();
+            mode = STRUCTURED_MODE;
+        }
+    }
 
-        return SUCCESS_OUTCOME;
+    public String switchToRaw() {
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getConfiguration(), true);
+
+        setConfiguration(configuration);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRaws().put(raw.getPath(), raw);
+        }
+        current = null;
+        setConfiguration(configuration);
+        updateModifiedCache();
+        mode = RAW_MODE;
+        return null;
+    }
+
+    private void updateModifiedCache() {
+        Configuration configuration = getConfiguration();
+
+        for (RawConfiguration updatedRaw : configuration.getRawConfigurations()) {
+            RawConfiguration cachedRaw = modified.get(updatedRaw.getPath());
+            if (cachedRaw != null && !updatedRaw.getSha256().equals(cachedRaw.getSha256())) {
+                modified.remove(cachedRaw.getPath());
+            }
+        }
+    }
+
+    public String switchToStructured() {
+        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
+            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
+
+        for (Property property : configuration.getAllProperties().values()) {
+            property.setConfiguration(configuration);
+        }
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            getRaws().put(raw.getPath(), raw);
+            setConfiguration(configuration);
+        }
+        current = null;
+        setConfiguration(configuration);
+
+        for (RawConfiguration raw : configuration.getRawConfigurations()) {
+            System.out.println(raw.getPath() + " -\n" + (new String(raw.getContents())) + "\n");
+        }
+
+        updateModifiedCache();
+
+        mode = STRUCTURED_MODE;
+
+        return null;
     }
 
     public String updateConfiguration() {
@@ -87,6 +199,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
     public String updateRawConfiguration() {
         return updateConfiguration(false);
+    }
+
+    public void saveModalEditorContents() {
+        setCurrentContents(modalEditorContents);
     }
 
     public String updateConfiguration(boolean fromStructured) {
@@ -109,7 +225,11 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                     + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
                 return FAILURE_OUTCOME;
-            }
+            case UNSENT:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update was not valid"
+                    , updateRequest.getErrorMessage());
+                return FAILURE_OUTCOME;
+            }        
         } else {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
                 + "no update request has been sent to the Agent.");
@@ -128,8 +248,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
         return SUCCESS_OUTCOME;
     }
-
-    // =========== impls of superclass abstract methods ===========
 
     protected int getConfigurationDefinitionKey() {
         return EnterpriseFacesContextUtility.getResource().getResourceType().getId();
@@ -175,8 +293,6 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         LookupUtil.getConfigurationManager().updateResourceConfiguration(subject, getResourceId(),
             getMergedConfiguration());
 
-        nullify();
-
         return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
     }
 
@@ -192,58 +308,36 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfiguration();
     }
 
-    public String discard() {
-        nullify();
-        return "/rhq/resource/configuration/view.xhtml?id=" + getResourceId();
+    public String editCurrent() {
+        RawConfiguration editedRaw = getCurrent();
+        RawConfiguration originalRaw = raws.get(editedRaw.getPath());
+
+        if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
+            --numberOfModifiedFiles;
+            RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
+            rawUIBean.setModified(false);
+            getModified().remove(editedRaw.getPath());
+        }
+        else {
+            ++numberOfModifiedFiles;
+        }
+        return null;
     }
 
-    public void fileUploadListener(UploadEvent event) throws Exception {
-        File uploadFile;
-        log.error("fileUploadListener called");
-        uploadFile = event.getUploadItem().getFile();
-        if (uploadFile != null) {
-            log.debug("fileUploadListener got file named " + event.getUploadItem().getFileName());
-            log.debug("content type is " + event.getUploadItem().getContentType());
-            if (uploadFile != null) {
-                try {
-                    FileReader fileReader = new FileReader(uploadFile);
-                    char[] buff = new char[1024];
-                    StringBuffer stringBuffer = new StringBuffer();
-                    for (int count = fileReader.read(buff); count != -1; count = fileReader.read(buff)) {
-                        stringBuffer.append(buff, 0, count);
-                    }
-                    setCurrentContents(stringBuffer.toString());
-                } catch (IOException e) {
-                    log.error("problem reading uploaded file", e);
-                }
-            }
+    public void undoEdit(String path) {
+        modified.remove(path);
+        RawConfigUIBean bean = findRawConfigUIBeanByPath(path);
+
+        if (bean != null) {
+            bean.setModified(false);
+            bean.setIcon("/images/blank.png");
         }
+
     }
 
     public int getConfigId() {
         return getConfiguration().getId();
     }
-
-    /*
-        public Configuration getConfiguration() {
-            if (null == configuration) {
-
-                Subject subject = EnterpriseFacesContextUtility.getSubject();
-                int resourceId = EnterpriseFacesContextUtility.getResource().getId();
-                AbstractResourceConfigurationUpdate configurationUpdate = LookupUtil.getConfigurationManager()
-                    .getLatestResourceConfigurationUpdate(subject, resourceId);
-                Configuration configuration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-                if (configuration != null) {
-                    //ConfigurationMaskingUtility.maskConfiguration(configuration, getConfigurationDefinition());
-                }
-
-                return configuration;
-
-            }
-            return configuration;
-        
-        }
-    */
 
     private ConfigurationFormat getConfigurationFormat() {
         return getConfigurationDefinition().getConfigurationFormat();
@@ -257,7 +351,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
             } else {
                 current = new RawConfiguration();
                 current.setPath("/dev/null");
-                current.setContents("".getBytes());
+                current.setContents("");
             }
         }
         return current;
@@ -271,6 +365,21 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getCurrent().getPath();
     }
 
+    public String getModalEditorHeader() {
+        return getCurrentPath();
+    }
+
+    public String getModalEditorContents() {
+        if (modalEditorContents == null) {
+            modalEditorContents = getCurrentContents();
+        }
+        return modalEditorContents;
+    }
+
+    public void setModalEditorContents(String contents) {
+        modalEditorContents = contents;
+    }
+
     public TreeMap<String, RawConfiguration> getModified() {
         if (modified == null) {
             modified = new TreeMap<String, RawConfiguration>();
@@ -278,15 +387,32 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return modified;
     }
 
+    public String getSelectedTab() {
+        if (mode == STRUCTURED_MODE) {
+            return "structuredTab";
+        }
+        return "rawTab";
+    }
+
+    public void setSelectedTab(String tab) {
+        if (tab.equals("structuredTab")) {
+            mode = STRUCTURED_MODE;
+        }
+        else {
+            mode = RAW_MODE;
+        }
+    }
+
     public Object[] getPaths() {
+
         return getRaws().keySet().toArray();
     }
 
     /**
     *      
     * @return the id associated with the resource.  
-    * The value Cached in order to be available on the upload page, 
-    * where seeing the resource id conflicts with the rich upload tag.
+    * The value Cached in order to be available on the completeUpload page,
+    * where seeing the resource id conflicts with the rich completeUpload tag.
     */
     public int getResourceId() {
         if (resourceId == null) {
@@ -295,15 +421,36 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return resourceId;
     }
 
-    /**
-     * Hack Alert.  This bean needs to be initialized on one of the pages that has id or resourceId set
-     * In order to capture the resource.  It will then Keep track of that particular resources until
-     * commit is called.  Ideally, this should be a conversation scoped bean, but that has other issues
-     * 
-     */
-    @Create
-    public void init() {
+    public boolean isStructuredMode() {
+        return mode == STRUCTURED_MODE;
+    }
 
+    public boolean isRawMode() {
+        return mode == RAW_MODE;
+    }
+
+    public boolean isDisplayChangedFilesLabel() {
+        if (isStructuredMode()) {
+            return false;
+        }
+
+        if (isRawSupported()) {
+            return true;
+        }
+
+        return isRawMode();
+    }
+
+    public String getModifiedFilesMsg() {
+        if (!isDisplayChangedFilesLabel() || numberOfModifiedFiles == 0) {
+            return "";
+        }
+
+        if (numberOfModifiedFiles == 1) {
+            return "1 file changed in this configuration";
+        }
+
+        return numberOfModifiedFiles + " files changed in this configuration";
     }
 
     public boolean isModified(String path) {
@@ -311,12 +458,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public boolean isRawSupported() {
-//        return getConfigurationFormat().isRawSupported();
-        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.RAW;            
+        return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.RAW;
     }
 
     public boolean isStructuredSupported() {
-//        return getConfigurationFormat().isStructuredSupported();
         return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED;
     }
 
@@ -324,8 +469,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return getConfigurationDefinition().getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW;        
     }
 
-    void nullify() {
-
+    public boolean isFileUploadAvailable() {
+        return isRawSupported() || (isStructuredAndRawSupported() && isRawMode());
     }
 
     /**
@@ -335,17 +480,37 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     public void select(String s) {
         selectedPath = s;
         setCurrentPath(selectedPath);
+        setCurrentContents(getCurrentContents());
+        modalEditorContents = getCurrentContents();
     }
 
     public void setCurrentContents(String updated) {
-
         String original = new String(getCurrent().getContents());
         if (!updated.equals(original)) {
             current = current.deepCopy(false);
-            current.setContents(updated.getBytes());
-            //TODO update other values like MD5
+            current.setContents(updated);
+
+            markCurrentRawConfigUIBeanModified();
             getModified().put(current.getPath(), current);
         }
+    }
+
+    private void markCurrentRawConfigUIBeanModified() {
+        RawConfigUIBean bean = findRawConfigUIBeanByPath(current.getPath());
+        if (bean != null) {
+            bean.setModified(true);
+        }
+    }
+
+    private RawConfigUIBean findRawConfigUIBeanByPath(String path) {
+        for (RawConfigDirectory dir : rawConfigDirectories) {
+            for (RawConfigUIBean bean : dir.getRawConfigUIBeans()) {
+                if (bean.getPath().equals(current.getPath())) {
+                    return bean;
+                }
+            }
+        }
+        return null;
     }
 
     public void setCurrentPath(String path) {
@@ -362,68 +527,59 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         getModified().put(raw.getPath(), raw);
     }
 
+    public String download() {
+        try {
+            File file = new File(getCurrentPath());
+
+            HttpServletResponse response = FacesContextUtility.getResponse();
+            response.setHeader("Content-Disposition", "attachment;filename=" + file.getName());
+            OutputStream ostream = response.getOutputStream();
+            ostream.write(getCurrentContents().getBytes());
+            ostream.flush();
+            ostream.close();
+
+            FacesContextUtility.getFacesContext().responseComplete();
+
+            return null;
+        }
+        catch (IOException e) {
+            log.error("Failed to complete download request for " + getCurrentPath(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
     /**
-     * This is a no-op, since the upload work was done by upload file
+     * This is a no-op, since the completeUpload work was done by completeUpload file
      * But is kept as a target for the "save" icon from the full screen page
      */
     public String update() {
         return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
     }
 
-    /**
-     * This is a no-op, since the upload work was done by upload file
-     * But is kept as a target for the "action" value 
-     */
-    public String upload() {
-        return "/rhq/resource/configuration/edit-raw.xhtml?currentResourceId=" + getResourceId();
-    }
+    public String completeUpload() {
+        try {
+            if (fileUploader.getFileItem() != null) {
+                UploadItem fileItem = fileUploader.getFileItem();
+                if (fileItem.isTempFile()) {
+                    setCurrentContents(FileUtils.readFileToString(fileItem.getFile()));
+                }
+                else {
+                    setCurrentContents(new String(fileItem.getData()));
+                }
+                fileUploader.clear();
+            }
 
-    public String switchToraw() {
-        log.error("switch2raw called");
-        dumpProperties(getConfiguration(), log);
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), true);
-        log.error("switch2raw post merge");
-        dumpProperties(getConfiguration(), log);
-
-        setConfiguration(configuration);
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
+            return null;    
         }
-        current = null;
-        setConfiguration(configuration);
-
-        return SUCCESS_OUTCOME;
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     void dumpProperties(Configuration conf, Log log) {
         for (String key : conf.getAllProperties().keySet()) {
             log.error("property=" + conf.getAllProperties().get(key));
         }
-    }
-
-    public String switchTostructured() {
-        log.error("switch2structured called");
-
-        dumpProperties(getConfiguration(), log);
-        Configuration configuration = LookupUtil.getConfigurationManager().translateResourceConfiguration(
-            EnterpriseFacesContextUtility.getSubject(), getResourceId(), getMergedConfiguration(), false);
-        log.error("switch2structured post merge");
-
-        dumpProperties(configuration, log);
-
-        for (Property property : configuration.getAllProperties().values()) {
-            property.setConfiguration(configuration);
-        }
-
-        for (RawConfiguration raw : configuration.getRawConfigurations()) {
-            getRaws().put(raw.getPath(), raw);
-            setConfiguration(configuration);
-        }
-        current = null;
-        setConfiguration(configuration);
-
-        return SUCCESS_OUTCOME;
     }
 
     void populateRaws() {
@@ -448,11 +604,10 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         return raws;
     }
 
-    /**
-     * 
-     */
     String selectedPath;
+
     private TreeMap<String, RawConfiguration> raws;
+    
     TreeMap<String, RawConfiguration> modified = new TreeMap<String, RawConfiguration>();
     RawConfiguration current = null;
 

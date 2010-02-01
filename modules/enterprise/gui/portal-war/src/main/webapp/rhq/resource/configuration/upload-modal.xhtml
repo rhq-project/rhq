@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:a4j="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich">
+
+  <f:subview id="uploadSubview" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
+
+    <script type="text/javascript">
+      function prepareFormForUpload() {
+        var form = document.getElementById('editResourceConfigurationForm');
+        form.encoding = 'multipart/form-data';
+      }
+    </script>
+
+    <rich:modalPanel id="uploadWindow" width="800" height="400">
+      <f:facet name="header">
+        <h:panelGroup>
+          <h:outputText value="#{ExistingResourceConfigurationUIBean.current.path}"/>
+        </h:panelGroup>
+      </f:facet>
+      <f:facet name="controls">
+        <h:panelGroup>
+          <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hidelink"/>
+          <rich:componentControl for="uploadWindow" attachTo="hidelink" operation="hide" event="onclick"/>
+        </h:panelGroup>
+      </f:facet>
+
+
+        <rich:panel id="uploadPanel" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
+
+          <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
+
+          <rich:fileUpload id="fileUpload"
+                           listHeight="50px"
+                           fileUploadListener="#{fileUploader.fileUploadListener}"
+                           addControlLabel="Browse"
+                           immediateUpload="false">
+            <f:facet name="label">
+              <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}"/>
+            </f:facet>
+            <a4j:support event="onuploadcomplete"
+                         action="#{ExistingResourceConfigurationUIBean.completeUpload}"
+                         reRender="fileUpload,fileContents,fileMenu"
+                         onsubmit="#{rich:component('uploadWindow')}.hide()"/>
+          </rich:fileUpload>
+
+        </rich:panel>   
+    </rich:modalPanel>
+  </f:subview>
+
+</ui:composition>

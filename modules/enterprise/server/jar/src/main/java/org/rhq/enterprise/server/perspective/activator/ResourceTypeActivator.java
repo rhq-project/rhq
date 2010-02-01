@@ -18,10 +18,14 @@
  */
 package org.rhq.enterprise.server.perspective.activator;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.perspective.activator.context.AbstractResourceOrGroupActivationContext;
 
 /**
@@ -29,7 +33,7 @@ import org.rhq.enterprise.server.perspective.activator.context.AbstractResourceO
  */
 public class ResourceTypeActivator extends AbstractResourceOrGroupActivator {
     static final long serialVersionUID = 1L;
-    
+
     private List<ResourceConditionSet> resourceConditionSets;
 
     public ResourceTypeActivator(List<ResourceConditionSet> resourceConditionSets) {
@@ -44,23 +48,35 @@ public class ResourceTypeActivator extends AbstractResourceOrGroupActivator {
      */
     public boolean isActive(AbstractResourceOrGroupActivationContext context) {
         for (ResourceConditionSet resourceConditionSet : this.resourceConditionSets) {
-            if (context.getResourceType().getPlugin().equals(resourceConditionSet.getPluginName()) &&
-                context.getResourceType().getName().equals(resourceConditionSet.getResourceTypeName())) {
+            if (context.getResourceType().getPlugin().equals(resourceConditionSet.getPluginName())
+                && context.getResourceType().getName().equals(resourceConditionSet.getResourceTypeName())) {
                 if (hasResourcePermissions(context, resourceConditionSet.getPermissions())) {
-                     // TODO: Evaluate traits.
-                     return true;
+                    if (hasTraits(context, resourceConditionSet.getTraitMatchers())) {
+                        return true;
+                    }
                 }
             }
         }
         return false;
     }
 
-    private boolean hasResourcePermissions(AbstractResourceOrGroupActivationContext context, EnumSet<Permission> resourcePermissions) {
+    private boolean hasResourcePermissions(AbstractResourceOrGroupActivationContext context,
+        EnumSet<Permission> resourcePermissions) {
         for (Permission permission : resourcePermissions) {
-             if (!context.hasResourcePermission(permission)) {
-                  return false;
-             }
+            if (!context.hasResourcePermission(permission)) {
+                return false;
+            }
         }
         return true;
+    }
+
+    private boolean hasTraits(AbstractResourceOrGroupActivationContext context, Map<String, Matcher> traitMatchers) {
+
+        if (traitMatchers.isEmpty()) {
+            return true;
+        }
+
+        Collection<Resource> resources = context.getResources();
+        return ActivatorHelper.areTraitsSatisfied(context.getSubject(), traitMatchers, resources, true);
     }
 }

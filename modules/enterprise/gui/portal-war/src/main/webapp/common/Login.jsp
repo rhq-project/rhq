@@ -80,7 +80,7 @@ input.button_submit {
 </head>
 
 <body>
-    <jsp:include page="/rhq/common/ie6/ie6fix.xhtml"/>
+    <%--<jsp:include page="/rhq/common/ie6/ie6fix.xhtml"/>--%>
 <div id="PageHeader">
 
 <table width="100%" border="0" cellpadding="20" cellspacing="0" height="70px">
@@ -145,6 +145,6 @@ input.button_submit {
     document.forms["LoginForm"].elements["j_username"].focus();
   // -->
 </script>
-<jsp:include page="/rhq/common/ie6/ie6loginfix.xhtml" />
+<%--<jsp:include page="/rhq/common/ie6/ie6loginfix.xhtml" />--%>
 </body>
 </html>

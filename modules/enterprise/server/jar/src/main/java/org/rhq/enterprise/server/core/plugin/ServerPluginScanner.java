@@ -106,11 +106,11 @@ public class ServerPluginScanner {
         List<ServerPlugin> allPlugins = serverPluginsManager.getAllServerPlugins();
         List<ServerPlugin> installedPlugins = new ArrayList<ServerPlugin>();
         List<ServerPlugin> undeployedPlugins = new ArrayList<ServerPlugin>();
-        for (ServerPlugin allPlugin : allPlugins) {
-            if (allPlugin.getStatus() == PluginStatusType.INSTALLED) {
-                installedPlugins.add(allPlugin);
+        for (ServerPlugin plugin : allPlugins) {
+            if (plugin.getStatus() == PluginStatusType.INSTALLED) {
+                installedPlugins.add(plugin);
             } else {
-                undeployedPlugins.add(allPlugin);
+                undeployedPlugins.add(plugin);
             }
         }
 
@@ -130,16 +130,33 @@ public class ServerPluginScanner {
         }
 
         // now see if any plugins changed state from enabled->disabled or vice versa
+        // this also checks to see if the plugin configuration has changed since it was last loaded 
         MasterServerPluginContainer master = LookupUtil.getServerPluginService().getMasterPluginContainer();
         if (master != null) {
             for (ServerPlugin installedPlugin : installedPlugins) {
                 PluginKey key = PluginKey.createServerPluginKey(installedPlugin.getType(), installedPlugin.getName());
                 AbstractTypeServerPluginContainer pc = master.getPluginContainerByPlugin(key);
                 if (pc != null && pc.isPluginLoaded(key)) {
+                    boolean needToReloadPlugin = false;
                     boolean currentlyEnabled = pc.isPluginEnabled(key);
                     if (installedPlugin.isEnabled() != currentlyEnabled) {
-                        log.info("Detected a change to plugin [" + key + "]. It will now be "
+                        log.info("Detected a state change to plugin [" + key + "]. It will now be "
                             + ((installedPlugin.isEnabled()) ? "[enabled]" : "[disabled]"));
+                        needToReloadPlugin = true;
+                    } else {
+                        Long pluginLoadTime = pc.getPluginLoadTime(key);
+                        if (pluginLoadTime != null) {
+                            long configChangeTimestamp = serverPluginsManager
+                                .getLastConfigurationChangeTimestamp(installedPlugin.getId());
+                            if (configChangeTimestamp > pluginLoadTime.longValue()) {
+                                // since the last time the plugin was loaded, its configuration has changed, reload it to pick up the new config 
+                                log.info("Detected a config change to plugin [" + key + "]. It will be reloaded and "
+                                    + ((installedPlugin.isEnabled()) ? "[enabled]" : "[disabled]"));
+                                needToReloadPlugin = true;
+                            }
+                        }
+                    }
+                    if (needToReloadPlugin) {
                         pc.reloadPlugin(key, installedPlugin.isEnabled());
                     }
                 }

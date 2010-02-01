@@ -81,6 +81,7 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 @Stateless
 public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
@@ -309,7 +310,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED, pc);
 
         query.setParameter("repoId", repoId);
-        query.setParameter("filter", PersistenceUtility.formatSearchParameter(filter));
+        query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromRepo(subject, filter, repoId);

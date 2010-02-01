@@ -93,6 +93,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -975,7 +976,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (field.equals("groupName") == false) {
             pc.addDefaultOrderingField("groupName");
         }
-        nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
+        nameFilter = QueryUtility.formatSearchParameter(nameFilter);
 
         Connection conn = null;
         PreparedStatement stmt = null;

@@ -142,7 +142,10 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
 
     public String addSubjects() {
 
-        System.out.println("Selected subjects: ");
+        System.out.println("Selected subjects: " + currentSubjects);
+        if (currentSubjects.isEmpty())
+            return "ALERT_NOTIFICATIONS";
+
         String subjects="";
         for (String subject : currentSubjects) {
             System.out.println(subject);

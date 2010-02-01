@@ -114,15 +114,6 @@
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifest>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-              <Build-Number>${buildNumber}</Build-Number>
-            </manifestEntries>            
-          </archive>
           <webResources>
             <resource>
               <filtering>true</filtering>

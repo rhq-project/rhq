@@ -48,18 +48,10 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGrid columns="2" style="width:100%">
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
           <h:panelGroup style="text-align:right">
-
             <s:button id="upperEditButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
               <f:param name="id" value="#{ResourceUIBean.id}"/>
               <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
             </s:button>
-
-            <ui:remove>
-            <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
-            </ui:remove>
           </h:panelGroup>
         </h:panelGrid>
       </h:panelGrid>
@@ -131,10 +123,10 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup style="text-align:right">
-                  <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
+                  <s:button id="lowerEditRawButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                    <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
+                  </s:button>
                 </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
@@ -158,10 +150,10 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup style="text-align:right">
-                  <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
+                  <s:button id="lowerEditStructuredButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                    <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
+                  </s:button>
                 </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
@@ -177,7 +169,7 @@ THIS TEXT WILL BE REMOVED.
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();"
                       limitToList="true"
-                      reRender="upperEditButton,fileUpload,upperCommitPanel,lowerCommitPanel">
+                      reRender="upperEditButton,lowerEditStructuredButton,lowerEditRawButton,fileUpload,upperCommitPanel,lowerCommitPanel">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -191,10 +183,10 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup style="text-align:right">
-                  <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
+                  <s:button id="lowerEditStructuredButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                    <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
+                  </s:button>
                 </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
@@ -203,7 +195,7 @@ THIS TEXT WILL BE REMOVED.
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();"
                       limitToList="true" 
-                      reRender="upperEditButton,fileUpload,upperCommitPanel,lowerCommitPanel">
+                      reRender="upperEditButton,lowerEditStructuredButton,lowerEditRawButton,fileUpload,upperCommitPanel,lowerCommitPanel">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -264,10 +256,10 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup style="text-align:right">
-                  <h:commandButton value="Edit"
-                                 action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
-                                 title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
+                  <s:button id="lowerEditRawButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+                    <f:param name="id" value="#{ResourceUIBean.id}"/>
+                    <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
+                  </s:button>
                 </h:panelGroup>
               </h:panelGrid>
             </rich:tab>

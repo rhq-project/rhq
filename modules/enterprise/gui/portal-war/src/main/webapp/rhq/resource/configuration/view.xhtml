@@ -48,10 +48,18 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGrid columns="2" style="width:100%">
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
           <h:panelGroup style="text-align:right">
+
+            <s:button id="upperEditButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+              <f:param name="id" value="#{ResourceUIBean.id}"/>
+              <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
+            </s:button>
+
+            <ui:remove>
             <h:commandButton value="Edit"
                                  action="#{ExistingResourceConfigurationUIBean.editRawConfiguration}"
                                  title="Advanced Mode Edit of Raw Configuration Files" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure and !configurationViewer.updateInProgress}"/>
+            </ui:remove>
           </h:panelGroup>
         </h:panelGrid>
       </h:panelGrid>
@@ -161,11 +169,15 @@ THIS TEXT WILL BE REMOVED.
         </c:when>
 
         <c:when test="${configurationViewer.structuredAndRawSupported}">
-          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+          <rich:tabPanel id="resourceConfigurationTabPanel"
+                         switchType="ajax"
+                         valueChangeListener="#{configurationViewer.changeTabs}">
             <rich:tab id="structuredTab"
                       label="Basic Mode"
                       onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();">
+                      oncomplete="cursor_clear();"
+                      limitToList="true"
+                      reRender="upperEditButton,fileUpload,upperCommitPanel,lowerCommitPanel">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 
@@ -186,11 +198,12 @@ THIS TEXT WILL BE REMOVED.
                 </h:panelGroup>
               </h:panelGrid>
             </rich:tab>
-
             <rich:tab id="rawTab"
                       label="Advanced Mode"
                       onlabelclick="cursor_wait();"
-                      oncomplete="cursor_clear();">
+                      oncomplete="cursor_clear();"
+                      limitToList="true" 
+                      reRender="upperEditButton,fileUpload,upperCommitPanel,lowerCommitPanel">
               <h:outputText value=" #{messages.nopermissionedit}"
                             rendered="#{!ResourceUIBean.permissions.configure}"/>
 

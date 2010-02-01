@@ -72,6 +72,9 @@ public class ResourceConfigurationEditor {
     @RequestParameter("id")
     private int resourceId;
 
+    @RequestParameter
+    private String tab;
+
     private boolean readOnly = true;
 
     @Create
@@ -79,6 +82,10 @@ public class ResourceConfigurationEditor {
         loadResourceConfigurationDefinition();
         loadResourceConfiguration();
         initRawConfigDirectories();
+
+        if (tab != null) {
+            setSelectedTab(tab);
+        }
     }
 
     private void loadResourceConfigurationDefinition() {
@@ -165,6 +172,22 @@ public class ResourceConfigurationEditor {
         return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW;
     }
 
+    public String getSelectedTab() {
+        if (mode == STRUCTURED_MODE) {
+            return "structuredTab";
+        }
+        return "rawTab";
+    }
+
+    public void setSelectedTab(String tab) {
+        if (tab.equals("structuredTab")) {
+            mode = STRUCTURED_MODE;
+        }
+        else {
+            mode = RAW_MODE;
+        }
+    }
+
     public void changeTabs(ValueChangeEvent event) {
         if (event.getNewValue().equals("rawTab")) {
 //            switchToRaw();
@@ -220,4 +243,5 @@ public class ResourceConfigurationEditor {
             throw new RuntimeException(e);
         }
     }
+
 }

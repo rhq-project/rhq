@@ -19,10 +19,10 @@
 package org.rhq.enterprise.server.plugins.alertSubject;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -32,7 +32,6 @@ import org.jboss.seam.annotations.Create;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -45,23 +44,37 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
 
     private final Log log = LogFactory.getLog(SubjectsBackingBean.class);
 
+    private List<Subject> allSubjects;
+
     private Map<String, String> subjectsMap;
     private List<String> currentSubjects;
+    private List<String> subjectsToRemove;
+    private List<String> subjectsToAdd;
     private static final String SUBJECT_ID = "subjectId";
 
     @Create
     public void init() {
-        getSubjectsMap();
+
+        getAllSubjects();
+
+        getSelectableSubjectsMap();
         fillSubjectsFromAlertParameters();
+    }
+
+    private void getAllSubjects() {
+        SubjectManagerLocal mgr = LookupUtil.getSubjectManager();
+        allSubjects = mgr.findAllSubjects(new PageControl());
     }
 
     private void fillSubjectsFromAlertParameters() {
         String rolesString = alertParameters.getSimpleValue(SUBJECT_ID,"");
         String[] subjects = rolesString.split(",");
+        if (subjects.length==0)
+            return;
+
         if (currentSubjects==null)
             currentSubjects = new ArrayList<String>();
-        for (String r : subjects)
-            currentSubjects.add(r);
+        currentSubjects.addAll(Arrays.asList(subjects));
     }
 
     public List<String> getCurrentSubjects() {
@@ -74,26 +87,62 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
         this.currentSubjects = currentSubjects;
     }
 
-    public Map<String, String> getSubjectsMap() {
+    public List<String> getSubjectsToRemove() {
+        return subjectsToRemove;
+    }
+
+    public void setSubjectsToRemove(List<String> subjectsToRemove) {
+        this.subjectsToRemove = subjectsToRemove;
+    }
+
+    public List<String> getSubjectsToAdd() {
+        return subjectsToAdd;
+    }
+
+    public void setSubjectsToAdd(List<String> subjectsToAdd) {
+        this.subjectsToAdd = subjectsToAdd;
+    }
+
+    public Map<String, String> getSelectableSubjectsMap() {
 
         if (subjectsMap == null) {
             subjectsMap = new HashMap<String, String>();
 
+            if (allSubjects==null)
+                getAllSubjects();
 
-            SubjectManagerLocal mgr = LookupUtil.getSubjectManager();
-            PageList<Subject> subjectList = mgr.findAllSubjects(new PageControl());
+            if (currentSubjects==null)
+                fillSubjectsFromAlertParameters();
+
             Map<String,String> ret = new HashMap<String, String>();
-            for (Subject subject : subjectList) {
-                subjectsMap.put(subject.getName(),String.valueOf(subject.getId()));
+            for (Subject subject : allSubjects) {
+                String subjectId = String.valueOf(subject.getId());
+                if (currentSubjects==null || !currentSubjects.contains(subjectId)) {
+                    subjectsMap.put(subject.getName(), subjectId);
+                }
             }
         }
         return subjectsMap;
 
     }
 
-    public String submit() {
+    public Map<String, String> getCurrentSubjectsMap() {
 
-        System.out.println("Selected subjects:  ");
+        Map<String,String> ret = new HashMap<String, String>();
+        if (currentSubjects==null)
+            return ret;
+
+        for (Subject subject:allSubjects) {
+            if (currentSubjects.contains(String.valueOf(subject.getId())))
+                ret.put(subject.getName(),String.valueOf(subject.getId()) );
+        }
+        return ret;
+
+    }
+
+    public String addSubjects() {
+
+        System.out.println("Selected subjects: ");
         String subjects="";
         for (String subject : currentSubjects) {
             System.out.println(subject);
@@ -112,6 +161,41 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
             p.setStringValue(subjects);
 
         alertParameters = persistConfiguration(alertParameters);
+
+        fillSubjectsFromAlertParameters();
+
+        return "ALERT_NOTIFICATIONS";
+    }
+
+    public String removeSubjects() {
+        System.out.println("In remove subjects, " + subjectsToRemove);
+
+        String subjects="";
+        List<String> resulting = new ArrayList<String>(currentSubjects);
+        resulting.removeAll(subjectsToRemove);
+
+        for (String subject : resulting) {
+            System.out.println(subject);
+            subjects += subject;
+            subjects += ",";
+        }
+
+        if (subjects.endsWith(","))
+            subjects = subjects.substring(0,subjects.length()-1);
+
+        PropertySimple p = alertParameters.getSimple(SUBJECT_ID);
+        if (p==null) {
+            if (!resulting.isEmpty()) {
+                p = new PropertySimple(SUBJECT_ID,subjects);
+                alertParameters.put(p);
+            }
+        }
+        else
+            p.setStringValue(subjects);
+
+        alertParameters = persistConfiguration(alertParameters);
+
+        currentSubjects = resulting;
 
         fillSubjectsFromAlertParameters();
 

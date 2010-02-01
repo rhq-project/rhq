@@ -816,22 +816,7 @@ public class AgentMain {
      * @return object that can be used to read input with the typed data being echoed or not
      */
     public PromptInput getNativeIn() {
-        SystemInfo sysinfo = null;
-
-        // if we are not in daemon mode, we are running in a console and thus we can try to use
-        // the native library to get its input.
-        // If we are in daemon mode, we aren't running in a console so we need to pass null
-        // in for sysinfo thus causing the prompt info implementation to use our fallback buffered
-        // reader (which is either empty or is contents of an input file that was piped in via --input.
-        if (!m_daemonMode) {
-            // just in case the native stuff has a bug in the console stuff (JBNATIVE-42 as an example),
-            // be able to configure the agent to ignore the native console
-            if (Boolean.getBoolean("rhq.agent.do-not-use-native-console") == false) {
-                sysinfo = SystemInfoFactory.createSystemInfo();
-            }
-        }
-
-        return new AgentNativePromptInfo(sysinfo, this);
+        return new JlinePromptInfo(this) ;
     }
 
     /**

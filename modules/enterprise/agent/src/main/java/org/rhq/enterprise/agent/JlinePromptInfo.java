@@ -48,14 +48,14 @@ public class JlinePromptInfo implements PromptInput {
 
         while (true) {
             // get the answer the first time
-            input = agent.getIn().readLine('0');
+            // A (char)0 will blank it out. I like stars
+            input = agent.getIn().readLine('*');
 
             // get the answer a second time
             agent.getOut().write(agent.getI18NMsg().getMsg(AgentI18NResourceKeys.PROMPT_CONFIRM)) ;
             agent.getOut().println() ;
-            String confirmation = agent.getIn().readLine('0');
-            agent.getOut().println() ;
-            agent.getOut().println() ;            
+            String confirmation = agent.getIn().readLine('*');
+            agent.getOut().println() ;        
 
             // make sure the first and second answers match; otherwise, ask again
             if (input.equals(confirmation)) {

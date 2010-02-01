@@ -860,10 +860,12 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         queryCount.setParameter("pluginName", pluginName);
         query.setParameter("search", searchString);
         queryCount.setParameter("search", searchString);
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         query.setParameter("parentResource", parentResource);
-        queryCount.setParameter("parentResource", parentResource);
+        queryCount.setParameter("parentResource", parentResource);        
 
         long count = (Long) queryCount.getSingleResult();
 

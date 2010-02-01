@@ -628,7 +628,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite( res, " //
         + "       (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
@@ -641,7 +641,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN, query = "" //
         + " SELECT count(res) " //
         + "  FROM Resource res " //
@@ -650,7 +650,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_STATUSES_BY_PARENT, query = "" //
         + "SELECT r.id, r.inventoryStatus " //
         + "  FROM Resource r " //

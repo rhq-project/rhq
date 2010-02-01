@@ -82,14 +82,31 @@ public class QueryUtility {
     }
 
     /**
-     * Get the proper ESCAPE clause character for the current DatabaseType.
+     * Get the proper ESCAPE clause character for the current DatabaseType. This is for use when
+     * constructing query strings to be parsed (it may itself escape the escape character for
+     * proper parsing (like in Postgres when standard_conforming_strings is off).
+     * Call getEscapeCharacterParam() when needed for setting a NamedQuery parameter.
      * 
-     * @return The escape character(s)
+     * @return The escape character as a String.  The string may actually be multiple character but
+     * when parsed by the vendor it will parse out the single character. 
+     */
+    public static String getEscapeClauseCharacter() {
+        init();
+
+        return ESCAPE_CLAUSE_CHARACTER;
+    }
+
+    /**
+     * Get the proper ESCAPE clause character for the current DatabaseType. This is for use when
+     * setting a NamedQuery paramater (unparsed, guaranteed to be a single char). If constructing
+     * query strings to be parsed  Call getEscapeCharacter()
+     * 
+     * @return The single escape character as a String.
      */
     public static String getEscapeCharacter() {
         init();
 
-        return ESCAPE_CLAUSE_CHARACTER;
+        return ESCAPE_CHARACTER;
     }
 
     private static void init() {

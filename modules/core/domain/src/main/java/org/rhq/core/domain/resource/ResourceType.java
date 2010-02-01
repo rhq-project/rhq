@@ -751,9 +751,12 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         if (obj == null || !(obj instanceof ResourceType))
             return false;
         ResourceType that = (ResourceType) obj;
-        if (!this.name.equals(that.name))
+        if (this.name != null ? !this.name.equals(that.name) : that.name != null)
             return false;
         if (this.plugin != null ? !this.plugin.equals(that.plugin) : that.plugin != null)
+            return false;
+        //only compare id's if they've both been set
+        if (this.id != 0 && that.id != 0 && this.id != that.id)
             return false;
         return true;
     }
@@ -762,7 +765,7 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public int hashCode() {
         int result;
         if (name != null && this.plugin != null) {
-            result = this.name.hashCode();
+            result = (this.name != null ? this.name.hashCode() : 0);
             result = 31 * result + (this.plugin != null ? plugin.hashCode() : 0);
         } else {
             result = 31 * id;

@@ -31,6 +31,7 @@
             <groupId>${rhq.groupId}</groupId>
             <artifactId>rhq-core-domain</artifactId>
             <version>${project.version}</version>
+            <scope>provided</scope> <!-- rhq.ear -->
         </dependency>
 
         <dependency>

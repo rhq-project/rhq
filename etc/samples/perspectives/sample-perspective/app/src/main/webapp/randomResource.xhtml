@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<ui:composition
+      template="/WEB-INF/templates/mainTemplate.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:rhq="http://rhq-project.org/rhq"
+      xmlns:onc="http://jboss.org/on/component">
+
+    <ui:param name="pageTitle" value="Meet Your Soul-Resource!"/>
+
+    <ui:define name="body">
+
+        <h:panelGroup layout="block">
+            This page uses a Seam component which connects to the RHQ Server running on 127.0.0.1:7080 and
+            utilizes the RHQ remote API to obtain a Resource from that Server's inventory that has been
+            matched to you based on 29 dimensions of compatibility for lasting and fulfilling relationships.
+        </h:panelGroup>
+
+        <h3>And the lucky Resource is...</h3>
+
+        <h2>a #{RandomResourceUIBean.randomResource.resourceType.name} named '#{RandomResourceUIBean.randomResource.name}'
+        with id #{RandomResourceUIBean.randomResource.id}</h2>
+
+        <a href="javascript:location.reload(true)">
+        #{RandomResourceUIBean.randomResource.resourceType.name}s are just not my ResourceType - find me another one.
+        </a>
+            
+    </ui:define>
+
+</ui:composition>

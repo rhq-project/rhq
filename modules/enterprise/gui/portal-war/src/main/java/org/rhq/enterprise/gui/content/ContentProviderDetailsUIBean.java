@@ -48,11 +48,11 @@ public class ContentProviderDetailsUIBean {
         ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
 
         try {
-            manager.updateContentSource(subject, contentSource);
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The content source [" + contentSource.getName()
-                + "] has been updated.");
+            manager.updateContentSource(subject, contentSource, true);
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "The content provider ["
+                + contentSource.getName() + "] has been updated.");
         } catch (Exception e) {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Failed to update content source ["
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "Failed to update content provider ["
                 + contentSource.getName() + "]", e);
         }
 
@@ -89,7 +89,7 @@ public class ContentProviderDetailsUIBean {
 
         try {
             manager.synchronizeAndLoadContentSource(subject, contentSource.getId());
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content source ["
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Synchronizing content provider ["
                 + contentSource.getName() + "] now.");
         } catch (Exception e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,

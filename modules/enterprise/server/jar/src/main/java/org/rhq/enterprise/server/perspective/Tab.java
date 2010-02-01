@@ -18,17 +18,13 @@
  */
 package org.rhq.enterprise.server.perspective;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ResourceActivatorSetType;
+
+import org.rhq.enterprise.server.perspective.activator.ActivatorHelper;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TabType;
 
 /**
@@ -36,132 +32,53 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
  *  
  * @author Ian Springer
  */
-public class Tab implements Serializable, Cloneable
-{
+public class Tab extends RenderedExtension implements Serializable, Cloneable {
     private static final long serialVersionUID = 1L;
 
-    private List<Tab> children;
-    private String qualifiedName;
     private String name;
-    private String displayName;
-    private String url;
-    private String iconUrl;
-    transient private List<ResourceActivatorSetType> currentResourceOrGroupActivatorSet;
+    private String qualifiedName;
+    private List<Tab> children;
 
-    public Tab(TabType tab)
-    {
-        this.qualifiedName = tab.getName();
-        int lastDotIndex = this.qualifiedName.lastIndexOf(".");
-        this.name = this.qualifiedName.substring(lastDotIndex + 1);
-        this.displayName = tab.getDisplayName();
-        this.url = tab.getUrl();
-        if (tab.getApplication() != null) {
+    public Tab(TabType rawTab, String perspectiveName) {
+        super(rawTab, perspectiveName, rawTab.getUrl());
+        this.name = getSimpleName(rawTab.getName());
+        this.qualifiedName = rawTab.getName();
+        if (rawTab.getApplication() != null) {
             this.url += "&tab=" + this.qualifiedName;
         }
-        this.iconUrl = tab.getIconUrl();
-        this.currentResourceOrGroupActivatorSet = (tab.getCurrentResourceOrGroupActivatorSet() != null) ?
-                tab.getCurrentResourceOrGroupActivatorSet() : Collections.<ResourceActivatorSetType>emptyList();
         this.children = new ArrayList<Tab>();
+        this.debugMode = ActivatorHelper.initResourceActivators(rawTab.getActivators(), getActivators());
     }
 
     @NotNull
-    public List<Tab> getChildren()
-    {
+    public List<Tab> getChildren() {
         return children;
     }
 
-    public void setChildren(List<Tab> children)
-    {
+    public void setChildren(List<Tab> children) {
         this.children = (children != null) ? children : new ArrayList<Tab>();
     }
 
-    public String getQualifiedName()
-    {
+    public String getQualifiedName() {
         return qualifiedName;
     }
 
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    public String getDisplayName()
-    {
-        return displayName;
+    private static String getSimpleName(String qualifiedName) {
+        int lastDotIndex = qualifiedName.lastIndexOf(".");
+        return qualifiedName.substring(lastDotIndex + 1);
     }
 
-    public String getUrl()
-    {
-        return url;
-    }
-
-    public String getIconUrl()
-    {
-        return iconUrl;
-    }
-
-    @NotNull
-    public List<ResourceActivatorSetType> getCurrentResourceOrGroupActivatorSets()
-    {
-        return currentResourceOrGroupActivatorSet;
-    }
-
+    /**
+     * Note that this will clone the children list but not the child Tab objects themselves.
+     * @see java.lang.Object#clone()
+     */
     @Override
-    public boolean equals(Object o)
-    {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Tab tab = (Tab)o;
-
-        if (!name.equals(tab.name)) return false;
-
-        return true;
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 
-    @Override
-    public int hashCode()
-    {
-        return name.hashCode();
-    }
-
-    @Override
-    public String toString() {        
-        return this.getClass().getSimpleName() + "[name=" + this.name + ", displayName=" + this.displayName + ", url=" + this.url + ", iconUrl="
-            + this.iconUrl + "]";
-    }
-    
-    @Override
-    public Tab clone() throws CloneNotSupportedException {
-        Object obj = null;
-        try {
-            // Write the object out to a byte array
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream out = new ObjectOutputStream(bos);
-            out.writeObject(this);
-            out.flush();
-            out.close();
-
-            // Make an input stream from the byte array and read
-            // a copy of the object back in.
-            ObjectInputStream in = new ObjectInputStream(new ByteArrayInputStream(bos.toByteArray()));
-            obj = in.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Tab tab = (Tab)obj;
-        if (tab != null) {
-            tab.currentResourceOrGroupActivatorSet = this.currentResourceOrGroupActivatorSet;
-            List<Tab> subtabs = tab.getChildren();
-            if (subtabs != null) {
-                for (int i = 0, subtabsSize = subtabs.size(); i < subtabsSize; i++)
-                {
-                    Tab subtab = subtabs.get(i);
-                    subtab.currentResourceOrGroupActivatorSet = this.children.get(i).currentResourceOrGroupActivatorSet;
-                }
-            }
-        }
-        return tab;
-    }
 }

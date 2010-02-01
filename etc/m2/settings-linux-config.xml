@@ -41,6 +41,25 @@
         <agent1.communications.connector.bind-port>33334</agent1.communications.connector.bind-port> 
         <agent2.communications.connector.bind-port>44445</agent2.communications.connector.bind-port> 
       </properties>
+      <repositories>
+        <!-- Public JBoss Repo -->
+        <repository>
+          <id>jboss</id>
+          <name>JBoss Repository</name>
+          <url>http://repository.jboss.org/maven2/</url>
+          <snapshots>
+            <enabled>false</enabled>
+          </snapshots>
+        </repository>
+        <!-- Oracle Driver 
+             To package the Oracle OJDBC driver set -Drhq.m2.repo.url.oracle and this repo definition will
+             be used to pick it up at build time. -->
+        <repository>
+          <id>ojdbc-repo</id>
+          <name>M2 Repo containing OJDBC driver jar</name>
+          <url>${rhq.m2.repo.url.oracle}</url>
+        </repository>
+      </repositories>     
     </profile>
   </profiles>
   

@@ -38,7 +38,7 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
-import org.rhq.plugins.augeas.helper.Glob;
+import org.rhq.augeas.util.Glob;
 
 /**
  * Discovery for cron tabs.

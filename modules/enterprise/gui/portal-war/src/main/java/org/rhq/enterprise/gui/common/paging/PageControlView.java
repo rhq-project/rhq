@@ -41,6 +41,7 @@ import org.rhq.enterprise.gui.content.ListPackageHistoryUIBean;
 import org.rhq.enterprise.gui.content.ListPackageTypesUIBean;
 import org.rhq.enterprise.gui.content.ListPackagesUIBean;
 import org.rhq.enterprise.gui.content.ListReposUIBean;
+import org.rhq.enterprise.gui.content.RepoAdvisoryUIBean;
 import org.rhq.enterprise.gui.content.RepoAssociationsUIBean;
 import org.rhq.enterprise.gui.content.RepoContentSourcesUIBean;
 import org.rhq.enterprise.gui.content.RepoDisassociationsUIBean;
@@ -52,6 +53,7 @@ import org.rhq.enterprise.gui.content.RepoSubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.RepoUnsubscriptionsUIBean;
 import org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ResourceReposUIBean;
+import org.rhq.enterprise.gui.content.ResourceUpdatePackageVersionsUIBean;
 import org.rhq.enterprise.gui.content.ShowContentServiceRequestUIBean;
 import org.rhq.enterprise.gui.definition.group.GroupDefinitionUIBean;
 import org.rhq.enterprise.gui.definition.group.ListGroupDefinitionsUIBean;
@@ -143,6 +145,8 @@ public enum PageControlView {
     /** */
     RepoDistributionList(RepoDistributionUIBean.class),
     /** */
+    RepoAdvisoryList(RepoAdvisoryUIBean.class),
+    /** */
     RepoAssociationsList(RepoAssociationsUIBean.class),
     /** */
     RepoDisassociationsList(RepoDisassociationsUIBean.class),
@@ -156,6 +160,8 @@ public enum PageControlView {
     AvailableResourceReposList(AvailableResourceReposUIBean.class),
     /** */
     ResourcePackageVersionsList(ResourcePackageVersionsUIBean.class),
+    /** */
+    ResourceUpdatePackageVersionsList(ResourceUpdatePackageVersionsUIBean.class),
     /** */
     PackagesToDeployList(DeployPackagesUIBean.class),
     /** */

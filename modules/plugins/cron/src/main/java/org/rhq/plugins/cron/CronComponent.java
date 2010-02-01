@@ -41,7 +41,7 @@ import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.GlobFilter;
+import org.rhq.augeas.util.GlobFilter;
 import org.rhq.plugins.platform.PlatformComponent;
 
 /**

@@ -23,15 +23,18 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
@@ -50,7 +53,7 @@ import org.hibernate.annotations.NamedQuery;
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
         + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
     @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_LABEL, query = "SELECT dt FROM Distribution dt WHERE dt.label = :label"),
-    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.base_path = :path"),
+    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.basePath = :path"),
     @NamedQuery(name = Distribution.QUERY_DELETE_BY_DIST_ID, query = "DELETE Distribution dt WHERE dt.id = :distid") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
@@ -84,12 +87,23 @@ public class Distribution implements Serializable {
      * Base path where the kickstart tree is located
      */
     @Column(name = "BASE_PATH", nullable = false)
-    private String base_path;
+    private String basePath;
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
 
+    @OneToMany(mappedBy = "distribution", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<DistributionFile> distributionFiles;
+
     // Constructor ----------------------------------------
+
+    public Set<DistributionFile> getDistributionFiles() {
+        return distributionFiles;
+    }
+
+    public void setDistributionFiles(Set<DistributionFile> distributionFiles) {
+        this.distributionFiles = distributionFiles;
+    }
 
     public Distribution() {
     }
@@ -105,7 +119,7 @@ public class Distribution implements Serializable {
     }
 
     public String getBasePath() {
-        return this.base_path;
+        return this.basePath;
     }
 
     public void setLabel(String labelIn) {
@@ -113,7 +127,7 @@ public class Distribution implements Serializable {
     }
 
     public void setBasePath(String basepathIn) {
-        this.base_path = basepathIn;
+        this.basePath = basepathIn;
     }
 
     public int getId() {
@@ -147,7 +161,7 @@ public class Distribution implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("Distribution [label=%s, Type=%s, basePath=%s]", label, distributionType, base_path);
+        return String.format("Distribution [label=%s, Type=%s, basePath=%s]", label, distributionType, basePath);
     }
 
     @Override

@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -61,7 +62,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.plugins.augeas.helper.AugeasNode;
-import org.rhq.plugins.augeas.helper.Glob;
 
 /**
  * @author Ian Springer
@@ -78,7 +78,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
 
     private static final boolean IS_WINDOWS = (File.separatorChar == '\\');
     public static final String DEFAULT_AUGEAS_ROOT_PATH = (IS_WINDOWS) ? "C:/" : "/";
-    private static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
+    protected static final String AUGEAS_LOAD_PATH = "/usr/share/augeas/lenses";
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -90,10 +90,14 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     private AugeasNode resourceConfigRootNode;
     private String augeasRootPath;
 
+    protected String getAugeasRootPath() {
+        return augeasRootPath;
+    }
+
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
         this.resourceContext = resourceContext;
         this.resourceDescription = this.resourceContext.getResourceType() + " Resource with key ["
-                    + this.resourceContext.getResourceKey() + "]";
+            + this.resourceContext.getResourceKey() + "]";
         initGlobs();
 
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
@@ -112,7 +116,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
     }
 
     public void stop() {
-        if (this.augeas!=null)
+        if (this.augeas != null)
             this.augeas.close();
     }
 
@@ -145,13 +149,28 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return resourceConfig;
     }
 
-    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        try
-        {
-            abortIfAugeasNotAvailable();
+    protected void updateStructuredConfiguration(Configuration config) throws Exception {
+        abortIfAugeasNotAvailable();
+
+        // Load the config files from disk and build a tree representation of them in memory.
+        loadConfigurationFiles(this.augeas);
+
+        ConfigurationDefinition resourceConfigDef = this.resourceContext.getResourceType()
+            .getResourceConfigurationDefinition();
+
+        Collection<PropertyDefinition> propDefs = resourceConfigDef.getPropertyDefinitions().values();
+        for (PropertyDefinition propDef : propDefs) {
+            setNode(propDef, config, this.augeas, this.resourceConfigRootNode);
         }
-        catch (Exception e)
-        {
+
+        // Write the updated tree out to the config file.
+        saveConfigurationFiles();
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        try {
+            abortIfAugeasNotAvailable();
+        } catch (Exception e) {
             report.setErrorMessage(e.getLocalizedMessage());
             return;
         }
@@ -288,8 +307,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return this.resourceContext;
     }
 
-    public String getResourceDescription()
-    {
+    public String getResourceDescription() {
         return this.resourceDescription;
     }
 
@@ -303,26 +321,28 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         return this.augeas;
     }
 
-    private Augeas createAugeas() {
+    protected void setupAugeasModules(Augeas augeas) {
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String augeasModuleName = pluginConfig.getSimpleValue(AUGEAS_MODULE_NAME_PROP, null);
         if (augeasModuleName == null) {
             throw new IllegalStateException("Plugin config property '" + AUGEAS_MODULE_NAME_PROP + "' is required.");
         }
+        augeas.set("/augeas/load/" + augeasModuleName + "/lens", augeasModuleName + ".lns");
+        int idx = 1;
+        for (String incl : this.includeGlobs) {
+            augeas.set("/augeas/load/" + augeasModuleName + "/incl[" + (idx++) + "]", incl);
+        }
+        idx = 1;
+        for (String excl : this.excludeGlobs) {
+            augeas.set("/augeas/load/" + augeasModuleName + "/excl[" + (idx++) + "]", excl);
+        }
+    }
 
+    protected Augeas createAugeas() {
         Augeas augeas;
         try {
             augeas = new Augeas(this.augeasRootPath, AUGEAS_LOAD_PATH, Augeas.NO_MODL_AUTOLOAD);
-            augeas.set("/augeas/load/" + augeasModuleName + "/lens", augeasModuleName + ".lns");
-
-            int idx = 1;
-            for (String incl : this.includeGlobs) {
-                augeas.set("/augeas/load/" + augeasModuleName + "/incl[" + (idx++) + "]", incl);
-            }
-            idx = 1;
-            for (String excl : this.excludeGlobs) {
-                augeas.set("/augeas/load/" + augeasModuleName + "/excl[" + (idx++) + "]", excl);
-            }
+            setupAugeasModules(augeas);
             loadConfigurationFiles(augeas);
         } catch (RuntimeException e) {
             augeas = null;
@@ -677,9 +697,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent> implement
         log.debug("Resource Config Root Node = \"" + this.resourceConfigRootNode + "\"");
     }
 
-    private void abortIfAugeasNotAvailable()
-            throws Exception
-    {
+    private void abortIfAugeasNotAvailable() throws Exception {
         if (getAugeas() == null) {
             if (isAugeasAvailable()) {
                 initAugeas();

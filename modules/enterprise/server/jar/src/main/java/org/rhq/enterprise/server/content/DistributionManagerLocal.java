@@ -47,10 +47,10 @@ public interface DistributionManagerLocal {
 
     /**
      * Deletes a given instance of distribution object. If the object does not exist
-     * @param subject 
+     * @param subject
      * @param repoId
      */
-    void deleteDistributionByRepo(Subject subject, int repoId);
+    void deleteDistributionMappingsForRepo(Subject subject, int repoId);
 
     /**
      * Deletes a given instance of distribution object. If the object does not exist
@@ -58,14 +58,6 @@ public interface DistributionManagerLocal {
      * @param distId
      */
     void deleteDistributionByDistId(Subject subject, int distId);
-
-    /**
-     * get the kickstart tree bits either from database or filesystem based on kickstart label
-     * @param subject
-     * @param kslabel
-     * @return
-     */
-    void getDistributionBits(Subject subject, String kslabel);
 
     /**
      * get distribution based on a given label
@@ -95,6 +87,16 @@ public interface DistributionManagerLocal {
      *
      */
     void deleteDistributionFilesByDistId(Subject subject, int distid);
+
+    /**
+     * Deletes all distribution types with the given name.
+     * <p/>
+     * This should only be needed for testing purposes.
+     *
+     * @param subject
+     * @param name
+     */
+    void deleteDistributionTypeByName(Subject subject, String name);
 
     /**
      * Returns a DistributionType for given name

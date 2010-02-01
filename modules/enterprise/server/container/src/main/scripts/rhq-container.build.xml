@@ -237,9 +237,6 @@
 
       <property name="jboss.lib.dir" location="${jboss.home}/server/default/lib" />
       <echo>Copying additional libs to ${jboss.lib.dir} ...</echo>
-      <!--<copy file="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"
-          toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />-->
-    <delete verbose="true"><fileset dir="${jboss.lib.dir}" includes="ojdbc14-*.jar" /></delete>
     <copy file="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"
           toDir="${jboss.lib.dir}" failonerror="false" verbose="true" />
     <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
@@ -501,7 +498,7 @@ rhq.communications.multicast-detector.port=16162
 # Server-side SSL Security Configuration for HTTPS thru Tomcat
 # These are used for browser https: access and for incoming messages from agents over sslservlet transport
 # [you cannot use ${x} variables - see https://jira.jboss.org/jira/browse/JBWEB-74]
-rhq.server.tomcat.security.client-auth-mode=false
+rhq.server.tomcat.security.client-auth-mode=want
 rhq.server.tomcat.security.secure-socket-protocol=TLS
 rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ

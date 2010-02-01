@@ -34,7 +34,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
-import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -64,12 +64,12 @@ public final class CriteriaQueryGenerator {
     private Criteria criteria;
 
     private String authorizationJoinFragment;
+    private String authorizationPermsFragment;
     private int authorizationSubjectId;
 
     private String alias;
     private String className;
     private static String NL = System.getProperty("line.separator");
-    private static String ESCAPE_CHARACTER = null;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
 
@@ -116,7 +116,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '" + getEscapeCharacter() + "'";
+            expression += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
         }
 
         return expression;
@@ -151,6 +151,22 @@ public final class CriteriaQueryGenerator {
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
                 + " does not yet support generating queries for '" + type + "' token types");
+        }
+
+        // If the query results are narrowed by requiredParams generate the fragment now. It's done
+        // here for two reasons. First, it seems to make sense to apply this only when an authFragment is
+        // being used.  Second, because ond day the query may be less brute force and may modify or
+        // leverage the joinFragment above.  But, after extensive trying a more elegant
+        // query could not be constructed due to Hibernate limitations. So, for now, here it is...
+        List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+        if (!(null == requiredPerms || requiredPerms.isEmpty())) {
+            this.authorizationPermsFragment = "" //
+                + "AND ( SELECT COUNT(DISTINCT p)" + NL //
+                + "      FROM Subject innerSubject" + NL //
+                + "      JOIN innerSubject.roles r" + NL //
+                + "      JOIN r.permissions p" + NL //
+                + "      WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "      AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
         }
     }
 
@@ -212,7 +228,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    fragment += " ESCAPE '" + getEscapeCharacter() + "'";
+                    fragment += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
@@ -234,6 +250,9 @@ public final class CriteriaQueryGenerator {
                 results.append(NL).append(" AND ");
             }
             results.append("authSubject.id = " + authorizationSubjectId + " ");
+            if (null != this.authorizationPermsFragment) {
+                results.append(this.authorizationPermsFragment + " ");
+            }
         }
 
         if (countQuery == false) {
@@ -338,7 +357,6 @@ public final class CriteriaQueryGenerator {
     private void setBindValues(Query query, boolean countQuery) {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
         boolean wantsFuzzyMatching = !criteria.isStrict();
-        boolean handleEscapedBackslash = "\\\\".equals(getEscapeCharacter());
 
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
             Object value = critField.getValue();
@@ -351,9 +369,8 @@ public final class CriteriaQueryGenerator {
                  * Double escape backslashes if they are not treated as string literals by the db vendor
                  * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
                  */
-                if (handleEscapedBackslash) {
-                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
-                }
+                formattedValue = QueryUtility.handleDoubleEscaping(formattedValue);
+
                 if (wantsFuzzyMatching) {
                     // append '%' onto edges that don't already have '%' explicitly set from the caller
                     formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
@@ -361,17 +378,16 @@ public final class CriteriaQueryGenerator {
                 }
                 value = formattedValue;
             }
-            LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            }
             query.setParameter(critField.getKey(), value);
         }
-    }
-
-    public static String getEscapeCharacter() {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
+        if (null != this.authorizationPermsFragment) {
+            List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+            query.setParameter("requiredPerms", requiredPerms);
+            query.setParameter("requiredPermsSize", (long) requiredPerms.size());
         }
-
-        return ESCAPE_CHARACTER;
     }
 
     public static void main(String[] args) {

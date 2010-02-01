@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>rhq-remoting-cli</artifactId>
@@ -20,8 +20,6 @@
 
    <properties>
       <scm.module.path>modules/enterprise/remoting/</scm.module.path>
-
-      <jline.version>0.9.94</jline.version>
       <i18nlog.version>1.0.9</i18nlog.version>
       <log4j.version>1.2.14</log4j.version>
       <persistence-api.version>1.0</persistence-api.version>
@@ -32,58 +30,14 @@
 
    <dependencies>
       <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-remoting</artifactId>
-      </dependency>
-
-       <dependency>
-          <groupId>jboss</groupId>
-          <artifactId>javassist</artifactId>
-       </dependency>
-
-      <dependency>
          <groupId>${groupId}</groupId>
-         <artifactId>rhq-enterprise-comm</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>${groupId}</groupId>
-         <artifactId>rhq-enterprise-server</artifactId>
-         <version>${project.version}</version>
-         <type>ejb</type>
-      </dependency>
-
-      <dependency>
-         <groupId>${groupId}</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <type>ejb</type>
-      </dependency>
-
-      <dependency>
-         <groupId>${groupId}</groupId>
-         <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
-      </dependency>
-
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>${persistence-api.version}</version>
-      </dependency>
+         <artifactId>rhq-remoting-client-api</artifactId>
+         <version>${project.version}</version>         
+      </dependency>   
 
       <dependency>
          <groupId>commons-logging</groupId>
-         <artifactId>commons-logging</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>commons-lang</groupId>
-         <artifactId>commons-lang</artifactId>
-         <version>2.4</version>
-         <scope>test</scope>
+         <artifactId>commons-logging</artifactId>         
       </dependency>
 
       <dependency>
@@ -94,20 +48,7 @@
 
       <dependency>
          <groupId>gnu-getopt</groupId>
-         <artifactId>getopt</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-j2ee</artifactId>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-remoting</artifactId>
-         <scope>provided</scope>
+         <artifactId>getopt</artifactId>         
       </dependency>
 
       <dependency>
@@ -117,24 +58,26 @@
       </dependency>
 
       <dependency>
-         <groupId>log4j</groupId>
-         <artifactId>log4j</artifactId>
-         <version>${log4j.version}</version>
-         <scope>provided</scope>
-      </dependency>
-
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-      </dependency>
-
-      <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${testng.version}</version>
+         <version>5.9</version>          
+         <!-- Yes, this is actually meant to be compile, and not test, scoped. -->
          <classifier>jdk15</classifier>
       </dependency>
 
+      <dependency>
+         <groupId>log4j</groupId>
+         <artifactId>log4j</artifactId>
+         <version>${log4j.version}</version>         
+         <scope>runtime</scope>
+      </dependency>
+      
+      <dependency>
+         <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>2.4</version>
+         <scope>test</scope>
+      </dependency>            
    </dependencies>
 
    <build>
@@ -388,5 +331,7 @@
             </plugins>
          </build>
       </profile>
+      
    </profiles>
+   
 </project>

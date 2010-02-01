@@ -10,7 +10,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -21,7 +21,7 @@
    <description>A Sample Perspective showing extension points and filters</description>
 
    <properties>
-      <rhq.version>1.4.0-SNAPSHOT</rhq.version>
+      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
    </properties>
 
    <dependencies>
@@ -43,6 +43,7 @@
          <scope>provided</scope> <!-- provided by the server/plugin-container -->
       </dependency>
 
+      
       <!-- uncomment the one of the three logging systems your plugin uses: log4j, commons-logging or i18nlog -->
       <!-- all three are provided to your plugin by the server/plugin-container -->
       <!--

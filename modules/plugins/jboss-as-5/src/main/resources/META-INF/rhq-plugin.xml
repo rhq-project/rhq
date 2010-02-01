@@ -1005,6 +1005,12 @@
                                               (e.g. 10.11.14.233 or foo.example.com); specify 0.0.0.0 to tell the
                                               application server to bind to all available network interfaces; defaults to
                                               '127.0.0.1'."/>
+               <c:simple-property name="javaHome" required="false"
+                                 description="The absolute path to a JRE or JDK installation directory containing
+                                              the JVM that should be used to start and shutdown this JBoss AS server;
+                                              this property must be set in order for the Start operation to work,
+                                              or for the Shutdown operation to work when the shutdown method is set
+                                              to 'shutdown script'."/>
              </c:group>
 
            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
@@ -2895,7 +2901,7 @@ you have to set the "Naming Provider Url" to jnp://127.0.0.1:4099.
                                 <c:integer-constraint maximum="65535"/>
                             </c:constraint>
                         </c:simple-property>
-	                    <c:simple-property name="hostname" required="false" description="The host name or string notation IP address to use for the binding."/>
+	                    <c:simple-property name="hostName" required="false" description="The host name or string notation IP address to use for the binding."/>
 	                    <c:simple-property name="description" required="false" description="Description of the binding."/>
 	                    <c:simple-property name="fullyQualifiedName" required="false" readOnly="true" description="The fully qualified binding name. This is an informational field only consisting of the service name and the binding name."/>
 	                    <c:simple-property name="fixedHostName" type="boolean" description="Whether the host name should remain fixed in all binding sets."/>

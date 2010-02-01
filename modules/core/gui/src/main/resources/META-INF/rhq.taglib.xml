@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE facelet-taglib PUBLIC
+  "-//Sun Microsystems, Inc.//DTD Facelet Taglib 1.0//EN"
+  "http://java.sun.com/dtd/facelet-taglib_1_0.dtd">
+
+<facelet-taglib xmlns="http://java.sun.com/JSF/Facelet">
+
+    <namespace>http://rhq-project.org/rhq</namespace>
+
+    <tag>
+        <tag-name>sortableColumnHeader</tag-name>
+        <component>
+            <component-type>org.rhq.SortableColumnHeader</component-type>
+            <renderer-type>org.rhq.SortableColumnHeader</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>rowSelector</tag-name>
+        <component>
+            <component-type>org.rhq.RowSelector</component-type>
+            <renderer-type>org.rhq.RowSelector</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>allRowsSelector</tag-name>
+        <component>
+            <component-type>org.rhq.AllRowsSelector</component-type>
+            <renderer-type>org.rhq.AllRowsSelector</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>selectedRowsCommandButton</tag-name>
+        <component>
+            <component-type>org.rhq.SelectedRowsCommandButton</component-type>
+            <renderer-type>org.rhq.SelectedRowsCommandButton</renderer-type>
+        </component>
+    </tag>
+
+</facelet-taglib>

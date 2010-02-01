@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -43,21 +43,21 @@
     <doUpdate>false</doUpdate>
 
     <!-- dependency versions -->
-    
+
     <!-- Start: JBoss AS Dependency Versions
          The dependency versions below are declared together as the versions of each are dependent on the
          overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
-         version is changed the versions of each of these should be validated and updated as needed. -->   
+         version is changed the versions of each of these should be validated and updated as needed. -->
     <jboss.version>4.2.3.GA</jboss.version>
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
     <jboss-common.version>1.2.1.GA</jboss-common.version>
     <jboss-jta.version>4.2.3.SP7</jboss-jta.version>
-    <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>    
+    <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
     <jboss-javassist.version>3.8.0.GA</jboss-javassist.version>
     <jbossws-native-dist.version>3.1.1.GA</jbossws-native-dist.version>
     <!-- End: JBoss AS Dependency Versions -->
-    
+
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
     <concurrent.version>1.3.4-jboss-update1</concurrent.version> <!-- oswego-concurrent compatible with 4.2.3.GA -->
     <getopt.version>1.0.13</getopt.version>
@@ -66,17 +66,18 @@
     <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
     <jaxb-api.version>2.1</jaxb-api.version>
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
-    <jsf-api.version>1.2_12</jsf-api.version>
-    <jsf-impl.version>1.2_12</jsf-impl.version>
-    <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
+    <jsf-api.version>1.2_14</jsf-api.version>
+    <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.11</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
-    <richfaces.version>3.3.0.GA</richfaces.version>
+    <jline.version>0.9.94</jline.version>
+    <richfaces.version>3.3.2.SR1</richfaces.version>
     <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
+    <jna.version>3.2.2</jna.version>
 
     <!-- defaults for datasource used by dbsetup, unit+integration tests, and dev container build -
          these may be overridden in ~/.m2/settings.xml -->
@@ -112,20 +113,20 @@
       <!-- Start: JBoss AS Dependencies
            The dependencies below are declared together as the versions of each are dependent on the
            overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
-           version is changed the versions of each of these should be validated and updated as needed. -->   
+           version is changed the versions of each of these should be validated and updated as needed. -->
       <dependency>
         <groupId>org.jboss.jbossas</groupId>
         <artifactId>jboss-as-dist</artifactId>
         <version>${jboss.version}</version>
-        <type>zip</type>        
+        <type>zip</type>
       </dependency>
-      
+
      <dependency>
          <groupId>org.jboss.jbossws</groupId>
          <artifactId>jbossws-native-dist</artifactId>
          <version>${jbossws-native-dist.version}</version>
          <type>zip</type>
-     </dependency>      
+     </dependency>
 
       <dependency>
         <groupId>jboss</groupId>
@@ -211,13 +212,13 @@
          <version>${jbossws-native-dist.version}</version>
          <type>zip</type>
       </dependency>
-      
+
       <dependency>
         <groupId>org.jboss.transaction</groupId>
         <artifactId>jboss-jta</artifactId>
         <version>${jboss-jta.version}</version>
       </dependency>
-      
+
       <!-- End: JBoss AS Dependencies -->
 
       <dependency>
@@ -276,12 +277,12 @@
          <artifactId>hibernate-annotations</artifactId>
          <version>${hibernate-annotations.version}</version>
       </dependency>
-      
+
       <dependency>
          <groupId>hibernate-entitymanager</groupId>
          <artifactId>hibernate-entitymanager</artifactId>
          <version>${hibernate-entitymanager.version}</version>
-      </dependency>      
+      </dependency>
 
       <dependency>
         <groupId>org.hyperic</groupId>
@@ -319,7 +320,7 @@
         <artifactId>concurrent</artifactId>
         <version>${concurrent.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>org.opensymphony.quartz</groupId>
         <artifactId>quartz</artifactId>
@@ -344,7 +345,7 @@
         <artifactId>h2</artifactId>
         <version>${h2.version}</version>
       </dependency>
-      
+
       <dependency>
         <groupId>net.sourceforge.jtds</groupId>
         <artifactId>jtds</artifactId>
@@ -355,6 +356,12 @@
         <groupId>org.codehaus.groovy</groupId>
         <artifactId>groovy-all</artifactId>
         <version>1.6.0</version>
+      </dependency>
+
+      <dependency>
+         <groupId>net.java.dev.jna</groupId>
+         <artifactId>jna</artifactId>
+         <version>${jna.version}</version>
       </dependency>
 
     </dependencies>
@@ -419,43 +426,43 @@
          </plugin>
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
-           <version>2.2-beta-2</version>
+           <version>2.2-beta-5</version>
          </plugin>
          <plugin>
            <artifactId>maven-clean-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.0.2</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-dependency-plugin</artifactId>
-           <version>2.0</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-deploy-plugin</artifactId>
-           <version>2.3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-ear-plugin</artifactId>
-           <version>2.3.1</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-enforcer-plugin</artifactId>
-           <version>1.0-alpha-3</version>
-         </plugin>
-         <plugin>
-           <artifactId>maven-ejb-plugin</artifactId>
            <version>2.1</version>
          </plugin>
          <plugin>
-           <artifactId>maven-install-plugin</artifactId>
+           <artifactId>maven-dependency-plugin</artifactId>
+           <version>2.1</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-deploy-plugin</artifactId>
+           <version>2.5</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-ear-plugin</artifactId>
+           <version>2.4</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-enforcer-plugin</artifactId>
+           <version>1.0-beta-1</version>
+         </plugin>
+         <plugin>
+           <artifactId>maven-ejb-plugin</artifactId>
            <version>2.2</version>
          </plugin>
          <plugin>
+           <artifactId>maven-install-plugin</artifactId>
+           <version>2.3</version>
+         </plugin>
+         <plugin>
            <artifactId>maven-jar-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.3</version>
          </plugin>
          <plugin>
            <artifactId>maven-javadoc-plugin</artifactId>
@@ -463,7 +470,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-plugin-plugin</artifactId>
-           <version>2.4.1</version>
+           <version>2.5.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-rar-plugin</artifactId>
@@ -477,7 +484,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-resources-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.4.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
@@ -485,20 +492,20 @@
          </plugin>
          <plugin>
            <artifactId>maven-source-plugin</artifactId>
-           <version>2.0.4</version>
+           <version>2.1.1</version>
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.4.2</version>
+            <version>2.5</version>
          </plugin>
          <plugin>
            <artifactId>maven-war-plugin</artifactId>
-           <version>2.1-alpha-1</version>
+           <version>2.1-beta-1</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>build-helper-maven-plugin</artifactId>
-           <version>1.3</version>         
+           <version>1.3</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -510,12 +517,12 @@
 
     <plugins>
 
-      <!-- Set the 'maven.version' property to the version of Maven being used, 
+      <!-- Set the 'maven.version' property to the version of Maven being used,
            so we can include the Maven version in the MANIFEST.MF files of all
            build artifacts. -->
       <plugin>
          <groupId>org.codehaus.mojo</groupId>
-         <artifactId>build-helper-maven-plugin</artifactId>        
+         <artifactId>build-helper-maven-plugin</artifactId>
          <executions>
            <execution>
              <phase>validate</phase>
@@ -525,7 +532,7 @@
            </execution>
          </executions>
       </plugin>
-    
+
       <!-- Set the 'buildNumber' property to the current SVN revision, or to '0'
            if an SVN revision cannot be determined, so we can include the SVN
            revision in the MANIFEST.MF files of all build artifacts. -->
@@ -542,26 +549,26 @@
              </executions>
              <configuration>
              <getRevisionOnlyOnce>true</getRevisionOnlyOnce>
-             <revisionOnScmFailure>0</revisionOnScmFailure>             
+             <revisionOnScmFailure>0</revisionOnScmFailure>
              <doCheck>false</doCheck>
              <doUpdate>false</doUpdate>
              <timestampFormat>{0, date, long} {0, time, long}</timestampFormat>
           </configuration>
       </plugin>
-    
+
       <!-- Ensure all code compiles and runs on Java 5 or later. -->
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>          
+        <configuration>
           <!-- invocation options -->
           <fork>true</fork>
           <meminitial>128M</meminitial>
           <maxmem>512M</maxmem>
-          
+
           <!-- compiler options -->
           <source>1.5</source>
           <target>1.5</target>
-          <optimize>false</optimize>          
+          <optimize>false</optimize>
         </configuration>
       </plugin>
 
@@ -661,7 +668,7 @@
          <version>1.0-beta-2</version>
       </extension>
    </extensions>
-   
+
   </build>
 
   <repositories>
@@ -708,19 +715,17 @@
   <profiles>
     <profile>
         <id>ojdbc-driver</id>
+         <activation>
+            <property>
+               <name>rhq.m2.repo.url.oracle</name>
+            </property>
+         </activation>        
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
                  Add a top level dependency if this profile is active to allow for db-required tests in any module.
                  The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
                  this profile should not be active by default. -->
-            <dependency>
-                <groupId>ojdbc14</groupId>
-                <artifactId>ojdbc14</artifactId>
-                <version>${ojdbc14.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc5</artifactId>
@@ -796,7 +801,7 @@
          </activation>
 
          <build>
-           <plugins>           
+           <plugins>
                <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
@@ -814,7 +819,7 @@
                   </execution>
                 </executions>
                </plugin>
-       
+
               <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -822,7 +827,7 @@
                     <bootclasspath>${java5.home}/lib/rt.jar${path.separator}${java5.home}/lib/jsse.jar${path.separator}${java5.home}/lib/jce.jar</bootclasspath>
                   </compilerArguments>
                 </configuration>
-              </plugin>              
+              </plugin>
             </plugins>
           </build>
       </profile>

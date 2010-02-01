@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugins.alertEmail;
 
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.mail.Message;
@@ -36,7 +37,8 @@ import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
 import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 
 /**
- * Class to send emails.
+ * Class to send emails. Actually it does not do the work
+ * itself, but just prepares the input which is then passed to
  * @author Heiko W. Rupp
  */
 public class EmailSender extends AlertSender {
@@ -55,29 +57,12 @@ public class EmailSender extends AlertSender {
             return new SenderResult(ResultState.FAILURE,"No email address given");
         }
 
-        String tmp = System.getProperty(SMTP_HOST,"localhost");
-        String mailserver = preferences.getSimpleValue("mailserver",tmp);
-        tmp = System.getProperty(EMAIL_FROM, "rhqadmin@localhost");
-        String senderAddress = preferences.getSimpleValue("senderEmail",tmp);
+        // TODO shall we validate the emails here and return failure if they look
+        // invalid? But then do we know what mail setup a user has and what may be
+        // illegal in his case?
 
-        Properties props = new Properties();
-        props.put("mail.smtp.host",mailserver);
-        props.put("mail.transport.protocol","smtp");
-        props.put("mail.host",mailserver);
-        // TODO for whatever reason, the passed props are ignored and 'localhost' is used
-        Session session = Session.getInstance(props); // TODO pass authenticator
-        Message message = new SMTPMessage(session);
-        try {
-            message.setFrom(new InternetAddress(senderAddress));
-            message.setRecipient(Message.RecipientType.TO,new InternetAddress(emailAddress));
-            message.setSubject("Alert on " + "Dummy - TODO");
-            message.setText("Li la lu, nur der Mann im Mond schaut zu");
-            Transport.send(message);
-        }
-        catch (Exception e) {
-            log.warn("Sending of email failed: " + e);
-            return new SenderResult(ResultState.FAILURE,"Send failed: " + e.getMessage());
-        }
-        return new SenderResult(ResultState.SUCCESS, "Emails sent to XXXX");
+        String[] emails = emailAddress.split(",");
+
+        return new SenderResult(ResultState.DEFERRED_EMAIL, "Emails prepared for sending", Arrays.asList(emails));
     }
 }

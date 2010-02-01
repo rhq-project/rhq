@@ -19,26 +19,50 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import net.augeas.AugeasException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeData;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.util.ResponseTimeConfiguration;
 import org.rhq.core.pluginapi.util.ResponseTimeLogParser;
+import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
+import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
+import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
@@ -46,17 +70,21 @@ import org.rhq.plugins.www.util.WWWUtils;
 
 /**
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet {
+public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
+    ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
     private final Log log = LogFactory.getLog(this.getClass());
 
-    public static final String SNMP_WWW_SERVICE_INDEX_CONFIG_PROP = "snmpWwwServiceIndex";
     public static final String URL_CONFIG_PROP = "url";
+    public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
 
     public static final String RESPONSE_TIME_LOG_FILE_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_EXCLUDES_CONFIG_PROP;
     public static final String RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP = ResponseTimeConfiguration.RESPONSE_TIME_URL_TRANSFORMS_CONFIG_PROP;
 
+    public static final String SERVER_NAME_CONFIG_PROP = "ServerName";
+    
     private static final String RESPONSE_TIME_METRIC = "ResponseTime";
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
@@ -65,24 +93,31 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     private URL url;
     private ResponseTimeLogParser logParser;
 
+    private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
+    private int snmpWwwServiceIndex = -1;
+
+    public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
+    
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
         Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
         String url = pluginConfig.getSimple(URL_CONFIG_PROP).getStringValue();
-        try {
-            this.url = new URL(url);
-            if (this.url.getPort() == 0) {
-                throw new InvalidPluginConfigurationException(
-                    "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the " +
-                    "port this virtual host is listening on. NOTE: If the 'url' property was set this way " +
-                    "after autodiscovery, you most likely did not include the port in the ServerName directive for " +
-                    "this virtual host in httpd.conf.");
+        if (url != null) {
+            try {
+                this.url = new URL(url);
+                if (this.url.getPort() == 0) {
+                    throw new InvalidPluginConfigurationException(
+                        "The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                            + "port this virtual host is listening on. NOTE: If the 'url' property was set this way "
+                            + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                            + "this virtual host in httpd.conf.");
+                }
+            } catch (MalformedURLException e) {
+                throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
+                    + "') is not a valid URL.");
             }
-        } catch (MalformedURLException e) {
-            throw new Exception("Value of '" + URL_CONFIG_PROP + "' connection property ('" + url
-                + "') is not a valid URL.");
         }
-
+        
         ResponseTimeConfiguration responseTimeConfig = new ResponseTimeConfiguration(pluginConfig);
         File logFile = responseTimeConfig.getLogFile();
         if (logFile != null) {
@@ -98,16 +133,72 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public AvailabilityType getAvailability() {
-        return WWWUtils.isAvailable(this.url) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (this.url != null && WWWUtils.isAvailable(this.url)) ? AvailabilityType.UP : AvailabilityType.DOWN;
+    }
+
+    public Configuration loadResourceConfiguration() throws Exception {
+        resourceContext.getParentResourceComponent().checkConfigurationSupported();
+        
+        AugeasTree tree = getServerConfigurationTree();
+        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+            .getResourceConfigurationDefinition();
+
+        ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+        return mapping.updateConfiguration(getNode(tree), resourceConfigDef);
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        AugeasTree tree = null;
+        try {
+            tree = getServerConfigurationTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            AugeasNode virtHostNode = getNode(tree);
+            mapping.updateAugeas(virtHostNode, report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            log.info("Apache configuration was updated");
+            
+            finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+        }
+    }
+
+    public void deleteResource() throws Exception {
+        if (MAIN_SERVER_RESOURCE_KEY.equals(resourceContext.getResourceKey())) {
+            throw new IllegalArgumentException("Cannot delete the virtual host representing the main server configuration.");
+        }
+        
+        AugeasTree tree = getServerConfigurationTree();
+        
+        try {
+            AugeasNode myNode = getNode(getServerConfigurationTree());
+    
+            tree.removeNode(myNode, true);
+            tree.save();
+            
+            deleteEmptyFile(tree, myNode);
+            conditionalRestart();
+        } catch (IllegalStateException e) {
+            //this means we couldn't find the augeas node for this vhost.
+            //that error can be safely ignored in this situation.
+        }
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
-        Configuration pluginConfig = this.resourceContext.getPluginConfiguration();
-        int primaryIndex = pluginConfig.getSimple(SNMP_WWW_SERVICE_INDEX_CONFIG_PROP).getIntegerValue();
+        int primaryIndex = getWwwServiceIndex();
+
+        //bail out quickly if there's no SNMP support
+        if (primaryIndex < 0)
+            return;
+
         log.debug("Collecting metrics for VirtualHost service #" + primaryIndex + "...");
         SNMPSession snmpSession = this.resourceContext.getParentResourceComponent().getSNMPSession();
 
@@ -147,6 +238,156 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             + this.resourceContext.getResourceKey() + ".");
     }
 
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        ResourceType resourceType = report.getResourceType();
+        
+        if (resourceType.equals(getDirectoryResourceType())) {
+            Configuration resourceConfiguration = report.getResourceConfiguration();
+            Configuration pluginConfiguration = report.getPluginConfiguration();
+        
+            String directoryName = report.getUserSpecifiedResourceName();
+            
+            //fill in the plugin configuration
+            
+            //get the directive index
+            AugeasTree tree = getServerConfigurationTree();
+            AugeasNode myNode = getNode(tree);
+            List<AugeasNode> directories = myNode.getChildByLabel("<Directory");
+            int seq = 0;
+            for (AugeasNode n : directories) {
+                if (n.getSeq() > seq) {
+                    seq = n.getSeq();
+                }
+            }
+            seq++;
+            
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, seq));
+            //we don't support this yet... need to figure out how...
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.REGEXP_PROP, false));
+
+            //set the resource key and name
+            String dirNameToSet = AugeasNodeValueUtil.escape(directoryName);
+            report.setResourceKey(dirNameToSet + "|" + seq); 
+            report.setResourceName(directoryName);
+            
+            //now actually create the data in augeas
+            try {
+                ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+                AugeasNode directoryNode = tree.createNode(myNode, "<Directory", null, seq);
+                tree.createNode(directoryNode, "param", dirNameToSet, 0);
+                mapping.updateAugeas(directoryNode, resourceConfiguration, resourceType.getResourceConfigurationDefinition());
+                tree.save();
+                
+                report.setStatus(CreateResourceStatus.SUCCESS);
+                
+                resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
+            } catch (Exception e) {
+                report.setException(e);
+                report.setStatus(CreateResourceStatus.FAILURE);
+            }
+        } else {
+            report.setErrorMessage("Unable to create resources of type " + resourceType.getName());
+            report.setStatus(CreateResourceStatus.FAILURE);
+        }
+        return report;
+    }
+    
+    public AugeasTree getServerConfigurationTree() {
+        return resourceContext.getParentResourceComponent().getAugeasTree();
+    }
+
+    /**
+     * Returns a node corresponding to this component in the Augeas tree.
+     * 
+     * @param tree
+     * @return
+     * @throws IllegalStateException if none or more than one nodes found
+     */
+    public AugeasNode getNode(AugeasTree tree) {
+        String resourceKey = resourceContext.getResourceKey();
+
+        if (ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY.equals(resourceKey)) {
+            return tree.getRootNode();
+        }
+
+        String serverName = null;
+        int pipeIdx = resourceKey.indexOf('|');
+        if (pipeIdx >= 0) {
+            serverName = resourceKey.substring(0, pipeIdx);
+        }
+
+        String[] addrs = resourceKey.substring(pipeIdx + 1).split(" ");
+        List<AugeasNode> nodes = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
+        List<AugeasNode> virtualHosts = new ArrayList<AugeasNode>();
+        boolean updated = false;
+
+        for (AugeasNode node : nodes) {
+               updated = false;
+            List<AugeasNode> serverNameNodes = tree.matchRelative(node, "ServerName/param");
+            String tempServerName = null;
+
+            if (!(serverNameNodes.isEmpty())) {
+                tempServerName = serverNameNodes.get(0).getValue();
+            }
+                if (tempServerName == null & serverName == null)
+                   updated = true;
+                if (tempServerName != null & serverName != null)
+                    if (tempServerName.equals(serverName)){
+                            updated = true;
+                     }
+                
+
+               if (updated){ 
+                    updated = false;
+                    List<AugeasNode> params = node.getChildByLabel("param");
+                    for (AugeasNode nd : params) {
+                        updated = false;
+                        for (String adr : addrs) {
+                            if (adr.equals(nd.getValue()))
+                                updated = true;
+                        }
+                        if (!updated)
+                            break;
+                      }
+
+                    if (updated) 
+                        virtualHosts.add(node);                    
+                }
+           }
+       
+        if (virtualHosts.size() == 0) {
+            throw new IllegalStateException("Could not find virtual host configuration in augeas for virtual host: "
+                + resourceKey);
+        }
+
+        if (virtualHosts.size() > 1) {
+            throw new IllegalStateException("Found more than 1 virtual host configuration in augeas for virtual host: "
+                + resourceKey);
+        }
+
+        return virtualHosts.get(0);
+    }
+
+    /**
+     * @see ApacheServerComponent#finishConfigurationUpdate(ConfigurationUpdateReport)
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        resourceContext.getParentResourceComponent().finishConfigurationUpdate(report);
+    }
+    
+    /**
+     * @see ApacheServerComponent#conditionalRestart()
+     * 
+     * @throws Exception
+     */
+    public void conditionalRestart() throws Exception {
+        resourceContext.getParentResourceComponent().conditionalRestart();
+    }
+    
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        resourceContext.getParentResourceComponent().deleteEmptyFile(tree, deletedNode);
+    }
+    
     private void collectSnmpMetric(MeasurementReport report, int primaryIndex, SNMPSession snmpSession,
         MeasurementScheduleRequest schedule) throws SNMPException {
         SNMPValue snmpValue = null;
@@ -206,5 +447,131 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
         oid = strBuf.toString();
         return oid;
+    }
+
+    /**
+     * @return the index of the virtual host that identifies it in SNMP
+     * @throws Exception on SNMP error
+     */
+    private int getWwwServiceIndex() throws Exception {
+        ConfigurationTimestamp currentTimestamp = resourceContext.getParentResourceComponent().getConfigurationTimestamp();
+        if (!lastConfigurationTimeStamp.equals(currentTimestamp)) {
+            snmpWwwServiceIndex = -1;
+            //don't go through this configuration again even if we fail further below.. we'd fail again.
+            lastConfigurationTimeStamp = currentTimestamp;
+            
+            //configuration has changed. re-read the service index of this virtual host
+
+            //we have to scan the SNMP to find the entry corresponding to this vhost.
+            SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
+
+            List<SNMPValue> names;
+            List<SNMPValue> ports;
+
+            names = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_NAME);
+            ports = snmpSession.getColumn(SNMPConstants.COLUMN_VHOST_PORT);
+            Iterator<SNMPValue> namesIterator = names.iterator();
+            Iterator<SNMPValue> portsIterator = ports.iterator();
+
+            //figure out the servername and addresses of this virtual host
+            //from the resource key.
+            String vhostServerName = null;
+            String[] vhostAddressStrings = null;
+            String key = resourceContext.getResourceKey();
+            int pipeIdx = key.indexOf('|');
+            if (pipeIdx >= 0) {
+                vhostServerName = key.substring(0, pipeIdx);
+            }
+            vhostAddressStrings = key.substring(pipeIdx + 1).split(" ");
+
+            AugeasTree configTree = null;
+            try {
+                configTree = resourceContext.getParentResourceComponent().getAugeasTree();
+            } catch (AugeasException e) {
+                //ok, we'll need to live without augeas...
+            }
+            
+            //convert the vhost addresses into fully qualified ip/port addresses
+            List<HttpdAddressUtility.Address> vhostAddresses = new ArrayList<HttpdAddressUtility.Address>(
+                vhostAddressStrings.length);
+
+            
+            if (configTree != null) {
+                ApacheServerComponent parent = resourceContext.getParentResourceComponent();
+                if (vhostAddressStrings.length == 1 && MAIN_SERVER_RESOURCE_KEY.equals(vhostAddressStrings[0])) {
+                    vhostAddresses.add(parent.getAddressUtility().getMainServerSampleAddress(configTree));
+                } else {
+                    for (int i = 0; i < vhostAddressStrings.length; ++i) {
+                        vhostAddresses.add(parent.getAddressUtility().getVirtualHostSampleAddress(configTree, vhostAddressStrings[i],
+                            vhostServerName));
+                    }
+                }
+            } else {
+                Configuration pluginConfig = resourceContext.getPluginConfiguration();
+                URI uri = new URI(pluginConfig.getSimpleValue(URL_CONFIG_PROP, null));
+                String host = uri.getHost();
+                int port = uri.getPort();
+                if (port == -1) port = 80;
+                HttpdAddressUtility.Address addr = new HttpdAddressUtility.Address(host, port);
+                
+                if (addr != null) {
+                    vhostAddresses.add(addr);
+                }
+            }
+            
+            while (namesIterator.hasNext()) {
+                SNMPValue nameValue = namesIterator.next();
+                SNMPValue portValue = portsIterator.next();
+
+                String snmpHost = nameValue.toString();
+                String fullPort = portValue.toString();
+
+                int snmpPort = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+                if (snmpPort == 0) snmpPort = 80;
+                
+                if (containsAddress(vhostAddresses, new HttpdAddressUtility.Address(snmpHost, snmpPort))) {
+                    String nameOID = nameValue.getOID();
+                    snmpWwwServiceIndex = Integer.parseInt(nameOID.substring(nameOID.lastIndexOf(".") + 1));
+                    
+                    break;
+                }
+            }
+        }
+        return snmpWwwServiceIndex;
+    }
+
+    private boolean containsAddress(List<HttpdAddressUtility.Address> addresses, HttpdAddressUtility.Address addressToCheck) throws UnknownHostException {
+        if (addresses.contains(addressToCheck)) {
+            return true;
+        }
+        
+        //try to get the IP of the address to check
+        InetAddress[] ipAddresses = InetAddress.getAllByName(addressToCheck.host);
+        
+        for(InetAddress ip : ipAddresses) {
+            HttpdAddressUtility.Address newCheck = new HttpdAddressUtility.Address(ip.getHostAddress(), addressToCheck.port);
+            
+            if (addresses.contains(newCheck)) {
+                return true;
+            }
+        }
+        
+        //ok, try the hardest...
+        for(HttpdAddressUtility.Address listAddress: addresses) {
+            InetAddress[] listAddresses = InetAddress.getAllByName(listAddress.host);
+            for (InetAddress listInetAddr : listAddresses) {
+                for (InetAddress ip : ipAddresses) {
+                    if (ip.equals(listInetAddr) && addressToCheck.port == listAddress.port) {
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
+    private ResourceType getDirectoryResourceType() {
+        return resourceContext.getResourceType().getChildResourceTypes().iterator().next();
     }
 }

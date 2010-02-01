@@ -1,10 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="DiskContentSourcePlugin"
-                version="1.0"
-                apiVersion="2.0"
+                displayName="Disk Content"
+                description="Provides the ability to obtain content from a local file system"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Provides a content provider that retrieves content from a local file system.
+        If deployed in an HA environment, this must be on a distributed file system that all servers can access.
+        The content must be of the package type as defined in the content provider configuration.
+    ]]></serverplugin:help>
 
     <contentSourceType name="DiskSource"
                        displayName="Local Disk Storage Content Provider"
@@ -21,18 +28,22 @@
             </c:group>
 
             <c:group name="Package Source">
-                <c:simple-property name="packageSourceEnabled" required="true" summary="true" default="true"
+                <c:simple-property name="packageSourceEnabled" required="true" summary="true" default="true" readOnly="true"
                                    type="boolean" description="Indicates if this instance of the plugin should act as a package source"/>
                 <c:simple-property name="filenameFilter" required="true" summary="true" default=".*"
                                    description="A regular expression that identifies a file of this package type (e.g. '.*\.jar', '.*/i686/.*\.rpm$')"/>
-                <c:simple-property name="packageTypeName" required="true" summary="true"
-                                   description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')"/>
-                <c:simple-property name="architectureName" required="true" summary="true" default="noarch"
-                                   description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')"/>
-                <c:simple-property name="resourceTypeName" required="true" summary="true"
-                                   description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')"/>
-                <c:simple-property name="resourceTypePluginName" required="true" summary="true"
-                                   description="The name of the plugin that defined the resource type. (e.g. 'Platform', 'JBossAS')"/>
+                <c:dynamic-property name="packageTypeName" required="true" summary="true"
+                                   description="The name that identifies the kind of package this type represents (e.g. 'ear', 'rpm')">
+                    <c:database-backing key="package-types"/>
+                </c:dynamic-property>
+                <c:dynamic-property name="architectureName" required="true" summary="true"
+                                    description="The specific hardware architecture this type of package can be deployed on. If there is no specific architecture required, use 'noarch'. (e.g. 'i686', 'amd64')">
+                    <c:database-backing key="package-architectures"/>
+                </c:dynamic-property>
+                <c:dynamic-property name="resourceType" required="true" summary="true"
+                                    description="The name of the resource type on which this package can be deployed. This is the resource type name as defined in the agent plugin. (e.g. 'Linux', 'JBossAS Server')">
+                    <c:database-backing key="resource-type-with-plugin"/>
+                </c:dynamic-property>
             </c:group>
 
             <c:group name="Repo Source">

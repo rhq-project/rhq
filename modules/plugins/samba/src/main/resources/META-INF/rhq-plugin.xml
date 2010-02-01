@@ -16,13 +16,6 @@
             class="SambaServerComponent">
 
        <plugin-configuration>
-          <c:group name="Active Server Directory">
-              <c:simple-property name="krealm" displayName="Kerberos Realm" required="false"/>
-              <c:simple-property name="kdc" displayName="KDC" required="false"/>
-              <c:simple-property name="kadmin" displayName="Admin Server" required="false"/>
-              <c:simple-property name="realm" displayName="ADS Realm" required="false"/>
-              <c:simple-property name="domain" displayName="Domain" required="false"/>
-          </c:group>
 
           <c:group name="Augeas">
            <c:simple-property name="augeasModuleName" displayName="Augeas Module Name" default="Samba" required="true" readOnly="true"
@@ -36,6 +29,35 @@
                               default="/files/etc/samba/smb.conf/target[.='global']"/>
            </c:group>
        </plugin-configuration>
+       
+
+       <operation name="join"
+                 displayName="Join Active Server Directory"
+                 description="Joins the Samba domain member to the Active Server Directory">
+       </operation>
+       
+       <operation name="disconnect"
+                  displayName="Disconnect Active Server Directory"
+                  description="Disconnects the Samba domain member to the Active Server Directory">
+       </operation>
+       
+       <metric property="NetworkStat.tcpInboundTotal" displayName="TCP Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpOutboundTotal" displayName="TCP Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allInboundTotal" displayName="All Inbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.allOutboundTotal" displayName="All Outbound Connections" displayType="summary"/>
+       <metric property="NetworkStat.tcpEstablished" displayName="State ESTABLISHED"/>
+       <metric property="NetworkStat.tcpSynSent" displayName="State SYN_SENT"/>
+       <metric property="NetworkStat.tcpSynRecv" displayName="State SYN_RECV"/>
+       <metric property="NetworkStat.tcpFinWait1" displayName="State FIN_WAIT1"/>
+       <metric property="NetworkStat.tcpFinWait2" displayName="State FIN_WAIT2"/>
+       <metric property="NetworkStat.tcpTimeWait" displayName="State TIME_WAIT"/>
+       <metric property="NetworkStat.tcpClose" displayName="State CLOSE"/>
+       <metric property="NetworkStat.tcpCloseWait" displayName="State CLOSE_WAIT"/>
+       <metric property="NetworkStat.tcpLastAck" displayName="State LAST_ACK"/>
+       <metric property="NetworkStat.tcpListen" displayName="State LISTEN"/>
+       <metric property="NetworkStat.tcpClosing" displayName="State CLOSING"/>
+       <metric property="NetworkStat.tcpIdle" displayName="State IDLE"/>
+       <metric property="NetworkStat.tcpBound" displayName="State BOUND"/>
 
       <resource-configuration>
         <c:group name="Basic Configurations">
@@ -48,10 +70,8 @@
           <c:group name="Security">
               <c:simple-property name="security" displayName="Authentication Mode" required="false" description="The type of authentication used by Samba">
                   <c:property-options>
-                      <c:option value="domain"/>
-                      <c:option value="server"/>
-                      <c:option value="share"/>
                       <c:option value="user"/>
+                      <c:option value="ads"/>
                   </c:property-options>
               </c:simple-property>
 
@@ -66,14 +86,18 @@
           </c:group>
 
           <c:group name="Active Server Directory">
-              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
-              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
-              <c:simple-property name="winbind use default domain" required="false" displayName="Use default domain" type="boolean" description="Operate on users without domain component in usernames"/>
-              <c:simple-property name="winbind offline logon" required="false" displayName="Offline logon" type="boolean" description="Use pam_winbind module with Cached Credentials"/>
+              <c:simple-property name="realm" displayName="ADS Realm" required="false"/>
+              <c:simple-property name="controller" displayName="Domain Controller" required="false"/>
+              <c:simple-property name="username" displayName="ADS username" required="false"/>
+              <c:simple-property name="password" type="password" displayName="ADS password" required="false"/>
+              <c:simple-property name="idmap uid" required="false" displayName="Idmap UID range" description="Specifies range of users ids that are allocated for use in mapping Linux users to NT user SIDs"/>
+              <c:simple-property name="idmap gid" required="false" displayName="Idmap GID range" description="Specifies range of group ids that are allocated for use in mapping Linux groups to NT group SIDs"/>
+              <c:simple-property name="template shell" required="false" displayName="Template Shell" default="/bin/bash" description="winbindd daemon uses this parameter to fill in the login shell for users"/>
               <c:simple-property name="winbind enum users" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of user info"/>
-              <c:simple-property name="winbind enum groups" required="false" displayName="User enumeration" type="boolean" description="Allow enumeration of group info"/>
-              <c:simple-property name="winbind separator" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
+              <c:simple-property name="winbind enum groups" required="false" displayName="Group enumeration" type="boolean" description="Allow enumeration of group info"/>
+              <c:simple-property name="winbind separator" default="+" required="false" displayName="Winbind separator" description="Character used when listing a username in the DOMAIN\user format"/>
           </c:group>
+
       </resource-configuration>
 
        <service name="Samba Share" description="a Samba share"

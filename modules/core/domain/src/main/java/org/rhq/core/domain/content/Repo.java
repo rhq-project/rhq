@@ -23,7 +23,11 @@
 package org.rhq.core.domain.content;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -36,11 +40,13 @@ import javax.persistence.Id;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.common.Tag;
 import org.rhq.core.domain.common.Taggable;
@@ -93,8 +99,7 @@ import org.rhq.core.domain.resource.Resource;
         + "     WHERE rcs.repo.id = r.id " //
         + "     AND rcs.contentSource.id = :contentSourceId) = 1 " //
         + "AND (SELECT COUNT(rcs) FROM RepoContentSource rcs" //
-        + "     WHERE rcs.repo.id = r.id) = 1 ")
-    })
+        + "     WHERE rcs.repo.id = r.id) = 1 ") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_REPO_ID_SEQ")
 @Table(name = "RHQ_REPO")
 public class Repo implements Serializable, Taggable {
@@ -139,23 +144,45 @@ public class Repo implements Serializable, Taggable {
     @Column(name = "IS_CANDIDATE", nullable = false)
     private boolean candidate;
 
+    @Column(name = "SYNC_SCHEDULE", nullable = true)
+    private String syncSchedule = "0 0 3 * * ?";
+
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<ResourceRepo> resourceRepos;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoContentSource> repoContentSources;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoPackageVersion> repoPackageVersions;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private Set<RepoRepoGroup> repoRepoGroups;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoRepoRelationship> repoRepoRelationships;
 
+    @XmlTransient
     @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY)
     private Set<RepoTag> repoTags;
+
+    @XmlTransient
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OrderBy("startTime DESC")
+    // latest appears first, oldest last
+    private List<RepoSyncResults> syncResults;
+
+    @XmlTransient
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoDistribution> repoDistributions;
+
+    @XmlTransient
+    @OneToMany(mappedBy = "repo", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<RepoAdvisory> repoAdvisories;
 
     @Transient
     private String syncStatus;
@@ -236,6 +263,25 @@ public class Repo implements Serializable, Taggable {
 
     public void setCandidate(boolean candidate) {
         this.candidate = candidate;
+    }
+
+    /**
+     * Periodically, the Repo will be asked to synchronize with the remote ContentProviders associated with it
+     * This attribute defines the schedule, as a cron string. The default will be set for everyday at
+     * 3:00am local time. If this content source should never automatically sync, this should be null, but
+     * an empty string would also indicate this, too.
+     *
+     * @return sync schedule as a cron string or null if the sync should not automatically occur
+     */
+    public String getSyncSchedule() {
+        return syncSchedule;
+    }
+
+    public void setSyncSchedule(String syncSchedule) {
+        if (syncSchedule != null && syncSchedule.trim().length() == 0) {
+            syncSchedule = null;
+        }
+        this.syncSchedule = syncSchedule;
     }
 
     /**
@@ -325,18 +371,38 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
+     * Returns the explicit mapping entities.
+     *
+     * @return the mapping entities
+     *
+     * @see    #getContentSources()
+     */
+    public Set<RepoDistribution> getRepoDistributions() {
+        return repoDistributions;
+    }
+
+    public Set<RepoAdvisory> getRepoAdvisories() {
+        return repoAdvisories;
+    }
+
+    public void setRepoAdvisories(Set<RepoAdvisory> repoAdvisories) {
+        this.repoAdvisories = repoAdvisories;
+    }
+
+    /**
      * Get the overall sync status of this Repository.  This is a summation of all the syncs.
-     * 
+     *
      * There is a weight to the status since this returns the most 'relevant' status:
-     * 
+     *
      * 1) ContentSourceSyncStatus.FAILURE
      * 2) ContentSourceSyncStatus.INPROGRESS
      * 3) ContentSourceSyncStatus.SUCCESS
-     * 
+     *
      * @return String summary of the status of this Repository
      */
     @Transient
     public String getSyncStatus() {
+
         return this.syncStatus;
     }
 
@@ -696,7 +762,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     public void setRepoTags(Set<RepoTag> tags) {
-        this.repoTags = repoTags;
+        this.repoTags = tags;
     }
 
     public boolean hasTag(Tag tag) {
@@ -762,7 +828,7 @@ public class Repo implements Serializable, Taggable {
     }
 
     /**
-     * Removes association with a tag, if it exists. 
+     * Removes association with a tag, if it exists.
      */
     public void removeTag(Tag tag) {
         if ((this.repoTags == null) || (tag == null)) {
@@ -791,4 +857,38 @@ public class Repo implements Serializable, Taggable {
     public void setSyncStatus(String syncStatusIn) {
         this.syncStatus = syncStatusIn;
     }
+
+    public void addSyncResult(RepoSyncResults syncResult) {
+        if (this.syncResults == null) {
+            this.syncResults = new ArrayList<RepoSyncResults>();
+        }
+
+        this.syncResults.add(syncResult);
+        syncResult.setRepo(this);
+    }
+
+    /**
+     * The list of sync results - order ENSURED by the incrementing ID of this object
+     */
+    public List<RepoSyncResults> getSyncResults() {
+        if (syncResults == null) {
+            return null;
+        }
+
+        Comparator dc = new Comparator() {
+            public int compare(Object arg0, Object arg1) {
+                RepoSyncResults c1 = (RepoSyncResults) arg0;
+                RepoSyncResults c2 = (RepoSyncResults) arg1;
+
+                Integer id1 = c1.getId();
+                Integer id2 = c2.getId();
+
+                return id1.compareTo(id2);
+            }
+        };
+        Collections.sort(syncResults, dc);
+
+        return syncResults;
+    }
+
 }

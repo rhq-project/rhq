@@ -18,26 +18,26 @@
  */
 package org.rhq.enterprise.server.plugins.rhnhosted;
 
-import java.util.List;
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesEntryType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresType;
-import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresEntryType;
 import org.apache.commons.lang.StringUtils;
-import org.jdom.input.SAXBuilder;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.input.SAXBuilder;
+
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesEntryType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageProvidesType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresEntryType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageRequiresType;
+import org.rhq.enterprise.server.plugins.rhnhosted.xml.RhnPackageType;
 
 /**
  * @author John Matthews
  */
-public class PrimaryXMLTest extends TestCase
-{
+public class PrimaryXMLTest extends TestCase {
     protected RhnPackageType getTestRhnPackage() {
         RhnPackageType pkg = new RhnPackageType();
         pkg.setName("gnome-user-docs");
@@ -59,7 +59,6 @@ public class PrimaryXMLTest extends TestCase
         pkg.setSourceRpm("gnome-user-docs-2.16.0-2.fc6.src.rpm");
         pkg.setRhnPackageHeaderStart("440");
         pkg.setRhnPackageHeaderEnd("97656");
-
 
         RhnPackageProvidesType provides_type = new RhnPackageProvidesType();
         List<RhnPackageProvidesEntryType> provides = provides_type.getRhnPackageProvidesEntry();
@@ -83,8 +82,7 @@ public class PrimaryXMLTest extends TestCase
         return pkg;
     }
 
-    public void testGetFlags()
-    {
+    public void testGetFlags() {
         String value = PrimaryXML.getFlags("8");
         assert StringUtils.equals(value, "EQ");
 
@@ -102,24 +100,21 @@ public class PrimaryXMLTest extends TestCase
 
     }
 
-    public void testGetEpoch()
-    {
+    public void testGetEpoch() {
         String value = PrimaryXML.getEpoch("4:98.9-4");
         assert StringUtils.equals(value, "4");
 
         value = PrimaryXML.getEpoch("98.9-4");
-        assert StringUtils.equals(value, "");
+        assert StringUtils.equals(value, "0");
 
         value = PrimaryXML.getEpoch("");
-        assert StringUtils.equals(value, "");
+        assert StringUtils.equals(value, "0");
 
         value = PrimaryXML.getEpoch("98.9-45:3.f");
-        assert StringUtils.equals(value, "");
+        assert StringUtils.equals(value, "0");
     }
 
-
-    public void testGetVersion()
-    {
+    public void testGetVersion() {
         String value = PrimaryXML.getVersion("4:98.9-4");
         assert StringUtils.equals(value, "98.9");
 
@@ -131,8 +126,7 @@ public class PrimaryXMLTest extends TestCase
 
     }
 
-    public void testGetRelease()
-    {
+    public void testGetRelease() {
         String value = PrimaryXML.getRelease("4:98.9-4");
         assert StringUtils.equals(value, "4");
 
@@ -145,9 +139,8 @@ public class PrimaryXMLTest extends TestCase
         value = PrimaryXML.getRelease("98.9");
         assert StringUtils.equals(value, "");
     }
-    
-    public void testCreatePackageXML() throws Exception
-    {
+
+    public void testCreatePackageXML() throws Exception {
         RhnPackageType pkg = getTestRhnPackage();
         String xml = PrimaryXML.createPackageXML(pkg);
         System.out.println(xml);

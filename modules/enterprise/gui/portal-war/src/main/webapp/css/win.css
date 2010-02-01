@@ -1713,6 +1713,31 @@ P.compact {
     vertical-align: top;
 }
 
+/**--- Raw Config ---------------------*/
+.raw-outer-table {
+  width: 100%;
+}
+
+.raw-outer-table-left-col {
+  width: 25%;
+  vertical-align: top;
+}
+
+.raw-outer-table-right-col {
+  /*width: 75%;*/
+  margin-left: 10px;
+  margin-right: 10px;
+  vertical-align: top;
+}
+
+.rich-pmenu-selected-element {
+  background-color: #D8D8D8;  
+}
+
+.raw-edit-footer {
+  text-align: right;
+}
+
 /*--- Configuration ---------------------*/
 .property-group-header {
     padding: 4px;
@@ -2108,6 +2133,31 @@ ul.radio-group .unspecified {
     background: #ffffff;
 }
 
+.advisory-details-key-column {
+    width: 200px;
+    text-align: right;
+    vertical-align: top;
+}
+
+.advisory-details-value-column {
+    text-align: left;
+    vertical-align: top;
+}
+
+.advisory-details-even-row {
+    background: #f0f0f0;
+}
+
+.advisory-details-odd-row {
+    background: #ffffff;
+}
+
+.advisory-whitespace {
+ 	white-space: pre-wrap;
+ 	white-space: -moz-pre-wrap;
+ 	white-space: -o-pre-wrap;
+}
+
 /*--- Pagination ---------------------*/
 .on-pager-footer {
     background: #E5E5E5;
@@ -2218,6 +2268,14 @@ ul.radio-group .unspecified {
     font-size: 11px;
 }
 
+.resourceLink {
+    color: #000;
+    font-weight: normal;
+    font-family: tahoma, verdana, sans-serif;
+    font-size: 11px;
+    cursor: pointer;
+}
+
 .availLinkUp {
     color: black;
     font-weight: normal;
@@ -2289,4 +2347,18 @@ ul.radio-group .unspecified {
 
 .dr-menu-item {
     z-index: 50;
+}
+
+.rich-tree-node-highlighted {
+   text-decoration: none; 
+   color: #000;
+}
+
+.rich-tree-node-selected {
+   border-color:#D4CFC7;
+   background: #E5E5E5;
+}
+
+.rich-tree-h-ic-img, .rich-tree-node-handleicon-collapsed, .rich-tree-node-handleicon-expanded {
+   cursor:pointer;
 }

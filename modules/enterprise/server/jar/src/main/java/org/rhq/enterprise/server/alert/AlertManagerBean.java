@@ -23,6 +23,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -55,7 +56,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.alert.notification.RoleNotification;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
@@ -623,7 +623,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          */
         try {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
-            Set<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
+            Collection<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
             Set<String> emailAddresses = new LinkedHashSet<String>();
 
             for (AlertNotification alertNotification : alertNotifications) {
@@ -649,11 +649,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     String emailAddress = subjectNotification.getSubject().getEmailAddress();
 
                     processEmailAddress(alert, emailAddress, emailAddresses);
-                } else if (alertNotification instanceof EmailNotification) {
-                    EmailNotification emailNotification = (EmailNotification) alertNotification;
-                    String emailAddress = emailNotification.getEmailAddress();
-
-                    processEmailAddress(alert, emailAddress, emailAddresses);
                 }
 
 
@@ -662,16 +657,17 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     continue;
 
                 AlertSender sender = getAlertSender(alertNotification);
-                if (sender!=null) {
+                if (sender != null) {
                     try {
                         SenderResult result = sender.send(alert);
                         if (result == null) {
-                            log.warn("- !! -- sender " + alertNotification.getSenderName() + " did not return a SenderResult. Please fix this -- !! - ");
-                        } else if (result.getState() == ResultState.SUCCESS) {
-                            if (result.getEmails()!=null && !result.getEmails().isEmpty())
+                            log.warn("- !! -- sender " + alertNotification.getSenderName() +
+                                    " did not return a SenderResult. Please fix this -- !! - ");
+                        } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
+                            if (result.getEmails() != null && !result.getEmails().isEmpty())
                                 emailAddresses.addAll(result.getEmails());
                         }
-                        // TODO log result
+                        // TODO log result - especially handle the deferred_email case
                         log.info(result);
                     }
                     catch (Throwable t) {

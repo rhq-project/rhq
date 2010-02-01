@@ -1,10 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
 <content-plugin name="UrlContentSourcePlugin" 
-                version="1.0"
-                apiVersion="2.0"
+                displayName="URL Content"
+                description="Provides the ability to obtain content from a remote URL location"
                 xmlns="urn:xmlns:rhq-serverplugin.content"
+                xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
                 xmlns:c="urn:xmlns:rhq-configuration">
+
+    <serverplugin:help><![CDATA[
+        Provides a content provider that retrieves content from a remote repository identified by a URL.
+        The content must be described by an index file that contains data about all the content.
+    ]]></serverplugin:help>
 
    <contentSourceType name="UrlSource"
                       displayName="Remote URL Content Provider"

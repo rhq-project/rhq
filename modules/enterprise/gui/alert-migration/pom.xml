@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>rhq-helpers</artifactId>
+        <groupId>org.rhq.helpers</groupId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.rhq.helpers</groupId>
+    <artifactId>alert-migration</artifactId>
+    <packaging>war</packaging>
+
+    <name>RHQ alert migration</name>
+    <description>Migrate alert notification from RHQ 1.3.1 to RHQ 3 format</description>
+
+    <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/alert-migration</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/alert-migration</developerConnection>
+   </scm>
+
+    <dependencies>
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by ear -->
+        </dependency>
+
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-enterprise-server</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
+
+        <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-util</artifactId>
+           <version>${project.version}</version>
+           <scope>provided</scope> <!-- by rhq.ear -->
+        </dependency>
+
+
+        <dependency>
+            <groupId>net.sf.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>2.0</version>
+        </dependency>
+
+        <!-- This is a fix for the Javac bug requiring annotations to be
+             available when compiling dependent classes. -->
+        <dependency>
+          <groupId>javax.persistence</groupId>
+          <artifactId>persistence-api</artifactId>
+          <version>1.0</version>
+          <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+          <groupId>jboss.jboss-embeddable-ejb3</groupId>
+          <artifactId>hibernate-all</artifactId>
+          <version>1.0.0.Alpha9</version>
+          <scope>provided</scope>
+          <!-- needed for referenced domain entities that use Hibernate annotations -->
+        </dependency>
+
+        <dependency>
+           <groupId>jboss.jboss-embeddable-ejb3</groupId>
+           <artifactId>jboss-ejb3-all</artifactId>
+           <version>1.0.0.Alpha9</version>
+           <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+           <groupId>commons-fileupload</groupId>
+           <artifactId>commons-fileupload</artifactId>
+           <version>1.2</version>
+        </dependency>
+
+        <dependency>
+           <groupId>commons-io</groupId>
+           <artifactId>commons-io</artifactId>
+           <version>1.3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>i18nlog</groupId>
+            <artifactId>i18nlog</artifactId>
+            <version>1.0.9</version>
+            <scope>provided</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+      <finalName>alert-migration</finalName>
+
+      <plugins>
+
+        <plugin>
+          <artifactId>maven-war-plugin</artifactId>
+          <configuration>
+            <archive>
+              <manifest>
+                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+              </manifest>
+              <manifestEntries>
+                <Build-Number>${buildNumber}</Build-Number>
+              </manifestEntries>
+            </archive>
+            <webResources>
+              <resource>
+                <filtering>false</filtering>
+                <directory>${basedir}/src/main/webapp</directory>
+                <!--<includes>-->
+                  <!--<include>**/*.properties</include>-->
+                <!--</includes>-->
+              </resource>
+              <!--<resource>-->
+                  <!--<filtering>true</filtering>-->
+                  <!--<directory>${basedir}/target/resources</directory>-->
+                  <!--<includes>-->
+                    <!--<include>**/*.properties</include>-->
+                  <!--</includes>-->
+              <!--</resource>-->
+            </webResources>
+          </configuration>
+        </plugin>
+
+<!--
+        <plugin>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <executions>
+            <execution>
+              <id>Generate I18N Resource Bundles</id>
+              <phase>process-classes</phase>
+              <configuration>
+                <tasks>
+                  <- - generate the I18N resource bundles - - >
+                  <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+                  <- -<i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">- ->
+                  <i18n outputdir="${basedir}/target/resources/WEB-INF/classes" defaultlocale="en" verbose="false" append="false" verify="true">
+                    <classpath refid="maven.runtime.classpath" />
+                    <classfileset dir="${project.build.outputDirectory}">
+                      <include name="**/*I18NResourceKeys.class" />
+                    </classfileset>
+                  </i18n>
+                  <copy todir="${project.build.outputDirectory}" encoding="UTF-8" outputencoding="UTF-8">
+                    <fileset dir="${basedir}/target/resources/WEB-INF/classes">
+                      <include name="InstallerMessages*.properties" />
+                    </fileset>
+                    <mapper type="glob" from="*" to="*.unfiltered" />
+                  </copy>
+                </tasks>
+              </configuration>
+              <goals>
+                <goal>run</goal>
+              </goals>
+            </execution>
+          </executions>
+        </plugin>
+-->
+      </plugins>
+
+    </build>
+
+    <profiles>
+
+        <profile>
+           <id>dev</id>
+
+           <properties>
+              <rhq.rootDir>../../../..</rhq.rootDir>
+              <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+              <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+              <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+           </properties>
+
+           <build>
+              <plugins>
+
+                 <plugin>
+                   <artifactId>maven-antrun-plugin</artifactId>
+                   <version>1.1</version>
+                   <executions>
+
+                       <execution>
+                          <id>deploy-classes</id>
+                          <phase>compile</phase>
+                          <configuration>
+                            <tasks>
+                              <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                              <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
+                              <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="target/classes" />
+                              </copy>
+                            </tasks>
+                          </configuration>
+                          <goals>
+                            <goal>run</goal>
+                          </goals>
+                       </execution>
+
+                       <execution>
+                          <id>deploy</id>
+                          <phase>package</phase>
+                          <configuration>
+                            <tasks>
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="${basedir}/target/${project.build.finalName}" />
+                              </copy>
+                              <delete dir="${deployment.dir}.rej" /> <!-- need to remove any residual backups -->
+                            </tasks>
+                          </configuration>
+                          <goals>
+                            <goal>run</goal>
+                          </goals>
+                       </execution>
+
+                       <execution>
+                          <id>undeploy</id>
+                          <phase>clean</phase>
+                          <configuration>
+                            <tasks>
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                              <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                              <delete dir="${deployment.dir}" />
+                            </tasks>
+                          </configuration>
+                          <goals>
+                            <goal>run</goal>
+                          </goals>
+                       </execution>
+
+                    </executions>
+                 </plugin>
+
+              </plugins>
+           </build>
+        </profile>
+
+    </profiles>
+</project>

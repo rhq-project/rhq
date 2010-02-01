@@ -30,20 +30,23 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.ContentSourceSyncResults;
 import org.rhq.core.domain.content.ContentSourceType;
+import org.rhq.core.domain.content.DistributionFile;
 import org.rhq.core.domain.content.DownloadMode;
 import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.PackageVersionContentSource;
 import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.composite.PackageVersionMetadataComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
+import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
-import org.rhq.enterprise.server.plugin.pc.content.DistributionSyncReport;
 
 /**
  * Interface that provides access to the {@link ContentSource} objects deployed in the server, allowing the callers to
@@ -173,11 +176,11 @@ public interface ContentSourceManagerLocal {
 
     /**
      * Create the specified content source.
-     * 
+     *
      * @param subject The user making the request.
-     * 
+     *
      * @param contentSource A content source to be created.
-     * 
+     *
      * @return The created content source.
      */
     ContentSource createContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
@@ -191,10 +194,12 @@ public interface ContentSourceManagerLocal {
      *
      * @param  subject       wanting to update the ContentSource
      * @param  contentSource to be updated
+     * @param  syncNow if you wish to resync the ContentSource after updating
      *
      * @return the ContentSource that was updated
      */
-    ContentSource updateContentSource(Subject subject, ContentSource contentSource) throws ContentSourceException;
+    ContentSource updateContentSource(Subject subject, ContentSource contentSource, boolean syncNow)
+        throws ContentSourceException;
 
     /**
      * Given a content source ID, this will test that the adapter responsible for pulling data from the content source's
@@ -245,7 +250,7 @@ public interface ContentSourceManagerLocal {
      *         contains the location where those package versions are located in the content source
      */
     List<PackageVersionContentSource> getPackageVersionsFromContentSourceForRepo(Subject subject, int contentSourceId,
-                                                                                 int repoId);
+        int repoId);
 
     /**
      * Returns count of PackageVersions associated with the given content source.
@@ -264,7 +269,7 @@ public interface ContentSourceManagerLocal {
      * @param  resourceId
      * @param  packageDetailsKey
      *
-     * @return teh length of the package version
+     * @return the length of the package version
      */
     long getPackageBitsLength(int resourceId, PackageDetailsKey packageDetailsKey);
 
@@ -284,8 +289,6 @@ public interface ContentSourceManagerLocal {
     PageList<PackageVersionContentSource> getPackageVersionsFromContentSources(Subject subject, int[] contentSourceIds,
         PageControl pc);
 
-    
-
     /**
      * Returns all the package versions that are served by the content source identified by the given ID but whose
      * {@link PackageVersion#getPackageBits() package bits} have not been loaded yet.
@@ -297,9 +300,8 @@ public interface ContentSourceManagerLocal {
      * @return all unloaded package versions that the content source will be providing content for. The object returned
      *         also contains the location where those package versions are located in the content source
      */
-    PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSource(Subject subject,
-        int contentSourceId, PageControl pc);
-
+    PageList<PackageVersionContentSource> getUnloadedPackageVersionsFromContentSourceInRepo(Subject subject,
+        int contentSourceId, int repoId, PageControl pc);
 
     /**
      * This will download all the distribution bits associated with a specific content source.
@@ -308,7 +310,6 @@ public interface ContentSourceManagerLocal {
      * @param contentSource
      */
     void downloadDistributionBits(Subject subject, ContentSource contentSource);
-
 
     /**
      * Given a {@link PackageVersionContentSource} which contains the ID of a content source, an ID of a package
@@ -400,9 +401,8 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults);
+    RepoSyncResults mergePackageSyncReport(ContentSource contentSource, Repo repo, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults);
 
     /**
      * After a sync has happened, this is responsible for persisting the results.
@@ -414,30 +414,49 @@ public interface ContentSourceManagerLocal {
      * @return the updated syncResults that includes more summary information in the results string that indicates what
      *         was done
      */
-    ContentSourceSyncResults mergeContentSourceSyncReport(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults);
+    RepoSyncResults mergeDistributionSyncReport(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults);
 
-    void _mergeContentSourceSyncReportUpdateRepo(int contentSourceId);
+    /**
+     * After a sync has happened, this is responsible for persisting the results.
+     *
+     * @param  contentSource content source that was just sync'ed
+     * @param  report        information on what the current inventory should look like
+     * @param  syncResults   sync results object that should be updated to track this method's progress
+     *
+     * @return the updated syncResults that includes more summary information in the results string that indicates what
+     *         was done
+     */
+    RepoSyncResults mergeAdvisorySyncReport(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    void _mergePackageSyncReportUpdateRepo(int contentSourceId);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
+    RepoSyncResults _mergePackageSyncReportREMOVE(ContentSource contentSource, Repo repo, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress);
+
+    RepoSyncResults _mergePackageSyncReportADD(ContentSource contentSource, Repo repo,
         Collection<ContentProviderPackageDetails> newPackages,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress, int addCount);
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress, int addCount);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
-        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergePackageSyncReportUPDATE(ContentSource contentSource, PackageSyncReport report,
+        Map<ContentProviderPackageDetailsKey, PackageVersionContentSource> previous, RepoSyncResults syncResults,
+        StringBuilder progress);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
-        ContentSourceSyncResults syncResults, StringBuilder progress);
+    RepoSyncResults _mergeDistributionSyncReportREMOVE(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
 
-    ContentSourceSyncResults _mergeContentSourceSyncReportADD(ContentSource contentSource,
-        DistributionSyncReport report, ContentSourceSyncResults syncResults, StringBuilder progress);
-    
+    RepoSyncResults _mergeDistributionSyncReportADD(ContentSource contentSource, DistributionSyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
+
+    RepoSyncResults _mergeAdvisorySyncReportADD(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
+
+    RepoSyncResults _mergeAdvisorySyncReportREMOVE(ContentSource contentSource, AdvisorySyncReport report,
+        RepoSyncResults syncResults, StringBuilder progress);
+
     /**
      * Requests all {@link PackageVersion#getMetadata() metadata} for all package versions that the given resource
      * component is subscribed to (see {@link Repo#getResources()}. The returned object has the metadata bytes that
@@ -539,6 +558,56 @@ public interface ContentSourceManagerLocal {
      */
     long outputPackageBitsForChildResource(int parentResourceId, String resourceTypeName,
         PackageDetailsKey packageDetailsKey, OutputStream outputStream);
+
+    /**
+     * Requests the bits of a package be streamed down to the caller over the given output stream. 
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param packageVersion    packageVersion to fetch 
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream);
+
+    /**
+     * Requests a range of bits from a package.  This range of bits will be streamed down to the caller over the given 
+     * output stream.  This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility. This may be a time-consuming method call because
+     * if the bits have not yet been loaded (i.e. the content source where the package version lives
+     * {@link ContentSource#isLazyLoad() is lazy loading} then this may be the time when it is downloaded from the
+     * remote repository.
+     *
+     * @param packageVersion    packageVersion to fetch 
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     * @param startByte         start index
+     * @param endByte           end index
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputPackageVersionBits(PackageVersion packageVersion, OutputStream outputStream, long startByte, long endByte);
+
+    /**
+     * Requests the bits of a distribution file be streamed down to the caller over the given output stream.
+     * This method will <b>not</b> take care of closing the stream when it is finished;
+     * it is the caller's responsibility.
+     *
+     * @param distFile          distribution file to fetch
+     * @param outputStream      an output stream where the server should write the package contents. It is up to the
+     *                          caller to prepare this output stream in order to write the package content to an
+     *                          appropriate location.
+     *
+     * @return the number of bytes written to the output stream
+     */
+    long outputDistributionFileBits(DistributionFile distFile, OutputStream outputStream);
 
     /**
      * Adds the specified content source to the database but does not attempt to create or start

@@ -20,16 +20,20 @@
 package org.rhq.enterprise.server.plugin.pc;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
+import org.quartz.Scheduler;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.plugin.PluginKey;
-import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
 import org.rhq.enterprise.server.xmlschema.CronScheduleType;
 import org.rhq.enterprise.server.xmlschema.PeriodicScheduleType;
 import org.rhq.enterprise.server.xmlschema.ScheduledJobDefinition;
@@ -47,6 +51,11 @@ public abstract class AbstractTypeServerPluginContainer {
     private ServerPluginManager pluginManager;
 
     /**
+     * Maps the time (in epoch milliseconds) when plugins were loaded in this plugin container.
+     */
+    private final Map<PluginKey, Long> loadedTimestamps;
+
+    /**
      * Instantiates the plugin container. All subclasses must support this and only this
      * constructor.
      *
@@ -54,6 +63,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public AbstractTypeServerPluginContainer(MasterServerPluginContainer master) {
         this.master = master;
+        this.loadedTimestamps = Collections.synchronizedMap(new HashMap<PluginKey, Long>());
     }
 
     /**
@@ -107,6 +117,17 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public boolean isPluginEnabled(PluginKey pluginKey) {
         return this.pluginManager.isPluginEnabled(pluginKey.getPluginName());
+    }
+
+    /**
+     * Given a plugin key, this returns the time (in epoch milliseconds) when that plugin was loaded into
+     * this plugin container.
+     * 
+     * @param pluginKey identifies the plugin whose load time is to be returned
+     * @return the epoch millis timestamp when the plugin was loaded; <code>null</code> if the plugin is not loaded
+     */
+    public Long getPluginLoadTime(PluginKey pluginKey) {
+        return this.loadedTimestamps.get(pluginKey);
     }
 
     /**
@@ -184,6 +205,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.loadPlugin(env, enabled);
+            this.loadedTimestamps.put(env.getPluginKey(), System.currentTimeMillis());
         } else {
             throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
         }
@@ -200,6 +222,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.unloadPlugin(pluginKey.getPluginName(), false);
+            this.loadedTimestamps.remove(pluginKey);
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
         }
@@ -217,6 +240,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void reloadPlugin(PluginKey pluginKey, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.reloadPlugin(pluginKey.getPluginName(), enabled);
+            this.loadedTimestamps.put(pluginKey, System.currentTimeMillis());
         } else {
             throw new Exception("Cannot reload a plugin; plugin container has been shutdown");
         }
@@ -298,25 +322,82 @@ public abstract class AbstractTypeServerPluginContainer {
      * @throws Exception if failed to unschedule jobs
      */
     public void unschedulePluginJobs(PluginKey pluginKey) throws Exception {
-        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
 
         // note: all jobs for a plugin are placed in the same group, where the group name is the plugin name
         String groupName = pluginKey.getPluginName();
 
-        scheduler.pauseJobGroup(groupName);
-        String[] jobNames = scheduler.getJobNames(groupName);
-        if (jobNames != null) {
-            for (String jobName : jobNames) {
-                boolean deleted = scheduler.deleteJob(jobName, groupName);
-                if (deleted) {
-                    log.info("Job [" + jobName + "] for plugin [" + pluginKey + "] has been unscheduled!");
-                } else {
-                    log.warn("Job [" + jobName + "] for plugin [" + pluginKey + "] failed to be unscheduled!");
+        EnhancedScheduler clusteredScheduler = getMasterServerPluginContainer().getClusteredScheduler();
+        EnhancedScheduler nonclusteredScheduler = getMasterServerPluginContainer().getNonClusteredScheduler();
+
+        for (Scheduler scheduler : new Scheduler[] { clusteredScheduler, nonclusteredScheduler }) {
+            String[] jobNames = scheduler.getJobNames(groupName);
+            if (jobNames != null) {
+                for (String jobName : jobNames) {
+                    boolean deleted = scheduler.deleteJob(jobName, groupName);
+                    if (deleted) {
+                        log.info("Job [" + jobName + "] for plugin [" + pluginKey + "] has been unscheduled!");
+                    } else {
+                        log.warn("Job [" + jobName + "] for plugin [" + pluginKey + "] failed to be unscheduled!");
+                    }
                 }
             }
         }
 
         return;
+    }
+
+    /**
+     * Invokes a control operation on a given plugin and returns the results. This method blocks until
+     * the plugin component completes the invocation.
+     * 
+     * @param pluginKey identifies the plugin whose control operation is to be invoked
+     * @param controlName identifies the name of the control operation to invoke
+     * @param params parameters to pass to the control operation; may be <code>null</code>
+     * @return the results of the invocation
+     * 
+     * @throws if failed to obtain the plugin component and invoke the control. This usually means an
+     *         abnormal error occurred - if the control operation merely failed to do what it needed to do,
+     *         the error will be reported in the returned results, not as a thrown exception.
+     */
+    public ControlResults invokePluginControl(PluginKey pluginKey, String controlName, Configuration params)
+        throws Exception {
+
+        if (this.pluginManager != null) {
+            String pluginName = pluginKey.getPluginName();
+            if (this.pluginManager.isPluginEnabled(pluginName)) {
+                ServerPluginEnvironment pluginEnv = this.pluginManager.getPluginEnvironment(pluginName);
+                if (pluginEnv != null) {
+                    ServerPluginComponent pluginComponent = this.pluginManager.getServerPluginComponent(pluginName);
+                    if (pluginComponent != null) {
+                        log.debug("Invoking control [" + controlName + "] on server plugin [" + pluginKey + "]");
+                        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+                        try {
+                            ControlFacet controlFacet = (ControlFacet) pluginComponent; // let it throw ClassCastException when appropriate
+                            Thread.currentThread().setContextClassLoader(pluginEnv.getPluginClassLoader());
+                            ControlResults results = controlFacet.invoke(controlName, params);
+                            return results;
+                        } catch (Throwable t) {
+                            throw new Exception("Failed to invoke control operation [" + controlName
+                                + "] for server plugin [" + pluginKey + "]", t);
+                        } finally {
+                            Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                        }
+                    } else {
+                        throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                            + pluginKey + "]; failed to get server plugin component");
+                    }
+                } else {
+                    throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                        + pluginKey + "]; failed to get server plugin environment");
+                }
+            } else {
+                throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin ["
+                    + pluginKey + "]; plugin is not enabled");
+            }
+        } else {
+            throw new Exception("Cannot invoke control operation [" + controlName + "] for server plugin [" + pluginKey
+                + "]; plugin container is not initialized yet");
+        }
     }
 
     /**
@@ -374,6 +455,7 @@ public abstract class AbstractTypeServerPluginContainer {
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TYPE, schedule.getScheduleType().getTypeName());
         jobData.put(AbstractJobWrapper.DATAMAP_SCHEDULE_TRIGGER, schedule.getScheduleType().getScheduleTrigger());
         jobData.putAsString(AbstractJobWrapper.DATAMAP_IS_CONCURRENT, schedule.getScheduleType().isConcurrent());
+        jobData.putAsString(AbstractJobWrapper.DATAMAP_IS_CLUSTERED, schedule.getScheduleType().isClustered());
         jobData.put(AbstractJobWrapper.DATAMAP_JOB_METHOD_NAME, schedule.getMethodName());
         if (schedule.getClassName() != null) {
             jobData.put(AbstractJobWrapper.DATAMAP_JOB_CLASS, schedule.getClassName());
@@ -383,7 +465,14 @@ public abstract class AbstractTypeServerPluginContainer {
         }
 
         // schedule the job now
-        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        EnhancedScheduler scheduler;
+
+        if (schedule.getScheduleType().isClustered()) {
+            scheduler = getMasterServerPluginContainer().getClusteredScheduler();
+        } else {
+            scheduler = getMasterServerPluginContainer().getNonClusteredScheduler();
+        }
+
         if (schedule.getScheduleType() instanceof CronScheduleType) {
             String cronExpression = ((CronScheduleType) schedule.getScheduleType()).getCronExpression();
             log.info("Scheduling server plugin cron job: jobName=" + schedule.getJobId() + ", groupName=" + groupName

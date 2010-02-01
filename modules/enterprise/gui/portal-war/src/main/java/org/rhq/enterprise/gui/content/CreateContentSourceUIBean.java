@@ -23,6 +23,7 @@ import java.util.Set;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -40,12 +41,15 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "CreateContentSourceUIBean";
 
-    ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+    private ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+
+    private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     private ContentSource newContentSource = new ContentSource();
     private ContentSourceType selectedContentSourceType = null;
@@ -76,6 +80,16 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     }
 
     public ContentSource getContentSource() {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+
+        // If the user gets here trying to create a new content source, reset the previous object's data.
+        // This is to prevent prepopulation of data from an earlier failed attempt if the user navigates off
+        // the second attempt without using the cancel button.
+        if ("new".equals(request.getParameter("mode"))) {
+            newContentSource = new ContentSource();
+            updateSelectedContentSourceType(this.selectedContentSourceType);
+        }
+
         return newContentSource;
     }
 
@@ -84,11 +98,11 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     }
 
     public String getNullConfigurationDefinitionMessage() {
-        return "The selected content source type does not require a configuration.";
+        return "The selected content provider type does not require a configuration.";
     }
 
     public String getNullConfigurationMessage() {
-        return "Content source has an empty configuration."; // is this ever really used?
+        return "Content provider has an empty configuration."; // is this ever really used?
     }
 
     public String save() {
@@ -138,7 +152,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
                 }
             }
 
-            // reset the content source's sync schedule and other settings  to the new type's defaults
+            // reset the content provider's sync schedule and other settings  to the new type's defaults
             newContentSource.setSyncSchedule(cst.getDefaultSyncSchedule());
             newContentSource.setLazyLoad(cst.isDefaultLazyLoad());
             newContentSource.setDownloadMode(cst.getDefaultDownloadMode());
@@ -165,7 +179,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
                 if (this.selectedContentSourceType == null
                     || (this.selectedContentSourceType != null && !typeName.equals(this.selectedContentSourceType
                         .getName()))) {
-                    this.selectedContentSourceType = manager.getContentSourceType(typeName);
+                    this.selectedContentSourceType = contentSourceManager.getContentSourceType(typeName);
                     updateSelectedContentSourceType(this.selectedContentSourceType);
                 }
             }
@@ -181,11 +195,24 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ContentSourceType> fetchPage(PageControl pc) {
-            Set<ContentSourceType> types = manager.getAllContentSourceTypes();
+            Set<ContentSourceType> types = contentSourceManager.getAllContentSourceTypes();
 
             PageList<ContentSourceType> results = null;
             results = new PageList<ContentSourceType>(types, types.size(), PageControl.getUnlimitedInstance());
             return results;
         }
+    }
+
+    public String getCreateContentProviderPageLink(String typeName) {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String link = perspectiveManager.getPageLink(subject, "createContentProvider", typeName, null);
+
+        if (null == link) {
+            link = "/rhq/content/createContentProvider.xhtml?mode=new&typeName=" + typeName;
+        } else {
+            link += "&mode=new&typeName=" + typeName;
+        }
+
+        return link;
     }
 }

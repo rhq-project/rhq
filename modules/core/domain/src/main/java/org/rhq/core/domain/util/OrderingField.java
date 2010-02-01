@@ -22,18 +22,20 @@
   */
 package org.rhq.core.domain.util;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Serializable;
 
 /**
  * Object to hold an ORDER BY field argument including the name and sort order.
  */
 public class OrderingField implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private String field;
     private PageOrdering ordering;
 
-    private static final long serialVersionUID = 1L;
-
-    public OrderingField() {
+    protected OrderingField() {
     }
 
     public OrderingField(String field, PageOrdering ordering) {
@@ -53,6 +55,7 @@ public class OrderingField implements Serializable {
         this.field = field;
     }
 
+    @NotNull
     public PageOrdering getOrdering() {
         return ordering;
     }
@@ -71,5 +74,30 @@ public class OrderingField implements Serializable {
         } else {
             ordering = PageOrdering.ASC;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        OrderingField that = (OrderingField) o;
+
+        if (!field.equals(that.field)) return false;
+        if (ordering != that.ordering) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = field.hashCode();
+        result = 31 * result + ordering.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return this.getClass().getSimpleName() + "[field=" + this.field + ", ordering=" + this.ordering + "]";
     }
 }

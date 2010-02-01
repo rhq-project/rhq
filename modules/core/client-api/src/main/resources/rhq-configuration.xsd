@@ -23,7 +23,7 @@
             <jaxb:class name="ConfigurationDescriptor"/>
          </xs:appinfo>
          <xs:documentation>Describes all configurable elements of a resource.</xs:documentation>
-      </xs:annotation>       
+      </xs:annotation>
       <xs:sequence>
          <xs:element name="notes" type="xs:string" minOccurs="0" maxOccurs="1">
             <xs:annotation>
@@ -201,6 +201,54 @@
 
    </xs:complexType>
 
+   <xs:element name="dynamic-property" type="config:dynamicProperty" substitutionGroup="config:configuration-property"/>
+   <xs:complexType name="dynamicProperty">
+      <xs:complexContent>
+         <xs:extension base="config:configurationProperty">
+            <xs:sequence>
+                <xs:choice minOccurs="1" maxOccurs="1">
+                    <xs:element name="database-backing" type="config:databaseBackingType">
+                        <xs:annotation>
+                            <xs:documentation>Indicates where to retrieve the values for this property.</xs:documentation>
+                        </xs:annotation>
+                    </xs:element>
+                    <!-- This will ultimately have other options in the choice, such as from a plugin call. -->
+                </xs:choice>
+            </xs:sequence>
+
+             <xs:attribute name="activationPolicy" default="immediate" type="config:activationPolicy" use="optional">
+                <xs:annotation>
+                   <xs:documentation>conditions under which a change to this property will become effective
+                   </xs:documentation>
+                </xs:annotation>
+             </xs:attribute>
+
+         </xs:extension>
+      </xs:complexContent>
+   </xs:complexType>
+
+   <xs:complexType name="databaseBackingType">
+       <xs:annotation>
+           <xs:documentation>Configures a property to look up values from the database.</xs:documentation>
+       </xs:annotation>
+
+       <xs:attribute name="key" type="config:databaseBackingKeys" use="required">
+           <xs:annotation>
+               <xs:documentation>Key RHQ will use to determine what values to retieve from the database.</xs:documentation>
+           </xs:annotation>
+       </xs:attribute>
+   </xs:complexType>
+
+   <xs:simpleType name="databaseBackingKeys">
+       <xs:restriction base="xs:string">
+          <xs:enumeration value="users"/>
+          <xs:enumeration value="roles"/>
+          <xs:enumeration value="package-types"/>
+          <xs:enumeration value="resource-type-with-plugin"/>
+          <xs:enumeration value="package-architectures"/>
+       </xs:restriction>
+   </xs:simpleType>
+
    <xs:element name="simple-property" type="config:simpleProperty" substitutionGroup="config:configuration-property"/>
    <xs:complexType name="simpleProperty">
       <xs:complexContent>
@@ -261,7 +309,7 @@
                      property that is not defined in a configuration</xs:documentation>
                   <xs:appinfo>
                      <jaxb:property name="initialValue"/>
-                  </xs:appinfo>                  
+                  </xs:appinfo>
                </xs:annotation>
                <xs:simpleType>
                   <xs:restriction base="xs:string">

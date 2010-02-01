@@ -154,6 +154,16 @@
       <managed-bean-class>org.rhq.enterprise.gui.content.RepoDistributionUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   <managed-bean>
+      <managed-bean-name>RepoAdvisoryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.RepoAdvisoryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>AdvisoryDetailsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.AdvisoryDetailsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
    
    <!-- /rhq/resource/content/subscription*.xhtml -->
    <managed-bean>
@@ -164,6 +174,11 @@
    <managed-bean>
       <managed-bean-name>ResourcePackageVersionsUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.content.ResourcePackageVersionsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   <managed-bean>
+      <managed-bean-name>ResourceUpdatePackageVersionsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.content.ResourceUpdatePackageVersionsUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
    <managed-bean>

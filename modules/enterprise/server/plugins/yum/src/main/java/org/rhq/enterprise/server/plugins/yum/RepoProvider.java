@@ -31,6 +31,8 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
  * The RepoSource provides a content source for synchronizing content contained with a yum repo.
@@ -127,11 +129,10 @@ public class RepoProvider implements ContentProvider, PackageSource {
      * @param repoName
      *@param  report           A report to fill in.
      * @param  existingPackages A collection of package specifications already in inventory.
- *   @throws Exception On all errors.
+    *   @throws Exception On all errors.
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         Summary summary = new Summary(reader);
         log.info("synchronizing with repo: " + reader + " started");
         try {
@@ -157,7 +158,7 @@ public class RepoProvider implements ContentProvider, PackageSource {
             }
         } catch (Exception e) {
             summary.errors.add(e.toString());
-            throw e;
+            throw new SyncException("error synching synchronizePackages", e);
         } finally {
             repo.disconnect();
             summary.markEnded();
@@ -189,5 +190,9 @@ public class RepoProvider implements ContentProvider, PackageSource {
         }
 
         return path;
+    }
+
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 }

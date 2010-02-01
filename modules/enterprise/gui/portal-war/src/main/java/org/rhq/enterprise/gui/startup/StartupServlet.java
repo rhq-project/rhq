@@ -39,11 +39,14 @@ import org.jboss.mx.util.MBeanServerLocator;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.configuration.PropertyDynamicType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.serial.ExternalizableStrategy;
+import org.rhq.core.gui.configuration.helper.PropertyRenderingUtility;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.SecurityUtil;
+import org.rhq.enterprise.gui.configuration.DatabaseDynamicPropertyRetriever;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.prefs.SubjectPreferencesCache;
@@ -87,7 +90,7 @@ public class StartupServlet extends HttpServlet {
         // As a security measure, make sure the installer has been undeployed
         LookupUtil.getSystemManager().undeployInstaller();
 
-        // get singletons right now so we load the classes immediately into our classloader 
+        // get singletons right now so we load the classes immediately into our classloader
         AlertConditionCacheCoordinator.getInstance();
         SessionManager.getInstance();
         SubjectPreferencesCache.getInstance();
@@ -126,11 +129,15 @@ public class StartupServlet extends HttpServlet {
         startEmbeddedAgent();
         registerShutdownListener();
 
+        // Configures the configuration rendering to be able to support database backed dynamic configuration properties
+        PropertyRenderingUtility.putDynamicPropertyRetriever(PropertyDynamicType.DATABASE,
+            new DatabaseDynamicPropertyRetriever());
+
         return;
     }
 
     private void initializeServer() {
-        // Ensure the class is loaded and the dbType is set for our current db       
+        // Ensure the class is loaded and the dbType is set for our current db
         try {
             DataSource ds = LookupUtil.getDataSource();
             Connection conn = ds.getConnection();
@@ -161,7 +168,7 @@ public class StartupServlet extends HttpServlet {
      * For developer builds that don't use the HA installer to write a localhost entry into the {@link Server}
      * table, we will create a default one here.  Then, if the "rhq.high-availability.name" property is missing, the
      * {@link ServerManagerLocal} will return this localhost entry.
-     * 
+     *
      * If the installer was already run, then this method should be a no-op because a row would already exist
      * in the {@link Server} table
      */
@@ -204,7 +211,7 @@ public class StartupServlet extends HttpServlet {
 
     /**
      * Starts the plugin deployer which will effectively ask the plugin deployer to persist information about all
-     * detected agent and server plugins. 
+     * detected agent and server plugins.
      *
      * Because this will scan and register the initial plugins right now, make sure this is called prior
      * to starting the master plugin container; otherwise, the master PC will not have any plugins to start.

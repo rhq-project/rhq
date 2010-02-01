@@ -51,11 +51,6 @@
       <xs:element type="rhn-channel-familyType" name="rhn-channel-family" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
-  <xs:complexType name="rhn-packages-shortType">
-    <xs:sequence>
-      <xs:element type="rhn-package-shortType" name="rhn-package-short" maxOccurs="unbounded" minOccurs="0"/>
-    </xs:sequence>
-  </xs:complexType>
   <xs:complexType name="rhn-package-provides-entryType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -64,6 +59,11 @@
         <xs:attribute type="xs:string" name="sense" use="optional"/>
       </xs:extension>
     </xs:simpleContent>
+  </xs:complexType>
+  <xs:complexType name="rhn-packages-shortType">
+    <xs:sequence>
+      <xs:element type="rhn-package-shortType" name="rhn-package-short" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-product-namesType">
     <xs:sequence>
@@ -88,6 +88,7 @@
     <xs:sequence>
       <xs:element type="rhn-channel-familiesType" name="rhn-channel-families" minOccurs="0"/>
       <xs:element type="rhn-channelsType" name="rhn-channels" minOccurs="0"/>
+      <xs:element type="rhn-errataType" name="rhn-errata" minOccurs="0"/>
       <xs:element type="rhn-kickstartable-treesType" name="rhn-kickstartable-trees" minOccurs="0"/>
       <xs:element type="rhn-packages-shortType" name="rhn-packages-short" minOccurs="0"/>
       <xs:element type="rhn-packagesType" name="rhn-packages" minOccurs="0"/>
@@ -115,6 +116,11 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:complexType name="rhn-erratum-filesType">
+    <xs:sequence>
+      <xs:element type="rhn-erratum-fileType" name="rhn-erratum-file" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="rhn-product-nameType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -123,16 +129,16 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
+  <xs:complexType name="rhn-package-changelogType">
+    <xs:sequence>
+      <xs:element type="rhn-package-changelog-entryType" name="rhn-package-changelog-entry" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="rhn-package-changelog-entryType">
     <xs:sequence>
       <xs:element type="xs:string" name="rhn-package-changelog-entry-name"/>
       <xs:element type="xs:string" name="rhn-package-changelog-entry-text"/>
       <xs:element type="xs:string" name="rhn-package-changelog-entry-time"/>
-    </xs:sequence>
-  </xs:complexType>
-  <xs:complexType name="rhn-package-changelogType">
-    <xs:sequence>
-      <xs:element type="rhn-package-changelog-entryType" name="rhn-package-changelog-entry" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-package-shortType">
@@ -211,6 +217,31 @@
     <xs:attribute type="xs:string" name="virt-sub-level-label" use="optional"/>
     <xs:attribute type="xs:string" name="virt-sub-level-name" use="optional"/>
   </xs:complexType>
+  <xs:complexType name="rhn-erratumType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-erratum-advisory-name"/>
+      <xs:element type="xs:string" name="rhn-erratum-advisory-rel"/>
+      <xs:element type="xs:string" name="rhn-erratum-advisory-type"/>
+      <xs:element type="xs:string" name="rhn-erratum-product"/>
+      <xs:element type="xs:string" name="rhn-erratum-description"/>
+      <xs:element type="xs:string" name="rhn-erratum-synopsis"/>
+      <xs:element type="xs:string" name="rhn-erratum-topic"/>
+      <xs:element type="xs:string" name="rhn-erratum-solution"/>
+      <xs:element type="xs:string" name="rhn-erratum-refers-to"/>
+      <xs:element type="xs:string" name="rhn-erratum-notes"/>
+      <xs:element type="xs:string" name="rhn-erratum-issue-date"/>
+      <xs:element type="xs:string" name="rhn-erratum-update-date"/>
+      <xs:element type="xs:string" name="rhn-erratum-last-modified"/>
+      <xs:element type="rhn-erratum-keywordsType" name="rhn-erratum-keywords"/>
+      <xs:element type="rhn-erratum-bugsType" name="rhn-erratum-bugs"/>
+      <xs:element type="rhn-erratum-filesType" name="rhn-erratum-files"/>
+    </xs:sequence>
+    <xs:attribute type="xs:string" name="channels" use="optional"/>
+    <xs:attribute type="xs:string" name="advisory" use="optional"/>
+    <xs:attribute type="xs:string" name="packages" use="optional"/>
+    <xs:attribute type="xs:string" name="id" use="optional"/>
+    <xs:attribute type="xs:string" name="cve-names" use="optional"/>
+  </xs:complexType>
   <xs:complexType name="rhn-kickstart-fileType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -240,6 +271,11 @@
       <xs:element type="xs:string" name="rhn-null"/>
     </xs:sequence>
   </xs:complexType>
+  <xs:complexType name="rhn-erratum-bugsType">
+    <xs:sequence>
+      <xs:element type="rhn-erratum-bugType" name="rhn-erratum-bug" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="rhn-source-packagesType">
     <xs:sequence>
       <xs:element type="rhn-source-packageType" name="rhn-source-package" maxOccurs="unbounded" minOccurs="0"/>
@@ -248,6 +284,11 @@
   <xs:complexType name="rhn-kickstart-filesType">
     <xs:sequence>
       <xs:element type="rhn-kickstart-fileType" name="rhn-kickstart-file" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-errataType">
+    <xs:sequence>
+      <xs:element type="rhn-erratumType" name="rhn-erratum" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-channel-descriptionType">
@@ -277,6 +318,12 @@
   <xs:complexType name="rhn-kickstartable-treesType">
     <xs:sequence>
       <xs:element type="rhn-kickstartable-treeType" name="rhn-kickstartable-tree" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="rhn-erratum-bugType">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-erratum-bug-id"/>
+      <xs:element type="xs:string" name="rhn-erratum-bug-summary"/>
     </xs:sequence>
   </xs:complexType>
   <xs:complexType name="rhn-channelsType">
@@ -317,6 +364,11 @@
     <xs:attribute type="xs:string" name="packages" use="optional"/>
     <xs:attribute type="xs:string" name="channel-id" use="optional"/>
   </xs:complexType>
+  <xs:complexType name="rhn-erratum-keywordsType" mixed="true">
+    <xs:sequence>
+      <xs:element type="xs:string" name="rhn-erratum-keyword" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
   <xs:complexType name="rhn-package-requires-entryType">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -326,14 +378,26 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <xs:complexType name="source-packagesType">
-    <xs:sequence>
-      <xs:element type="source-packageType" name="source-package" maxOccurs="unbounded" minOccurs="0"/>
-    </xs:sequence>
+  <xs:complexType name="rhn-erratum-fileType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute type="xs:string" name="channels" use="optional"/>
+        <xs:attribute type="xs:string" name="md5sum" use="optional"/>
+        <xs:attribute type="xs:string" name="type" use="optional"/>
+        <xs:attribute type="xs:string" name="source-package" use="optional"/>
+        <xs:attribute type="xs:string" name="filename" use="optional"/>
+        <xs:attribute type="xs:string" name="package" use="optional"/>
+      </xs:extension>
+    </xs:simpleContent>
   </xs:complexType>
   <xs:complexType name="rhn-package-requiresType">
     <xs:sequence>
       <xs:element type="rhn-package-requires-entryType" name="rhn-package-requires-entry" maxOccurs="unbounded" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+  <xs:complexType name="source-packagesType">
+    <xs:sequence>
+      <xs:element type="source-packageType" name="source-package" maxOccurs="unbounded" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
 </xs:schema>

@@ -27,15 +27,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.perspective.MenuItem;
+import org.rhq.enterprise.server.perspective.PageLink;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ActionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ApplicationType;
-import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionPointType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PageLinkType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PageType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PlacementType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PositionType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.RenderedExtensionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TabType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TaskType;
 
@@ -55,20 +58,20 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
 public class PerspectivePluginMetadataManager {
     private final String CORE_PERSPECTIVE_NAME = "CorePerspective";
 
-    private static final String MENU_ITEM_TARGET_URL = "/rhq/common/perspective-main.xhtml?targetUrl=";
-    private static final String TAB_TARGET_URL = "/rhq/resource/perspective/index.xhtml?targetUrl=";
+    private static final String TARGET_MAIN_URL = "/rhq/perspective/main.xhtml?targetUrlKey=";
+    private static final String TARGET_RESOURCE_URL = "/rhq/perspective/resource.xhtml?targetUrlKey=";
 
-    private Log log = LogFactory.getLog(PerspectivePluginMetadataManager.class);
+    private static final Map<Integer, String> KEY_URL_MAP = new HashMap<Integer, String>();
 
-    //private static PerspectivePluginMetadataManager manager = new PerspectivePluginMetadataManager(); 
+    private final Log log = LogFactory.getLog(this.getClass());
 
     private Map<String, PerspectivePluginDescriptorType> loadedPlugins = new HashMap<String, PerspectivePluginDescriptorType>();
 
-    private boolean isStarted = false;
+    private boolean isStarted;
+    private long lastModifiedTime;
     private List<Tab> resourceTabs;
-    private List<MenuItem> coreMenu;
-
-
+    private List<MenuItem> menu;
+    private List<PageLink> pageLinks;
 
     public PerspectivePluginMetadataManager() {
     }
@@ -87,83 +90,98 @@ public class PerspectivePluginMetadataManager {
     }
 
     public synchronized void start() {
-        if (isStarted)
+        if (isStarted) {
             return;
+        }
 
-        // always process the core perspective first as other perspectives may reference its definitions
+        this.menu = new ArrayList<MenuItem>();
+        this.resourceTabs = new ArrayList<Tab>();
+        // TODO: Init lists of global tasks and resource tasks.
+        this.pageLinks = new ArrayList<PageLink>();
+
+        // Always process the Core perspective first as other perspectives may remove extensions it defines.
         processCorePerspective();
         processNonCorePerspectives();
 
-        isStarted = true;
+        this.isStarted = true;
+        this.lastModifiedTime = System.currentTimeMillis();
+    }
+
+    public synchronized void stop() {
+        if (!isStarted) {
+            return;
+        }
+        this.menu = null;
+        this.resourceTabs = null;
+        this.isStarted = false;
     }
 
     private void processCorePerspective() {
-        PerspectivePluginDescriptorType cp = loadedPlugins.get(CORE_PERSPECTIVE_NAME);
-
-        if (null == cp) {
+        PerspectivePluginDescriptorType corePerspectiveDescriptor = this.loadedPlugins.get(CORE_PERSPECTIVE_NAME);
+        if (corePerspectiveDescriptor == null) {
             throw new IllegalStateException("Core perspective must be loaded. Invalid startup. Load: "
                 + CORE_PERSPECTIVE_NAME);
         }
-
-        // TODO: Init lists of global tasks and resource tasks.
-
-        // Setup core menus
-        if (null == this.coreMenu) {
-            this.coreMenu = new ArrayList<MenuItem>();
-        }
-
-        if (null == this.resourceTabs) {
-            this.resourceTabs = new ArrayList<Tab>();
-        }
-
-        processPerspective(cp);
+        processPerspective(corePerspectiveDescriptor);
 
         // TODO: remove this debug code
-        //printMenu(this.coreMenu, "");
+        //printMenu(this.menu, "");
     }
 
     private void processNonCorePerspectives() {
-        for (String key : loadedPlugins.keySet()) {
+        for (String key : this.loadedPlugins.keySet()) {
             if (!CORE_PERSPECTIVE_NAME.equals(key)) {
-                processPerspective(loadedPlugins.get(key));
+                processPerspective(this.loadedPlugins.get(key));
             }
         }
 
         // TODO: remove this debug code
-        //printMenu(this.coreMenu, "");
+        //printMenu(this.menu, "");
     }
 
-    private void processPerspective(PerspectivePluginDescriptorType perspective) {                
+    private void processPerspective(PerspectivePluginDescriptorType perspective) {
         List<ApplicationType> applications = perspective.getApplication();
 
-        // TODO: Process global tasks and resource tasks.
-
+        // Process MenuItem Extensions 
         for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
-            resolveUrls(applications, rawMenuItem, MENU_ITEM_TARGET_URL);
+            resolveUrls(applications, rawMenuItem, TARGET_MAIN_URL);
             ActionType action = rawMenuItem.getAction();
-            ExtensionPointType extensionPoint = rawMenuItem.getPosition().getExtensionPoint();
-            if (ExtensionPointType.CORE_MENU == extensionPoint) {
-                if (ActionType.ADD == action) {
-                    menuAdd(this.coreMenu, rawMenuItem);
-                } else if (ActionType.REMOVE == action) {
-                    menuRemove(this.coreMenu, rawMenuItem);
-                } else if (ActionType.REPLACE == action) {
-                    menuReplace(this.coreMenu, rawMenuItem);
-                }
-            } else {
-                throw new IllegalArgumentException("Unknown Extension Point defined in menuItem ["
-                    + rawMenuItem.getName() + "] : " + extensionPoint);
+            switch (action) {
+            case ADD:
+                menuAdd(rawMenuItem, perspective.getName());
+                break;
+            case REMOVE:
+                menuRemove(rawMenuItem);
+                break;
             }
         }
 
+        // Process Tab Extensions
         for (TabType rawTab : perspective.getTab()) {
-            resolveUrls(applications, rawTab, TAB_TARGET_URL);
+            resolveUrls(applications, rawTab, TARGET_RESOURCE_URL);
             ActionType action = rawTab.getAction();
             switch (action) {
-                case ADD: addTab(rawTab); break;
-                case REMOVE: removeTab(rawTab); break;
-                case REPLACE: replaceTab(rawTab); break;
-            }            
+            case ADD:
+                addTab(rawTab, perspective.getName());
+                break;
+            case REMOVE:
+                removeTab(rawTab);
+                break;
+            }
+        }
+
+        // TODO: Process global tasks and resource tasks.
+
+        // Process Page Extensions
+        // For now just assume there are a reasonable number of page extesnions such that throwing
+        // them all into one list will have acceptable performance.  If necessary we could segregate
+        // by page name etc...
+        for (PageType rawPage : perspective.getPage()) {
+            for (PageLinkType rawPageLink : rawPage.getPageLink()) {
+                resolveUrls(applications, rawPageLink, TARGET_MAIN_URL);
+                this.pageLinks.add(new PageLink(rawPageLink, perspective.getName(), rawPage.getName(), rawPageLink
+                    .getUrl()));
+            }
         }
     }
 
@@ -177,30 +195,34 @@ public class PerspectivePluginMetadataManager {
         ApplicationType applicationType = getApplicationByName(applications, extension.getApplication());
 
         if (extension instanceof TaskType) {
-            TaskType task = (TaskType)extension;
+            TaskType task = (TaskType) extension;
             String resolvedUrl = resolveUrl(applicationType, task.getUrl(), targetUrl);
             task.setUrl(resolvedUrl);
-        }
-        else if (extension instanceof MenuItemType) {
-            MenuItemType menuItem = (MenuItemType)extension;
+        } else if (extension instanceof MenuItemType) {
+            MenuItemType menuItem = (MenuItemType) extension;
             String resolvedUrl = resolveUrl(applicationType, menuItem.getUrl(), targetUrl);
             menuItem.setUrl(resolvedUrl);
-        }
-        else if (extension instanceof TabType) {
-            TabType tab = (TabType)extension;
+        } else if (extension instanceof TabType) {
+            TabType tab = (TabType) extension;
             String resolvedUrl = resolveUrl(applicationType, tab.getUrl(), targetUrl);
             tab.setUrl(resolvedUrl);
+        } else if (extension instanceof PageLinkType) {
+            PageLinkType pageLink = (PageLinkType) extension;
+            String resolvedUrl = resolveUrl(applicationType, pageLink.getUrl(), targetUrl);
+            pageLink.setUrl(resolvedUrl);
         }
 
-        String resolvedIconUrl = resolveUrl(applicationType, extension.getIconUrl(), "");
-        extension.setIconUrl(resolvedIconUrl);
+        if (extension instanceof RenderedExtensionType) {
+            String resolvedIconUrl = resolveUrl(applicationType, ((RenderedExtensionType) extension).getIconUrl(), null);
+            ((RenderedExtensionType) extension).setIconUrl(resolvedIconUrl);
+        }
     }
 
     private String resolveUrl(ApplicationType applicationType, String url, String targetUrl) {
         String result = url;
 
         if (null != url) {
-            if (isRelativeUrl(url)) {
+            if (isPerspectiveUrl(url)) {
                 if (null == applicationType) {
                     throw new IllegalArgumentException(
                         "Relative URL found without application. Add application attribute to fully resolve url '"
@@ -213,14 +235,35 @@ public class PerspectivePluginMetadataManager {
                     baseUrl += "/";
                     applicationType.setBaseUrl(baseUrl);
                 }
-                result = targetUrl + baseUrl + url;
+
+                result = baseUrl + url;
+
+                // if a targetUrl is supplied then it is assumed that the url will actually
+                // be passed as a parameter to a predefined perspective (xhtml) page. And then
+                // content will be rendered within that page.  We don't want to pass urls as request
+                // parameters (long, could contain characters that would need to be escaped, etc)
+                // so instead we'll now replace the actual url with a numeric key for short and
+                // safe param passing.  The key can then be used to get back the real url at runtime.
+                if (null != targetUrl) {
+                    String keyedUrl = baseUrl + url;
+                    int key = getUrlKey(keyedUrl);
+
+                    // return the targetUrl with the proper targetUrlKey param 
+                    result = targetUrl + key;
+                }
             }
         }
 
         return result;
     }
 
-    private boolean isRelativeUrl(String url) {
+    /**
+     * Determine whether the url is relative to a perspective application or whether the url is
+     * for the RHQ Portal War.
+     * @param url
+     * @return true for a relative url in a declared perspective application
+     */
+    private static boolean isPerspectiveUrl(String url) {
         return (!(url.startsWith("/") || url.startsWith("http")));
     }
 
@@ -239,6 +282,36 @@ public class PerspectivePluginMetadataManager {
         return result;
     }
 
+    /**
+     * Return a unique key for the url.
+     * @param url
+     * @return
+     */
+    public synchronized int getUrlKey(String url) {
+        int key = url.hashCode();
+
+        // in the very unlikely case that we have multiple urls with the same hashcode, protect
+        // ourselves. This will mess up user bookmarking of the url but saves us from internal confusion.
+        String mapEntry = KEY_URL_MAP.get(key);
+        while (!((null == mapEntry) || mapEntry.equals(url))) {
+            key *= 13;
+            mapEntry = KEY_URL_MAP.get(key);
+        }
+
+        if (null == mapEntry) {
+            KEY_URL_MAP.put(key, url);
+        }
+
+        return key;
+    }
+
+    /**
+     * Return the url for the given key.
+     */
+    public String getUrlViaKey(int key) {
+        return KEY_URL_MAP.get(key);
+    }
+
     // TODO: remove this debug code
     @SuppressWarnings("unused")
     private void printMenu(List<MenuItem> menu, String indent) {
@@ -246,19 +319,20 @@ public class PerspectivePluginMetadataManager {
             return;
 
         for (MenuItem menuItem : menu) {
-            System.out.println(indent + menuItem.getItem().getName());
+            System.out.println(indent + menuItem.getName());
             printMenu(menuItem.getChildren(), indent + "   ");
         }
     }
 
-    private void menuAdd(List<MenuItem> menu, MenuItemType rawMenuItem) {
+    private void menuAdd(MenuItemType rawMenuItem, String perspectiveName) {
         PositionType position = rawMenuItem.getPosition();
-        List<MenuItem> containingMenu = getContainingMenu(menu, rawMenuItem);
-        MenuItem menuItem = new MenuItem(rawMenuItem);
+        List<MenuItem> containingMenu = getContainingMenu(rawMenuItem);
 
-        if (PlacementType.START == position.getPlacement()) {
+        MenuItem menuItem = new MenuItem(rawMenuItem, perspectiveName);
+
+        if (PlacementType.FIRST_CHILD == position.getPlacement()) {
             containingMenu.add(0, menuItem);
-        } else if (PlacementType.END == position.getPlacement()) {
+        } else if (PlacementType.LAST_CHILD == position.getPlacement()) {
             containingMenu.add(menuItem);
         } else {
             int index = getMenuItemIndex(containingMenu, position.getName());
@@ -272,55 +346,35 @@ public class PerspectivePluginMetadataManager {
         }
     }
 
-    private void menuRemove(List<MenuItem> menu, MenuItemType rawMenuItem) {
+    private void menuRemove(MenuItemType rawMenuItem) {
         PositionType position = rawMenuItem.getPosition();
         List<MenuItem> containingMenu;
         try {
-            containingMenu = getContainingMenu(menu, rawMenuItem);
+            containingMenu = getContainingMenu(rawMenuItem);
             int index = getMenuItemIndex(containingMenu, rawMenuItem.getName());
             if (-1 == index) {
                 throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
                     + "]. Referenced menuItem not found : " + position.getName()
                     + ". Make sure supporting menus are defined for the menuItem.");
             }
-
+            MenuItem menuItem = containingMenu.get(index);
+            if (!menuItem.getPerspectiveName().equals(CORE_PERSPECTIVE_NAME)) {
+                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
+                    + "]. Referenced menuItem is defined but not by the Core perspective : " + position.getName()
+                    + ". Only Core menuItems can be removed.");
+            }
             containingMenu.remove(index);
 
         } catch (IllegalArgumentException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Menu item not found. Ignoring removal of " + rawMenuItem.getName(), e);
-            }
+            log.debug("Menu item not found. Ignoring removal of menu item [" + rawMenuItem.getName() + "]: " + e);
         }
     }
 
-    private void menuReplace(List<MenuItem> menu, MenuItemType rawMenuItem) {
-        PositionType position = rawMenuItem.getPosition();
-        List<MenuItem> containingMenu;
-        try {
-            containingMenu = getContainingMenu(menu, rawMenuItem);
-            int index = getMenuItemIndex(containingMenu, rawMenuItem.getName());
-            if (-1 == index) {
-                throw new IllegalArgumentException("Invalid position defined for menuItem [" + rawMenuItem.getName()
-                    + "]. Referenced menuItem not found : " + position.getName()
-                    + ". Make sure supporting menus are defined for the menuItem.");
-            }
+    private List<MenuItem> getContainingMenu(MenuItemType rawMenuItem) {
+        List<MenuItem> result = this.menu;
 
-            containingMenu.set(index, new MenuItem(rawMenuItem));
-
-        } catch (IllegalArgumentException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Menu item not found. Ignoring replacement and attempting add for " + rawMenuItem.getName(),
-                    e);
-            }
-            menuAdd(menu, rawMenuItem);
-        }
-    }
-
-    private List<MenuItem> getContainingMenu(List<MenuItem> menu, MenuItemType rawMenuItem) {
         String name = rawMenuItem.getName();
         String[] nameTokens = (null != name) ? name.split("\\.") : new String[0];
-        List<MenuItem> result = menu;
-
         for (int i = 0; (i + 1 < nameTokens.length); ++i) {
             int index = this.getMenuItemIndex(result, nameTokens[i]);
             if (-1 == index) {
@@ -330,35 +384,28 @@ public class PerspectivePluginMetadataManager {
             }
             MenuItem menuItem = result.get(index);
             result = menuItem.getChildren();
-            if (null == result) {
-                result = new ArrayList<MenuItem>();
-                menuItem.setChildren(result);
-            }
         }
 
         return result;
     }
 
     private int getMenuItemIndex(List<MenuItem> menu, String name) {
-        int result = -1;
-
         for (int i = 0, size = menu.size(); (i < size); ++i) {
-            if (menu.get(i).getItem().getName().endsWith(name)) {
-                result = i;
-                break;
+            if (menu.get(i).getName().endsWith(name)) {
+                return i;
             }
         }
-        return result;
+        return -1;
     }
 
-    private void addTab(TabType rawTab) {
+    private void addTab(TabType rawTab, String perspectiveName) {
         PositionType position = rawTab.getPosition();
         List<Tab> siblingTabs = getSiblingTabs(rawTab);
-        Tab tab = new Tab(rawTab);
+        Tab tab = new Tab(rawTab, perspectiveName);
 
-        if (PlacementType.START == position.getPlacement()) {
+        if (PlacementType.FIRST_CHILD == position.getPlacement()) {
             siblingTabs.add(0, tab);
-        } else if (PlacementType.END == position.getPlacement()) {
+        } else if (PlacementType.LAST_CHILD == position.getPlacement()) {
             siblingTabs.add(tab);
         } else {
             int index = getTabIndex(siblingTabs, position.getName());
@@ -382,46 +429,29 @@ public class PerspectivePluginMetadataManager {
                     + "]. Referenced menuItem not found : " + position.getName()
                     + ". Make sure supporting menus are defined for the menuItem.");
             }
+            Tab tab = siblingTabs.get(index);
+            if (!tab.getPerspectiveName().equals(CORE_PERSPECTIVE_NAME)) {
+                throw new IllegalArgumentException("Invalid position defined for tab [" + tab.getName()
+                    + "]. Referenced tab is defined but not by the Core perspective : " + position.getName()
+                    + ". Only Core tabs can be removed.");
+            }
             siblingTabs.remove(index);
         } catch (IllegalArgumentException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Tab not found. Ignoring removal of tab [" + rawTab.getName() + "].", e);
-            }
-        }
-    }
-
-    private void replaceTab(TabType rawTab) {
-        PositionType position = rawTab.getPosition();
-        List<Tab> siblingTabs;
-        try {
-            siblingTabs = getSiblingTabs(rawTab);
-            int index = getTabIndex(siblingTabs, rawTab.getName());
-            if (-1 == index) {
-                throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
-                    + "]. Referenced tab not found : " + position.getName()
-                    + ". Make sure supporting tabs are defined for the tab.");
-            }
-            siblingTabs.set(index, new Tab(rawTab));
-        } catch (IllegalArgumentException e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Tab not found. Ignoring replacement and attempting add for " + rawTab.getName(),
-                    e);
-            }
-            addTab(rawTab);
+            log.debug("Tab not found. Ignoring removal of tab [" + rawTab.getName() + "]: " + e);
         }
     }
 
     private List<Tab> getSiblingTabs(TabType rawTab) {
-        String name = rawTab.getName();
-        String[] nameTokens = (name != null) ? name.split("\\.") : new String[0];
         List<Tab> result = this.resourceTabs;
 
+        String name = rawTab.getName();
+        String[] nameTokens = (name != null) ? name.split("\\.") : new String[0];
         for (int i = 0; (i + 1) < nameTokens.length; i++) {
             int index = getTabIndex(result, nameTokens[i]);
             if (index == -1) {
                 throw new IllegalArgumentException("Invalid position defined for tab [" + rawTab.getName()
-                    + "]. No parent tab found for : " + name
-                    + ". Make sure supporting tabs are defined for the tab.");
+                    + "]. No parent tab found for tab [" + name
+                    + "]. Make sure supporting tabs are defined for the tab.");
             }
             Tab parentTab = result.get(index);
             result = parentTab.getChildren();
@@ -430,38 +460,50 @@ public class PerspectivePluginMetadataManager {
         return result;
     }
 
-    private int getTabIndex(List<Tab> menu, String name) {
-        int result = -1;
-
-        for (int i = 0, size = menu.size(); (i < size); ++i) {
-            if (menu.get(i).getQualifiedName().endsWith(name)) {
-                result = i;
-                break;
+    private int getTabIndex(List<Tab> tabs, String name) {
+        for (int i = 0, size = tabs.size(); (i < size); ++i) {
+            if (tabs.get(i).getQualifiedName().endsWith(name)) {
+                return i;
             }
         }
-        return result;
+        return -1;
     }
 
     /**
-     * @return the coreMenu
+     * Returns the full menu, with no activators applied. Callers should not modify the returned list or any of its
+     * descendant lists.
+     *
+     * @return the full menu, with no activators applied
      */
-    public List<MenuItem> getCoreMenu() {
-        return coreMenu;
+    public List<MenuItem> getMenu() {
+        return this.menu;
     }
 
-    public List<Tab> getResourceTabs()
-    {
-        List<Tab> clone = new ArrayList<Tab>(this.resourceTabs.size());
-        for (Tab resourceTab : this.resourceTabs) {
-            try
-            {
-                clone.add(resourceTab.clone());
-            }
-            catch (CloneNotSupportedException e)
-            {
-                throw new IllegalStateException(e);
-            }
-        }
-        return clone;
+    /**
+     * Returns the full Resource tab bar, with no activators applied. Callers should not modify the returned list or any
+     * of its descendant lists.
+     *
+     * @return the full Resource tab bar, with no activators applied
+     */
+    public List<Tab> getResourceTabs() {
+        return this.resourceTabs;
+    }
+
+    /**
+     * Returns the full set of defined PageLink extensions with no activators applied. Callers should not
+     * modify the returned list or any of its descendant lists.
+     *
+     * @return the full Resource tab bar, with no activators applied
+     */
+    public List<PageLink> getPageLinks() {
+        return this.pageLinks;
+    }
+
+    public synchronized boolean isStarted() {
+        return this.isStarted;
+    }
+
+    public long getLastModifiedTime() {
+        return this.lastModifiedTime;
     }
 }

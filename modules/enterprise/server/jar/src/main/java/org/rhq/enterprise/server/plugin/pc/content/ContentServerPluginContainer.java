@@ -23,15 +23,22 @@ import java.util.Date;
 import org.quartz.JobDetail;
 import org.quartz.SchedulerException;
 import org.quartz.SimpleTrigger;
+import org.quartz.Trigger;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.content.ContentSource;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.Repo;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.AbstractTypeServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginType;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.ContentSourceSyncJob;
+import org.rhq.enterprise.server.scheduler.jobs.ContentProviderSyncJob;
+import org.rhq.enterprise.server.scheduler.jobs.RepoSyncJob;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.ContentPluginDescriptorType;
 
@@ -42,7 +49,9 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.content.Conten
  */
 public class ContentServerPluginContainer extends AbstractTypeServerPluginContainer {
 
-    private static final String SYNC_JOB_GROUP_NAME = "syncContentSource";
+    private static final String CONTENT_SRC_SYNC_JOB_GROUP_NAME = "syncContentSource";
+    private static final String REPO_SYNC_JOB_GROUP_NAME = "syncRepo";
+    private static final String REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME = "syncRepoImmediate";
 
     private ContentProviderManager adapterManager;
 
@@ -105,14 +114,14 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      *
      * @throws SchedulerException if failed to schedule the job for immediate execution
      */
-    public void syncNow(final ContentSource contentSource) throws SchedulerException {
+    public void syncProviderNow(final ContentSource contentSource) throws SchedulerException {
         // Create our job with a trigger that fires immediately and doesn't repeat.
         // Make the name unique - we may already have our cron job schedules.
         // What happens if this is triggered when our cron job is triggered? the job will abort and let the current job finish
-        JobDetail job = new JobDetail(ContentSourceSyncJob.createUniqueJobName(contentSource), SYNC_JOB_GROUP_NAME,
-            ContentSourceSyncJob.class, false, false, false);
+        JobDetail job = new JobDetail(ContentProviderSyncJob.createUniqueJobName(contentSource),
+            CONTENT_SRC_SYNC_JOB_GROUP_NAME, ContentProviderSyncJob.class, false, false, false);
 
-        ContentSourceSyncJob.createJobDataMap(contentSource, job);
+        ContentProviderSyncJob.createJobDataMap(contentSource, job);
 
         SimpleTrigger trigger = new SimpleTrigger(job.getName(), job.getGroup());
         trigger.setVolatility(false);
@@ -121,10 +130,52 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         Date next = scheduler.scheduleJob(job, trigger);
 
         getLog().info(
-            "Scheduled content source sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + next
-                + "] for [" + contentSource + "]");
+            "Scheduled content provider sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at ["
+                + next + "] for [" + contentSource + "]");
+    }
 
-        return;
+    /**
+     * Causes the given repo to be scheduled for an immediate sync. The sync will take place through the scheduler,
+     * causing this call to be asynchronous and return before the sync itself takes place.
+     *
+     * @param repo cannot be <code>null</code>
+     * @throws SchedulerException if the job cannot be scheduled
+     */
+    public void syncRepoNow(Repo repo) throws SchedulerException {
+        String jobName = RepoSyncJob.createJobName(repo);
+        JobDetail job = new JobDetail(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME, RepoSyncJob.class, false, false,
+            false);
+
+        RepoSyncJob.createJobDataMap(job, repo);
+        Date nextExecution;
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        Trigger trigger = scheduler.getTrigger(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME);
+        if (trigger == null) {
+            trigger = new SimpleTrigger(jobName, job.getGroup());
+            trigger.setVolatility(false);
+            nextExecution = scheduler.scheduleJob(job, trigger);
+        } else {
+            nextExecution = scheduler.rescheduleJob(jobName, REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME, trigger);
+        }
+        getLog().info(
+            "Scheduled repo sync job [" + job.getName() + ':' + job.getGroup() + "] to fire now at [" + nextExecution
+                + "] for [" + repo + "]");
+    }
+
+    public void cancelRepoSync(Subject subject, Repo repo) throws SchedulerException {
+        JobDetail jobDetail = new JobDetail(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME,
+            RepoSyncJob.class, false, false, false);
+
+        RepoSyncJob.createJobDataMap(jobDetail, repo);
+
+        SimpleTrigger trigger = new SimpleTrigger(jobDetail.getName(), jobDetail.getGroup());
+        trigger.setVolatility(false);
+
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+
+        boolean cancelled = scheduler.interrupt(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_IMMEDIATE_GROUP_NAME);
+
+        getLog().info("cancelled repo sync job [" + jobDetail.getName() + ':' + jobDetail.getGroup() + "] ");
     }
 
     /**
@@ -135,11 +186,11 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
      * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed so
      * no schedule will be created and this method simply returns.</p>
      *
-     * @param  contentSource
+     * @param  contentSource provider to sync
      *
      * @throws SchedulerException if failed to schedule the job
      */
-    public void scheduleSyncJob(ContentSource contentSource) throws SchedulerException {
+    public void scheduleProviderSyncJob(ContentSource contentSource) throws SchedulerException {
         String syncSchedule = contentSource.getSyncSchedule();
         if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
             getLog().debug(contentSource.toString() + " does not define a sync schedule - not scheduling");
@@ -147,11 +198,34 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         }
 
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.scheduleCronJob(ContentSourceSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME,
-            ContentSourceSyncJob.createJobDataMap(contentSource, null), ContentSourceSyncJob.class, true, false,
+        scheduler.scheduleCronJob(ContentProviderSyncJob.createJobName(contentSource), CONTENT_SRC_SYNC_JOB_GROUP_NAME,
+            ContentProviderSyncJob.createJobDataMap(contentSource, null), ContentProviderSyncJob.class, true, false,
             syncSchedule);
+    }
 
-        return;
+    /**
+     * This will schedule the sync job for the given content source. Once the scheduling is complete, the content
+     * source's adapter will be asked to synchronize with the remote content source according to the time(s) specified
+     * in the {@link ContentSource#getSyncSchedule() schedule}.
+     *
+     * <p>If the content source's sync schedule is empty, this method assumes it should not be automatically sync'ed so
+     * no schedule will be created and this method simply returns.</p>
+     *
+     * @param  contentSource provider to sync
+     *
+     * @throws SchedulerException if failed to schedule the job
+     */
+    public void scheduleRepoSyncJob(Repo repo) throws SchedulerException {
+        String syncSchedule = repo.getSyncSchedule();
+        if ((syncSchedule == null) || (syncSchedule.trim().length() == 0)) {
+            getLog().warn(repo.toString() + " does not define a sync schedule - not scheduling");
+            return;
+        }
+
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+
+        scheduler.scheduleCronJob(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME, RepoSyncJob
+            .createJobDataMap(null, repo), RepoSyncJob.class, true, false, syncSchedule);
     }
 
     /**
@@ -162,32 +236,49 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         if (this.adapterManager != null) {
             for (ContentSource contentSource : this.adapterManager.getAllContentSources()) {
                 try {
-                    scheduleSyncJob(contentSource);
+                    getLog().debug("scheduleSyncJobs :: Scheduling CP job: " + contentSource.getName());
+                    scheduleProviderSyncJob(contentSource);
+                    ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+                    PageList<Repo> repos = contentSourceManager.getAssociatedRepos(LookupUtil.getSubjectManager()
+                        .getOverlord(), contentSource.getId(), PageControl.getUnlimitedInstance());
+                    if (repos != null) {
+                        for (Repo repo : repos) {
+                            getLog().debug("scheduleSyncJobs :: Scheduling REPO job: " + repo.getName());
+                            scheduleRepoSyncJob(repo);
+                        }
+                    }
                 } catch (Exception e) {
                     getLog().warn("Could not schedule sync job for content source [" + contentSource + "]", e);
                 }
             }
         }
-
-        return;
     }
 
     /**
      * This will unschedule the sync job for the given content source. Once unscheduled, the content source's adapter
      * will not be asked to synchronize with the remote content source.
      *
-     * @param  contentSource
+     * @param  contentSource cannot be <code>null</code>
      *
      * @throws SchedulerException if failed to unschedule the job
      */
-    public void unscheduleSyncJob(ContentSource contentSource) throws SchedulerException {
+    public void unscheduleProviderSyncJob(ContentSource contentSource) throws SchedulerException {
         SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
-        scheduler.deleteJob(ContentSourceSyncJob.createJobName(contentSource), SYNC_JOB_GROUP_NAME);
-
-        return;
+        scheduler.deleteJob(ContentProviderSyncJob.createJobName(contentSource), CONTENT_SRC_SYNC_JOB_GROUP_NAME);
     }
 
-    @Override
+    /**
+     * This will unschedule the sync job for the given Repo.
+     *
+     * @param  repo cannot be <code>null</code>
+     *
+     * @throws SchedulerException if failed to unschedule the job
+     */
+    public void unscheduleRepoSyncJob(Repo repo) throws SchedulerException {
+        SchedulerLocal scheduler = LookupUtil.getSchedulerBean();
+        scheduler.deleteJob(RepoSyncJob.createJobName(repo), REPO_SYNC_JOB_GROUP_NAME);
+    }
+
     protected ServerPluginManager createPluginManager() {
         return new ContentServerPluginManager(this);
     }
@@ -204,4 +295,5 @@ public class ContentServerPluginContainer extends AbstractTypeServerPluginContai
         ContentProviderManager am = new ContentProviderManager();
         return am;
     }
+
 }

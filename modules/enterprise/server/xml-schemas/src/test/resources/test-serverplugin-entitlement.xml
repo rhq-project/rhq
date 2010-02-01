@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<entitlement-plugin apiVersion="1.2"
+                    version="2.3"
+                    name="entitlement name"
+                    displayName="entitlement display"
+                    description="entitlement description"
+                    package="entitlement.package"
+                    xmlns="urn:xmlns:rhq-serverplugin.entitlement"
+                    xmlns:sp="urn:xmlns:rhq-serverplugin"
+                    xmlns:c="urn:xmlns:rhq-configuration"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <sp:help><![CDATA[help text with <em>XML</em>]]></sp:help>
+
+    <sp:plugin-component class="entitlement.plugin.component" />
+
+    <sp:plugin-configuration>        
+        <!-- custom global config - unrelated to schedules  -->
+        <c:simple-property name="entitlementprop1" type="string" required="true" default="entitlementprop1value" />
+    </sp:plugin-configuration>
+</entitlement-plugin>

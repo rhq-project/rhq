@@ -12,7 +12,7 @@
 
    <h:form>
 
-      <ui:include src="/rhq/common/ie6/ie6fix.xhtml" />
+      <ui:remove><ui:include src="/rhq/common/ie6/ie6fix.xhtml" /></ui:remove>
 
       <f:loadBundle
          basename="ApplicationResources"
@@ -25,14 +25,14 @@
 
             <c:forEach
                var="menuItem"
-               items="#{PerspectivesMenuUIBean.coreMenu}">
+               items="#{PerspectiveUIBean.coreMenu}">
 
-               <c:if test="#{not menuItem.item.isDebug or GlobalPermissionsUIBean.debugMode}">
+               <c:if test="#{not menuItem.debugMode or GlobalPermissionsUIBean.debugMode}">
 
                   <rich:dropDownMenu rendered="${menuItem.menuGroup}">
                      <f:facet name="label">
                         <h:panelGroup>
-                           <h:outputText value="#{menuItem.item.displayName}" />
+                           <h:outputText value="#{menuItem.displayName}" />
                         </h:panelGroup>
                      </f:facet>
 
@@ -42,7 +42,7 @@
 
                         <rich:menuGroup
                            rendered="#{childMenuItem.menuGroup}"
-                           value="#{childMenuItem.item.displayName}">
+                           value="#{childMenuItem.displayName}">
                            <c:forEach
                               var="grandchildMenuItem"
                               items="#{childMenuItem.children}">
@@ -67,8 +67,8 @@
 
                   <h:outputLink
                      rendered="#{menuItem.graphic}"
-                     value="#{menuItem.item.url}">
-                     <h:graphicImage value="#{menuItem.item.iconUrl}" />
+                     value="#{menuItem.url}">
+                     <h:graphicImage value="#{menuItem.iconUrl}" />
                   </h:outputLink>
 
                   <c:if test="#{not menuItem.menuGroup and not menuItem.graphic}">
@@ -163,7 +163,6 @@
                         height="16" />
                   </f:facet>
                </rich:menuItem>
-
             </rich:dropDownMenu>
 
             <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
@@ -207,11 +206,13 @@
          resizeable="false"
          width="320"
          height="250">
+
          <f:facet name="header">
             <h:panelGroup>
                <h:outputText value="#{msg['about.Title']}" />
             </h:panelGroup>
          </f:facet>
+
          <f:facet name="controls">
             <h:panelGroup>
                <h:graphicImage
@@ -226,10 +227,29 @@
             </h:panelGroup>
          </f:facet>
 
-         <p><span class="DisplaySubhead"><h:outputText value="#{msg['footer.aboutLink']}" /></span><br />
+         <p>
+         <span class="DisplaySubhead">
+             <a href="http://rhq-project.org/">#{msg['footer.aboutLink']}</a>
+         </span><br />
          <span class="DisplayLabel"><h:outputText value="#{msg['footer.version']}: #{msg['product.version']}" /></span><br />
          <span class="DisplayLabel"><h:outputText
             value="#{msg['footer.buildNumber']}: #{msg['product.buildNumber']}" /></span></p>
+
+         <rich:panel rendered="#{ServerInfoUIBean.debugModeEnabled}">
+             <h:panelGrid columns="2" border="0">
+               <h:panelGroup style="font-weight: bold">JSF RI Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.facesVersion}</h:panelGroup>
+
+               <h:panelGroup style="font-weight: bold">Facelets Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.faceletsVersion}</h:panelGroup>
+
+               <h:panelGroup style="font-weight: bold">Seam Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.seamVersion}</h:panelGroup>
+
+               <h:panelGroup style="font-weight: bold">RichFaces Version:</h:panelGroup>
+               <h:panelGroup style="font-color: red">#{ServerInfoUIBean.richFacesVersion}</h:panelGroup>
+             </h:panelGrid>
+         </rich:panel>
 
          <p><a href="http://jboss.org/"> <img
             src="/images/jboss_logo.png"
@@ -241,15 +261,14 @@
             <h:outputText value="#{msg['footer.copyright']}" />
          </f:verbatim> <h:outputText value="#{msg['about.Copyright.Content']}" /></p>
 
-         <p><a href="http://jboss.org/jopr"> <h:graphicImage
-            value="/images/logo_icon.png"
-            style="vertical-align:middle" /> Jopr Project </a> <ui:remove>
+                   
+         <ui:remove>
             <!--<h:outputText value="#{msg['about.MoreInfo.Label']}"/><br/>-->
             <!--
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSales']}"/></a><br/>
                 <a href='mailto:<h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/>'><h:outputText value="#{msg['about.MoreInfo.LinkSupport']}"/></a>
         -->
-         </ui:remove></p>
+         </ui:remove>
 
          <input
             type="button"
@@ -259,5 +278,50 @@
 
 
    </h:form>
+
+   <a4j:region
+      renderRegionOnly="true"
+      selfRendered="true">
+
+
+      <script type="text/javascript">
+
+        function refresh() {
+
+            if (timeLeft &gt; 0) {
+               timeLeft = timeLeft - 1;
+               document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+               setTimeout("refresh()", 1000); // call again in 1 second (1000ms)
+            }
+
+            if (timeLeft == 0) {
+               document.getElementById("refreshTimeLeft").innerHTML = timeLeft;
+               window.location.reload(true); 
+            }            
+        }
+
+        var refreshTime = <h:outputText value="#{UserPreferencesUIBean.pageRefresh}"/>;
+        var timeLeft = refreshTime;
+
+        if (refreshTime &gt; 0) {
+            setTimeout("refresh()", 1000);
+        }
+
+    </script>
+
+      <a4j:form>
+         <a4j:jsFunction
+            name="updatePageRefresh"
+            status="commonStatus"
+            oncomplete="window.location.reload(true);">
+            <a4j:actionparam
+               name="param1"
+               assignTo="#{UserPreferencesUIBean.refreshPath}" />
+            <a4j:actionparam
+               name="param2"
+               assignTo="#{UserPreferencesUIBean.pageRefresh}" />
+         </a4j:jsFunction>
+      </a4j:form>
+   </a4j:region>
 
 </a4j:region>

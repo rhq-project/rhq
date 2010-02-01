@@ -23,6 +23,9 @@
 package org.rhq.core.domain.resource.composite;
 
 import java.io.Serializable;
+import java.util.EnumSet;
+
+import org.rhq.core.domain.resource.ResourceTypeFacet;
 
 /**
  * The set of facets a Resource supports - used to determine which quicknav icons and tabs to display in the UI.
@@ -32,8 +35,8 @@ import java.io.Serializable;
 public class ResourceFacets implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false);
-    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true);
+    public static ResourceFacets NONE = new ResourceFacets(-1, false, false, false, false, false, false, false, false);
+    public static ResourceFacets ALL = new ResourceFacets(-1, true, true, true, true, true, true, true, true);
     /*
      * immutable private member data makes this object safe to use in a concurrent environment, such as a 
      * concurrent-acess cache of ResourceFacets objects
@@ -46,9 +49,11 @@ public class ResourceFacets implements Serializable {
     private final boolean operation;
     private final boolean content;
     private final boolean callTime;
+    private final boolean support;
+    private EnumSet<ResourceTypeFacet> facets;
 
     public ResourceFacets(int resourceTypeId, boolean measurement, boolean event, boolean pluginConfiguration,
-        boolean configuration, boolean operation, boolean content, boolean callTime) {
+        boolean configuration, boolean operation, boolean content, boolean callTime, boolean support) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement;
         this.event = event;
@@ -57,10 +62,12 @@ public class ResourceFacets implements Serializable {
         this.operation = operation;
         this.content = content;
         this.callTime = callTime;
+        this.support = support;
+        initEnum();
     }
 
     public ResourceFacets(int resourceTypeId, Number measurement, Number event, Number pluginConfiguration,
-        Number configuration, Number operation, Number content, Number callTime) {
+        Number configuration, Number operation, Number content, Number callTime, Number support) {
         this.resourceTypeId = resourceTypeId;
         this.measurement = measurement.intValue() != 0;
         this.event = event.intValue() != 0;
@@ -69,6 +76,8 @@ public class ResourceFacets implements Serializable {
         this.operation = operation.intValue() != 0;
         this.content = content.intValue() != 0;
         this.callTime = callTime.intValue() != 0;
+        this.support = support.intValue() != 0;
+        initEnum();
     }
 
     public int getResourceTypeId() {
@@ -138,5 +147,43 @@ public class ResourceFacets implements Serializable {
      */
     public boolean isCallTime() {
         return callTime;
+    }
+
+    /**
+     * Does this resource expose support snapshot capability? If so, the Support sub-tab will be displayed in the GUI.
+     *
+     * @return true if the resource allows support snapshots, false otherwise
+     */
+    public boolean isSupport() {
+        return support;
+    }
+
+    /**
+     * Returns an enum representation of the facets.
+     *
+     * @return an enum representation of the facets
+     */
+    public EnumSet<ResourceTypeFacet> getFacets() {
+        return facets;
+    }
+
+    private void initEnum() {
+        this.facets = EnumSet.noneOf(ResourceTypeFacet.class);
+        if (measurement)
+            this.facets.add(ResourceTypeFacet.MEASUREMENT);
+        if (event)
+            this.facets.add(ResourceTypeFacet.EVENT);
+        if (pluginConfiguration)
+            this.facets.add(ResourceTypeFacet.PLUGIN_CONFIGURATION);
+        if (configuration)
+            this.facets.add(ResourceTypeFacet.CONFIGURATION);
+        if (operation)
+            this.facets.add(ResourceTypeFacet.OPERATION);
+        if (content)
+            this.facets.add(ResourceTypeFacet.CONTENT);
+        if (callTime)
+            this.facets.add(ResourceTypeFacet.CALL_TIME);
+        if (support)
+            this.facets.add(ResourceTypeFacet.SUPPORT);
     }
 }

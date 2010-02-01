@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<perspectivePlugin
+<perspective-plugin
    apiVersion="1.0"
    version="1.0"
    description="A Sample Perspective Utilizing Every Extension Point and Filter"
-   displayName="Sample Perspective"
+   displayName="Perspective:Sample"
    name="SamplePerspective"
    package="org.rhq.perspective.sample"
    xmlns="urn:xmlns:rhq-serverplugin.perspective"
@@ -12,116 +12,266 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
 
+
    <!-- Declare supporting applications for this perspective -->
    <application
       name="sample"
       baseUrl="/rhq-sample-perspective/" />
 
-   <!--  replace the coreMenu log with a new one -->
-   <menuItem
-      action="replace"
+   <!--  replace the coreMenu logo with a new one -->
+   <menu-item
+      action="remove"
       name="logo"
       displayName=""
       application="sample"
       url="/"
       iconUrl="images/jboss.png">
       <position
-         extensionPoint="coreMenu"
-         placement="start" />
-   </menuItem>
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
+      action="add"
+      name="logo"
+      displayName=""
+      application="sample"
+      url="/"
+      iconUrl="images/jboss.png">
+      <position
+         placement="firstChild" />
+   </menu-item>
 
    <!--  remove the 'new' menu items from the group menuGroup and move them to the custom menuGroup -->
-   <menuItem
+   <menu-item
       action="remove"
       name="groups.newGroup"
       displayName="New Group">
       <position
-         extensionPoint="coreMenu"
          name="groups.groupDefinitions"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       action="remove"
       name="groups.newGroupDefinition"
       displayName="New Group Definition">
       <position
-         extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
-   <!-- Add Custom menuItem to Core Menu -->
-   <menuItem
-      name="custom"
-      displayName="Custom">
+   <!-- Add Sample Perspective menu-item to Core Menu -->
+   <menu-item
+      name="sample"
+      displayName="Sample Perspective">
       <position
-         extensionPoint="coreMenu"
          name="help"
          placement="after" />
-   </menuItem>
-   <menuItem
-      name="custom.child1"
-      displayName="Child-1">
+   </menu-item>
+   <menu-item
+      name="sample.child1"
+      displayName="New Group">
       <position
-         extensionPoint="coreMenu"
-         name="custom"
-         placement="start" />
-   </menuItem>
-   <menuItem
-      name="custom.child2"
-      displayName="Child-2"
+         name="sample"
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
+      name="sample.child2"
+      displayName="Sample Page"
       application="sample"
-      url="index.html">
+      url="mainpage.html">
       <position
-         extensionPoint="coreMenu"
-         name="custom.child1"
+         name="sample.child1"
          placement="after" />
-   </menuItem>
-   <menuItem
-      name="custom.child1.newGroup"
+   </menu-item>
+   <menu-item
+      name="sample.child3"
+      displayName="Random Resource"
+      application="sample"
+      url="randomResource.seam">
+      <position
+         name="sample.child2"
+         placement="after" />
+   </menu-item>
+   <menu-item
+      name="sample.child4"
+      displayName="Browse Resources"
+      application="sample"
+      url="browseResources.seam">
+      <position
+         name="sample.child3"
+         placement="after" />
+   </menu-item>
+   <menu-item
+      name="sample.child4"
+      displayName="EJB Admin Wizard"
+      application="sample"
+      url="wizard.seam">
+      <position
+         name="sample.child3"
+         placement="after" />
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+         <global-permission
+            name="MANAGE_SECURITY" />
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server" />
+         </inventory>
+      </activators>
+   </menu-item>
+   <menu-item
+      name="sample.child5"
+      displayName="Config and Restart AS"
+      application="sample"
+      url="mainpage.html">
+      <position
+         name="sample.child4"
+         placement="after" />
+      <activators>
+         <inventory>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server">
+               <resource-permission
+                  name="CONTROL" />
+               <resource-permission
+                  name="CONFIGURE" />
+               <trait
+                  name="Version Name"
+                  value="Trinity" />
+               <trait
+                  name="Build Date"
+                  value="20\d\d" />
+            </resource>
+         </inventory>
+      </activators>
+   </menu-item>
+   <menu-item
+      name="sample.child1.newGroup"
       displayName="New Group"
       application="sample"
       url="/resource/group/Inventory.do?mode=new"
       iconUrl="images/create.png">
-      <globalPermissionActivatorSet>
-         <globalPermissionActivator
-            permission="MANAGE_INVENTORY" />
-      </globalPermissionActivatorSet>
-       <position
-         extensionPoint="coreMenu"
-         name="custom.child1"
-         placement="start" />
-   </menuItem>
-   <menuItem
-      name="custom.child1.newGroupDefinition"
+      <position
+         name="sample.child1"
+         placement="firstChild" />
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
+   <menu-item
+      name="sample.child1.newGroupDefinition"
       displayName="New Group Definition"
       application="sample"
       url="/rhq/definition/group/new.xhtml"
       iconUrl="images/create.png">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
-         name="custom.child1.newGroup"
+         name="sample.child1.newGroup"
          placement="after" />
-   </menuItem>
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
 
-    <tab name="Custom" displayName="Custom" iconUrl="/images/icons/Favorite_16.png"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory"
-           placement="after" />
+    <!-- A tab that is always displayed -->
+    <tab
+       name="Sample"
+       displayName="Sample"
+       iconUrl="/images/icons/Favorite_16.png"
+       application="sample"
+       url="currentResource.seam">
+       <position
+          name="Content"
+          placement="after" />
     </tab>
 
-    <tab name="Monitor.Reports" displayName="Reports"
-         application="sample" url="index.html">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Tables"
-           placement="after" />
-    </tab>
+   <!--  A tab that shows up whenever the RT implements the Support Facet and user can execute operations -->
+   <tab
+      name="SampleSupport"
+      displayName="Sample Support"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="currentResource.seam">
+      <position
+         name="Sample"
+         placement="after" />
+      <activators>
+         <facet
+            name="support" />
+         <resource-permission
+            name="CONTROL" />
+      </activators>
+   </tab>
 
-</perspectivePlugin>
+   <!-- a subtab that will only be displayed for Network Adapter Resources -->
+   <tab
+      name="Summary.SampleNetAdapt"
+      displayName="Sample-NetAdapt"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Summary.Timeline"
+         placement="after" />
+      <activators>
+         <resource-type>
+            <resource
+               plugin="Platforms"
+               type="Network Adapter" />
+         </resource-type>
+      </activators>
+   </tab>
+
+   <!-- a subtab that will only be displayed for AS Server (4 or 5) Resources -->
+   <tab
+      name="Summary.SampleAS"
+      displayName="Sample-AS4,5"
+      iconUrl="/images/icons/Favorite_16.png"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Summary.Timeline"
+         placement="after" />
+      <activators>
+         <resource-type>
+            <resource
+               plugin="JBossAS"
+               type="JBossAS Server">
+            </resource>
+            <resource
+               plugin="JBossAS5"
+               type="JBossAS Server">
+            </resource>
+         </resource-type>
+      </activators>
+   </tab>
+
+   <tab
+      name="Monitor.Sample"
+      displayName="Sample"
+      application="sample"
+      url="subtabpage.html">
+      <position
+         name="Monitor.Tables"
+         placement="after" />
+   </tab>
+
+   <!-- Page extensions -->
+
+   <page
+      name="createContentProvider">
+      <page-link
+         name="RHNSource"
+         application="sample"
+         url="createContentProviderRHN.xhtml" />
+      <page-link
+         name="JBossASPatchSource"
+         application="sample"
+         url="createContentProviderJBossASPatch.xhtml" />
+   </page>
+
+
+</perspective-plugin>

@@ -58,17 +58,6 @@ public interface DistributionManagerRemote {
     /**
      * Deletes a given instance of kickstart tree object. If the object does not exist
      * @param subject
-     * @param repoId
-     *
-     */
-    @WebMethod
-    void deleteDistributionByRepo( //
-        @WebParam(name = "subject") Subject subject, //                  
-        @WebParam(name = "repoId") int repoId) throws Exception;
-
-    /**
-     * Deletes a given instance of kickstart tree object. If the object does not exist
-     * @param subject
      * @param distId
      *
      */
@@ -76,16 +65,6 @@ public interface DistributionManagerRemote {
     void deleteDistributionByDistId( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "distId") int distId) throws Exception;
-
-    /**
-     * get the kickstart tree bits either from database or filesystem based on kickstart label
-     * @param subject
-     * @param kslabel
-     * @return
-     */
-    @WebMethod
-    void getDistributionBits(@WebParam(name = "subject") Subject subject, //
-        @WebParam(name = "kslabel") String kslabel) throws Exception;
 
     /**
      * get kickstart tree based on a given label
@@ -120,11 +99,23 @@ public interface DistributionManagerRemote {
          @WebParam(name = "distid") int distid);
 
     /**
+     * Deletes all distribution types with the given name.
+     * <p/>
+     * This should only be needed for testing purposes.
+     *
+     * @param subject
+     * @param name
+     */
+    @WebMethod
+    void deleteDistributionTypeByName(@WebParam(name = "subject") Subject subject,
+                                      @WebParam(name = "name") String name);
+
+    /**
      * Returns a DistributionType for given name
      * @param name name of distribution type
      * @return distribution type from db
      */
     @WebMethod
     DistributionType getDistributionTypeByName(@WebParam(name = "name") String name);
-   
+
 }

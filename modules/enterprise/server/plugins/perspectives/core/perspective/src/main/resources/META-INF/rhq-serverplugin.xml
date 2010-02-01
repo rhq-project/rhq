@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<perspectivePlugin
+<perspective-plugin
    version="1.0"
    apiVersion="2.0"
    description="The Core Perspective defining Core UI Elements"
-   displayName="Core Perspective"
+   displayName="Perspective:Core"
    name="CorePerspective"
    package="org.rhq.perspective.core"
    xmlns="urn:xmlns:rhq-serverplugin.perspective"
@@ -12,878 +12,855 @@
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
    <!--  Core Menu -->
-   <menuItem
+   <menu-item
       name="logo"
       displayName=""
       url="/"
       iconUrl="/images/JBossLogo_small.png">
       <position
-         extensionPoint="coreMenu"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="overview"
       displayName="Overview">
       <position
-         extensionPoint="coreMenu"
          name="logo"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="resources"
       displayName="Resources">
       <position
-         extensionPoint="coreMenu"
          name="overview"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="groups"
       displayName="Groups">
       <position
-         extensionPoint="coreMenu"
          name="resources"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration"
       displayName="Administration">
       <position
-         extensionPoint="coreMenu"
          name="groups"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="debug"
-      displayName="Debug"
-      isDebug="true">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="SUPERUSER" />
-       </globalPermissionActivatorSet>
+      displayName="Debug">
       <position
-         extensionPoint="coreMenu"
          name="administration"
          placement="after" />
-   </menuItem>
-   <menuItem
+      <activators>
+         <debug-mode />
+         <superuser />
+      </activators>
+   </menu-item>
+   <menu-item
       name="help"
       displayName="Help">
       <position
-         extensionPoint="coreMenu"
          name="debug"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: Overview -->
-   <menuItem
+   <menu-item
       name="overview.subsystemViews"
       displayName="Subsystem Views">
       <position
-         extensionPoint="coreMenu"
          name="overview"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="overview.autoDiscoveryQueue"
       displayName="Auto Discovery Queue"
       url="/rhq/discovery/queue.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="overview.dashboard"
       displayName="Dashboard"
       url="/Dashboard.do">
       <position
-         extensionPoint="coreMenu"
          name="overview.autoDiscoveryQueue"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: Resources -->
-   <menuItem
+   <menu-item
       name="resources.platforms"
       displayName="Platforms"
       iconUrl="/images/icons/Platform_up_16.png"
       url="/ResourceHub.do?resourceCategory=PLATFORM">
       <position
-         extensionPoint="coreMenu"
          name="resources"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="resources.servers"
       displayName="Servers"
       iconUrl="/images/icons/Server_up_16.png"
       url="/ResourceHub.do?resourceCategory=SERVER">
       <position
-         extensionPoint="coreMenu"
          name="resources.platforms"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="resources.services"
       displayName="Services"
       iconUrl="/images/icons/Service_up_16.png"
       url="/ResourceHub.do?resourceCategory=SERVICE">
       <position
-         extensionPoint="coreMenu"
          name="resources.servers"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="resources.favoriteResources"
       displayName="Favorite Resources"
       feature="resourceFavorites"
       iconUrl="/images/icons/Favorite_16.png">
       <position
-         extensionPoint="coreMenu"
          name="resources.services"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="resources.recentlyViewedResources"
       displayName="Recently Viewed Resources"
       feature="resourceRecentlyViewed"
       iconUrl="/images/icons/History_16.png">
       <position
-         extensionPoint="coreMenu"
          name="resources.favoriteResources"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="resources.search"
       displayName="Search:"
       feature="resourceSearch"
-      iconUrl="/images/icons/Search_16.png">
+      iconUrl="/images/icons/Search_16.png"
+      addBreak="true">
       <position
-         extensionPoint="coreMenu"
          name="resources.recentlyViewedResources"
-         placement="after"
-         addBreak="true" />
-   </menuItem>
+         placement="after" />
+   </menu-item>
 
    <!--  Core Menu: Groups -->
-   <menuItem
+   <menu-item
       name="groups.compatibleGroups"
       displayName="Compatible Groups"
       iconUrl="/images/icons/Cluster_up_16.png"
       url="/GroupHub.do?groupCategory=COMPATIBLE">
       <position
-         extensionPoint="coreMenu"
          name="groups"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="groups.mixedGroups"
       displayName="Mixed Groups"
       iconUrl="/images/icons/Group_up_16.png"
       url="/GroupHub.do?groupCategory=MIXED">
       <position
-         extensionPoint="coreMenu"
          name="groups.compatibleGroups"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="groups.groupDefinitions"
       displayName="Group Definitions"
       iconUrl="/images/GroupDefinition_16.png"
       url="/rhq/definition/group/list.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="groups.mixedGroups"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="groups.newGroup"
       displayName="New Group"
-      url="/resource/group/Inventory.do?mode=new">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
+      url="/resource/group/Inventory.do?mode=new"
+      addBreak="true">
       <position
-         extensionPoint="coreMenu"
          name="groups.groupDefinitions"
-         placement="after"
-         addBreak="true" />
-   </menuItem>
-   <menuItem
+         placement="after" />
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="groups.newGroupDefinition"
       displayName="New Group Definition"
       url="/rhq/definition/group/new.xhtml">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="groups.newGroup"
          placement="after" />
-   </menuItem>
-   <menuItem
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="groups.favoriteGroups"
       displayName="Favorite Groups"
       feature="groupFavorites"
-      iconUrl="/images/icons/Favorite_16.png">
+      iconUrl="/images/icons/Favorite_16.png"
+      addBreak="true">
       <position
-         extensionPoint="coreMenu"
          name="groups.newGroupDefinition"
-         placement="after"
-         addBreak="true" />
-   </menuItem>
-   <menuItem
+         placement="after" />
+   </menu-item>
+   <menu-item
       name="groups.recentlyViewedGroups"
       displayName="Recently Viewed Groups"
       feature="groupRecentlyViewed"
       iconUrl="/images/icons/History_16.png">
       <position
-         extensionPoint="coreMenu"
          name="groups.favoriteGroups"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="groups.search"
       displayName="Search:"
       feature="groupSearch"
-      iconUrl="/images/icons/Search_16.png">
+      iconUrl="/images/icons/Search_16.png"
+      addBreak="true">
       <position
-         extensionPoint="coreMenu"
          name="groups.recentlyViewedGroups"
-         placement="after"
-         addBreak="true" />
-   </menuItem>
+         placement="after" />
+   </menu-item>
 
    <!--  Core Menu: Administration -->
-   <menuItem
+   <menu-item
       name="administration.security"
       displayName="Security">
       <position
-         extensionPoint="coreMenu"
          name="administration"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="administration.systemConfiguration"
       displayName="System Configuration">
-       <globalPermissionActivatorSet
-          any="true">
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-          <globalPermissionActivator
-             permission="MANAGE_SETTINGS" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.security"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration.content"
       displayName="Content">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.systemConfiguration"
          placement="after" />
-   </menuItem>
-   <menuItem
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="administration.highAvailability"
       displayName="High Availability">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.content"
          placement="after" />
-   </menuItem>
-   <menuItem
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="administration.reports"
       displayName="Reports">
       <position
-         extensionPoint="coreMenu"
          name="administration.highAvailability"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration.download"
       displayName="Download"
       iconUrl="/images/icons/Save_16.png"
       url="/rhq/admin/downloads.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.reports"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration.license"
       displayName="License"
       url="/admin/license/LicenseAdmin.do?mode=view">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_SETTINGS" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.download"
          placement="after" />
-   </menuItem>
+      <activators>
+         <global-permission
+            name="MANAGE_SETTINGS" />
+      </activators>
+   </menu-item>
 
    <!--  Core Menu: Debug -->
-   <menuItem
+   <menu-item
       name="debug.sqlInterface"
       displayName="SQL Interface"
-      isDebug="true"
       url="/admin/test/sql.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="debug.jpqlHqlInterface"
       displayName="JPQL/HQL Interface"
-      isDebug="true"
       url="/admin/test/hibernate.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug.sqlInterface"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="debug.hibernateEntityBrowser"
       displayName="Hibernate Entity Browser"
-      isDebug="true"
       url="/admin/test/browser.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug.jpqlHqlInterface"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="debug.administrativeConsole"
       displayName="Administrative Console"
-      isDebug="true"
       url="/admin/test/control.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug.hibernateEntityBrowser"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="debug.testEmailConfiguration"
       displayName="Test Email Configuration"
-      isDebug="true"
       url="/admin/test/email.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug.administrativeConsole"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="debug.testAgentCommunications"
       displayName="Test Agent Configurations"
-      isDebug="true"
       url="/admin/test/agent.jsp">
       <position
-         extensionPoint="coreMenu"
          name="debug.testEmailConfiguration"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: Help -->
-   <menuItem
+   <menu-item
       name="help.onlineDocumentation"
       displayName="Online Documentation"
       newWindow="true"
       url="http://www.redhat.com/docs/en-US/JBoss_ON/">
       <position
-         extensionPoint="coreMenu"
          name="help"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="help.openASupportCase"
       displayName="Open a Support Case"
       newWindow="true"
       url="https://support.redhat.com/jbossnetwork/restricted/addCase.html">
       <position
-         extensionPoint="coreMenu"
          name="help.onlineDocumentation"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="help.about"
       displayName="About"
       feature="aboutBox"
-      iconUrl="/images/icons/availability_grey_16.png">
+      iconUrl="/images/icons/availability_grey_16.png"
+      addBreak="true">
       <position
-         extensionPoint="coreMenu"
          name="help.openASupportCase"
-         placement="after"
-         addBreak="true" />
-   </menuItem>
+         placement="after" />
+   </menu-item>
 
    <!--  Core Menu: Overview.Subsystem Views -->
-   <menuItem
+   <menu-item
       name="overview.subsystemViews.configurationChanges"
       displayName="Configuration Changes"
       iconUrl="/images/icons/Configure_16.png"
       url="/rhq/subsystem/configurationUpdate.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="overview.subsystemViews.suspectMetrics"
       displayName="Suspect Metrics"
       iconUrl="/images/icons/Monitor_failed_16.png"
       url="/rhq/subsystem/oobHistory.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews.configurationChanges"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="overview.subsystemViews.operations"
       displayName="Operations"
       iconUrl="/images/icons/Operation_16.png"
       url="/rhq/subsystem/operationHistory.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews.suspectMetrics"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="overview.subsystemViews.alerts"
       displayName="Alerts"
       iconUrl="/images/icons/Flag_blue_16.png"
       url="/rhq/subsystem/alertHistory.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews.operations"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="overview.subsystemViews.alertDefinitions"
       displayName="Alert Definitions"
       iconUrl="/images/icons/Flag_blue_16.png"
       url="/rhq/subsystem/alertDefinitions.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="overview.subsystemViews.alerts"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: Administration.Security -->
-   <menuItem
+   <menu-item
       name="administration.security.users"
       displayName="Users"
       url="/admin/user/UserAdmin.do?mode=list">
       <position
-         extensionPoint="coreMenu"
          name="administration.security"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="administration.security.roles"
       displayName="Roles"
       url="/admin/role/RoleAdmin.do?mode=list">
       <position
-         extensionPoint="coreMenu"
          name="administration.security.users"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: administration.systemConfiguration -->
-   <menuItem
+   <menu-item
       name="administration.systemConfiguration.settings"
       displayName="Settings"
       url="/admin/config/Config.do?mode=edit">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_SETTINGS" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.systemConfiguration"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+      <activators>
+         <global-permission
+            name="MANAGE_SETTINGS" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="administration.systemConfiguration.plugins"
       displayName="Plugins"
       url="/rhq/admin/plugin/plugin-list.xhtml">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_SETTINGS" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.systemConfiguration.settings"
          placement="after" />
-   </menuItem>
-   <menuItem
+      <activators>
+         <global-permission
+            name="MANAGE_SETTINGS" />
+      </activators>
+   </menu-item>
+   <menu-item
       name="administration.systemConfiguration.templates"
       displayName="Templates"
       url="/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all">
-       <globalPermissionActivatorSet>
-          <globalPermissionActivator
-             permission="MANAGE_INVENTORY" />
-       </globalPermissionActivatorSet>
       <position
-         extensionPoint="coreMenu"
          name="administration.systemConfiguration.plugins"
          placement="after" />
-   </menuItem>
+      <activators>
+         <global-permission
+            name="MANAGE_INVENTORY" />
+      </activators>
+   </menu-item>
 
    <!--  Core Menu: administration.content -->
-   <menuItem
+   <menu-item
       name="administration.content.contentProviders"
       displayName="Content Providers"
       url="/rhq/content/listContentProviders.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.content"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="administration.content.repositories"
       displayName="Repositories"
       url="/rhq/content/listRepos.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.content.contentProviders"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: administration.highAvailability -->
-   <menuItem
+   <menu-item
       name="administration.highAvailability.servers"
       displayName="Servers"
       url="/rhq/ha/listServers.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.highAvailability"
-         placement="start" />
-   </menuItem>
-   <menuItem
+         placement="firstChild" />
+   </menu-item>
+   <menu-item
       name="administration.highAvailability.agents"
       displayName="Agents"
       url="/rhq/ha/listAgents.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.highAvailability.servers"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration.highAvailability.affinityGroups"
       displayName="Affinity Groups"
       url="/rhq/ha/listAffinityGroups.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.highAvailability.agents"
          placement="after" />
-   </menuItem>
-   <menuItem
+   </menu-item>
+   <menu-item
       name="administration.highAvailability.paritionEvents"
       displayName="Partition Events"
       url="/rhq/ha/listPartitionEvents.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.highAvailability.affinityGroups"
          placement="after" />
-   </menuItem>
+   </menu-item>
 
    <!--  Core Menu: administration.reports -->
-   <menuItem
+   <menu-item
       name="administration.reports.resourceVersionInventoryReport"
       displayName="Servers"
       url="/rhq/admin/report/resourceInstallReport.xhtml">
       <position
-         extensionPoint="coreMenu"
          name="administration.reports"
-         placement="start" />
-   </menuItem>
+         placement="firstChild" />
+   </menu-item>
 
 
-    <!-- Top-level Tabs -->
-    <tab name="Summary" displayName="Summary" iconUrl="/images/icons/Service_up_16.png">
-       <position
-          extensionPoint="coreMenu"
-          placement="start" />
-    </tab>
+   <!-- Top-level Tabs -->
+   <tab
+      name="Summary"
+      displayName="Summary"
+      iconUrl="/images/icons/Service_up_16.png">
+      <position
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Monitor" displayName="Monitor" iconUrl="/images/icons/Monitor_grey_16.png">
-        <monitoringLicenseActivator/>
-        <position
-           extensionPoint="coreMenu"
-           name="Summary"
-           placement="after" />
-    </tab>
+   <tab
+      name="Monitor"
+      displayName="Monitor"
+      iconUrl="/images/icons/Monitor_grey_16.png">
+      <position
+         name="Summary"
+         placement="after" />
+      <activators>
+         <license-feature
+            name="monitoring" />
+      </activators>
+   </tab>
 
-    <tab name="Inventory" displayName="Inventory" iconUrl="/images/icons/Inventory_grey_16.png">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor"
-           placement="after" />
-    </tab>
+   <tab
+      name="Inventory"
+      displayName="Inventory"
+      iconUrl="/images/icons/Inventory_grey_16.png">
+      <position
+         name="Monitor"
+         placement="after" />
+   </tab>
 
-    <tab name="Alert" displayName="Alert" iconUrl="/images/icons/Alert_grey_16.png">
-        <monitoringLicenseActivator/>
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory"
-           placement="after" />
-    </tab>
+   <tab
+      name="Alert"
+      displayName="Alert"
+      iconUrl="/images/icons/Alert_grey_16.png">
+      <position
+         name="Inventory"
+         placement="after" />
+      <activators>
+         <license-feature
+            name="monitoring" />
+      </activators>
+   </tab>
 
-    <tab name="Configuration" displayName="Configuration" iconUrl="/images/icons/Configure_grey_16.png">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="configuration"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
-        <position
-           extensionPoint="coreMenu"
-           name="Alert"
-           placement="after" />
-    </tab>
+   <tab
+      name="Configuration"
+      displayName="Configuration"
+      iconUrl="/images/icons/Configure_grey_16.png">
+      <position
+         name="Alert"
+         placement="after" />
+      <activators>
+         <facet
+            name="configuration" />
+      </activators>
+   </tab>
 
-    <tab name="Operations" displayName="Operations" iconUrl="/images/icons/Operation_grey_16.png">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="operation"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
-        <position
-           extensionPoint="coreMenu"
-           name="Configuration"
-           placement="after" />
-    </tab>
+   <tab
+      name="Operations"
+      displayName="Operations"
+      iconUrl="/images/icons/Operation_grey_16.png">
+      <position
+         name="Configuration"
+         placement="after" />
+      <activators>
+         <facet
+            name="operation" />
+      </activators>
+   </tab>
 
-    <tab name="Events" displayName="Events" iconUrl="/images/icons/Events_grey_16.png">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="event"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
-        <position
-           extensionPoint="coreMenu"
-           name="Operations"
-           placement="after" />
-    </tab>
+   <tab
+      name="Events"
+      displayName="Events"
+      iconUrl="/images/icons/Events_grey_16.png">
+      <position
+         name="Operations"
+         placement="after" />
+      <activators>
+         <facet
+            name="event" />
+      </activators>
+   </tab>
 
-    <tab name="Content" displayName="Content" iconUrl="/images/icons/Content_grey_16.png">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="content"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
-        <position
-           extensionPoint="coreMenu"
-           name="Events"
-           placement="after" />
-    </tab>
+   <tab
+      name="Content"
+      displayName="Content"
+      iconUrl="/images/icons/Content_grey_16.png">
+      <position
+         name="Events"
+         placement="after" />
+      <activators>
+         <facet
+            name="content" />
+      </activators>
+   </tab>
 
-    <!-- Summary Subtabs -->
-    <tab name="Summary.Overview" displayName="Overview" url="/rhq/resource/summary/overview.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Summary"
-          placement="start" />
-    </tab>
+   <!-- Summary Subtabs -->
+   <tab
+      name="Summary.Overview"
+      displayName="Overview"
+      url="/rhq/resource/summary/overview.xhtml">
+      <position
+         name="Summary"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Summary.Timeline" displayName="Timeline" url="/rhq/resource/summary/timeline.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Summary.Overview"
-           placement="after" />
-    </tab>
+   <tab
+      name="Summary.Timeline"
+      displayName="Timeline"
+      url="/rhq/resource/summary/timeline.xhtml">
+      <position
+         name="Summary.Overview"
+         placement="after" />
+   </tab>
 
-    <!-- Monitor Subtabs -->
-    <tab name="Monitor.Graphs" displayName="Graphs" url="/rhq/resource/monitor/graphs.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Monitor"
-          placement="start" />
-    </tab>
+   <!-- Monitor Subtabs -->
+   <tab
+      name="Monitor.Graphs"
+      displayName="Graphs"
+      url="/rhq/resource/monitor/graphs.xhtml">
+      <position
+         name="Monitor"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Monitor.Tables" displayName="Tables" url="/rhq/resource/monitor/tables.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Graphs"
-           placement="after" />
-    </tab>
+   <tab
+      name="Monitor.Tables"
+      displayName="Tables"
+      url="/rhq/resource/monitor/tables.xhtml">
+      <position
+         name="Monitor.Graphs"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Traits" displayName="Traits" url="/rhq/resource/monitor/traits.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Monitor.Tables"
-          placement="after" />
-    </tab>
+   <tab
+      name="Monitor.Traits"
+      displayName="Traits"
+      url="/rhq/resource/monitor/traits.xhtml">
+      <position
+         name="Monitor.Tables"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Availability" displayName="Availability" url="/rhq/resource/monitor/availabilityHistory.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Traits"
-           placement="after" />
-    </tab>
+   <tab
+      name="Monitor.Availability"
+      displayName="Availability"
+      url="/rhq/resource/monitor/availabilityHistory.xhtml">
+      <position
+         name="Monitor.Traits"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Schedules" displayName="Schedules" url="/rhq/resource/monitor/schedules.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Monitor.Availability"
-          placement="after" />
-    </tab>
+   <tab
+      name="Monitor.Schedules"
+      displayName="Schedules"
+      url="/rhq/resource/monitor/schedules.xhtml">
+      <position
+         name="Monitor.Availability"
+         placement="after" />
+   </tab>
 
-    <tab name="Monitor.Response" displayName="Response" url="/rhq/resource/monitor/response.xhtml">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="callTime"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
+   <tab
+      name="Monitor.Response"
+      displayName="Response"
+      url="/rhq/resource/monitor/response.xhtml">
+      <position
+         name="Monitor.Schedules"
+         placement="after" />
+      <activators>
+         <facet
+            name="call_time" />
+      </activators>
+   </tab>
 
-        <position
-           extensionPoint="coreMenu"
-           name="Monitor.Schedules"
-           placement="after" />
-    </tab>
+   <!-- Inventory Subtabs -->
+   <tab
+      name="Inventory.Overview"
+      displayName="Overview"
+      url="/rhq/resource/inventory/view.xhtml">
+      <position
+         name="Inventory"
+         placement="firstChild" />
+   </tab>
 
-    <!-- Inventory Subtabs -->
-    <tab name="Inventory.Overview" displayName="Overview" url="/rhq/resource/inventory/view.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Inventory"
-          placement="start" />
-    </tab>
+   <tab
+      name="Inventory.Connection"
+      displayName="Connection"
+      url="/rhq/resource/inventory/view-connection.xhtml">
+      <position
+         name="Inventory.Overview"
+         placement="after" />
+      <activators>
+         <facet
+            name="plugin_configuration" />
+      </activators>
+   </tab>
 
-    <tab name="Inventory.Connection" displayName="Connection" url="/rhq/resource/inventory/view-connection.xhtml">
-        <currentResourceOrGroupActivatorSet>
-            <resourceActivator>
-                <facetActivatorSet>
-                    <facetActivator facet="pluginConfiguration"/>
-                </facetActivatorSet>
-            </resourceActivator>
-        </currentResourceOrGroupActivatorSet>
+   <tab
+      name="Inventory.Agent"
+      displayName="Agent"
+      url="/rhq/resource/inventory/view-agent.xhtml">
+      <position
+         name="Inventory.Connection"
+         placement="after" />
+   </tab>
 
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory.Overview"
-           placement="after" />
-    </tab>
+   <!-- Alert Subtabs -->
+   <tab
+      name="Alert.Definitions"
+      displayName="Definitions"
+      url="/rhq/resource/alert/listAlertDefinitions.xhtml">
+      <position
+         name="Alert"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Inventory.Agent" displayName="Agent" url="/rhq/resource/inventory/view-agent.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Inventory.Connection"
-           placement="after" />
-    </tab>
-    
-    <!-- Alert Subtabs -->
-    <tab name="Alert.Definitions" displayName="Definitions" url="/rhq/resource/alert/listAlertDefinitions.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Alert"
-          placement="start" />
-    </tab>
+   <tab
+      name="Alert.History"
+      displayName="History"
+      url="/rhq/resource/alert/listAlertHistory.xhtml">
+      <position
+         name="Alert.Definitions"
+         placement="after" />
+   </tab>
 
-    <tab name="Alert.History" displayName="History" url="/rhq/resource/alert/listAlertHistory.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Alert.Definitions"
-           placement="after" />
-    </tab>
-    
-    <!-- Configuration Subtabs -->
-    <tab name="Configuration.Current" displayName="Current" url="/rhq/resource/configuration/view.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Configuration"
-          placement="start" />
-    </tab>
+   <!-- Configuration Subtabs -->
+   <tab
+      name="Configuration.Current"
+      displayName="Current"
+      url="/rhq/resource/configuration/view.xhtml">
+      <position
+         name="Configuration"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Configuration.History" displayName="History" url="/rhq/resource/configuration/history.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Configuration.Current"
-           placement="after" />
-    </tab>
-    
-    <!-- Operations Subtabs -->
-    <tab name="Operations.New" displayName="New" url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Operations"
-          placement="start" />
-    </tab>
+   <tab
+      name="Configuration.History"
+      displayName="History"
+      url="/rhq/resource/configuration/history.xhtml">
+      <position
+         name="Configuration.Current"
+         placement="after" />
+   </tab>
 
-    <tab name="Operations.Schedules" displayName="Schedules" url="/rhq/resource/operation/resourceOperationSchedules.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Operations.New"
-           placement="after" />
-    </tab>
+   <!-- Operations Subtabs -->
+   <tab
+      name="Operations.New"
+      displayName="New"
+      url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml">
+      <position
+         name="Operations"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Operations.History" displayName="History" url="/rhq/resource/operation/resourceOperationHistory.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Operations.Schedules"
-           placement="after" />
-    </tab>
-    
-    <!-- Events Subtabs -->
-    <tab name="Events.History" displayName="History" url="/rhq/resource/events/history.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Events"
-          placement="start" />
-    </tab>
+   <tab
+      name="Operations.Schedules"
+      displayName="Schedules"
+      url="/rhq/resource/operation/resourceOperationSchedules.xhtml">
+      <position
+         name="Operations.New"
+         placement="after" />
+   </tab>
 
-    <!-- Content Subtabs -->
-    <tab name="Content.Deployed" displayName="Deployed" url="/rhq/resource/content/view.xhtml">
-       <position
-          extensionPoint="coreMenu"
-          name="Content"
-          placement="start" />
-    </tab>
+   <tab
+      name="Operations.History"
+      displayName="History"
+      url="/rhq/resource/operation/resourceOperationHistory.xhtml">
+      <position
+         name="Operations.Schedules"
+         placement="after" />
+   </tab>
 
-    <tab name="Content.New" displayName="New" url="/rhq/resource/content/deploy.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Content.Deployed"
-           placement="after" />
-    </tab>            
+   <!-- Events Subtabs -->
+   <tab
+      name="Events.History"
+      displayName="History"
+      url="/rhq/resource/events/history.xhtml">
+      <position
+         name="Events"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Content.Subscriptions" displayName="Subscriptions" url="/rhq/resource/content/subscription.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Content.New"
-           placement="after" />
-    </tab>            
+   <!-- Content Subtabs -->
+   <tab
+      name="Content.Deployed"
+      displayName="Deployed"
+      url="/rhq/resource/content/view.xhtml">
+      <position
+         name="Content"
+         placement="firstChild" />
+   </tab>
 
-    <tab name="Content.History" displayName="History" url="/rhq/resource/content/history.xhtml">
-        <position
-           extensionPoint="coreMenu"
-           name="Content.Subscriptions"
-           placement="after" />
-    </tab>            
-    
-</perspectivePlugin>
+   <tab
+      name="Content.New"
+      displayName="New"
+      url="/rhq/resource/content/deploy.xhtml">
+      <position
+         name="Content.Deployed"
+         placement="after" />
+   </tab>
+
+   <tab
+      name="Content.Subscriptions"
+      displayName="Subscriptions"
+      url="/rhq/resource/content/subscription.xhtml">
+      <position
+         name="Content.New"
+         placement="after" />
+   </tab>
+
+   <tab
+      name="Content.History"
+      displayName="History"
+      url="/rhq/resource/content/history.xhtml">
+      <position
+         name="Content.Subscriptions"
+         placement="after" />
+   </tab>
+
+</perspective-plugin>

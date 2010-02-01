@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+    <ui:composition template="/rhq/layout/main.xhtml">
+        <ui:param name="pageTitle" value="Definition for '#{alertDefinition.name}' on resource '#{ResourceUIBean.name}'"/>
+
+        <ui:define name="metaHeaders">
+            <style>
+                label {
+                    font-weight: bold;
+                }
+
+                .col1, .col2 {
+                    vertical-align: top;
+                    padding: 10px;
+                }
+
+                .col1 {
+                    width: 35%;
+                }
+
+                .col2 {
+                    width: 100%;
+                }
+            </style>
+        </ui:define>
+
+        <ui:define name="breadcrumbs">
+            <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
+                <f:param name="id" value="#{param.id}"/>
+                <h:outputText>Alert Definitions</h:outputText>
+            </h:outputLink>
+            <h:outputText> &gt; </h:outputText>
+            <h:outputLink value="viewAlert.xhtml">
+                <f:param name="id" value="#{param.id}" />
+                <f:param name="ad" value="#{param.ad}" />
+                <h:outputText value="Definition for '#{alertDefinition.name}' on resource '#{ResourceUIBean.name}'" />
+            </h:outputLink>
+        </ui:define>
+
+        <ui:define name="body">
+            <h:messages showDetail="true"
+                       globalOnly="true"
+                       infoClass="InfoBlock"
+                       warnClass="WarnBlock"
+                       errorClass="ErrorBlock"
+                       fatalClass="FatalBlock"
+                       layout="table"
+                       width="100%"/>
+
+            <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
+
+                <rich:panel>
+                    <f:facet name="header">
+                        <h:outputText value="Alert Properties" />
+                    </f:facet>
+
+                    <h:panelGrid columns="2" border="1" cellpadding="5" width="100%">
+                        <h:outputLabel for="alertName" value="Name:  " />
+                        <h:outputText id="alertName" value="#{alertDefinition.name}" />
+
+                        <h:outputLabel for="alertDescription" value="Description:  " />
+                        <h:outputText id="alertDescription" value="#{alertDefinition.description}" />
+
+                        <h:outputLabel for="alertPriority" value="Priority:  " />
+                        <h:outputText id="alertPriority" value="#{alertDefinition.priority.displayName}" />
+
+                        <h:outputLabel for="alertEnabled" value="Active:  " />
+                        <h:outputText id="alertEnabled" value="#{alertDefinition.enabled}" />
+
+                        <h:outputLabel for="alertDateCreated" value="Date Created:  " />
+                        <h:outputText id="alertDateCreated" value="#{alertDefinition.ctime}">
+                            <f:converter converterId="UserDateTimeConverter" />
+                        </h:outputText>
+
+                        <h:outputLabel for="alertDateModified" value="Date Modified:  " />
+                        <h:outputText id="alertDateModified" value="#{alertDefinition.mtime}">
+                            <f:converter converterId="UserDateTimeConverter" />
+                        </h:outputText>
+                    </h:panelGrid>
+
+                    <br />
+                    <h:outputLink id="editLink" styleClass="buttonmed" value="#">
+                        <h:outputText value="Edit '#{alertDefinition.name}' Properties" />
+                        <rich:componentControl for="editAlertDefinitionPanel" attachTo="editLink" operation="show" event="onclick" />
+                    </h:outputLink>
+                </rich:panel>
+
+                <rich:panel>
+                    <f:facet name="header">
+                        <h:outputText value="Condition Set" />
+                    </f:facet>
+
+                    <h3>
+                        <h:outputText value="#{messages['alert.config.props.CB.ExpressionDetails.1']} " />
+                        <h:outputText value="#{alertDefinition.conditionExpression}" />
+                        <h:outputText value=" #{messages['alert.config.props.CB.ExpressionDetails.2']}" />
+                    </h3>
+
+                    <rich:dataTable value="#{alertUIBean.alertConditions}" var="condition" cellpadding="20" cellspacing="5">
+                        <h:column>
+                            <h:outputText value="#{condition}" />
+                        </h:column>
+                    </rich:dataTable>
+
+                    <h:panelGrid columns="2" cellpadding="5">
+                        <h:panelGroup>
+                            <strong>
+                                <h:outputText value="#{messages['alert.config.props.CB.DampeningRule']}" />
+                            </strong>
+                        </h:panelGroup>
+
+                        <h:outputText value="#{alertUIBean.alertDampening}" />
+
+                        <h:panelGroup>
+                            <strong>
+                                <h:outputText value="#{messages['alert.config.props.CB.Content.ActionFilters']}  " />
+                            </strong>
+                        </h:panelGroup>
+
+                        <h:panelGroup>
+                            <h:outputText value="#{messages['alert.config.props.CB.Content.UntilRecovered']}:  " />
+                            <strong>
+                                <h:outputText value="#{alertDefinition.willRecover}" />
+                            </strong>
+                        </h:panelGroup>
+                    </h:panelGrid>
+
+                    <!-- Temp -->
+                    <br /><br />
+                    <h:outputLink id="editConditionsLink" styleClass="buttonmed" value="/alerts/Config.do">
+                        <f:param name="mode" value="editConditions" />
+                        <f:param name="ad" value="#{param.ad}" />
+                        <f:param name="id" value="#{param.id}" />
+
+                        <h:outputText value="Edit Alert Conditions" />
+                    </h:outputLink>
+
+                </rich:panel>
+            </h:panelGrid>
+
+            <ui:include src="notif/listAlertSender.xhtml" />
+
+            <rich:modalPanel id="editAlertDefinitionPanel" moveable="false" autosized="true">
+                <f:facet name="header">
+                    <h:outputText value="Edit #{alertDefinition.name} Definition" />
+                </f:facet>
+
+                <h:form id="editAlertDefinitionForm">
+                    <input type="hidden" name="ad" value="#{param.ad}" />
+                    <input type="hidden" name="id" value="#{param.id}" />
+
+                    <h:panelGrid columns="2" border="1" cellpadding="5" style="margin: 15px;">
+                        <h:outputLabel for="alertNameInput" value="Name:  " />
+                        <h:inputText id="alertNameInput" value="#{alertUIBean.alertDefinition.name}" style="width: 300px;" />
+
+                        <h:outputLabel for="alertDescriptionInput" value="Description:  " />
+                        <h:inputTextarea id="alertDescriptionInput" value="#{alertUIBean.alertDefinition.description}" style="width: 300px;" />
+
+                        <h:outputLabel for="alertPriorityInput" value="Priority:  " />
+                        <h:selectOneMenu id="alertPriorityInput" value="#{alertUIBean.alertDefinition.priority}">
+                            <f:selectItems value="#{alertUIBean.priorities}" />
+                        </h:selectOneMenu>
+
+                        <h:outputLabel for="alertEnabledInput" value="Active:  " />
+                        <h:selectBooleanCheckbox id="alertEnabledInput" value="#{alertUIBean.alertDefinition.enabled}" />
+                    </h:panelGrid>
+
+                    <h:outputLink id="cancelLink" styleClass="buttonmed" value="#" style="float: right;">
+                        <h:outputText value="Cancel" />
+                        <rich:componentControl for="editAlertDefinitionPanel" attachTo="cancelLink" operation="hide" event="onclick" />
+                    </h:outputLink>
+
+                    <h:commandButton id="saveButton" value="Save Changes" styleClass="buttonmed" action="#{alertUIBean.saveAlertDefinition}" />
+                </h:form>
+                
+            </rich:modalPanel>
+
+        </ui:define>
+    </ui:composition>
+</html>

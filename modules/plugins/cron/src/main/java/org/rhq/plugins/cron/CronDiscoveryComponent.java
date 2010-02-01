@@ -18,6 +18,10 @@
  */
 package org.rhq.plugins.cron;
 
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 import org.rhq.plugins.platform.PlatformComponent;
 
@@ -25,5 +29,16 @@ import org.rhq.plugins.platform.PlatformComponent;
  * @author Lukas Krejci
  */
 public class CronDiscoveryComponent extends AugeasConfigurationDiscoveryComponent<PlatformComponent> {
-    //the super class provides everything we need...
+
+    public static final String CRON_RESOURCE_KEY = "Cron";
+
+    @Override
+    protected DiscoveredResourceDetails createResourceDetails(
+        ResourceDiscoveryContext<PlatformComponent> discoveryContext, Configuration pluginConfig) {
+        
+        ResourceType resourceType = discoveryContext.getResourceType();
+        
+        return new DiscoveredResourceDetails(resourceType, CRON_RESOURCE_KEY, resourceType
+            .getName(), null, resourceType.getDescription(), pluginConfig, null);
+    }
 }

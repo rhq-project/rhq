@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ejb.Stateless;
+import javax.jws.WebParam;
 import javax.jws.WebService;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
@@ -46,14 +47,23 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionMap;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.group.GroupPluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.group.GroupResourceConfigurationUpdate;
+import org.rhq.core.domain.content.Advisory;
+import org.rhq.core.domain.content.AdvisoryBuglist;
+import org.rhq.core.domain.content.AdvisoryCVE;
+import org.rhq.core.domain.content.AdvisoryPackage;
 import org.rhq.core.domain.content.Architecture;
+import org.rhq.core.domain.content.CVE;
 import org.rhq.core.domain.content.Distribution;
+import org.rhq.core.domain.content.DistributionFile;
+import org.rhq.core.domain.content.DistributionType;
 import org.rhq.core.domain.content.InstalledPackage;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.content.RepoGroup;
 import org.rhq.core.domain.content.RepoGroupType;
+import org.rhq.core.domain.content.transfer.EntitlementCertificate;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -102,7 +112,12 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationUpdateStillInProgressException;
+import org.rhq.enterprise.server.content.AdvisoryException;
+import org.rhq.enterprise.server.content.AdvisoryManagerLocal;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
+import org.rhq.enterprise.server.content.DistributionException;
+import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoException;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
@@ -123,6 +138,8 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.operation.GroupOperationSchedule;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
+import org.rhq.enterprise.server.registration.RegistrationException;
+import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -138,8 +155,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 /** The purpose of this class is to aggregate all the EJB remote implementation into one
  *  class that can be annotated by JBossWS.  Each annotated SLSB causes a full WSDL compile and
- *  publish by JBossWS which is very costly in terms of time.  Deploy times went from 2 mins to 12 mins. 
- * 
+ *  publish by JBossWS which is very costly in terms of time.  Deploy times went from 2 mins to 12 mins.
+ *
  * @author Simeon Pinder
  *
  */
@@ -150,6 +167,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class WebservicesManagerBean implements WebservicesRemote {
 
     //Lookup the required beans as local references
+    private AdvisoryManagerLocal advisoryManager = LookupUtil.getAdvisoryManagerLocal();
     private AlertManagerLocal alertManager = LookupUtil.getAlertManager();
     private AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
     private AvailabilityManagerLocal availabilityManager = LookupUtil.getAvailabilityManager();
@@ -160,6 +178,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     //removed as it is problematic for WS clients having XMLAny for Object.
     //    private DataAccessManagerLocal dataAccessManager = LookupUtil.getDataAccessManager();
     private DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
+    private DistributionManagerLocal distributionManager = LookupUtil.getDistributionManagerLocal();
     private EventManagerLocal eventManager = LookupUtil.getEventManager();
     private MeasurementBaselineManagerLocal measurementBaselineManager = LookupUtil.getMeasurementBaselineManager();
     private MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
@@ -172,10 +191,96 @@ public class WebservicesManagerBean implements WebservicesRemote {
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
     private ResourceGroupManagerLocal resourceGroupManager = LookupUtil.getResourceGroupManager();
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
+    private RegistrationManagerLocal registrationManager = LookupUtil.getRegistrationManager();
     private RoleManagerLocal roleManager = LookupUtil.getRoleManager();
     private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
     private SupportManagerLocal supportManager = LookupUtil.getSupportManager();
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
+    private EntitlementStuffManagerLocal entitlementManager = LookupUtil.getEntitlementManager();
+
+    //ADVISORYMANAGER: BEGIN ------------------------------------------
+
+    public Advisory createAdvisory(@WebParam(name = "subject") Subject user,
+        @WebParam(name = "advisory") String advisory, @WebParam(name = "advisoryType") String advisoryType,
+        @WebParam(name = "advisoryName") String advisoryName) throws AdvisoryException {
+        return advisoryManager.createAdvisory(user, advisory, advisoryType, advisoryName);
+    }
+
+    public CVE createCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cvename") String cvename)
+        throws AdvisoryException {
+        return advisoryManager.createCVE(user, cvename);
+    }
+
+    public AdvisoryCVE createAdvisoryCVE(@WebParam(name = "subject") Subject user,
+        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "cve") CVE cve) throws AdvisoryException {
+        return advisoryManager.createAdvisoryCVE(user, advisory, cve);
+    }
+
+    public AdvisoryPackage createAdvisoryPackage(@WebParam(name = "subject") Subject user,
+        @WebParam(name = "advisory") Advisory advisory, @WebParam(name = "pkg") PackageVersion pkg)
+        throws AdvisoryException {
+        return advisoryManager.createAdvisoryPackage(user, advisory, pkg);
+    }
+
+    public CVE getCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
+        return advisoryManager.getCVE(user, cveId);
+    }
+
+    public void deleteCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "cveId") int cveId) {
+        advisoryManager.deleteCVE(user, cveId);
+    }
+
+    public void deleteAdvisoryCVE(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryCVE(user, advId);
+    }
+
+    public void deleteAdvisoryByAdvId(@WebParam(name = "subject") Subject subject, @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryByAdvId(subject, advId);
+    }
+
+    public Advisory getAdvisoryByName(@WebParam(name = "advlabel") String advlabel) {
+        return advisoryManager.getAdvisoryByName(advlabel);
+    }
+
+    public List<AdvisoryPackage> findPackageByAdvisory(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.findPackageByAdvisory(subject, advId, pc);
+    }
+
+    public PackageVersion findPackageVersionByPkgId(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "rpmName") String rpmName, @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.findPackageVersionByPkgId(subject, rpmName, pc);
+    }
+
+    public PageList<AdvisoryCVE> getAdvisoryCVEByAdvId(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "advId") int advId, @WebParam(name = "pc") PageControl pc) {
+        return advisoryManager.getAdvisoryCVEByAdvId(subject, advId, pc);
+    }
+
+    public List<AdvisoryBuglist> getAdvisoryBuglistByAdvId(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "advId") int advId) {
+        return advisoryManager.getAdvisoryBuglistByAdvId(subject, advId);
+    }
+
+    public void deleteAdvisoryBugList(@WebParam(name = "subject") Subject overlord, @WebParam(name = "advId") int id) {
+        advisoryManager.deleteAdvisoryBugList(overlord, id);
+    }
+
+    public void deleteAdvisoryPackage(@WebParam(name = "subject") Subject user, @WebParam(name = "advId") int advId) {
+        advisoryManager.deleteAdvisoryPackage(user, advId);
+    }
+
+    public AdvisoryPackage findAdvisoryPackage(@WebParam(name = "subject") Subject overlord,
+        @WebParam(name = "advId") int advId, @WebParam(name = "pkgVerId") int pkgVerId) {
+        return advisoryManager.findAdvisoryPackage(overlord, advId, pkgVerId);
+    }
+
+    public AdvisoryBuglist getAdvisoryBuglist(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "advId") int advId, @WebParam(name = "buginfo") String buginfo) {
+        return advisoryManager.getAdvisoryBuglist(subject, advId, buginfo);
+    }
+
+    //ADVISORYMANAGER: END ------------------------------------------
 
     //ALERTMANAGER: BEGIN ------------------------------------------
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
@@ -287,8 +392,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findPackageVersionsInRepoByCriteria(subject, criteria);
     }
 
-    @Override
-    public int synchronizeRepos(Subject subject, Integer[] repoIds) {
+    public int synchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
         return repoManager.synchronizeRepos(subject, repoIds);
     }
 
@@ -372,8 +476,8 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException {
         return configurationManager.updateStructuredOrRawConfiguration(subject, resourceId, newConfiguration,
             fromStructured);
     }
@@ -439,7 +543,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //DATAACCESSMANAGER: END ----------------------------------
 
-    //DISCOVERYBOSS: BEGIN ------------------------------------    
+    //DISCOVERYBOSS: BEGIN ------------------------------------
     public void ignoreResources(Subject subject, Integer[] resourceIds) {
         discoveryBoss.ignoreResources(subject, resourceIds);
     }
@@ -453,6 +557,47 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     //DISCOVERYBOSS: END ------------------------------------
+
+    //DISTRIBUTION: START ------------------------------------
+
+    public DistributionType getDistributionTypeByName(@WebParam(name = "name") String name) {
+        return distributionManager.getDistributionTypeByName(name);
+    }
+
+    public void deleteDistributionFilesByDistId(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "distid") int distid) {
+        distributionManager.deleteDistributionByDistId(subject, distid);
+    }
+
+    public List<DistributionFile> getDistributionFilesByDistId(@WebParam(name = "distid") int distid) {
+        return distributionManager.getDistributionFilesByDistId(distid);
+    }
+
+    public Distribution getDistributionByPath(@WebParam(name = "basepath") String basepath) {
+        return distributionManager.getDistributionByPath(basepath);
+    }
+
+    public Distribution getDistributionByLabel(@WebParam(name = "kslabel") String kslabel) {
+        return distributionManager.getDistributionByLabel(kslabel);
+    }
+
+    public void deleteDistributionByDistId(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "distId") int distId) throws Exception {
+        distributionManager.deleteDistributionByDistId(subject, distId);
+    }
+
+    public void deleteDistributionTypeByName(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "name") String name) {
+        distributionManager.deleteDistributionTypeByName(subject, name);
+    }
+
+    public Distribution createDistribution(@WebParam(name = "subject") Subject subject,
+        @WebParam(name = "kslabel") String kslabel, @WebParam(name = "basepath") String basepath,
+        @WebParam(name = "disttype") DistributionType disttype) throws DistributionException {
+        return distributionManager.createDistribution(subject, kslabel, basepath, disttype);
+    }
+
+    //DISTRIBUTION: END ------------------------------------
 
     //EVENTMANAGER: BEGIN ----------------------------------
     public PageList<Event> findEventsByCriteria(Subject subject, EventCriteria criteria) {
@@ -632,7 +777,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
     }
 
     public ResourceOperationSchedule scheduleResourceOperation(Subject subject, int resourceId, String operationName,
-        long delay, long repeatInterval, int repeatCount, int timeout,// 
+        long delay, long repeatInterval, int repeatCount, int timeout,//
         @XmlJavaTypeAdapter(value = ConfigurationAdapter.class)//
         Configuration parameters, String description) throws ScheduleException {
         return operationManager.scheduleResourceOperation(subject, resourceId, operationName, delay, repeatInterval,
@@ -654,6 +799,19 @@ public class WebservicesManagerBean implements WebservicesRemote {
         Configuration pluginConfiguration, Configuration resourceConfiguration) {
         resourceFactoryManager.createResource(subject, parentResourceId, resourceTypeId, resourceName,
             pluginConfiguration, resourceConfiguration);
+    }
+
+    public void registerPlatform(Subject subject, Resource resource, int parentId) {
+        registrationManager.registerPlatform(subject, resource, parentId);
+    }
+
+    public void importPlatform(Subject subject, Resource resource) {
+        registrationManager.importPlatform(subject, resource);
+    }
+
+    public void subscribePlatformToBaseRepo(Subject user, Resource platform, String release, String version, String arch)
+        throws RegistrationException {
+        registrationManager.subscribePlatformToBaseRepo(user, platform, release, version, arch);
     }
 
     public void createPackageBackedResource(Subject subject, int parentResourceId, int newResourceTypeId,
@@ -757,7 +915,7 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //RESOURCEGROUPMANAGER: END ----------------------------------
 
-    //RESOURCETYPEMANAGER: BEGIN ------------------------------------    
+    //RESOURCETYPEMANAGER: BEGIN ------------------------------------
     public PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria) {
         return resourceTypeManager.findResourceTypesByCriteria(subject, criteria);
     }
@@ -862,6 +1020,10 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return subjectManager.getSubjectByName(username);
     }
 
+    public Subject getSubjectByNameAndSessionId(String username, int sessionId) throws Exception {
+        return subjectManager.getSubjectByNameAndSessionId(username, sessionId);
+    }
+
     public Subject login(String username, String password) throws LoginException {
         return subjectManager.login(username, password);
     }
@@ -883,12 +1045,12 @@ public class WebservicesManagerBean implements WebservicesRemote {
 
     //SUPPORTMANAGER: END ------------------------------------
 
-    //SYSTEMMANAGER: BEGIN ------------------------------------    
+    //SYSTEMMANAGER: BEGIN ------------------------------------
     public ServerVersion getServerVersion(Subject subject) throws Exception {
         return systemManager.getServerVersion(subject);
     }
 
-    //SYSTEMMANAGER: END ------------------------------------    
+    //SYSTEMMANAGER: END ------------------------------------
 
     private void checkParametersPassedIn(Subject subject, Criteria criteria) {
         if (subject == null) {
@@ -903,4 +1065,15 @@ public class WebservicesManagerBean implements WebservicesRemote {
         return repoManager.findAssociatedDistributions(subject, repoId, pc);
     }
 
+    public PageList<Advisory> findAssociatedAdvisory(Subject subject, int repoId, PageControl pc) {
+        return repoManager.findAssociatedAdvisory(subject, repoId, pc);
+    }
+
+    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        return repoManager.findSubscriptions(subject, resourceId);
+    }
+
+    public List<EntitlementCertificate> getCertificates(Subject subject, int resourceId) {
+        return entitlementManager.getCertificates(subject, resourceId);
+    }
 }

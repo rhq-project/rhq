@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>rhq-remoting-parent</artifactId>
@@ -16,6 +16,7 @@
 
    <modules>
       <module>webservices</module>
+      <module>client-api</module>
    </modules>
 
    <profiles>
@@ -26,12 +27,12 @@
             <jdk>1.6</jdk>
          </activation>
 
-         <modules>
-            <module>webservices</module>
+         <modules>            
             <module>cli</module>
             <!--
                Temporarily commenting out scripts module from build. The scripts tests require a running server and
-               running agent which is not set up yet in the continuous integration build. <module>scripts</module>
+               running agent which is not set up yet in the continuous integration build. 
+               <module>scripts</module>
             -->
          </modules>
       </profile>

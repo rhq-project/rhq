@@ -42,10 +42,21 @@ import javax.persistence.Table;
  */
 @Entity
 @IdClass(RepoPackageVersionPK.class)
-@NamedQueries( { @NamedQuery(name = RepoPackageVersion.DELETE_BY_REPO_ID, query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId") })
+@NamedQueries( {
+    @NamedQuery(name = RepoPackageVersion.DELETE_BY_REPO_ID,
+        query = "DELETE RepoPackageVersion cpv WHERE cpv.repo.id = :repoId"),
+
+    // Deletes the repo <-> package mapping when the package has no providers for this package
+    @NamedQuery(name = RepoPackageVersion.DELETE_WHEN_NO_PROVIDER, query = "DELETE RepoPackageVersion rpv "
+        + "WHERE rpv.repo.id = :repoId " //
+        + "  AND (SELECT COUNT(pvcs.packageVersion.id) "
+        + "       FROM PackageVersionContentSource pvcs) = 0"
+        )
+})
 @Table(name = "RHQ_REPO_PKG_VERSION_MAP")
 public class RepoPackageVersion implements Serializable {
     public static final String DELETE_BY_REPO_ID = "RepoPackageVersion.deleteByRepoId";
+    public static final String DELETE_WHEN_NO_PROVIDER = "RepoPackageVersion.deleteWhenNoProvider";
 
     private static final long serialVersionUID = 1L;
 

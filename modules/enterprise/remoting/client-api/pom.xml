@@ -1,0 +1,252 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>3.0.0-SNAPSHOT</version>
+   </parent>
+
+   <artifactId>rhq-remoting-client-api</artifactId>
+
+   <name>RHQ Enterprise Remote Client API</name>
+   <description>a set of client APIs used to connect to an RHQ Server and invoke methods on it</description>
+
+   <scm>
+      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/remoting/client-api/</connection>
+      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/remoting/client-api/</developerConnection>
+   </scm>
+
+   <properties>
+      <scm.module.path>modules/enterprise/remoting/</scm.module.path>
+      
+      <i18nlog.version>1.0.9</i18nlog.version>
+      <log4j.version>1.2.14</log4j.version>
+      <persistence-api.version>1.0</persistence-api.version>
+      <hibernate-all.version>1.0.0.Alpha9</hibernate-all.version>
+   </properties>
+
+   <dependencies>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-enterprise-comm</artifactId>
+         <version>${project.version}</version>
+         <exclusions>
+            <exclusion>
+              <groupId>dom4j</groupId>
+              <artifactId>dom4j</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>gnu-getopt</groupId>
+              <artifactId>getopt</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>jboss</groupId>
+              <artifactId>jboss-jmx</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>jboss</groupId>
+              <artifactId>jboss-serialization</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>rhq-core-comm-api</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>oswego-concurrent</groupId>
+              <artifactId>concurrent</artifactId>
+            </exclusion>            
+         </exclusions>          
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-enterprise-server</artifactId>
+         <version>${project.version}</version>         
+         <exclusions>
+            <exclusion>
+              <groupId>ant</groupId>
+              <artifactId>ant</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-beanutils</groupId>
+              <artifactId>commons-beanutils</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-collections</groupId>
+              <artifactId>commons-collections</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-httpclient</groupId>
+              <artifactId>commons-httpclient</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-lang</groupId>
+              <artifactId>commons-lang</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-validator</groupId>
+              <artifactId>commons-validator</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>dom4j</groupId>
+              <artifactId>dom4j</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>gnu-getopt</groupId>
+              <artifactId>getopt</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>jboss</groupId>
+              <artifactId>jboss-cache</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>jboss</groupId>
+              <artifactId>jbpm</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>junit</groupId>
+              <artifactId>junit</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>rhq-core-client-api</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>rhq-core-dbutils</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>safe-invoker</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>test-utils</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.snmp4j</groupId>
+              <artifactId>snmp4j</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>oswego-concurrent</groupId>
+              <artifactId>concurrent</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>postgresql</groupId>
+              <artifactId>postgresql</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>rss4j</groupId>
+              <artifactId>rss4j</artifactId>
+            </exclusion>                        
+         </exclusions>          
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-domain</artifactId>
+         <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>${project.groupId}</groupId>
+         <artifactId>rhq-core-util</artifactId>
+         <version>${project.version}</version>
+         <exclusions>
+            <exclusion>
+              <groupId>jdom</groupId>
+              <artifactId>jdom</artifactId>
+            </exclusion>
+         </exclusions> 
+      </dependency>
+
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jboss-remoting</artifactId>
+      </dependency>
+
+       <dependency>
+          <groupId>jboss</groupId>
+          <artifactId>javassist</artifactId>
+       </dependency>
+      
+      <dependency>
+         <groupId>javax.persistence</groupId>
+         <artifactId>persistence-api</artifactId>
+         <version>${persistence-api.version}</version>
+         <exclusions>
+            <exclusion>
+              <groupId>hibernate-annotations</groupId>
+              <artifactId>hibernate-annotations</artifactId>
+            </exclusion>
+         </exclusions> 
+      </dependency>
+
+      <dependency>
+         <groupId>commons-logging</groupId>
+         <artifactId>commons-logging</artifactId>
+      </dependency>
+
+      <dependency>
+         <groupId>hibernate-annotations</groupId>
+         <artifactId>hibernate-annotations</artifactId>
+      </dependency>
+      
+   </dependencies>
+   
+   <profiles>
+         <profile>
+         <id>javadoc</id>
+         <activation>
+            <property>
+               <name>javadoc.outputDirectory</name>
+            </property>
+         </activation>
+
+         <build>
+            <plugins>
+               <plugin>
+                  <artifactId>maven-javadoc-plugin</artifactId>
+
+                  <executions>
+                     <execution>
+                        <id>javadoc-client-api</id>
+                        <phase>compile</phase>
+
+                        <configuration>
+                           <doctitle>RHQ ${project.version} - Client API</doctitle>
+                           <reportOutputDirectory>${javadoc.outputDirectory}</reportOutputDirectory>
+                           <destDir>client-api</destDir>
+                           <aggregate>true</aggregate>
+                           <encoding>UTF-8</encoding>
+                           <charset>UTF-8</charset>
+                           <docencoding>UTF-8</docencoding>
+                           <author>false</author>
+                           <breakiterator>true</breakiterator>
+                           <links>
+                              <link>http://java.sun.com/j2se/1.5.0/docs/api/</link>
+                              <link>../remote-api</link>                              
+                           </links>
+                        </configuration>
+                        <goals>
+                           <goal>javadoc</goal>
+                        </goals>
+                     </execution>
+                  </executions>
+
+               </plugin>
+            </plugins>
+         </build>
+
+      </profile>
+
+   </profiles>   
+
+</project>

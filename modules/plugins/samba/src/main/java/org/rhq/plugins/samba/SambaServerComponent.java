@@ -20,25 +20,48 @@ package org.rhq.plugins.samba;
 
 import net.augeas.Augeas;
 
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.*;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
+import org.rhq.core.pluginapi.operation.OperationFacet;
+import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.pluginapi.util.ObjectUtil;
+import org.rhq.core.system.*;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
+
+import java.util.List;
+import java.util.Set;
+
 
 /**
  * TODO
  */
-public class SambaServerComponent extends AugeasConfigurationComponent {
+public class SambaServerComponent extends AugeasConfigurationComponent implements OperationFacet, MeasurementFacet {
+
     static final String ENABLE_RECYCLING = "enableRecycleBin";
+    static final String AUTHCONFIG_PATH = "/usr/bin/authconfig";
+    static final String NET_PATH = "/usr/bin/net";
+    static final String SPACE = " ";
+    private static final int PORT = 445;
+    private ProcessInfo processInfo;
+
+    private ResourceContext resourceContext;
+
 
     public void start(ResourceContext resourceContext) throws Exception {
+        this.resourceContext = resourceContext;
         super.start(resourceContext);
+        getProcess();
     }
 
     public void stop() {
@@ -115,4 +138,145 @@ public class SambaServerComponent extends AugeasConfigurationComponent {
         }
         return super.toPropertyValue(propDefSimple, augeas, node);
     }
+
+    private void getProcess() {
+
+        List<ProcessInfo> procs =
+                resourceContext.getSystemInformation().getProcesses("process|basename|match=smbd,process|basename|nomatch|parent=smbd");
+
+        if (procs.size() == 1) {
+            this.processInfo = procs.get(0).getAggregateProcessTree();
+        }
+    }
+
+    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
+
+        NetworkStats stats = resourceContext.getSystemInformation().getNetworkStats("localhost", PORT);
+        
+        processInfo.refresh();
+
+        for (MeasurementScheduleRequest request : metrics) {
+            if (request.getName().startsWith("NetworkStat.")) {
+                int val = stats.getByName(request.getName().substring("NetworkStat.".length()));
+                report.addData(new MeasurementDataNumeric(request, (double) val));
+            } else if (request.getName().startsWith("Process.")) {
+                Double value = ObjectUtil.lookupDeepNumericAttributeProperty(processInfo, request.getName().substring("Process.".length()));
+                report.addData(new MeasurementDataNumeric(request, value));
+            }
+        }
+    }
+
+    public OperationResult invokeOperation(String name, Configuration params) throws Exception {
+
+        OperationResult result = null;
+
+        if (name.equals("join")) {
+          result = updateSmbAds(params);
+        }
+        else if (name.equals("disconnect")) {
+          result = disconnectSmbAds(params);
+        }
+        return result;
+    }
+
+    private OperationResult disconnectSmbAds(Configuration params) throws Exception {
+
+        Configuration resourceConfig = this.loadResourceConfiguration();
+        OperationResult result = new OperationResult();
+
+        String username = resourceConfig.getSimple("username").getStringValue();
+        String password = resourceConfig.getSimple("password").getStringValue();
+
+        if (username == null || password == null) {
+            result.setSimpleResult("Missing required connection parameters");
+            return result;
+        }
+
+        StringBuilder netArgs = new StringBuilder();
+        netArgs.append("ads leave");
+        netArgs.append(SPACE + "-U " + username + "%" + password);
+
+        ProcessExecutionResults netResults = execute(NET_PATH, netArgs.toString());
+        String results = netResults.getCapturedOutput();
+
+        result.setSimpleResult(results);
+
+        return result;
+    }
+
+    private OperationResult updateSmbAds(Configuration params) throws Exception {
+
+        Configuration resourceConfig = this.loadResourceConfiguration();
+        OperationResult result = new OperationResult();
+
+        String realm = resourceConfig.getSimple("realm").getStringValue();
+        String controller = resourceConfig.getSimple("controller").getStringValue();
+        String username = resourceConfig.getSimple("username").getStringValue();
+        String password = resourceConfig.getSimple("password").getStringValue();
+        String workgroup = resourceConfig.getSimple("workgroup").getStringValue();
+        String idmapuid = resourceConfig.getSimple("idmap uid").getStringValue();
+        String idmapgid = resourceConfig.getSimple("idmap gid").getStringValue();
+        String shell = resourceConfig.getSimple("template shell").getStringValue();
+
+        if (realm == null || controller == null || username == null || password == null || workgroup == null) {
+            result.setSimpleResult("Missing required connection parameters");
+            return result;
+        }
+
+        StringBuilder authArgs = new StringBuilder();
+        StringBuilder netArgs = new StringBuilder();
+
+        // AuthConfig arguments...ugly and would be a lot prettier using python
+        authArgs.append("--smbservers=" + controller);
+        authArgs.append(SPACE + "--smbrealm=" + realm);
+        authArgs.append(SPACE + "--enablewinbind --smbsecurity=ads");
+
+        if (idmapuid != null) {
+            authArgs.append(SPACE + "--smbidmapuid=" + idmapuid);
+        }
+
+        if (idmapgid != null) {
+            authArgs.append(SPACE + "--smbidmapgid=" + idmapgid);
+        }
+
+        if (shell != null) {
+            authArgs.append(SPACE + "--winbindtemplateshell=" + shell);
+        }
+
+        authArgs.append(SPACE + "--update");
+
+        // Net join arguments
+        netArgs.append("join");
+        netArgs.append(SPACE + "-w " + workgroup);
+        netArgs.append(SPACE + "-S " + controller);
+        netArgs.append(SPACE + "-U " + username + "%" + password);
+
+        ProcessExecutionResults authResults = execute(AUTHCONFIG_PATH, authArgs.toString());
+        ProcessExecutionResults netResults = execute(NET_PATH, netArgs.toString());
+
+        String results = authResults.getCapturedOutput() + netResults.getCapturedOutput();
+
+        result.setSimpleResult(results);
+
+        return result;
+    }
+
+    private ProcessExecutionResults execute(String path, String args) throws InvalidPluginConfigurationException {
+
+        ProcessExecution processExecution = new ProcessExecution(path);
+        SystemInfo sysInfo = this.resourceContext.getSystemInformation();
+
+        if (args != null) {
+            processExecution.setArguments(args.split(" "));
+        }
+        
+        processExecution.setCaptureOutput(true);
+        processExecution.setWaitForCompletion(1000L);
+        processExecution.setKillOnTimeout(true);
+
+        ProcessExecutionResults results = sysInfo.executeProcess(processExecution);
+
+        return results;
+   }
+
 }

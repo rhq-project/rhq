@@ -40,7 +40,7 @@ import org.rhq.plugins.www.util.WWWUtils;
  *
  * @author Heiko W. Rupp
  */
-public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<ModJKComponent> {
+public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<ApacheServerComponent> {
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -52,7 +52,7 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<ModJK
      * @throws Exception
      */
     public Set<DiscoveredResourceDetails> discoverResources(
-            ResourceDiscoveryContext<ModJKComponent> context) throws InvalidPluginConfigurationException, Exception {
+            ResourceDiscoveryContext<ApacheServerComponent> context) throws InvalidPluginConfigurationException, Exception {
 
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>(1);
 
@@ -87,9 +87,10 @@ public class ModJKDiscoveryComponent implements ResourceDiscoveryComponent<ModJK
             return null;
         }
 
+        //TODO the can be simplified using augeas...
         String confPath = confPathProp.getStringValue();
         if (!confPath.startsWith("/")) { // TODO implement for Windows too
-            String basePath = parentConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_SERVER_ROOT, "");
+            String basePath = context.getParentResourceComponent().getServerRoot().getAbsolutePath();
             confPath = basePath + "/" + confPath;
         }
 

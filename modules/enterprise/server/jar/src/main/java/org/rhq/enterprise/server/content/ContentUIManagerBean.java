@@ -19,7 +19,11 @@
 package org.rhq.enterprise.server.content;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -31,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.IntegerOptionItem;
+import org.rhq.core.domain.content.Advisory;
 import org.rhq.core.domain.content.ContentRequestStatus;
 import org.rhq.core.domain.content.ContentServiceRequest;
 import org.rhq.core.domain.content.InstalledPackage;
@@ -39,6 +44,7 @@ import org.rhq.core.domain.content.PackageBits;
 import org.rhq.core.domain.content.PackageInstallationStep;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.PackageVersion;
+import org.rhq.core.domain.content.composite.AdvisoryDetailsComposite;
 import org.rhq.core.domain.content.composite.LoadedPackageBitsComposite;
 import org.rhq.core.domain.content.composite.PackageListItemComposite;
 import org.rhq.core.domain.content.composite.PackageVersionComposite;
@@ -221,9 +227,25 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
     public PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId,
         String filter, PageControl pc) {
         pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
+        PageControl unlimitedpc = PageControl.getUnlimitedInstance();
+
+        Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
+
+        queryInstalled.setParameter("resourceId", resourceId);
+        queryInstalled.setParameter("packageTypeFilterId", null);
+        queryInstalled.setParameter("packageVersionFilter", null);
+        queryInstalled.setParameter("search", null);
+
+        List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
+
+        List<String> installedPackageNames = new ArrayList<String>();
+        for (PackageListItemComposite packageInstalled : packagesInstalled) {
+            installedPackageNames.add(packageInstalled.getPackageName());
+        }
 
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
-            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, pc);
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, unlimitedpc);
         Query queryCount = PersistenceUtility.createCountQuery(entityManager,
             PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS);
 
@@ -235,8 +257,113 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
 
         long count = (Long) queryCount.getSingleResult();
         List<PackageVersionComposite> results = query.getResultList();
+        List<PackageVersionComposite> modifiedResults = new ArrayList<PackageVersionComposite>();
 
-        return new PageList<PackageVersionComposite>(results, (int) count, pc);
+        for (PackageVersionComposite result : results) {
+            if (installedPackageNames.contains(result.getPackageName())) {
+                if (count > 0)
+                    count--;
+            } else {
+                modifiedResults.add(result);
+            }
+        }
+
+        Collections.sort(modifiedResults, new Comparator() {
+
+            public int compare(Object o1, Object o2) {
+                PackageVersionComposite p1 = (PackageVersionComposite) o1;
+                PackageVersionComposite p2 = (PackageVersionComposite) o2;
+                return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
+            }
+        });
+
+        return new PageList<PackageVersionComposite>(modifiedResults, (int) count, pc);
+    }
+
+    @SuppressWarnings("unchecked")
+    public PageList<PackageVersionComposite> getUpdatePackageVersionCompositesByFilter(Subject user, int resourceId,
+        String filter, PageControl pc) {
+        pc.initDefaultOrderingField("pv.generalPackage.name", PageOrdering.ASC);
+        PageControl unlimitedpc = PageControl.getUnlimitedInstance();
+
+        Query queryInstalled = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            InstalledPackage.QUERY_FIND_PACKAGE_LIST_ITEM_COMPOSITE, unlimitedpc);
+
+        queryInstalled.setParameter("resourceId", resourceId);
+        queryInstalled.setParameter("packageTypeFilterId", null);
+        queryInstalled.setParameter("packageVersionFilter", null);
+        queryInstalled.setParameter("search", null);
+
+        List<PackageListItemComposite> packagesInstalled = queryInstalled.getResultList();
+
+        Map<String, String> installedPackageNameAndVersion = new HashMap<String, String>();
+        for (PackageListItemComposite packageInstalled : packagesInstalled) {
+            installedPackageNameAndVersion.put(packageInstalled.getPackageName(), packageInstalled.getVersion());
+        }
+
+        Query query = PersistenceUtility.createQueryWithOrderBy(entityManager,
+            PackageVersion.QUERY_FIND_COMPOSITE_BY_FILTERS, unlimitedpc);
+        query.setParameter("resourceId", resourceId);
+        query.setParameter("filter", filter);
+
+        List<PackageVersionComposite> results = query.getResultList();
+        List<PackageVersionComposite> modifiedResults = new ArrayList<PackageVersionComposite>();
+        String packageName = new String();
+
+        for (PackageVersionComposite result : results) {
+            if (installedPackageNameAndVersion.get(result.getPackageName()) != null) {
+
+                packageName = result.getPackageName();
+
+                if (installedPackageNameAndVersion.get(packageName).compareTo(result.getPackageVersion().getVersion()) < 0) {
+                    modifiedResults.add(result);
+                }
+            }
+        }
+
+        List<PackageVersionComposite> testResults = new ArrayList<PackageVersionComposite>();
+        for (PackageVersionComposite result : modifiedResults) {
+            testResults.add(result);
+        }
+
+        List<PackageVersionComposite> latestResults = new ArrayList<PackageVersionComposite>();
+
+        PackageVersionComposite latestPackage = null;
+
+        for (PackageVersionComposite newPackage : modifiedResults) {
+            latestPackage = newPackage;
+
+            for (PackageVersionComposite pack : testResults) {
+                if (pack.getPackageName().equals(latestPackage.getPackageName())
+                    && latestPackage.getPackageVersion().getVersion().compareTo(pack.getPackageVersion().getVersion()) < 0) {
+                    latestPackage = pack;
+                }
+            }
+            latestResults.add(latestPackage);
+        }
+
+        List<PackageVersionComposite> finalResults = new ArrayList<PackageVersionComposite>();
+
+        long count = 0;
+        for (PackageVersionComposite pack : latestResults) {
+            if (finalResults.contains(pack)) {
+                continue;
+            } else {
+                finalResults.add(pack);
+                count++;
+            }
+        }
+
+        Collections.sort(finalResults, new Comparator() {
+
+            public int compare(Object o1, Object o2) {
+                PackageVersionComposite p1 = (PackageVersionComposite) o1;
+                PackageVersionComposite p2 = (PackageVersionComposite) o2;
+                return p1.getPackageName().compareToIgnoreCase(p2.getPackageName());
+            }
+        });
+
+        return new PageList<PackageVersionComposite>(finalResults, (int) count, pc);
     }
 
     public PackageVersionComposite loadPackageVersionComposite(Subject user, int packageVersionId) {
@@ -263,6 +390,15 @@ public class ContentUIManagerBean implements ContentUIManagerLocal {
         Query q = entityManager.createNamedQuery(PackageVersion.QUERY_FIND_COMPOSITES_BY_IDS);
         q.setParameter("ids", iPackageVersionIds);
         List<PackageVersionComposite> results = q.getResultList();
+
+        return results;
+    }
+
+    @SuppressWarnings("unchecked")
+    public AdvisoryDetailsComposite loadAdvisoryDetailsComposite(Subject user, Integer advisoryId) {
+        Query q = entityManager.createNamedQuery(Advisory.QUERY_FIND_COMPOSITE_BY_ID);
+        q.setParameter("id", advisoryId);
+        AdvisoryDetailsComposite results = (AdvisoryDetailsComposite) q.getSingleResult();
 
         return results;
     }

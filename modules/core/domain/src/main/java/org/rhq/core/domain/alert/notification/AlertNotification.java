@@ -42,6 +42,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -54,7 +55,7 @@ import org.rhq.core.domain.configuration.Configuration;
 @NamedQueries( {
     @NamedQuery(name = AlertNotification.DELETE_BY_ID, query = "DELETE FROM AlertNotification an WHERE an.id IN ( :ids )"),
     @NamedQuery(name = AlertNotification.QUERY_DELETE_BY_RESOURCES, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IN ( SELECT ad FROM AlertDefinition ad WHERE ad.resource.id IN ( :resourceIds ) )"),
-    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL") })
+    @NamedQuery(name = AlertNotification.QUERY_DELETE_ORPHANED, query = "DELETE FROM AlertNotification an WHERE an.alertDefinition IS NULL AND an.notificationTemplate IS NULL") })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIFICATION_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIFICATION")
 public class AlertNotification implements Serializable {
@@ -65,6 +66,11 @@ public class AlertNotification implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "AlertNotification.deleteByResources";
     public static final String QUERY_DELETE_ORPHANED = "AlertNotification.deleteOrphaned";
 
+    @Transient
+    transient int alertDefinitionId;
+    @Transient
+    transient int alertNotificationId;
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIFICATION_ID_SEQ")
     @Id
@@ -74,12 +80,22 @@ public class AlertNotification implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
+    @JoinColumn(name = "NOTIF_TEMPLATE_ID")
+    @ManyToOne
+    private NotificationTemplate notificationTemplate;
+
     @JoinColumn(name = "ALERT_CONFIG_ID", referencedColumnName = "ID")
     @OneToOne(cascade = { CascadeType.ALL }, fetch = FetchType.LAZY)
     private Configuration configuration;
 
     @Column(name = "ALERT_SENDER_NAME")
     private String senderName;
+
+    @Column(name = "ALERT_ORDER")
+    private int order;
+
+    @Column(name = "NAME")
+    private String name;
 
     protected AlertNotification() {
     } // JPA spec
@@ -101,7 +117,21 @@ public class AlertNotification implements Serializable {
         this.configuration = config.deepCopy();
     }
 
+    /**
+     * Constructor only for transient usage
+     * @param alertDefinitionId
+     * @param alertNotificationId
+     */
+    public AlertNotification(int alertDefinitionId, int alertNotificationId) {
+        this.alertDefinitionId = alertDefinitionId;
+        this.alertNotificationId = alertNotificationId;
+    }
 
+
+    public AlertNotification(String name, String sender) {
+        this.name = name;
+        this.senderName = sender;
+    }
 
     public int getId() {
         return id;
@@ -122,6 +152,19 @@ public class AlertNotification implements Serializable {
             results.id = this.id;
         }
         return results;
+    }
+
+    public AlertNotification copyWithAlertDefintion(AlertDefinition alertDefinition, boolean cloneConfiguration) {
+        Configuration config;
+        if (cloneConfiguration)
+            config = this.configuration.deepCopy(false);
+        else
+            config = this.configuration;
+        AlertNotification notification = new AlertNotification(alertDefinition, config);
+        notification.setName(this.name);
+        notification.setSenderName(this.senderName);
+        notification.setOrder(this.order);
+        return notification;
     }
 
     protected AlertNotification copy() {
@@ -146,5 +189,52 @@ public class AlertNotification implements Serializable {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public int getOrder() {
+        return order;
+    }
+
+    public void setOrder(int order) {
+        this.order = order;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public NotificationTemplate getNotificationTemplate() {
+        return notificationTemplate;
+    }
+
+    public void setNotificationTemplate(NotificationTemplate notificationTemplate) {
+        this.notificationTemplate = notificationTemplate;
+    }
+
+    public int getAlertDefinitionId() {
+        return alertDefinitionId;
+    }
+
+    public int getAlertNotificationId() {
+        return alertNotificationId;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("AlertNotification");
+        sb.append("{alertDefinitionId=").append(alertDefinitionId);
+        sb.append(", alertNotificationId=").append(alertNotificationId);
+        sb.append(", id=").append(id);
+        sb.append(", notificationTemplate=").append(notificationTemplate);
+        sb.append(", senderName='").append(senderName).append('\'');
+        sb.append(", order=").append(order);
+        sb.append(", name='").append(name).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

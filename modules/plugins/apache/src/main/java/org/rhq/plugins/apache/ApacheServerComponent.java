@@ -19,6 +19,7 @@
 package org.rhq.plugins.apache;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
@@ -27,44 +28,70 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import net.augeas.Augeas;
+import net.augeas.AugeasException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
+import org.rhq.augeas.AugeasProxy;
+import org.rhq.augeas.config.AugeasModuleConfig;
+import org.rhq.augeas.node.AugeasNode;
+import org.rhq.augeas.tree.AugeasTree;
+import org.rhq.augeas.tree.AugeasTreeException;
+import org.rhq.augeas.util.Glob;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.event.EventSeverity;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.domain.resource.CreateResourceStatus;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.event.EventPoller;
 import org.rhq.core.pluginapi.event.log.LogFileEventPoller;
+import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
+import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.pluginapi.operation.OperationContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.SystemInfo;
+import org.rhq.plugins.apache.augeas.ApacheAugeasNode;
+import org.rhq.plugins.apache.augeas.AugeasConfigurationApache;
+import org.rhq.plugins.apache.augeas.AugeasTreeBuilderApache;
+import org.rhq.plugins.apache.mapping.ApacheAugeasMapping;
 import org.rhq.plugins.apache.util.ApacheBinaryInfo;
+import org.rhq.plugins.apache.util.ConfigurationTimestamp;
+import org.rhq.plugins.apache.util.HttpdAddressUtility;
+import org.rhq.plugins.platform.PlatformComponent;
 import org.rhq.plugins.www.snmp.SNMPClient;
 import org.rhq.plugins.www.snmp.SNMPException;
 import org.rhq.plugins.www.snmp.SNMPSession;
 import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.plugins.www.util.WWWUtils;
+import org.rhq.rhqtransform.AugeasRHQComponent;
 
 /**
- * The resource component for Apache 1.3/2.x servers.
+ * The resource component for Apache 2.x servers.
  *
  * @author Ian Springer
+ * @author Lukas Krejci
  */
-public class ApacheServerComponent implements ResourceComponent, MeasurementFacet, OperationFacet {
+public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
+    ConfigurationFacet, CreateChildResourceFacet {
+
+    private static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -81,6 +108,15 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_EVENTS_ENABLED = "errorLogEventsEnabled";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_MINIMUM_SEVERITY = "errorLogMinimumSeverity";
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
+    public static final String PLUGIN_CONFIG_PROP_VHOST_FILES_MASK = "vhostFilesMask";
+    public static final String PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY = "vhostCreationPolicy";
+    
+    public static final String PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE = "restartAfterConfigurationUpdate";
+    
+    public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
+    public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
+    
+    public static final String AUXILIARY_INDEX_PROP = "_index";
 
     public static final String SERVER_BUILT_TRAIT = "serverBuilt";
 
@@ -92,21 +128,34 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
 
     private static final String ERROR_LOG_ENTRY_EVENT_TYPE = "errorLogEntry";
 
-    private static final String[] CONTROL_SCRIPT_PATHS = {"bin/apachectl", "sbin/apachectl", "bin/apachectl2", "sbin/apachectl2" };
+    private static final String[] CONTROL_SCRIPT_PATHS = { "bin/apachectl", "sbin/apachectl", "bin/apachectl2",
+        "sbin/apachectl2" };
 
-    private ResourceContext resourceContext;
+    private ResourceContext<PlatformComponent> resourceContext;
     private EventContext eventContext;
     private SNMPClient snmpClient;
     private URL url;
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
 
+    private static final boolean HAS_AUGEAS;
+    static {
+        boolean augeasPresent;
+        try {
+            new Augeas();
+            augeasPresent = true;
+        } catch (Throwable e) {
+            augeasPresent = false;
+        }
+        HAS_AUGEAS = augeasPresent;
+    }
+    
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
     private ApacheServerOperationsDelegate operationsDelegate;
 
-    public void start(ResourceContext resourceContext) throws Exception {
+    public void start(ResourceContext<PlatformComponent> resourceContext) throws Exception {
         log.info("Initializing server component for server [" + resourceContext.getResourceKey() + "]...");
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
@@ -249,13 +298,184 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return (mibName.equals("wwwServiceStartTime"));
     }
 
-    public void startOperationFacet(OperationContext context) {
-    }
-
     @Nullable
     public OperationResult invokeOperation(@NotNull String name, @NotNull Configuration params) throws Exception {
         log.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
         return this.operationsDelegate.invokeOperation(name, params);
+    }
+
+    public Configuration loadResourceConfiguration() throws Exception {
+        checkConfigurationSupported();
+
+        try {
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+
+            AugeasTree tree = getAugeasTree();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
+        } catch (Exception e) {
+            log.error("Failed to load Apache configuration.", e);
+            throw e;
+        }
+    }
+
+    public void updateResourceConfiguration(ConfigurationUpdateReport report) {
+        AugeasTree tree = null;
+        try {
+            tree = getAugeasTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+
+            mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            log.info("Apache configuration was updated");
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            
+            finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+        }
+   }
+
+    public AugeasProxy getAugeasProxy() throws AugeasException {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());
+        AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
+        AugeasProxy augeasProxy = new AugeasProxy(config, builder);
+        augeasProxy.load();
+        return augeasProxy;
+    }
+
+    public AugeasTree getAugeasTree() throws AugeasException {
+        AugeasProxy proxy = getAugeasProxy();
+        String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
+        
+        return proxy.getAugeasTree(module, true);
+    }
+    
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        if (ApacheVirtualHostServiceComponent.RESOURCE_TYPE_NAME.equals(report.getResourceType().getName())) {
+            Configuration vhostResourceConfig = report.getResourceConfiguration();
+            ConfigurationDefinition vhostResourceConfigDef = report.getResourceType().getResourceConfigurationDefinition();
+            Configuration vhostPluginConfig = report.getPluginConfiguration();
+            
+            String vhostDef = report.getUserSpecifiedResourceName();
+            String serverName = vhostResourceConfig.getSimpleValue(ApacheVirtualHostServiceComponent.SERVER_NAME_CONFIG_PROP, null);
+            
+            //determine the resource key
+            String resourceKey = vhostDef;
+            if (serverName != null) {
+                resourceKey = serverName + "|" + resourceKey;
+            }
+            
+            //determine the resource name
+            AugeasProxy proxy = getAugeasProxy();
+            AugeasTree tree = getAugeasTree();
+            String[] vhostDefs = vhostDef.split(" ");
+            HttpdAddressUtility.Address addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
+            
+            String resourceName;
+            if (serverName != null) {
+                resourceName = addr.host + ":" + addr.port;
+            } else {
+                resourceName = resourceKey;
+            }
+            
+            report.setResourceKey(resourceKey);
+            report.setResourceName(resourceName);
+
+            //fill in the plugin config
+            String url = "http://" + addr.host + ":" + addr.port + "/";
+            vhostPluginConfig.put(new PropertySimple(ApacheVirtualHostServiceComponent.URL_CONFIG_PROP, url));
+            
+            //determine the sequence number of the new vhost
+            List<AugeasNode> existingVhosts = tree.matchRelative(tree.getRootNode(), "<VirtualHost");
+            int seq = existingVhosts.size() + 1;
+            
+            Configuration pluginConfig = resourceContext.getPluginConfiguration();
+            String creationType = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY,
+                PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE);
+
+            AugeasNode vhost = null;
+            String vhostFile = proxy.getConfiguration().getModules().get(0).getConfigFiles().get(0);
+            
+            if (PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE.equals(creationType)) {
+                vhost = tree.createNode(tree.getRootNode(), "<VirtualHost", null, seq);
+            } else if (PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE.equals(creationType)) {
+                String mask = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, null);
+                if (mask == null) {
+                    report.setErrorMessage("No virtual host file mask configured.");
+                } else {
+                    vhostFile = getNewVhostFileName(addr, mask);
+                    File vhostFileFile = new File(vhostFile);
+                    
+                    //we're creating a new file here, so we must ensure that Augeas does have this file
+                    //on its load path, otherwise it will refuse to create it.
+                    AugeasConfigurationApache config = (AugeasConfigurationApache) proxy.getConfiguration();
+                    AugeasModuleConfig moduleConfig = config.getModuleByName(config.getAugeasModuleName());
+                    boolean willPersist = false;
+                    for(String glob : moduleConfig.getIncludedGlobs()) {
+                        if (Glob.matches(getServerRoot(), glob, vhostFileFile)) {
+                            willPersist = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!willPersist) {
+                        //the file wouldn't be loaded by augeas
+                        moduleConfig.addIncludedGlob(vhostFile);
+                    }
+                    
+                    try {
+                        vhostFileFile.createNewFile();
+                    } catch (IOException e) {
+                        log.error("Failed to create a new vhost file: " + vhostFile, e);
+                    }
+                    
+                    proxy.load();
+                    tree = proxy.getAugeasTree(moduleConfig.getModuletName(), true);
+                    
+                    vhost = tree.createNode(AugeasTree.AUGEAS_DATA_PATH + vhostFile + "/<VirtualHost");
+                    ((ApacheAugeasNode)vhost).setParentNode(tree.getRootNode());
+                    
+                    if (!willPersist) {
+                        //this also means that there was no include
+                        //that would load the file, so we have to
+                        //add the include directive to the main conf.
+                        List<AugeasNode> includes = tree.matchRelative(tree.getRootNode(), "Include");
+                        AugeasNode include = tree.createNode(tree.getRootNode(), "Include", null, includes.size() + 1);
+                        tree.createNode(include, "param", vhostFile, 0);
+                    }
+                }
+            }
+            
+            if (vhost == null) {
+                report.setStatus(CreateResourceStatus.FAILURE);
+            } else {
+                try {
+                    for(int i = 0; i < vhostDefs.length; ++i) {
+                        tree.createNode(vhost, "param", vhostDefs[i], i + 1);
+                    }
+                    ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);                    
+                    mapping.updateAugeas(vhost, vhostResourceConfig, vhostResourceConfigDef);
+                    
+                    tree.save();
+                    report.setStatus(CreateResourceStatus.SUCCESS);
+                    
+                    finishChildResourceCreate(report);
+                } catch (Exception e) {
+                    report.setStatus(CreateResourceStatus.FAILURE);
+                    report.setException(e);
+                }
+            }
+        }
+        return report;
     }
 
     /**
@@ -313,7 +533,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         if (executablePath != null) {
             executableFile = resolvePathRelativeToServerRoot(executablePath);
         } else {
-            String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
+            String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
             SystemInfo systemInfo = this.resourceContext.getSystemInformation();
             if (systemInfo.getOperatingSystemType() != OperatingSystemType.WINDOWS) // UNIX
             {
@@ -369,7 +589,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
             {
                 boolean found = false;
                 // First try server root as base
-                String serverRoot = getRequiredPropertyValue(pluginConfig, PLUGIN_CONFIG_PROP_SERVER_ROOT);
+                String serverRoot = getAugeasTree().getRootNode().getChildByLabel("ServerRoot").get(0).getValue();
 
                 for (String path : CONTROL_SCRIPT_PATHS) {
                     controlScriptFile = new File(serverRoot, path);
@@ -380,12 +600,12 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
                 }
                 if (!found) {
                     String executablePath = pluginConfig.getSimpleValue(PLUGIN_CONFIG_PROP_EXECUTABLE_PATH, null);
-                    if (executablePath!=null) {
+                    if (executablePath != null) {
                         // this is now somethig like /usr/sbin/httpd .. trim off the last 2 parts
                         int i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         i = executablePath.lastIndexOf('/');
-                        executablePath = executablePath.substring(0,i);
+                        executablePath = executablePath.substring(0, i);
                         for (String path : CONTROL_SCRIPT_PATHS) {
                             controlScriptFile = new File(executablePath, path);
                             if (controlScriptFile.exists()) {
@@ -407,6 +627,73 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return controlScriptFile;
     }
 
+    @NotNull
+    public ConfigurationTimestamp getConfigurationTimestamp() {
+        AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration()); 
+        return new ConfigurationTimestamp(config.getAllConfigurationFiles());
+    }
+    
+    /**
+     * This method is supposed to be called from {@link #updateResourceConfiguration(ConfigurationUpdateReport)}
+     * of this resource and any child resources.
+     * 
+     * Based on the plugin configuration of this resource, the Apache instance is either restarted or left as is.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
+        }
+    }
+    
+    /**
+     * This method is akin to {@link #finishConfigurationUpdate(ConfigurationUpdateReport)} but should
+     * be used in the {@link #createResource(CreateResourceReport)} method.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishChildResourceCreate(CreateResourceReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setException(e);
+        }
+    }
+    
+    /**
+     * Conditionally restarts the server based on the settings in the plugin configuration of the server.
+     * 
+     * @throws Exception if the restart fails.
+     */
+    public void conditionalRestart() throws Exception {
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        boolean restart = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE).getBooleanValue();
+        if (restart) {
+            operationsDelegate.invokeOperation("graceful_restart", new Configuration());
+        }
+    }
+    
+    /**
+     * This method checks whether the supplied node that has been deleted from the tree didn't leave
+     * the file it was contained in empty.
+     * If the file is empty after deleting the node, the file is automatically deleted.
+     * @param tree TODO
+     * @param deletedNode the node that has been deleted from the tree.
+     */
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        File file = tree.getFile(deletedNode);
+        List<AugeasNode> fileContents = tree.match(file.getAbsolutePath() + AugeasTree.PATH_SEPARATOR + "*");
+        
+        if (fileContents.size() == 0) {
+            file.delete();
+        }
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -445,6 +732,7 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         return resolvePathRelativeToServerRoot(this.resourceContext.getPluginConfiguration(), path);
     }
 
+    //TODO this needs to go...
     @NotNull
     static File resolvePathRelativeToServerRoot(Configuration pluginConfig, @NotNull String path) {
         File file = new File(path);
@@ -504,5 +792,52 @@ public class ApacheServerComponent implements ResourceComponent, MeasurementFace
         File errorLogFile = resolvePathRelativeToServerRoot(pluginConfig.getSimpleValue(
             PLUGIN_CONFIG_PROP_ERROR_LOG_FILE_PATH, DEFAULT_ERROR_LOG_PATH));
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
+    }
+
+    /**
+     * Checks whether the configuration is supported for this apache instance.
+     * Checks for Augeas availability and Apache version greater than 2.x are made.
+     * 
+     * @throws IllegalStateException if configuration isn't supported
+     */
+    public void checkConfigurationSupported() {
+        if (!HAS_AUGEAS) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
+        String version = resourceContext.getVersion();
+        
+        if (!version.startsWith("2.")) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+    }
+    
+    public HttpdAddressUtility getAddressUtility() {
+        String version = resourceContext.getVersion();
+        return HttpdAddressUtility.get(version);
+    }
+    
+    private String getNewVhostFileName(HttpdAddressUtility.Address address, String mask) {
+        String filename = address.host + "_" + address.port;
+        String fullPath = mask.replace("*", filename);
+        
+        File file = getFileRelativeToServerRoot(fullPath);
+        
+        int i = 1;
+        while (file.exists()) {
+            filename = address.host + "_" + address.port + "-" + (i++);
+            fullPath = mask.replace("*", filename);
+            file = getFileRelativeToServerRoot(fullPath);
+        }
+        return file.getAbsolutePath();
+    }
+    
+    private File getFileRelativeToServerRoot(String path) {
+        File f = new File(path);
+        if (f.isAbsolute()) {
+            return f;
+        } else {
+            return new File(getServerRoot(), path);
+        }   
     }
 }

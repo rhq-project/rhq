@@ -35,6 +35,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.hyperic.sigar.Mem;
+import org.hyperic.sigar.NetConnection;
 import org.hyperic.sigar.ProcMem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.Swap;
@@ -49,6 +50,8 @@ import org.testng.annotations.Test;
  */
 @Test(groups = "native-system")
 public class NativeSystemInfoTest {
+    private static final boolean ENABLED = true;
+
     @AfterMethod
     @BeforeMethod
     public void terminateNativeLibrary() {
@@ -59,8 +62,36 @@ public class NativeSystemInfoTest {
     }
 
     /**
+     * Tests getting network connection information.
+     */
+    @Test(enabled = ENABLED)
+    public void testGetNetworkConnections() {
+        SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
+
+        if (!sysinfo.isNative()) {
+            System.out.println("~~~ Native library is not available - skipping testGetNetworkConnections");
+            return;
+        }
+
+        List<NetConnection> allConnections = sysinfo.getNetworkConnections(null, 0);
+        assert allConnections != null;
+        if (allConnections.size() > 0) {
+            String localAddress = allConnections.get(0).getLocalAddress();
+            int localPort = (int) allConnections.get(0).getLocalPort();
+            List<NetConnection> filtered = sysinfo.getNetworkConnections(localAddress, localPort);
+            assert filtered != null;
+            assert filtered.size() > 0 : "connection should not be missing - did it close that fast since we last seen it?";
+            assert localAddress.equals(filtered.get(0).getLocalAddress());
+            assert localPort == (int) filtered.get(0).getLocalPort();
+        } else {
+            System.out.println("testGetNetworkConnections: no active connections - will not perform filtering tests");
+        }
+    }
+
+    /**
      * Tests getting network adapter information.
      */
+    @Test(enabled = ENABLED)
     public void testGetNetworkAdapterInfo() {
         SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 
@@ -103,6 +134,8 @@ public class NativeSystemInfoTest {
                 assert addr.getHostAddress() != null;
             }
 
+            assert sysinfo.getNetworkAdapterStats(adapter.getName()) != null;
+
             System.out.println("Network adapter found: " + adapter);
         }
     }
@@ -112,6 +145,7 @@ public class NativeSystemInfoTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLED)
     public void testGetAllServices() throws Exception {
         final SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 
@@ -133,6 +167,7 @@ public class NativeSystemInfoTest {
         assert allServices.size() > 0;
     }
 
+    @Test(enabled = ENABLED)
     public void testNativeMemory() throws Exception {
         Sigar sigar = new Sigar();
         try {
@@ -170,6 +205,7 @@ public class NativeSystemInfoTest {
     /**
      * Tests getting process memory usage information.
      */
+    @Test(enabled = ENABLED)
     public void testProcessMemory() {
         final SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 
@@ -194,6 +230,7 @@ public class NativeSystemInfoTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLED)
     public void testCreateAlotOfNativeObjects() throws Exception {
         System.out.println("Creating alot of native Who objects");
         for (int i = 0; i < 1000; i++) {
@@ -228,6 +265,7 @@ public class NativeSystemInfoTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLED)
     public void testShutdownInitialize() throws Exception {
         Sigar sigar = null;
         try {
@@ -246,6 +284,7 @@ public class NativeSystemInfoTest {
     /**
      * Test the ability to disable the native library and then reenable it.
      */
+    @Test(enabled = ENABLED)
     public void testDisable() {
         SystemInfoFactory.disableNativeSystemInfo();
         assert SystemInfoFactory.isNativeSystemInfoDisabled() : "Should have been disabled";
@@ -262,6 +301,7 @@ public class NativeSystemInfoTest {
     /**
      * Tests the "non-native" Java system info.
      */
+    @Test(enabled = ENABLED)
     public void testJava() {
         processJavaSystemInfo(new JavaSystemInfo());
     }
@@ -271,6 +311,7 @@ public class NativeSystemInfoTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLED)
     public void testNativeConcurrency() throws Exception {
         final SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 
@@ -377,6 +418,7 @@ public class NativeSystemInfoTest {
      * Tests getting stuff if there is no native library available (only can test if this is running on a platform that
      * doesn't have the native libraries in java.library.path)
      */
+    @Test(enabled = ENABLED)
     public void testNonNative() {
         if (SystemInfoFactory.isNativeSystemInfoAvailable()) {
             System.out.println("~~~ Native library is available - cannot test the fallback-to-Java feature");
@@ -390,6 +432,7 @@ public class NativeSystemInfoTest {
     /**
      * Test for memory leaks in the native layer.
      */
+    @Test(enabled = ENABLED)
     public void testMemoryLeak() {
         final SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 
@@ -442,6 +485,7 @@ public class NativeSystemInfoTest {
      *
      * @throws Exception
      */
+    @Test(enabled = ENABLED)
     public void testNativeConcurrencyExec() throws Exception {
         final SystemInfo sysinfo = SystemInfoFactory.createSystemInfo();
 

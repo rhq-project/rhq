@@ -38,6 +38,8 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetailsKey;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
+import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 import org.rhq.enterprise.server.plugins.url.RemotePackageInfo.SupportedPackageType;
 
 /**
@@ -175,8 +177,7 @@ public class UrlProvider implements ContentProvider, PackageSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-                                    Collection<ContentProviderPackageDetails> existingPackages)
-        throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException {
 
         // put all existing packages in a "to be deleted" list. As we sync, we will remove
         // packages from this list that still exist on the remote system. Any leftover in the list
@@ -187,9 +188,13 @@ public class UrlProvider implements ContentProvider, PackageSource {
         // sync now
         long before = System.currentTimeMillis();
 
-        Map<String, RemotePackageInfo> locationList = getRemotePackageInfosFromIndex();
-        for (RemotePackageInfo rpi : locationList.values()) {
-            syncPackage(report, deletedPackages, rpi);
+        try {
+            Map<String, RemotePackageInfo> locationList = getRemotePackageInfosFromIndex();
+            for (RemotePackageInfo rpi : locationList.values()) {
+                syncPackage(report, deletedPackages, rpi);
+            }
+        } catch (Exception e) {
+            throw new SyncException("error synching packages", e);
         }
 
         long elapsed = System.currentTimeMillis() - before;
@@ -391,5 +396,9 @@ public class UrlProvider implements ContentProvider, PackageSource {
         }
 
         return null; // the file doesn't match any known types for this content source
+    }
+
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 }

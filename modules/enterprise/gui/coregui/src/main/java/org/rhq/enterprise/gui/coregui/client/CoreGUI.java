@@ -1,8 +1,5 @@
 package org.rhq.enterprise.gui.coregui.client;
 
-import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceGWTService;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceGWTServiceAsync;
@@ -13,31 +10,15 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-
-
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DSRequest;
-import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.Autofit;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.types.Side;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.WidgetCanvas;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.ColumnTree;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -78,13 +59,14 @@ public class CoreGUI implements EntryPoint {
 
         TreeGrid resourceTree = new TreeGrid();
         resourceTree.setWidth(500);
-        resourceTree.setHeight(400);
+        resourceTree.setHeight100();
         resourceTree.setNodeIcon("icons/16/person.png");
         resourceTree.setFolderIcon("icons/16/person.png");
         resourceTree.setShowOpenIcons(false);
         resourceTree.setShowDropIcons(false);
         resourceTree.setClosedIconSuffix("");
         resourceTree.setAutoFetchData(true);
+        resourceTree.setAnimateFolders(false);
         resourceTree.setDataSource(new ResourceTreeDatasource());
         treeTab.setPane(new WidgetCanvas(resourceTree));
 //        ((Layout)treeTab.getPane()).add.addChild(resourceTree);

@@ -153,7 +153,7 @@
 
        
       <plugins>
-           <!--
+
            <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>gwt-maven-plugin</artifactId>
@@ -162,7 +162,7 @@
                    <noServer>true</noServer>
                    <inplace>false</inplace>
                    <logLevel>INFO</logLevel>
-                   <runTarget>org.rhq.enterprise.gui.coregui/CoreGUI.html</runTarget>
+                   <runTarget>coregui/CoreGUI.html</runTarget>
                    <extraJvmArgs>-Xmx512m</extraJvmArgs>
                    <localWorkers>2</localWorkers>
                    <draftCompile>true</draftCompile>
@@ -177,8 +177,8 @@
                    </execution>
                </executions>
            </plugin>
--->
-          <!--
+
+
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
             <version>2.1-beta-1</version>
@@ -199,7 +199,7 @@
                   </resource>
                </webResources>
             </configuration>
-         </plugin>-->
+         </plugin>
 
       <!--
          <plugin>
@@ -248,6 +248,90 @@
 
    </build>
 
+   <profiles>
+      <profile>
+         <id>dev</id>
+
+         <properties>
+            <rhq.rootDir>../../../..</rhq.rootDir>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+         </properties>
+
+         <build>
+            <plugins>
+
+               <plugin>
+                 <artifactId>maven-antrun-plugin</artifactId>
+                 <version>1.1</version>
+                 <executions>
+
+                     <execution>
+                        <id>deploy-classes</id>
+                        <phase>compile</phase>
+                        <configuration>
+                          <tasks>
+                            <!--
+                            <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                            <echo>*** Copying updated files from target/${project.build.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
+                            <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="war/WEB-INF/classes" />
+                            </copy>
+                            -->
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <echo>*** Copying updated files from src${file.separator}main${file.separator}webapp${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/src/main/webapp" />
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>deploy</id>
+                        <phase>package</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                               <fileset dir="${basedir}/target/${project.build.finalName}" />
+                            </copy>
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                     <execution>
+                        <id>undeploy</id>
+                        <phase>clean</phase>
+                        <configuration>
+                          <tasks>
+                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                            <delete dir="${deployment.dir}" />
+                          </tasks>
+                        </configuration>
+                        <goals>
+                          <goal>run</goal>
+                        </goals>
+                     </execution>
+
+                  </executions>
+               </plugin>
+
+            </plugins>
+         </build>
+      </profile>
+
+
+   </profiles>
 
    <repositories>
        <repository>

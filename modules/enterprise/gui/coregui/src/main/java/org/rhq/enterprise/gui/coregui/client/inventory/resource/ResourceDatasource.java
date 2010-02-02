@@ -153,6 +153,8 @@ public class ResourceDatasource extends DataSource {
 //
 //                mainPanel.add(table);
 
+                System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
+
                 ListGridRecord[] records = new ListGridRecord[result.size()];
                 for (int x=0; x<result.size(); x++) {
                     Resource res = result.get(x);

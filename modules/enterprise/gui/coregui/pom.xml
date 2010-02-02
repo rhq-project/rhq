@@ -53,6 +53,14 @@
            <scope>provided</scope>
        </dependency>
 
+       <!--<dependency>
+           <groupId>com.google.gwt</groupId>
+           <artifactId>gwt-incubator</artifactId>
+           <scope>provided</scope>
+           <version>2.0</version>
+       </dependency>-->
+
+
          <dependency>
              <groupId>com.smartgwt</groupId>
              <artifactId>smartgwt</artifactId>
@@ -102,13 +110,6 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>jsp-api</artifactId>
-         <version>2.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
       <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
       <dependency>
          <groupId>javax.persistence</groupId>
@@ -137,17 +138,16 @@
 
    <build>
       <finalName>coregui</finalName>
-      <outputDirectory>war/WEB-INF/classes</outputDirectory>
       <plugins>
            <plugin>
                <groupId>org.codehaus.mojo</groupId>
                <artifactId>gwt-maven-plugin</artifactId>
                <version>1.2.0-11137</version>
                <configuration>
-                   <warSourceDirectory>war</warSourceDirectory>
+                   <noServer>true</noServer>
                    <inplace>true</inplace>
                    <logLevel>INFO</logLevel>
-                   <runTarget>CoreGUI.html</runTarget>
+                   <runTarget>org.rhq.enterprise.gui.coregui/CoreGUI.html</runTarget>
                    <extraJvmArgs>-Xmx512m</extraJvmArgs>
                    <localWorkers>2</localWorkers>
                    <draftCompile>true</draftCompile>
@@ -165,8 +165,7 @@
             <artifactId>maven-war-plugin</artifactId>
             <version>2.1-beta-1</version>
             <configuration>
-                <warSourceDirectory>war</warSourceDirectory>
-               <archive>                   
+               <archive>
                   <manifest>
                      <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
                      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
@@ -178,7 +177,7 @@
                <webResources>
                   <resource>
                      <filtering>false</filtering>
-                     <directory>${basedir}/war</directory>
+                     <directory>${basedir}/src/main/webapp</directory>
                   </resource>
                   <resource>
                      <filtering>true</filtering>
@@ -236,7 +235,6 @@
    </build>
 
    <profiles>
-
       <profile>
          <id>dev</id>
 
@@ -270,7 +268,6 @@
                             <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                <fileset dir="${basedir}/src/main/webapp" />
                             </copy>
-                            <!-- TODO: Also copy the files from src/main/webapp-filtered/, and then filter them ourselves. -->
                           </tasks>
                         </configuration>
                         <goals>
@@ -316,6 +313,7 @@
             </plugins>
          </build>
       </profile>
+
 
    </profiles>
 

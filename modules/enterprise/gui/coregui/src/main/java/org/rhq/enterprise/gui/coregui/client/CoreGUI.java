@@ -15,19 +15,38 @@ import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.*;
 
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.DSDataFormat;
+import com.smartgwt.client.types.DSProtocol;
+import com.smartgwt.client.types.Side;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.WidgetCanvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ColumnTree;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.layout.Layout;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.MenuItemSeparator;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+import com.smartgwt.client.widgets.tab.Tab;
+import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.tree.TreeGrid;
+import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
+import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
 
 /**
@@ -36,39 +55,98 @@ import com.smartgwt.client.widgets.tree.TreeGrid;
 public class CoreGUI implements EntryPoint {
   ResourceGWTServiceAsync resourceService;
 
-    private VerticalPanel mainPanel;
-    private HorizontalPanel searchPanel;
-    private TextBox searchBox;
 
     public void onModuleLoad() {
         resourceService = ResourceGWTService.App.getInstance();
 
-        mainPanel = new VerticalPanel();
 
 
         DOM.setInnerHTML(RootPanel.get("Loading-Panel").getElement(), "");
 
 
+        final TabSet topTabSet = new TabSet();
+        topTabSet.setTabBarPosition(Side.TOP);
+        topTabSet.setWidth100();
+        topTabSet.setHeight100();
+
+
+        Tab tableTab = new Tab("Resource Search Table");
+
+        Tab treeTab = new Tab("Resource Tree");
+
+
+
+        TreeGrid resourceTree = new TreeGrid();
+        resourceTree.setWidth(500);
+        resourceTree.setHeight(400);
+        resourceTree.setNodeIcon("icons/16/person.png");
+        resourceTree.setFolderIcon("icons/16/person.png");
+        resourceTree.setShowOpenIcons(false);
+        resourceTree.setShowDropIcons(false);
+        resourceTree.setClosedIconSuffix("");
+        resourceTree.setAutoFetchData(true);
+        resourceTree.setDataSource(new ResourceTreeDatasource());
+        treeTab.setPane(new WidgetCanvas(resourceTree));
+//        ((Layout)treeTab.getPane()).add.addChild(resourceTree);
+
+        final Menu contextMenu = new Menu();
+        MenuItem item = new MenuItem("Expand node");
+        item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                TreeGrid treeGrid = (TreeGrid)event.getTarget();
+                System.out.println("You right clicked: " + treeGrid.getSelectedRecord());
+            }
+        });
+
+
+        /* Do menu support datasources? GH: Seemingly they'll only load once when done this way
+        contextMenu.setDataSource(new DataSource() {
+            {
+                setClientOnly(false);
+                setDataProtocol(DSProtocol.CLIENTCUSTOM);
+                setDataFormat(DSDataFormat.CUSTOM);
+            }
+            protected Object transformRequest(DSRequest request) {
+                System.out.println("Looking up menu info");
+                return request;
+            }
+        });
+        */
+
+        
+//        contextMenu.addItem(item);
+        resourceTree.setContextMenu(contextMenu);
+        resourceTree.addNodeContextClickHandler(new NodeContextClickHandler() {
+            public void onNodeContextClick(NodeContextClickEvent nodeContextClickEvent) {
+                nodeContextClickEvent.getNode();
+                contextMenu.setItems(new MenuItem(nodeContextClickEvent.getNode().getName()));
+                if (nodeContextClickEvent.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
+                    contextMenu.addItem(new MenuItem("Type: " + ((ResourceTreeDatasource.ResourceTreeNode)nodeContextClickEvent.getNode()).getResourceType().getName()));
+                }
+                contextMenu.addItem(new MenuItemSeparator());
+                MenuItem operations = new MenuItem("Operations");
+                Menu opSubMenu = new Menu();
+                opSubMenu.setItems(new MenuItem("Start"), new MenuItem("Stop"), new MenuItem("Restart"));
+                operations.setSubmenu(opSubMenu);
+                contextMenu.addItem(operations);
+                contextMenu.showContextMenu();
+            }
+        });
+
+
+
+
+
+        VerticalPanel resourceSearch = new VerticalPanel();
+        HorizontalPanel searchPanel;
+        final TextBox searchBox = new TextBox();
+        searchBox.setText("agent");
+
         searchPanel = new HorizontalPanel();
         searchPanel.add(new Label("Resource Search"));
-        searchBox = new TextBox();
         searchPanel.add(searchBox);
 
-        RootPanel.get().add(searchPanel);
-
-        RootPanel.get().add(mainPanel);
-
-//        TreeGrid resourceTree = new TreeGrid();
-//        resourceTree.setWidth(500);
-//        resourceTree.setHeight(400);
-//        resourceTree.setNodeIcon("icons/16/person.png");
-//        resourceTree.setFolderIcon("icons/16/person.png");
-//        resourceTree.setShowOpenIcons(false);
-//        resourceTree.setShowDropIcons(false);
-//        resourceTree.setClosedIconSuffix("");
-//        resourceTree.setAutoFetchData(true);
-//        resourceTree.setDataSource(new ResourceTreeDatasource());
-//        mainPanel.add(resourceTree);
+        resourceSearch.add(searchPanel);
 
 
         final ResourceDatasource datasource = new ResourceDatasource();
@@ -80,7 +158,7 @@ public class CoreGUI implements EntryPoint {
         listGrid.setAlternateRecordStyles(true);
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
 //        listGrid.getField("currentAvailability").setAlign(Alignment.CENTER);
-        mainPanel.add(listGrid);
+        resourceSearch.add(listGrid);
 
         
         searchBox.addKeyPressHandler(new KeyPressHandler() {
@@ -88,10 +166,18 @@ public class CoreGUI implements EntryPoint {
                 if (event.getCharCode() == KeyCodes.KEY_ENTER) {
                     datasource.setQuery(searchBox.getText());
                     Criteria c = new Criteria("name", searchBox.getText());
+                    long start = System.currentTimeMillis();
                     listGrid.fetchData(c);
+                    System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
                 }
             }
         });
+
+
+        tableTab.setPane(new WidgetCanvas(resourceSearch));//resourceSearch); //.addChild(resourceSearch);
+
+
+        /*
 
         IButton button = new IButton("say hello");
         button.moveTo(300,50);
@@ -102,12 +188,22 @@ public class CoreGUI implements EntryPoint {
                 
             }
         });
-        button.draw();
+        button.draw();*/
+
+
+
+//        RootPanel.get().add(topTabSet);
+
+        topTabSet.addTab(tableTab);
+        topTabSet.addTab(treeTab);
+
+        topTabSet.draw();
     }
 
 
 
-
+/*
+This displays a core gwt table
     public void updateSearch(String searchString) {
         final long start = System.currentTimeMillis();
         ResourceCriteria criteria = new ResourceCriteria();
@@ -151,4 +247,5 @@ public class CoreGUI implements EntryPoint {
             }
         });
     }
+    */
 }

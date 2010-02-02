@@ -7,6 +7,10 @@
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
+    <!--
+        <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
+    -->
+
 
 
     <set-property name="user.agent" value="safari"/>

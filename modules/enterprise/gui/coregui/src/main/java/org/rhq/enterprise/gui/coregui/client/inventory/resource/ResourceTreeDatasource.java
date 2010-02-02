@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
@@ -39,6 +40,10 @@ import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tree.TreeNode;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
 /**
  * @author Greg Hinkle
  */
@@ -53,7 +58,7 @@ private boolean initialized = false;
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
 
-        DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
+        DataSourceField idDataField = new DataSourceTextField("id", "ID");
         idDataField.setPrimaryKey(true);
 
         DataSourceTextField nameDataField = new DataSourceTextField("name", "Name");
@@ -65,9 +70,20 @@ private boolean initialized = false;
         DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability");
         descriptionDataField.setCanEdit(false);
 
+        DataSourceTextField parentIdField = new DataSourceTextField("parentId", "Parent ID");
+//        parentIdField.setForeignKey("id");
+//        parentIdField.setRootValue("10001");
+
+        DataSourceTextField parentKeyField = new DataSourceTextField("parentKey", "Parent KEY");
+        parentKeyField.setForeignKey("id");
+        parentKeyField.setRootValue("10001");
+
+
+
+
 //        nameDataField.setType(FieldType.);
 
-        setFields(idDataField, nameDataField, descriptionDataField, availabilityDataField);
+        setFields(idDataField, parentIdField, parentKeyField, nameDataField, descriptionDataField, availabilityDataField);
     }
 
     public String getQuery() {
@@ -108,13 +124,15 @@ private boolean initialized = false;
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
-        System.out.println("Trying to get attributes");
 
-        System.out.println(request.getAttributes());
-//        int parentId = request.getAttributeAsInt("parentId");
-        
+        String p = request.getCriteria().getAttribute("parentKey") == null ? "10001" : request.getCriteria().getAttribute("parentKey");
+        System.out.println(Arrays.toString(request.getCriteria().getAttributes()));
+        System.out.println("Loading " + p + "(" + request.getCriteria().getAttribute("parentKey") + ")");
+
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterParentResourceId(10001);
+        criteria.addFilterParentResourceId(Integer.parseInt(p));
+        criteria.fetchResourceType(true);
+
 
         ResourceGWTServiceAsync resourceService = ResourceGWTService.App.getInstance();
 
@@ -135,7 +153,9 @@ private boolean initialized = false;
                     records[x] = record;
                 }
 
-                response.setData(records);
+
+
+                response.setData(build(records));
                 response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
                 processResponse(requestId, response);
 
@@ -143,7 +163,55 @@ private boolean initialized = false;
         });
     }
 
-    private static class ResourceTreeNode extends TreeNode {
+
+    private TreeNode[] build(ResourceTreeNode[] nodes) {
+        ArrayList<TreeNode> built = new ArrayList<TreeNode>();
+        HashMap<ResourceType, TypeTreeNode> types = new HashMap<ResourceType, TypeTreeNode>();
+
+        for (ResourceTreeNode node : nodes) {
+
+            if (!types.containsKey(node.getResourceType())) {
+                TypeTreeNode typeNode = new TypeTreeNode(node.getParentId(),node.getResourceType().getName());
+                built.add(typeNode);
+                types.put(node.getResourceType(), typeNode);
+            }
+            built.add(node);
+        }
+
+
+        return built.toArray(new TreeNode[built.size()]);
+
+    }
+
+
+    private boolean sameTypes(ResourceTreeNode[] nodes) {
+        ResourceType first = nodes[0].getResourceType();
+        for (ResourceTreeNode node : nodes) {
+            if (!first.equals(node)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
+
+    public static class TypeTreeNode extends TreeNode {
+
+
+        private TypeTreeNode(int parentId, String type) {
+            setAttribute("id", parentId + type);
+            setAttribute("parentId", parentId);
+            setAttribute("parentKey", parentId);
+            setAttribute("name", type);
+        }
+
+    }
+
+
+
+    public static class ResourceTreeNode extends TreeNode {
 
         private Resource resource;
 
@@ -151,6 +219,8 @@ private boolean initialized = false;
             this.resource = resource;
 
             setAttribute("id",resource.getId());
+            setAttribute("parentId", resource.getParentResource() == null ? 0 : resource.getParentResource().getId());
+            setAttribute("parentKey", resource.getParentResource() == null ? 0 : (resource.getParentResource().getId() + resource.getResourceType().getName()));
             setAttribute("name",resource.getName());
             setAttribute("description",resource.getDescription());
             setAttribute("currentAvailability",
@@ -160,6 +230,9 @@ private boolean initialized = false;
 
         }
 
+        public int getParentId() {
+            return getAttributeAsInt("parentId");
+        }
 
 
         public Resource getResource() {
@@ -168,6 +241,10 @@ private boolean initialized = false;
 
         public void setResource(Resource resource) {
             this.resource = resource;
+        }
+
+        public ResourceType getResourceType() {
+            return resource.getResourceType();
         }
 
 

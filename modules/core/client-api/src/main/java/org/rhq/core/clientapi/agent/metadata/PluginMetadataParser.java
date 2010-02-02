@@ -79,7 +79,6 @@ public class PluginMetadataParser {
     // TODO: this isn't the most elegant... should we put these in the domain objects? or perhaps build another place for them to live?
     private Map<ResourceType, String> discoveryClasses = new HashMap<ResourceType, String>();
     private Map<ResourceType, String> componentClasses = new HashMap<ResourceType, String>();
-    private Map<ResourceType, BundleType> bundleTypes = new HashMap<ResourceType, BundleType>();
 
     // a map keyed on plugin name that contains the parsers for all other known plugin descriptors
     // this map is managed by this parser's PluginMetadataManager and is how the manager shares information
@@ -160,12 +159,6 @@ public class PluginMetadataParser {
         if (runsInside != null) {
             LOG.warn("Platforms do not currently support running inside other resources. "
                 + "The <runs-inside> information will be ignored in resource type: " + platformResourceType);
-        }
-
-        Bundle bundle = platformDescriptor.getBundle();
-        if (bundle != null) {
-            String typeName = bundle.getType();
-            this.bundleTypes.put(platformResourceType, new BundleType(typeName, platformResourceType));
         }
 
         return platformResourceType;
@@ -442,6 +435,7 @@ public class PluginMetadataParser {
         // 7) Process matches (for process scan auto-discovery)
         // 8) Artifacts
         // 9) Child subcategories
+        // 10) Bundle Type
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -520,6 +514,13 @@ public class PluginMetadataParser {
                         resourceType));
                 }
             }
+
+            Bundle bundle = resourceDescriptor.getBundle();
+            if (bundle != null) {
+                String typeName = bundle.getType();
+                resourceType.setBundleType(new BundleType(typeName, resourceType));
+            }
+
         } catch (InvalidPluginDescriptorException e) {
             // TODO: Should we be storing these for viewing in server? Breaking deployment? What?
             throw e;
@@ -588,17 +589,6 @@ public class PluginMetadataParser {
      */
     public String getComponentClass(ResourceType resourceType) {
         return this.componentClasses.get(resourceType);
-    }
-
-    /**
-     * Returns the type of bundle that the resource type can process, or <code>null</code> if there is no bundle type
-     * associated with a resource type.
-     *
-     * @param resourceType the ResourceType
-     * @return the bundle type
-     */
-    public BundleType getBundleType(ResourceType resourceType) {
-        return this.bundleTypes.get(resourceType);
     }
 
     private void registerResourceTypeAndComponentClasses(ResourceType resourceType, String discoveryClass,

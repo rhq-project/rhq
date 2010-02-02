@@ -51,6 +51,7 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -61,6 +62,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -185,9 +187,9 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  SELECT rt.name " //
         + "    FROM ResourceType rt " //
         + "GROUP BY rt.name " //
-        + "  HAVING COUNT(rt.name) > 1"),
+        + "  HAVING COUNT(rt.name) > 1"), //
     @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
-        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" )
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" ) //
 })
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
@@ -234,12 +236,12 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
-        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY)
+        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
     })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
@@ -375,6 +377,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
+
+    @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE }, optional = true)
+    private BundleType bundleType;
 
     @Transient
     private transient String helpText;
@@ -749,6 +754,14 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.classLoaderType = classLoaderType;
     }
 
+    public BundleType getBundleType() {
+        return this.bundleType;
+    }
+
+    public void setBundleType(BundleType bundleType) {
+        this.bundleType = bundleType;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -837,6 +850,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         out.writeLong(this.ctime);
         out.writeLong(this.mtime);
         out.writeObject(this.subCategory);
+        out.writeObject(this.bundleType);
         out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
         out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
         out.writeObject(pluginConfigurationDefinition);

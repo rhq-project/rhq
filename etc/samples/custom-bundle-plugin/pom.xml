@@ -6,16 +6,16 @@
 
    <modelVersion>4.0.0</modelVersion>
 
-   <groupId>org.rhq.sample.skeletonplugin</groupId>
-   <artifactId>skeleton-plugin</artifactId>
+   <groupId>org.rhq.sample.bundleplugin</groupId>
+   <artifactId>bundle-plugin</artifactId>
    <version>1.0</version>
    <packaging>jar</packaging>
 
-   <name>Skeleton RHQ Plugin Template</name>
-   <description>A template for building a custom RHQ agent plugin</description>
+   <name>Custom RHQ Bundle Plugin Template</name>
+   <description>A template for building a custom RHQ bundle plugin for deployment in an agent</description>
 
    <properties>
-      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
+      <rhq.version>1.4.0-SNAPSHOT</rhq.version>
    </properties>
 
    <dependencies>
@@ -40,6 +40,14 @@
          <artifactId>rhq-core-native-system</artifactId>
          <version>${rhq.version}</version>
          <scope>provided</scope> <!-- provided by the agent/plugin-container -->
+      </dependency>
+
+      <!-- so the plugin validator can run -->
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-core-plugin-container</artifactId>
+         <version>${rhq.version}</version>
+         <scope>test</scope>
       </dependency>
 
       <!-- Fix for the Javac bug requiring annotations to be available when compiling classes. (fixed in JDK 6) -->
@@ -147,6 +155,34 @@
             </executions>
          </plugin>
          -->
+
+         <plugin>       
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+               <execution>
+                  <phase>integration-test</phase>
+                  <configuration>
+                     <tasks>
+                        <property name="test.classpath" refid="maven.test.classpath" />
+                        <echo>Validating plugin...${project.build.finalName}.jar</echo>
+                        <java classname="org.rhq.core.pc.plugin.PluginValidator" failonerror="true" fork="true">
+                           <classpath>
+                              <pathelement path="${test.classpath}" />
+                              <pathelement location="target/${project.build.finalName}.jar" />
+                           </classpath>
+                           <sysproperty key="org.apache.commons.logging.Log" value="org.apache.commons.logging.impl.SimpleLog" />
+                           <!--
+                           <jvmarg line="-Xdebug -Xrunjdwp:transport=dt_socket,address=8797,server=y,suspend=y" />
+                           -->
+                        </java>
+                     </tasks>
+                  </configuration>
+                  <goals>
+                     <goal>run</goal>
+                  </goals>
+               </execution>
+            </executions>
+         </plugin>
 
       </plugins>
    </build>

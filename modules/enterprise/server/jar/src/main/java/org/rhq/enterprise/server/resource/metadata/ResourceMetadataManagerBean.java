@@ -18,8 +18,32 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -47,28 +71,6 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.sql.DataSource;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -183,6 +185,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
+        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
+        // if there are new plugins and if so download them - this of course would be configurable/disablable
         return;
     }
 
@@ -460,6 +464,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     + oldSubCat + " to " + existingSubCat);
                 existingType.setSubCategory(existingSubCat);
             }
+
+            existingType.setBundleType(resourceType.getBundleType());
 
             existingType = entityManager.merge(existingType);
             entityManager.flush();

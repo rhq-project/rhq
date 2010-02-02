@@ -230,12 +230,12 @@ public class BundleTest extends AbstractEJB3Test {
 
             String name = "BundleTest-testBundle";
 
+            Query q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
+            q.setParameter("name", name);
+            assert q.getResultList().size() == 0; // not in the db yet
+
             BundleType bundleType = new BundleType(name + "-Type", createResourceType(em));
             Bundle b = new Bundle(name, bundleType);
-
-            Query q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
-            q.setParameter("name", b.getName());
-            assert q.getResultList().size() == 0; // not in the db yet
 
             em.persist(b);
             id = b.getId();
@@ -243,7 +243,7 @@ public class BundleTest extends AbstractEJB3Test {
             assert b.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
 
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
-            q.setParameter("name", b.getName());
+            q.setParameter("name", name);
             assert q.getResultList().size() == 1;
             assert ((Bundle) q.getSingleResult()).getName().equals(b.getName());
 
@@ -303,18 +303,18 @@ public class BundleTest extends AbstractEJB3Test {
 
             String name = "BundleTest-testBundleType";
 
-            BundleType bt = new BundleType(name, createResourceType(em));
-
             Query q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
-            q.setParameter("name", bt.getName());
+            q.setParameter("name", name);
             assert q.getResultList().size() == 0; // not in the db yet
+
+            BundleType bt = new BundleType(name, createResourceType(em));
 
             em.persist(bt);
             id = bt.getId();
             assert id > 0;
 
             q = em.createNamedQuery(BundleType.QUERY_FIND_BY_NAME);
-            q.setParameter("name", bt.getName());
+            q.setParameter("name", name);
             assert q.getResultList().size() == 1;
             assert ((BundleType) q.getSingleResult()).getName().equals(bt.getName());
 

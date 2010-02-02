@@ -521,6 +521,18 @@
             </xs:complexType>
          </xs:element>
 
+         <xs:element name="bundle" type="rhq:bundle" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+               <xs:documentation>
+                  Defines the type of bundle this resource can process. Resource components that support
+                  bundles must implement BundleFacet.
+               </xs:documentation>
+               <xs:appinfo>
+                  <jaxb:property name="bundle" />
+               </xs:appinfo>
+            </xs:annotation>
+         </xs:element>
+
          <xs:element name="plugin-configuration" type="config:configuration" minOccurs="0">
             <xs:annotation>
                <xs:documentation>
@@ -621,6 +633,10 @@
       </xs:restriction>
    </xs:simpleType>
 
+   <xs:complexType name="bundle">
+      <xs:attribute name="type" type="xs:string"/>
+   </xs:complexType>
+
 
    <!-- PLATFORM -->
 
@@ -646,18 +662,6 @@
       <xs:complexContent>
          <xs:extension base="rhq:resource">
             <xs:sequence>
-               <xs:element name="bundle" type="rhq:bundle" minOccurs="0" maxOccurs="1">
-                  <xs:annotation>
-                     <xs:documentation>
-                        Defines the type of bundle this resource can process. Resource components that support
-                        bundles must implement BundleFacet.
-                     </xs:documentation>
-                     <xs:appinfo>
-                        <jaxb:property name="bundle" />
-                     </xs:appinfo>
-                  </xs:annotation>
-               </xs:element>
-
                <xs:element ref="rhq:server" minOccurs="0" maxOccurs="unbounded">
                   <xs:annotation>
                      <xs:documentation>
@@ -682,10 +686,6 @@
             </xs:sequence>
          </xs:extension>
       </xs:complexContent>
-   </xs:complexType>
-
-   <xs:complexType name="bundle">
-      <xs:attribute name="type" type="xs:string"/>
    </xs:complexType>
 
    <!-- SERVER -->

@@ -15,7 +15,7 @@
    <description>A template for building a custom generic RHQ server plugin</description>
 
    <properties>
-      <rhq.version>1.4.0-SNAPSHOT</rhq.version>
+      <rhq.version>3.0.0-SNAPSHOT</rhq.version>
    </properties>
 
    <dependencies>

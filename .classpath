@@ -123,6 +123,7 @@
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/skeleton-plugin/src/main/java"/>
+	<classpathentry kind="src" path="etc/samples/custom-bundle-plugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>

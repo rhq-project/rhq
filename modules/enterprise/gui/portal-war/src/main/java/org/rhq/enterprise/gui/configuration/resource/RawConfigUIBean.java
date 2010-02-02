@@ -72,6 +72,15 @@ public class RawConfigUIBean {
         panelMenuItem.setIcon(getIcon());
     }
 
+    public String getContents() {
+        return rawConfiguration.getContents();
+    }
+
+    public void setContents(String contents) {
+        rawConfiguration.setContents(contents);
+    }
+
+    /** @return The full path name of the raw config file */
     public String getPath() {
         return rawConfiguration.getPath();
     }
@@ -80,6 +89,10 @@ public class RawConfigUIBean {
         return rawConfiguration.getPath().replace('/', NamingContainer.SEPARATOR_CHAR);
     }
 
+    /** @return The name of the raw config file excluding its path */
+    // Note: In the mock-up an asterisk is prepended to the file name in the menu to indicate that it has modifications.
+    //       We may want to modify this method to include logic for that as the UI evolves. If so, it might also be
+    //       good to change the method name to something a bit more descriptive like getFileNameLabel().
     public String getFileName() {
         File file = new File(rawConfiguration.getPath());
         return file.getName();

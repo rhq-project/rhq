@@ -195,7 +195,7 @@ THIS TEXT WILL BE REMOVED.
 
         <c:when test="${ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
           <rich:tabPanel id="configTabPanel"
-                         selectedTab="#{ExistingResourceConfigurationUIBean.selectedTab}"
+                         selectedTab="#{configurationEditor.selectedTab}"
                          switchType="ajax"
                          valueChangeListener="#{ExistingResourceConfigurationUIBean.changeTabs}">
             <rich:tab id="structuredTab"

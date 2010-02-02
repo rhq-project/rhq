@@ -45,6 +45,7 @@
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
     <module>alert-roles</module>
+    <module>alert-scriptlang</module>
     <module>alert-snmp</module>
     <module>alert-subject</module>
     <module>cobbler</module>

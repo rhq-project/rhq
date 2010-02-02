@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
+import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
@@ -95,6 +96,11 @@ public class PluginMetadataManager {
     public String getComponentClass(ResourceType resourceType) {
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getComponentClass(resourceType) : null;
+    }
+
+    public BundleType getBundleType(ResourceType resourceType) {
+        PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
+        return (parser != null) ? parser.getBundleType(resourceType) : null;
     }
 
     /**

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.resource;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -88,6 +89,7 @@ import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
 import org.rhq.core.domain.resource.composite.LockedResource;
 import org.rhq.core.domain.resource.composite.RecentlyAddedResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
@@ -95,13 +97,17 @@ import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
+import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -2110,5 +2116,108 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         Resource parentResource = getResourceById(subject, parentResourceId);
 
         return (findChildResources(subject, parentResource, pageControl));
+    }
+
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent, IntExtractor<? super T> extractor) {
+        String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
+        
+        query = JDBCUtil.transformQueryForMultipleInParameters(query, "@@RESOURCE_IDS@@", results.size());
+        Query disambiguateQuery = entityManager.createNativeQuery(query);
+        int i = 1;
+        for(T r : results) {
+            disambiguateQuery.setParameter(i++, extractor.extract(r));
+        }
+        
+        Object[] rs = (Object[]) disambiguateQuery.getSingleResult();
+
+        int disambiguationLevel = Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; //the max we support
+
+        int targetCnt = ((BigInteger)rs[0]).intValue();
+        int typeCnt = ((BigInteger)rs[1]).intValue();
+        int typeAndPluginCnt = ((BigInteger)rs[2]).intValue();
+        for (i = 1; i <= Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; ++i) {
+            int levelCnt = ((BigInteger)rs[2 + i]).intValue();
+            if (levelCnt == targetCnt) {
+                disambiguationLevel = i - 1;
+                break;
+            }
+        }
+
+        if (alwaysIncludeParent && disambiguationLevel == 0) {
+            disambiguationLevel = 1;
+        }
+        
+        boolean typeResolutionNeeded = typeAndPluginCnt > 1;
+        boolean pluginResolutionNeeded = typeAndPluginCnt > typeCnt;
+        boolean parentResolutionNeeded = disambiguationLevel > 0;
+
+        //we can't assume any ordering in the results, hence this map
+        Map<Integer, MutableDisambiguationReport<T>> reportByResourceId = new LinkedHashMap<Integer, MutableDisambiguationReport<T>>();
+        for (T r : results) {
+            MutableDisambiguationReport<T> value = new MutableDisambiguationReport<T>();
+            value.original = r;
+            reportByResourceId.put(extractor.extract(r), value);
+        }
+
+        //k, now let's construct the JPQL query to get the parents and type infos...
+        StringBuilder selectBuilder = new StringBuilder(
+            "SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin");
+        StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
+
+        for (i = 1; i <= disambiguationLevel; ++i) {
+            int pi = i - 1;
+            selectBuilder.append(", r").append(i).append(".id");
+            selectBuilder.append(", r").append(i).append(".name");
+            fromBuilder.append(" left join r").append(pi).append(".parentResource r").append(i);
+        }
+
+        fromBuilder.append(" WHERE r0.id IN (:resourceIds)");
+
+        Query parentsQuery = entityManager.createQuery(selectBuilder.append(" ").append(fromBuilder).toString());
+
+        parentsQuery.setParameter("resourceIds", reportByResourceId.keySet());
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> parentsResults = (List<Object[]>) parentsQuery.getResultList();
+        for (Object[] parentsResult : parentsResults) {
+            List<ResourceParentFlyweight> parents = new ArrayList<ResourceParentFlyweight>(disambiguationLevel);
+            Integer resourceId = (Integer) parentsResult[0];
+            String typeName = (String) parentsResult[1];
+            String pluginName = (String) parentsResult[2];
+
+            for (i = 1; i <= disambiguationLevel; ++i) {
+                Integer parentId = (Integer) parentsResult[2 * i + 1];
+                if (parentId == null)
+                    break;
+                String parentName = (String) parentsResult[2 * i + 2];
+                parents.add(new ResourceParentFlyweight(parentId, parentName));
+            }
+            MutableDisambiguationReport<T> report = reportByResourceId.get(resourceId);
+            report.typeName = typeName;
+            report.pluginName = pluginName;
+            report.parents = parents;
+        }
+
+        //now we have all the information to create the result.
+        //first create the immutable reports.
+        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(reportByResourceId.size());
+        
+        for (Map.Entry<Integer, MutableDisambiguationReport<T>> entry : reportByResourceId.entrySet()) {
+            resolution.add(entry.getValue().getReport());
+        }
+
+        return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,
+            pluginResolutionNeeded);
+    }
+
+    private static class MutableDisambiguationReport<T> {
+        public T original;
+        public String typeName;
+        public String pluginName;
+        public List<ResourceParentFlyweight> parents;
+
+        public DisambiguationReport<T> getReport() {
+            return new DisambiguationReport<T>(original, parents, typeName, pluginName);
+        }
     }
 }

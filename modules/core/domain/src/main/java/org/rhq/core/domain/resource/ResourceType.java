@@ -79,7 +79,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
  * @author Ian Springer
  */
 @Entity
-@Table(name = "RHQ_RESOURCE_TYPE")
+@Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME, // TODO: QUERY: This breaks rules, names may not be unique between plugins
@@ -240,6 +240,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private static final long serialVersionUID = 1L;
 
+    public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
+    
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
     public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";

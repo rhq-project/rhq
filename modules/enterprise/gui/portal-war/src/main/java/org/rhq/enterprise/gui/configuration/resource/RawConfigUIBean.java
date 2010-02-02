@@ -62,6 +62,10 @@ public class RawConfigUIBean {
         Events.instance().raiseEvent("rawConfigUpdate", this);
     }
 
+    public void undoEdit() {
+        rawConfiguration = originalRawConfiguration.deepCopy(false);    
+    }
+
     /** @return The full path name of the raw config file */
     public String getPath() {
         return rawConfiguration.getPath();

@@ -262,7 +262,7 @@ THIS TEXT WILL BE REMOVED.
                                   <a4j:support event="onclick"
                                                onsumbit="cursor_wait()"
                                                oncomplete="cursor_clear()"
-                                               action="#{ExistingResourceConfigurationUIBean.undoEdit(rawConfigUIBean.path)}"
+                                               action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
                                                reRender="fileMenu,fileContents"/>
                                 </h:commandButton>
                               </h:panelGroup>

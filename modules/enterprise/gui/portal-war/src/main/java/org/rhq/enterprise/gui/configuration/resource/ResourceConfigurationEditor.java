@@ -171,6 +171,15 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
         return null;
     }
 
+    public void undoEdit(String path) {
+        RawConfigUIBean rawConfigUIBean = findRawConfigUIBeanByPath(path);
+        rawConfigUIBean.undoEdit();
+    }
+
+    /**
+     * 
+     * @return
+     */
     public String finishAddMap() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map added.");
         return "success";

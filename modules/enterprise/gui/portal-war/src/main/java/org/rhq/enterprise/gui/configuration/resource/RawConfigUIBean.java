@@ -23,53 +23,29 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import org.jboss.seam.core.Events;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.richfaces.component.html.HtmlPanelMenuItem;
 
 import javax.faces.component.NamingContainer;
 import java.io.File;
 
 public class RawConfigUIBean {
 
+    private RawConfiguration originalRawConfiguration;
+
     private RawConfiguration rawConfiguration;
 
-    private boolean modified;
-
-    private String modifiedContents;
-
-    private HtmlPanelMenuItem panelMenuItem;
-
-    public RawConfiguration getRawConfiguration() {
-        return rawConfiguration;
+    public RawConfigUIBean(RawConfiguration rawConfiguration) {
+        this.rawConfiguration = rawConfiguration;
+        originalRawConfiguration = rawConfiguration.deepCopy(false);
     }
 
     public void setRawConfiguration(RawConfiguration rawConfiguration) {
         this.rawConfiguration = rawConfiguration;
     }
 
-    public HtmlPanelMenuItem getPanelMenuItem() {
-        return panelMenuItem;
-    }
-
-    public void setPanelMenuItem(HtmlPanelMenuItem panelMenuItem) {
-        this.panelMenuItem = panelMenuItem;
-    }
-
-    public String getModifiedContents() {
-        return modifiedContents;
-    }
-
-    public void setModifiedContents(String contents) {
-        modifiedContents = contents;
-    }
-
     public boolean isModified() {
-        return modified;
-    }
-
-    public void setModified(boolean modified) {
-        this.modified = modified;
-        panelMenuItem.setIcon(getIcon());
+        return !rawConfiguration.getSha256().equals(originalRawConfiguration.getSha256());
     }
 
     public String getContents() {
@@ -78,6 +54,7 @@ public class RawConfigUIBean {
 
     public void setContents(String contents) {
         rawConfiguration.setContents(contents);
+        Events.instance().raiseEvent("rawConfigUpdate", this);
     }
 
     /** @return The full path name of the raw config file */
@@ -106,7 +83,4 @@ public class RawConfigUIBean {
         return "/images/blank.png";
     }
 
-    public void setIcon(String icon) {
-        panelMenuItem.setIcon(icon);
-    }
 }

@@ -24,228 +24,111 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.*;
+import org.jboss.seam.annotations.Name;
+import org.jboss.seam.annotations.Observer;
+import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
-import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.legacy.WebUser;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import javax.faces.event.ValueChangeEvent;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Name("configurationEditor")
 @Scope(ScopeType.CONVERSATION)
-@Role(name = "configurationViewer", scope = ScopeType.PAGE)
-public class ResourceConfigurationEditor {
-
-    private static final boolean STRUCTURED_MODE = true;
-    private static final boolean RAW_MODE = false;
-
-    private boolean mode = STRUCTURED_MODE;
+public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
 
     private Configuration originalResourceConfiguration;
 
-    @In("webUser")
-    private WebUser loggedInUser;
+    private int numberOfFilesModified;
 
-    @Out
-    private Configuration resourceConfiguration;
-
-    @Out
-    private ConfigurationDefinition resourceConfigurationDefinition;
-
-    @Out
-    private Collection<RawConfigDirectory> rawConfigDirectories;
-
-    @Out(required = false)
-    private RawConfigUIBean selectedRawUIBean;
-
-    @RequestParameter("id")
-    private int resourceId;
+    private Set<String> modifiedFiles = new HashSet<String>();
 
     @RequestParameter
     private String tab;
 
-    private boolean readOnly = true;
-
-    @Create
-    public void initialize() {
-        loadResourceConfigurationDefinition();
-        loadResourceConfiguration();
-        initRawConfigDirectories();
-
+    @Override
+    protected void doInitialization() {
         if (tab != null) {
             setSelectedTab(tab);
         }
-    }
 
-    private void loadResourceConfigurationDefinition() {
-        int resourceTypeId = EnterpriseFacesContextUtility.getResource().getResourceType().getId();
-
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-
-        resourceConfigurationDefinition = configurationManager.getResourceConfigurationDefinitionForResourceType(
-                loggedInUser.getSubject(), resourceTypeId);
-    }
-
-    private void loadResourceConfiguration() {
-        Subject subject = loggedInUser.getSubject();
-
-        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
-
-        AbstractResourceConfigurationUpdate configurationUpdate =
-                configurationManager.getLatestResourceConfigurationUpdate(subject, resourceId);
-        resourceConfiguration = (configurationUpdate != null) ? configurationUpdate.getConfiguration() : null;
-
-        if (resourceConfiguration != null) {
-            ConfigurationMaskingUtility.maskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
-        }
-
-    }
-
-    private void initRawConfigDirectories() {
-        if (isRawSupported() || isStructuredAndRawSupported()) {
-            initConfigDirectories();
-        }
-        else {
-            rawConfigDirectories = Collections.EMPTY_LIST;
-        }
-    }
-
-    private void initConfigDirectories() {
-        Map<String, RawConfigDirectory> dirs = new TreeMap<String, RawConfigDirectory>();
-
-        for (RawConfiguration rawConfig : resourceConfiguration.getRawConfigurations()) {
-            String parentDirPath = getParentDir(rawConfig);
-            RawConfigDirectory dir = dirs.get(parentDirPath);
-
-            if (dir == null) {
-                dir = new RawConfigDirectory();
-                dir.setPath(parentDirPath);
-            }
-
-            dir.addRawConfig(rawConfig);
-            dirs.put(parentDirPath, dir);
-        }
-
-        rawConfigDirectories = dirs.values();
-
-        RawConfigDirectory selectedDir = null;
-        for (RawConfigDirectory dir : rawConfigDirectories) {
-            selectedDir = dir;
-            break;
-        }
-        selectedRawUIBean = selectedDir.getRawConfigUIBeans().get(0);
-    }
-
-    private String getParentDir(RawConfiguration rawConfig) {
-        File file = new File(rawConfig.getPath());
-        return file.getParentFile().getAbsolutePath();
-    }
-
-    public boolean isReadOnly() {
-        return readOnly;
-    }
-
-    public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
-    }
-
-    public boolean isRawSupported() {
-        return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.RAW;
-    }
-
-    public boolean isStructuredSupported() {
-        return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED;
-    }
-
-    public boolean isStructuredAndRawSupported() {
-        return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.STRUCTURED_AND_RAW;
-    }
-
-    public String getSelectedTab() {
-        if (mode == STRUCTURED_MODE) {
-            return "structuredTab";
-        }
-        return "rawTab";
-    }
-
-    public void setSelectedTab(String tab) {
-        if (tab.equals("structuredTab")) {
-            mode = STRUCTURED_MODE;
-        }
-        else {
-            mode = RAW_MODE;
-        }
-    }
-
-    public void changeTabs(ValueChangeEvent event) {
-        if (event.getNewValue().equals("rawTab")) {
-//            switchToRaw();
-            mode = RAW_MODE;
-        }
-        else if (event.getNewValue().equals("structuredTab")) {
-//            switchToStructured();
-            mode = STRUCTURED_MODE;
-        }
-    }
-
-    public void edit() {
         originalResourceConfiguration = resourceConfiguration.deepCopy(true);
     }
 
-    public void select(String path) {
-        selectedRawUIBean = findRawConfigUIBeanByPath(path);
-    }
-
-    private RawConfigUIBean findRawConfigUIBeanByPath(String path) {
-        for (RawConfigDirectory dir : rawConfigDirectories) {
-            for (RawConfigUIBean bean : dir.getRawConfigUIBeans()) {
-                if (bean.getPath().equals(path)) {
-                    return bean;
-                }
-            }
+    @Override
+    protected void changeToRawTab() {
+        resourceConfiguration = translateToRaw();
+//        initRawConfigDirectories();
+        for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+            RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
+            uiBean.setRawConfiguration(raw);
         }
-        return null;
     }
 
-    public boolean isUpdateInProgress() {
+    private Configuration translateToRaw() {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
-        return configurationMgr.isResourceConfigurationUpdateInProgress(loggedInUser.getSubject(), resourceId);
+        return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+            resourceConfiguration, STRUCTURED_MODE);
     }
 
-    public String download() {
-        try {
-            File file = new File(selectedRawUIBean.getFileName());
+    @Override
+    protected void changeToStructuredTab() {
+        resourceConfiguration = translateToStructured();
+    }
 
-            HttpServletResponse response = FacesContextUtility.getResponse();
-            response.setHeader("Content-Disposition", "attachment;filename=" + file.getName());
-            OutputStream ostream = response.getOutputStream();
-            ostream.write(selectedRawUIBean.getContents().getBytes());
-            ostream.flush();
-            ostream.close();
+    private Configuration translateToStructured() {
+        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+        return configurationMgr.translateResourceConfiguration(loggedInUser.getSubject(), resourceId,
+            resourceConfiguration, RAW_MODE);
+    }
 
-            FacesContextUtility.getFacesContext().responseComplete();
-
-            return null;
+    @Observer("rawConfigUpdate")
+    public void rawConfigUpdated(RawConfigUIBean rawConfigUIBean) {
+        if (rawConfigUIBean.isModified()) {
+            // If the file is modified and not already in the cache, then the file was previously in an unmodified state
+            // so we want to increment the number of files modified and put the file in the cache to track its current
+            // state.
+            if (!modifiedFiles.contains(rawConfigUIBean.getPath())) {
+                modifiedFiles.add(rawConfigUIBean.getPath());
+                ++numberOfFilesModified;
+            }
+            // There is kind of an implicit else block to do nothing. If the file is modified and already in the cache,
+            // then that means we have already incremented the number of files modified, so we do not need to
+            // increment again.
         }
-        catch (IOException e) {
-//            log.error("Failed to complete download request for " + getCurrentPath(), e);
-            throw new RuntimeException(e);
+        else if (modifiedFiles.contains(rawConfigUIBean.getPath())) {
+            // We fall into this block if the file is not modified and if the cache contains the file, which means it
+            // was previously in a modified state; therefore, we remove it from the cache, and decrement the number of
+            // files modified.
+            modifiedFiles.remove(rawConfigUIBean.getPath());
+            --numberOfFilesModified;
         }
     }
 
+    public boolean isDisplayChangedFilesLabel() {
+        if (isStructuredMode()) {
+            return false;
+        }
+
+        if (isRawSupported()) {
+            return true;
+        }
+
+        return isRawMode();
+    }
+
+    public String getModifiedFilesMsg() {
+        if (!isDisplayChangedFilesLabel() || numberOfFilesModified == 0) {
+            return "";
+        }
+
+        if (numberOfFilesModified == 1) {
+            return "1 file changed in this configuration";
+        }
+
+        return numberOfFilesModified + " files changed in this configuration";
+    }
 }

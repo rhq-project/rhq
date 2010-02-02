@@ -115,8 +115,16 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
      * @param contents The new contents
      */
     public void setContents(String contents) {
+        if (configuration != null) {
+            configuration.removeRawConfiguration(this);
+        }
+
         this.contents = contents;
         updateSha256();
+
+        if (configuration != null) {
+            configuration.addRawConfiguration(this);
+        }
     }
 
     private void updateSha256() {

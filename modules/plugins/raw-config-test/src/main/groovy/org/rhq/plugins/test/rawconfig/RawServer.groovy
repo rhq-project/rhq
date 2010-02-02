@@ -50,7 +50,7 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
 
     rawConfig.createNewFile()
     rawConfig.withWriter { writer ->
-      properties.each { key, value -> writer.writeLine("${key}=${value}") }
+      properties.each { key, value -> writer.writeLine("${key} = ${value}") }
     }
   }
 

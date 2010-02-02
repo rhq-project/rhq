@@ -64,7 +64,7 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   def addProperties(File rawConfig, Map properties) {
     rawConfig.createNewFile()
     rawConfig.withWriter {writer ->
-      properties.each {key, value -> writer.writeLine("${key}=${value}") }
+      properties.each {key, value -> writer.writeLine("${key} = ${value}") }
     }
   }
 

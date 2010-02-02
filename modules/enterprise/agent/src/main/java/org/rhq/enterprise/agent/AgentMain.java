@@ -1276,6 +1276,7 @@ public class AgentMain {
                 boolean got_registered = false;
                 int registrationFailures = 0;
                 final int MAX_ALLOWED_REGISTRATION_FAILURES = 5;
+                boolean hide_loopback_warning = Boolean.getBoolean("rhq.hide-agent-localhost-warning");
 
                 while (retry) {
                     try {
@@ -1305,8 +1306,14 @@ public class AgentMain {
                             if (sender.isSending()) {
                                 LOG.debug(AgentI18NResourceKeys.AGENT_REGISTRATION_ATTEMPT, request);
 
-                                if (remote_endpoint.contains("127.0.0.1") || remote_endpoint.contains("localhost")) {
-                                    LOG.warn(AgentI18NResourceKeys.REGISTERING_WITH_LOOPBACK, remote_endpoint);
+                                if (!hide_loopback_warning) {
+                                    if (remote_endpoint.contains("localhost") || remote_endpoint.contains("127.0.0.1")) {
+                                        String msg_id = AgentI18NResourceKeys.REGISTERING_WITH_LOOPBACK;
+                                        LOG.warn(msg_id, remote_endpoint);
+                                        getOut().println(MSG.getMsg(msg_id, remote_endpoint));
+                                        getOut().println();
+                                        hide_loopback_warning = true; // don't bother to tell the user more than once
+                                    }
                                 }
 
                                 // delete any old token so request is unauthenticated to get server to accept it
@@ -2498,6 +2505,25 @@ public class AgentMain {
             } catch (Exception e) {
                 LOG.warn(e, AgentI18NResourceKeys.FAILOVER_LIST_CANNOT_BE_PERSISTED, failoverListFile, ThrowableUtil
                     .getAllMessages(e));
+            }
+
+            // let's be kind to the user - if any server address is "localhost" or "127.0.0.1"
+            // or starts with "localhost." (such as localhost.localdomain) then we should output a
+            // warning to let the user know that that probably isn't what they want.
+            // In cases when someone is demo'ing/testing/developing, and they don't want to see this, provide
+            // a way for them to turn off this warning - it could get annoying since it will show up everytime
+            // the primary switchover thread triggers and needs to persist the list as well as during initial startup/registration.
+            if (!Boolean.getBoolean("rhq.hide-server-localhost-warning")) {
+                int numServers = failoverList.size();
+                for (int i = 0; i < numServers; i++) {
+                    ServerEntry server = failoverList.get(i);
+                    String addr = (server.address != null) ? server.address : "";
+                    if ("localhost".equals(addr) || "127.0.0.1".equals(addr) || addr.startsWith("localhost.")) {
+                        LOG.warn(AgentI18NResourceKeys.FAILOVER_LIST_HAS_LOCALHOST, server.address);
+                        getOut().println(MSG.getMsg(AgentI18NResourceKeys.FAILOVER_LIST_HAS_LOCALHOST, server.address));
+                        break; // just show the warning once
+                    }
+                }
             }
         }
 

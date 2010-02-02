@@ -21,10 +21,13 @@ package org.rhq.enterprise.server.resource.group.definition.framework.test;
 import java.util.Arrays;
 import java.util.List;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.enterprise.server.resource.group.definition.framework.ExpressionEvaluator;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 public class ExpressionEvaluatorTest extends AbstractEJB3Test {
     private String[][] successTestCases = {
@@ -72,7 +75,7 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "  JOIN res.resourceConfiguration conf, PropertySimple simple, PropertyDefinition simpleDef  " + //
         "  JOIN res.resourceType.resourceConfigurationDefinition confDef " + // 
         " WHERE simple.name = :arg1 " + //
-        "   AND simple.stringValue like :arg2 " + //
+        "   AND simple.stringValue like :arg2 ESCAPE '\\'" + //
         "   AND simple.configuration = conf " + //
         "   AND simpleDef.configurationDefinition = confDef " + //
         "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " },
@@ -127,8 +130,8 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         " ;", // test empty last line, which should be allowed,
 
         "SELECT res.id FROM Resource res " + //
-            "WHERE res.name LIKE :arg1 " + //
-            "  AND res.parentResource.name LIKE :arg2 " },
+            "WHERE res.name LIKE :arg1 ESCAPE '\\'" + //
+            "  AND res.parentResource.name LIKE :arg2 ESCAPE '\\'" },
 
     { "EMPTY resource.name",
 
@@ -145,6 +148,14 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         "   AND simple.configuration = pluginConf " + //
         "   AND simpleDef.configurationDefinition = pluginConfDef " + //
         "   AND simple.name = simpleDef.name AND simpleDef.type != 'PASSWORD' " }, };
+
+    /**
+     * Prepares things for the entire test class.
+     */
+    @BeforeClass
+    public void beforeClass() {
+        System.setProperty("rhq.server.database.escape-character", "\\");
+    }
 
     @Test(groups = "integration.session")
     public void testWellFormedExpressions() throws Exception {

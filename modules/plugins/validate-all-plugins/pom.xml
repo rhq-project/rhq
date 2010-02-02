@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-plugins-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -40,6 +40,7 @@
                               <pathelement path="${test.classpath}" />
                               <pathelement location="../apache/target/rhq-apache-plugin-${project.version}.jar" />
                               <pathelement location="../augeas/target/rhq-augeas-plugin-${project.version}.jar" />
+                              <pathelement location="../samba/target/rhq-samba-plugin-${project.version}.jar" />
                               <pathelement location="../database/target/rhq-database-plugin-${project.version}.jar" />
                               <pathelement location="../grub/target/rhq-grub-plugin-${project.version}.jar" />
                               <!--<pathelement location="../hardware/target/rhq-hardware-plugin-${project.version}.jar" />-->

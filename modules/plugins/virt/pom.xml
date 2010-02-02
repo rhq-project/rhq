@@ -4,7 +4,7 @@
       <parent>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-plugins-parent</artifactId>
-         <version>1.4.0-SNAPSHOT</version>
+         <version>3.0.0-SNAPSHOT</version>
       </parent>
 
 
@@ -22,6 +22,7 @@
 
    <properties>
       <scm.module.path>modules/plugins/virt/</scm.module.path>
+      <libvirt-java.version>0.4.1</libvirt-java.version>
    </properties>
 
    <dependencies>
@@ -35,7 +36,7 @@
       <dependency>
          <groupId>org.libvirt</groupId>
          <artifactId>libvirt</artifactId>
-         <version>0.4.1</version>
+         <version>${libvirt-java.version}</version>
       </dependency>      
 
       <dependency>
@@ -75,7 +76,7 @@
                       	<artifactItem>
 					         <groupId>org.libvirt</groupId>
 					         <artifactId>libvirt</artifactId>
-					         <version>0.4.1</version>
+					         <version>${libvirt-java.version}</version>
 					     </artifactItem>                        
                       </artifactItems>
                       <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

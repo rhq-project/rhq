@@ -174,19 +174,7 @@ public class AgentUpdateThread extends Thread {
                 if (results.getError() != null) {
                     throw results.getError();
                 }
-
-                // update has started! if this agent is running in non-daemon mode, kill
-                // the input stream so the input thread knows to shutdown now
-                try {
-                    BufferedReader in = this.agent.getIn();
-                    if (in != null) {
-                        System.in.close(); // we must ensure we close this directly!
-                        in.close();
-                    }
-                } catch (Throwable t) {
-                } finally {
-                    tryAgain = false;
-                }
+                tryAgain = false;
             } catch (Throwable t) {
                 showErrorMessage(AgentI18NResourceKeys.UPDATE_THREAD_EXCEPTION, ThrowableUtil.getAllMessages(t));
 

@@ -32,8 +32,10 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.perspective.activator.Activator;
 import org.rhq.enterprise.server.perspective.activator.context.ActivationContext;
 import org.rhq.enterprise.server.perspective.activator.context.ActivationContextScope;
@@ -49,13 +51,18 @@ import org.rhq.enterprise.server.plugin.pc.perspective.metadata.PerspectivePlugi
  */
 public class PerspectiveManagerBean implements PerspectiveManagerLocal, PerspectiveManagerRemote {
 
-    private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
-
     // Map of sessionId to cached menu entry.  The cached menu is re-used for the same sessionId.
     // This should more appropriately use Subject as the key, but since Subject equality is
     // based on username, it's not quite appropriate.
     // The cache is cleaned anytime there is a new entry.
-    static final private Map<Integer, CacheEntry> CACHE = new HashMap<Integer, CacheEntry>();
+    static private final Map<Integer, CacheEntry> CACHE = new HashMap<Integer, CacheEntry>();
+
+    static private Server server = null;
+
+    private final Log log = LogFactory.getLog(PerspectiveManagerBean.class);
+
+    @EJB
+    private ServerManagerLocal serverManager;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -82,6 +89,22 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, tabs);
 
         return filteredTabs;
+    }
+
+    public String getPageLink(Subject subject, String pageName, String linkName, String defaultValue) {
+        CacheEntry cacheEntry = getCacheEntry(subject);
+        List<PageLink> pageLinks = cacheEntry.getPageLinks();
+
+        String result = defaultValue;
+
+        for (PageLink pageLink : pageLinks) {
+            if (pageLink.getPageName().equals(pageName) && pageLink.getName().equals(linkName)) {
+                result = pageLink.getUrl();
+                break;
+            }
+        }
+
+        return result;
     }
 
     /**
@@ -135,9 +158,26 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         return filteredTabs;
     }
 
+    /**
+     * Applies activators, based on the specified contexts, to a list of PageLinks, and returns a
+     * filtered list. The supplied <List> is unmodified.
+     */
+    private List<PageLink> applyActivatorsToPageLinks(ActivationContext context,
+        EnumSet<ActivationContextScope> scopes, List<PageLink> pageLinks) {
+
+        List<PageLink> filteredPageLinks = new ArrayList<PageLink>();
+        for (PageLink pageLink : pageLinks) {
+            if (isActive(context, scopes, pageLink)) {
+                filteredPageLinks.add(pageLink);
+            }
+        }
+
+        return filteredPageLinks;
+    }
+
     @SuppressWarnings("unchecked")
     private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
-        List<Activator> activators = extension.getActivators();
+        List<Activator<?>> activators = extension.getActivators();
         for (Activator activator : activators) {
             if (scopes.contains(activator.getScope()) && !activator.isActive(context)) {
                 return false;
@@ -150,8 +190,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         Integer sessionId = subject.getSessionId();
         CacheEntry cacheEntry = CACHE.get(sessionId);
         long metadataLastModifiedTime = getPluginMetadataManager().getLastModifiedTime();
-        if (cacheEntry == null ||
-            cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
+        if (cacheEntry == null || cacheEntry.getMetadataLastModifiedTime() < metadataLastModifiedTime) {
             // Take this opportunity to clean expired sessions from the cache.
             cleanCache();
 
@@ -164,7 +203,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
             List<Tab> baseTabs = getPluginMetadataManager().getResourceTabs();
             List<Tab> filteredTabs = applyActivatorsToTabs(context, scopes, baseTabs);
 
-            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs);
+            List<PageLink> basePageLinks = getPluginMetadataManager().getPageLinks();
+            List<PageLink> filteredPageLinks = applyActivatorsToPageLinks(context, scopes, basePageLinks);
+
+            cacheEntry = new CacheEntry(metadataLastModifiedTime, filteredMenu, filteredTabs, filteredPageLinks);
             CACHE.put(sessionId, cacheEntry);
         }
         return cacheEntry;
@@ -217,10 +259,16 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         // We cache it because the variables used by the global activators do not change very often.
         private List<Tab> tabs;
 
-        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs) {
+        // This is a list of references into the base pageLinks that has had all global-scoped activators
+        // already applied to it. We cache it because the variables used by the global activators do not
+        // change very often.
+        private List<PageLink> pageLinks;
+
+        public CacheEntry(long metadataLastModifiedTime, List<MenuItem> menu, List<Tab> tabs, List<PageLink> pageLinks) {
             this.metadataLastModifiedTime = metadataLastModifiedTime;
             this.menu = menu;
             this.tabs = tabs;
+            this.pageLinks = pageLinks;
         }
 
         public long getMetadataLastModifiedTime() {
@@ -233,6 +281,10 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
         public List<Tab> getTabs() {
             return tabs;
+        }
+
+        public List<PageLink> getPageLinks() {
+            return pageLinks;
         }
     }
 
@@ -252,4 +304,168 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getMenuUrl(org.rhq.core.domain.auth.Subject, java.lang.String)
+     */
+    public String getMenuItemUrl(Subject subject, String menuItemName, boolean makeExplicit, boolean makeSecure) {
+        if (null == menuItemName) {
+            throw new IllegalArgumentException("Invalid menuItemName: null ");
+        }
+
+        String result = null;
+
+        try {
+            result = getMenuItemUrlByName(menuItemName, getMenu(subject));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid menuItemName: " + menuItemName, e);
+        }
+
+        return (null == result) ? result : makeUrl(result, makeExplicit, makeSecure);
+    }
+
+    private String getMenuItemUrlByName(String menuItemName, List<MenuItem> menuItems) {
+        if (null == menuItems) {
+            return null;
+        }
+
+        String result = null;
+
+        for (MenuItem menuItem : menuItems) {
+            String url = menuItem.getUrl();
+            if (null != url && menuItemName.equals(menuItem.getName())) {
+                result = url;
+                break;
+            } else {
+                result = getMenuItemUrlByName(menuItemName, menuItem.getChildren());
+                if (null != result) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTabUrl(org.rhq.core.domain.auth.Subject, java.lang.String)
+     */
+    public String getResourceTabUrl(Subject subject, String tabName, int resourceId, boolean makeExplicit,
+        boolean makeSecure) {
+        if (null == tabName) {
+            throw new IllegalArgumentException("Invalid tabName: null ");
+        }
+
+        String result = null;
+
+        try {
+            result = getResourceTabUrlByName(tabName, this.getPluginMetadataManager().getResourceTabs());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid tabName: " + tabName, e);
+        }
+
+        return (null == result) ? result : makeUrl(result, makeExplicit, makeSecure);
+    }
+
+    private String getResourceTabUrlByName(String tabName, List<Tab> tabs) {
+        if (null == tabs) {
+            return null;
+        }
+
+        String result = null;
+
+        for (Tab tab : tabs) {
+            String url = tab.getUrl();
+            if (null != url && tabName.equals(tab.getName())) {
+                result = url;
+                break;
+            } else {
+                result = getResourceTabUrlByName(tabName, tab.getChildren());
+                if (null != result) {
+                    break;
+                }
+            }
+        }
+
+        return result;
+
+    }
+
+    /*
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getRootUrl(org.rhq.core.domain.auth.Subject)
+     */
+    public String getRootUrl(Subject subject, boolean makeExplicit, boolean makeSecure) {
+        return makeUrl("/", makeExplicit, makeSecure);
+    }
+
+    /*
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTargetUrl(org.rhq.core.domain.auth.Subject, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
+     */
+    public String getTargetUrl(Subject subject, PerspectiveTarget target, int targetId, boolean makeExplicit,
+        boolean makeSecure) {
+
+        return makeUrl(target.getTargetUrl(targetId), makeExplicit, makeSecure);
+    }
+
+    /*
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTargetUrls(org.rhq.core.domain.auth.Subject, org.rhq.enterprise.server.perspective.PerspectiveTarget, int[], boolean, boolean)
+     */
+    public Map<Integer, String> getTargetUrls(Subject subject, PerspectiveTarget target, int[] targetIds,
+        boolean makeExplicit, boolean makeSecure) {
+
+        Map<Integer, String> result = new HashMap<Integer, String>(targetIds.length);
+
+        for (int targetId : targetIds) {
+            result.put(targetId, makeUrl(target.getTargetUrl(targetId), makeExplicit, makeSecure));
+        }
+
+        return result;
+    }
+
+    /*
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTargetUrl(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
+     */
+    public String getResourceTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
+        boolean makeExplicit, boolean makeSecure) {
+
+        return makeUrl(target.getResourceTargetUrl(resourceId, targetId), makeExplicit, makeSecure);
+    }
+
+    /*
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTargetUrls(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int[], boolean, boolean)
+     */
+    public Map<Integer, String> getResourceTargetUrls(Subject subject, int resourceId, PerspectiveTarget target,
+        int[] targetIds, boolean makeExplicit, boolean makeSecure) {
+
+        Map<Integer, String> result = new HashMap<Integer, String>(targetIds.length);
+
+        for (int targetId : targetIds) {
+            result.put(targetId, makeUrl(target.getResourceTargetUrl(resourceId, targetId), makeExplicit, makeSecure));
+        }
+
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTemplateTargetUrl(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
+     */
+    public String getTemplateTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
+        boolean makeExplicit, boolean makeSecure) {
+
+        return makeUrl(target.getTemplateTargetUrl(resourceId, targetId), makeExplicit, makeSecure);
+    }
+
+    private String makeUrl(String url, boolean makeExplicit, boolean makeSecure) {
+        if (null == url || !makeExplicit || url.startsWith("http")) {
+            return url;
+        }
+
+        if (null == server) {
+            server = serverManager.getServer();
+        }
+
+        String protocol = (makeSecure) ? "https://" : "http://";
+        int port = (makeSecure) ? server.getSecurePort() : server.getPort();
+        String result = protocol + server.getAddress() + ":" + port + url;
+        return result;
+    }
 }

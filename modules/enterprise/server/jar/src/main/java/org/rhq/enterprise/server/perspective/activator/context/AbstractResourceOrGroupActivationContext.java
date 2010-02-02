@@ -19,9 +19,11 @@
 package org.rhq.enterprise.server.perspective.activator.context;
 
 import java.util.EnumSet;
+import java.util.Set;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.ResourceTypeFacet;
 
@@ -39,7 +41,11 @@ public abstract class AbstractResourceOrGroupActivationContext extends GlobalAct
     }
 
     public abstract ResourceType getResourceType();
+
     public abstract EnumSet<ResourceTypeFacet> getFacets();
+
+    public abstract Set<Resource> getResources();
+
     protected abstract EnumSet<Permission> getResourcePermissions();
 
     public boolean hasResourcePermission(Permission permission) {

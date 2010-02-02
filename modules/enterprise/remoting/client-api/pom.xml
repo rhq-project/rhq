@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <artifactId>rhq-remoting-client-api</artifactId>
@@ -30,7 +30,7 @@
    <dependencies>
 
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-enterprise-comm</artifactId>
          <version>${project.version}</version>
          <exclusions>
@@ -62,7 +62,7 @@
       </dependency>
 
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-enterprise-server</artifactId>
          <version>${project.version}</version>         
          <exclusions>
@@ -81,6 +81,10 @@
             <exclusion>
               <groupId>commons-httpclient</groupId>
               <artifactId>commons-httpclient</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>commons-lang</groupId>
+              <artifactId>commons-lang</artifactId>
             </exclusion>            
             <exclusion>
               <groupId>commons-validator</groupId>
@@ -108,10 +112,6 @@
             </exclusion>            
             <exclusion>
               <groupId>org.rhq</groupId>
-              <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
-            </exclusion>
-            <exclusion>
-              <groupId>org.rhq</groupId>
               <artifactId>rhq-core-client-api</artifactId>
             </exclusion>
             <exclusion>
@@ -120,11 +120,23 @@
             </exclusion>
             <exclusion>
               <groupId>org.rhq</groupId>
+              <artifactId>rhq-enterprise-server-xml-schemas</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
               <artifactId>safe-invoker</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.rhq</groupId>
+              <artifactId>test-utils</artifactId>
             </exclusion>
             <exclusion>
               <groupId>org.snmp4j</groupId>
               <artifactId>snmp4j</artifactId>
+            </exclusion>            
+            <exclusion>
+              <groupId>oswego-concurrent</groupId>
+              <artifactId>concurrent</artifactId>
             </exclusion>            
             <exclusion>
               <groupId>postgresql</groupId>
@@ -138,13 +150,13 @@
       </dependency>
 
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-core-domain</artifactId>
          <version>${project.version}</version>
       </dependency>
 
       <dependency>
-         <groupId>${groupId}</groupId>
+         <groupId>${project.groupId}</groupId>
          <artifactId>rhq-core-util</artifactId>
          <version>${project.version}</version>
          <exclusions>
@@ -169,6 +181,12 @@
          <groupId>javax.persistence</groupId>
          <artifactId>persistence-api</artifactId>
          <version>${persistence-api.version}</version>
+         <exclusions>
+            <exclusion>
+              <groupId>hibernate-annotations</groupId>
+              <artifactId>hibernate-annotations</artifactId>
+            </exclusion>
+         </exclusions> 
       </dependency>
 
       <dependency>

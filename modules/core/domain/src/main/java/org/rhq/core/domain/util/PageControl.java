@@ -121,8 +121,9 @@ public class PageControl implements Serializable, Cloneable {
     }
 
     public void setPageSize(int pageSize) {
+        this.pageNumber = (pageSize != 0 && pageSize != SIZE_UNLIMITED) ? (getStartRow() / pageSize) : 0;
         this.pageSize = pageSize;
-    }
+    }    
 
     public PageOrdering getPrimarySortOrder() {
         OrderingField primaryOrderingField = getPrimaryOrderingField();
@@ -233,6 +234,28 @@ public class PageControl implements Serializable, Cloneable {
         setPageNumber(0);
         setPageSize(15);
         this.orderingFields = new LinkedList<OrderingField>();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PageControl that = (PageControl) o;
+
+        if (pageNumber != that.pageNumber) return false;
+        if (pageSize != that.pageSize) return false;
+        if (!orderingFields.equals(that.orderingFields)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pageNumber;
+        result = 31 * result + pageSize;
+        result = 31 * result + orderingFields.hashCode();
+        return result;
     }
 
     @Override

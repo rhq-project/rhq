@@ -48,9 +48,11 @@ import org.rhq.augeas.tree.impl.AugeasTreeLazy;
 public class ApacheAugeasTree extends AugeasTreeLazy {
 
     private Map<AugeasNode, List<String>> includes;
+    private List<String> includeGlobs;
     
-    public ApacheAugeasTree(Augeas ag, AugeasModuleConfig moduleConfig) {
+    public ApacheAugeasTree(String serverRootPath, Augeas ag, AugeasModuleConfig moduleConfig) {
         super(ag, moduleConfig);
+        this.includeGlobs = initIncludeGlobs(serverRootPath);
     }
 
     protected AugeasNode instantiateNode(String fullPath) {
@@ -62,7 +64,6 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
     }
 
     public void setIncludes(Map<AugeasNode, List<String>> includes) {
-
         this.includes = includes;
     }
 
@@ -92,13 +93,18 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
 
     public List<AugeasNode> matchRelative(AugeasNode node, String expression) throws AugeasTreeException {
         try {
-            if (expression.indexOf(File.separatorChar) == 0)
+            if (expression.indexOf(PATH_SEPARATOR) == 0)
                 expression = expression.substring(1);
 
             return parseExpr(node, expression);
         } catch (Exception e) {
             throw new AugeasTreeException(e.getMessage());
         }
+    }
+
+    @Override
+    protected List<String> getIncludeGlobs() {
+        return includeGlobs;
     }
 
     private int subExpressionIndex(String expr) {
@@ -187,13 +193,13 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
 
     private List<AugeasNode> search(AugeasNode nd, String expr) throws Exception {
 
-        String fullExpr = nd.getFullPath() + File.separator + expr;
+        String fullExpr = nd.getFullPath() + PATH_SEPARATOR + expr;
 
         List<AugeasNode> nodes = this.matchInternal(fullExpr);
         if (includes.containsKey(nd)) {
             List<String> files = includes.get(nd);
             for (String fileName : files) {
-                List<AugeasNode> nds = this.matchInternal(fileName + File.separator + expr);
+                List<AugeasNode> nds = this.matchInternal(fileName + PATH_SEPARATOR+ expr);
                 for (AugeasNode node : nds) {
                     if (!nodes.contains(node))
                         nodes.add(node);
@@ -208,7 +214,7 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
         if (!expression.startsWith(AUGEAS_DATA_PATH))
             expression = AUGEAS_DATA_PATH + expression;
 
-        List<String> res = ag.match(expression);
+        List<String> res = getAugeas().match(expression);
 
         List<AugeasNode> nodes = new ArrayList<AugeasNode>();
 
@@ -216,5 +222,23 @@ public class ApacheAugeasTree extends AugeasTreeLazy {
             nodes.add(getNode(name));
         }
         return nodes;
+    }
+
+    /**
+     * @param serverRootPath
+     * @return
+     */
+    private List<String> initIncludeGlobs(String serverRootPath) {
+        ArrayList<String> ret = new ArrayList<String>();
+        
+        for(String glob : getModuleConfig().getIncludedGlobs()) {
+            File f = new File(glob);
+            if (f.isAbsolute()) {
+                ret.add(glob);
+            } else {
+                ret.add(new File(serverRootPath, glob).getPath());
+            }
+        }
+        return ret;
     }
 }

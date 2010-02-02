@@ -38,6 +38,7 @@ import org.quartz.simpl.SimpleThreadPool;
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.perspective.PerspectiveServerPluginContainer;
 import org.rhq.enterprise.server.scheduler.EnhancedScheduler;
@@ -447,11 +448,12 @@ public class MasterServerPluginContainer {
      * @return the new plugin containers created by this method
      */
     protected List<AbstractTypeServerPluginContainer> createPluginContainers() {
-        ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(4);
+        ArrayList<AbstractTypeServerPluginContainer> pcs = new ArrayList<AbstractTypeServerPluginContainer>(5);
         pcs.add(new GenericServerPluginContainer(this));
         pcs.add(new ContentServerPluginContainer(this));
         pcs.add(new PerspectiveServerPluginContainer(this));
         pcs.add(new AlertServerPluginContainer(this));
+        pcs.add(new EntitlementServerPluginContainer(this));
         return pcs;
     }
 

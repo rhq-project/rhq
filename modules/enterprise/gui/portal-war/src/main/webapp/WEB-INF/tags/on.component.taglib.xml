@@ -65,10 +65,10 @@
     </tag>
 
     <tag>
-        <tag-name>rawconfig</tag-name>
+        <tag-name>multifile</tag-name>
         <component>
-            <component-type>org.jboss.on.RawConfig</component-type>
-            <renderer-type>org.jboss.on.RawConfig</renderer-type>
+            <component-type>org.jboss.on.MultiFile</component-type>
+            <renderer-type>org.jboss.on.MultiFile</renderer-type>
         </component>
     </tag>
 

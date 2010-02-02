@@ -46,6 +46,11 @@
                 </c:list-property>
             </serverplugin:results>
         </serverplugin:control>
+        <serverplugin:control name="removeCobblerDistros" description="Removes RHQ distros known to Cobbler. Any non-RHQ distros will remain intact.">
+            <serverplugin:parameters>
+                <c:simple-property name="searchRegex" required="false" description="If specified, only those distros whose name matches this regex will be removed" />
+            </serverplugin:parameters>
+        </serverplugin:control>
     </serverplugin:plugin-component>
 
     <serverplugin:scheduled-jobs>

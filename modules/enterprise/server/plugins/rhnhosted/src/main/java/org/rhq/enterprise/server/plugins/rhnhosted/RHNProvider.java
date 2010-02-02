@@ -33,6 +33,7 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.xmlrpc.XmlRpcException;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisoryDetails;
@@ -49,7 +50,9 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
+import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.Certificate;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.CertificateFactory;
 import org.rhq.enterprise.server.plugins.rhnhosted.certificate.PublicKeyRing;
@@ -152,7 +155,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         log.info("synchronizePackages(repoName = " + repoName + ", report = " + report + ", existingPackages.size() = "
             + existingPackages.size());
         RHNSummary summary = new RHNSummary(helper);
@@ -187,6 +190,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                 long endTimeSlice = System.currentTimeMillis();
                 log.debug("Slice processed in " + (endTimeSlice - startTimeSlice) + "ms current size of pkgDetails is "
                     + pkgDetails.size());
+                ThreadUtil.checkInterrupted();
             }
             long endTime = System.currentTimeMillis();
             log.info("It took " + (endTime - startTime) + "ms too get PackageDetails for " + pkgIds.size()
@@ -202,6 +206,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
                     report.addNewPackage(p);
                     summary.added++;
                 }
+                ThreadUtil.checkInterrupted();
             }
             for (ContentProviderPackageDetails p : deletedPackages) {
                 log.debug("Package at (" + p.getDisplayName() + ") marked as deleted");
@@ -210,7 +215,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             }
         } catch (Exception e) {
             summary.errors.add(e.toString());
-            throw e;
+            throw new SyncException("error synching packages.", e);
         } finally {
             //helper.disconnect();
             summary.markEnded();
@@ -223,7 +228,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizeAdvisory(String repoName, AdvisorySyncReport report,
-        Collection<AdvisoryDetails> existingAdvisory) throws Exception {
+        Collection<AdvisoryDetails> existingAdvisory) throws SyncException, InterruptedException {
 
         List<String> existingLabels = new ArrayList<String>();
         for (AdvisoryDetails ad : existingAdvisory) {
@@ -233,17 +238,24 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         List<String> deletedAdvs = new ArrayList<String>(); //Existing advisories we want to remove.
         deletedAdvs.addAll(existingLabels);
 
-        List<String> errataIds = helper.getChannelAdvisory(repoName);
-        List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName);
-        log.debug("Found " + advList.size() + " available errata");
-        for (AdvisoryDetails adv : advList) {
-            log.debug("Processing Advisory ::" + adv.getAdvisory());
-            deletedAdvs.remove(adv.getAdvisory());
-            if (!existingLabels.contains(adv.getAdvisory())) {
-                log.debug("New Advisory " + adv.getAdvisory() + ") detected" + " with bugs" + adv.getBugs()
-                    + "with cves" + adv.getCVEs() + "wiuth packages" + adv.getPkgs());
-                report.addAdvisory(adv);
+        try {
+            List<String> errataIds = helper.getChannelAdvisory(repoName);
+            List<AdvisoryDetails> advList = helper.getAdvisoryMetadata(errataIds, repoName);
+            log.debug("Found " + advList.size() + " available errata");
+            for (AdvisoryDetails adv : advList) {
+                log.debug("Processing Advisory ::" + adv.getAdvisory());
+                deletedAdvs.remove(adv.getAdvisory());
+                if (!existingLabels.contains(adv.getAdvisory())) {
+                    log.debug("New Advisory " + adv.getAdvisory() + ") detected" + " with bugs" + adv.getBugs()
+                        + "with cves" + adv.getCVEs() + "wiuth packages" + adv.getPkgs());
+                    report.addAdvisory(adv);
+                }
+                ThreadUtil.checkInterrupted();
             }
+        } catch (IOException ioe) {
+            throw new SyncException("IOException syncing advisory meta", ioe);
+        } catch (XmlRpcException x) {
+            throw new SyncException("XmlRpcException syncing advisory meta", x);
         }
 
         for (String adv : deletedAdvs) {
@@ -259,7 +271,7 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
      * @inheritDoc
      */
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-        Collection<DistributionDetails> existingDistros) throws Exception {
+        Collection<DistributionDetails> existingDistros) throws SyncException {
 
         // Goal:
         //   This method will create the metadata representing what kickstart tree files need to be downloaded.
@@ -274,7 +286,12 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         List<String> deletedDistros = new ArrayList<String>(); //Existing distros we want to remove.
         deletedDistros.addAll(existingLabels);
 
-        List<String> availableLabels = helper.getSyncableKickstartLabels(repoName);
+        List<String> availableLabels;
+        try {
+            availableLabels = helper.getSyncableKickstartLabels(repoName);
+        } catch (Exception e) {
+            throw new SyncException("Error synching kickstart labels", e);
+        }
         log.debug("Found " + availableLabels.size() + " available kickstart trees");
         for (String label : availableLabels) {
             log.debug("Processing kickstart: " + label);
@@ -294,7 +311,12 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
             }
         }
 
-        List<DistributionDetails> ddList = helper.getDistributionMetaData(toSyncDistros);
+        List<DistributionDetails> ddList;
+        try {
+            ddList = helper.getDistributionMetaData(toSyncDistros);
+        } catch (Exception e) {
+            throw new SyncException("Error synching distro metadata", e);
+        }
         report.addDistros(ddList);
     }
 
@@ -357,7 +379,6 @@ public class RHNProvider implements ContentProvider, PackageSource, RepoSource, 
         return helper.constructKickstartFileUrl(repoName, label, relativeFilename);
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return new SyncProgressWeight(10, 1, 0, 0, 1);
     }

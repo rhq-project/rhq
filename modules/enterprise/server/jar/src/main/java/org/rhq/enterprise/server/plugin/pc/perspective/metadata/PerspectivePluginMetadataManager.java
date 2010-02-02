@@ -27,14 +27,18 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.enterprise.server.perspective.MenuItem;
+import org.rhq.enterprise.server.perspective.PageLink;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ActionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ApplicationType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.ExtensionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.MenuItemType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PageLinkType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PageType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PerspectivePluginDescriptorType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PlacementType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.PositionType;
+import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.RenderedExtensionType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TabType;
 import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.TaskType;
 
@@ -54,8 +58,8 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Ta
 public class PerspectivePluginMetadataManager {
     private final String CORE_PERSPECTIVE_NAME = "CorePerspective";
 
-    private static final String MENU_ITEM_TARGET_URL = "/rhq/perspective/main.xhtml?targetUrlKey=";
-    private static final String TAB_TARGET_URL = "/rhq/perspective/resource.xhtml?targetUrlKey=";
+    private static final String TARGET_MAIN_URL = "/rhq/perspective/main.xhtml?targetUrlKey=";
+    private static final String TARGET_RESOURCE_URL = "/rhq/perspective/resource.xhtml?targetUrlKey=";
 
     private static final Map<Integer, String> KEY_URL_MAP = new HashMap<Integer, String>();
 
@@ -67,6 +71,7 @@ public class PerspectivePluginMetadataManager {
     private long lastModifiedTime;
     private List<Tab> resourceTabs;
     private List<MenuItem> menu;
+    private List<PageLink> pageLinks;
 
     public PerspectivePluginMetadataManager() {
     }
@@ -92,6 +97,7 @@ public class PerspectivePluginMetadataManager {
         this.menu = new ArrayList<MenuItem>();
         this.resourceTabs = new ArrayList<Tab>();
         // TODO: Init lists of global tasks and resource tasks.
+        this.pageLinks = new ArrayList<PageLink>();
 
         // Always process the Core perspective first as other perspectives may remove extensions it defines.
         processCorePerspective();
@@ -138,7 +144,7 @@ public class PerspectivePluginMetadataManager {
 
         // Process MenuItem Extensions 
         for (MenuItemType rawMenuItem : perspective.getMenuItem()) {
-            resolveUrls(applications, rawMenuItem, MENU_ITEM_TARGET_URL);
+            resolveUrls(applications, rawMenuItem, TARGET_MAIN_URL);
             ActionType action = rawMenuItem.getAction();
             switch (action) {
             case ADD:
@@ -152,7 +158,7 @@ public class PerspectivePluginMetadataManager {
 
         // Process Tab Extensions
         for (TabType rawTab : perspective.getTab()) {
-            resolveUrls(applications, rawTab, TAB_TARGET_URL);
+            resolveUrls(applications, rawTab, TARGET_RESOURCE_URL);
             ActionType action = rawTab.getAction();
             switch (action) {
             case ADD:
@@ -165,6 +171,18 @@ public class PerspectivePluginMetadataManager {
         }
 
         // TODO: Process global tasks and resource tasks.
+
+        // Process Page Extensions
+        // For now just assume there are a reasonable number of page extesnions such that throwing
+        // them all into one list will have acceptable performance.  If necessary we could segregate
+        // by page name etc...
+        for (PageType rawPage : perspective.getPage()) {
+            for (PageLinkType rawPageLink : rawPage.getPageLink()) {
+                resolveUrls(applications, rawPageLink, TARGET_MAIN_URL);
+                this.pageLinks.add(new PageLink(rawPageLink, perspective.getName(), rawPage.getName(), rawPageLink
+                    .getUrl()));
+            }
+        }
     }
 
     /**
@@ -188,10 +206,16 @@ public class PerspectivePluginMetadataManager {
             TabType tab = (TabType) extension;
             String resolvedUrl = resolveUrl(applicationType, tab.getUrl(), targetUrl);
             tab.setUrl(resolvedUrl);
+        } else if (extension instanceof PageLinkType) {
+            PageLinkType pageLink = (PageLinkType) extension;
+            String resolvedUrl = resolveUrl(applicationType, pageLink.getUrl(), targetUrl);
+            pageLink.setUrl(resolvedUrl);
         }
 
-        String resolvedIconUrl = resolveUrl(applicationType, extension.getIconUrl(), null);
-        extension.setIconUrl(resolvedIconUrl);
+        if (extension instanceof RenderedExtensionType) {
+            String resolvedIconUrl = resolveUrl(applicationType, ((RenderedExtensionType) extension).getIconUrl(), null);
+            ((RenderedExtensionType) extension).setIconUrl(resolvedIconUrl);
+        }
     }
 
     private String resolveUrl(ApplicationType applicationType, String url, String targetUrl) {
@@ -463,6 +487,16 @@ public class PerspectivePluginMetadataManager {
      */
     public List<Tab> getResourceTabs() {
         return this.resourceTabs;
+    }
+
+    /**
+     * Returns the full set of defined PageLink extensions with no activators applied. Callers should not
+     * modify the returned list or any of its descendant lists.
+     *
+     * @return the full Resource tab bar, with no activators applied
+     */
+    public List<PageLink> getPageLinks() {
+        return this.pageLinks;
     }
 
     public synchronized boolean isStarted() {

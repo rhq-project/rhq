@@ -108,18 +108,21 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         return advpkg;
     }
 
+    public CVE getCVE(Subject user, int cveId) {
+        CVE cve = entityManager.find(CVE.class, cveId);
+        return cve;
+    }
+
     public void deleteCVE(Subject user, int cveId) {
         log.debug("User [" + user + "] is deleting CVE [" + cveId + "]");
 
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(CVE.DELETE_BY_CVE_ID).setParameter("cveId", cveId).executeUpdate();
+        int success = entityManager.createNamedQuery(CVE.DELETE_BY_CVE_ID).setParameter("cveId", cveId).executeUpdate();
 
-        CVE cve = entityManager.find(CVE.class, cveId);
-        if (cve != null) {
-            entityManager.remove(cve);
-            log.debug("User [" + user + "] deleted CVE [" + cve + "]");
+        if (success == 1) {
+            log.debug("User [" + user + "] deleted CVE [" + cveId + "]");
         } else {
             log.debug("CVE ID [" + cveId + "] doesn't exist - nothing to delete");
         }
@@ -131,14 +134,13 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(AdvisoryCVE.DELETE_BY_ADV_ID).setParameter("advId", advId).executeUpdate();
+        int success = entityManager.createNamedQuery(AdvisoryCVE.DELETE_BY_ADV_ID).setParameter("advId", advId)
+            .executeUpdate();
 
-        AdvisoryCVE advcve = entityManager.find(AdvisoryCVE.class, advId);
-        if (advcve != null) {
-            entityManager.remove(advcve);
-            log.debug("User [" + user + "] deleted CVE [" + advcve + "]");
+        if (success == 1) {
+            log.debug("User [" + user + "] deleted CVEs for " + advId);
         } else {
-            log.debug("Advisory ID [" + advId + "] doesn't exist - nothing to delete");
+            log.debug("Advisory ID [" + advId + "] CVE deletion unsuccessful");
         }
     }
 
@@ -148,48 +150,44 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(Advisory.QUERY_DELETE_BY_ADV_ID).setParameter("advid", advId).executeUpdate();
+        int success = entityManager.createNamedQuery(Advisory.QUERY_DELETE_BY_ADV_ID).setParameter("advid", advId)
+            .executeUpdate();
 
-        Advisory adv = entityManager.find(Advisory.class, advId);
-        if (adv != null) {
-            entityManager.remove(adv);
-            log.debug("User [" + user + "] deleted advisory [" + adv + "]");
+        if (success == 1) {
+            log.debug("User [" + user + "] deleted Advisory for " + advId);
         } else {
-            log.debug("Advisory tree ID [" + adv + "] doesn't exist - nothing to delete");
+            log.debug("Advisory ID [" + advId + "] deletion unsuccessful");
         }
 
     }
 
     public void deleteAdvisoryPackage(Subject user, int advId) {
-        log.debug("User [" + user + "] is deleting CVE [" + advId + "]");
+        log.debug("User [" + user + "] is deleting packages for advisory [" + advId + "]");
 
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID).setParameter("advId", advId)
-            .executeUpdate();
+        int success = entityManager.createNamedQuery(AdvisoryPackage.DELETE_PACKAGES_BY_ADV_ID).setParameter("advId",
+            advId).executeUpdate();
 
-        AdvisoryPackage advpkg = entityManager.find(AdvisoryPackage.class, advId);
-        if (advpkg != null) {
-            entityManager.remove(advpkg);
-            log.debug("User [" + user + "] deleted CVE [" + advpkg + "]");
+        if (success == 1) {
+            log.debug("User [" + user + "] deleted AdvisoryPackage for [" + advId + "]");
         } else {
             log.debug("Advisory ID [" + advId + "] doesn't exist - nothing to delete");
         }
     }
 
     public void deleteAdvisoryBugList(Subject user, int advId) {
-        log.debug("User [" + user + "] is deleting CVE [" + advId + "]");
+        log.debug("User [" + user + "] is deleting Buglist for Advisory [" + advId + "]");
 
         entityManager.flush();
         entityManager.clear();
 
-        entityManager.createNamedQuery(AdvisoryBuglist.DELETE_BY_ADV_ID).setParameter("advId", advId).executeUpdate();
+        int success = entityManager.createNamedQuery(AdvisoryBuglist.DELETE_BY_ADV_ID).setParameter("advId", advId)
+            .executeUpdate();
 
-        AdvisoryBuglist advbugs = entityManager.find(AdvisoryBuglist.class, advId);
-        if (advbugs != null) {
-            entityManager.remove(advbugs);
-            log.debug("User [" + user + "] deleted CVE [" + advbugs + "]");
+        if (success == 1) {
+            log.debug("User [" + user + "] deleted buglist for Advisory [" + advId + "]");
         } else {
             log.debug("Advisory ID [" + advId + "] doesn't exist - nothing to delete");
         }
@@ -248,7 +246,6 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
 
     /**
      * find list of Packages Versions associated to an advisory
-     * @param pkgId packageId
      * @return list of PackageVersion objects
      */
     @SuppressWarnings("unchecked")
@@ -350,7 +347,7 @@ public class AdvisoryManagerBean implements AdvisoryManagerLocal, AdvisoryManage
         if (adv.getAdvisory() == null || adv.getAdvisory().trim().equals("")) {
             throw new AdvisoryException("A valid Advisory tree is required");
         }
-        System.out.println("Advisory validating done " + adv);
+        log.debug("Advisory validating done " + adv);
     }
 
 }

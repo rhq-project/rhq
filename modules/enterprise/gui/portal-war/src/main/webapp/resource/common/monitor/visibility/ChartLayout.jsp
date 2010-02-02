@@ -111,10 +111,12 @@
                         <tiles:put name="multiResource" value="true"/>
                      </tiles:insert>
                      &nbsp;<br>
+                     <%--
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.baselinerangeparams">
                         <tiles:put name="edit" value="false"/>
                      </tiles:insert>
                      &nbsp;<br>
+                     --%>
                      <tiles:insert definition=".resource.common.monitor.visibility.charts.metric.partrsrcs">
                         <tiles:put name="multiResource" value="true"/>
                      </tiles:insert>

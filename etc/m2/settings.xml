@@ -93,14 +93,14 @@
                </snapshots>
             </repository>
 -->
-            <!-- Uncomment this and point it at a local repo that contains the Oracle JDBC jar. -->
-            <!--
+            <!-- Oracle Driver 
+                 To package the Oracle OJDBC driver set -Drhq.m2.repo.url.oracle and this repo definition will
+                 be used to pick it up at build time. -->
             <repository>
-               <id>internal</id>
-               <name>Internal Repository</name>
-               <url>http://foo.example.com/m2-repo/</url>
+               <id>ojdbc-repo</id>
+               <name>M2 Repo containing OJDBC driver jar</name>
+               <url>${rhq.m2.repo.url.oracle}</url>
             </repository>
-            -->
 
          </repositories>
 

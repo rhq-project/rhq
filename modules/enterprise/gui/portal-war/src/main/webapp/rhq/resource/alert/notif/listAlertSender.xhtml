@@ -1,63 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:c="http://java.sun.com/jstl/core"
-      xmlns:onc="http://jboss.org/on/component"
-      xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
-<ui:composition template="/rhq/layout/main.xhtml">
-
-    <ui:param name="pageTitle" value="List Alert Notifications for Resource '#{ResourceUIBean.name}'"/>
-
-    <ui:define name="metaHeaders">
-        <style>
-            .col1, .col2 {
-                vertical-align: top;
-                padding: 10px;
-            }
-
-            .col2 {
-                width: 100%;
-            }
-
-            #senderName {
-                display: none;
-            }
-        </style>
-    </ui:define>
-
-    <ui:define name="breadcrumbs">
-        <h:outputLink value="/alerts/Config.do">
-            <f:param name="mode" value="viewRoles"/>
-            <f:param name="id" value="#{param.id}"/>
-            <f:param name="ad" value="#{param.ad}"/>
-            <h:outputText>Alert Definitions</h:outputText>
-        </h:outputLink>
-        <h:outputText> &gt; </h:outputText>
-        <h:outputLink value="listAlertSender.xhtml">
-            Alert Notification Definitions
-        </h:outputLink>
-    </ui:define>
-
-    <ui:define name="body">
-        <br/>
-        <h:messages showDetail="true"
-                    globalOnly="true"
-                    infoClass="InfoBlock"
-                    warnClass="WarnBlock"
-                    errorClass="ErrorBlock"
-                    fatalClass="FatalBlock"
-                    layout="table"
-                    width="100%"/>
+<ui:component xmlns="http://www.w3.org/1999/xhtml"
+              xmlns:h="http://java.sun.com/jsf/html"
+              xmlns:f="http://java.sun.com/jsf/core"
+              xmlns:ui="http://java.sun.com/jsf/facelets"
+              xmlns:c="http://java.sun.com/jstl/core"
+              xmlns:onc="http://jboss.org/on/component"
+              xmlns:a4j="http://richfaces.org/a4j"
+              xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
         <rich:panel id="existingAlertsPanel">
             <f:facet name="header">
                 <h:outputText>Existing notifications for Resource '#{ResourceUIBean.name}' and alert definition '#{alertNotificationsUIBean.alertDefinition.name}':</h:outputText>
             </f:facet>
+
+            <a4j:region renderRegionOnly="true">
             <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
                 <h:panelGroup>
                     <h:form id="notificationListForm">
@@ -81,12 +42,14 @@
                                          ignoreDupResponses="true"
                                          requestDelay="25"
                                          reRender="alertConfig,senderName"
-                                         oncomplete="updateCustomContent();" />
+                                         oncomplete="updateCustomContent();"
+                                         onsubmit="showLoadConfig();" />
                             <a4j:support event="onkeyup"
                                          ignoreDupResponses="true"
                                          requestDelay="150"
                                          reRender="alertConfig,senderName"
-                                         oncomplete="updateCustomContent();" />
+                                         oncomplete="updateCustomContent();"
+                                         onsubmit="showLoadConfig();" />
                             <a4j:support event="onorderchanged"
                                          ignoreDupResponses="true"
                                          requestDelay="250"
@@ -107,10 +70,22 @@
                                          value="Remove Selected"
                                          action="#{alertNotificationsUIBean.removeSelected}"
                                          styleClass="buttonmed"/>
+                        
+                        <br /><br />
+                        <h:outputLink id="addAlertLink" styleClass="buttonmed" value="#">
+                            <h:outputText value="Add New Alert Notification" />
+                            <rich:componentControl for="addAlertPanel" attachTo="addAlertLink" operation="show" event="onclick" />
+                        </h:outputLink>
                     </h:form>
                 </h:panelGroup>
 
                 <h:panelGroup>
+                    <div id="configLoader" style="display: none; margin: auto;">
+                        <strong><h:outputText value="Loading Configuration..." /></strong>
+                        <br /><br />
+                        <img src="/images/ajax-loader.gif" alt="Loading Configuration..." />
+                    </div>
+
                     <h:form id="alertConfig">
                         <input type="hidden" name="id" value="${param.id}"/>
                         <input type="hidden" name="ad" value="${param.ad}"/>
@@ -132,46 +107,90 @@
                     <!-- Custom plugin UI -->
                     <div id="customContentArea"></div>
                 </h:panelGroup>
+
+                <h:outputText id="senderName"
+                              style="display: none;"
+                              value="#{alertNotificationsUIBean.activeNotification.senderName}" />
             </h:panelGrid>
+            </a4j:region>
         </rich:panel>
 
-        <rich:panel id="addAlertPanel">
-            <f:facet name="header">
-                <h:outputText value="Add Alert Notification" />
-            </f:facet>
+        <rich:modalPanel id="addAlertPanel" moveable="false" autosized="true">
 
-            <h:form id="newNotificationForm">
-                <input type="hidden" name="id" value="${param.id}"/>
-                <input type="hidden" name="ad" value="${param.ad}"/>
+            <h:panelGrid columns="2" width="100%" columnClasses="col1,col2">
+                <rich:panel id="addNewAlertPanel">
+                    <f:facet name="header">
+                        <h:outputText value="Add New Alert Notifications"/>
+                    </f:facet>
 
-                <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
-                <br />
-                <h:inputText id="alertNameInput"
-                             value="#{alertNotificationsUIBean.newAlertName}"
-                             maxlength="100"
-                             required="true" />
+                    <h:form id="newNotificationForm">
+                        <input type="hidden" name="id" value="${param.id}"/>
+                        <input type="hidden" name="ad" value="${param.ad}"/>
+
+                        <div style="height: 100px;">
+                            <h:outputLabel for="alertNameInput" value="Alert Notification Name:" />
+                            <br />
+                            <h:inputText id="alertNameInput"
+                                         value="#{alertNotificationsUIBean.newAlertName}"
+                                         maxlength="100"
+                                         required="true" />
+
+                            <h:message for="alertNameInput"
+                                       infoClass="InfoBlock"
+                                       warnClass="WarnBlock"
+                                       errorClass="ErrorBlock"
+                                       fatalClass="FatalBlock" />
+                            <br /><br />
+
+                            <h:outputLabel for="senderList" value="Alert Sender Type:" />
+                            <br />
+                            <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">
+                                <f:selectItems value="#{alertNotificationsUIBean.allAlertSenders}" />
+                            </h:selectOneMenu>
+                        </div>
+
+                        <h:commandButton id="addAlertButton"
+                                         value="Add Alert Notification"
+                                         action="#{alertNotificationsUIBean.addAlertSender}"
+                                         styleClass="buttonmed">
+                        </h:commandButton>
+                    </h:form>
+                </rich:panel>
                 
-                <h:message for="alertNameInput"
-                           infoClass="InfoBlock"
-                           warnClass="WarnBlock"
-                           errorClass="ErrorBlock"
-                           fatalClass="FatalBlock" />
-                <br /><br />
+                <rich:panel id="addAlertFromTemplatePanel">
+                    <f:facet name="header">
+                        <h:outputText value="Add Alert Notifications from template"/>
+                    </f:facet>
+                    <h:form id="newNotificationsFromTemplateForm">
+                        <input type="hidden" name="id" value="${param.id}"/>
+                        <input type="hidden" name="ad" value="${param.ad}"/>
 
-                <h:outputLabel for="senderList" value="Alert Sender Type:" />
-                <br />
-                <h:selectOneMenu id="senderList" value="#{alertNotificationsUIBean.selectedNewSender}">
-                    <f:selectItems value="#{alertNotificationsUIBean.allAlertSenders}" />
-                </h:selectOneMenu>
-                <br /><br />
+                        <div style="height: 100px;">
+                            <h:selectOneMenu id="templateList" value="#{alertNotificationsUIBean.selectedTemplate}">
+                                <f:selectItems value="#{alertNotificationsUIBean.allNotificationTemplates}"/>
+                            </h:selectOneMenu>
 
-                <h:commandButton id="addAlertButton"
-                                 value="Add Alert Notification"
-                                 action="#{alertNotificationsUIBean.addAlertSender}"
-                                 styleClass="buttonmed">
-                </h:commandButton>
-            </h:form>
-        </rich:panel>
+                            <br/>
+
+                            <h:selectBooleanCheckbox title="clearExisting" value="#{alertNotificationsUIBean.clearExistingNotifications}"/>
+                            <h:outputText value="Clear existing notifications"/>
+                        </div>
+
+                        <h:commandButton id="addTemplateButton"
+                                         value="Add Alert Notification from Template"
+                                         action="#{alertNotificationsUIBean.addAlertSenderFromTemplate}"
+                                         styleClass="buttonmed"
+                                         style="margin-top: auto;">
+                        </h:commandButton>
+                    </h:form>
+                </rich:panel>
+            </h:panelGrid>
+
+            <h:outputLink id="notificationCancelLink" styleClass="buttonmed" value="#" style="float: right;">
+                <h:outputText value="Cancel" />
+                <rich:componentControl for="addAlertPanel" attachTo="notificationCancelLink" operation="hide" event="onclick" />
+            </h:outputLink>
+        </rich:modalPanel>
 
         <br />
         <br />
@@ -180,23 +199,34 @@
             <h:outputText value="Back to Alert Definitions for Resource '#{ResourceUIBean.name}'"/>
         </h:outputLink>
 
-        <h:outputText id="senderName"
-                      value="#{alertNotificationsUIBean.activeNotification.senderName}" />
-        <script>
+        
+        
+        <script type="text/javascript">
             function updateCustomContent() {
                 var sender = $('senderName').innerHTML;
                 new Ajax.Updater('customContentArea',
-                                 'customContent.xhtml',
+                                 'notif/customContent.xhtml',
                                  { method: 'get',
-                                   parameters: {'senderName': sender}
+                                   parameters: {'senderName': sender, 'ad': #{param.ad}, 'id': #{param.id}}
                                  });
+
+                hideLoadConfig();
+            }
+
+            function showLoadConfig() {
+                $('alertConfig').hide();
+                $('customContentArea').hide();
+                $('configLoader').show();
+            }
+
+            function hideLoadConfig() {
+                $('configLoader').hide();
+                $('alertConfig').show();
+                $('customContentArea').show();
             }
 
             Event.observe(window, 'load', function() {
                 updateCustomContent();
             });
         </script>
-    </ui:define>
-</ui:composition>
-
-</html>
+</ui:component>

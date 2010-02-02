@@ -53,7 +53,7 @@ import java.util.Set;
     @NamedQuery(name = Distribution.QUERY_FIND_PATH_BY_DIST_TYPE, query = "SELECT dt " + "  FROM Distribution dt "
         + " WHERE dt.label = :label AND dt.distributionType.name = :typeName "),
     @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_LABEL, query = "SELECT dt FROM Distribution dt WHERE dt.label = :label"),
-    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.base_path = :path"),
+    @NamedQuery(name = Distribution.QUERY_FIND_BY_DIST_PATH, query = "SELECT dt FROM Distribution dt WHERE dt.basePath = :path"),
     @NamedQuery(name = Distribution.QUERY_DELETE_BY_DIST_ID, query = "DELETE Distribution dt WHERE dt.id = :distid") })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_DISTRIBUTION_ID_SEQ")
 @Table(name = "RHQ_DISTRIBUTION")
@@ -87,7 +87,7 @@ public class Distribution implements Serializable {
      * Base path where the kickstart tree is located
      */
     @Column(name = "BASE_PATH", nullable = false)
-    private String base_path;
+    private String basePath;
 
     @Column(name = "LAST_MODIFIED", nullable = false)
     private long lastModifiedDate;
@@ -119,7 +119,7 @@ public class Distribution implements Serializable {
     }
 
     public String getBasePath() {
-        return this.base_path;
+        return this.basePath;
     }
 
     public void setLabel(String labelIn) {
@@ -127,7 +127,7 @@ public class Distribution implements Serializable {
     }
 
     public void setBasePath(String basepathIn) {
-        this.base_path = basepathIn;
+        this.basePath = basepathIn;
     }
 
     public int getId() {
@@ -161,7 +161,7 @@ public class Distribution implements Serializable {
 
     @Override
     public String toString() {
-        return "Distribution [label=" + label + ", Type=" + distributionType + ", basePath=" + base_path + "]";
+        return "Distribution [label=" + label + ", Type=" + distributionType + ", basePath=" + basePath + "]";
     }
 
     @Override

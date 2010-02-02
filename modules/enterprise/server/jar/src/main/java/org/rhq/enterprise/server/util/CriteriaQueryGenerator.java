@@ -35,7 +35,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
-import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -72,7 +71,6 @@ public final class CriteriaQueryGenerator {
     private String alias;
     private String className;
     private static String NL = System.getProperty("line.separator");
-    private static String ESCAPE_CHARACTER = null;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
 
@@ -119,7 +117,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '" + getEscapeCharacter() + "'";
+            expression += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
         }
 
         return expression;
@@ -231,7 +229,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    fragment += " ESCAPE '" + getEscapeCharacter() + "'";
+                    fragment += " ESCAPE '" + QueryUtility.getEscapeCharacter() + "'";
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
@@ -427,7 +425,6 @@ public final class CriteriaQueryGenerator {
     private void setBindValues(Query query, boolean countQuery) {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
         boolean wantsFuzzyMatching = !criteria.isStrict();
-        boolean handleEscapedBackslash = "\\\\".equals(getEscapeCharacter());
 
         for (Map.Entry<String, Object> critField : getFilterFields(criteria).entrySet()) {
             Object value = critField.getValue();
@@ -440,9 +437,8 @@ public final class CriteriaQueryGenerator {
                  * Double escape backslashes if they are not treated as string literals by the db vendor
                  * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
                  */
-                if (handleEscapedBackslash) {
-                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
-                }
+                formattedValue = QueryUtility.handleDoubleEscaping(formattedValue);
+
                 if (wantsFuzzyMatching) {
                     // append '%' onto edges that don't already have '%' explicitly set from the caller
                     formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
@@ -450,7 +446,9 @@ public final class CriteriaQueryGenerator {
                 }
                 value = formattedValue;
             }
-            LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            }
             query.setParameter(critField.getKey(), value);
         }
         if (null != this.authorizationPermsFragment) {
@@ -458,14 +456,6 @@ public final class CriteriaQueryGenerator {
             query.setParameter("requiredPerms", requiredPerms);
             query.setParameter("requiredPermsSize", (long) requiredPerms.size());
         }
-    }
-
-    public static String getEscapeCharacter() {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
-        }
-
-        return ESCAPE_CHARACTER;
     }
 
     public static void main(String[] args) {

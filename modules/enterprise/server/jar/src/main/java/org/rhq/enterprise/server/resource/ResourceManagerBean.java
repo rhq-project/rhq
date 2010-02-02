@@ -117,6 +117,7 @@ import org.rhq.enterprise.server.operation.ResourceOperationSchedule;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying {@link Resource}s.
@@ -159,18 +160,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             if (parent == null) {
                 throw new ResourceNotFoundException("Intended parent for new resource does not exist.");
             }
-        }
 
-        if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parent.getId())) {
-            throw new PermissionException("You do not have permission to add this resource as a child.");
-        }
+            if (!authorizationManager.hasResourcePermission(user, Permission.CREATE_CHILD_RESOURCES, parent.getId())) {
+                throw new PermissionException("You do not have permission to add this resource as a child.");
+            }
 
-        if (getResourceByParentAndKey(user, parent, resource.getResourceKey(), resource.getResourceType().getPlugin(),
-            resource.getResourceType().getName()) != null) {
-            throw new ResourceAlreadyExistsException("Resource with key '" + resource.getResourceKey()
-                + "' already exists.");
+            if (getResourceByParentAndKey(user, parent, resource.getResourceKey(), resource.getResourceType()
+                .getPlugin(), resource.getResourceType().getName()) != null) {
+                throw new ResourceAlreadyExistsException("Resource with key '" + resource.getResourceKey()
+                    + "' already exists.");
+            }
         }
-
         if (parent != Resource.ROOT) {
             // Only set the relationships if this is not a root resource.
             // The cardinal rule is to add the relationship in both directions,
@@ -180,7 +180,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         entityManager.persist(resource);
-
+        log.error("********* resource persisted ************");
         // Execute sub-methods as overlord to bypass additional security checks.
         Subject overlord = this.subjectManager.getOverlord();
         updateImplicitMembership(overlord, resource);
@@ -850,7 +850,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("subject", user);
         }
 
-        searchString = PersistenceUtility.formatSearchParameter(searchString);
+        searchString = QueryUtility.formatSearchParameter(searchString);
 
         query.setParameter("category", category);
         queryCount.setParameter("category", category);
@@ -1448,7 +1448,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             query.setParameter("excludeIds", excludeList);
         }
 
-        nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
+        nameFilter = QueryUtility.formatSearchParameter(nameFilter);
 
         queryCount.setParameter("groupId", groupId);
         query.setParameter("groupId", groupId);
@@ -1485,7 +1485,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         queryCount.setParameter("repoId", repoId);
         query.setParameter("repoId", repoId);
 
-        search = PersistenceUtility.formatSearchParameter(search);
+        search = QueryUtility.formatSearchParameter(search);
         queryCount.setParameter("search", search);
         query.setParameter("search", search);
 

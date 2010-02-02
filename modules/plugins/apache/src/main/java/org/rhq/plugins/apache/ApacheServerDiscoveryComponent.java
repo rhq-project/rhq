@@ -20,6 +20,7 @@ package org.rhq.plugins.apache;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +56,10 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.OsProcessUtility;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.plugins.platform.PlatformComponent;
+import org.rhq.plugins.www.snmp.SNMPClient;
+import org.rhq.plugins.www.snmp.SNMPException;
+import org.rhq.plugins.www.snmp.SNMPSession;
+import org.rhq.plugins.www.snmp.SNMPValue;
 import org.rhq.rhqtransform.impl.PluginDescriptorBasedAugeasConfiguration;
 
 /**
@@ -129,6 +134,8 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
             
                 AugeasTree serverConfig = loadAugeas(pluginConfig);
                 
+                String serverUrl = null;
+                String vhostsGlobInclude = null;
                 if (serverConfig != null) {
                     //now check if the httpd.conf doesn't redefine the ServerRoot
                     List<AugeasNode> serverRoots = serverConfig.matchRelative(serverConfig.getRootNode(), "ServerRoot/param");
@@ -137,17 +144,21 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
                         serverRootProp.setValue(serverRoot);
                     }
 
-                    String url = getUrl(pluginConfig, serverConfig);
-                    if (url != null) {
-                        Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, url);
-                        pluginConfig.put(urlProp);                    
-                    }
-                    
-                    //now try to detect where to put the new files if vhost-per-file option is selected
-                    String globInclude = scanForGlobInclude(serverConfig);
-                    if (globInclude != null) {
-                        pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, globInclude));
-                    }
+                    serverUrl = getUrl(serverConfig, binaryInfo.getVersion());
+                    vhostsGlobInclude = scanForGlobInclude(serverConfig);
+                } else {
+                    //try SNMP to get the server's URL
+                    serverUrl = getUrl(pluginConfig);
+                    vhostsGlobInclude = "--none--";
+                }
+                
+                if (serverUrl != null) {
+                    Property urlProp = new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, serverUrl);
+                    pluginConfig.put(urlProp);                    
+                }
+                
+                if (vhostsGlobInclude != null) {
+                    pluginConfig.put(new PropertySimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_VHOST_FILES_MASK, vhostsGlobInclude));
                 }
                 
                 discoveredResources.add(createResourceDetails(discoveryContext, pluginConfig, process.getProcessInfo(),
@@ -218,17 +229,60 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
      * Return the root URL as determined from the Httpd configuration loaded by Augeas.
      * he URL's protocol is assumed to be "http" and its path is assumed to be "/".
      *  
-     * @param  pluginConfig
-     *
      * @return
      *
      * @throws Exception
      */
-    private static String getUrl(Configuration pluginConfig, AugeasTree serverConfig) throws Exception {
-        Address addr = HttpdAddressUtility.getMainServerSampleAddress(serverConfig);
+    private static String getUrl(AugeasTree serverConfig, String version) throws Exception {
+        Address addr = HttpdAddressUtility.get(version).getMainServerSampleAddress(serverConfig);
         return addr == null ? null : "http://" + addr.host + ":" + addr.port + "/";
     }
 
+    /**
+     * Return the root URL as determined from the SNMP session.
+     * 
+     * @param pluginConfiguration
+     * @return the URL or null if SNMP session couldn't be obtained
+     * @throws Exception
+     */
+    private static String getUrl(Configuration pluginConfiguration) throws Exception {
+        SNMPClient snmpClient = new SNMPClient();
+        try {
+            SNMPSession snmpSession = ApacheServerComponent.getSNMPSession(snmpClient, pluginConfiguration);
+            if (!snmpSession.ping()) {
+                return null;
+            }
+
+            SNMPValue nameValue;
+            SNMPValue portValue;
+            try {
+                nameValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_NAME);
+            } catch (SNMPException e) {
+                throw new Exception("Error getting SNMP value: " + SNMPConstants.COLUMN_VHOST_NAME + ": "
+                    + e.getMessage(), e);
+            }
+
+            try {
+                portValue = snmpSession.getNextValue(SNMPConstants.COLUMN_VHOST_PORT);
+            } catch (SNMPException e) {
+                throw new Exception("Error getting SNMP column: " + SNMPConstants.COLUMN_VHOST_PORT + ": "
+                    + e.getMessage(), e);
+            }
+
+            String host = nameValue.toString();
+            String fullPort = portValue.toString();
+
+            // The port value will be in the form "1.3.6.1.2.1.6.XXXXX",
+            // where "1.3.6.1.2.1.6" represents the TCP protocol ID,
+            // and XXXXX is the actual port number
+            int port = Integer.parseInt(fullPort.substring(fullPort.lastIndexOf(".") + 1));
+
+            return "http://" + host + ":" + port + "/";
+        } finally {
+            snmpClient.close();
+        }
+    }
+    
     @Nullable
     private String getServerRoot(@NotNull ApacheBinaryInfo binaryInfo, @NotNull ProcessInfo processInfo) {
         String[] cmdLine = processInfo.getCommandLine();

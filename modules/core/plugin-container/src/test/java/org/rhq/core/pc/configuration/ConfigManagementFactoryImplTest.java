@@ -25,13 +25,13 @@ package org.rhq.core.pc.configuration;
 
 import static org.testng.Assert.*;
 
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.testng.annotations.Test;
 import org.testng.annotations.BeforeMethod;
-import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
-import org.rhq.test.JMockTest;
 import org.jmock.Expectations;
 
 public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
@@ -51,65 +51,14 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
     }
 
     @Test
-    public void factoryShouldReturnLegacyLoadConfigWhenAmpsVersionIsLessThan2dot1() throws Exception {
+    public void factoryShouldInitializeLegacyConfigMgmtWithComponentService() throws Exception {
+        final boolean daemonOnly = true;
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
-        }});
-
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
-
-        assertTrue(
-            loadConfig instanceof LegacyConfigManagement,
-            "Expected to get an instance of " + LegacyConfigManagement.class.getSimpleName() + " when the " +
-            "resource is from a plugin having an ampsVersion less than " + NON_LEGACY_AMPS_VERSION
-        );
-    }
-
-    @Test
-    public void factoryShouldInitializeLegacyLoadConfigWithComponentService() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
-        }});
-
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
-
-        assertComponentServiceInitialized(loadConfig);
-    }
-
-    @Test
-    public void factoryShouldInitializeLegacyLoadConfigWithConfigurationUtilityService() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(LEGACY_AMPS_VERSION));
-        }});
-
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
-
-        assertConfigurationUtilityServiceInitialized(loadConfig);
-    }
-
-    @Test
-    public void factoryShouldReturnStructuredLoadConfigWhenAmpsVersionIs2dot1AndFormatIsStructured() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
-
-            allowing(componentService).getResourceType(resourceId);
-            will(returnValue(createResourceTypeThatSupportsStructured()));
-        }});
-
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
-
-        assertTrue(
-            loadConfig instanceof StructuredConfigManagement,
-            "Expected to get an instance of " + StructuredConfigManagement.class.getSimpleName() +
-            "when resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
-            "configuration format is structured."
-        );
-    }
-
-    @Test
-    public void factoryShouldInitializeLoadStructuredWithComponentService() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
@@ -121,9 +70,14 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
     }
 
     @Test
-    public void factoryShouldInitializeLoadStructuredWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeLegacyConfigMgmtWithConfigurationUtilityService() throws Exception {
+        final boolean daemonOnly = true;
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
@@ -135,28 +89,15 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
     }
 
     @Test
-    public void factoryShouldReturnLoadRawWhenAmpsVersionIs2dot1AndFormatIsRaw() throws Exception {
+    public void factoryShouldInitializeStructuredConfigMgmtWithComponentService() throws Exception {
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
-
-            allowing(componentService).getResourceType(resourceId);
-            will(returnValue(createResourceTypeThatSupportsRaw()));
-        }});
-
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
-
-        assertTrue(
-            loadConfig instanceof RawConfigManagement,
-            "Expected to get an instance of " + RawConfigManagement.class.getSimpleName() + " when " +
-            "resource is from a plugin having an ampsversion >= " + NON_LEGACY_AMPS_VERSION + " and the resource " +
-            "configuration format is raw."
-        );
-   }
-
-   @Test
-    public void factoryShouldInitializeLoadRawWithComponentService() throws Exception {
-        context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            boolean daemonOnly = true;
+            
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
@@ -168,9 +109,15 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
     }
 
     @Test
-    public void factoryShouldInitializeLoadRawWithConfigurationUtilityService() throws Exception {
+    public void factoryShouldInitializeStructuredConfigMgmtWithConfigurationUtilityService() throws Exception {
+        final boolean daemonOnly = true;
+
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
@@ -182,28 +129,55 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
     }
 
     @Test
-    public void factoryShouldReturnLoadStructuredAndRawWhenAmpsVersionIs2dot1AndFormatIsBoth() throws Exception {
+    public void factoryShouldInitializeRawConfigMgmtWithComponentService() throws Exception {
+        final boolean daemonOnly = true;
+
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
-            will(returnValue(createResourceTypeThatSupportsStructuredAndRaw()));
+            will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
         ConfigManagement loadConfig = factory.getStrategy(resourceId);
 
-        assertTrue(
-            loadConfig instanceof StructuredAndRawConfigManagement,
-            "Expected to get an instance of" + StructuredAndRawConfigManagement.class.getSimpleName() +
-            " when resource is from a plugin having an ampsVersion >= " + NON_LEGACY_AMPS_VERSION + " and the " +
-            "resource configuration format is both (structured and raw)."
-        );
+        assertComponentServiceInitialized(loadConfig);
+    }
+
+    @Test
+    public void factoryShouldInitializeRawConfigMgmtWithConfigurationUtilityService() throws Exception {
+        final boolean daemonOnly = true;
+
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
+        context.checking(new Expectations() {{
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
+
+            allowing(componentService).getResourceType(resourceId);
+            will(returnValue(createResourceTypeThatSupportsStructured()));
+        }});
+
+        ConfigManagement loadConfig = factory.getStrategy(resourceId);
+
+        assertConfigurationUtilityServiceInitialized(loadConfig);
     }
 
     @Test
     public void factoryShouldInitializeLoadStructuredAndRawWithComponentService() throws Exception {
+        final boolean daemonOnly = true;
+
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
@@ -216,25 +190,32 @@ public class ConfigManagementFactoryImplTest extends ConfigManagementTest {
 
     @Test
     public void factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService() throws Exception {
+        final boolean daemonOnly = true;
+        final boolean onlyIfStarted = true;
+
+        final ResourceComponent resourceComponent = context.mock(ResourceComponent.class);
+
         context.checking(new Expectations() {{
-            allowing(componentService).getAmpsVersion(resourceId); will(returnValue(NON_LEGACY_AMPS_VERSION));
+            allowing(componentService).getComponent(resourceId, ResourceComponent.class, FacetLockType.READ,
+                ConfigManagement.FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
+            will(returnValue(resourceComponent));
 
             allowing(componentService).getResourceType(resourceId);
             will(returnValue(createResourceTypeThatSupportsStructured()));
         }});
 
-        ConfigManagement loadConfig = factory.getStrategy(resourceId);
+        ConfigManagement configManagement = factory.getStrategy(resourceId);
 
-        assertConfigurationUtilityServiceInitialized(loadConfig);
+        assertConfigurationUtilityServiceInitialized(configManagement);
     }
 
-    void assertComponentServiceInitialized(ConfigManagement loadConfig) {
-        assertNotNull(loadConfig.getComponentService(), "The factory must initialize the componentService " +
+    void assertComponentServiceInitialized(ConfigManagement configMgmt) {
+        assertNotNull(configMgmt.getComponentService(), "The factory must initialize the componentService " +
                 "property of the loadConfig object.");
     }
 
-    void assertConfigurationUtilityServiceInitialized(ConfigManagement loadConfig) {
-        assertNotNull(loadConfig.getConfigurationUtilityService(), "The factory must initialize the " +
+    void assertConfigurationUtilityServiceInitialized(ConfigManagement configMgmt) {
+        assertNotNull(configMgmt.getConfigurationUtilityService(), "The factory must initialize the " +
                 "configurationUtilityService property of the loadConfig object.");
     }
 

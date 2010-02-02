@@ -23,11 +23,11 @@
 
 package org.rhq.core.pc.configuration;
 
+import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pc.util.ComponentService;
 import org.rhq.core.pc.util.FacetLockType;
-import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 
 public abstract class ConfigManagementSupport implements ConfigManagement {
 

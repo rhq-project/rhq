@@ -76,6 +76,7 @@ import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * Manager for Handling of {@link Event}s.
@@ -480,9 +481,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 }
             }
             if (isFilled(searchString))
-                stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
+                stm.setString(i++, QueryUtility.formatSearchParameter(searchString));
             if (isFilled(source))
-                stm.setString(i++, PersistenceUtility.formatSearchParameter(source));
+                stm.setString(i++, QueryUtility.formatSearchParameter(source));
 
             rs = stm.executeQuery();
             while (rs.next()) {
@@ -526,9 +527,9 @@ public class EventManagerBean implements EventManagerLocal, EventManagerRemote {
                 }
             }
             if (isFilled(searchString))
-                stm.setString(i++, PersistenceUtility.formatSearchParameter(searchString));
+                stm.setString(i++, QueryUtility.formatSearchParameter(searchString));
             if (isFilled(source))
-                stm.setString(i++, PersistenceUtility.formatSearchParameter(source));
+                stm.setString(i++, QueryUtility.formatSearchParameter(source));
 
             rs = stm.executeQuery();
             while (rs.next()) {

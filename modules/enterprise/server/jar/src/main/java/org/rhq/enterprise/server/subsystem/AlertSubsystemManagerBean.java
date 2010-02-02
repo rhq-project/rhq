@@ -45,6 +45,7 @@ import org.rhq.core.server.PersistenceUtility;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * @author Joseph Marques
@@ -83,8 +84,8 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
             query.setParameter("subjectId", subject.getId());
         }
 
-        resourceFilter = PersistenceUtility.formatSearchParameter(resourceFilter);
-        parentFilter = PersistenceUtility.formatSearchParameter(parentFilter);
+        resourceFilter = QueryUtility.formatSearchParameter(resourceFilter);
+        parentFilter = QueryUtility.formatSearchParameter(parentFilter);
 
         queryCount.setParameter("resourceFilter", resourceFilter);
         query.setParameter("resourceFilter", resourceFilter);
@@ -127,8 +128,8 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
             query.setParameter("subjectId", subject.getId());
         }
 
-        resourceFilter = PersistenceUtility.formatSearchParameter(resourceFilter);
-        parentFilter = PersistenceUtility.formatSearchParameter(parentFilter);
+        resourceFilter = QueryUtility.formatSearchParameter(resourceFilter);
+        parentFilter = QueryUtility.formatSearchParameter(parentFilter);
 
         queryCount.setParameter("resourceFilter", resourceFilter);
         query.setParameter("resourceFilter", resourceFilter);

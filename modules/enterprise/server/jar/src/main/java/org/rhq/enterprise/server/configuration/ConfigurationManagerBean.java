@@ -988,14 +988,45 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             fromStructured);
         }
 
+	if (isRawSupported(resourceId)){
+	    try{
+	    validateResourceConfiguration(subject, resourceId, newConfiguration,false);
+	    } catch(PluginContainerException e){
+		ResourceConfigurationUpdate response = new ResourceConfigurationUpdate(null, newConfiguration, subject.getName());
+		response.setErrorMessage(e.getMessage());
+		response.setStatus(ConfigurationUpdateStatus.UNSENT);
+		return response;
+	    } 
+	}
+
         ResourceConfigurationUpdate newUpdate =
             configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, configToUpdate,
                 ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
-
         executeResourceConfigurationUpdate(newUpdate, fromStructured);
-
         return newUpdate;
     }
+    private void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,boolean isStructured) throws PluginContainerException {
+     Resource resource = entityManager.find(Resource.class, resourceId);
+        if (resource == null) {
+            throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
+        }
+        if (!authorizationManager.canViewResource(subject, resource.getId())) {
+            throw new PermissionException("User [" + subject.getName()
+                + "] does not have permission to view resource configuration for [" + resource + "]");
+        }
+        Agent agent = resource.getAgent();
+        AgentClient agentClient = this.agentManager.getAgentClient(agent);
+        ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
+        configService.validate(configuration, resourceId, isStructured);
+    }
+
+    private boolean isRawSupported(int resourceId) {
+        Resource resource = entityManager.find(Resource.class, resourceId);
+        ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
+
+        return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef.getConfigurationFormat()));
+    }
+
 
     private boolean isStructuredAndRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -1897,20 +1928,6 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return update;
-    }
-
-    public Collection<RawConfiguration> findRawConfigurationsByConfigurationId(int configId) {
-        Configuration config = entityManager.find(Configuration.class, configId);
-
-        if (config == null) {
-            return Collections.EMPTY_LIST;
-        }
-
-        return config.getRawConfigurations();
-    }
-
-    public RawConfiguration findRawConfigurationById(int rawConfigId) {
-        return entityManager.find(RawConfiguration.class, rawConfigId);
     }
 
     public Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,

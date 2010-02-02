@@ -36,7 +36,7 @@ import org.rhq.core.domain.content.PackageVersion;
 import org.rhq.core.domain.util.StringUtils;
 
 /**
- * 
+ *
  * @author Pradeep Kilambi
  *
  */
@@ -54,7 +54,6 @@ public class AdvisoryDetailsComposite implements Serializable {
     private final String severity;
     private final Date updateDate;
     private final Date issueDate;
-    private final String cve;
     private final List<PackageVersion> pkgs;
     private String bugid;
 
@@ -70,7 +69,6 @@ public class AdvisoryDetailsComposite implements Serializable {
         this.severity = severity;
         this.updateDate = new Date(updateDate.longValue() * 1000L);
         this.issueDate = new Date(issueDate.longValue() * 1000L);
-        this.cve = getAdvisoryCVE();
         this.pkgs = getAdvisoryPackages();
         this.bugid = getBugid();
 
@@ -83,15 +81,6 @@ public class AdvisoryDetailsComposite implements Serializable {
             pkges.add(apkg.getPkg());
         }
         return pkges;
-    }
-
-    private String getAdvisoryCVE() {
-        List<String> cves = new ArrayList<String>();
-        Set<AdvisoryCVE> acves = advisory.getAdvisorycves();
-        for (AdvisoryCVE acve : acves) {
-            cves.add(acve.getCVE().getName());
-        }
-        return StringUtils.getListAsString(cves, " ");
     }
 
     public static long getSerialversionuid() {
@@ -128,10 +117,6 @@ public class AdvisoryDetailsComposite implements Serializable {
 
     public String getSeverity() {
         return severity;
-    }
-
-    public String getCve() {
-        return cve;
     }
 
     public List<PackageVersion> getPkgs() {

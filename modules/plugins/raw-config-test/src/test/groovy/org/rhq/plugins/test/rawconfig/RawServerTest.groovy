@@ -5,7 +5,7 @@ import org.rhq.core.domain.configuration.RawConfiguration
 
 class RawServerTest {
 
-  @Test
+//  @Test
   void testPersistRawConfiguration() {
     def rawFileName = "raw-test.txt"
     def rawFile = new File(confDir, rawFileName)

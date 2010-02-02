@@ -96,9 +96,6 @@ public class Advisory implements Serializable {
     private long lastModifiedDate;
 
     @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-    private Set<AdvisoryCVE> advisorycves;
-
-    @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<AdvisoryPackage> advisorypkgs;
 
     @OneToMany(mappedBy = "advisory", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
@@ -218,14 +215,6 @@ public class Advisory implements Serializable {
 
     public long getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    public Set<AdvisoryCVE> getAdvisorycves() {
-        return advisorycves;
-    }
-
-    public void setAdvisorycves(Set<AdvisoryCVE> advisorycves) {
-        this.advisorycves = advisorycves;
     }
 
     public Set<AdvisoryPackage> getAdvisorypkgs() {

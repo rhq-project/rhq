@@ -87,8 +87,8 @@ import java.util.Set;
     query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt WHERE rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
-    hints = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
-        @QueryHint(name = "org.hibernate.cacheRegion", value = "metadata") }, query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
+    hints = { @QueryHint(name = "org.hibernate.able", value = "true"),
+        @QueryHint(name = "org.hibernate.Region", value = "metadata") }, query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
     query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
@@ -128,9 +128,7 @@ import java.util.Set;
         + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
-        + "ORDER BY res.resourceType.name "
-
-    ),
+        + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject "
@@ -178,7 +176,8 @@ import java.util.Set;
         + "         (SELECT COUNT(resConfig) FROM rt.resourceConfigurationDefinition resConfig)," // configuration
         + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
-        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
+        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
+        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')" // support 
         + "       ) " //
         + "  FROM ResourceType rt " //
         + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
@@ -186,7 +185,10 @@ import java.util.Set;
         + "  SELECT rt.name " //
         + "    FROM ResourceType rt " //
         + "GROUP BY rt.name " //
-        + "  HAVING COUNT(rt.name) > 1") })
+        + "  HAVING COUNT(rt.name) > 1"),
+    @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" )
+})
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
@@ -232,7 +234,8 @@ import java.util.Set;
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
-        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) })
+        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY)
+    })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
@@ -269,6 +272,8 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
     public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";
     public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
+
+    public static final String QUERY_DYNAMIC_CONFIG_WITH_PLUGIN = "ResourceType.dynamicConfigWithPlugin";
 
     @Id
     @Column(name = "ID", nullable = false)

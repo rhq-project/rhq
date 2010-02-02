@@ -72,7 +72,6 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.plugins.rhnhosted.xmlrpc.XmlRpcExecutor#execute(java.lang.String, java.lang.Object[])
      */
-    @Override
     public Object execute(String methodName, Object[] params) throws XmlRpcException {
         //for (Object object : params) {
         //    System.out.println("parm: " + object);
@@ -269,7 +268,6 @@ public class MockRhnXmlRpcExecutor implements XmlRpcExecutor {
 
     }
 
-    @Override
     public Object execute(String pMethodName, List pParams) throws XmlRpcException {
         return execute(pMethodName, pParams.toArray());
     }

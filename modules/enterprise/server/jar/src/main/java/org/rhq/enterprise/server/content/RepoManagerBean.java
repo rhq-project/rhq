@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.content;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,9 +34,11 @@ import javax.persistence.Query;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
 import org.jboss.annotation.IgnoreDependency;
+import org.jboss.annotation.ejb.TransactionTimeout;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -58,6 +61,7 @@ import org.rhq.core.domain.content.RepoRepoRelationship;
 import org.rhq.core.domain.content.RepoSyncResults;
 import org.rhq.core.domain.content.ResourceRepo;
 import org.rhq.core.domain.content.composite.RepoComposite;
+import org.rhq.core.domain.content.transfer.SubscribedRepo;
 import org.rhq.core.domain.criteria.PackageVersionCriteria;
 import org.rhq.core.domain.criteria.RepoCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -77,6 +81,7 @@ import org.rhq.enterprise.server.plugin.pc.content.RepoGroupDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 @Stateless
 public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
@@ -104,6 +109,9 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private RepoManagerLocal repoManager;
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public void deleteRepo(Subject subject, int repoId) {
@@ -226,6 +234,18 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         return new PageList<RepoComposite>(results, (int) count, pc);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public List<SubscribedRepo> findSubscriptions(Subject subject, int resourceId) {
+        List<SubscribedRepo> list = new ArrayList<SubscribedRepo>();
+        PageControl pc = new PageControl();
+        for (RepoComposite repoComposite : findResourceSubscriptions(subject, resourceId, pc)) {
+            Repo repo = repoComposite.getRepo();
+            SubscribedRepo summary = new SubscribedRepo(repo.getId(), repo.getName());
+            list.add(summary);
+        }
+        return list;
+    }
+
     @SuppressWarnings("unchecked")
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<RepoComposite> findAvailableResourceSubscriptions(Subject subject, int resourceId, PageControl pc) {
@@ -290,7 +310,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
             PackageVersion.QUERY_FIND_BY_REPO_ID_WITH_PACKAGE_FILTERED, pc);
 
         query.setParameter("repoId", repoId);
-        query.setParameter("filter", PersistenceUtility.formatSearchParameter(filter));
+        query.setParameter("filter", QueryUtility.formatSearchParameter(filter));
 
         List<PackageVersion> results = query.getResultList();
         long count = getPackageVersionCountFromRepo(subject, filter, repoId);
@@ -300,10 +320,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Repo updateRepo(Subject subject, Repo repo) throws RepoException {
-        if (repo.getName() == null || repo.getName().trim().equals("")) {
-            throw new RepoException("Repo name is required");
-        }
-
+        validateFields(repo);
         // HHH-2864 - Leave this in until we move to hibernate > 3.2.r14201-2
         getRepo(subject, repo.getId());
 
@@ -311,6 +328,14 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         log.debug("User [" + subject + "] is updating repo [" + repo + "]");
         repo = entityManager.merge(repo);
         log.debug("User [" + subject + "] updated repo [" + repo + "]");
+
+        try {
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            pc.unscheduleRepoSyncJob(repo);
+            pc.scheduleRepoSyncJob(repo);
+        } catch (Exception e) {
+            log.warn("Failed to reschedule for [" + repo + "]", e);
+        }
 
         return repo;
     }
@@ -323,6 +348,16 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         log.debug("User [" + subject + "] is creating repo [" + repo + "]");
         entityManager.persist(repo);
         log.debug("User [" + subject + "] created repo [" + repo + "]");
+
+        // Schedule the repo sync job.
+        try {
+            ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+            // Schedule a job for the future
+            pc.scheduleRepoSyncJob(repo);
+        } catch (Exception e) {
+            log.error("error trying to schedule RepoSync", e);
+            throw new RuntimeException(e);
+        }
 
         return repo; // now has the ID set
     }
@@ -772,10 +807,21 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         repo.addRepoRelationship(repoRelationship);
     }
 
-    private void validateRepo(Repo c) throws RepoException {
-        if (c.getName() == null || c.getName().trim().equals("")) {
+    private void validateFields(Repo repo) throws RepoException {
+        if (repo.getName() == null || repo.getName().trim().equals("")) {
             throw new RepoException("Repo name is required");
         }
+        if (repo.getSyncSchedule() != null) {
+            try {
+                CronExpression ce = new CronExpression(repo.getSyncSchedule());
+            } catch (ParseException e) {
+                throw new RepoException("Repo sync schedule is not a vaild format.");
+            }
+        }
+    }
+
+    private void validateRepo(Repo c) throws RepoException {
+        this.validateFields(c);
 
         List<Repo> repos = getRepoByName(c.getName());
         if (repos.size() != 0) {
@@ -952,6 +998,7 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public RepoSyncResults getMostRecentSyncResults(Subject subject, int repoId) {
         Repo found = this.getRepo(subject, repoId);
         Set<ContentSyncStatus> stati = new HashSet<ContentSyncStatus>();
@@ -985,8 +1032,15 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
-    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws Exception {
-        ContentServerPluginContainer pc = ContentManagerHelper.getPluginContainer();
+    // TEMPORARY TIMEOUT DEFINED WHILE WE PROPERLY FIGURE OUT TIMEOUTS
+    @TransactionTimeout(86400)
+    public int internalSynchronizeRepos(Subject subject, Integer[] repoIds) throws InterruptedException {
+        ContentServerPluginContainer pc;
+        try {
+            pc = ContentManagerHelper.getPluginContainer();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
         ContentProviderManager providerManager = pc.getAdapterManager();
 
         int syncCount = 0;
@@ -999,6 +1053,26 @@ public class RepoManagerBean implements RepoManagerLocal, RepoManagerRemote {
         }
 
         return syncCount;
+    }
+
+    public void cancelSync(Subject subject, int repoId) throws ContentException {
+        ContentServerPluginContainer pc;
+        try {
+            pc = ContentManagerHelper.getPluginContainer();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        Repo repo = this.getRepo(subject, repoId);
+        try {
+            pc.cancelRepoSync(subject, repo);
+
+        } catch (SchedulerException e) {
+            throw new ContentException(e);
+        }
+        RepoSyncResults results = this.getMostRecentSyncResults(subject, repo.getId());
+        results.setStatus(ContentSyncStatus.CANCELLING);
+        repoManager.mergeRepoSyncResults(results);
     }
 
     @SuppressWarnings("unchecked")

@@ -1,61 +1,53 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<?xml version="1.0"?>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
-      xmlns:h="http://java.sun.com/jsf/html"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:s="http://jboss.com/products/seam/taglib"
-      xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.org/rich">
-<ui:remove>
-    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
-  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
-  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
-  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
-  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
-</ui:remove>
+<ui:composition
+        template="/WEB-INF/templates/mainTemplate.xhtml"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:f="http://java.sun.com/jsf/core"
+        xmlns:h="http://java.sun.com/jsf/html"
+        xmlns:ui="http://java.sun.com/jsf/facelets"
+        xmlns:c="http://java.sun.com/jstl/core"
+        xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+        xmlns:a4j="http://richfaces.org/a4j"
+        xmlns:rich="http://richfaces.org/rich"
+        xmlns:rhq="http://rhq-project.org/rhq"
+        xmlns:onc="http://jboss.org/on/component">
 
-    <head>        
-        <title>
-            Current Resource
-        </title>
-    </head>
-    
-    <body style="background-color: #FF66CC">
+    <ui:param name="pageTitle" value="Meet Your Soul-Resource!"/>
 
-    <f:view contentType="text/html; charset=UTF-8">
+    <ui:define name="body">
 
-    <!-- Force the page to be taller than the height of the browser
-         to test that a vertical scrollbar is not added to the
-         enclosing iframe. -->
-    <div style="padding: 10px; height: 1000px;">
-       <h4>It's always good to see something from another perspective.</h4>
+        <h1>Current Resource</h1>
 
-       <p>You should have arrived at this page by clicking on a Resource
-          tab defined by the sample perspective.
-          As evidenced by the URL in your browser's address bar, this
-          page was loaded from the core RHQ GUI. However, the
-          pink portion of this page is an IFRAME whose content was
-          loaded from rhq-sample-perspective.war, a WAR deployed to the
-          RHQ Server, as a sibling of rhq.ear.</p>
+        <!-- Force the page to be taller than the height of the browser
+      to test that a vertical scrollbar is not added to the
+      enclosing iframe. -->
+        <div style="padding: 10px; height: 1000px;">
+            <h4>It's always good to see something from another perspective.</h4>
 
-        <h3>Resource Info</h3>
+            <p>You should have arrived at this page by clicking on a Resource
+                tab defined by the sample perspective.
+                As evidenced by the URL in your browser's address bar, this
+                page was loaded from the core RHQ GUI. However, the
+                pink portion of this page is an IFRAME whose content was
+                loaded from rhq-sample-perspective.war, a WAR deployed to the
+                RHQ Server, as a sibling of rhq.ear.</p>
 
-        <h4>Here's some info about the current Resource:</h4>
+            <h3>Resource Info</h3>
 
-        <h:panelGrid columns="2">
-            <h:outputText value="Type" style="font-weight: bold" />
-            <h:outputText value="#{CurrentResourceUIBean.resource.resourceType.name}" />
-            <h:outputText value="Name" style="font-weight: bold" />
-            <h:outputText value="#{CurrentResourceUIBean.resource.name}" />
-            <h:outputText value="Id" style="font-weight: bold" />
-            <h:outputText value="#{CurrentResourceUIBean.resource.id}" />
-        </h:panelGrid>
-    
-    </div>
+            <h4>Here's some info about the current Resource:</h4>
 
-    </f:view>
+            <h:panelGrid columns="2">
+                <h:outputText value="Type" style="font-weight: bold"/>
+                <h:outputText value="#{CurrentResourceUIBean.resource.resourceType.name}"/>
+                <h:outputText value="Name" style="font-weight: bold"/>
+                <h:outputText value="#{CurrentResourceUIBean.resource.name}"/>
+                <h:outputText value="Id" style="font-weight: bold"/>
+                <h:outputText value="#{CurrentResourceUIBean.resource.id}"/>
+            </h:panelGrid>
 
-    </body>
+        </div>
 
-</html>
+    </ui:define>
+
+</ui:composition>

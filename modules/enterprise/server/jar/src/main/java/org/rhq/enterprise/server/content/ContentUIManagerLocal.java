@@ -134,6 +134,9 @@ public interface ContentUIManagerLocal {
     PageList<PackageVersionComposite> getPackageVersionCompositesByFilter(Subject user, int resourceId, String filter,
         PageControl pc);
 
+    PageList<PackageVersionComposite> getUpdatePackageVersionCompositesByFilter(Subject user, int resourceId,
+        String filter, PageControl pc);
+
     /**
      * Used to retrieve information about a package version to display to a user.
      *

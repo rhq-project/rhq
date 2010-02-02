@@ -14,9 +14,9 @@
         <h:outputText value="Select the roles to add:" />
         <br/>
 
-        <h:selectManyMenu id="mySenderList" value="#{rolesBean.currentRoles}">
+        <h:selectManyListbox id="mySenderList" value="#{rolesBean.currentRoles}">
             <f:selectItems value="#{rolesBean.rolesMap}"/>
-        </h:selectManyMenu>
+        </h:selectManyListbox>
 
         <br />
         <h:commandButton id="roles_submit"

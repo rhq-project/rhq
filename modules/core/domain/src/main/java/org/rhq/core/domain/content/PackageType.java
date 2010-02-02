@@ -64,12 +64,15 @@ import org.rhq.core.domain.resource.ResourceType;
  */
 @Entity
 @NamedQueries( {
+    @NamedQuery(name = PackageType.QUERY_FIND_ALL, query = "SELECT pt FROM PackageType pt"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME, query = "SELECT pt FROM PackageType pt WHERE pt.resourceType.id = :typeId AND pt.name = :name"),
     @NamedQuery(name = PackageType.QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG, query = "SELECT pt FROM PackageType pt "
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
-        + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true") })
+        + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true"),
+    @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.displayName, pt.name FROM PackageType AS pt")
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -78,9 +81,13 @@ public class PackageType implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public static final String QUERY_FIND_ALL = "PackageType.findAll";
+
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID = "PackageType.findByResourceTypeId";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_NAME = "PackageType.findByResourceTypeIdAndName";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_ID_AND_CREATION_FLAG = "PackageType.findByResourceTypeIdAndCreationFlag";
+
+    public static final String QUERY_DYNAMIC_CONFIG_VALUES = "PackageType.dynamicConfigValues";
 
     // Attributes  --------------------------------------------
 
@@ -221,7 +228,7 @@ public class PackageType implements Serializable {
     /**
      * Indicates if this package type will be of any specific architecture. If this is <code>true</code>, each package
      * may be of a different architecture. If this is <code>false</code>, all packages will be of architecture
-     * "noarch". 
+     * "noarch".
      */
     public boolean isSupportsArchitecture() {
         return supportsArchitecture;

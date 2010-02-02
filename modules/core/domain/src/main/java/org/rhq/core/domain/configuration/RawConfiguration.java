@@ -23,12 +23,16 @@
 
 package org.rhq.core.domain.configuration;
 
+import org.rhq.core.util.MessageDigestGenerator;
+
+import javax.persistence.Basic;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.Lob;
 import javax.persistence.ManyToOne;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -40,10 +44,8 @@ import java.io.Serializable;
 /**
  * Resources support structured configuration as well as raw configuration which is represented by this class. A raw
  * configuration is typically in the form of a file on the file system. This could be httpd.conf in the case of apache.
- * Note however that while a raw configuration generally refers to some configuration file, this class does not limit
- * the actual configuration source to files.
  * <p/>
- * A raw configuration is stored as an array of bytes and has a SHA-256 hash with which it can be uniquely identified.
+ * A raw configuration is stored as a CLOB and has a SHA-256 hash with which it can be uniquely identified.
  * <p/>
  * A RawConfiguration is always associated with its parent {@link org.rhq.core.domain.configuration.Configuration} which
  * can be structured, raw, or both. A Configuration can have multiple RawConfigurations associated with it. Suppose for
@@ -66,8 +68,9 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @Column(name = "PATH", nullable = true)
     private String path;
 
+    @Lob
     @Column(name = "CONTENTS", nullable = false)
-    private byte[] contents;
+    private String contents;
 
     @Column(name = "SHA256", nullable = false)
     private String sha256;
@@ -82,6 +85,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
+    /** @return The database identifier or primary key */
     public int getId() {
         return id;
     }
@@ -90,71 +94,56 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         this.id = id;
     }
 
+    /** @return The file system path of the configuration that this object represents */
     public String getPath() {
         return path;
     }
 
+    /** @param path The new file system path of the configuration file represented by this object */
     public void setPath(String path) {
         this.path = path;
     }
 
-    /**
-     * Returns a copy of the contents as an array of bytes. Modifications to the underlying array have to happen through
-     * {@link #setContents(byte[])}; otherwise, we could wind up with an incorrect SHA-256 hash. This behavior is
-     * enforced by returning a copy instead of a reference to the underlying array. By returning a copy, callers can only
-     * modify the underlying array by calling the setter.
-     *
-     * @return A copy of the file contents as an array of bytes
-     */
-    public byte[] getContents() {
-        return copy(contents);
+    /** @return The contents of the raw configuration which typically will be a file */
+    public String getContents() {
+        return contents;
     }
 
     /**
-     * Replaces the contents of this raw config with a copy of the specified bytes. The SHA-256 hash returned from
-     * {@link #getSha256()} will be changed as well, provided the contents actually changed in some way.
+     * Replaces the contents of the raw configuration. The SHA-256 hash returned from {@link #getSha256()} will be
+     * updated as well.
      *
-     * @param newContents The new bytes
+     * @param contents The new contents
      */
-    public void setContents(byte[] newContents) {
-        this.contents = copy(newContents);
+    public void setContents(String contents) {
+        this.contents = contents;
         updateSha256();
-    }
-
-    private byte[] copy(byte[] original) {
-        byte[] copy = new byte[original.length];
-        for (int i = 0; i < original.length; ++i) {
-            copy[i] = original[i];
-        }
-        return copy;
     }
 
     private void updateSha256() {
         /* TODO: GWT
         MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
-        sha256Generator.add(contents);
-        sha256 = sha256Generator.getDigestString();*/
+        sha256Generator.add(contents.getBytes());
+        sha256 = sha256Generator.getDigestString();
+        */
     }
 
-    /** @return A SHA-256 hash of the bytes for this raw configuration, which can be accessed via {@link #getContents()} */
+    /**
+     * @return A SHA-256 hash of the contents for this raw configuration, which can be accessed via
+     * {@link #getContents()}
+     */
     public String getSha256() {
         return sha256;
     }
 
+    /** @return A timestamp of when this object was created */
     public long getCtime() {
         return ctime;
     }
 
-    public void setCtime(long ctime) {
-        this.ctime = ctime;
-    }
-
+    /** @return A timestamp of when this object was last modified */
     public long getMtime() {
         return mtime;
-    }
-
-    public void setMtime(long mtime) {
-        this.mtime = mtime;
     }
 
     /** @return The owning {@link org.rhq.core.domain.configuration.Configuration} object */
@@ -162,6 +151,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         return configuration;
     }
 
+    /** @param configuration The parent configuration object */
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
     }
@@ -228,6 +218,15 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         return sha256.hashCode() * path.hashCode() * 37;
     }
 
+    /**
+     * Returns a string representation of this object that is in the following format,
+     *
+     * <code>
+     * RawConfiguration[id=1, path=/foo/bar/raw.txt, sha256=13xcx9sd82e, configuration=<configuration.toString()>]
+     * </code>
+     *
+     * @return A string representation of this object
+     */
     @Override
     public String toString() {
         return new StringBuilder()
@@ -240,6 +239,13 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
             .toString();
     }
 
+    /**
+     * Creates a deep copy of this object that includes all of the properties except for the parent configuration. If
+     * the <code>keepId</code> flag is <code>false</code>, then the id property is not copied.
+     *
+     * @param keepId A flag indicating whether or not the id should be copied
+     * @return A copy of this object
+     */
     public RawConfiguration deepCopy(boolean keepId) {
         RawConfiguration copy = new RawConfiguration();
         if (keepId) {

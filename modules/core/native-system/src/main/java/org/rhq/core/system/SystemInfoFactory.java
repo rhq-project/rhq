@@ -29,9 +29,12 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
@@ -74,7 +77,8 @@ public class SystemInfoFactory {
             nativeLibraryLoadable = true;
         } catch (Throwable t) {
             nativeLibraryLoadable = false; // can't load the native libs if we don't even have the JNI classes
-            LOG.warn("System info API not accessible on this platform (native shared library not found in java.library.path).");
+            LOG
+                .warn("System info API not accessible on this platform (native shared library not found in java.library.path).");
             LOG.trace("Stack trace...", t);
         }
 
@@ -97,8 +101,8 @@ public class SystemInfoFactory {
         if (isNativeSystemInfoAvailable() && !isNativeSystemInfoDisabled()) {
             try {
                 version = "Version=" + invokeApi(NativeApi.VERSION_STRING) + " (" + invokeApi(NativeApi.BUILD_DATE)
-                        + "); Native version=" + invokeApi(NativeApi.NATIVE_VERSION_STRING) + " ("
-                        + invokeApi(NativeApi.NATIVE_BUILD_DATE) + ")";
+                    + "); Native version=" + invokeApi(NativeApi.NATIVE_VERSION_STRING) + " ("
+                    + invokeApi(NativeApi.NATIVE_BUILD_DATE) + ")";
             } catch (Throwable t) {
                 error = t;
             }
@@ -308,7 +312,7 @@ public class SystemInfoFactory {
             rootDir = System.getProperty("rhq.native-libraries-root-directory");
             if (rootDir == null) {
                 jarLocation = Class.forName(NATIVE_LIBRARY_CLASS_NAME).getProtectionDomain().getCodeSource()
-                        .getLocation();
+                    .getLocation();
                 if (jarLocation != null) {
                     // the root directory where all JNI libraries are located is the
                     // same directory as where the SIGAR jar is found
@@ -319,7 +323,7 @@ public class SystemInfoFactory {
                     rootDir = jniLocation.getAbsolutePath();
                 } else {
                     throw new Exception("Native JNI libraries cannot be found: " + "jar-location=[" + jarLocation
-                            + "], jni-location=[" + jniLocation + "]");
+                        + "], jni-location=[" + jniLocation + "]");
                 }
             }
         }
@@ -333,5 +337,34 @@ public class SystemInfoFactory {
      * Prevent instantiation.
      */
     private SystemInfoFactory() {
+    }
+
+    public static TemplateEngine fetchTemplateEngine() {
+
+        SystemInfo systemInfo = createSystemInfo();
+
+        Map<String, String> tokens = new HashMap<String, String>();
+        tokens.put("rhq.hostname", systemInfo.getHostname());
+        tokens.put("rhq.os.name", systemInfo.getOperatingSystemName());
+        tokens.put("rhq.os.version", systemInfo.getOperatingSystemVersion());
+        tokens.put("rhq.os.type", systemInfo.getOperatingSystemType().toString());
+        tokens.put("rhq.cpu.count", Integer.toString(systemInfo.getNumberOfCpus()));
+        tokens.put("rhq.architecture", systemInfo.getSystemArchitecture());
+
+        for (NetworkAdapterInfo networkAdapter : systemInfo.getAllNetworkAdapters()) {
+            String key = "rhq.interfaces." + networkAdapter.getName();
+            tokens.put(key + ".mac", networkAdapter.getMacAddressString());
+            tokens.put(key + ".type", networkAdapter.getType());
+            tokens.put(key + ".flags", networkAdapter.getAllFlags());
+
+            if (!networkAdapter.getUnicastAddresses().isEmpty()) {
+                tokens.put(key + ".address", networkAdapter.getUnicastAddresses().get(0).getHostAddress());
+            }
+            if (!networkAdapter.getMulticastAddresses().isEmpty()) {
+                tokens.put(key + ".multicast.address", networkAdapter.getMulticastAddresses().get(0).getHostAddress());
+            }
+        }
+        TemplateEngine templateEngine = new TemplateEngine(tokens);
+        return templateEngine;
     }
 }

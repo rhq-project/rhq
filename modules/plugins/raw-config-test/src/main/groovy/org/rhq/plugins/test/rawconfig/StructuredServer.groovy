@@ -12,6 +12,8 @@ import groovy.util.AntBuilder
 
 class StructuredServer implements ResourceComponent, ResourceConfigurationFacet {
 
+  ResourceContext resourceContext
+
   File configDir
 
   File structuredConfigFile
@@ -19,6 +21,8 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   def ant = new AntBuilder()
 
   void start(ResourceContext context) {
+    resourceContext = context
+
     configDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
     structuredConfigFile = new File(configDir, "structured-test-1.txt")
 
@@ -73,6 +77,11 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   void persistStructuredConfiguration(Configuration configuration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failUpdate")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Validation failed for $configuration");
+    }
+
     ant.copy(file: structuredConfigFile.absolutePath, tofile: "${structuredConfigFile.absolutePath}.orig")
     ant.delete(file: structuredConfigFile)
 
@@ -89,6 +98,10 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   void validateStructuredConfiguration(Configuration configuration) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Validation failed for $configuration");
+    }
   }
 
   void validateRawConfiguration(RawConfiguration rawConfiguration) {

@@ -482,10 +482,6 @@ public interface ConfigurationManagerLocal {
      */
     ConfigurationDefinition getPackageTypeConfigurationDefinition(Subject subject, int packageTypeId);
 
-    Collection<RawConfiguration> findRawConfigurationsByConfigurationId(int configId);
-
-    RawConfiguration findRawConfigurationById(int rawConfigId);
-
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 

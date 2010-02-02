@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -35,17 +34,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 
 /**
- * This can be the start of your own custom plugin's server component. Review the javadoc for {@link ResourceComponent}
- * and all the facet interfaces to learn what you can do in your resource component. This component has a lot of methods
- * in it because it implements all possible facets. If your resource does not support, for example, configuration, you
- * can remove the {@link ConfigurationFacet} from the <code>implements</code> clause and remove all method
- * implementations that that facet required.
- *
- * <p>You should not only read the javadoc in each of this class' methods, but you should also read the javadocs linked
- * by their "see" javadoc tags since those additional javadocs will contain a good deal of additional information you
- * will need to know.</p>
- *
- * @author John Mazzitelli
+ * Uses koan to actually do kickstarts on this machine.
  */
 public class KickstartServerComponent implements ResourceComponent, OperationFacet {
     private final Log log = LogFactory.getLog(KickstartServerComponent.class);
@@ -72,9 +61,15 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
             String virtName = configuration.getSimpleValue("name", "Guest " + System.currentTimeMillis());
             String profile = configuration.getSimpleValue("profile", "profile");
             String server = configuration.getSimpleValue("server", "localhost");
-            ProcessExecutionResults pr = this.execute(command, "--virt", "--server", server, "--profile", profile,
-                "--virt-name", virtName);
-            res.setSimpleResult(pr.getExitCode().toString());
+            String[] argsString = { "--virt", "--server", server, "--profile", profile, "--virt-name", virtName };
+            ProcessExecutionResults pr = this.execute(command, argsString);
+            if (pr.getExitCode() > 0) {
+                log.error("Error executing command: " + this.buildCommandString(command, argsString));
+                res.setErrorMessage(pr.getCapturedOutput());
+            } else {
+                res.setSimpleResult(pr.getCapturedOutput());
+            }
+
         }
 
         return res;
@@ -83,10 +78,7 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
     public ProcessExecutionResults execute(String process, String... args) {
         List<String> argsList = Arrays.asList(args);
         if (log.isDebugEnabled()) {
-            String argsString = "";
-            for (String arg : argsList)
-                argsString = argsString + " " + arg;
-            log.debug("Executing command " + process + argsString);
+            log.debug("Executing command " + this.buildCommandString(process, args));
         }
         ProcessExecution pe = new ProcessExecution(process);
         pe.setCaptureOutput(true);
@@ -95,5 +87,13 @@ public class KickstartServerComponent implements ResourceComponent, OperationFac
         ProcessExecutionResults pr = resourceContext.getSystemInformation().executeProcess(pe);
         log.debug("Result " + pr.getExitCode());
         return pr;
+    }
+
+    private String buildCommandString(String process, String... argsList) {
+        String argsString = process;
+        for (String arg : argsList)
+            argsString = argsString + " " + arg;
+        return process;
+
     }
 }

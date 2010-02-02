@@ -97,7 +97,7 @@ public abstract class Criteria implements Serializable {
     public PageControl getPageControlOverrides() {
         return pageControlOverrides;
     }
-    
+
     protected void addSortField(String fieldName) {
         orderingFieldNames.add("sort" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
     }

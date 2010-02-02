@@ -40,6 +40,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * Backing Bean for the subjects sender alert sender plugin custom UI
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
 
     private final Log log = LogFactory.getLog(SubjectsBackingBean.class);
@@ -49,7 +50,6 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
     private Map<String, String> subjectsMap;
     private List<String> currentSubjects;
     private List<String> subjectsToRemove;
-    private List<String> subjectsToAdd;
     private static final String SUBJECT_ID = "subjectId";
 
     @Create
@@ -95,13 +95,6 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
         this.subjectsToRemove = subjectsToRemove;
     }
 
-    public List<String> getSubjectsToAdd() {
-        return subjectsToAdd;
-    }
-
-    public void setSubjectsToAdd(List<String> subjectsToAdd) {
-        this.subjectsToAdd = subjectsToAdd;
-    }
 
     public Map<String, String> getSelectableSubjectsMap() {
 
@@ -114,7 +107,6 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
             if (currentSubjects==null)
                 fillSubjectsFromAlertParameters();
 
-            Map<String,String> ret = new HashMap<String, String>();
             for (Subject subject : allSubjects) {
                 String subjectId = String.valueOf(subject.getId());
                 if (currentSubjects==null || !currentSubjects.contains(subjectId)) {
@@ -133,8 +125,9 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
             return ret;
 
         for (Subject subject:allSubjects) {
-            if (currentSubjects.contains(String.valueOf(subject.getId())))
-                ret.put(subject.getName(),String.valueOf(subject.getId()) );
+            String subjectId = String.valueOf(subject.getId());
+            if (currentSubjects.contains(subjectId))
+                ret.put(subject.getName(), subjectId);
         }
         return ret;
 

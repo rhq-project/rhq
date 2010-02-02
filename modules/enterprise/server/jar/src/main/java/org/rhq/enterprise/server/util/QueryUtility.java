@@ -43,8 +43,12 @@ public class QueryUtility {
             return null;
         }
 
-        init();
+        return doEscapeSearchParameter(value);
+    }
 
+    private static String doEscapeSearchParameter(String value) {
+        init();
+        
         // Escape LIKE's wildcard characters with escaped characters so that the user's input
         // will be matched literally
         value = value.replace(ESCAPE_CHARACTER, ESCAPED_ESCAPE);
@@ -52,11 +56,11 @@ public class QueryUtility {
         value = value.replace("%", ESCAPED_PERCENT);
 
         return value;
-    }
-
+    }  
+    
     /**
      * Given the settings for the current DatabaseType, properly handle escaping special SQL characters as
-     * well as upcasing the value (standard for rhq filter searches) and wrapping with SQL wildcard for
+     * well as UPCASING the value (standard for rhq filter searches) and wrapping with SQL wildcard for
      * implicit "contains" (i.e. '%' characters)  
      * 
      * @param value
@@ -67,7 +71,7 @@ public class QueryUtility {
             return null;
         }
 
-        return "%" + escapeSearchParameter(value).toUpperCase() + "%";
+        return "%" + doEscapeSearchParameter(value).toUpperCase() + "%";
     }
 
     /**

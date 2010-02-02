@@ -1463,6 +1463,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         query.setParameter("search", nameFilter);
         queryCount.setParameter("search", nameFilter);
+        
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
 
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
@@ -1491,12 +1494,15 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         queryCount.setParameter("search", search);
         query.setParameter("search", search);
 
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+
         queryCount.setParameter("category", category);
         query.setParameter("category", category);
 
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-
+        
         long count = (Long) queryCount.getSingleResult();
 
         List<Resource> resources = query.getResultList();

@@ -273,8 +273,8 @@ public class ResourceGroup extends Group {
         + "          WHERE %GROUP_AND_VISIBILITY_FRAGMENT_WHERE% " // postgres uses true/false, oracle uses 1/0
         + "                %RESOURCE_FRAGMENT_WHERE% " //
         + "            AND ( ? IS NULL " // :search
-        + "                  OR UPPER(rg.name) LIKE ? " // :search
-        + "                  OR UPPER(rg.description) LIKE ? ) " // :search
+        + "                  OR UPPER(rg.name) LIKE ? ESCAPE ?" // :search :escapeChar
+        + "                  OR UPPER(rg.description) LIKE ? ESCAPE ?) " // :search escapeChar
         + "            AND ( rg.resource_type_id IS NULL " //
         + "                  OR ( ( resType.name = ? OR ? IS NULL ) " // :resourceTypeName x2
         + "                      AND ( resType.plugin = ? OR ? IS NULL ) " // :pluginName x2

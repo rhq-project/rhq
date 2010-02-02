@@ -219,6 +219,8 @@ public class PartitionEventManagerBean implements PartitionEventManagerLocal {
         countQuery.setParameter("status", status);
         query.setParameter("details", details);
         countQuery.setParameter("details", details);
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        countQuery.setParameter("escapeChar", QueryUtility.getEscapeCharacter());               
 
         List<PartitionEvent> results = query.getResultList();
         long count = (Long) countQuery.getSingleResult();

@@ -465,7 +465,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "          WHERE rc.repo.id = :repoId ) " //
         + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "     AND (res.inventoryStatus = :inventoryStatus) " //
-        + "     AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "     AND (:search is null OR UPPER(res.name) LIKE :search ESCAPE :escapeChar) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -476,7 +476,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -487,7 +487,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
@@ -500,7 +500,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -512,7 +512,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, query = "" //
         + "SELECT res " //
@@ -587,7 +587,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "  AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, " //
         + " (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
@@ -609,7 +609,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "  AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " //
         + "  FROM Resource res " //
         + " WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -618,7 +618,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) " //
         + "  FROM Resource res " //

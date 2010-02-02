@@ -1028,11 +1028,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             if (search == null) {
                 stmt.setNull(++i, Types.VARCHAR);
                 stmt.setNull(++i, Types.VARCHAR);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
                 stmt.setNull(++i, Types.VARCHAR);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
             } else {
                 stmt.setString(++i, search);
                 stmt.setString(++i, search);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
                 stmt.setString(++i, search);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
             }
 
             if (resourceTypeName == null) {

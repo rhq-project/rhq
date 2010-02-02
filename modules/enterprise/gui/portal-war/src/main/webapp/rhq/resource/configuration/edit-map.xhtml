@@ -27,14 +27,14 @@ THIS TEXT WILL BE REMOVED.
 
          <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
-         <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                     configuration="#{ExistingResourceConfigurationUIBean.configuration}"
+         <onc:config configurationDefinition="#{resourceConfigurationDefinition}"
+                     configuration="#{resourceConfiguration}"
                      listName="#{param.listName}"
                      listIndex="#{param.listIndex}"
                      prevalidate="true"/>
 
          <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell">
-            <h:commandButton value="OK" action="#{ExistingResourceConfigurationUIBean.finishEditMap}"
+            <h:commandButton value="OK" action="#{configurationEditor.finishEditMap}"
                              alt="Click to Update Map" styleClass="buttonmed"/>
             <h:commandButton value="RESET" type="reset" immediate="true"
                              alt="Click to Reset Fields" styleClass="buttonmed"/>

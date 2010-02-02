@@ -20,6 +20,7 @@
   <page view-id="/rhq/resource/configuration/edit.xhtml">
     <action execute="#{configurationEditor.initialize}" on-postback="false"/>
     <begin-conversation join="true"/>
+
     <navigation from-action="#{configurationEditor.updateConfiguration}">
       <rule if-outcome="success">
         <end-conversation before-redirect="false"/>
@@ -27,6 +28,14 @@
           <param name="id" value="#{ResourceUIBean.id}"/>
         </redirect>
       </rule>
+    </navigation>
+
+    <navigation from-action="#{configurationEditor.finishAddMap}">
+      <render view-id="/rhq/resource/configuration/edit.xhtml"/>
+    </navigation>
+
+    <navigation from-action="#{configurationEditor.finishEditMap}">
+      <render view-id="/rhq/resource/configuration/edit.xhtml"/>
     </navigation>
   </page>
 

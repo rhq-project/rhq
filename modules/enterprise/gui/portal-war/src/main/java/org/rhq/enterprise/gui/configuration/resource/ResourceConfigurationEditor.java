@@ -170,4 +170,14 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
 
         return null;
     }
+
+    public String finishAddMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map added.");
+        return "success";
+    }
+
+    public String finishEditMap() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
+        return "success";
+    }
 }

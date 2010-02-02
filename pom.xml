@@ -595,7 +595,7 @@
                 <executable>git</executable>
                 <arguments>
                     <argument>log</argument>
-                    <argument>--pretty=format:buildNumber = %H</argument>
+                    <argument>--pretty=format:buildNumber = %h</argument>
                     <argument>-n1</argument>
                 </arguments>
                 <outputFile>${project.build.directory}/build-number.properties</outputFile>

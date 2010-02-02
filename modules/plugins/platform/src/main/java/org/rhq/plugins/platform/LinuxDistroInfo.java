@@ -140,7 +140,7 @@ public class LinuxDistroInfo {
         }
 
         if (this.version == null) {
-            this.name = DEFAULT_VERSION;
+            this.version = DEFAULT_VERSION;
         }
 
         // Finally, append the release codename if we were able to ascertain it.

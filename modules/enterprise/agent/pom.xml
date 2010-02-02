@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -57,6 +57,12 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
       <version>${project.version}</version>
+    </dependency>
+    
+   <dependency>
+       <groupId>jline</groupId>
+       <artifactId>jline</artifactId>
+       <version>${jline.version}</version>
     </dependency>
 
     <dependency>
@@ -174,6 +180,7 @@ Build-Number=${buildNumber}
                    <property name="sigar.version" value="${sigar.version}" />
                    <property name="jaxb-api.version" value="${jaxb-api.version}" />
                    <property name="jaxb-impl.version" value="${jaxb-impl.version}" />
+                   <property name="jline.version" value="${jline.version}" />                   
                 </ant>
               </tasks>
             </configuration>

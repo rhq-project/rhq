@@ -38,7 +38,6 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
@@ -46,7 +45,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -61,11 +59,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @SuppressWarnings("unused")
 public class NotificationTemplatesUIBean implements Serializable {
 
-    private final static String SUCCESS_OUTCOME = "success";
-    @RequestParameter("ad")
-    private Integer alertDefinitionId;
+    private final static String CONTINUE_OUTCOME = "continue";
+    private final static String NEW_OUTCOME = "new";
     @RequestParameter("nid")
     private Integer notificationId;
+    @RequestParameter("tid")
+    private Integer templateId;
     private String opMode;
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
@@ -81,7 +80,7 @@ public class NotificationTemplatesUIBean implements Serializable {
     private AlertNotificationConverter notificationConverter;
     private AlertNotificationManagerLocal alertNotificationManager;
     private static final String EDIT = "EDIT";
-    private List<NotificationTemplate> listOfTemplates;
+    private List<NotificationTemplate> notificationTemplates;
     NotificationTemplate selectedTemplate;
 
     public List<AlertNotification> getAlertNotifications() {
@@ -192,6 +191,10 @@ public class NotificationTemplatesUIBean implements Serializable {
         this.selectedTemplate = selectedTemplate;
     }
 
+    public List<NotificationTemplate> getNotificationTemplates() {
+        return this.notificationTemplates;
+    }
+
     private void lookupActiveConfigDefinition() {
         System.out.println("lookupActiveConfigDef: activeNotification is " + activeNotification);
 
@@ -199,13 +202,6 @@ public class NotificationTemplatesUIBean implements Serializable {
             String senderName = this.activeNotification.getSenderName();
             this.activeConfigDefinition = this.alertNotificationManager.getConfigurationDefinitionForSender(senderName);
         }
-    }
-
-    public AlertDefinition getAlertDefinition() {
-        AlertDefinitionManagerLocal definitionManager = LookupUtil.getAlertDefinitionManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-
-        return definitionManager.getAlertDefinitionById(subject, alertDefinitionId);
     }
 
     @Create
@@ -218,8 +214,24 @@ public class NotificationTemplatesUIBean implements Serializable {
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();
         this.notificationConverter.setAlertNotifications(alertNotifications);
+        this.notificationTemplates = alertNotificationManager.listNotificationTemplates(EnterpriseFacesContextUtility.getSubject());
 
+        selectActiveTemplate();
         selectActiveNotification();
+    }
+
+    private void selectActiveTemplate() {
+        if (this.templateId != null) {
+            for (NotificationTemplate template : this.notificationTemplates) {
+                if (template.getId() == this.templateId) {
+                    selectTemplate(template);
+
+                    return;
+                }
+            }
+        }
+
+        opMode = "";
     }
 
     // Sets the initial state of the bean given the requrest parameters, this allows
@@ -271,7 +283,7 @@ public class NotificationTemplatesUIBean implements Serializable {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,"Adding the sender failed: " + iae.getMessage() );
         }
 
-        return SUCCESS_OUTCOME;
+        return CONTINUE_OUTCOME;
     }
 
     public String saveConfiguration() {
@@ -281,7 +293,7 @@ public class NotificationTemplatesUIBean implements Serializable {
             this.alertNotificationManager.updateAlertNotification(this.activeNotification);
         }
 
-        return SUCCESS_OUTCOME;
+        return CONTINUE_OUTCOME;
     }
 
     public String removeSelected() {
@@ -291,7 +303,7 @@ public class NotificationTemplatesUIBean implements Serializable {
 
         alertNotificationManager.removeNotificationsFromTemplate(subject, selectedTemplate.getId(), toArray(ids));
 
-        return SUCCESS_OUTCOME;
+        return CONTINUE_OUTCOME;
     }
 
     public String saveOrder() {
@@ -304,7 +316,7 @@ public class NotificationTemplatesUIBean implements Serializable {
             this.alertNotificationManager.updateAlertNotification(notification);
         }
 
-        return SUCCESS_OUTCOME;
+        return CONTINUE_OUTCOME;
     }
 
     private List<Integer> getSelectedIds(Collection<AlertNotification> notifications) {
@@ -332,14 +344,7 @@ public class NotificationTemplatesUIBean implements Serializable {
         return result;
     }
 
-    public List<NotificationTemplate> getNotificationTemplates() {
-
-        List<NotificationTemplate> templates = alertNotificationManager.listNotificationTemplates(EnterpriseFacesContextUtility.getSubject());
-        listOfTemplates = templates;
-        return templates;
-    }
-
-    public String createNoticationTemplate() {
+    public String createNotificationTemplate() {
 
         NotificationTemplate templ;
 
@@ -352,7 +357,7 @@ public class NotificationTemplatesUIBean implements Serializable {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR,"Creation of template failed: " + iae.getMessage());
         }
 
-        return SUCCESS_OUTCOME;
+        return NEW_OUTCOME;
     }
 
     public String deleteNotificationTemplate() {
@@ -362,7 +367,7 @@ public class NotificationTemplatesUIBean implements Serializable {
         Iterator<Object> iter = selectedTemplates.getKeys();
         while (iter.hasNext()) {
             Integer row = (Integer) iter.next();
-            NotificationTemplate templ = listOfTemplates.get(row);
+            NotificationTemplate templ = notificationTemplates.get(row);
             ids.add(templ.getId());
         }
 
@@ -375,26 +380,30 @@ public class NotificationTemplatesUIBean implements Serializable {
             summary+="s";
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, summary);
 
-        return SUCCESS_OUTCOME;
+        return NEW_OUTCOME;
     }
 
-    public String editNotificationTemplate() {
+    public void editNotificationTemplate() {
 
         Subject subject = EnterpriseFacesContextUtility.getSubject();
         System.out.println("in edit Template");
         Iterator<Object> iter = selectedTemplates.getKeys();
         if (selectedTemplates.size()==1) {
             Integer row = (Integer) iter.next();
-            selectedTemplate = listOfTemplates.get(row);
-            alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject,selectedTemplate.getId());
-            this.notificationConverter.setAlertNotifications(alertNotifications);
-            System.out.println("Selected template is " + selectedTemplate);
-            opMode = EDIT;
+            selectTemplate(notificationTemplates.get(row));
         }
-        else
+        else {
             opMode = "";
+        }
+    }
 
-        return SUCCESS_OUTCOME;
+    private void selectTemplate(NotificationTemplate template) {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
 
+        selectedTemplate = template;
+        alertNotifications = alertNotificationManager.getNotificationsForTemplate(subject, selectedTemplate.getId());
+        this.notificationConverter.setAlertNotifications(alertNotifications);
+        System.out.println("Selected template is " + selectedTemplate);
+        opMode = EDIT;
     }
 }

@@ -254,4 +254,8 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
     public InputStream getSnapshotReport(int resourceId, String name, String description) throws Exception {
         return null;
     }
+
+    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+            throws PluginContainerException {
+    }
 }

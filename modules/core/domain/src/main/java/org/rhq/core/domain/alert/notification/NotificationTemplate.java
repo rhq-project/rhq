@@ -43,7 +43,7 @@ import javax.persistence.Table;
 
 @NamedQueries({
         @NamedQuery(name = NotificationTemplate.FIND_BY_NAME, query = "SELECT t FROM NotificationTemplate t WHERE t.name = :name"),
-        @NamedQuery(name = NotificationTemplate.FIND_ALL, query = "SELECT t FROM NotificationTemplate t LEFT JOIN FETCH t.notifications")
+        @NamedQuery(name = NotificationTemplate.FIND_ALL, query = "SELECT t FROM NotificationTemplate AS t")
 })
 @Entity
 @Table(name="RHQ_ALERT_NOTIF_TEMPL")

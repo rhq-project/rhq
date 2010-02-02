@@ -23,9 +23,9 @@
 
 package org.rhq.core.pc.configuration;
 
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 
 import java.util.List;
 

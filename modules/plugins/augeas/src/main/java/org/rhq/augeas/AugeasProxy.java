@@ -148,7 +148,7 @@ public class AugeasProxy {
         try {
             tree = augeasTreeBuilder.buildTree(this, config, moduleName, lazy);
         } catch (Exception e) {
-            throw new AugeasTreeException(e.getMessage());
+            throw new AugeasTreeException("Error building Augeas tree.", e);
         }
 
         return tree;

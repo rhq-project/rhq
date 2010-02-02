@@ -11,6 +11,14 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>ViewRawTestConfigurationUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.configuration.test.ViewRawTestConfigurationUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+
+
+   <managed-bean>
       <managed-bean-name>EditTestConfigurationUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.configuration.test.EditTestConfigurationUIBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>

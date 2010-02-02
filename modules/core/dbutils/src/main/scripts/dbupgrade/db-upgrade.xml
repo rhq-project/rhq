@@ -1498,7 +1498,7 @@
                 <schema-addColumn table="RHQ_RAW_CONFIG" column="CONTENTS" columnType="BLOB"/>
                 <schema-alterColumn table="RHQ_RAW_CONFIG"
                                     column="CONTENTS"
-                                    columnType="BLOB"
+                                    columnType="CLOB"
                                     nullable="false"/>
 
                 <schema-addColumn table="RHQ_RAW_CONFIG" column="SHA256" columnType="VARCHAR2"/>

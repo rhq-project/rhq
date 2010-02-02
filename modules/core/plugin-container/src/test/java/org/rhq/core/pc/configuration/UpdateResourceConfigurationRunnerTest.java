@@ -33,12 +33,13 @@ import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.test.jmock.PropertyMatcher;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
+import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 
 public class UpdateResourceConfigurationRunnerTest extends ConfigManagementTest {
 

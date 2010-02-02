@@ -51,7 +51,8 @@ public class MicroblogSender extends AlertSender {
         Twitter twitter = new Twitter(user,password,baseUrl);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         twitter.setSource("Jopr");
-        StringBuilder b = new StringBuilder("Alert: '");
+        StringBuilder b = new StringBuilder("Alert ");
+        b.append(alert.getId()).append(":'"); // Alert id
         b.append(alert.getAlertDefinition().getResource().getName());
         b.append("' (");
         b.append(alert.getAlertDefinition().getResource().getId());
@@ -69,6 +70,7 @@ public class MicroblogSender extends AlertSender {
 
             log.warn("Notification via Microblog failed for " + txt + " ", e);
             result = new SenderResult(ResultState.FAILURE,"Sending failed :" + e.getMessage());
+
         }
         return result;
     }

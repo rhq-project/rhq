@@ -28,6 +28,9 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import net.augeas.Augeas;
+import net.augeas.AugeasException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +41,6 @@ import org.rhq.augeas.node.AugeasNode;
 import org.rhq.augeas.tree.AugeasTree;
 import org.rhq.augeas.tree.AugeasTreeException;
 import org.rhq.augeas.util.Glob;
-import org.rhq.augeas.util.GlobFilter;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -87,6 +89,9 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
  */
 public class ApacheServerComponent implements AugeasRHQComponent<PlatformComponent>, MeasurementFacet, OperationFacet,
     ConfigurationFacet, CreateChildResourceFacet {
+
+    private static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE = "Configuration is supported only for Apache version 2 and up using Augeas. You either have an old version of Apache or Augeas is not installed.";
+
     private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
@@ -105,6 +110,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     public static final String PLUGIN_CONFIG_PROP_ERROR_LOG_INCLUDES_PATTERN = "errorLogIncludesPattern";
     public static final String PLUGIN_CONFIG_PROP_VHOST_FILES_MASK = "vhostFilesMask";
     public static final String PLUGIN_CONFIG_PROP_VHOST_CREATION_POLICY = "vhostCreationPolicy";
+    
+    public static final String PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE = "restartAfterConfigurationUpdate";
     
     public static final String PLUGIN_CONFIG_VHOST_IN_SINGLE_FILE_PROP_VALUE = "single-file";
     public static final String PLUGIN_CONFIG_VHOST_PER_FILE_PROP_VALUE = "vhost-per-file";
@@ -131,6 +138,18 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     private ApacheBinaryInfo binaryInfo;
     private long availPingTime = -1;
 
+    private static final boolean HAS_AUGEAS;
+    static {
+        boolean augeasPresent;
+        try {
+            new Augeas();
+            augeasPresent = true;
+        } catch (Throwable e) {
+            augeasPresent = false;
+        }
+        HAS_AUGEAS = augeasPresent;
+    }
+    
     /**
      * Delegate instance for handling all calls to invoke operations on this component.
      */
@@ -286,9 +305,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
-        if (!isConfigurationSupported()) {
-            throw new IllegalStateException("Configuration is supported only for Apache version 2 and up.");
-        }
+        checkConfigurationSupported();
 
         try {
             ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
@@ -304,27 +321,30 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
     }
 
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        AugeasTree tree=null;
+        AugeasTree tree = null;
         try {
-        tree = getAugeasTree();
-        ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType().getResourceConfigurationDefinition();
-       ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
+            tree = getAugeasTree();
+            ConfigurationDefinition resourceConfigDef = resourceContext.getResourceType()
+                .getResourceConfigurationDefinition();
+            ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
 
-       mapping.updateAugeas(tree.getRootNode(),report.getConfiguration(), resourceConfigDef);
-       tree.save();
-       
-       report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-       log.info("Apache configuration was updated");
-        }catch(Exception e){
-                 if (tree!=null)
-                   log.error("Augeas failed to save configuration "+tree.summarizeAugeasError());
-               else
-                   log.error("Augeas failed to save configuration",e);
-          report.setStatus(ConfigurationUpdateStatus.FAILURE);		
+            mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
+            tree.save();
+
+            log.info("Apache configuration was updated");
+            report.setStatus(ConfigurationUpdateStatus.SUCCESS);
+            
+            finishConfigurationUpdate(report);
+        } catch (Exception e) {
+            if (tree != null)
+                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+            else
+                log.error("Augeas failed to save configuration", e);
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
         }
    }
 
-    public AugeasProxy getAugeasProxy() throws AugeasTreeException {
+    public AugeasProxy getAugeasProxy() throws AugeasException {
         AugeasConfigurationApache config = new AugeasConfigurationApache(resourceContext.getPluginConfiguration());
         AugeasTreeBuilderApache builder = new AugeasTreeBuilderApache();
         AugeasProxy augeasProxy = new AugeasProxy(config, builder);
@@ -332,7 +352,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return augeasProxy;
     }
 
-    public AugeasTree getAugeasTree() throws AugeasTreeException {
+    public AugeasTree getAugeasTree() throws AugeasException {
         AugeasProxy proxy = getAugeasProxy();
         String module = ((AugeasConfigurationApache)proxy.getConfiguration()).getAugeasModuleName();
         
@@ -358,7 +378,7 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
             AugeasProxy proxy = getAugeasProxy();
             AugeasTree tree = getAugeasTree();
             String[] vhostDefs = vhostDef.split(" ");
-            HttpdAddressUtility.Address addr = HttpdAddressUtility.getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
+            HttpdAddressUtility.Address addr = getAddressUtility().getVirtualHostSampleAddress(tree, vhostDefs[0], serverName);
             
             String resourceName;
             if (serverName != null) {
@@ -447,6 +467,8 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
                     
                     tree.save();
                     report.setStatus(CreateResourceStatus.SUCCESS);
+                    
+                    finishChildResourceCreate(report);
                 } catch (Exception e) {
                     report.setStatus(CreateResourceStatus.FAILURE);
                     report.setException(e);
@@ -611,6 +633,67 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         return new ConfigurationTimestamp(config.getAllConfigurationFiles());
     }
     
+    /**
+     * This method is supposed to be called from {@link #updateResourceConfiguration(ConfigurationUpdateReport)}
+     * of this resource and any child resources.
+     * 
+     * Based on the plugin configuration of this resource, the Apache instance is either restarted or left as is.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishConfigurationUpdate(ConfigurationUpdateReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(ConfigurationUpdateStatus.FAILURE);
+            report.setErrorMessageFromThrowable(e);
+        }
+    }
+    
+    /**
+     * This method is akin to {@link #finishConfigurationUpdate(ConfigurationUpdateReport)} but should
+     * be used in the {@link #createResource(CreateResourceReport)} method.
+     * 
+     * @param report the report is updated with the error message and status is set to failure if the restart fails.
+     */
+    public void finishChildResourceCreate(CreateResourceReport report) {
+        try {
+            conditionalRestart();
+        } catch (Exception e) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setException(e);
+        }
+    }
+    
+    /**
+     * Conditionally restarts the server based on the settings in the plugin configuration of the server.
+     * 
+     * @throws Exception if the restart fails.
+     */
+    public void conditionalRestart() throws Exception {
+        Configuration pluginConfig = resourceContext.getPluginConfiguration();
+        boolean restart = pluginConfig.getSimple(PLUGIN_CONFIG_PROP_RESTART_AFTER_CONFIG_UPDATE).getBooleanValue();
+        if (restart) {
+            operationsDelegate.invokeOperation("graceful_restart", new Configuration());
+        }
+    }
+    
+    /**
+     * This method checks whether the supplied node that has been deleted from the tree didn't leave
+     * the file it was contained in empty.
+     * If the file is empty after deleting the node, the file is automatically deleted.
+     * @param tree TODO
+     * @param deletedNode the node that has been deleted from the tree.
+     */
+    public void deleteEmptyFile(AugeasTree tree, AugeasNode deletedNode) {
+        File file = tree.getFile(deletedNode);
+        List<AugeasNode> fileContents = tree.match(file.getAbsolutePath() + AugeasTree.PATH_SEPARATOR + "*");
+        
+        if (fileContents.size() == 0) {
+            file.delete();
+        }
+    }
+    
     // TODO: Move this method to a helper class.
     static void addSnmpMetricValueToReport(MeasurementReport report, MeasurementScheduleRequest schedule,
         SNMPValue snmpValue, boolean valueIsTimestamp) throws SNMPException {
@@ -711,9 +794,27 @@ public class ApacheServerComponent implements AugeasRHQComponent<PlatformCompone
         this.eventContext.unregisterEventPoller(ERROR_LOG_ENTRY_EVENT_TYPE, errorLogFile.getPath());
     }
 
-    private boolean isConfigurationSupported() {
+    /**
+     * Checks whether the configuration is supported for this apache instance.
+     * Checks for Augeas availability and Apache version greater than 2.x are made.
+     * 
+     * @throws IllegalStateException if configuration isn't supported
+     */
+    public void checkConfigurationSupported() {
+        if (!HAS_AUGEAS) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+        
         String version = resourceContext.getVersion();
-        return version.startsWith("2.");
+        
+        if (!version.startsWith("2.")) {
+            throw new IllegalStateException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+        }
+    }
+    
+    public HttpdAddressUtility getAddressUtility() {
+        String version = resourceContext.getVersion();
+        return HttpdAddressUtility.get(version);
     }
     
     private String getNewVhostFileName(HttpdAddressUtility.Address address, String mask) {

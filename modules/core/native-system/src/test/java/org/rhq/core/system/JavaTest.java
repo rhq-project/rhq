@@ -117,7 +117,7 @@ public class JavaTest {
      */
     public void testConcurrency() throws Exception {
         final SystemInfo sysinfo = SystemInfoFactory.createJavaSystemInfo();
-        final int hostname = sysinfo.getHostname().hashCode();
+//        final int hostname = sysinfo.getHostname().hashCode();
         final int osname = sysinfo.getOperatingSystemName().hashCode();
         final int osver = sysinfo.getOperatingSystemVersion().hashCode();
         final List<Throwable> errors = new Vector<Throwable>();
@@ -128,7 +128,7 @@ public class JavaTest {
                 try {
                     count.incrementAndGet();
 
-                    assert sysinfo.getHostname().hashCode() == hostname;
+//                    assert sysinfo.getHostname().hashCode() == hostname;
                     assert sysinfo.getOperatingSystemName().hashCode() == osname;
                     assert sysinfo.getOperatingSystemVersion().hashCode() == osver;
                 } catch (Throwable t) {

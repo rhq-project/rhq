@@ -39,44 +39,9 @@ import java.io.IOException;
 public class RawConfigurationTest {
 
     @Test
-    public void getContentsShouldReturnADeepCopyOfArray() {
-        RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(getBytes());
-
-        byte[] contents = rawConfig.getContents();
-        contents[0] = 5;
-
-        assertEquals(
-            rawConfig.getContents(),
-            getBytes(),
-            "The contents property should only be mutable through setContents(). Therefore getContents() must return a copy of the underlying array."
-        ); 
-    }
-
-    @Test
-    public void setContentsShouldUpdateContentsArrayWithCopyOfSpecifiedValue() {
-        byte[] bytes = getBytes();
-
-        RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(bytes);
-
-        bytes[0] = 9;
-
-        assertEquals(
-            rawConfig.getContents(),
-            getBytes(),
-            "setContents() should update the underlying array to refer to a copy of the incoming array to enforce the contents property being mutable only through setContents()."
-        );
-    }
-
-    byte[] getBytes() {
-        return new byte[] {1, 2, 3};
-    }
-
-    @Test
     public void sha256ShouldChangeWhenContentsChange() throws Exception {
         RawConfiguration rawConfig = new RawConfiguration();
-        rawConfig.setContents(new byte[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
+        rawConfig.setContents("contents");
 
         String actualSha256 = rawConfig.getSha256();
 
@@ -84,7 +49,7 @@ public class RawConfigurationTest {
 
         assertEquals(actualSha256, expectedSha256, "Failed to calculate the SHA-256 correctly.");
 
-        byte[] newContents = new byte[] {1, 3, 5, 7, 11, 13, 17, 19, 23};
+        String newContents = "new contents";
         rawConfig.setContents(newContents);
 
         actualSha256 = rawConfig.getSha256();
@@ -94,8 +59,8 @@ public class RawConfigurationTest {
         assertEquals(actualSha256, expectedSha256, "Failed to update sha256 when contents property changes");
     }
 
-    String calculateSHA256(byte[] data) throws DecoderException {
-        return DigestUtils.sha256Hex(data);
+    String calculateSHA256(String string) throws DecoderException {
+        return DigestUtils.sha256Hex(string);
     }
 
     @Test
@@ -124,7 +89,7 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsWhenRawConfigurationArgHasNullContents() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents("contents");
 
         RawConfiguration r2 = new RawConfiguration();
 
@@ -134,11 +99,11 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsWhenRawConfigurationArgHasNullPath() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents("contents");
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(getBytes());
+        r2.setContents("contents");
 
         assertFalse(r1.equals(r2), "equals() should return false when one of the raw configs does not have its paths set");
     }
@@ -153,10 +118,10 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsAndHashCodeAreSymmetricWhenPathIsNull() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents("contents");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(getBytes());
+        r2.setContents("contents");
 
         assertTrue(r1.equals(r2), "equals() should be true when contents are the same and path is null for both.");
         assertTrue(r2.equals(r1), "equals() should be symmetric.");
@@ -167,11 +132,11 @@ public class RawConfigurationTest {
     @Test
     public void verifyEqualsAndHashCodeAreSymmetricWhenPathIsNotNull() {
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents("contents");
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(getBytes());
+        r2.setContents("contents");
         r2.setPath("/tmp/foo");
 
         assertTrue(r1.equals(r2), "equals() should be true when contents and paths are the same.");
@@ -182,14 +147,16 @@ public class RawConfigurationTest {
 
     @Test
     public void verifyEqualsAndHashCodeTransitiveWhenPathIsNull() {
+        String contents = "contents";
+
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents(contents);
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(getBytes());
+        r2.setContents(contents);
 
         RawConfiguration r3 = new RawConfiguration();
-        r3.setContents(getBytes());
+        r3.setContents(contents);
 
         assertTrue(r1.equals(r2) && r2.equals(r3), "equals() should be true when contents are the same and paths are null.");
         assertTrue(r1.equals(r3), "equals() should be transitive when contents are the same and paths are null.");
@@ -199,16 +166,18 @@ public class RawConfigurationTest {
 
     @Test
     public void verifyEqualsAndHashCodeTransitiveWhenPathIsNotNull() {
+        String contents = "contents";
+
         RawConfiguration r1 = new RawConfiguration();
-        r1.setContents(getBytes());
+        r1.setContents(contents);
         r1.setPath("/tmp/foo");
 
         RawConfiguration r2 = new RawConfiguration();
-        r2.setContents(getBytes());
+        r2.setContents(contents);
         r2.setPath("/tmp/foo");
 
         RawConfiguration r3 = new RawConfiguration();
-        r3.setContents(getBytes());
+        r3.setContents(contents);
         r3.setPath("/tmp/foo");
 
         assertTrue(r1.equals(r2) && r2.equals(r3), "equals() should be true when contents and paths are the same.");
@@ -244,22 +213,22 @@ public class RawConfigurationTest {
     @Test
     public void deepCopyShouldCopyContentsWhenCopyingId() {
         RawConfiguration original = new RawConfiguration();
-        original.setContents(new byte[] {1, 2, 3, 4, 5});
+        original.setContents("contents");
 
         RawConfiguration copy = original.deepCopy(true);
 
-        assertFalse(original.getContents() == copy.getContents(), "The values in the contents array should be copied, not the reference to the original object.");
+        assertEquals(original.getContents(), copy.getContents(), "Failed to copy the contents property");
         assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
     }
 
     @Test
     public void deepCopyShouldCopyContentsWhenNotCopyingId() {
         RawConfiguration original = new RawConfiguration();
-        original.setContents(new byte[] {1, 2, 3, 4, 5});
+        original.setContents("contents");
 
         RawConfiguration copy = original.deepCopy(false);
 
-        assertFalse(original.getContents() == copy.getContents(), "The values in the contents array should be copied, not the reference to the original object.");
+        assertEquals(original.getContents(), copy.getContents(), "Failed to copy the contents property");
         assertEquals(copy.getContents(), original.getContents(), "Failed to copy contents property.");
     }
 

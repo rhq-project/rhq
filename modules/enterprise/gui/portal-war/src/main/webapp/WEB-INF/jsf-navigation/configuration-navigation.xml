@@ -5,59 +5,22 @@
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
    <navigation-rule>
-
-
       <navigation-case>
-         <from-action>#{ExistingResourceConfigurationViewUIBean.editConfiguration}</from-action>
+         <from-action>#{ExistingResourceConfigurationUIBean.editConfiguration}</from-action>
          <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
 
       <navigation-case>
-         <from-action>#{ExistingResourceConfigurationViewUIBean.editRawConfiguration}</from-action>
-         <to-view-id>/rhq/resource/configuration/edit-raw.xhtml?id=#{param.id}</to-view-id>
+         <from-action>#{ExistingResourceConfigurationUIBean.editRawConfiguration}</from-action>
+         <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
-
+     
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/resource/configuration/view-map.xhtml</to-view-id>
       </navigation-case>
-
-      <navigation-case>
-         <from-action>#{ExistingResourceConfigurationUIBean.switchTostructured}</from-action>
-         <to-view-id>/rhq/resource/configuration/edit.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-      <navigation-case>
-         <from-action>#{ExistingResourceConfigurationUIBean.switchToraw}</from-action>
-         <to-view-id>/rhq/resource/configuration/edit-raw.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-      
-   </navigation-rule>
-
-   <navigation-rule>
-      <from-view-id>/rhq/resource/configuration/edit-raw-full.xhtml</from-view-id>
-      <navigation-case>
-          <from-action>#{RawConfigCollection.update}</from-action>
-      	  <to-view-id>/rhq/resource/configuration/edit-raw.xhtml?id=#{param.id}</to-view-id>
-      </navigation-case>
-   </navigation-rule>
-   
-   <navigation-rule>
-
-      <from-view-id>/rhq/resource/configuration/edit-raw.xhtml</from-view-id>
-            
-	  <navigation-case>
-         <from-action>#{ExistingResourceConfigurationUIBean.updateRawConfiguration}</from-action>
-         <from-outcome>success</from-outcome>
-         <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>
-         <redirect/>
-      </navigation-case>
-
-
    </navigation-rule>
 
    <navigation-rule>
@@ -70,6 +33,18 @@
          <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
+
+     <navigation-case>
+         <from-action>#{ExistingResourceConfigurationUIBean.updateRawConfiguration}</from-action>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/resource/configuration/history.xhtml?id=#{param.id}</to-view-id>
+         <redirect/>
+      </navigation-case>
+
+     <navigation-case>
+       <from-action>#{ExistingResourceConfigurationUIBean.switchToraw}</from-action>
+       <to-view-id>/rhq/resource/configuration/edit.xhtml</to-view-id>
+     </navigation-case>
 
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
@@ -150,8 +125,7 @@
       <navigation-case>
          <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
          <to-view-id>/rhq/resource/configuration/history-view-map.xhtml</to-view-id>
-      </navigation-case>
-      
+      </navigation-case>      
    </navigation-rule>
    
 </faces-config>

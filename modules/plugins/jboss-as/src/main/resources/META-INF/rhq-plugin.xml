@@ -336,7 +336,7 @@
                                      default="jboss.web:address=%address%,port=%port%,type=Connector"/>
                   <c:simple-property name="port" type="string" description="Port this connector listens on." readOnly="true"/>
                   <c:simple-property name="address" type="string" description="Address this connector listens on." readOnly="true"/>
-                  <c:simple-property name="schema" type="string" description="The protocol schema (jk, ajp, http)." default="http"/>
+                  <c:simple-property name="schema" displayName="Scheme" type="string" description="The scheme of the protocol used by this connector (e.g. jk, ajp, http, https)." default="http"/>
                </c:group>
                <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
                   <c:simple-property name="nameTemplate" default="Tomcat Connector ({port})"/>

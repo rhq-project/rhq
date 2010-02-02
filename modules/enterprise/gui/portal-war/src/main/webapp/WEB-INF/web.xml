@@ -5,7 +5,7 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          version="2.5">
 
-   <display-name>RHQ</display-name>
+   <display-name>RHQ_FOO</display-name>
 
    <!--=== Seam ===-->
 
@@ -209,7 +209,7 @@
       <param-value>false</param-value>
    </context-param>
 
-   <!-- Allows upload of files through JSF (i.e. software uploads) -->
+   <!-- Allows completeUpload of files through JSF (i.e. software uploads) -->
    <filter>
       <filter-name>MultipartFilter</filter-name>
       <filter-class>org.rhq.enterprise.gui.common.upload.MultipartFilter</filter-class>
@@ -234,7 +234,7 @@
          <param-value>true</param-value>
       </init-param>
       <init-param>
-         <!-- is 250MB the largest package we'll ever want to upload? -->
+         <!-- is 250MB the largest package we'll ever want to completeUpload? -->
          <param-name>maxRequestSize</param-name>
          <param-value>250000000</param-value>
       </init-param>

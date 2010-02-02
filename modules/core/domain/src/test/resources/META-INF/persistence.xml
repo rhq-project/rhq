@@ -1,0 +1,37 @@
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2008 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software
+  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  -->
+
+<persistence xmlns="http://java.sun.com/xml/ns/persistence">
+  <persistence-unit name="rhq-test" transaction-type="RESOURCE_LOCAL">
+    <jar-file>target/classes</jar-file>
+    <properties>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.PostgreSQLDialect"/>
+      <property name="hibernate.connection.driver_class" value="org.postgresql.Driver"/>
+      <property name="hibernate.connection.username" value="rhqadmin"/>
+      <property name="hibernate.connection.password" value="rhqadmin"/>
+      <property name="hibernate.connection.url" value="jdbc:postgresql://127.0.0.1:5432/rhq"/>
+      <property name="hibernate.jdbc.batch_size" value="30"/>
+      <property name="hibernate.cache.use_second_level_cache" value="false"/>
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+      <property name="hibernate.use_sql_comments" value="true" />
+      <property name="hibernate.connection.autocommit" value="false"/>
+    </properties>
+  </persistence-unit>
+</persistence>

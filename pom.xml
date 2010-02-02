@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -66,15 +66,15 @@
     <hibernate-entitymanager.version>3.2.1.GA</hibernate-entitymanager.version>
     <jaxb-api.version>2.1</jaxb-api.version>
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
-    <jsf-api.version>1.2_12</jsf-api.version>
-    <jsf-impl.version>1.2_12</jsf-impl.version>
-    <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
+    <jsf-api.version>1.2_14</jsf-api.version>
+    <jsf-impl.version>1.2_14</jsf-impl.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.11</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
-    <richfaces.version>3.3.0.GA</richfaces.version>
+    <jline.version>0.9.94</jline.version>
+    <richfaces.version>3.3.2.SR1</richfaces.version>
     <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.2</jna.version>
@@ -426,15 +426,15 @@
          </plugin>
          <plugin>
            <artifactId>maven-assembly-plugin</artifactId>
-           <version>2.2-beta-2</version>
+           <version>2.2-beta-5</version>
          </plugin>
          <plugin>
            <artifactId>maven-clean-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.0.2</version>
+           <version>2.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
@@ -442,27 +442,27 @@
          </plugin>
          <plugin>
            <artifactId>maven-deploy-plugin</artifactId>
-           <version>2.3</version>
+           <version>2.5</version>
          </plugin>
          <plugin>
            <artifactId>maven-ear-plugin</artifactId>
-           <version>2.3.1</version>
+           <version>2.4</version>
          </plugin>
          <plugin>
            <artifactId>maven-enforcer-plugin</artifactId>
-           <version>1.0-alpha-3</version>
+           <version>1.0-beta-1</version>
          </plugin>
          <plugin>
            <artifactId>maven-ejb-plugin</artifactId>
-           <version>2.1</version>
+           <version>2.2</version>
          </plugin>
          <plugin>
            <artifactId>maven-install-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.3</version>
          </plugin>
          <plugin>
            <artifactId>maven-jar-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.3</version>
          </plugin>
          <plugin>
            <artifactId>maven-javadoc-plugin</artifactId>
@@ -470,7 +470,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-plugin-plugin</artifactId>
-           <version>2.4.1</version>
+           <version>2.5.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-rar-plugin</artifactId>
@@ -484,7 +484,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-resources-plugin</artifactId>
-           <version>2.2</version>
+           <version>2.4.1</version>
          </plugin>
          <plugin>
            <artifactId>maven-site-plugin</artifactId>
@@ -492,15 +492,15 @@
          </plugin>
          <plugin>
            <artifactId>maven-source-plugin</artifactId>
-           <version>2.0.4</version>
+           <version>2.1.1</version>
          </plugin>
          <plugin>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.4.2</version>
+            <version>2.5</version>
          </plugin>
          <plugin>
            <artifactId>maven-war-plugin</artifactId>
-           <version>2.1-alpha-1</version>
+           <version>2.1-beta-1</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -715,19 +715,17 @@
   <profiles>
     <profile>
         <id>ojdbc-driver</id>
+         <activation>
+            <property>
+               <name>rhq.m2.repo.url.oracle</name>
+            </property>
+         </activation>        
 
         <dependencies>
             <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
                  Add a top level dependency if this profile is active to allow for db-required tests in any module.
                  The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
                  this profile should not be active by default. -->
-            <dependency>
-                <groupId>ojdbc14</groupId>
-                <artifactId>ojdbc14</artifactId>
-                <version>${ojdbc14.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc5</artifactId>

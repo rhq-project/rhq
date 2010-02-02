@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
   <groupId>org.rhq</groupId>
@@ -143,7 +143,6 @@
                 <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
@@ -175,7 +174,6 @@
                 <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-combine">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
@@ -208,7 +206,6 @@
                 <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                 <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml" target="dbsetup-check-schema">
                   <property name="settings.localRepository" value="${settings.localRepository}" />
-                  <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
@@ -248,7 +245,6 @@
           </systemProperties>
           <!-- The below is required for tests to run against Oracle. -->
           <additionalClasspathElements>
-            <!--<additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>-->
             <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
           </additionalClasspathElements>
         </configuration>

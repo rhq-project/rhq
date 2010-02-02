@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:a4j="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich">
+
+  <f:subview id="modalEditorSubview">
+    <rich:modalPanel id="modalEditor" width="800" height="600">
+      <f:facet name="header">
+        <h:panelGroup>
+          <h:outputText value="#{ExistingResourceConfigurationUIBean.modalEditorHeader}"/>          
+        </h:panelGroup>
+      </f:facet>
+      <f:facet name="controls">
+        <h:panelGroup>
+          <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hidelink"/>
+          <rich:componentControl for="modalEditor" attachTo="hidelink" operation="hide" event="onclick"/>
+        </h:panelGroup>
+      </f:facet>
+      <rich:panel style="margin-left:1px; border: none;">
+        <h:inputTextarea id="modalFileContents"
+                         style="width:100%; height:100%; overflow:visible;"
+                         rows="30"
+                         cols="30"
+                         value="#{ExistingResourceConfigurationUIBean.modalEditorContents}"
+                         readonly="false"/>
+      </rich:panel>
+      <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
+        <h:panelGroup style="text-align:right">
+          <a4j:commandButton value="Save"
+                             action="#{ExistingResourceConfigurationUIBean.saveModalEditorContents}"
+                             reRender="fileContents,fileMenu"
+                             styleClass="buttonmed"
+                             onclick="#{rich:component('modalEditor')}.hide()"/>
+          <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>
+        </h:panelGroup>
+      </h:panelGrid>
+    </rich:modalPanel>
+  </f:subview>
+
+</ui:composition>

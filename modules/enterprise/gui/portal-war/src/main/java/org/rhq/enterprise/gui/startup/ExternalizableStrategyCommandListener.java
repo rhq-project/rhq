@@ -23,6 +23,7 @@ import org.rhq.enterprise.communications.command.Command;
 import org.rhq.enterprise.communications.command.CommandResponse;
 import org.rhq.enterprise.communications.command.client.CommandPreprocessor;
 import org.rhq.enterprise.communications.command.server.CommandListener;
+import org.rhq.enterprise.server.util.HibernateDetachUtility;
 
 /**
  * This is a listener for commands coming into the {@link ServiceContainer}'s {@link CommandPreprocessor} and will
@@ -68,6 +69,13 @@ public class ExternalizableStrategyCommandListener implements CommandListener {
      */
     public void processedCommand(Command command, CommandResponse response) {
         // nothing to do
+        //long start = System.currentTimeMillis();
+        try {
+            HibernateDetachUtility.nullOutUninitializedFields(response, HibernateDetachUtility.SerializationType.SERIALIZATION);
+            //System.out.println("HDU: " + (System.currentTimeMillis() - start));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

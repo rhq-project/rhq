@@ -102,10 +102,9 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
             if (currentRoles==null)
                 fillRolesFromAlertParameters();
 
-            Map<String,String> ret = new HashMap<String, String>();
             for (Role role : allRoles) {
                 String roleId = String.valueOf(role.getId());
-                if (currentRoles==null || currentRoles.contains(roleId))
+                if (currentRoles==null || !currentRoles.contains(roleId))
                     rolesMap.put(role.getName(), roleId);
             }
         }

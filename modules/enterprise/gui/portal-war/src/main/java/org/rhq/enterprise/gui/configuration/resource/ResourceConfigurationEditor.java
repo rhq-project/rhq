@@ -28,11 +28,16 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Observer;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
+import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
+import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import javax.faces.application.FacesMessage;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -130,5 +135,39 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
         }
 
         return numberOfFilesModified + " files changed in this configuration";
+    }
+
+    public String updateConfiguration() {
+        ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
+
+        ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
+
+        AbstractResourceConfigurationUpdate updateRequest = configurationMgr.updateStructuredOrRawConfiguration(
+            loggedInUser.getSubject(), resourceId, resourceConfiguration, isStructuredMode());
+
+        if (updateRequest != null) {
+            switch (updateRequest.getStatus()) {
+            case SUCCESS:
+            case INPROGRESS:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
+                    + updateRequest.getId() + " has been sent to the Agent.");
+                return "success";
+            case FAILURE:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
+                    + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
+                return "failure";
+            case UNSENT:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update was not valid",
+                    updateRequest.getErrorMessage());
+                return "failure";
+            }
+        }
+        else {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
+                + "no update request has been sent to the Agent.");
+            return "success";
+        }
+
+        return null;
     }
 }

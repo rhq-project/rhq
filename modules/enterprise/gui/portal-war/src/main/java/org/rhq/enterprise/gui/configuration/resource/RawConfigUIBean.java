@@ -24,6 +24,7 @@
 package org.rhq.enterprise.gui.configuration.resource;
 
 import org.jboss.seam.core.Events;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 
 import javax.faces.component.NamingContainer;
@@ -53,7 +54,11 @@ public class RawConfigUIBean {
     }
 
     public void setContents(String contents) {
+        Configuration configuration = rawConfiguration.getConfiguration();
+        configuration.removeRawConfiguration(rawConfiguration);
         rawConfiguration.setContents(contents);
+        configuration.addRawConfiguration(rawConfiguration);
+
         Events.instance().raiseEvent("rawConfigUpdate", this);
     }
 

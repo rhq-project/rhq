@@ -62,7 +62,7 @@ public class ResourceConfigurationViewer {
     protected Configuration resourceConfiguration;
 
     @Out
-    private ConfigurationDefinition resourceConfigurationDefinition;
+    protected ConfigurationDefinition resourceConfigurationDefinition;
 
     @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
@@ -181,6 +181,14 @@ public class ResourceConfigurationViewer {
 
     /** @return The currently selected tab, structured (i.e., Basic Mode) or raw (i.e., Advanced Mode). */
     public String getSelectedTab() {
+        if (isStructuredSupported()) {
+            return "structuredTab";
+        }
+
+        if (isRawSupported()) {
+            return "rawTab";
+        }
+
         if (mode == STRUCTURED_MODE) {
             return "structuredTab";
         }
@@ -212,7 +220,6 @@ public class ResourceConfigurationViewer {
 
     protected void changeToStructuredTab() {
     }
-
 
     public void select(String path) {
         selectedRawUIBean = findRawConfigUIBeanByPath(path);

@@ -12,7 +12,7 @@
     <component name="org.jboss.seam.core.init">
         <property name="debug">false</property> <!-- enable only when needed -->
         <property name="transactionManagementEnabled">false</property>
-        <property name="jndi-pattern">rhq/#{ejbName}/local</property>
+        <property name="jndiPattern">rhq/#{ejbName}/local</property>
     </component>
 
 

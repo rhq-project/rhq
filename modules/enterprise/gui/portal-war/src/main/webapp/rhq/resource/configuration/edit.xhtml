@@ -49,7 +49,7 @@ THIS TEXT WILL BE REMOVED.
 
     <h:form id="editResourceConfigurationForm"
             onsubmit="prepareInputsForSubmission(this)"
-            rendered="#{!ViewResourceConfigurationUIBean.updateInProgress}">
+            rendered="#{!configurationEditor.updateInProgress}">
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
@@ -61,7 +61,7 @@ THIS TEXT WILL BE REMOVED.
                           style="padding-right:10px"
                           value="#{configurationEditor.modifiedFilesMsg}"/>
             <h:commandButton value="Commit"
-                             action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                             action="#{configurationEditor.updateConfiguration}"
                              title="Click to Save Changes"
                              styleClass="buttonmed"
                              rendered="${ResourceUIBean.permissions.configure}"/>
@@ -70,14 +70,14 @@ THIS TEXT WILL BE REMOVED.
       </h:panelGrid>
 
       <c:choose>
-        <c:when test="${ExistingResourceConfigurationUIBean.rawSupported}">
+        <c:when test="${configurationEditor.rawSupported}">
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
             <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
               <h:panelGrid columns="2"
                            styleClass="raw-outer-table"
                            columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
                 <h:panelGrid columns="1">
-                  <rich:panel style="width:100%">
+                  <rich:panel id="fileMenuPanel" style="width:100%">
                     <f:facet name="header">Files</f:facet>
 
                     <rich:panelMenu id="fileMenu"
@@ -89,18 +89,17 @@ THIS TEXT WILL BE REMOVED.
                                  var="rawConfigDir">
                         <rich:panelMenuGroup label="#{rawConfigDir.path}"
                                              expanded="true"
-                                             selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
+                                             selectedChild="#{selectedRawUIBean.path}">
                           <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                             <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
                                                 icon="#{rawConfigUIBean.icon}"
-                                                binding="#{rawConfigUIBean.panelMenuItem}"
                                                 onclick="cursor_wait();"
                                                 oncomplete="cursor_clear();"
-                                                action="#{ExistingResourceConfigurationUIBean.select(rawConfigUIBean.path)}"
+                                                action="#{configurationEditor.select(rawConfigUIBean.path)}"
                                                 limitToList="true"
                                                 reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
                               <h:panelGroup>
-                                <h:outputText value="#{#rawConfigUIBean.fileName}"/>
+                                <h:outputText value="#{rawConfigUIBean.fileName}"/>
                                 <h:commandButton value="Undo"
                                                  styleClass="buttonmed"
                                                  rendered="#{rawConfigUIBean.modified}">
@@ -131,38 +130,37 @@ THIS TEXT WILL BE REMOVED.
 
                     <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
-                    <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
+                    <h:commandLink action="#{configurationEditor.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
                     </h:commandLink>
 
                     <a4j:status id="selectedFileHeader"
-                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
-                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
+                                startText="Loading #{selectedRawUIBean.path} ..."
+                                stopText="#{selectedRawUIBean.path}"/>
                   </h:panelGrid>
 
                   <rich:panel style="margin-left:1px; border: none;">
                     <h:inputTextarea id="fileContents"
                                      style="width:100%"
-                                     value="#{ExistingResourceConfigurationUIBean.currentContents}"
+                                     value="#{selectedRawUIBean.contents}"
                                      readonly="false">
                       <a4j:support event="onkeyup"
                                    ignoreDupeResponses="true"
-                                   reRender="fileMenu"
-                                   requestDelay="1000"
-                                   action="#{ExistingResourceConfigurationUIBean.editCurrent}"/>
+                                   reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
+                                   requestDelay="1000"/>
                     </h:inputTextarea>
                   </rich:panel>
                 </h:panelGrid>
               </h:panelGrid>
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                <h:panelGroup style="text-align:right">
+                <h:panelGroup id="lowerCommitPanel" style="text-align:right">
                   <h:outputText value="#{configurationEditor.modifiedFilesMsg}"
                                 rendered="#{configurationEditor .rawMode}"
                                 style="padding-right:10px"/>
                   <h:commandButton value="Commit"
-                                   action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                   action="#{configurationEditor.updateConfiguration}"
                                    title="Click to Save Changes"
                                    styleClass="buttonmed"
                                    rendered="${ResourceUIBean.permissions.configure}"/>
@@ -172,18 +170,18 @@ THIS TEXT WILL BE REMOVED.
           </rich:tabPanel>
         </c:when>
 
-        <c:when test="${ExistingResourceConfigurationUIBean.structuredSupported}">
+        <c:when test="${configurationEditor.structuredSupported}">
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
             <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
-              <onc:config configurationDefinition="#{ExistingResourceConfigurationUIBean.configurationDefinition}"
-                          configuration="#{ExistingResourceConfigurationUIBean.configuration}"
-                          nullConfigurationDefinitionMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationDefinitionMessage}"
-                          nullConfigurationMessage="#{ExistingResourceConfigurationUIBean.nullConfigurationMessage}"
+              <onc:config configurationDefinition="#{resourceConfigurationDefinition}"
+                          configuration="#{resourceConfiguration}"
+                          nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
+                          nullConfigurationMessage="#{msg['resource.configuration.null']}"
                           prevalidate="true"/>
 
               <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
-                           rendered="#{ExistingResourceConfigurationUIBean.configuration != null}">
-                <h:commandButton value="SAVE" action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
+                           rendered="#{resourceConfiguration != null}">
+                <h:commandButton value="SAVE" action="#{configurationEditor.updateConfiguration}"
                                  title="Click to Save Changes" styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure}"/>
                 <h:commandButton value="RESET" type="reset" immediate="true"
@@ -193,7 +191,7 @@ THIS TEXT WILL BE REMOVED.
           </rich:tabPanel>
         </c:when>
 
-        <c:when test="${ExistingResourceConfigurationUIBean.structuredAndRawSupported}">
+        <c:when test="${configurationEditor.structuredAndRawSupported}">
           <rich:tabPanel id="configTabPanel"
                          selectedTab="#{configurationEditor.selectedTab}"
                          switchType="ajax"
@@ -214,7 +212,7 @@ THIS TEXT WILL BE REMOVED.
                            columnClasses="button-cell"
                            rendered="#{resourceConfiguration != null}">
                 <h:commandButton value="SAVE"
-                                 action="#{ExistingResourceConfigurationUIBean.updateConfiguration}"
+                                 action="#{configurationEditor.updateConfiguration}"
                                  title="Click to Save Changes"
                                  styleClass="buttonmed"
                                  rendered="${ResourceUIBean.permissions.configure}"/>
@@ -247,7 +245,7 @@ THIS TEXT WILL BE REMOVED.
                                  var="rawConfigDir">
                         <rich:panelMenuGroup label="#{rawConfigDir.path}"
                                              expanded="true"
-                                             selectedChild="#{ExistingResourceConfigurationUIBean.currentPath}">
+                                             selectedChild="#{selectedRawUIBean.path}">
                           <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
                             <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
                                                 icon="#{rawConfigUIBean.icon}"
@@ -288,14 +286,14 @@ THIS TEXT WILL BE REMOVED.
 
                     <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
 
-                    <h:commandLink action="#{ExistingResourceConfigurationUIBean.download}" value="Download">
+                    <h:commandLink action="#{configurationEditor.download}" value="Download">
                       <h:graphicImage value="/images/download.png"/>
                       <f:param name="id" value="#{ResourceUIBean.id}"/>
                     </h:commandLink>
 
                     <a4j:status id="selectedFileHeader"
-                                startText="Loading #{ExistingResourceConfigurationUIBean.current.path} ..."
-                                stopText="#{ExistingResourceConfigurationUIBean.current.path}"/>
+                                startText="Loading #{selectedRawUIBean.path} ..."
+                                stopText="#{selectedRawUIBean.path}"/>
                   </h:panelGrid>
 
                   <rich:panel id="fileContentsPanel" style="margin-left:1px; border: none;">
@@ -318,7 +316,7 @@ THIS TEXT WILL BE REMOVED.
                                 rendered="#{configurationEditor.displayChangedFilesLabel}"
                                 style="padding-right:10px"/>
                   <h:commandButton value="Commit"
-                                   action="#{ExistingResourceConfigurationUIBean.updateRawConfiguration}"
+                                   action="#{configurationEditor.updateConfiguration}"
                                    title="Click to Save Changes"
                                    styleClass="buttonmed"
                                    rendered="${ResourceUIBean.permissions.configure}"/>
@@ -334,7 +332,7 @@ THIS TEXT WILL BE REMOVED.
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"
-                  rendered="#{ExistingResourceConfigurationUIBean.updateInProgress}">
+                  rendered="#{configurationEditor.updateInProgress}">
       <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
     </h:panelGroup>
   </ui:define>

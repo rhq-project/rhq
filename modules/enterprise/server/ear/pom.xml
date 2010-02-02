@@ -62,6 +62,15 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
+         <artifactId>rhq-coregui</artifactId>
+         <version>${project.version}</version>
+         <type>war</type>
+      </dependency>
+
+
+
+      <dependency>
+         <groupId>org.rhq</groupId>
          <artifactId>rhq-webdav</artifactId>
          <version>${project.version}</version>
          <type>war</type>
@@ -166,6 +175,15 @@
                      <bundleFileName>rhq-portal.war</bundleFileName>
                      <contextRoot>/</contextRoot>
                   </webModule>
+
+
+                   <webModule>
+                      <groupId>org.rhq</groupId>
+                      <artifactId>rhq-coregui</artifactId>
+                      <bundleFileName>coregui.war</bundleFileName>
+                      <contextRoot>/coregui</contextRoot>
+                   </webModule>
+
 
                   <!--  included unless exclude.webdav property is set to true. -->
                   <webModule>
@@ -536,3 +554,4 @@
    </profiles>
 
 </project>
+

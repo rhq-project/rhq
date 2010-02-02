@@ -124,9 +124,6 @@
       <module>virt</module>
       <module>kickstart</module>
 
-      <!-- this is just for testing raw config -->
-      <module>raw-config-test</module>
-
       <!-- make this the last - it will validate all the plugins -->
       <module>validate-all-plugins</module>
    </modules>

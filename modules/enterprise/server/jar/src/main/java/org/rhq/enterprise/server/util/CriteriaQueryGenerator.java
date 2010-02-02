@@ -362,15 +362,15 @@ public final class CriteriaQueryGenerator {
             Object value = critField.getValue();
             if (value instanceof String) {
                 String formattedValue = (String) value;
+
+                if (wantsFuzzyMatching) {
+                    formattedValue = "%" + QueryUtility.escapeSearchParameter(formattedValue) + "%";
+                }
+
                 if (wantCaseInsensitiveMatch) {
                     formattedValue = formattedValue.toLowerCase();
                 }
 
-                if (wantsFuzzyMatching) {
-                    // append '%' onto edges that don't already have '%' explicitly set from the caller
-                    formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
-                        + (formattedValue.endsWith("%") ? "" : "%");
-                }
                 value = formattedValue;
             }
             if (LOG.isDebugEnabled()) {

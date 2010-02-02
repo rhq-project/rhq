@@ -179,10 +179,6 @@
                      <filtering>false</filtering>
                      <directory>${basedir}/src/main/webapp</directory>
                   </resource>
-                  <resource>
-                     <filtering>true</filtering>
-                     <directory>${basedir}/src/main/webapp-filtered</directory>
-                  </resource>
                </webResources>
             </configuration>
          </plugin>

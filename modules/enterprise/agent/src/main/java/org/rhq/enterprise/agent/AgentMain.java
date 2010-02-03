@@ -21,14 +21,12 @@ package org.rhq.enterprise.agent;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -57,8 +55,6 @@ import java.util.prefs.Preferences;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
-import jline.ConsoleReader;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
@@ -208,7 +204,7 @@ public class AgentMain {
     /**
      * The stream where the commands are input.
      */
-    private ConsoleReader m_input;
+    private AgentInputReader m_input;
 
     /**
      * Will be <code>true</code> if the input is coming directly from stdin; <code>false</code> if an input script file
@@ -463,7 +459,7 @@ public class AgentMain {
 
         m_agentHomeDirectory = null;
         m_daemonMode = false;
-        m_input = new ConsoleReader() ;
+        m_input = AgentInputReaderFactory.create();
         m_output = new AgentPrintWriter(System.out, true);
         m_stdinInput = true;
         m_configuration = null;
@@ -804,7 +800,7 @@ public class AgentMain {
      *
      * @return the input stream or <code>null</code> if the agent is not currently accepting input
      */
-    public ConsoleReader getIn() {
+    public AgentInputReader getIn() {
         return m_input;
     }
 
@@ -1093,13 +1089,17 @@ public class AgentMain {
             }
         } else if (!m_stdinInput) {
             // if we are processing a script, we hit the EOF, so close the input stream
-
+            try {
+                m_input.close();
+            } catch (IOException e1) {
+            }
 
             // if we are not in daemon mode, let's now start processing prompt commands coming in via stdin
             if (!m_daemonMode) {
                 try {
-                    m_input = new ConsoleReader() ;
+                    m_input = AgentInputReaderFactory.create();
                 } catch (IOException e1) {
+                    m_input = null;
                 }            
                 m_stdinInput = true;
                 input_string = "";
@@ -2798,7 +2798,7 @@ public class AgentMain {
                 File script = new File(getopt.getOptarg());
 
                 try {
-                    m_input = new ConsoleReader(new FileInputStream(script), null);
+                    m_input = AgentInputReaderFactory.create(new FileInputStream(script));
                     m_stdinInput = false;
                 } catch (Exception e) {
                     throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_INPUT_FILE, script, e));

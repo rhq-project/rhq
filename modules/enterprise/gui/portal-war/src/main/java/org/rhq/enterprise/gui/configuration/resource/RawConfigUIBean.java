@@ -63,7 +63,10 @@ public class RawConfigUIBean {
     }
 
     public void undoEdit() {
-        rawConfiguration = originalRawConfiguration.deepCopy(false);    
+        Configuration configuration = rawConfiguration.getConfiguration();
+        configuration.removeRawConfiguration(rawConfiguration);
+        rawConfiguration = originalRawConfiguration.deepCopy(true);
+        configuration.addRawConfiguration(rawConfiguration);
     }
 
     /** @return The full path name of the raw config file */

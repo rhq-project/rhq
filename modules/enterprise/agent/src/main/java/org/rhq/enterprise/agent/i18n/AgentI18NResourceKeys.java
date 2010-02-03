@@ -28,7 +28,13 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
-    @I18NMessage("This agent is registering under the loopback address [{0}] - this should only be done for testing "
+    @I18NMessage("Specified bad console type [{0}]")
+    String AGENT_INPUT_READER_FACTORY_BAD_TYPE = "AgentMain.input-reader-factory-bad-type";
+
+    @I18NMessage("Failed to create console input reader of type [{0}]")
+    String AGENT_INPUT_READER_FACTORY_ERROR = "AgentMain.input-reader-factory-error";
+
+    @I18NMessage("!!! This agent is registering under the loopback address [{0}] - this should only be done for testing "
         + "or demo purposes - this agent will only be able to interact with a server running on the same host as this agent")
     String REGISTERING_WITH_LOOPBACK = "AgentMain.registering-with-loopback";
 
@@ -199,6 +205,12 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Too many failover attempts have been made [{0}]. Exception that triggered the failover: [{1}]")
     String TOO_MANY_FAILOVER_ATTEMPTS = "AgentMain.too-many-failover-attempts";
+
+    @I18NMessage("!!! A server has registered under a loopback address [{0}] - this should only be done for testing and demo purposes. "
+        + "Only agents running on the same machine as that server will be able to interact with that server successfully. "
+        + "Please double check that you really want your server to have a public endpoint of [{0}]. "
+        + "See the Administration > High Availability > Servers menu in the server GUI to change the public endpoint of the server.")
+    String FAILOVER_LIST_HAS_LOCALHOST = "AgentMain.failover-list-has-localhost";
 
     @I18NMessage("The server failover list has been loaded from [{0}] - there are [{1}] servers in the list")
     String FAILOVER_LIST_LOADED = "AgentMain.failover-list-loaded";
@@ -543,6 +555,7 @@ public interface AgentI18NResourceKeys {
         + "\\   -c, --config=<filename>       Specifies an agent configuration preferences file (on filesystem or classpath)\\n\\\n"
         + "\\   -d, --daemon                  Agent runs in daemon mode - will not read from stdin for commands\\n\\\n"
         + "\\   -D<name>[=<value>]            Overrides an agent configuration preference and sets a system property\\n\\\n"
+        + "\\   -e, --console=<type>          Specifies the implementation to use when reading console input: jline, sigar, java\\n\\\n"
         + "\\   -h, --help                    Shows this help message (default)\\n\\\n"
         + "\\   -i, --input=<filename>        Specifies a script file to be used for input\\n\\\n"
         + "\\   -l, --cleanconfig             Clears out any existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"

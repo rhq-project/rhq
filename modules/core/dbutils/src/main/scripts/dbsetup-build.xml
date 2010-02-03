@@ -54,7 +54,6 @@ To run the default target, you must set one of the following properties to true:
            unless="dbsetup-init-taskdefs.notrequired">
      <path id="full.task.classpath">
         <pathelement path="${task.classpath.property}" />
-        <!--<pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>-->
         <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
         <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
         <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>
@@ -306,7 +305,6 @@ To run the default target, you must set one of the following properties to true:
            print="true"
            showheaders="false">
          <classpath>
-            <!--<pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>-->
             <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
             <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
             <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>

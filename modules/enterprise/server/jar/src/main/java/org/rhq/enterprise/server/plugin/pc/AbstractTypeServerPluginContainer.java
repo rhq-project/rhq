@@ -20,7 +20,10 @@
 package org.rhq.enterprise.server.plugin.pc;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -48,6 +51,11 @@ public abstract class AbstractTypeServerPluginContainer {
     private ServerPluginManager pluginManager;
 
     /**
+     * Maps the time (in epoch milliseconds) when plugins were loaded in this plugin container.
+     */
+    private final Map<PluginKey, Long> loadedTimestamps;
+
+    /**
      * Instantiates the plugin container. All subclasses must support this and only this
      * constructor.
      *
@@ -55,6 +63,7 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public AbstractTypeServerPluginContainer(MasterServerPluginContainer master) {
         this.master = master;
+        this.loadedTimestamps = Collections.synchronizedMap(new HashMap<PluginKey, Long>());
     }
 
     /**
@@ -108,6 +117,17 @@ public abstract class AbstractTypeServerPluginContainer {
      */
     public boolean isPluginEnabled(PluginKey pluginKey) {
         return this.pluginManager.isPluginEnabled(pluginKey.getPluginName());
+    }
+
+    /**
+     * Given a plugin key, this returns the time (in epoch milliseconds) when that plugin was loaded into
+     * this plugin container.
+     * 
+     * @param pluginKey identifies the plugin whose load time is to be returned
+     * @return the epoch millis timestamp when the plugin was loaded; <code>null</code> if the plugin is not loaded
+     */
+    public Long getPluginLoadTime(PluginKey pluginKey) {
+        return this.loadedTimestamps.get(pluginKey);
     }
 
     /**
@@ -185,6 +205,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void loadPlugin(ServerPluginEnvironment env, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.loadPlugin(env, enabled);
+            this.loadedTimestamps.put(env.getPluginKey(), System.currentTimeMillis());
         } else {
             throw new Exception("Cannot load a plugin; plugin container is not initialized yet");
         }
@@ -201,6 +222,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void unloadPlugin(PluginKey pluginKey) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.unloadPlugin(pluginKey.getPluginName(), false);
+            this.loadedTimestamps.remove(pluginKey);
         } else {
             throw new Exception("Cannot unload a plugin; plugin container has been shutdown");
         }
@@ -218,6 +240,7 @@ public abstract class AbstractTypeServerPluginContainer {
     public synchronized void reloadPlugin(PluginKey pluginKey, boolean enabled) throws Exception {
         if (this.pluginManager != null) {
             this.pluginManager.reloadPlugin(pluginKey.getPluginName(), enabled);
+            this.loadedTimestamps.put(pluginKey, System.currentTimeMillis());
         } else {
             throw new Exception("Cannot reload a plugin; plugin container has been shutdown");
         }

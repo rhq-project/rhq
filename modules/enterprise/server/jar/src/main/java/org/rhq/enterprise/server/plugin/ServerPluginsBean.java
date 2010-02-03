@@ -147,6 +147,23 @@ public class ServerPluginsBean implements ServerPluginsLocal {
         return query.getResultList();
     }
 
+    @SuppressWarnings("unchecked")
+    public long getLastConfigurationChangeTimestamp(int pluginId) {
+        Query query = entityManager.createNamedQuery(ServerPlugin.QUERY_GET_CONFIG_MTIMES);
+        query.setParameter("id", pluginId);
+        Object[] timestamps = (Object[]) query.getSingleResult();
+        long lastConfigChangeTimestamp = 0L;
+        for (Object timestamp : timestamps) {
+            if (timestamp != null) {
+                long val = ((Long) timestamp).longValue();
+                if (val > lastConfigChangeTimestamp) {
+                    lastConfigChangeTimestamp = val;
+                }
+            }
+        }
+        return lastConfigChangeTimestamp;
+    }
+
     public ServerPluginDescriptorType getServerPluginDescriptor(PluginKey pluginKey) throws Exception {
         ServerPlugin plugin = getServerPlugin(pluginKey);
         File pluginsDir = LookupUtil.getServerPluginService().getServerPluginsDirectory();

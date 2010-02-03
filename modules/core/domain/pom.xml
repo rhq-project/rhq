@@ -5,7 +5,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -231,7 +231,6 @@
               </systemProperties>
               <!-- The below is required for tests to run against Oracle. -->
               <additionalClasspathElements>
-                 <!--<additionalClasspathElement>${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar</additionalClasspathElement>-->
                  <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
               </additionalClasspathElements>
             </configuration>

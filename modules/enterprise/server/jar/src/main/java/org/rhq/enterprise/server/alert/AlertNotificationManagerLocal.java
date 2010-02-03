@@ -25,13 +25,9 @@ import javax.ejb.Local;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
-import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
@@ -42,23 +38,6 @@ import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 @Local
 public interface AlertNotificationManagerLocal {
-
-    int addRoleNotifications(Subject subject, Integer alertDefinitionId, Integer[] roleIds);
-
-    int addSubjectNotifications(Subject subject, Integer alertDefinitionId, Integer[] subjectId);
-
-
-    PageList<RoleNotification> getRoleNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotifications(Integer alertDefinitionId, PageControl pageControl);
-
-    PageList<RoleNotification> getRoleNotifications(Integer[] alertNotificationIds, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotifications(Integer[] alertNotificationIds, PageControl pageControl);
-
-    PageList<RoleNotification> getRoleNotificationsByRoles(Integer[] roleIds, PageControl pageControl);
-
-    PageList<SubjectNotification> getSubjectNotificationsBySubjects(Integer[] subjectId, PageControl pageControl);
 
     /**
      * Remove the passed notifications from the passed alert definition (all identified by their id)

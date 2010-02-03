@@ -56,8 +56,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.RoleNotification;
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
@@ -627,34 +625,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             Set<String> emailAddresses = new LinkedHashSet<String>();
 
             for (AlertNotification alertNotification : alertNotifications) {
-                if (alertNotification instanceof RoleNotification) {
-                    RoleNotification roleNotification = (RoleNotification) alertNotification;
-                    Set<Subject> subjects = roleNotification.getRole().getSubjects();
 
-                    for (Subject subject : subjects) {
-                        if (subject.getFsystem()) {
-                            /*
-                             * if a user wants to notify the superuser role, that's fine... but we shouldn't send an
-                             * email to the special overlord user
-                             */
-                            continue;
-                        }
-
-                        String emailAddress = subject.getEmailAddress();
-
-                        processEmailAddress(alert, emailAddress, emailAddresses);
-                    }
-                } else if (alertNotification instanceof SubjectNotification) {
-                    SubjectNotification subjectNotification = (SubjectNotification) alertNotification;
-                    String emailAddress = subjectNotification.getSubject().getEmailAddress();
-
-                    processEmailAddress(alert, emailAddress, emailAddresses);
-                }
-
-
-                // Send over the new AlertSenders
-                if (alertNotification.getSenderName()==null)
+                // Send over the new AlertSender plugins
+                if (alertNotification.getSenderName()==null) {
+                    log.warn("Alert notification " + alertNotification + " has no sender name defined");
                     continue;
+                }
 
                 AlertSender sender = getAlertSender(alertNotification);
                 if (sender != null) {

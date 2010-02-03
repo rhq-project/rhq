@@ -107,28 +107,11 @@ public class AlertNotificationLog implements Serializable {
 
         List<AlertNotification> currentNotifications = alertDefinition.getAlertNotifications();
         for (AlertNotification notification : currentNotifications) {
-            if (notification instanceof RoleNotification) {
-                if (rolesBuilder.length() != 0) {
-                    rolesBuilder.append(", ");
-                }
-
-                rolesBuilder.append(((RoleNotification) notification).getRole().getName());
-            } else if (notification instanceof SubjectNotification) {
-                if (subjectsBuilder.length() != 0) {
-                    subjectsBuilder.append(", ");
-                }
-
-                subjectsBuilder.append(((SubjectNotification) notification).getSubject().getName());
-            } else {
                 //((SnmpNotification)notification).
                 // TODO: log that this type of AlertNotification is not supported yet for auditing
-            }
         }
 
         // always make sure each notification field is non-null by "fixing" it
-        roles = fixup(rolesBuilder);
-        subjects = fixup(subjectsBuilder);
-        emails = fixup(emailsBuilder);
         this.alert = alert;
     }
 

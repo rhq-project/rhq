@@ -106,25 +106,11 @@
   <definition name=".events.alert.view.notifications.list"
         path="/resource/common/monitor/alerts/ViewAlertNotificationsList.jsp"/>
 
-  <definition name=".events.alert.view.notifications.others"
-        path="/resource/common/monitor/alerts/ViewAlertNotificationsOthers.jsp"
-        controllerUrl="/alerts/ViewNotificationsOthers.do"/>
-
-  <definition name=".events.alert.view.notifications.roles"
-        path="/resource/common/monitor/alerts/ViewAlertNotificationsRoles.jsp"
-        controllerUrl="/alerts/ViewNotificationsRoles.do"/>
-
-  <definition name=".events.alert.view.notifications.users"
-        path="/resource/common/monitor/alerts/ViewAlertNotificationsUsers.jsp"
-        controllerUrl="/alerts/ViewNotificationsUsers.do"/>
 
   <definition name=".events.alert.view.controlaction"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"
               controllerUrl="/alerts/ViewControlAction.do"/>
 
-  <definition name=".events.alert.view.syslogaction"
-              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogAction.jsp"
-              controllerUrl="/alerts/ViewSyslogAction.do"/>
 
   <definition name=".events.alert.view"
         path="/resource/common/monitor/alerts/ViewAlert.jsp"
@@ -216,31 +202,12 @@
   <definition name=".events.config.view.notifications.tabs"
     path="/resource/common/monitor/alerts/config/ViewDefinitionNotificationsTabs.jsp"/>
 
-  <definition name=".events.config.view.notifications.others"
-        path="/resource/common/monitor/alerts/config/ListOthers.jsp"
-        controllerUrl="/alerts/ViewNotificationsOthers.do"/>
-
-  <definition name=".events.config.view.notifications.roles"
-        path="/resource/common/monitor/alerts/config/ListRoles.jsp"
-        controllerUrl="/alerts/ViewNotificationsRoles.do"/>
-
-  <definition name=".events.config.view.notifications.users"
-        path="/resource/common/monitor/alerts/config/ListUsers.jsp"
-        controllerUrl="/alerts/ViewNotificationsUsers.do"/>
-
   <definition name=".events.config.view.controlactionbox"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlActionBox.jsp"
               controllerUrl="/alerts/ViewControlAction.do"/>
 
   <definition name=".events.config.view.controlaction"
               path="/resource/common/monitor/alerts/config/ViewDefinitionControlAction.jsp"/>
-
-  <definition name=".events.config.view.syslogactionbox"
-              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogActionBox.jsp"
-              controllerUrl="/alerts/ViewSyslogAction.do"/>
-
-  <definition name=".events.config.view.syslogaction"
-              path="/resource/common/monitor/alerts/config/ViewDefinitionSyslogAction.jsp"/>
 
   <definition name=".events.config.view.others"
       path="/resource/common/monitor/alerts/config/ViewDefinition.jsp"
@@ -258,18 +225,6 @@
   <definition name=".events.config.list"
         path="/resource/common/monitor/alerts/config/ListDefinitions.jsp"
         controllerUrl="/alerts/ListDefinitions.do"/>
-
-  <definition name =".events.config.addusers"
-        controllerUrl="/events/config/AddUsersFormPrepare.do"
-        path="/resource/common/monitor/alerts/config/AddEventUsers.jsp"/>
-
-  <definition name =".events.config.addroles"
-      controllerUrl="/events/config/AddRolesFormPrepare.do"
-      path="/resource/common/monitor/alerts/config/AddEventRoles.jsp"/>
-
-  <definition name =".events.config.addothers"
-      controllerUrl="/events/config/AddOthersFormPrepare.do"
-      path="/resource/common/monitor/alerts/config/AddEventOthers.jsp"/>
 
     <definition name=".tabs.resource.events"
             extends=".tabs.resource">

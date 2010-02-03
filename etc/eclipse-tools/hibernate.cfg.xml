@@ -18,8 +18,8 @@
         <property name="hibernate.connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
         <property name="hibernate.dialect">org.hibernate.dialect.OracleDialect</property>
         -->
-        
-        <property name="hibernate.cache.use_second_level_cache">false</property> 
+
+        <property name="hibernate.cache.use_second_level_cache">false</property>
         <property name="hibernate.cache.use_query_cache">false</property>
 
         <mapping class="org.rhq.core.domain.auth.Principal" />
@@ -106,10 +106,7 @@
         <mapping class="org.rhq.core.domain.alert.AlertDefinition" />
         <mapping class="org.rhq.core.domain.alert.notification.AlertNotification" />
         <mapping class="org.rhq.core.domain.alert.notification.AlertNotificationLog" />
-        <mapping class="org.rhq.core.domain.alert.notification.EmailNotification" />
-        <mapping class="org.rhq.core.domain.alert.notification.RoleNotification" />
-        <mapping class="org.rhq.core.domain.alert.notification.SnmpNotification" />
-        <mapping class="org.rhq.core.domain.alert.notification.SubjectNotification" />
+        <mapping class="org.rhq.core.domain.alert.notification.NotificationTemplate" />
         <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataKey" />
         <mapping class="org.rhq.core.domain.measurement.calltime.CallTimeDataValue" />
         <mapping class="org.rhq.core.domain.resource.group.Group" />

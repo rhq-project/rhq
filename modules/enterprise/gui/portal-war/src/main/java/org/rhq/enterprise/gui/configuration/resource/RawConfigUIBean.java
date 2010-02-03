@@ -59,7 +59,7 @@ public class RawConfigUIBean {
         rawConfiguration.setContents(contents);
         configuration.addRawConfiguration(rawConfiguration);
 
-        Events.instance().raiseEvent("rawConfigUpdate", this);
+        fireRawConfigUpdateEvent();
     }
 
     public void undoEdit() {
@@ -67,15 +67,17 @@ public class RawConfigUIBean {
         configuration.removeRawConfiguration(rawConfiguration);
         rawConfiguration = originalRawConfiguration.deepCopy(true);
         configuration.addRawConfiguration(rawConfiguration);
+
+        fireRawConfigUpdateEvent();
+    }
+
+    private void fireRawConfigUpdateEvent() {
+        Events.instance().raiseEvent("rawConfigUpdate", this);
     }
 
     /** @return The full path name of the raw config file */
     public String getPath() {
         return rawConfiguration.getPath();
-    }
-
-    public String getPathAsId() {
-        return rawConfiguration.getPath().replace('/', NamingContainer.SEPARATOR_CHAR);
     }
 
     /** @return The name of the raw config file excluding its path */

@@ -66,7 +66,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
     @Override
     protected void changeToRawTab() {
         resourceConfiguration = translateToRaw();
-//        initRawConfigDirectories();
         for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
             RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
             uiBean.setRawConfiguration(raw);
@@ -82,6 +81,10 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
     @Override
     protected void changeToStructuredTab() {
         resourceConfiguration = translateToStructured();
+        for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+            RawConfigUIBean uiBean = findRawConfigUIBeanByPath(raw.getPath());
+            uiBean.setRawConfiguration(raw);
+        }
     }
 
     private Configuration translateToStructured() {
@@ -177,7 +180,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
     }
 
     /**
-     * 
+     *
      * @return
      */
     public String finishAddMap() {

@@ -56,7 +56,7 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGrid columns="2" style="width:100%">
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
           <h:panelGroup id="upperCommitPanel" style="text-align:right">
-            <h:outputText id="changedFilesLabel"
+            <h:outputText id="upperChangedFilesLabel"
                           rendered="#{configurationEditor.displayChangedFilesLabel}"
                           style="padding-right:10px"
                           value="#{configurationEditor.modifiedFilesMsg}"/>
@@ -91,24 +91,22 @@ THIS TEXT WILL BE REMOVED.
                                              expanded="true"
                                              selectedChild="#{selectedRawUIBean.path}">
                           <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                            <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
-                                                icon="#{rawConfigUIBean.icon}"
-                                                onclick="cursor_wait();"
-                                                oncomplete="cursor_clear();"
-                                                action="#{configurationEditor.select(rawConfigUIBean.path)}"
-                                                limitToList="true"
-                                                reRender="fileContents,selectedFileHeader,modalEditor,fileMenu">
+                            <rich:panelMenuItem label=""
+                                                icon="#{rawConfigUIBean.icon}">
                               <h:panelGroup>
-                                <h:outputText value="#{rawConfigUIBean.fileName}"/>
-                                <h:commandButton value="Undo"
-                                                 styleClass="buttonmed"
-                                                 rendered="#{rawConfigUIBean.modified}">
+                                <h:outputLabel value="#{rawConfigUIBean.fileName}">
                                   <a4j:support event="onclick"
-                                               onsumbit="cursor_wait()"
+                                               onsubmit="cursor_wait()"
                                                oncomplete="cursor_clear()"
-                                               action="#{ExistingResourceConfigurationUIBean.undoEdit(rawConfigUIBean.path)}"
-                                               reRender="fileMenu,fileContents"/>
-                                </h:commandButton>
+                                               action="#{configurationEditor.select(rawConfigUIBean.path)}"
+                                               limitToList="true"
+                                               reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel"/>
+                                </h:outputLabel>
+                                <a4j:commandButton value="Undo"
+                                                   styleClass="buttonmed"
+                                                   rendered="#{rawConfigUIBean.modified}"
+                                                   action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
+                                                   reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel"/>
                               </h:panelGroup>
                             </rich:panelMenuItem>
                           </c:forEach>
@@ -156,7 +154,8 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup id="lowerCommitPanel" style="text-align:right">
-                  <h:outputText value="#{configurationEditor.modifiedFilesMsg}"
+                  <h:outputText id="lowerChangedFilesLabel"
+                                value="#{configurationEditor.modifiedFilesMsg}"
                                 rendered="#{configurationEditor .rawMode}"
                                 style="padding-right:10px"/>
                   <h:commandButton value="Commit"
@@ -260,7 +259,7 @@ THIS TEXT WILL BE REMOVED.
                                                    styleClass="buttonmed"
                                                    rendered="#{rawConfigUIBean.modified}"
                                                    action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
-                                                   reRender="fileMenuPanel,fileContents"/>
+                                                   reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel"/>
                               </h:panelGroup>
                             </rich:panelMenuItem>
                           </c:forEach>
@@ -308,7 +307,7 @@ THIS TEXT WILL BE REMOVED.
 
               <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
                 <h:panelGroup id="lowerCommitPanel" style="text-align:right">
-                  <h:outputText value="#{configurationEditor.modifiedFilesMsg}"
+                  <h:outputText id="lowerChangedFilesLabel" value="#{configurationEditor.modifiedFilesMsg}"
                                 rendered="#{configurationEditor.displayChangedFilesLabel}"
                                 style="padding-right:10px"/>
                   <h:commandButton value="Commit"

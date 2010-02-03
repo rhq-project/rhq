@@ -323,7 +323,9 @@ THIS TEXT WILL BE REMOVED.
       </c:choose>
 
       <ui:include src="upload-modal.xhtml"/>
-      <ui:include src="view-raw-modal.xhtml"/>
+      <ui:include src="view-raw-modal.xhtml">
+        <ui:param name="readOnly" value="false"/>
+      </ui:include>
     </h:form>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"

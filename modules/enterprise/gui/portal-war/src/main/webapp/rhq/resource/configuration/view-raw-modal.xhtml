@@ -3,10 +3,15 @@
 
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:c="http://java.sun.com/jstl/core"
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:a4j="http://richfaces.org/a4j"
                 xmlns:rich="http://richfaces.org/rich">
+
+  <c:if test="${empty readOnly}">
+    <c:set var="readOnly" value="true"/>
+  </c:if>
 
   <f:subview id="modalEditorSubview">
     <rich:modalPanel id="modalEditor" width="800" height="600">
@@ -27,12 +32,13 @@
                          rows="30"
                          cols="30"
                          value="#{ExistingResourceConfigurationUIBean.modalEditorContents}"
-                         readonly="false"/>
+                         readonly="#{readOnly}"/>
       </rich:panel>
       <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
         <h:panelGroup style="text-align:right">
           <a4j:commandButton value="Save"
                              action="#{ExistingResourceConfigurationUIBean.saveModalEditorContents}"
+                             rendered="#{!readOnly}"
                              reRender="fileContents,fileMenu"
                              styleClass="buttonmed"
                              onclick="#{rich:component('modalEditor')}.hide()"/>

@@ -33,7 +33,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -46,8 +45,6 @@ import java.util.Set;
 public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
 
     private Configuration originalResourceConfiguration;
-
-    private int numberOfFilesModified;
 
     private Set<String> modifiedFiles = new HashSet<String>();
 
@@ -101,7 +98,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
             // state.
             if (!modifiedFiles.contains(rawConfigUIBean.getPath())) {
                 modifiedFiles.add(rawConfigUIBean.getPath());
-                ++numberOfFilesModified;
             }
             // There is kind of an implicit else block to do nothing. If the file is modified and already in the cache,
             // then that means we have already incremented the number of files modified, so we do not need to
@@ -112,7 +108,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
             // was previously in a modified state; therefore, we remove it from the cache, and decrement the number of
             // files modified.
             modifiedFiles.remove(rawConfigUIBean.getPath());
-            --numberOfFilesModified;
         }
     }
 
@@ -129,15 +124,15 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
     }
 
     public String getModifiedFilesMsg() {
-        if (!isDisplayChangedFilesLabel() || numberOfFilesModified == 0) {
+        if (!isDisplayChangedFilesLabel() || modifiedFiles.size() == 0) {
             return "";
         }
 
-        if (numberOfFilesModified == 1) {
+        if (modifiedFiles.size() == 1) {
             return "1 file changed in this configuration";
         }
 
-        return numberOfFilesModified + " files changed in this configuration";
+        return modifiedFiles.size() + " files changed in this configuration";
     }
 
     public String updateConfiguration() {

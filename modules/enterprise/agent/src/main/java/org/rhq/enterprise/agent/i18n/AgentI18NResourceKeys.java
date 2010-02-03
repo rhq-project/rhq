@@ -28,6 +28,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Specified bad console type [{0}]")
+    String AGENT_INPUT_READER_FACTORY_BAD_TYPE = "AgentMain.input-reader-factory-bad-type";
+
+    @I18NMessage("Failed to create console input reader of type [{0}]")
+    String AGENT_INPUT_READER_FACTORY_ERROR = "AgentMain.input-reader-factory-error";
+
     @I18NMessage("!!! This agent is registering under the loopback address [{0}] - this should only be done for testing "
         + "or demo purposes - this agent will only be able to interact with a server running on the same host as this agent")
     String REGISTERING_WITH_LOOPBACK = "AgentMain.registering-with-loopback";
@@ -549,6 +555,7 @@ public interface AgentI18NResourceKeys {
         + "\\   -c, --config=<filename>       Specifies an agent configuration preferences file (on filesystem or classpath)\\n\\\n"
         + "\\   -d, --daemon                  Agent runs in daemon mode - will not read from stdin for commands\\n\\\n"
         + "\\   -D<name>[=<value>]            Overrides an agent configuration preference and sets a system property\\n\\\n"
+        + "\\   -e, --console=<type>          Specifies the implementation to use when reading console input: jline, sigar, java\\n\\\n"
         + "\\   -h, --help                    Shows this help message (default)\\n\\\n"
         + "\\   -i, --input=<filename>        Specifies a script file to be used for input\\n\\\n"
         + "\\   -l, --cleanconfig             Clears out any existing configuration and data files so the agent starts with a totally clean slate\\n\\\n"

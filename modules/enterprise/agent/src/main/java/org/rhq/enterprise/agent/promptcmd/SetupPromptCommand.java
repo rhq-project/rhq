@@ -31,6 +31,7 @@ import org.jboss.remoting.security.SSLSocketBuilder;
 import org.rhq.enterprise.agent.AgentConfiguration;
 import org.rhq.enterprise.agent.AgentConfigurationConstants;
 import org.rhq.enterprise.agent.AgentMain;
+import org.rhq.enterprise.agent.AgentPromptInfo;
 import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
 import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
 import org.rhq.enterprise.agent.i18n.AgentSetupInstructions;
@@ -78,11 +79,11 @@ public class SetupPromptCommand implements AgentPromptCommand {
             agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.SETUP_MUST_BE_STOPPED));
         } else {
             if (args.length == 1) {
-                performBasicSetup(agent.getConfiguration().getPreferences(), agent.getNativeIn(), agent.getOut());
+                performBasicSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
             } else if ((args.length == 2) && args[1].equals(MSG.getMsg(AgentI18NResourceKeys.SETUP_ADVANCED))) {
-                performAdvancedSetup(agent.getConfiguration().getPreferences(), agent.getNativeIn(), agent.getOut());
+                performAdvancedSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
             } else if ((args.length == 2) && args[1].equals(MSG.getMsg(AgentI18NResourceKeys.SETUP_ALL))) {
-                performAllSetup(agent.getConfiguration().getPreferences(), agent.getNativeIn(), agent.getOut());
+                performAllSetup(agent.getConfiguration().getPreferences(), new AgentPromptInfo(agent), agent.getOut());
             } else {
                 agent.getOut().println(MSG.getMsg(AgentI18NResourceKeys.HELP_SYNTAX_LABEL, getSyntax()));
             }

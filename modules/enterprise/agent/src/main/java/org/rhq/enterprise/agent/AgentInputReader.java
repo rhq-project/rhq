@@ -28,24 +28,32 @@ import java.io.IOException;
  */
 public interface AgentInputReader {
     /**
+     * Indicates if the input is coming from a console (i.e. keyboard) or if its coming from
+     * a file.
+     *
+     * @return <code>true</code> if console is the source of the input; <code>false</code> if file is the source
+     */
+    boolean isConsole();
+
+    /**
      * Reads a line from the input console.
      * 
      * @return the line
      * @throws IOException
      */
     String readLine() throws IOException;
-    
+
     /**
-     * Reads a line from the input console, echoing out the 'mask' character as opposed to the character
-     * typed by the user. If the console implementation does not support mask echoes, either the
-     * user-entered character is masked or some other masking is performed in an implementation specific way.
+     * Read a line of input, but do not echo back to the user what is being typed. This is used mainly when asking for
+     * things like passwords.
+     * If the console implementation does not support no-echo input, the input will be
+     * output as the user typed it.
      * 
-     * @param mask character to echo back to the user when the user types in the line.
      * @return the line typed by the user
      * @throws IOException
      */
-    String readLine(char mask) throws IOException;
-    
+    String readLineNoEcho() throws IOException;
+
     /**
      * Close the reader.
      * @throws IOException

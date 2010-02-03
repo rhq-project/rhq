@@ -18,32 +18,43 @@
  */
 package org.rhq.enterprise.agent;
 
+import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 import jline.ConsoleReader;
 
-public class JlineAgentInputReader implements AgentInputReader {
+public class JavaAgentInputReader implements AgentInputReader {
 
-    private ConsoleReader jline;
+    private final BufferedReader reader;
+    private final boolean consoleInput;
 
-    public JlineAgentInputReader() throws IOException {
-        jline = new ConsoleReader();
+    public JavaAgentInputReader() throws IOException {
+        this.reader = new BufferedReader(new InputStreamReader(System.in));
+        this.consoleInput = true;
     }
 
-    public JlineAgentInputReader(FileInputStream fis) throws IOException {
-        jline = new ConsoleReader(fis, null);
+    public JavaAgentInputReader(FileReader fr) throws IOException {
+        this.reader = new BufferedReader(fr);
+        this.consoleInput = false;
+    }
+
+    public boolean isConsole() {
+        return this.consoleInput;
     }
 
     public String readLine() throws IOException {
-        return jline.readLine();
+        return this.reader.readLine();
     }
     
-    public String readLine(char mask) throws IOException {
-        return jline.readLine(Character.valueOf(mask));
+    public String readLineNoEcho() throws IOException {
+        return this.reader.readLine(); // can't mask the input with this Java API
     }
     
     public void close() throws IOException {
-        jline.getInput().close();
+        this.reader.close();
     }
 }

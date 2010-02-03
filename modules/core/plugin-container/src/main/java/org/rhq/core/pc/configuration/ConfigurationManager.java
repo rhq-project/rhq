@@ -27,11 +27,14 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -45,8 +48,11 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.exception.WrappedRemotingException;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -268,39 +274,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             + "]: " + msg;
     }
 
-    //    public Configuration loadResourceConfiguration(int resourceId) throws PluginContainerException {
-    //        ResourceType resourceType = getResourceType(resourceId);
-    //        ConfigurationFacet configComponent = getConfigurationFacet(resourceId, FacetLockType.READ);
-    //        try {
-    //            Configuration configuration = configComponent.loadResourceConfiguration();
-    //            if (configuration == null) {
-    //                throw new PluginContainerException("Plugin Error: Resource Component for [" + resourceType.getName()
-    //                        + "] Resource with id [" + resourceId + "] returned a null Configuration.");
-    //            }
-    //
-    //            // If the plugin didn't already set the notes field, set it to something useful.
-    //            if (configuration.getNotes() == null) {
-    //                configuration.setNotes("Resource config for " + resourceType.getName() + " Resource w/ id " + resourceId);
-    //            }
-    //
-    //            ConfigurationDefinition configurationDefinition = resourceType.getResourceConfigurationDefinition();
-    //
-    //            // Normalize and validate the config.
-    //            ConfigurationUtility.normalizeConfiguration(configuration, configurationDefinition);
-    //            List<String> errorMessages = ConfigurationUtility.validateConfiguration(configuration,
-    //                configurationDefinition);
-    //            for (String errorMessage : errorMessages) {
-    //                log.warn("Plugin Error: Invalid " + resourceType.getName() + " Resource configuration returned by "
-    //                    + resourceType.getPlugin() + " plugin - " + errorMessage);
-    //            }
-    //
-    //            return configuration;
-    //        } catch (Throwable t) {
-    //            //noinspection ThrowableInstanceNeverThrown
-    //            throw new PluginContainerException("Cannot load Resource configuration for [" + resourceId + "]",
-    //                new WrappedRemotingException(t));
-    //        }
-    //    }
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a
@@ -374,25 +347,21 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         if (isStructured) {
             return;
         } else {
-            StringBuilder  errorMessage = null;
-
+            ArrayList<String> errors = new ArrayList<String>();
             try{
                 for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                     try {
                         facet.validateRawConfiguration(rawConfiguration);
                     } catch (IllegalArgumentException e) {
-                        if (null == errorMessage){
-                            errorMessage = new StringBuilder();
-                        }
-                        errorMessage.append("file " + rawConfiguration.getPath() +" failed validation with " + e.getMessage()+"."  );                  
+                        errors.add(rawConfiguration.getPath() +" :" + e.getMessage());                  
                     }
                 }
             }catch(Throwable t){
-                errorMessage = new StringBuilder();
-                errorMessage.append("configuation validation failed with" + t.getMessage()+".");                
+                errors.clear();
+                errors.add("configuation validation failed with" + t.getMessage()+".");                
 	    }
-	    if (null != errorMessage){
-		throw new PluginContainerException(errorMessage.toString());
+	    if (!errors.isEmpty()){
+		throw new PluginContainerException(new ConfigurationValidationException(errors));
 	    }
 	}
     }

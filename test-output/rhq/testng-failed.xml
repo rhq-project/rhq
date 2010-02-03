@@ -1,0 +1,15 @@
+<!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+<suite thread-count="5" skipfailedinvocationCounts="false" verbose="1" name="Failed suite [rhq]" junit="false" annotations="JDK" data-provider-thread-count="10">
+  <test name="classes(failed)" junit="false" annotations="JDK">
+    <classes>
+      <class name="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest">
+        <methods>
+          <include name="initContext"/>
+          <include name="initMocks"/>
+          <include name="setup"/>
+          <include name="factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService"/>
+        </methods>
+      </class>
+    </classes>
+  </test>
+</suite>

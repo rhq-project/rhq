@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="classes" failures="0" tests="8" time="0.212" errors="0">
+  <properties/>
+  <testcase name="factoryShouldInitializeLegacyConfigMgmtWithComponentService" time="0.051" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeLegacyConfigMgmtWithConfigurationUtilityService" time="0.004" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeLoadStructuredAndRawWithComponentService" time="0.002" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService" time="0.005" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeRawConfigMgmtWithComponentService" time="0.005" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeRawConfigMgmtWithConfigurationUtilityService" time="0.016" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeStructuredConfigMgmtWithComponentService" time="0.014" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+  <testcase name="factoryShouldInitializeStructuredConfigMgmtWithConfigurationUtilityService" time="0.016" classname="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest"/>
+</testsuite>

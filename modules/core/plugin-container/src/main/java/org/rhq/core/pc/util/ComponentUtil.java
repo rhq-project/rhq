@@ -27,6 +27,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 /**
  * Some static utilities for use with component objects.
@@ -102,5 +103,10 @@ public class ComponentUtil {
                 + resourceId);
         }
         return resourceContainer.createResourceComponentProxy(facetInterface, lockType, timeout, daemonThread, onlyIfStarted);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static ResourceComponent fetchResourceComponent(int resourceId) {
+        return PluginContainer.getInstance().getInventoryManager().getResourceContainer(resourceId).getResourceComponent();
     }
 }

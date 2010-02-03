@@ -1,0 +1,76 @@
+<testng-results>
+  <reporter-output>
+  </reporter-output>
+  <suite name="rhq">
+    <groups>
+    </groups>
+    <test name="classes">
+      <class name="org.rhq.core.pc.configuration.ConfigManagementFactoryImplTest">
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="9" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="11" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="1" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeLegacyConfigMgmtWithComponentService()" name="factoryShouldInitializeLegacyConfigMgmtWithComponentService" duration-ms="51" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="1" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeLegacyConfigMgmtWithConfigurationUtilityService()" name="factoryShouldInitializeLegacyConfigMgmtWithConfigurationUtilityService" duration-ms="4" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="1" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeLoadStructuredAndRawWithComponentService()" name="factoryShouldInitializeLoadStructuredAndRawWithComponentService" duration-ms="2" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService()" name="factoryShouldInitializeLoadStructuredAndRawWithConfigurationUtilityService" duration-ms="5" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="1" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeRawConfigMgmtWithComponentService()" name="factoryShouldInitializeRawConfigMgmtWithComponentService" duration-ms="5" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="1" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeRawConfigMgmtWithConfigurationUtilityService()" name="factoryShouldInitializeRawConfigMgmtWithConfigurationUtilityService" duration-ms="16" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeStructuredConfigMgmtWithComponentService()" name="factoryShouldInitializeStructuredConfigMgmtWithComponentService" duration-ms="14" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initContext()" name="initContext" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="initMocks()" name="initMocks" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="factoryShouldInitializeStructuredConfigMgmtWithConfigurationUtilityService()" name="factoryShouldInitializeStructuredConfigMgmtWithConfigurationUtilityService" duration-ms="16" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+        <test-method status="PASS" signature="setup()" name="setup" is-config="true" duration-ms="0" started-at="2010-02-02T20:31:22Z" finished-at="2010-02-02T20:31:22Z">
+        </test-method>
+      </class>
+    </test>
+  </suite>
+</testng-results>

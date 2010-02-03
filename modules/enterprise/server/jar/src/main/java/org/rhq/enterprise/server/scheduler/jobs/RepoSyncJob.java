@@ -217,9 +217,7 @@ public class RepoSyncJob implements StatefulJob, InterruptableJob {
         repoManager.internalSynchronizeRepos(overlord, new Integer[] { repoToSync.getId() });
     }
 
-    @Override
     public void interrupt() throws UnableToInterruptJobException {
-
         if (executionThread == null) {
             log.error("execution thread is null, cant interrupt", new IllegalStateException());
 

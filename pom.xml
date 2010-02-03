@@ -4,7 +4,7 @@
 
   <groupId>org.rhq</groupId>
   <artifactId>rhq-parent</artifactId>
-  <version>1.4.0-SNAPSHOT</version>
+  <version>3.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>RHQ</name>
@@ -68,13 +68,13 @@
     <jaxb-impl.version>2.1.6</jaxb-impl.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
-    <ojdbc14.version>10.2.0.4.0</ojdbc14.version>
     <ojdbc5.version>11.2.0.1.0</ojdbc5.version>
     <ems.version>1.2.11</ems.version>
     <postgresql.version>8.4-701.jdbc3</postgresql.version>
     <h2.version>1.1.117</h2.version>
     <jtds.version>1.2.2</jtds.version>
     <richfaces.version>3.3.2.GA</richfaces.version>
+    <jline.version>0.9.94</jline.version>
     <sigar.version>1.6.3.82</sigar.version>
     <quartz.version>1.6.5</quartz.version>
     <jna.version>3.2.2</jna.version>
@@ -859,13 +859,6 @@
                  Add a top level dependency if this profile is active to allow for db-required tests in any module.
                  The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
                  this profile should not be active by default. -->
-            <dependency>
-                <groupId>ojdbc14</groupId>
-                <artifactId>ojdbc14</artifactId>
-                <version>${ojdbc14.version}</version>
-                <scope>provided</scope>
-            </dependency>
-
             <dependency>
                 <groupId>com.oracle</groupId>
                 <artifactId>ojdbc5</artifactId>

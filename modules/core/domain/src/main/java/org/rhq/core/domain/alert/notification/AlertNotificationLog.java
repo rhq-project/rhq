@@ -101,10 +101,6 @@ public class AlertNotificationLog implements Serializable {
     public AlertNotificationLog(Alert alert) {
         AlertDefinition alertDefinition = alert.getAlertDefinition();
 
-        StringBuilder rolesBuilder = new StringBuilder();
-        StringBuilder subjectsBuilder = new StringBuilder();
-        StringBuilder emailsBuilder = new StringBuilder();
-
         List<AlertNotification> currentNotifications = alertDefinition.getAlertNotifications();
         for (AlertNotification notification : currentNotifications) {
                 //((SnmpNotification)notification).
@@ -113,6 +109,9 @@ public class AlertNotificationLog implements Serializable {
 
         // always make sure each notification field is non-null by "fixing" it
         this.alert = alert;
+        this.roles ="(none)";
+        this.subjects ="(none)";
+        this.emails ="(none)";
     }
 
     private String fixup(StringBuilder builder) {

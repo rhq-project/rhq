@@ -21,14 +21,12 @@ package org.rhq.enterprise.agent;
 import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -57,8 +55,6 @@ import java.util.prefs.Preferences;
 
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
-
-import jline.ConsoleReader;
 
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
@@ -93,7 +89,6 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.ServerServices;
 import org.rhq.core.pc.plugin.FileSystemPluginFinder;
-import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -156,7 +151,6 @@ import org.rhq.enterprise.communications.command.server.CommandListener;
 import org.rhq.enterprise.communications.command.server.IncomingCommandTrace;
 import org.rhq.enterprise.communications.util.CommandTraceUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
-import org.rhq.enterprise.communications.util.prefs.PromptInput;
 
 /**
  * The main class of the agent runtime container.
@@ -208,7 +202,7 @@ public class AgentMain {
     /**
      * The stream where the commands are input.
      */
-    private ConsoleReader m_input;
+    private AgentInputReader m_input;
 
     /**
      * Will be <code>true</code> if the input is coming directly from stdin; <code>false</code> if an input script file
@@ -391,12 +385,13 @@ public class AgentMain {
                 if (agent.m_forcedSetup || (!agent.m_daemonMode && !agent.m_configuration.isAgentConfigurationSetup())) {
                     SetupPromptCommand setup_cmd = new SetupPromptCommand();
 
+                    AgentPromptInfo in = new AgentPromptInfo(agent);
+                    AgentPrintWriter out = agent.getOut();
+                    Preferences prefs = agent.m_configuration.getPreferences();
                     if (agent.m_advancedSetup) {
-                        setup_cmd.performAdvancedSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(),
-                            agent.getOut());
+                        setup_cmd.performAdvancedSetup(prefs, in, out);
                     } else {
-                        setup_cmd.performBasicSetup(agent.m_configuration.getPreferences(), agent.getNativeIn(), agent
-                            .getOut());
+                        setup_cmd.performBasicSetup(prefs, in, out);
                     }
                 }
 
@@ -463,7 +458,7 @@ public class AgentMain {
 
         m_agentHomeDirectory = null;
         m_daemonMode = false;
-        m_input = new ConsoleReader() ;
+        m_input = null;
         m_output = new AgentPrintWriter(System.out, true);
         m_stdinInput = true;
         m_configuration = null;
@@ -481,6 +476,9 @@ public class AgentMain {
 
         m_commandLineArgs = args;
         processArguments(m_commandLineArgs);
+        if (m_input == null) {
+            m_input = AgentInputReaderFactory.create(this);
+        }
 
         m_promptCommands = new HashMap<String, Class<? extends AgentPromptCommand>>();
         setupPromptCommandsMap(m_promptCommands);
@@ -804,34 +802,8 @@ public class AgentMain {
      *
      * @return the input stream or <code>null</code> if the agent is not currently accepting input
      */
-    public ConsoleReader getIn() {
+    public AgentInputReader getIn() {
         return m_input;
-    }
-
-    /**
-     * In some cases, we want to read console input in a native way (that is, using the native system to read the
-     * keyboard input). This is mainly useful when you want to read in prompt answers which include passwords and you do
-     * not want to echo what the user typed.
-     *
-     * @return object that can be used to read input with the typed data being echoed or not
-     */
-    public PromptInput getNativeIn() {
-        SystemInfo sysinfo = null;
-
-        // if we are not in daemon mode, we are running in a console and thus we can try to use
-        // the native library to get its input.
-        // If we are in daemon mode, we aren't running in a console so we need to pass null
-        // in for sysinfo thus causing the prompt info implementation to use our fallback buffered
-        // reader (which is either empty or is contents of an input file that was piped in via --input.
-        if (!m_daemonMode) {
-            // just in case the native stuff has a bug in the console stuff (JBNATIVE-42 as an example),
-            // be able to configure the agent to ignore the native console
-            if (Boolean.getBoolean("rhq.agent.do-not-use-native-console") == false) {
-                sysinfo = SystemInfoFactory.createSystemInfo();
-            }
-        }
-
-        return new AgentNativePromptInfo(sysinfo, this);
     }
 
     /**
@@ -1093,14 +1065,18 @@ public class AgentMain {
             }
         } else if (!m_stdinInput) {
             // if we are processing a script, we hit the EOF, so close the input stream
-
+            try {
+                m_input.close();
+            } catch (IOException e1) {
+            }
 
             // if we are not in daemon mode, let's now start processing prompt commands coming in via stdin
             if (!m_daemonMode) {
                 try {
-                    m_input = new ConsoleReader() ;
+                    m_input = AgentInputReaderFactory.create(this);
                 } catch (IOException e1) {
-                }            
+                    m_input = null;
+                }
                 m_stdinInput = true;
                 input_string = "";
             } else {
@@ -2691,12 +2667,13 @@ public class AgentMain {
      * @throws HelpException            if help was requested and the agent should not be created
      */
     private void processArguments(String[] args) throws Exception {
-        String sopts = "-:hdlasntuD:i:o:c:p:";
+        String sopts = "-:hdlasntuD:i:o:c:p:e:";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'h'),
             new LongOpt("input", LongOpt.REQUIRED_ARGUMENT, null, 'i'),
             new LongOpt("output", LongOpt.REQUIRED_ARGUMENT, null, 'o'),
             new LongOpt("config", LongOpt.REQUIRED_ARGUMENT, null, 'c'),
             new LongOpt("pref", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
+            new LongOpt("console", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
             new LongOpt("daemon", LongOpt.NO_ARGUMENT, null, 'd'),
             new LongOpt("cleanconfig", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("advanced", LongOpt.NO_ARGUMENT, null, 'a'),
@@ -2789,6 +2766,11 @@ public class AgentMain {
                 break;
             }
 
+            case 'e': {
+                AgentInputReaderFactory.setConsoleType(getopt.getOptarg());
+                break;
+            }
+
             case 'd': {
                 m_daemonMode = true;
                 break;
@@ -2798,7 +2780,7 @@ public class AgentMain {
                 File script = new File(getopt.getOptarg());
 
                 try {
-                    m_input = new ConsoleReader(new FileInputStream(script), null);
+                    m_input = AgentInputReaderFactory.create(this, script);
                     m_stdinInput = false;
                 } catch (Exception e) {
                     throw new IllegalArgumentException(MSG.getMsg(AgentI18NResourceKeys.BAD_INPUT_FILE, script, e));

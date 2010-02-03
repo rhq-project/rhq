@@ -13,11 +13,20 @@
     <c:set var="readOnly" value="true"/>
   </c:if>
 
+  <c:choose>
+    <c:when test="#{readOnly}">
+      <c:set var="editor" value="#{configurationViewer}"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="editor" value="#{configurationEditor}"/>
+    </c:otherwise>
+  </c:choose>
+
   <f:subview id="modalEditorSubview">
     <rich:modalPanel id="modalEditor" width="800" height="600">
       <f:facet name="header">
         <h:panelGroup>
-          <h:outputText value="#{ExistingResourceConfigurationUIBean.modalEditorHeader}"/>          
+          <h:outputText value="#{editor.modalEditorHeader}"/>
         </h:panelGroup>
       </f:facet>
       <f:facet name="controls">
@@ -31,15 +40,14 @@
                          style="width:100%; height:100%; overflow:visible;"
                          rows="30"
                          cols="30"
-                         value="#{ExistingResourceConfigurationUIBean.modalEditorContents}"
+                         value="#{editor.modalEditorContents}"
                          readonly="#{readOnly}"/>
       </rich:panel>
       <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
         <h:panelGroup style="text-align:right">
           <a4j:commandButton value="Save"
-                             action="#{ExistingResourceConfigurationUIBean.saveModalEditorContents}"
                              rendered="#{!readOnly}"
-                             reRender="fileContents,fileMenu"
+                             reRender="fileContents,fileMenu,lowerChangedFilesLabel,upperChangedFilesLabel"
                              styleClass="buttonmed"
                              onclick="#{rich:component('modalEditor')}.hide()"/>
           <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>

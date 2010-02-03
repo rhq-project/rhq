@@ -68,7 +68,7 @@ public class ResourceConfigurationViewer {
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
     @Out(required = false)
-    private RawConfigUIBean selectedRawUIBean;
+    protected RawConfigUIBean selectedRawUIBean;
 
     @RequestParameter("id")
     protected int resourceId;
@@ -262,4 +262,12 @@ public class ResourceConfigurationViewer {
         }
     }
 
+    public String getModalEditorHeader() {
+        return selectedRawUIBean.getPath();
+    }
+
+    public String getModalEditorContents() {
+        return selectedRawUIBean.getContents();
+    }
+    
 }

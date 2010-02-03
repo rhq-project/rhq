@@ -187,4 +187,8 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map updated.");
         return "success";
     }
+
+    public void setModalEditorContents(String contents) {
+        selectedRawUIBean.setContents(contents);
+    }
 }

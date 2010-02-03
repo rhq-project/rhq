@@ -121,7 +121,6 @@
 	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/lsof/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>

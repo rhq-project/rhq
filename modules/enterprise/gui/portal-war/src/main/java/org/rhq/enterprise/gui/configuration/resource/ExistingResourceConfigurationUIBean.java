@@ -73,7 +73,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     //    @Out
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
-    @Out
+//    @Out
     private FileUploadUIBean fileUploader = new FileUploadUIBean();
 
     private String modalEditorContents;

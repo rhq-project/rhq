@@ -8,19 +8,21 @@
                 xmlns:a4j="http://richfaces.org/a4j"
                 xmlns:rich="http://richfaces.org/rich">
 
-  <f:subview id="uploadSubview" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
+  <f:subview id="uploadSubview" rendered="#{configurationEditor.fileUploadAvailable}">
 
     <script type="text/javascript">
       function prepareFormForUpload() {
         var form = document.getElementById('editResourceConfigurationForm');
         form.encoding = 'multipart/form-data';
+
+        return true;
       }
     </script>
 
     <rich:modalPanel id="uploadWindow" width="800" height="400">
       <f:facet name="header">
         <h:panelGroup>
-          <h:outputText value="#{ExistingResourceConfigurationUIBean.current.path}"/>
+          <h:outputText value="#{selectedRawUIBean.path}"/>
         </h:panelGroup>
       </f:facet>
       <f:facet name="controls">
@@ -31,7 +33,7 @@
       </f:facet>
 
 
-        <rich:panel id="uploadPanel" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
+        <rich:panel id="uploadPanel">
 
           <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
 
@@ -39,12 +41,13 @@
                            listHeight="50px"
                            fileUploadListener="#{fileUploader.fileUploadListener}"
                            addControlLabel="Browse"
-                           immediateUpload="false">
+                           immediateUpload="false"
+                           onupload="prepareFormForUpload()">
             <f:facet name="label">
               <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}"/>
             </f:facet>
             <a4j:support event="onuploadcomplete"
-                         action="#{ExistingResourceConfigurationUIBean.completeUpload}"
+                         action="#{configurationEditor.completeUpload}"
                          reRender="fileUpload,fileContents,fileMenu"
                          onsubmit="#{rich:component('uploadWindow')}.hide()"/>
           </rich:fileUpload>

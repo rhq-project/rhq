@@ -23,9 +23,11 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import org.apache.commons.io.FileUtils;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Observer;
+import org.jboss.seam.annotations.Out;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -33,10 +35,13 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.richfaces.model.UploadItem;
 
 import javax.faces.application.FacesMessage;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -50,6 +55,9 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
 
     @RequestParameter
     private String tab;
+
+    @Out
+    private FileUploadUIBean fileUploader = new FileUploadUIBean();
 
     @Override
     protected void doInitialization() {
@@ -133,6 +141,28 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
         }
 
         return modifiedFiles.size() + " files changed in this configuration";
+    }
+
+    public boolean isFileUploadAvailable() {
+        return isRawSupported() || (isStructuredAndRawSupported() && isRawMode());
+    }
+
+    public String completeUpload() {
+        try {
+            if (fileUploader.getFileItem() != null) {
+                UploadItem fileItem = fileUploader.getFileItem();
+                if (fileItem.isTempFile()) {
+                    selectedRawUIBean.setContents(FileUtils.readFileToString(fileItem.getFile()));
+                } else {
+                    selectedRawUIBean.setContents(new String(fileItem.getData()));
+                }
+                fileUploader.clear();
+            }
+
+            return null;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public String updateConfiguration() {

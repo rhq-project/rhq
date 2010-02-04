@@ -22,7 +22,7 @@
     </c:otherwise>
   </c:choose>
 
-  <f:subview id="modalEditorSubview">
+  <f:subview id="modalEditorSubview" rendered="#{editor.rawSupported or editor.structuredAndRawSupported}">
     <rich:modalPanel id="modalEditor" width="800" height="600">
       <f:facet name="header">
         <h:panelGroup>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:c="http://java.sun.com/jstl/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:a4j="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich"
+                xmlns:onc="http://jboss.org/on/component">
+
+  <h:outputText value=" #{messages.nopermissionedit}"
+                rendered="#{!ResourceUIBean.permissions.configure}"/>
+
+  <onc:config
+          configurationDefinition="#{resourceConfigurationDefinition}"
+          configuration="#{resourceConfiguration}"
+          readOnly="true"
+          nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
+          nullConfigurationMessage="#{msg['resource.configuration.null']}"
+          prevalidate="true"/>
+
+</ui:composition>

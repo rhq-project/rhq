@@ -122,22 +122,12 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
-          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
 
         <c:when test="${configurationViewer.structuredSupported}">
           <rich:tabPanel switchType="ajax">
-            <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
-              <h:outputText value=" #{messages.nopermissionedit}"
-                            rendered="#{!ResourceUIBean.permissions.configure}"/>
-
-              <onc:config
-                      configurationDefinition="#{resourceConfigurationDefinition}"
-                      configuration="#{resourceConfiguration}"
-                      readOnly="true"
-                      nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
-                      nullConfigurationMessage="#{msg['resource.configuration.null']}"
-                      prevalidate="true"/>
+            <rich:tab label="Basic Mode">
+              <ui:include src="view-structured.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -152,16 +142,7 @@ THIS TEXT WILL BE REMOVED.
                       oncomplete="cursor_clear();"
                       limitToList="true"
                       reRender="upperEditButton,lowerEditButton">
-              <h:outputText value=" #{messages.nopermissionedit}"
-                            rendered="#{!ResourceUIBean.permissions.configure}"/>
-
-              <onc:config
-                      configurationDefinition="#{resourceConfigurationDefinition}"
-                      configuration="#{resourceConfiguration}"
-                      readOnly="true"
-                      nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
-                      nullConfigurationMessage="#{msg['resource.configuration.null']}"
-                      prevalidate="true"/>
+              <ui:include src="view-structured.xhtml"/>
             </rich:tab>
             <rich:tab id="rawTab"
                       label="Advanced Mode"
@@ -228,10 +209,10 @@ THIS TEXT WILL BE REMOVED.
               </h:panelGrid>
             </rich:tab>
           </rich:tabPanel>
-
-          <ui:include src="view-raw-modal.xhtml"/>
         </c:when>
       </c:choose>
+
+      <ui:include src="view-raw-modal.xhtml"/>
 
       <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
         <h:panelGroup style="text-align:right">

@@ -322,7 +322,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
             --numberOfModifiedFiles;
             RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
-            rawUIBean.setModified(false);
+//            rawUIBean.setModified(false);
             getModified().remove(editedRaw.getPath());
         } else {
             ++numberOfModifiedFiles;
@@ -335,8 +335,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         RawConfigUIBean bean = findRawConfigUIBeanByPath(path);
 
         if (bean != null) {
-            bean.setModified(false);
-            bean.setIcon("/images/blank.png");
+//            bean.setModified(false);
+//            bean.setIcon("/images/blank.png");
         }
 
     }
@@ -503,7 +503,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     private void markCurrentRawConfigUIBeanModified() {
         RawConfigUIBean bean = findRawConfigUIBeanByPath(current.getPath());
         if (bean != null) {
-            bean.setModified(true);
+//            bean.setModified(true);
         }
     }
 

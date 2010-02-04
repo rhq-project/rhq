@@ -173,6 +173,16 @@
                                              <artifactId>jaxrs-api</artifactId>
                                              <version>${resteasy.version}</version>
                                          </artifactItem>
+                                         <artifactItem>
+                                             <groupId>org.slf4j</groupId>
+                                             <artifactId>slf4j-simple</artifactId>
+                                             <version>1.5.6</version>
+                                         </artifactItem>
+                                         <artifactItem>
+                                             <groupId>org.slf4j</groupId>
+                                             <artifactId>slf4j-api</artifactId>
+                                             <version>1.5.6</version>
+                                         </artifactItem>
                                      </artifactItems>
                                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
                                  </configuration>

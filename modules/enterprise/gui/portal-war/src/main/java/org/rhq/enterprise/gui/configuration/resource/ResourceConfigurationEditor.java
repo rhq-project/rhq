@@ -154,10 +154,6 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                     + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
                 return "failure";
-            case UNSENT:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update was not valid",
-                    updateRequest.getErrorMessage());
-                return "failure";
             }
         }
         else {

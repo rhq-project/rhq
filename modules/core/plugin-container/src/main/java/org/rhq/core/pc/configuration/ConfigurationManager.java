@@ -344,12 +344,11 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
         ArrayList<String> errors = new ArrayList<String>();
         try {
-            for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-                try {
-                    facet.validateRawConfiguration(rawConfiguration);
-                } catch (IllegalArgumentException e) {
-                    errors.add(rawConfiguration.getPath() + " :" + e.getMessage());
-                }
+            //TODO Extend the API so that structureed can return a collection
+            if(isStructured){
+                facet.validateStructuredConfiguration(configuration);                
+            }else{
+                validateRaw(configuration, facet, errors);
             }
         } catch (Throwable t) {
             errors.clear();
@@ -357,6 +356,16 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         }
         if (!errors.isEmpty()) {
             throw new PluginContainerException(new ConfigurationValidationException(errors));
+        }
+    }
+
+    private void validateRaw(Configuration configuration, ResourceConfigurationFacet facet, ArrayList<String> errors) {
+        for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+            try {
+                facet.validateRawConfiguration(rawConfiguration);
+            } catch (IllegalArgumentException e) {
+                errors.add(rawConfiguration.getPath() + " :" + e.getMessage());
+            }
         }
     }
 }

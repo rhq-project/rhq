@@ -344,7 +344,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
         ArrayList<String> errors = new ArrayList<String>();
         try {
-            //TODO Extend the API so that structureed can return a collection
+            //TODO Extend the API so that structured can return a collection
             if(isStructured){
                 facet.validateStructuredConfiguration(configuration);                
             }else{

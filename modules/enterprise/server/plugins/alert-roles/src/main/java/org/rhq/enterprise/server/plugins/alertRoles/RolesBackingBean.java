@@ -25,6 +25,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.jboss.seam.annotations.Create;
 
 import org.rhq.core.domain.authz.Role;
@@ -41,15 +44,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @SuppressWarnings("unused")
 public class RolesBackingBean extends CustomAlertSenderBackingBean {
 
+    private final Log log = LogFactory.getLog(RolesBackingBean.class);
+
     private List<Role> allRoles;
 
     private Map<String, String> rolesMap;
     private List<String> currentRoles;
     private List<String> rolesToRemove;
     private static final String ROLE_ID = "roleId";
+    private boolean isDebug = false;
 
     @Create
     public void init() {
+
+        if (log.isDebugEnabled())
+            isDebug = true;
 
         getAllRoles();
 
@@ -128,13 +137,13 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
 
     public String addRoles() {
 
-        System.out.println("Selected roles:  " + currentRoles );
+        if (isDebug)
+            log.debug("Selected roles:  " + currentRoles );
         if (currentRoles.isEmpty())
             return "ALERT_NOTIFICATION";
 
         String roles="";
         for (String role : currentRoles) {
-            System.out.println(role);
             roles += role;
             roles += ",";
         }
@@ -157,14 +166,14 @@ public class RolesBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public String removeRoles() {
-        System.out.println("In remove roles, " + rolesToRemove);
+        if (isDebug)
+            log.debug("In remove roles, " + rolesToRemove);
 
         String roles ="";
         List<String> resulting = new ArrayList<String>(currentRoles);
         resulting.removeAll(rolesToRemove);
 
         for (String subject : resulting) {
-            System.out.println(subject);
             roles += subject;
             roles += ",";
         }

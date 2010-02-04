@@ -51,9 +51,13 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
     private List<String> currentSubjects;
     private List<String> subjectsToRemove;
     private static final String SUBJECT_ID = "subjectId";
+    private boolean isDebug;
 
     @Create
     public void init() {
+
+        if (log.isDebugEnabled())
+            isDebug = true;
 
         getAllSubjects();
 
@@ -135,13 +139,13 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
 
     public String addSubjects() {
 
-        System.out.println("Selected subjects: " + currentSubjects);
+        if (isDebug)
+            log.debug("Selected subjects: " + currentSubjects);
         if (currentSubjects.isEmpty())
             return "ALERT_NOTIFICATIONS";
 
         String subjects="";
         for (String subject : currentSubjects) {
-            System.out.println(subject);
             subjects += subject;
             subjects += ",";
         }
@@ -164,14 +168,14 @@ public class SubjectsBackingBean extends CustomAlertSenderBackingBean {
     }
 
     public String removeSubjects() {
-        System.out.println("In remove subjects, " + subjectsToRemove);
+        if (isDebug)
+            log.debug("In remove subjects, " + subjectsToRemove);
 
         String subjects="";
         List<String> resulting = new ArrayList<String>(currentSubjects);
         resulting.removeAll(subjectsToRemove);
 
         for (String subject : resulting) {
-            System.out.println(subject);
             subjects += subject;
             subjects += ",";
         }

@@ -46,6 +46,7 @@
       <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
         <h:panelGroup style="text-align:right">
           <a4j:commandButton value="Save"
+                             action="#{configurationEditor.applyModalEditContents}"
                              rendered="#{!readOnly}"
                              reRender="fileContents,fileMenu,lowerChangedFilesLabel,upperChangedFilesLabel"
                              styleClass="buttonmed"

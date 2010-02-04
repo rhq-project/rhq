@@ -53,6 +53,8 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
 
     private Set<String> modifiedFiles = new HashSet<String>();
 
+    private String modalEditorContents;
+
     @RequestParameter
     private String tab;
 
@@ -215,6 +217,10 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
     }
 
     public void setModalEditorContents(String contents) {
-        selectedRawUIBean.setContents(contents);
+        modalEditorContents = contents;
+    }
+
+    public void applyModalEditContents() {
+        selectedRawUIBean.setContents(modalEditorContents);
     }
 }

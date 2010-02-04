@@ -648,6 +648,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     }
                     catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
+                        if (log.isDebugEnabled())
+                            log.debug("Sender " + sender.toString() + "failed: \n", t);
                     }
                 }
             }

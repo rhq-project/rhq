@@ -191,21 +191,20 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
         TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
-        
+
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
                 String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
                 rawConfig.setContents(contents);
-                
+
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
         }
     }
 
-    
     private void prepareConfigForMergeIntoStructured(Configuration config, Configuration latestStructured) {
         config.getAllProperties().clear();
         for (Property property : latestStructured.getProperties()) {
@@ -223,8 +222,8 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
-        TemplateEngine  templateEngine = SystemInfoFactory.fetchTemplateEngine();
-        
+        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
+
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
@@ -273,7 +272,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return "Plugin Error: Resource Component for [" + resourceType.getName() + "] Resource with id [" + resourceId
             + "]: " + msg;
     }
-
 
     /**
      * Returns a thread pool that this object will use when asychronously executing configuration operations on a
@@ -339,30 +337,26 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     }
 
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
-    throws PluginContainerException {
+        throws PluginContainerException {
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
-        if (isStructured) {
-            return;
-        } else {
-            ArrayList<String> errors = new ArrayList<String>();
-            try{
-                for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-                    try {
-                        facet.validateRawConfiguration(rawConfiguration);
-                    } catch (IllegalArgumentException e) {
-                        errors.add(rawConfiguration.getPath() +" :" + e.getMessage());                  
-                    }
+        ArrayList<String> errors = new ArrayList<String>();
+        try {
+            for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                try {
+                    facet.validateRawConfiguration(rawConfiguration);
+                } catch (IllegalArgumentException e) {
+                    errors.add(rawConfiguration.getPath() + " :" + e.getMessage());
                 }
-            }catch(Throwable t){
-                errors.clear();
-                errors.add("configuation validation failed with" + t.getMessage()+".");                
-	    }
-	    if (!errors.isEmpty()){
-		throw new PluginContainerException(new ConfigurationValidationException(errors));
-	    }
-	}
+            }
+        } catch (Throwable t) {
+            errors.clear();
+            errors.add("configuation validation failed with" + t.getMessage() + ".");
+        }
+        if (!errors.isEmpty()) {
+            throw new PluginContainerException(new ConfigurationValidationException(errors));
+        }
     }
 }

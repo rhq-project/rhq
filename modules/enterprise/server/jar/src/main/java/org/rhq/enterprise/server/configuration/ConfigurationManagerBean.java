@@ -23,7 +23,9 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -980,7 +982,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException,ConfigurationValidationException {
+        ConfigurationUpdateStillInProgressException, ConfigurationValidationException {
 
         Configuration configToUpdate = newConfiguration;
 
@@ -995,13 +997,11 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 if (e.getCause() instanceof ConfigurationValidationException) {
                     ConfigurationValidationException exception = (ConfigurationValidationException) e.getCause();
                     throw exception;
+                } else {
+                    List<String> messages = new ArrayList<String>();
+                    messages.add(e.getMessage());
+                    throw new ConfigurationValidationException(messages);
                 }
-
-                ResourceConfigurationUpdate response = new ResourceConfigurationUpdate(null, newConfiguration, subject
-                    .getName());
-                response.setErrorMessage(e.getMessage());
-                response.setStatus(ConfigurationUpdateStatus.UNSENT);
-                return response;
             }
         }
 

@@ -30,7 +30,7 @@ package org.rhq.core.domain.configuration;
  * @author John Mazzitelli
  */
 public enum ConfigurationUpdateStatus {
-    INPROGRESS("In Progress"), SUCCESS("Success"), FAILURE("Failure"),UNSENT("unsent");
+    INPROGRESS("In Progress"), SUCCESS("Success"), FAILURE("Failure");
 
     private String displayName;
 

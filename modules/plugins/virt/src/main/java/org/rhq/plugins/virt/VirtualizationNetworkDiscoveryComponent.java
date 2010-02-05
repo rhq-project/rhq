@@ -25,13 +25,13 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libvirt.LibvirtException;
-import org.libvirt.Network;
 
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.virt.LibVirtConnection.NetworkInfo;
 
 /**
  * @author Greg Hinkle
@@ -81,8 +81,8 @@ public class VirtualizationNetworkDiscoveryComponent implements ResourceDiscover
         return details;
     }
 
-    public DiscoveredResourceDetails createResource(ResourceType resourceType, Network net) throws LibvirtException {
-        String name = net.getName();
+    public DiscoveredResourceDetails createResource(ResourceType resourceType, NetworkInfo net) throws LibvirtException {
+        String name = net.name;
         DiscoveredResourceDetails detail = new DiscoveredResourceDetails(resourceType, name, name, null,
             "Virtual Network Named " + name, null, null);
         return detail;

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.core;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import javax.annotation.Resource;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.mail.MessagingException;
 import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
@@ -88,12 +90,28 @@ public class EmailManagerBean implements EmailManagerLocal {
     @Resource(mappedName = "java:/Mail")
     private Session mailSession;
 
-    public void sendEmail(Collection<String> toAddresses, String messageSubject, String messageBody) throws Exception {
+    /**
+     * Send email to the addressses passed in toAddresses with the passed subject and body. Invalid emails will
+     * be reported back. This can only catch sender errors up to the first smtp gateway.
+     * @param  toAddresses list of email addresses to send to
+     * @param  messageSubject subject of the email sent
+     * @param  messageBody body of the email to be sent
+     *
+     * @return list of email receivers for which initial delivery failed.
+     */
+    public Collection<String> sendEmail(Collection<String> toAddresses, String messageSubject, String messageBody) {
+
         MimeMessage mimeMessage = new MimeMessage(mailSession);
-        mimeMessage.setSubject(messageSubject);
-        mimeMessage.setContent(messageBody, "text/plain");
+        try {
+            mimeMessage.setSubject(messageSubject);
+            mimeMessage.setContent(messageBody, "text/plain");
+        } catch (MessagingException e) {
+            e.printStackTrace();  // TODO: Customise this generated block
+            return toAddresses;
+        }
 
         Exception error = null;
+        Collection<String> badAdresses = new ArrayList<String>(toAddresses.size());
 
         // Send to each recipient individually, do not throw exceptions until we try them all
         for (String toAddress : toAddresses) {
@@ -103,6 +121,7 @@ public class EmailManagerBean implements EmailManagerLocal {
                 Transport.send(mimeMessage, new InternetAddress[] { recipient });
             } catch (Exception e) {
                 LOG.error("Failed to send email [" + messageSubject + "] to recipient [" + toAddress + "]", e);
+                badAdresses.add(toAddress);
 
                 // Remember the first error - in case its due to a session initialization problem,
                 // we don't want to lose the first error.
@@ -113,10 +132,10 @@ public class EmailManagerBean implements EmailManagerLocal {
         }
 
         if (error != null) {
-            throw error;
+            LOG.error("Sending of emails failed for this reason: " + error.getMessage());
         }
 
-        return;
+        return badAdresses;
     }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
@@ -166,7 +185,7 @@ public class EmailManagerBean implements EmailManagerLocal {
     /*
      * if we don't escape the regex special characters '\' and '$', they will be interpreted differently
      * than desired; quoteReplacement was specifically written to help alleviate this common scenario:
-     * 
+     *
      *    http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6523151
      */
     private String cleanse(String passedValue, String defaultValue) {

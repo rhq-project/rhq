@@ -30,19 +30,15 @@ import javax.ejb.Local;
 @Local
 public interface EmailManagerLocal {
     /**
-     * Sends an email message to the given a set of email addresses where the subject and body of the message are passed
-     * in. The message body is considered to have a MIME type of <code>text/plain</code>.
+     * Send email to the addressses passed in toAddresses with the passed subject and body. Invalid emails will
+     * be reported back. This can only catch sender errors up to the first smtp gateway.
+     * @param  toAddresses list of email addresses to send to
+     * @param  messageSubject subject of the email sent
+     * @param  messageBody body of the email to be sent
      *
-     * <p>This method will attempt to send to all addresses, even if one or more failed. The first exception that is
-     * encountered will be the one that is eventually thrown.</p>
-     *
-     * @param  toAddresses
-     * @param  messageSubject
-     * @param  messageBody
-     *
-     * @throws Exception if failed to send to one or more email addresses
+     * @return list of email receivers for which initial delivery failed.
      */
-    void sendEmail(Collection<String> toAddresses, String messageSubject, String messageBody) throws Exception;
+    Collection<String> sendEmail(Collection<String> toAddresses, String messageSubject, String messageBody);
 
     /**
      * This returns an email message based on the alert email template with its replacement tokens replaced with the

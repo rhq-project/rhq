@@ -98,7 +98,7 @@ public class RelativeDurationConverter implements Converter {
         timeAgo %= MILLIS_IN_DAY;
         if (days > 0) {
             count++;
-            buf.append(days + " day");
+            buf.append(days).append(" day");
             if (days != 1)
                 buf.append("s");
         }
@@ -109,7 +109,7 @@ public class RelativeDurationConverter implements Converter {
             count++;
             if (buf.length() > 0)
                 buf.append(", ");
-            buf.append(hours + " hour");
+            buf.append(hours).append(" hour");
             if (hours != 1)
                 buf.append("s");
         }
@@ -120,7 +120,7 @@ public class RelativeDurationConverter implements Converter {
             if (mins > 0) {
                 if (buf.length() > 0)
                     buf.append(", ");
-                buf.append(mins + " minute");
+                buf.append(mins).append(" minute");
                 if (mins != 1)
                     buf.append("s");
             }

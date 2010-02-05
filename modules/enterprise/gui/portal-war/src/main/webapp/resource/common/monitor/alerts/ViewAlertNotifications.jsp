@@ -10,16 +10,5 @@
 
 <!-- Notification Content -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-  <tiles:insert definition=".events.alert.view.notifications.roles"/>
-  <tr>
-    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-  </tr>
-  <tiles:insert definition=".events.alert.view.notifications.users"/>
-  <tr>
-    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-  </tr>
-  <tiles:insert definition=".events.alert.view.notifications.others"/>
-  <tr>
-    <td colspan="2" class="BlockBottomLine"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
-  </tr>
+    Details of fired alerts go here
 </table>

@@ -236,6 +236,15 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to download an updated server failover list. Cause: {0}")
     String FAILOVER_LIST_DOWNLOAD_FAILURE = "AgentMain.failover-list-download-failure";
 
+    @I18NMessage("The prompt input reader returned null. EOF?")
+    String INPUT_EOF = "AgentMain.input-eof";
+
+    @I18NMessage("The prompt input reader stopped providing input due to an exception. EOF? Cause: {0}")
+    String INPUT_EXCEPTION = "AgentMain.input-exception";
+
+    @I18NMessage("Failed to create prompt input reader.")
+    String INPUT_FACTORY_EXCEPTION = "AgentMain.input-factory-exception";
+
     @I18NMessage("(type it again to confirm) ")
     String PROMPT_CONFIRM = "AgentNativePromptInfo.prompt-confirm";
 
@@ -299,7 +308,7 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("The server has [{0}] plugins available for download")
     String LATEST_PLUGINS_COUNT = "PluginUpdate.latest-plugins-count";
 
-    @I18NMessage("Plugin available for download: id=[{0}], name=[{1}], displayName=[{2}], version=[{3}], path=[{4}], md5=[{5}], description=[{6}]")
+    @I18NMessage("Plugin available for download: id=[{0}], name=[{1}], displayName=[{2}], version=[{3}], path=[{4}], md5=[{5}], enabled=[{6}], description=[{7}]")
     String LATEST_PLUGIN = "PluginUpdate.latest-plugin";
 
     @I18NMessage("Updating plugins to their latest versions.")
@@ -316,6 +325,15 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("The plugin [{0}] is current and does not need to be updated.")
     String PLUGIN_ALREADY_AT_LATEST = "PluginUpdate.already-at-latest";
+
+    @I18NMessage("The plugin [{0}] is disabled and will not be downloaded.")
+    String PLUGIN_DISABLED_PLUGIN_DOWNLOAD_SKIPPED = "PluginUpdate.disabled-plugin-download-skipped";
+
+    @I18NMessage("The disabled plugin file [{0}] is deleted,")
+    String PLUGIN_DISABLED_PLUGIN_DELETED = "PluginUpdate.disabled-plugin-deleted";
+
+    @I18NMessage("The disabled plugin file [{0}] failed to be deleted.")
+    String PLUGIN_DISABLED_PLUGIN_DELETE_FAILED = "PluginUpdate.disabled-plugin-delete-failed";
 
     @I18NMessage("The plugin [{0}] does not exist on the Server - renaming it to [{1}] so it will not get deployed by the Plugin Container.")
     String PLUGIN_NOT_ON_SERVER = "PluginUpdate.plugin-not-on-server";
@@ -344,8 +362,11 @@ public interface AgentI18NResourceKeys {
     @I18NMessage("Failed to download the plugin [{0}]. This was attempt #[{1}] - will no longer retry. This plugin will not be deployed in the agent. Cause: {2}")
     String DOWNLOAD_PLUGIN_FAILURE_WILL_NOT_RETRY = "PluginUpdate.download-failure-will-not-retry";
 
-    @I18NMessage("The plugin [{0}] has been updated.")
+    @I18NMessage("The plugin [{0}] has been updated at [{1}].")
     String DOWNLOADING_PLUGIN_COMPLETE = "PluginUpdate.downloading-complete";
+
+    @I18NMessage("The plugin [{0}] is disabled and will not be updated.")
+    String DOWNLOADING_PLUGIN_SKIPPED = "PluginUpdate.downloading-skipped";
 
     @I18NMessage("All plugins are already up-to-date.")
     String UPDATING_PLUGINS_ALREADY_UPTODATE = "PluginUpdate.already-uptodate";
@@ -1483,8 +1504,14 @@ public interface AgentI18NResourceKeys {
         + "Perform an update to download the latest plugins from the server.")
     String PLUGINS_NO_CURRENT_PLUGINS = "PromptCommand.plugins.no-current-plugins";
 
-    @I18NMessage("Plugins that are currently installed:")
-    String PLUGINS_LISTING_PLUGINS = "PromptCommand.plugins.listing-plugins";
+    @I18NMessage("Summary of installed plugins:\\n{0}")
+    String PLUGINS_LISTING_PLUGINS_SUMMARY = "PromptCommand.plugins.listing-plugins-summary";
+
+    @I18NMessage("The following plugins will be disabled:\\n{0}")
+    String PLUGINS_LISTING_PLUGINS_DISABLED = "PromptCommand.plugins.listing-plugins-disabled";
+
+    @I18NMessage("Details of the plugins that are currently installed:")
+    String PLUGINS_LISTING_PLUGINS_DETAILS = "PromptCommand.plugins.listing-plugins-details";
 
     @I18NMessage("Total number of plugins currently installed: [{0}]")
     String PLUGINS_NUM_CURRENT_PLUGINS = "PromptCommand.plugins.num-current-plugins";
@@ -1494,6 +1521,9 @@ public interface AgentI18NResourceKeys {
 
     @I18NMessage("Plugin Name:  {0}")
     String PLUGINS_PLUGINS_INFO_NAME = "PromptCommand.plugins.plugin-info.name";
+
+    @I18NMessage("Display Name: {0}")
+    String PLUGINS_PLUGINS_INFO_DISPLAY_NAME = "PromptCommand.plugins.plugin-info.display-name";
 
     @I18NMessage("File Size:    {0,number} bytes")
     String PLUGINS_PLUGINS_INFO_FILESIZE = "PromptCommand.plugins.plugin-info.filesize";

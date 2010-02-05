@@ -1053,8 +1053,12 @@ public class AgentMain {
             try {
                 m_output.flush();
                 input_string = m_input.readLine();
+                if (input_string == null) {
+                    LOG.debug(AgentI18NResourceKeys.INPUT_EOF);
+                }
             } catch (Exception e) {
                 input_string = null;
+                LOG.debug(AgentI18NResourceKeys.INPUT_EXCEPTION, ThrowableUtil.getAllMessages(e));
             }
         }
 
@@ -1076,6 +1080,7 @@ public class AgentMain {
                     m_input = AgentInputReaderFactory.create(this);
                 } catch (IOException e1) {
                     m_input = null;
+                    LOG.debug(e1, AgentI18NResourceKeys.INPUT_FACTORY_EXCEPTION);
                 }
                 m_stdinInput = true;
                 input_string = "";

@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -129,6 +128,10 @@ public class PluginUpdate {
         this(null, config);
     }
 
+    public PluginContainerConfiguration getPluginContainerConfiguration() {
+        return this.config;
+    }
+
     /**
      * This will compare the current set of plugins that exist locally with the set of latest plugins that are available
      * from the core server service. If we need to upgrade to one or more latest plugins, this method will download them
@@ -157,20 +160,20 @@ public class PluginUpdate {
             createMarkerFile();
 
             try {
+                List<String> disabled_plugin_names = this.config.getDisabledPlugins();
+
                 // find out what plugins we already have locally
                 Map<String, Plugin> current_plugins = getCurrentPlugins();
 
                 // find out what the latest plugins are available to us
                 List<Plugin> latest_plugins = coreServerService.getLatestPlugins();
 
-                config.setPluginsOnServer(new HashSet(latest_plugins));
-
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(AgentI18NResourceKeys.LATEST_PLUGINS_COUNT, latest_plugins.size());
                     for (Plugin latest_plugin : latest_plugins) {
                         LOG.debug(AgentI18NResourceKeys.LATEST_PLUGIN, latest_plugin.getId(), latest_plugin.getName(),
                             latest_plugin.getDisplayName(), latest_plugin.getVersion(), latest_plugin.getPath(),
-                            latest_plugin.getMd5(), latest_plugin.getDescription());
+                            latest_plugin.getMd5(), latest_plugin.isEnabled(), latest_plugin.getDescription());
                     }
                 }
 
@@ -186,15 +189,25 @@ public class PluginUpdate {
                         updated_plugins.add(latest_plugin); // we don't have any version of this plugin, we'll need to get it
                         LOG.debug(AgentI18NResourceKeys.NEED_MISSING_PLUGIN, plugin_filename);
                     } else {
-                        String latest_md5 = latest_plugin.getMD5();
-                        String current_md5 = current_plugin.getMD5();
+                        if (latest_plugin.isEnabled() && !disabled_plugin_names.contains(latest_plugin.getName())) {
+                            String latest_md5 = latest_plugin.getMD5();
+                            String current_md5 = current_plugin.getMD5();
 
-                        if (!current_md5.equals(latest_md5)) {
-                            updated_plugins.add(latest_plugin);
-                            LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename, current_md5,
-                                latest_md5);
+                            if (!current_md5.equals(latest_md5)) {
+                                updated_plugins.add(latest_plugin);
+                                LOG.debug(AgentI18NResourceKeys.PLUGIN_NEEDS_TO_BE_UPDATED, plugin_filename,
+                                    current_md5, latest_md5);
+                            } else {
+                                LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
+                            }
                         } else {
-                            LOG.debug(AgentI18NResourceKeys.PLUGIN_ALREADY_AT_LATEST, plugin_filename);
+                            // we have a plugin file locally, but it is to be disabled, so delete the plugin .jar
+                            File disabled_file = getPluginFile(latest_plugin);
+                            if (disabled_file.delete()) {
+                                LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETED, disabled_file);
+                            } else {
+                                LOG.error(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DELETE_FAILED, disabled_file);
+                            }
                         }
                     }
                 }
@@ -204,13 +217,20 @@ public class PluginUpdate {
                 // Let's go ahead and download all the plugins that we need.
                 // Try to update all plugins, even if one or more fails to update. At the end,
                 // if an exception was thrown, we'll rethrow it but only after all update attempts were made
+                // NOTE: we do not download any plugins that are to be disabled
                 Exception last_error = null;
 
                 for (Plugin updated_plugin : updated_plugins) {
-                    try {
-                        downloadPluginWithRetries(updated_plugin); // tries our very best to get it
-                    } catch (Exception e) {
-                        last_error = e;
+                    String name = updated_plugin.getName();
+                    if (updated_plugin.isEnabled() && !disabled_plugin_names.contains(name)) {
+                        try {
+                            downloadPluginWithRetries(updated_plugin); // tries our very best to get it
+                        } catch (Exception e) {
+                            last_error = e;
+                        }
+                    } else {
+                        LOG.info(AgentI18NResourceKeys.PLUGIN_DISABLED_PLUGIN_DOWNLOAD_SKIPPED, name);
+                        updated_plugin.setEnabled(false);
                     }
                 }
 
@@ -424,10 +444,10 @@ public class PluginUpdate {
     private void deleteIllegitimatePlugins(Map<String, Plugin> current_plugins, Map<String, Plugin> latest_plugins_map) {
         for (Plugin current_plugin : current_plugins.values()) {
             if (!latest_plugins_map.containsKey(current_plugin.getPath())) {
-                File plugin_dir = this.config.getPluginDirectory();
-                String plugin_filename = current_plugin.getPath();
-                File plugin = new File(plugin_dir, plugin_filename);
+                File plugin = getPluginFile(current_plugin);
                 if (plugin.exists()) {
+                    File plugin_dir = this.config.getPluginDirectory();
+                    String plugin_filename = plugin.getPath();
                     File plugin_backup = new File(plugin_dir, plugin_filename + ".REJECTED");
                     LOG.warn(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());
                     try {
@@ -437,6 +457,7 @@ public class PluginUpdate {
                         if (!renamed) {
                             LOG.error(AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
                                 .getName());
+                            plugin.delete(); // give it one last try to remove it - otherwise, the PC will still deploy it
                         }
                     } catch (RuntimeException e) {
                         LOG.error(e, AgentI18NResourceKeys.PLUGIN_RENAME_FAILED, plugin_filename, plugin_backup
@@ -445,5 +466,12 @@ public class PluginUpdate {
                 }
             }
         }
+    }
+
+    private File getPluginFile(Plugin plugin) {
+        File plugin_dir = this.config.getPluginDirectory();
+        String plugin_filename = plugin.getPath();
+        File file = new File(plugin_dir, plugin_filename);
+        return file;
     }
 }

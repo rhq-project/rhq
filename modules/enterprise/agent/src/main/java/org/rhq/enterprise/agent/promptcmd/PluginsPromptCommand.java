@@ -21,6 +21,7 @@ package org.rhq.enterprise.agent.promptcmd;
 import java.io.File;
 import java.io.PrintWriter;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -113,18 +114,24 @@ public class PluginsPromptCommand implements AgentPromptCommand {
         PrintWriter out = agent.getOut();
         PluginUpdate plugin_update = getPluginUpdateObject(agent);
         List<File> current_plugins = plugin_update.getCurrentPluginFiles();
+        List<String> disabled_plugins = plugin_update.getPluginContainerConfiguration().getDisabledPlugins();
+        List<String> installed_plugins = new ArrayList<String>();
 
         if (current_plugins.size() > 0) {
-            out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_LISTING_PLUGINS));
+            out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_LISTING_PLUGINS_DETAILS));
 
             for (File current_plugin : current_plugins) {
                 String plugin_name;
+                String plugin_display_name;
                 try {
                     URL url = current_plugin.toURI().toURL();
                     PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
                     plugin_name = descriptor.getName();
+                    plugin_display_name = descriptor.getDisplayName();
+                    installed_plugins.add(plugin_name);
                 } catch (Throwable t) {
                     plugin_name = "?cannot-parse-descriptor?";
+                    plugin_display_name = "?cannot-parse-descriptor?";
                 }
 
                 String filename = current_plugin.getName();
@@ -137,11 +144,21 @@ public class PluginsPromptCommand implements AgentPromptCommand {
                 out.print('\t');
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_NAME, plugin_name));
                 out.print('\t');
+                out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_DISPLAY_NAME, plugin_display_name));
+                out.print('\t');
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_LASTMOD, last_mod));
                 out.print('\t');
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_FILESIZE, filesize));
                 out.print('\t');
                 out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_PLUGINS_INFO_MD5, md5));
+            }
+
+            out.println();
+            out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_LISTING_PLUGINS_SUMMARY, installed_plugins));
+
+            if (!disabled_plugins.isEmpty()) {
+                out.println();
+                out.println(MSG.getMsg(AgentI18NResourceKeys.PLUGINS_LISTING_PLUGINS_DISABLED, disabled_plugins));
             }
 
             out.println();
@@ -187,7 +204,12 @@ public class PluginsPromptCommand implements AgentPromptCommand {
 
             if ((updated_plugins != null) && (updated_plugins.size() > 0)) {
                 for (Plugin plugin : updated_plugins) {
-                    out.println(MSG.getMsg(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getPath()));
+                    if (plugin.isEnabled()) {
+                        out.println(MSG.getMsg(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_COMPLETE, plugin.getName(),
+                            plugin.getPath()));
+                    } else {
+                        out.println(MSG.getMsg(AgentI18NResourceKeys.DOWNLOADING_PLUGIN_SKIPPED, plugin.getName()));
+                    }
                 }
             } else {
                 out.println(MSG.getMsg(AgentI18NResourceKeys.UPDATING_PLUGINS_ALREADY_UPTODATE));

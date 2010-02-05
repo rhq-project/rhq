@@ -253,7 +253,7 @@ public class Alert implements Serializable {
 
 
     @Column(name ="ACK_TIME")
-    private long ackTime;
+    private long ackTime = -1;
 
     @JoinColumn(name = "ACK_BY_ID", referencedColumnName = "ID")
     @ManyToOne

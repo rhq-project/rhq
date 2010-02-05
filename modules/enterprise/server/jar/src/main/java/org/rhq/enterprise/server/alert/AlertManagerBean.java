@@ -551,6 +551,33 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         alert.setAckTime(System.currentTimeMillis());
     }
 
+    /**
+     * Acknowledge the alerts (that got fired) so that admins know who is working
+     * on fixing the situation.
+     * @param user calling user
+     * @param resourceId resource the alerts happened on
+     * @param alertIds PKs of the alerts to ack
+     */
+    public int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds) {
+        if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
+            throw new PermissionException("User [" + user.getName() + "] does not have permissions to acknowledge alerts "
+                + "for resourceId=" + resourceId);
+        }
+
+        int i=0;
+        if (alertIds==null || alertIds.length==0) {
+            log.debug("acknowledgeAlerts: no alertIds passed");
+            return -1;
+        }
+
+        for (int id : alertIds) {
+            acknowledgeAlert(id,user);
+            i++;
+            if (i %20 == 0)
+                entityManager.flush();
+        }
+        return i;
+    }
 
     public void fireAlert(int alertDefinitionId) {
         log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");

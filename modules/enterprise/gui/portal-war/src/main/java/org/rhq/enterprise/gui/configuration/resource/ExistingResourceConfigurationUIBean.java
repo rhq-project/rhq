@@ -227,7 +227,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
 
                 if (null != mergedConfiguration) {
                     for (RawConfiguration raw : mergedConfiguration.getRawConfigurations()) {
-                        String message = raw.getErrorMessage();
+                        String message = raw.errorMessage;
                         if (message != null) {
                             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
                         }

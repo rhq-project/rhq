@@ -355,12 +355,12 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                         facet.validateRawConfiguration(rawConfiguration);
                     } catch (IllegalArgumentException e) {
                         thereAreErrors = true;
-                        rawConfiguration.setErrorMessage(e.getMessage());
+                        rawConfiguration.errorMessage = e.getMessage();
                     }
                 }
             }
         } catch (Throwable t) {
-            throw new PluginContainerException(t);
+            throw new PluginContainerException(t.getMessage());
         }
         if (thereAreErrors) {
             throw new PluginContainerException("One or more files failed validation");

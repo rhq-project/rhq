@@ -989,14 +989,14 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         if (isStructuredAndRawSupported(resourceId)) {
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
-
-        if (isRawSupported(resourceId)) {
-            try {
-                validateResourceConfiguration(subject, resourceId, newConfiguration, false);
-            } catch (PluginContainerException e) {
-                Resource resource = resourceManager.getResourceById(subject, resourceId);
-                return new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
-            }
+        try {
+            validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
+        } catch (PluginContainerException e) {
+            Resource resource = resourceManager.getResourceById(subject, resourceId);
+            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+            resourceConfigurationUpdate.setErrorMessage(e.getMessage());
+            resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return resourceConfigurationUpdate;
         }
 
         ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(

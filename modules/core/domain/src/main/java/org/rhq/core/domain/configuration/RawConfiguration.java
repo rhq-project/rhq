@@ -38,6 +38,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
 import java.io.Serializable;
 
 /**
@@ -89,7 +91,8 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
      * set when validation indicates that  there is a problem 
      * with the file structure.
      */
-    private String errorMessage;
+    @Transient
+    public String errorMessage;
     
     /** @return The database identifier or primary key */
     public int getId() {
@@ -158,15 +161,6 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     /** @param configuration The parent configuration object */
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-    
-    /** @param validation error message */
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
     }
 
     

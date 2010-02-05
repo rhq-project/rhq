@@ -27,6 +27,9 @@ import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 
 /**
+ * Convert the passed value in to a relative date compared to now.
+ * If the passed value is -1, the output will be empty (as a value of 0
+ * returns the number of days since the epoch)
  * @author Joseph Marques
  */
 public class RelativeDurationConverter implements Converter {
@@ -34,8 +37,9 @@ public class RelativeDurationConverter implements Converter {
     private static final long MILLIS_IN_SECOND = 1000L;
     private static final long MILLIS_IN_MINUTE = 60 * MILLIS_IN_SECOND;
     private static final long MILLIS_IN_HOUR = 60 * MILLIS_IN_MINUTE;
-    private static final long MILLIS_IN_DAY = 24 * MILLIS_IN_HOUR;
+    private static final long NEVER = -1;
 
+    private static final long MILLIS_IN_DAY = 24 * MILLIS_IN_HOUR;
     private static final SimpleDateFormat dayFormatter = new SimpleDateFormat("D");
     private static final SimpleDateFormat formatter = new SimpleDateFormat("hh:mm aaa z");
     public static TimeZone tz = null;
@@ -59,6 +63,9 @@ public class RelativeDurationConverter implements Converter {
             throw new IllegalArgumentException("The " + RelativeDurationConverter.class.getSimpleName()
                 + " converter does not support rendering objects of type " + value.getClass().getSimpleName());
         }
+
+        if (millis== NEVER)
+            return "";
 
         String result = format(millis);
         return result;

@@ -114,16 +114,11 @@ public class ResourceDatasource extends DataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
+
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterName(query);
-        int startRow = request.getStartRow();
-        int endRow = request.getEndRow();
-        PageControl pc = new PageControl();
-        if (startRow == 0) {
-            criteria.setPaging(0,endRow);
-        } else {
-            criteria.setPaging(1, startRow);
-        }
+        criteria.setPageControl(PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow()));
+
 //        criteria.addSortAgentName(PageOrdering.ASC);
 
         ResourceGWTServiceAsync resourceService = ResourceGWTService.App.getInstance();
@@ -131,7 +126,7 @@ public class ResourceDatasource extends DataSource {
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
                 Window.alert("Failed to load " + caught.getMessage());
-                System.err.println("StateDS failed to fetch");
+                System.err.println("Failed to fetch Resource Data");
                 response.setStatus(RPCResponse.STATUS_FAILURE);
                 processResponse(requestId, response);                
             }

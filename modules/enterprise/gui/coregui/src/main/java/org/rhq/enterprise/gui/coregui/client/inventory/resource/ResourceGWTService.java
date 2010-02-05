@@ -35,6 +35,8 @@ public interface ResourceGWTService extends RemoteService {
 
     PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria);
 
+
+
     /**
      * Utility/Convenience class.
      * Use ResourceGWTService.App.getInstance() to access static instance of ResourceGWTServiceAsync

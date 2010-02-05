@@ -32,6 +32,15 @@ import org.rhq.enterprise.server.util.LookupUtil;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Greg Hinkle
  */
@@ -43,19 +52,115 @@ public class ResourceGWTServiceImpl extends RemoteServiceServlet implements Reso
         System.out.println("Loading GWT RPC Services");
     }
 
+    public ResourceGWTServiceImpl() {
+    }
+
     public PageList<Resource> findResourcesByCriteria(ResourceCriteria criteria) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         try {
             PageList<Resource> result = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+            for (Resource resource : result) {
+                resource.setAgent(null);
+            }
+
+
             HibernateDetachUtility.nullOutUninitializedFields(result,
                     HibernateDetachUtility.SerializationType.SERIALIZATION);
+
+
+            String[] importantFields = {
+                    "serialVersionUID",
+//                    "ROOT                            \n" +
+//                    "ROOT_ID                         \n" +
+                    "id",
+
+//                    "uuid                            \n" +
+//                    "resourceKey                     \n" +
+                            "name",
+
+//                    "connected                       \n" +
+//                    "version                         \n" +
+                            "description",
+
+//                    "ctime                           \n" +
+//                    "mtime                           \n" +
+//                    "itime                           \n" +
+//                    "modifiedBy                      \n" +
+//                    "location                        \n" +
+                    "resourceType",
+//                    "childResources                  \n" +
+                    "parentResource",
+//                    "resourceConfiguration           \n" +
+//                    "pluginConfiguration             \n" +
+//                    "agent                           \n" +
+//                    "alertDefinitions                \n" +
+//                    "resourceConfigurationUpdates    \n" +
+//                    "pluginConfigurationUpdates      \n" +
+//                    "implicitGroups                  \n" +
+//                    "explicitGroups                  \n" +
+//                    "contentServiceRequests          \n" +
+//                    "createChildResourceRequests     \n" +
+//                    "deleteResourceRequests          \n" +
+//                    "operationHistories              \n" +
+//                    "installedPackages               \n" +
+//                    "installedPackageHistory         \n" +
+//                    "resourceRepos                   \n" +
+//                    "schedules                       \n" +
+//                    "availability                    \n" +
+                            "currentAvailability"
+//                    "resourceErrors                  \n" +
+//                    "eventSources                    \n" +
+//                    "productVersion                  "}
+
+            };
+
+            List<String> goodFields = Arrays.asList(importantFields);
+
+
+            long start = System.currentTimeMillis();
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(50000);
+            ObjectOutputStream o = new ObjectOutputStream(baos);
+            o.writeObject(result);
+            o.flush();
+            System.out.println("Page " + criteria.getPageControl().getStartRow() + " : " + criteria.getPageControl().getPageSize());
+            System.out.println("Serialized size before: " + baos.size());
+
+            Field[] fields = Resource.class.getDeclaredFields();
+            for (Resource res : result) {
+                for (Field f : fields) {
+                    if (!Modifier.isFinal(f.getModifiers())) {
+                        if (!goodFields.contains(f.getName())) {
+                            if (Object.class.isAssignableFrom(f.getType())) {
+//                                System.out.println("clearing " + f.getName());
+                                f.setAccessible(true);
+                                f.set(res, null);
+                            } else {
+//                                System.out.println("Can't do " + f.getType());
+                            }
+                        }
+                    }
+                }
+            }
+
+            baos = new ByteArrayOutputStream(50000);
+            o = new ObjectOutputStream(baos);
+            o.writeObject(result);
+            o.flush();
+            System.out.println("Serialized size after: " + baos.size());
+
+            System.out.println("Took: " + (System.currentTimeMillis() - start) + "ms");
+
             return result;
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             throw new RuntimeException(e);
         }
     }
+
+
+
 
 
 }

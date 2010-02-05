@@ -7,6 +7,7 @@
     <inherits name='org.rhq.core.RHQDomain'/>
 
     <inherits name='com.smartgwt.SmartGwt' />
+    <inherits name="com.smartgwt.tools.SmartGwtTools"/>
     <!--
         <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
     -->
@@ -19,5 +20,7 @@
 
     <servlet path="/ResourceGroupGWTService" class="org.rhq.enterprise.gui.coregui.server.inventory.group.ResourceGroupGWTServiceImpl"/>
     <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.inventory.resource.ResourceGWTServiceImpl"/>
+    <servlet path="/ConfigurationGwtService"
+             class="org.rhq.enterprise.gui.coregui.server.inventory.configuration.ConfigurationGwtServiceImpl"/>
 
 </module>

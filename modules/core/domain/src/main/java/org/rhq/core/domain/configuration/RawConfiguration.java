@@ -84,6 +84,13 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
+    /**
+     * THis value is not persisted to the database, but is 
+     * set when validation indicates that  there is a problem 
+     * with the file structure.
+     */
+    private String errorMessage;
+    
     /** @return The database identifier or primary key */
     public int getId() {
         return id;
@@ -153,6 +160,16 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         this.configuration = configuration;
     }
 
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+    
+    /** @param validation error message */
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    
     @PrePersist
     void onPersist() {
         mtime = System.currentTimeMillis();
@@ -257,6 +274,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
         return copy;
     }
+
 
 }
 

@@ -205,45 +205,45 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     }
 
     public String updateConfiguration(boolean fromStructured) {
-
+        Configuration mergedConfiguration = null;
         ConfigurationMaskingUtility.unmaskConfiguration(getConfiguration(), getConfigurationDefinition());
         int resourceId = EnterpriseFacesContextUtility.getResource().getId();
+        
+        mergedConfiguration = getMergedConfiguration();
+        AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
+            .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
+                mergedConfiguration, fromStructured);
+        if (updateRequest != null) {
+            switch (updateRequest.getStatus()) {
+            case SUCCESS:
+            case INPROGRESS:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
+                    + updateRequest.getId() + " has been sent to the Agent.");
+                clearConfiguration();
+                return SUCCESS_OUTCOME;
+            case FAILURE:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
+                    + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
 
-        try {
-            AbstractResourceConfigurationUpdate updateRequest = this.configurationManager
-                .updateStructuredOrRawConfiguration(EnterpriseFacesContextUtility.getSubject(), resourceId,
-                    getMergedConfiguration(), fromStructured);
-            if (updateRequest != null) {
-                switch (updateRequest.getStatus()) {
-                case SUCCESS:
-                case INPROGRESS:
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
-                        + updateRequest.getId() + " has been sent to the Agent.");
-                    clearConfiguration();
-                    return SUCCESS_OUTCOME;
-                case FAILURE:
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
-                        + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-                    return FAILURE_OUTCOME;
-
+                if (null != mergedConfiguration) {
+                    for (RawConfiguration raw : mergedConfiguration.getRawConfigurations()) {
+                        String message = raw.getErrorMessage();
+                        if (message != null) {
+                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+                        }
+                    }
                 }
-            } else {
+
+                return FAILURE_OUTCOME;
+            case NOCHANGE:
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
                     "No changes were made to the configuration, so " + "no update request has been sent to the Agent.");
                 clearConfiguration();
                 return SUCCESS_OUTCOME;
-            }
-            return null;
-        } catch (EJBException e) {
-            if (e.getCause() instanceof ConfigurationValidationException) {
-                ConfigurationValidationException exception = (ConfigurationValidationException) e.getCause();
 
-                for (Iterator<String> i = exception.messageIterator(); i.hasNext();) {
-                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "", i.next());
-                }
             }
-            return FAILURE_OUTCOME;
         }
+        return FAILURE_OUTCOME;
     }
 
     public String finishAddMap() {
@@ -322,7 +322,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         if (editedRaw.getSha256().equals(originalRaw.getSha256())) {
             --numberOfModifiedFiles;
             RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(editedRaw.getPath());
-//            rawUIBean.setModified(false);
+            //            rawUIBean.setModified(false);
             getModified().remove(editedRaw.getPath());
         } else {
             ++numberOfModifiedFiles;
@@ -335,8 +335,8 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
         RawConfigUIBean bean = findRawConfigUIBeanByPath(path);
 
         if (bean != null) {
-//            bean.setModified(false);
-//            bean.setIcon("/images/blank.png");
+            //            bean.setModified(false);
+            //            bean.setIcon("/images/blank.png");
         }
 
     }
@@ -503,7 +503,7 @@ public class ExistingResourceConfigurationUIBean extends AbstractConfigurationUI
     private void markCurrentRawConfigUIBeanModified() {
         RawConfigUIBean bean = findRawConfigUIBeanByPath(current.getPath());
         if (bean != null) {
-//            bean.setModified(true);
+            //            bean.setModified(true);
         }
     }
 

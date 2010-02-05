@@ -338,34 +338,32 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
+        
+        boolean thereAreErrors = false;
+        
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
-        ArrayList<String> errors = new ArrayList<String>();
         try {
             //TODO Extend the API so that structured can return a collection
             if(isStructured){
                 facet.validateStructuredConfiguration(configuration);                
             }else{
-                validateRaw(configuration, facet, errors);
+                for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
+                    try {
+                        facet.validateRawConfiguration(rawConfiguration);
+                    } catch (IllegalArgumentException e) {
+                        thereAreErrors = true;
+                        rawConfiguration.setErrorMessage(e.getMessage());
+                    }
+                }
             }
         } catch (Throwable t) {
-            errors.clear();
-            errors.add("configuation validation failed with" + t.getMessage() + ".");
+            throw new PluginContainerException(t);
         }
-        if (!errors.isEmpty()) {
-            throw new PluginContainerException(new ConfigurationValidationException(errors));
-        }
-    }
-
-    private void validateRaw(Configuration configuration, ResourceConfigurationFacet facet, ArrayList<String> errors) {
-        for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
-            try {
-                facet.validateRawConfiguration(rawConfiguration);
-            } catch (IllegalArgumentException e) {
-                errors.add(rawConfiguration.getPath() + " :" + e.getMessage());
-            }
+        if (thereAreErrors) {
+            throw new PluginContainerException("One or more files failed validation");
         }
     }
 }

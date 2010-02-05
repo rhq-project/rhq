@@ -982,7 +982,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
         Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
-        ConfigurationUpdateStillInProgressException, ConfigurationValidationException {
+        ConfigurationUpdateStillInProgressException {
 
         Configuration configToUpdate = newConfiguration;
 
@@ -994,14 +994,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             try {
                 validateResourceConfiguration(subject, resourceId, newConfiguration, false);
             } catch (PluginContainerException e) {
-                if (e.getCause() instanceof ConfigurationValidationException) {
-                    ConfigurationValidationException exception = (ConfigurationValidationException) e.getCause();
-                    throw exception;
-                } else {
-                    List<String> messages = new ArrayList<String>();
-                    messages.add(e.getMessage());
-                    throw new ConfigurationValidationException(messages);
-                }
+                Resource resource = resourceManager.getResourceById(subject, resourceId);
+                return new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
             }
         }
 

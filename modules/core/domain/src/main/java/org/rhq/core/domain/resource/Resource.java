@@ -1457,7 +1457,7 @@ public class Resource implements Comparable<Resource>, Serializable {
      *
      * @return the mapping entities
      *
-     * @see    #getResources()
+     * @see    #getResourceRepos()
      */
     public Set<ResourceRepo> getResourceRepos() {
         return resourceRepos;

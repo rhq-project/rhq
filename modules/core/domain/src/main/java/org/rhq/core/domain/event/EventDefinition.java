@@ -145,8 +145,13 @@ public class EventDefinition implements Serializable {
             return false;
         }
 
-        if (!name.equals(that.name))
+        if ((name != null ? (!name.equals(that.name)) : (that.name != null))) {
             return false;
+        }
+
+        if (id != 0 && that.id != 0 && id != that.id) {
+            return false;
+        }
 
         return true;
     }
@@ -155,7 +160,8 @@ public class EventDefinition implements Serializable {
     public int hashCode() {
         int result;
         result = (resourceType != null) ? resourceType.hashCode() : 0;
-        result = 31 * result + name.hashCode();
+        result = 31 * result + ((name != null) ? name.hashCode() : 0);
+        result = 31 * result + id;
         return result;
     }
 

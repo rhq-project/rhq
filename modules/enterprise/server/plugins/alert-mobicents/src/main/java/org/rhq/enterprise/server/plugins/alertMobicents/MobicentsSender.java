@@ -128,8 +128,9 @@ public class MobicentsSender extends AlertSender {
             }
             baseUrl = baseUrl +telEnc;
             if (kind==MobiKind.VOICE) {
-                if (!tel.endsWith("@callwithus.com") && !tel.contains("@")) { // TODO parametrize
-                    baseUrl = baseUrl + "@callwithus.com";
+                if (!tel.contains("@")) { // Append domain from preferences if user has none provided
+                    String domain = preferences.getSimpleValue("defaultVoipDomain","localhost");
+                    baseUrl = baseUrl + "@" + domain;
                 }
             }
             // TODO SMS url

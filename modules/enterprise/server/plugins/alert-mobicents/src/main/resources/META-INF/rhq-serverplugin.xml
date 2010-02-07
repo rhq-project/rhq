@@ -24,6 +24,9 @@
         <c:simple-property name="mobicentsServerUrl" displayName="Mobicents server URL" type="longString"
                            default="http://localhost:8080/mobicents"
                 description="Base URL of the Mobicents server"/>
+        <c:simple-property name="defaultVoipDomain" default="localhost"
+                           description="The domain of your VoIP provider (e.g. callwithus.com). This will be appended to numbers if no domain is given"
+                           />
 
     </serverplugin:plugin-configuration>
 

@@ -128,7 +128,7 @@ public class MobicentsSender extends AlertSender {
             }
             baseUrl = baseUrl +telEnc;
             if (kind==MobiKind.VOICE) {
-                if (!tel.endsWith("@callwithus.com")) { // TODO parametrize
+                if (!tel.endsWith("@callwithus.com") && !tel.contains("@")) { // TODO parametrize
                     baseUrl = baseUrl + "@callwithus.com";
                 }
             }

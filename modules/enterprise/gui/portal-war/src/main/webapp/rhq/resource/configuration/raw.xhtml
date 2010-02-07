@@ -57,7 +57,28 @@
                 <c:otherwise>
                   <rich:panelMenuItem label=""
                                       icon="#{rawConfigUIBean.icon}">
-                    <h:panelGroup>
+                    <ui:remove>
+                    <rich:layout>
+                      <rich:layoutPanel position="left">
+                        <h:outputLabel value="#{rawConfigUIBean.fileName}">
+                        <a4j:support event="onmousedown"
+                                     onsubmit="cursor_wait()"
+                                     oncomplete="cursor_clear()"
+                                     action="#{configurationEditor.select(rawConfigUIBean.path)}"
+                                     limitToList="true"
+                                     reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel,uploadWindow"/>
+                      </h:outputLabel>
+                      </rich:layoutPanel>
+                      <rich:layoutPanel position="right">
+                        <a4j:commandButton value="Undo"
+                                         styleClass="rawConfigUndoButton"
+                                         rendered="#{rawConfigUIBean.modified}"
+                                         action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
+                                         reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>  
+                      </rich:layoutPanel>
+                    </rich:layout>
+                    </ui:remove>
+                    <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol, rawConfigUndoCol">
                       <h:outputLabel value="#{rawConfigUIBean.fileName}">
                         <a4j:support event="onmousedown"
                                      onsubmit="cursor_wait()"
@@ -67,11 +88,11 @@
                                      reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel,uploadWindow"/>
                       </h:outputLabel>
                       <a4j:commandButton value="Undo"
-                                         styleClass="buttonmed"
+                                         styleClass="rawConfigUndoButton"
                                          rendered="#{rawConfigUIBean.modified}"
                                          action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
                                          reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>
-                    </h:panelGroup>
+                    </h:panelGrid>
                   </rich:panelMenuItem>
                 </c:otherwise>
               </c:choose>
@@ -80,10 +101,12 @@
         </c:forEach>
       </rich:panelMenu>
 
-      <div class="raw-outer-table-left-col-footer">
-        <br/>
-        <div class="raw-outer-table-left-col-footer-content">* - Contains uncommitted changes.</div>
-      </div>
+      <c:if test="#{!readOnly}">
+        <div class="raw-outer-table-left-col-footer">
+          <br/>
+          <div class="raw-outer-table-left-col-footer-content">* - Contains uncommitted changes.</div>
+        </div>
+      </c:if>
 
     </rich:panel>
 
@@ -123,6 +146,12 @@
                          styleClass="rawConfigFileContents"
                          value="#{selectedRawUIBean.contents}"
                          readonly="#{readOnly}"/>
+        <c:if test="#{!readOnly}">
+          <a4j:support event="onkeyup"
+                       ignoreDupeResponses="true"
+                       reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
+                       requestDelay="1000"/>
+        </c:if>
       </rich:panel>
     </h:panelGrid>
   </h:panelGrid>

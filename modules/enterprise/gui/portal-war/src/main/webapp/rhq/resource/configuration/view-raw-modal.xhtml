@@ -26,7 +26,7 @@
     <rich:modalPanel id="modalEditor" width="800" height="600">
       <f:facet name="header">
         <h:panelGroup>
-          <h:outputText value="#{editor.modalEditorHeader}"/>
+          <h:outputText value="#{editor.modalEditorHeader}" styleClass="rawConfigFileHeader"/>
         </h:panelGroup>
       </f:facet>
       <f:facet name="controls">
@@ -37,6 +37,7 @@
       </f:facet>
       <rich:panel style="margin-left:1px; border: none;">
         <h:inputTextarea id="modalFileContents"
+                         styleClass="rawConfigFileContents"
                          style="width:100%; height:100%; overflow:visible;"
                          rows="30"
                          cols="30"

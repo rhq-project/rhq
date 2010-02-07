@@ -61,7 +61,7 @@ THIS TEXT WILL BE REMOVED.
 
           <rich:tabPanel switchType="ajax">
             <rich:tab label="Advanced Mode">
-              <ui:include src="view-raw.xhtml"/>
+              <ui:include src="raw.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -69,7 +69,7 @@ THIS TEXT WILL BE REMOVED.
         <c:when test="${configurationViewer.structuredSupported}">
           <rich:tabPanel switchType="ajax">
             <rich:tab label="Basic Mode">
-              <ui:include src="view-structured.xhtml"/>
+              <ui:include src="structured.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -84,7 +84,7 @@ THIS TEXT WILL BE REMOVED.
                       oncomplete="cursor_clear();"
                       limitToList="true"
                       reRender="upperEditButton,lowerEditButton">
-              <ui:include src="view-structured.xhtml"/>
+              <ui:include src="structured.xhtml"/>
             </rich:tab>
             <rich:tab id="rawTab"
                       label="Advanced Mode"
@@ -92,7 +92,7 @@ THIS TEXT WILL BE REMOVED.
                       oncomplete="cursor_clear();"
                       limitToList="true" 
                       reRender="upperEditButton,lowerEditButton">
-              <ui:include src="view-raw.xhtml"/>
+              <ui:include src="raw.xhtml"/>
             </rich:tab>
           </rich:tabPanel>
         </c:when>

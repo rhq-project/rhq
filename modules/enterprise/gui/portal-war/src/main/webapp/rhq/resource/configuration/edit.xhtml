@@ -73,98 +73,9 @@ THIS TEXT WILL BE REMOVED.
         <c:when test="${configurationEditor.rawSupported}">
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
             <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
-              <h:panelGrid columns="2"
-                           styleClass="raw-outer-table"
-                           columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
-                <h:panelGrid columns="1">
-                  <rich:panel id="fileMenuPanel" style="width:100%">
-                    <f:facet name="header">Files</f:facet>
-
-                    <rich:panelMenu id="fileMenu"
-                                    mode="ajax"
-                                    expandMode="client"
-                                    iconCollapsedGroup="/images/icn_tree_folder.gif"
-                                    iconExpandedGroup="/images/icn_tree_folder.gif">
-                      <c:forEach items="#{rawConfigDirectories}"
-                                 var="rawConfigDir">
-                        <rich:panelMenuGroup label="#{rawConfigDir.path}"
-                                             expanded="true"
-                                             selectedChild="#{selectedRawUIBean.path}">
-                          <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                            <rich:panelMenuItem label=""
-                                                icon="#{rawConfigUIBean.icon}">
-                              <h:panelGroup>
-                                <h:outputLabel value="#{rawConfigUIBean.fileName}">
-                                  <a4j:support event="onmousedown"
-                                               onsubmit="cursor_wait()"
-                                               oncomplete="cursor_clear()"
-                                               action="#{configurationEditor.select(rawConfigUIBean.path)}"
-                                               limitToList="true"
-                                               reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel"/>
-                                </h:outputLabel>
-                                <a4j:commandButton value="Undo"
-                                                   styleClass="buttonmed"
-                                                   rendered="#{rawConfigUIBean.modified}"
-                                                   action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
-                                                   reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel"/>
-                              </h:panelGroup>
-                            </rich:panelMenuItem>
-                          </c:forEach>
-                        </rich:panelMenuGroup>
-                      </c:forEach>
-                    </rich:panelMenu>
-                  </rich:panel>
-                  <rich:panel style="border:none">
-                    <h:graphicImage url="/images/star_on_24.png"/>
-                    <h:outputText value="- Contains uncommitted changes"/>
-                  </rich:panel>
-                </h:panelGrid>
-
-                <h:panelGrid columns="1" style="width:100%;">
-                  <h:panelGrid columns="4" style="width:100%;">
-                    <h:outputLabel value=" "/>
-
-                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
-
-                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
-
-                    <h:commandLink action="#{configurationEditor.download}" value="Download">
-                      <h:graphicImage value="/images/download.png"/>
-                      <f:param name="id" value="#{ResourceUIBean.id}"/>
-                    </h:commandLink>
-
-                    <a4j:status id="selectedFileHeader"
-                                startText="Loading #{selectedRawUIBean.path} ..."
-                                stopText="#{selectedRawUIBean.path}"/>
-                  </h:panelGrid>
-
-                  <rich:panel style="margin-left:1px; border: none;">
-                    <h:inputTextarea id="fileContents"
-                                     style="width:100%"
-                                     value="#{selectedRawUIBean.contents}"
-                                     readonly="false">
-                      <a4j:support event="onkeyup"
-                                   ignoreDupeResponses="true"
-                                   reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
-                                   requestDelay="1000"/>
-                    </h:inputTextarea>
-                  </rich:panel>
-                </h:panelGrid>
-              </h:panelGrid>
-
-              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                <h:panelGroup id="lowerCommitPanel" style="text-align:right">
-                  <h:outputText id="lowerChangedFilesLabel"
-                                value="#{configurationEditor.modifiedFilesMsg}"
-                                rendered="#{configurationEditor .rawMode}"
-                                style="padding-right:10px"/>
-                  <h:commandButton value="Commit"
-                                   action="#{configurationEditor.updateConfiguration}"
-                                   title="Click to Save Changes"
-                                   styleClass="buttonmed"
-                                   rendered="${ResourceUIBean.permissions.configure}"/>
-                </h:panelGroup>
-              </h:panelGrid>
+              <ui:include src="raw.xhtml">
+                <ui:param name="readOnly" value="false"/>
+              </ui:include>  
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -172,12 +83,11 @@ THIS TEXT WILL BE REMOVED.
         <c:when test="${configurationEditor.structuredSupported}">
           <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
             <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
-              <onc:config configurationDefinition="#{resourceConfigurationDefinition}"
-                          configuration="#{resourceConfiguration}"
-                          nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
-                          nullConfigurationMessage="#{msg['resource.configuration.null']}"
-                          prevalidate="true"/>
+              <ui:include src="structured.xhtml">
+                <ui:param name="readOnly" value="false"/>
+              </ui:include>
 
+              <ui:remove>
               <h:panelGrid columns="2" styleClass="buttons-table" columnClasses="button-cell"
                            rendered="#{resourceConfiguration != null}">
                 <h:commandButton value="SAVE" action="#{configurationEditor.updateConfiguration}"
@@ -186,6 +96,7 @@ THIS TEXT WILL BE REMOVED.
                 <h:commandButton value="RESET" type="reset" immediate="true"
                                  title="Click to Reset Fields" styleClass="buttonmed"/>
               </h:panelGrid>
+              </ui:remove>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
@@ -197,130 +108,39 @@ THIS TEXT WILL BE REMOVED.
                          valueChangeListener="#{configurationEditor.changeTabs}">
             <rich:tab id="structuredTab"
                       label="Basic Mode"
-                      reRender="fileUpload,upperCommitPanel"
+                      reRender="upperCommitPanel"
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();">
-              <onc:config configurationDefinition="#{resourceConfigurationDefinition}"
-                          configuration="#{resourceConfiguration}"
-                          nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
-                          nullConfigurationMessage="#{msg['resource.configuration.null']}"
-                          prevalidate="true"/>
-
-              <h:panelGrid columns="2"
-                           styleClass="buttons-table"
-                           columnClasses="button-cell"
-                           rendered="#{resourceConfiguration != null}">
-                <h:commandButton value="SAVE"
-                                 action="#{configurationEditor.updateConfiguration}"
-                                 title="Click to Save Changes"
-                                 styleClass="buttonmed"
-                                 rendered="${ResourceUIBean.permissions.configure}"/>
-                <h:commandButton value="RESET"
-                                 type="reset"
-                                 immediate="true"
-                                 title="Click to Reset Fields"
-                                 styleClass="buttonmed"/>
-              </h:panelGrid>
+              <ui:include src="structured.xhtml">
+                <ui:param name="readOnly" value="false"/>
+              </ui:include>
             </rich:tab>
             <rich:tab id="rawTab"
                       label="Advanced Mode"
-                      reRender="fileUpload,fileMenuPanel,upperCommitPanel,lowerCommitPanel"
+                      reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();">
-              <h:panelGrid columns="2"
-                           styleClass="raw-outer-table"
-                           columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
-                <h:panelGrid columns="1">
-                  <rich:panel id="fileMenuPanel" style="width:100%">
-                    <f:facet name="header">Files</f:facet>
-                    <rich:panelMenu id="fileMenu"
-                                    mode="ajax"
-                                    expandMode="client"
-                                    iconCollapsedGroup="/images/icn_tree_folder.gif"
-                                    iconExpandedGroup="/images/icn_tree_folder.gif">
-                      <c:forEach items="#{rawConfigDirectories}"
-                                 var="rawConfigDir">
-                        <rich:panelMenuGroup label="#{rawConfigDir.path}"
-                                             expanded="true"
-                                             selectedChild="#{selectedRawUIBean.path}">
-                          <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
-                            <rich:panelMenuItem label=""
-                                                icon="#{rawConfigUIBean.icon}">
-                              <h:panelGroup>
-                                <h:outputLabel value="#{rawConfigUIBean.fileName}">
-                                  <a4j:support event="onmousedown"
-                                               onsubmit="cursor_wait()"
-                                               oncomplete="cursor_clear()"
-                                               action="#{configurationEditor.select(rawConfigUIBean.path)}"
-                                               limitToList="true"
-                                               reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel"/>
-                                </h:outputLabel>
-                                <a4j:commandButton value="Undo"
-                                                   styleClass="buttonmed"
-                                                   rendered="#{rawConfigUIBean.modified}"
-                                                   action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
-                                                   reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel"/>
-                              </h:panelGroup>
-                            </rich:panelMenuItem>
-                          </c:forEach>
-                        </rich:panelMenuGroup>
-                      </c:forEach>
-                    </rich:panelMenu>
-                  </rich:panel>
-                  <rich:panel style="border:none">
-                    <h:graphicImage url="/images/star_on_24.png"/>
-                    <h:outputText value="- Contains uncommitted changes"/>
-                  </rich:panel>
-                </h:panelGrid>
-
-                <h:panelGrid columns="1" style="width:100%;">
-                  <h:panelGrid columns="4" style="width:100%;">
-                    <h:outputLabel value=" "/>
-
-                    <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
-
-                    <h:outputLink value="#" onclick="#{rich:component('uploadWindow')}.show()">Upload New</h:outputLink>
-
-                    <h:commandLink action="#{configurationEditor.download}" value="Download">
-                      <h:graphicImage value="/images/download.png"/>
-                      <f:param name="id" value="#{ResourceUIBean.id}"/>
-                    </h:commandLink>
-
-                    <a4j:status id="selectedFileHeader"
-                                startText="Loading #{selectedRawUIBean.path} ..."
-                                stopText="#{selectedRawUIBean.path}"/>
-                  </h:panelGrid>
-
-                  <rich:panel id="fileContentsPanel" style="margin-left:1px; border: none;">
-                    <h:inputTextarea id="fileContents"
-                                     style="width:100%"
-                                     value="#{selectedRawUIBean.contents}"
-                                     readonly="false">
-                      <a4j:support event="onkeyup"
-                                   ignoreDupeResponses="true"
-                                   reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
-                                   requestDelay="1000"/>
-                    </h:inputTextarea>
-                  </rich:panel>
-                </h:panelGrid>
-              </h:panelGrid>
-
-              <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-                <h:panelGroup id="lowerCommitPanel" style="text-align:right">
-                  <h:outputText id="lowerChangedFilesLabel" value="#{configurationEditor.modifiedFilesMsg}"
-                                rendered="#{configurationEditor.displayChangedFilesLabel}"
-                                style="padding-right:10px"/>
-                  <h:commandButton value="Commit"
-                                   action="#{configurationEditor.updateConfiguration}"
-                                   title="Click to Save Changes"
-                                   styleClass="buttonmed"
-                                   rendered="${ResourceUIBean.permissions.configure}"/>
-                </h:panelGroup>
-              </h:panelGrid>
+              <ui:include src="raw.xhtml">
+                <ui:param name="readOnly" value="false"/>
+              </ui:include>
             </rich:tab>
           </rich:tabPanel>
         </c:when>
       </c:choose>
+
+      <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
+        <h:panelGroup id="lowerCommitPanel" style="text-align:right">
+          <h:outputText id="lowerChangedFilesLabel"
+                        value="#{configurationEditor.modifiedFilesMsg}"
+                        rendered="#{configurationEditor .rawMode}"
+                        style="padding-right:10px"/>
+          <h:commandButton value="Commit"
+                           action="#{configurationEditor.updateConfiguration}"
+                           title="Click to Save Changes"
+                           styleClass="buttonmed"
+                           rendered="${ResourceUIBean.permissions.configure}"/>
+        </h:panelGroup>
+      </h:panelGrid>
 
       <ui:include src="upload-modal.xhtml"/>
       <ui:include src="view-raw-modal.xhtml">

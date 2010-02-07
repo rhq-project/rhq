@@ -9,13 +9,17 @@
                 xmlns:rich="http://richfaces.org/rich"
                 xmlns:onc="http://jboss.org/on/component">
 
+  <c:if test="#{empty readOnly}">
+    <c:set var="readOnly" value="true"/>
+  </c:if>
+
   <h:outputText value=" #{messages.nopermissionedit}"
                 rendered="#{!ResourceUIBean.permissions.configure}"/>
 
   <onc:config
           configurationDefinition="#{resourceConfigurationDefinition}"
           configuration="#{resourceConfiguration}"
-          readOnly="true"
+          readOnly="#{readOnly}"
           nullConfigurationDefinitionMessage="#{msg['resource.configuration.definition.null']}"
           nullConfigurationMessage="#{msg['resource.configuration.null']}"
           prevalidate="true"/>

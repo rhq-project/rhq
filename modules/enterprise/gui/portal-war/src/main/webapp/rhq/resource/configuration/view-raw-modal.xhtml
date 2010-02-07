@@ -48,7 +48,7 @@
           <a4j:commandButton value="Save"
                              action="#{configurationEditor.applyModalEditContents}"
                              rendered="#{!readOnly}"
-                             reRender="fileContents,fileMenu,lowerChangedFilesLabel,upperChangedFilesLabel"
+                             reRender="fileContents,fileMenuPanel,lowerChangedFilesLabel,upperChangedFilesLabel"
                              styleClass="buttonmed"
                              onclick="#{rich:component('modalEditor')}.hide()"/>
           <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>

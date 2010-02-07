@@ -27,6 +27,8 @@
 
   <h:panelGrid columns="2"
                styleClass="raw-outer-table"
+               cellpadding="0"
+               cellspacing="0"
                columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
     <rich:panel id="fileMenuPanel" style="width:100%">
       <f:facet name="header">Files</f:facet>
@@ -77,33 +79,48 @@
           </rich:panelMenuGroup>
         </c:forEach>
       </rich:panelMenu>
+
+      <div class="raw-outer-table-left-col-footer">
+        <br/>
+        <div class="raw-outer-table-left-col-footer-content">* - Contains uncommitted changes.</div>
+      </div>
+
     </rich:panel>
 
     <h:panelGrid columns="1" style="width:100%;">
       <h:panelGrid columns="4" style="width:100%;">
         <h:outputLabel value=" "/>
 
-        <h:outputLink value="#" onclick="#{rich:component('modalEditor')}.show()">View Full Screen</h:outputLink>
+        <h:outputLink value="#"
+                      onclick="#{rich:component('modalEditor')}.show()"
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+          View Full Screen
+        </h:outputLink>
 
         <h:outputLink value="#"
                       disabled="#{readOnly}"
-                      onclick="#{rich:component('uploadWindow')}.show()">
+                      onclick="#{rich:component('uploadWindow')}.show()"
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
           Upload New
         </h:outputLink>
 
-        <h:commandLink action="#{editor['download']}" value="Download">
+        <h:commandLink action="#{editor['download']}"
+                       value="Download"
+                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
           <h:graphicImage value="/images/download.png"/>
           <f:param name="id" value="#{ResourceUIBean.id}"/>
         </h:commandLink>
 
         <a4j:status id="selectedFileHeader"
                     startText="Loading #{selectedRawUIBean.path} ..."
-                    stopText="#{selectedRawUIBean.path}"/>
+                    stopText="#{selectedRawUIBean.path}"
+                    startStyle="color: gray; white-space: nowrap; font-weight: bold; font-family: sans-serif;"
+                    stopStyle="color: gray; white-space: nowrap; font-weight: bold; font-family: sans-serif;"/>
       </h:panelGrid>
 
       <rich:panel style="margin-left:1px; border: none;">
         <h:inputTextarea id="fileContents"
-                         style="width:100%"
+                         styleClass="rawConfigFileContents"
                          value="#{selectedRawUIBean.contents}"
                          readonly="#{readOnly}"/>
       </rich:panel>

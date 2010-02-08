@@ -48,8 +48,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
- * Defines a set of configuration values that can be used to deploy a bundle version somewhere. Also stores any other
- * deployment settings to be applied to deployments using this def. 
+ * Defines a set of configuration values that can be used to deploy a bundle version somewhere. Once set the
+ * configuration should not be changed.  Also stores any other deployment settings to be applied to deployments
+ * using this def.
  *
  * @author John Mazzitelli
  */

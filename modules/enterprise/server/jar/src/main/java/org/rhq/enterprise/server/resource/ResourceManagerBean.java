@@ -2091,7 +2091,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         List<ResourceComposite> results = new ArrayList<ResourceComposite>();
         for (Resource next : intermediate) {
             AvailabilityType availType = next.getCurrentAvailability().getAvailabilityType();
-            ResourceComposite composite = new ResourceComposite(next, availType);
+            Resource parent = next.getParentResource();
+            ResourceComposite composite = new ResourceComposite(next, parent, availType);
             composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
             results.add(composite);
         }

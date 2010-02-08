@@ -983,7 +983,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             ResourceType type = group.getResourceType();
             ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
                 : ResourceFacets.NONE;
-            // composite.setResourceFacets(facets);
+            composite.setResourceFacets(facets);
         }
         return results;
     }

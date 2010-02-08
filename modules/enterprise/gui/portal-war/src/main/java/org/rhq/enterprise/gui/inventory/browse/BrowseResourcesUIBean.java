@@ -8,7 +8,7 @@ import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -44,17 +44,17 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    private class ResultsDataModel extends PagedListDataModel<Resource> {
+    private class ResultsDataModel extends PagedListDataModel<ResourceComposite> {
 
         public ResultsDataModel(PageControlView view, String beanName) {
             super(view, beanName);
         }
 
-        public PageList<Resource> fetchPage(PageControl pc) {
+        public PageList<ResourceComposite> fetchPage(PageControl pc) {
             getDataFromRequest();
             String filter = getFilter();
 
-            PageList<Resource> results;
+            PageList<ResourceComposite> results;
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.setPageControl(pc);
@@ -63,7 +63,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
             }
             criteria.fetchParentResource(true);
 
-            results = resourceManager.findResourcesByCriteria(getSubject(), criteria);
+            results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
             return results;
         }
 

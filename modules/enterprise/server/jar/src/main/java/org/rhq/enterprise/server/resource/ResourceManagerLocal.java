@@ -43,7 +43,6 @@ import org.rhq.core.domain.resource.composite.ResourceHealthComposite;
 import org.rhq.core.domain.resource.composite.ResourceIdFlyWeight;
 import org.rhq.core.domain.resource.composite.ResourceInstallCount;
 import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
-import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
@@ -432,6 +431,8 @@ public interface ResourceManagerLocal {
 
     List<ResourceInstallCount> findResourceInstallCounts(Subject subject, boolean groupByVersions);
 
+    PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria);
+
     PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria);
 
     PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
@@ -448,5 +449,6 @@ public interface ResourceManagerLocal {
      * @param resourceIdExtractor an object able to extract resource id from an instance of type parameter.
      * @return the disambiguation result or null on error
      */
-    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwayIncludeParent, IntExtractor<? super T> resourceIdExtractor);
+    <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwayIncludeParent,
+        IntExtractor<? super T> resourceIdExtractor);
 }

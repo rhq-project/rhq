@@ -70,7 +70,7 @@
                             value="#{browseResourcesDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 20%, 20%, 10%, 10%, 10%, 25%, 4%"
+                            columnsWidth="1%, 5%, 20%, 20%, 5%, 10%, 10%, 25%, 4%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -86,7 +86,46 @@
                   </f:facet>
 
                   <onc:select name="selectedItems"
-                              value="#{item.id}" />
+                              value="#{item.resource.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <onc:quickNav>
+                     <f:param name="id" value="#{item.resource.id}"/>
+            
+                     <onc:icon name="Monitor"
+                               url="/rhq/resource/monitor/graphs.xhtml" 
+                               alt="Monitor"
+                               visible="#{monitorEnabled}">
+                     </onc:icon>
+            
+                     <onc:icon name="Inventory"
+                               url="/rhq/resource/inventory/view.xhtml" 
+                               alt="Inventory"/>
+            
+                     <onc:icon name="Alert"
+                               url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
+                               alt="Alerts" 
+                               visible="#{monitorEnabled}"/>
+            
+                     <onc:icon name="Configure"
+                               url="/rhq/resource/configuration/view.xhtml" 
+                               alt="Configure" 
+                               visible="#{item.resourceFacets.configuration}"/>
+            
+                     <onc:icon name="Operation"
+                               url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
+                               alt="Operations" 
+                               visible="#{item.resourceFacets.operation}"/>
+            
+                     <onc:icon name="Content" 
+                               url="/rhq/resource/content/view.xhtml" 
+                               alt="Content"
+                               visible="#{item.resourceFacets.content}"/>
+                     
+                     <!--  Is this necessary? It's being passed for all quick nav urls. -->   
+                     <f:param name="mode" value="list"/>
+                  </onc:quickNav>
                </rich:column>
 
                <rich:column>
@@ -97,8 +136,8 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.id}" />
-                     <h:outputText value="#{item.name}" />
+                     <f:param name="id" value="#{item.resource.id}" />
+                     <h:outputText value="#{item.resource.name}" />
                   </h:outputLink>
                </rich:column>
                
@@ -110,8 +149,8 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.parentResource.id}" />
-                     <h:outputText value="#{item.parentResource.name}" />
+                     <f:param name="id" value="#{item.resource.parentResource.id}" />
+                     <h:outputText value="#{item.resource.parentResource.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -122,7 +161,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.resourceType.category.name}" />
+                  <h:outputText value="#{item.resource.resourceType.category.name}" />
                </rich:column>
 
                <rich:column>
@@ -132,7 +171,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.resourceType.name}" />
+                  <h:outputText value="#{item.resource.resourceType.name}" />
                </rich:column>
                
                <rich:column>
@@ -142,7 +181,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.resourceType.plugin}" />
+                  <h:outputText value="#{item.resource.resourceType.plugin}" />
                </rich:column>
                
                <rich:column>
@@ -150,7 +189,7 @@
                      <h:outputText styleClass="headerText" value="Description" />
                   </f:facet>
 
-                  <h:outputText value="#{item.description}" />
+                  <h:outputText value="#{item.resource.description}" />
                </rich:column>
 
                <rich:column>
@@ -160,12 +199,12 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:graphicImage value="#{onf:getAvailabilityURL(item.currentAvailability.availabilityType, 16)}" />
+                  <h:graphicImage value="#{onf:getAvailabilityURL(item.resource.currentAvailability.availabilityType, 16)}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="9" width="100%">
                         <onc:selectCommandButton action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
                                                  value="UNINVNETORY SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.inventory}" />

@@ -150,7 +150,7 @@ public class BundleVersion implements Serializable {
      * Returns the metadata that describes the configuration that must be set in order for this
      * bundle to be properly deployed. Think of this as "the questions that the user must answer"
      * in order to provide values that are needed to deploy the content. This definition
-     * describes the {@link BundleConfig#getConfiguration() bundle config data}.
+     * describes the {@link BundleDeployDefinition#getConfiguration() bundle config data}.
      *
      * @return defines the values that must be set in order for this bundle to be deployed properly
      */

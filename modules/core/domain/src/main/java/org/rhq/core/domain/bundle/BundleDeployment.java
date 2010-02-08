@@ -23,72 +23,128 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
+import javax.persistence.PrePersist;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.resource.Resource;
 
 /**
- * This is the many-to-many entity that correlates a bundle configuration with a resource where
- * that bundle config is installed. A bundle configuration is essentially a bundle version with
- * the custom configuration settings that were used to determine how/where that bundle version
- * was deployed to the resource.
- *
+ * This is the many-to-many entity that correlates a bundle deployment def with a (platform) resource.  It keeps
+ * information about the currently installed bundle and assists with enforcing the def's policy on the deployed bundle.
+ * It also provides the anchor for audit information related to the deployment.
+ * 
  * @author John Mazzitelli
  */
 @Entity
-@IdClass(BundleDeploymentPK.class)
+//@IdClass(BundleDeploymentPK.class)
 @NamedQueries( {
-    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_BUNDLE_CONFIG_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.bundleConfig.id = :id "),
+    @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_DEFINITION_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.bundleDeployDefinition.id = :id "),
     @NamedQuery(name = BundleDeployment.QUERY_FIND_BY_RESOURCE_ID_NO_FETCH, query = "SELECT bd FROM BundleDeployment bd WHERE bd.resource.id = :id ") })
-@Table(name = "RHQ_BUNDLE_DEPLOYMENT")
+@SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_DEPLOY_ID_SEQ")
+@Table(name = "RHQ_BUNDLE_DEPLOY")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class BundleDeployment implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    public static final String QUERY_FIND_BY_BUNDLE_CONFIG_ID_NO_FETCH = "BundleDeployment.findByBundleConfigIdNoFetch";
+    public static final String QUERY_FIND_BY_DEFINITION_ID_NO_FETCH = "BundleDeployment.findByDefinitionIdNoFetch";
     public static final String QUERY_FIND_BY_RESOURCE_ID_NO_FETCH = "BundleDeployment.findByResourceIdNoFetch";
+
+    @Column(name = "ID", nullable = false)
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "SEQ")
+    @Id
+    private int id;
 
     /*
      * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the
      * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
      * @IdClass.
+     * Looks like this may be fixed in 3.5, see http://opensource.atlassian.com/projects/hibernate/browse/HHH-4256
+     * Although, it may be a while before that's available to us.
      */
-    @Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
-    private BundleConfig bundleConfig;
+    //@Id
+    @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    private BundleDeployDefinition bundleDeployDefinition;
 
-    @Id
-    //   @ManyToOne
-    //   @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false, insertable = false, updatable = false)
+    //@Id
+    @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
     private Resource resource;
+
+    @Column(name = "CTIME")
+    private Long ctime = -1L;
+
+    @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleDeploymentHistory> audits = new ArrayList<BundleDeploymentHistory>();
 
     protected BundleDeployment() {
     }
 
-    public BundleDeployment(BundleConfig bundleConfig, Resource repo) {
-        this.bundleConfig = bundleConfig;
-        this.resource = repo;
+    public BundleDeployment(BundleDeployDefinition bundleDeploymentDef, Resource resource) {
+        this.bundleDeployDefinition = bundleDeploymentDef;
+        this.resource = resource;
     }
 
-    public BundleDeploymentPK getBundleVersionRepoPK() {
-        return new BundleDeploymentPK(bundleConfig, resource);
+    public BundleDeployDefinition getBundleDeployDefinition() {
+        return bundleDeployDefinition;
     }
 
-    public void setBundleVersionRepoPK(BundleDeploymentPK pk) {
-        this.bundleConfig = pk.getBundleConfig();
-        this.resource = pk.getResource();
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public Resource getResource() {
+        return resource;
+    }
+
+    public Long getCtime() {
+        return ctime;
+    }
+
+    @PrePersist
+    void onPersist() {
+        this.ctime = System.currentTimeMillis();
+    }
+
+    public List<BundleDeploymentHistory> getAudits() {
+        return audits;
+    }
+
+    public void setAudits(List<BundleDeploymentHistory> audits) {
+        this.audits = audits;
+    }
+
+    public void addAudit(BundleDeploymentHistory audit) {
+        audit.setBundleDeployment(this);
+        this.audits.add(audit);
     }
 
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder("BundleDeployment: ");
-        str.append(", bc=[").append(this.bundleConfig).append("]");
+        str.append(", bdd=[").append(this.bundleDeployDefinition).append("]");
         str.append(", resource=[").append(this.resource).append("]");
         return str.toString();
     }
@@ -96,7 +152,7 @@ public class BundleDeployment implements Serializable {
     @Override
     public int hashCode() {
         int result = 1;
-        result = (31 * result) + ((bundleConfig == null) ? 0 : bundleConfig.hashCode());
+        result = (31 * result) + ((bundleDeployDefinition == null) ? 0 : bundleDeployDefinition.hashCode());
         result = (31 * result) + ((resource == null) ? 0 : resource.hashCode());
         return result;
     }
@@ -113,11 +169,11 @@ public class BundleDeployment implements Serializable {
 
         final BundleDeployment other = (BundleDeployment) obj;
 
-        if (bundleConfig == null) {
-            if (bundleConfig != null) {
+        if (bundleDeployDefinition == null) {
+            if (bundleDeployDefinition != null) {
                 return false;
             }
-        } else if (!bundleConfig.equals(other.bundleConfig)) {
+        } else if (!bundleDeployDefinition.equals(other.bundleDeployDefinition)) {
             return false;
         }
 

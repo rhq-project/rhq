@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition template="/rhq/entity/layout/main-wide.xhtml">
+
+<ui:param name="defaultPageTitle" value="Subsystem Views"/>
+
+   <ui:define name="summary"></ui:define>
+   
+   <ui:define name="tabBar">
+      <onc:tabBar selectedTabName="#{selectedTabName}">
+         <onc:tab name="Resources" url="/rhq/inventory/browseResources.xhtml" />
+         <onc:tab name="Groups" url="/rhq/inventory/browseGroups.xhtml" />
+      </onc:tabBar>
+      <p />
+         
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  infoClass="InfoBlock"
+                  warnClass="WarnBlock"
+                  errorClass="ErrorBlock"
+                  fatalClass="FatalBlock"
+                  globalOnly="false"
+                  layout="table"
+                  width="100%"/>
+   </ui:define>
+
+   <ui:define name="content">
+      <p/>
+      <h1>Default Browser Content</h1>
+      <p/>
+   </ui:define>
+
+</ui:composition>
+
+</html>

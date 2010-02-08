@@ -62,6 +62,11 @@ public class ResourceGroupComposite implements Serializable {
     }
 
     public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
+        double implicitAvailability, ResourceGroup resourceGroup) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);
+    }
+
+    public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
         double implicitAvailability, ResourceGroup resourceGroup, ResourceFacets facets) {
 
         explicitUp = Math.round(explicitCount * explicitAvailability);
@@ -135,6 +140,12 @@ public class ResourceGroupComposite implements Serializable {
     public String getImplicitFormatted() {
         return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
     }
+
+    /*
+    public void setResourceFacets(ResourceFacets facets) {
+        this.resourceFacets = facets;
+    }
+    */
 
     public ResourceFacets getResourceFacets() {
         return resourceFacets;

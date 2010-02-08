@@ -4,6 +4,20 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
 
+   <!-- /rhq/inventory/** -->
+
+   <managed-bean>
+      <managed-bean-name>BrowseResourcesUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.browse.BrowseResourcesUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>BrowseGroupsUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.browse.BrowseGroupsUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <!-- /rhq/resource/** -->
 
    <managed-bean>

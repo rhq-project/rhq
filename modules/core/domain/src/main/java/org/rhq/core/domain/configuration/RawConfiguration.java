@@ -126,6 +126,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
      */
     public void setContents(String contents) {
         this.contents = contents;
+        this.errorMessage = null;
         updateSha256();
     }
 

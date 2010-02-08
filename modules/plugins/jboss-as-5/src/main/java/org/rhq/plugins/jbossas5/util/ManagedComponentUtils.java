@@ -74,11 +74,12 @@ public class ManagedComponentUtils
     }
 
     public static Serializable getSimplePropertyValue(ManagedComponent component, String propertyName)
-    {
+            throws PropertyNotFoundException {
         ManagedProperty property = component.getProperty(propertyName);
-        if (property == null)
-            throw new IllegalStateException("Property named '" + propertyName + "' not found for ManagedComponent ["
+        if (property == null) {
+            throw new PropertyNotFoundException("Property named '" + propertyName + "' not found for ManagedComponent ["
                     + component + "].");
+        }
         MetaType metaType = property.getMetaType();
         Serializable value;
         if (metaType.isSimple())
@@ -174,6 +175,12 @@ public class ManagedComponentUtils
             int value = type1.getType().compareTo(type2.getType());
             // If the categories (e.g. JMSDestination) were equal, do a secondary sort by subtype (e.g. Queue).
             return (value != 0) ? value : type1.getSubtype().compareTo(type2.getSubtype());
+        }
+    }
+
+    public static class PropertyNotFoundException extends Exception {
+        public PropertyNotFoundException(String message) {
+            super(message);
         }
     }
 }

@@ -1140,7 +1140,7 @@
 
           <metric displayName="Transactions Rolled Back" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
                   defaultInterval="600000" defaultOn="true" category="utilization"
-                  description="Number of transactions committed since last restart"/>
+                  description="Number of transactions rolled back since last restart"/>
 
           <event name="logEntry" description="an entry was appended to a log file"/>
 

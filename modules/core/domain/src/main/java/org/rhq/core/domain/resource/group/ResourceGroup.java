@@ -281,7 +281,7 @@ public class ResourceGroup extends Group {
         + "                      AND ( resType.category = ? OR ? IS NULL ) ) ) " // :resourceCategory x2
         + "            AND ( rg.category = ? OR ? IS NULL ) " // :groupCategory x2
         + "                %SECURITY_FRAGMENT_WHERE%" //
-        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name ";
+        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name, resType.plugin ";
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_JOIN = ""
         + " INNER JOIN rhq_role_resource_group_map roleMap " //

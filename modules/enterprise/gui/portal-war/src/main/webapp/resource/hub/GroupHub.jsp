@@ -304,7 +304,7 @@
             <display:column width="15%" property="resourceGroup.resourceType.name" title="${resourceTypeTH}"
                             isLocalizedTitle="false" sortAttr="resourceTypeName" />
             <display:column width="10%" property="resourceGroup.resourceType.plugin" title="${pluginTH}" 
-                            isLocalizedTitle="false" sortAttr="res.resourceType.plugin" />
+                            isLocalizedTitle="false" sortAttr="resType.plugin" />
          </c:if>
 
          <display:column width="30%" property="resourceGroup.description"

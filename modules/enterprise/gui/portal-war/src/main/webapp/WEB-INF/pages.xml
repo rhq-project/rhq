@@ -4,4 +4,7 @@
        xsi:schemaLocation="http://jboss.com/products/seam/pages 
                            http://jboss.com/products/seam/pages-2.1.xsd">
 
+    <page view-id="/rhq/resource/alert/viewAlert.xhtml" action="#{alertNotificationStoreSelector.select('alertDefinitionNotificationStore')}" />
+
+    <page view-id="/rhq/resource/alert/notif/notificationTemplates.xhtml" action="#{alertNotificationStoreSelector.select('alertNotificationTemplateStore')}" />
 </pages>

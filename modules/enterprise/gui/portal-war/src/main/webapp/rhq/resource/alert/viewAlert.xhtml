@@ -16,7 +16,7 @@
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
     <ui:composition template="/rhq/layout/main.xhtml">
-        <ui:param name="pageTitle" value="Definition for '#{alertDefinition.name}' on resource '#{ResourceUIBean.name}'"/>
+        <ui:param name="pageTitle" value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'"/>
 
         <ui:define name="metaHeaders">
             <style>
@@ -41,14 +41,13 @@
 
         <ui:define name="breadcrumbs">
             <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
-                <f:param name="id" value="#{param.id}"/>
+                <f:param name="id" value="#{alertDefinition.resource.id}"/>
                 <h:outputText>Alert Definitions</h:outputText>
             </h:outputLink>
             <h:outputText> &gt; </h:outputText>
             <h:outputLink value="viewAlert.xhtml">
-                <f:param name="id" value="#{param.id}" />
                 <f:param name="ad" value="#{param.ad}" />
-                <h:outputText value="Definition for '#{alertDefinition.name}' on resource '#{ResourceUIBean.name}'" />
+                <h:outputText value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'" />
             </h:outputLink>
         </ui:define>
 
@@ -145,7 +144,7 @@
                     <h:outputLink id="editConditionsLink" styleClass="buttonmed" value="/alerts/Config.do">
                         <f:param name="mode" value="editConditions" />
                         <f:param name="ad" value="#{param.ad}" />
-                        <f:param name="id" value="#{param.id}" />
+                        <f:param name="id" value="#{alertDefinition.resource.id}" />
 
                         <h:outputText value="Edit Alert Conditions" />
                     </h:outputLink>
@@ -153,7 +152,44 @@
                 </rich:panel>
             </h:panelGrid>
 
-            <ui:include src="notif/listAlertSender.xhtml" />
+            <ui:include src="notif/listAlertSender.xhtml">
+                <ui:param name="redirect" value="/rhq/resource/alert/viewAlert.xhtml?ad=#{param.ad}" />
+            </ui:include>
+
+            <!-- Temp -->
+            <rich:panel id="addAlertFromTemplatePanel">
+                <f:facet name="header">
+                    <h:outputText value="Add Alert Notifications from template"/>
+                </f:facet>
+                <h:form id="newNotificationsFromTemplateForm">
+                    <input type="hidden" name="ad" value="${param.ad}"/>
+
+                    <div style="height: 100px;">
+                        <h:selectOneMenu id="templateList" value="#{definitionNotificationsUIBean.selectedTemplate}">
+                            <f:selectItems value="#{definitionNotificationsUIBean.notificationTemplates}"/>
+                        </h:selectOneMenu>
+
+                        <br/>
+
+                        <h:selectBooleanCheckbox title="clearExisting" value="#{definitionNotificationsUIBean.clearExistingNotifications}"/>
+                        <h:outputText value="Clear existing notifications"/>
+                    </div>
+
+                    <h:commandButton id="addTemplateButton"
+                                   value="Add Alert Notification from Template"
+                                   action="#{definitionNotificationsUIBean.addAlertSenderFromTemplate}"
+                                   styleClass="buttonmed"
+                                   style="margin-top: auto;">
+                    </h:commandButton>
+                </h:form>
+            </rich:panel>
+
+            <br />
+            <br />
+            <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
+                <f:param name="id" value="#{alertDefinition.resource.id}"/>
+                <h:outputText value="Back to Alert Definitions for Resource '#{alertDefinition.resource.name}'"/>
+            </h:outputLink>
 
             <rich:modalPanel id="editAlertDefinitionPanel" moveable="false" autosized="true">
                 <f:facet name="header">
@@ -162,7 +198,6 @@
 
                 <h:form id="editAlertDefinitionForm">
                     <input type="hidden" name="ad" value="#{param.ad}" />
-                    <input type="hidden" name="id" value="#{param.id}" />
 
                     <h:panelGrid columns="2" border="1" cellpadding="5" style="margin: 15px;">
                         <h:outputLabel for="alertNameInput" value="Name:  " />

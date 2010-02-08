@@ -18,29 +18,37 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.io.Serializable;
 import org.jboss.seam.ScopeType;
+import org.jboss.seam.annotations.AutoCreate;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.Unwrap;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
+@AutoCreate
 @Scope(ScopeType.PAGE)
 @Name("alertDefinition")
-public class AlertDefinitionComponent {
+public class AlertDefinitionComponent implements Serializable {
 
+    @In("#{webUser.subject}")
+    private Subject subject;
+    @In
+    private AlertDefinitionManagerLocal alertDefinitionManager;
     @RequestParameter("ad")
-    private int alertDefinitionId;
+    private Integer alertDefinitionId;
+    private AlertDefinition alertDefinition;
 
     @Unwrap
     public AlertDefinition lookupAlertDefinition() {
-        AlertDefinitionManagerLocal definitionManager = LookupUtil.getAlertDefinitionManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        if (this.alertDefinitionId != null) {
+            this.alertDefinition = this.alertDefinitionManager.getAlertDefinitionById(this.subject , this.alertDefinitionId);
+        }
 
-        return definitionManager.getAlertDefinitionById(subject, this.alertDefinitionId);
+        return this.alertDefinition;
     }
 }

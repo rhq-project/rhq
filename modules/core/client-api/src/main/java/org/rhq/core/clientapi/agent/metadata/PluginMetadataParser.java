@@ -92,6 +92,10 @@ public class PluginMetadataParser {
         parseDescriptor();
     }
 
+    public PluginDescriptor getDescriptor() {
+        return this.pluginDescriptor;
+    }
+
     public String getPluginLifecycleListenerClass() {
         String pkg = this.pluginDescriptor.getPackage();
         String clazz = this.pluginDescriptor.getPluginLifecycleListener();

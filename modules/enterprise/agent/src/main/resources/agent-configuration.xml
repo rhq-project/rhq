@@ -750,6 +750,32 @@ commands named "config", "setconfig" and "setup" and the command line options
 
                <!--
                _______________________________________________________________
+               rhq.agent.plugins.disabled
+
+               Defines the names of the plugins that are to be disabled.
+               This is a comma-separated list of plugin names, where a
+               plugin name is found in the name attribute in the root XML
+               element in the plugin descriptor. A disabled plugin will
+               simply not be loaded in the plugin container.
+
+               By default, all plugins are enabled. If a plugin was marked
+               as disabled by the server, the agent will not download it and
+               will not load it, regardless of the value of this preference.
+               If a plugin is enabled on the server, this
+               preference will override that enable setting (in other words,
+               an agent is able to disable a plugin, effectively overriding
+               the server setting, by placing the plugin name in this
+               preference). If the agent already has a plugin jar in
+               its local plugins directory, but that plugin is disabled
+               via this preference, that local plugin jar file will be
+               deleted and the plugin will not be loaded.
+               -->
+               <!--
+               <entry key="rhq.agent.plugins.disabled" value=""/>
+               -->
+
+               <!--
+               _______________________________________________________________
                rhq.communications.configuration-schema-version
 
                Defines what version of the agent configuration schema this

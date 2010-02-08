@@ -7,6 +7,12 @@
    <!-- /rhq/inventory/** -->
 
    <managed-bean>
+      <managed-bean-name>InventorySummaryUIBean</managed-bean-name>
+      <managed-bean-class>org.rhq.enterprise.gui.inventory.browse.InventorySummaryUIBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>BrowseResourcesUIBean</managed-bean-name>
       <managed-bean-class>org.rhq.enterprise.gui.inventory.browse.BrowseResourcesUIBean</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

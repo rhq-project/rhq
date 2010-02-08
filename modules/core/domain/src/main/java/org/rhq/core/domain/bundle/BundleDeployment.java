@@ -93,7 +93,7 @@ public class BundleDeployment implements Serializable {
     private Long ctime = -1L;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeploymentHistory> audits = new ArrayList<BundleDeploymentHistory>();
+    private List<BundleDeploymentHistory> histories = new ArrayList<BundleDeploymentHistory>();
 
     protected BundleDeployment() {
     }
@@ -128,17 +128,17 @@ public class BundleDeployment implements Serializable {
         this.ctime = System.currentTimeMillis();
     }
 
-    public List<BundleDeploymentHistory> getAudits() {
-        return audits;
+    public List<BundleDeploymentHistory> getBundleDeploymentHistories() {
+        return histories;
     }
 
-    public void setAudits(List<BundleDeploymentHistory> audits) {
-        this.audits = audits;
+    public void setBundleDeploymentHistories(List<BundleDeploymentHistory> audits) {
+        this.histories = audits;
     }
 
-    public void addAudit(BundleDeploymentHistory audit) {
-        audit.setBundleDeployment(this);
-        this.audits.add(audit);
+    public void addBundleDeploymentHistory(BundleDeploymentHistory history) {
+        history.setBundleDeployment(this);
+        this.histories.add(history);
     }
 
     @Override

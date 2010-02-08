@@ -178,7 +178,7 @@ public class ManagedComponentUtils
         }
     }
 
-    public static class PropertyNotFoundException extends Exception {
+    public static class PropertyNotFoundException extends RuntimeException {
         public PropertyNotFoundException(String message) {
             super(message);
         }

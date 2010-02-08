@@ -20,13 +20,44 @@
    <ui:define name="summary"></ui:define>
    
    <ui:define name="tabBar">
-      <onc:tabBar selectedTabName="#{selectedTabName}">
-         <onc:tab name="Resources" url="/rhq/inventory/browseResources.xhtml" />
-         <onc:tab name="Groups" url="/rhq/inventory/browseGroups.xhtml" />
-         <onc:tab name="Group Definitions" url="/rhq/definition/group/list.xhtml" />
+      <onc:tabBar selectedTabName="#{selectedTabName}" >
+         <onc:tab name="Resources" 
+                  displayName="Resources #{InventorySummaryUIBean.resourceCount}"
+                  url="/rhq/inventory/browseResources.xhtml?subtab=all">
+            <onc:subtab name="all" 
+                        displayName="All"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=all" />
+            <onc:subtab name="platform" 
+                        displayName="Platforms #{InventorySummaryUIBean.platformCount}"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=platform" />
+            <onc:subtab name="server" 
+                        displayName="Servers #{InventorySummaryUIBean.serverCount}" 
+                        url="/rhq/inventory/browseResources.xhtml?subtab=server" />
+            <onc:subtab name="service" 
+                        displayName="Services #{InventorySummaryUIBean.serviceCount}"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=service" />
+         </onc:tab>
+         <onc:tab name="Groups" 
+                  displayName="Groups #{InventorySummaryUIBean.groupCount}"
+                  url="/rhq/inventory/browseGroups.xhtml?subtab=all">
+            <onc:subtab name="all" 
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=all" />
+            <onc:subtab name="compatible" 
+                        displayName="Compatible #{InventorySummaryUIBean.compatibleCount}" 
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=compatible" />
+            <onc:subtab name="mixed" 
+                        displayName="Mixed #{InventorySummaryUIBean.mixedCount}"
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=mixed" />
+         </onc:tab>
+         <onc:tab name="GroupDefinitions" 
+                  displayName="Group Definitions #{InventorySummaryUIBean.groupDefinitionCount}"
+                  url="/rhq/definition/group/list.xhtml">
+            <onc:subtab name="all" 
+                        url="/rhq/definition/group/list.xhtml" />
+         </onc:tab>
       </onc:tabBar>
       <p />
-         
+
       <h:messages showSummary="true"
                   showDetail="true"
                   infoClass="InfoBlock"

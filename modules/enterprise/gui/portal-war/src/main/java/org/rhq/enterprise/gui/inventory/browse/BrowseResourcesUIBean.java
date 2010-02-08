@@ -6,8 +6,12 @@ import java.util.List;
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -21,21 +25,40 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class BrowseResourcesUIBean extends PagedDataTableUIBean {
+    protected final Log log = LogFactory.getLog(BrowseResourcesUIBean.class);
+
     public static final String MANAGED_BEAN_NAME = "BrowseResourcesUIBean";
-    private static final String FORM_PREFIX = "browseResourcesForm:";
 
     private String filter;
+    private ResourceCategory category;
+
+    public BrowseResourcesUIBean() {
+        String subtab = FacesContextUtility.getOptionalRequestParameter("subtab", "").toLowerCase();
+        if (subtab.equals("platform")) {
+            category = ResourceCategory.PLATFORM;
+        } else if (subtab.equals("server")) {
+            category = ResourceCategory.SERVER;
+        } else if (subtab.equals("service")) {
+            category = ResourceCategory.SERVICE;
+        }
+
+        filter = FacesContextUtility.getOptionalRequestParameter("filter");
+    }
 
     public String getFilter() {
-        return filter;
+        return this.filter;
     }
 
     public void setFilter(String filter) {
         this.filter = filter;
     }
 
+    public ResourceCategory getCategory() {
+        return this.category;
+    }
+
     @Override
-    public DataModel getDataModel() {
+    public synchronized DataModel getDataModel() {
         if (dataModel == null) {
             dataModel = new ResultsDataModel(PageControlView.BrowseResources, MANAGED_BEAN_NAME);
         }
@@ -51,25 +74,20 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
         }
 
         public PageList<ResourceComposite> fetchPage(PageControl pc) {
-            getDataFromRequest();
             String filter = getFilter();
-
-            PageList<ResourceComposite> results;
+            ResourceCategory category = getCategory();
 
             ResourceCriteria criteria = new ResourceCriteria();
             criteria.setPageControl(pc);
             if (filter != null && !filter.equals("")) {
                 criteria.addFilterName(filter);
             }
+            criteria.addFilterResourceCategory(category);
             criteria.fetchParentResource(true);
 
+            PageList<ResourceComposite> results;
             results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
             return results;
-        }
-
-        private void getDataFromRequest() {
-            String filter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "filter");
-            BrowseResourcesUIBean.this.filter = filter;
         }
     }
 
@@ -114,7 +132,7 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
     public List<Suggestion> autocomplete(Object suggest) {
         String currentInputText = (String) suggest;
         List<Suggestion> results = new ArrayList<Suggestion>();
-        // offer suggestions based on current currentInputText
+        // offer suggestions based on currentInputText
         return results;
     }
 

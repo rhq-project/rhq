@@ -76,6 +76,14 @@
       <c:simple-property name="foo"/>
       <c:simple-property name="bar"/>
       <c:simple-property name="bam"/>
+
+      <c:list-property name="listProperty" required="false">
+        <c:map-property name="listPropertyValues">
+          <c:simple-property name="listProperty.x" displayName="listProperty.x"/>
+          <c:simple-property name="listProperty.y" displayName="listProperty.y"/>
+          <c:simple-property name="listProperty.z" displayName="listProperty.z"/>
+        </c:map-property>
+      </c:list-property>
     </resource-configuration>
   </server>
 </plugin>

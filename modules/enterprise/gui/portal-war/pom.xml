@@ -375,11 +375,38 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
+      <!-- ============ Testing ========================-->
+      <dependency>
+          <groupId>jboss</groupId>
+          <artifactId>javassist</artifactId>
+          <scope>test</scope>
+      </dependency>
+
+      <dependency>
+          <groupId>org.codehaus.groovy</groupId>
+          <artifactId>groovy-all</artifactId>
+          <version>1.6.4</version>
+      </dependency>
+
    </dependencies>
 
    <build>
       <finalName>rhq-portal</finalName>
       <plugins>
+
+          <plugin>
+              <groupId>org.codehaus.groovy.maven</groupId>
+              <artifactId>gmaven-plugin</artifactId>
+              <version>1.0</version>
+              <executions>
+                  <execution>
+                      <goals>
+                          <goal>compile</goal>
+                          <goal>testCompile</goal>
+                      </goals>
+                  </execution>
+              </executions>
+          </plugin>
 
          <plugin>
             <artifactId>maven-war-plugin</artifactId>

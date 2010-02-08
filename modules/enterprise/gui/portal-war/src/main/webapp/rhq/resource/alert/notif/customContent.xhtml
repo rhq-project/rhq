@@ -22,8 +22,7 @@
             <c:if test="#{not empty customContentUIBean.contentUrl}">
                 <h:form>
                     <input type="hidden" name="senderName" value="#{param.senderName}" />
-                    <input type="hidden" name="id" value="${param.id}"/>
-                    <input type="hidden" name="ad" value="${param.ad}"/>
+                    <input type="hidden" name="redirect" value="#{param.redirect}&amp;nid=#{param.nid}" />
                     
                     <h:messages showDetail="true"
                               globalOnly="true"

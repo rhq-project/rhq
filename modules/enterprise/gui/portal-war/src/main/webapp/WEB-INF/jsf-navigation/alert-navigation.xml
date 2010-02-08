@@ -88,7 +88,7 @@
 
         <navigation-case>
             <from-outcome>success</from-outcome>
-            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?id=#{param.id}&amp;ad=#{param.ad}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?ad=#{alertDefinition.id}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
             
             <redirect />
         </navigation-case>
@@ -96,11 +96,11 @@
     </navigation-rule>
 
     <navigation-rule>
-        <from-view-id>*</from-view-id>
+        <from-view-id>/rhq/resource/alert/notif/customContent.xhtml</from-view-id>
 
         <navigation-case>
             <from-outcome>ALERT_NOTIFICATIONS</from-outcome>
-            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?id=#{param.id}&amp;ad=#{param.ad}&amp;nid=#{alertNotificationsUIBean.activeNotification.id}</to-view-id>
+            <to-view-id>#{param.redirect}</to-view-id>
 
             <redirect />
         </navigation-case>
@@ -111,20 +111,8 @@
         <from-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</from-view-id>
 
         <navigation-case>
-            <from-outcome>continue</from-outcome>
-            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml?nid=#{notificationTemplateUIBean.activeNotification.id}&amp;tid=#{notificationTemplateUIBean.selectedTemplate.id}</to-view-id>
-
-            <redirect />
-        </navigation-case>
-
-    </navigation-rule>
-
-    <navigation-rule>
-        <from-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</from-view-id>
-
-        <navigation-case>
-            <from-outcome>new</from-outcome>
-            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml</to-view-id>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/alert/notif/notificationTemplates.xhtml?nid=#{alertNotificationsUIBean.activeNotification.id}&amp;tid=#{notificationTemplatesUIBean.selectedTemplateId}</to-view-id>
 
             <redirect />
         </navigation-case>

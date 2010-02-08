@@ -20,30 +20,28 @@ package org.rhq.enterprise.gui.alert;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
-import org.jboss.seam.log.Log;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
 import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 @Scope(ScopeType.PAGE)
 @Name("customContentUIBean")
 public class CustomContentUIBean {
 
-    @Logger
-    private Log log;
-
     @RequestParameter
     private String senderName;
 
-    @RequestParameter
+    @RequestParameter("nid")
     private Integer notificationId;
+
+    @In
+    private AlertNotificationManagerLocal alertNotificationManager;
 
     private String contentUrl;
 
@@ -53,7 +51,6 @@ public class CustomContentUIBean {
 
     @Create
     public void init()  {
-        AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(this.senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {

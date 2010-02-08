@@ -950,8 +950,8 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
      * The extended data in the composite object, however, is treated differently:
      * 
      *   1) It is always fetched
-     *   2) It can not a candidate for filtering
-     *   3) It must be sorted by using the zero-based positional ordinal within the project
+     *   2) It can not be a candidate for filtering
+     *   3) It must be sorted by using the zero-based positional ordinal within the projection
      *   
      * This method offers 4 new aggregates that you can sort on.  The 
      * 

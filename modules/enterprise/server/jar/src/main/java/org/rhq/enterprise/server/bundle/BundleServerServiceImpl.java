@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.server.bundle.BundleServerService;
+import org.rhq.core.clientapi.server.bundle.BundleUpdateComplete;
 
 /**
  * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
@@ -31,4 +32,8 @@ import org.rhq.core.clientapi.server.bundle.BundleServerService;
  */
 public class BundleServerServiceImpl implements BundleServerService {
     private final Log log = LogFactory.getLog(this.getClass());
+
+    public void updateComplete(BundleUpdateComplete buc) {
+        // TODO Auto-generated method stub
+    }
 }

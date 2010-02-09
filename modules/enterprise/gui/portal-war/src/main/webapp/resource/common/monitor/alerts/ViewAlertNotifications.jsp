@@ -11,20 +11,28 @@
 
 <!-- Notification Content -->
 <table width="100%" cellpadding="0" cellspacing="0" border="0">
-    Details of fired alerts go here
-
     <c:choose>
         <c:when test="${not empty aNotifLogs }">
+            <thead>
+                <td class="BlockLeftAlignLabel" width="10%">Sender</td>
+                <td class="BlockLeftAlignLabel" width="10%">Result</td>
+                <td class="BlockLeftAlignLabel" width="30%">Message</td>
+                <td class="BlockLeftAlignLabel" width="25%">All emails</td>
+                <td class="BlockLeftAlignLabel" width="25%">Failed emails</td>
+            </thead>
             <c:forEach var="notif" items="${aNotifLogs}">
-                <c:out value="${notif.sender}"/>
-                <br/>
-                <c:out value="${notif.message}"/>
+                <tr valign="top">
+                    <td class="BlockContent"><c:out value="${notif.sender}"/></td>
+                    <td class="BlockContent"><c:out value="${notif.resultState}"/></td>
+                    <td class="BlockContent"><c:out value="${notif.message}"/></td>
+                    <td class="BlockContent"><c:out value="${notif.allEmails}"/></td>
+                    <td class="BlockContent"><c:out value="${notif.badEmails}"/></td>
                 <p/>
-
+                </tr>
             </c:forEach>
         </c:when>
         <c:otherwise>
-            No notifications were specified
+            <strong>No notifications were specified for this alert's definition</strong>
         </c:otherwise>
     </c:choose>
 </table>

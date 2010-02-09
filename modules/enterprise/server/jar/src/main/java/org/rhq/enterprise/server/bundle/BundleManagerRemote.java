@@ -20,28 +20,26 @@ package org.rhq.enterprise.server.bundle;
 
 import java.util.List;
 
-import javax.ejb.Local;
+import javax.ejb.Remote;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
- * Local interface to the manager responsible for creating and managing bundles.
+ * Remote interface to the manager responsible for creating and managing bundles.
  *  
  * @author John Mazzitelli
  */
-@Local
-public interface BundleManagerLocal {
-    BundleType createBundleType(BundleType bundleType);
-
-    Bundle createBundle(Bundle b);
-
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    List<BundleType> getAllBundleTypes(Subject subject);
+@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
+@WebService(targetNamespace = ServerVersion.namespace)
+@Remote
+public interface BundleManagerRemote {
+    @WebMethod
+    List<BundleType> getAllBundleTypes( //
+        @WebParam(name = "subject") Subject subject);
 }

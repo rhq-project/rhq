@@ -83,7 +83,7 @@ public class BundleDeployDefinition implements Serializable {
     private Long mtime = System.currentTimeMillis();
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
     private Configuration configuration;
 
     @Column(name = "ENFORCE_POLICY", nullable = false)

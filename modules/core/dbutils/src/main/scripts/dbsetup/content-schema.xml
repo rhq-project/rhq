@@ -533,6 +533,28 @@
         <column name="PACKAGE_VERSION_ID" type="INTEGER" required="false" references="RHQ_PACKAGE_VERSION"/>
         <column name="PACKAGE_ID" type="INTEGER" required="false" references="RHQ_PACKAGE"/>
     </table>
+    
+    <!-- !!! REMOVED !!!! -->
+    <table name="RHQ_BUNDLE_DEPLOYMENT" obsolete="true">
+        <column name="BUNDLE_CONFIG_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_CONFIG"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+
+        <constraint name="RHQ_BUNDLE_DEPLOYMENT_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_CONFIG_ID"/>
+                <field ref="RESOURCE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>    
+
+    <!-- !!! REMOVED !!!! -->
+    <table name="RHQ_BUNDLE_CONFIG" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />
+        <!-- this probably needs a DTYPE discriminator so we know if its a bundle or a specific bundle version -->
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_VERSION"/>
+        <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
+    </table>
 
     <!-- A set of configuration values that are used to customize how a bundle version is installed -->
     <table name="RHQ_BUNDLE_DEPLOY_DEF">

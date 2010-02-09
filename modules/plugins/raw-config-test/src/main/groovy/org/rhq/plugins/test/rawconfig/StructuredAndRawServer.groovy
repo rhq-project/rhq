@@ -155,7 +155,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
 
   void validateRawConfiguration(RawConfiguration rawConfig) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
-    if (failValidation.getBooleanValue()) {
+    if (failValidation.booleanValue) {
       def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailValidation").stringValue.split()
       def match = fileNames.find { rawConfig.path.endsWith(it) }
 
@@ -178,10 +178,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       throw new RuntimeException("Update failed for $configuration");
     }
 
-    def delay = resourceContext.pluginConfiguration.getSimple("structuredUpdateDelay")
-    if (delay) {
-      Thread.sleep(delay.longValue)
-    }
+    pauseForStructuredUpdateIfDelaySet()
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
@@ -195,11 +192,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       }
     }
 
-    def delay = resourceContext.pluginConfiguration.getSimple("rawUpdateDelay")
-    if (delay) {
-      Thread.sleep(delay.longValue)
-    }
-
+    pauseForRawUpdateIfDelaySet()
     backupAndSave(rawConfiguration)
   }
 

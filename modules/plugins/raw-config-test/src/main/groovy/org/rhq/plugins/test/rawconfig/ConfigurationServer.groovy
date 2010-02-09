@@ -63,4 +63,18 @@ class ConfigurationServer {
     file << rawConfiguration.contents
   }
 
+  def pauseForRawUpdateIfDelaySet() {
+    def delay = resourceContext.pluginConfiguration.getSimple("rawUpdateDelay")
+    if (delay) {
+      Thread.sleep(delay.longValue)
+    }
+  }
+
+  def pauseForStructuredUpdateIfDelaySet() {
+    def delay = resourceContext.pluginConfiguration.getSimple("structuredUpdateDelay")
+    if (delay) {
+      Thread.sleep(delay.longValue)
+    }
+  }
+
 }

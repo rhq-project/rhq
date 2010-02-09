@@ -94,10 +94,12 @@ class StructuredServer extends ConfigurationServer implements ResourceComponent,
   }
 
   void persistStructuredConfiguration(Configuration configuration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failUpdate")
-    if (failValidation.getBooleanValue()) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
+    if (failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
+
+    pauseForStructuredUpdateIfDelaySet()
 
     ant.copy(file: structuredConfigFile.absolutePath, tofile: "${structuredConfigFile.absolutePath}.orig")
     ant.delete(file: structuredConfigFile)
@@ -139,8 +141,8 @@ class StructuredServer extends ConfigurationServer implements ResourceComponent,
   }
 
   void validateStructuredConfiguration(Configuration configuration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
-    if (failValidation.getBooleanValue()) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
+    if (failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
   }

@@ -72,8 +72,21 @@
           description="A fake server component that supports raw configuration">
 
     <plugin-configuration>
-      <c:simple-property name="failRawValidation" type="boolean" default="false"/>
-      <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
+      <c:group name="Raw Validation">
+        <c:simple-property name="failRawValidation" type="boolean" default="false"/>
+        <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
+      </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="rawUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the raw update method, persistRawConfiguration. Note that
+                                        persistRawConfiguration is called once for each raw config file; so, if you
+                                        specify a delay of 5000 (i.e., 5 seconds) and there are 5 raw config files,
+                                        then this will result in a delay of 25 seconds."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="raw"/>    
@@ -85,8 +98,18 @@
           description="A fake server component that supports structured configuration">
 
     <plugin-configuration>
-      <c:simple-property name="failStructuredValidation" type="boolean" default="false"/>
-      <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      <c:group name="Structured Validation">
+        <c:simple-property name="failStructuredValidation" type="boolean" default="false"/>
+        <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="structuredUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the structured update method, persistStructuredConfiguration."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="structured">

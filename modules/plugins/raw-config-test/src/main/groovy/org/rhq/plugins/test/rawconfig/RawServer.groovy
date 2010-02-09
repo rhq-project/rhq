@@ -79,11 +79,12 @@ class RawServer extends ConfigurationServer implements ResourceComponent, Resour
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failUpdate")
-    if (failValidation.getBooleanValue()) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failRawUpdate")
+    if (failValidation.booleanValue) {
       throw new RuntimeException("Update failed for ${rawConfiguration.path}");
     }
 
+    pauseForRawUpdateIfDelaySet()
     backupAndSave(rawConfiguration)
   }
 
@@ -91,7 +92,7 @@ class RawServer extends ConfigurationServer implements ResourceComponent, Resour
   }
 
   void validateRawConfiguration(RawConfiguration rawConfiguration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
     if (failValidation.getBooleanValue()) {
       throw new IllegalArgumentException("Validation failed for ${rawConfiguration.path}");
     }

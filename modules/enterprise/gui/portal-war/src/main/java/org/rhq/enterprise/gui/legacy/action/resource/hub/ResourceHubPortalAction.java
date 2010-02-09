@@ -85,6 +85,31 @@ public class ResourceHubPortalAction extends BaseAction {
         HttpServletResponse response) throws Exception {
         messages = getResources(request);
         ResourceHubForm hubForm = (ResourceHubForm) form;
+
+        /*
+         * once search functionality is complete, this will redirect to the new inventory manager; 
+         * until then, keep it working against the old ResourceHub
+         */
+        if (false) {
+            String filter = hubForm.getKeywords();
+            if (filter.equals("Resource Name")) {
+                filter = null; // user didn't type a filter, just selected a category and clicked 'GO'
+            }
+            String category = hubForm.getResourceCategory();
+            String subtab = "all";
+            try {
+                ResourceCategory.valueOf(category.toUpperCase());
+                subtab = category.toLowerCase();
+            } catch (Exception e) {
+                subtab = "hub";
+            }
+            String url = "/rhq/inventory/browseResources.xhtml?subtab=" + subtab;
+            if (filter != null && !filter.trim().equals("")) {
+                url += "&filter=" + filter;
+            }
+            response.sendRedirect(url);
+        }
+
         org.rhq.core.domain.util.PageControl pageControl = WebUtility.getPageControl(request);
         Subject subject = RequestUtils.getSubject(request);
 

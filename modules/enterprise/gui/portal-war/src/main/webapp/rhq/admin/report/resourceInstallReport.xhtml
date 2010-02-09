@@ -46,7 +46,6 @@
                             value="#{ResourceInstallReportUIBean.resourceInstallCounts}"
                             var="installReport"
                             width="100%"
-                            columnsWidth="15%, 15%, 10%, 10%, 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -57,10 +56,9 @@
                             <f:facet name="header">
                                 Type
                             </f:facet>
-                            <h:outputLink value="/ResourceHub.do">
-                                <f:param name="resourceCategory" value="#{installReport.category.name}"/>
-                                <f:param name="view" value="LIST"/>
-                                <f:param name="resourceType" value="#{installReport.typeId}"/>
+                            <h:outputLink value="/rhq/inventory/browseResources.xhtml">
+                                <f:param name="subtab" value="#{installReport.category.name.toLowerCase()}" />
+                                <f:param name="filter" value="#{installReport.typeName}"/>
                                 <h:outputText value="#{installReport.typeName}"/>
                             </h:outputLink>
                         </rich:column>

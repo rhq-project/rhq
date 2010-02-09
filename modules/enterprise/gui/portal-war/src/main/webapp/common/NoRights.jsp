@@ -45,7 +45,7 @@
         <p>
         <fmt:message key="securityAlert.ReturnTo"/>
         <html:link href="javascript:history.back(1)"><fmt:message key="securityAlert.previousPage"/></html:link>
-        <html:link page="/ResourceHub.do"><fmt:message key="error.Error.ResourceHubLink"/></html:link>
+        <html:link page="/rhq/inventory/browseResources.xhtml?subtab=all"><fmt:message key="error.Error.ResourceHubLink"/></html:link>
         </p>
       </td>
     </tr>

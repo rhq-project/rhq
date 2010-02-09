@@ -38,6 +38,8 @@ import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
+
 import java.io.Serializable;
 
 /**
@@ -84,6 +86,14 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
 
+    /**
+     * THis value is not persisted to the database, but is 
+     * set when validation indicates that  there is a problem 
+     * with the file structure.
+     */
+    @Transient
+    public String errorMessage;
+    
     /** @return The database identifier or primary key */
     public int getId() {
         return id;
@@ -116,6 +126,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
      */
     public void setContents(String contents) {
         this.contents = contents;
+        this.errorMessage = null;
         updateSha256();
     }
 
@@ -153,6 +164,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
         this.configuration = configuration;
     }
 
+    
     @PrePersist
     void onPersist() {
         mtime = System.currentTimeMillis();
@@ -257,6 +269,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
 
         return copy;
     }
+
 
 }
 

@@ -40,15 +40,6 @@ import java.util.List;
 public class PluginContainerException extends Exception {
     private static final long serialVersionUID = 1L;
 
-    private final List<String> messages;
-
-    public PluginContainerException(List<String> messages) {
-        super();
-        List<String> msgs = new ArrayList<String>();
-        Collections.copy(msgs, messages);
-        this.messages = msgs;
-    }
-
     /**
      * Because this exception is part of the plugin container's client API and thus is to be available on remote clients
      * as well, make sure the <code>cause</code> throwable you pass to this constructor is also available to remote
@@ -59,7 +50,6 @@ public class PluginContainerException extends Exception {
      */
     public PluginContainerException(Throwable cause) {
         super(cause);
-        messages = Collections.emptyList();
     }
 
     /**
@@ -72,14 +62,12 @@ public class PluginContainerException extends Exception {
      */
     public PluginContainerException(String message, Throwable cause) {
         super(message, cause);
-        messages = Collections.emptyList();
-    }
+     }
 
     /**
      * @see Throwable#Throwable()
      */
     public PluginContainerException() {
-        messages = Collections.emptyList();
     }
 
     /**
@@ -87,10 +75,6 @@ public class PluginContainerException extends Exception {
      */
     public PluginContainerException(String message) {
         super(message);
-        messages = Collections.emptyList();
     }
 
-    public Iterator<String> messageIterator() {
-        return messages.iterator();
-    }
 }

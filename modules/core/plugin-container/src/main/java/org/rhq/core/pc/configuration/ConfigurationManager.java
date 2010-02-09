@@ -22,19 +22,26 @@
  */
 package org.rhq.core.pc.configuration;
 
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainer;
@@ -49,17 +56,6 @@ import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.template.TemplateEngine;
 import org.rhq.core.util.exception.WrappedRemotingException;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Manages configuration of all resources across all plugins.
@@ -338,25 +334,36 @@ public class ConfigurationManager extends AgentService implements ContainerServi
 
     public void validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
+
+        boolean thereAreErrors = false;
+
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
         ResourceConfigurationFacet facet = componentService.getComponent(resourceId, ResourceConfigurationFacet.class,
             FacetLockType.READ, FACET_METHOD_TIMEOUT, daemonOnly, onlyIfStarted);
-        ArrayList<String> errors = new ArrayList<String>();
-        try {
+        if (isStructured) {
+            try {
+                facet.validateStructuredConfiguration(configuration);
+            } catch (IllegalArgumentException e) {
+                thereAreErrors = true;
+            } catch (Throwable t) {
+                throw new PluginContainerException(t.getMessage(), new WrappedRemotingException(t));
+            }
+        } else {
             for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
                 } catch (IllegalArgumentException e) {
-                    errors.add(rawConfiguration.getPath() + " :" + e.getMessage());
+                    thereAreErrors = true;
+                    rawConfiguration.errorMessage = e.getMessage();
+                } catch (Throwable t) {
+                    thereAreErrors = true;
+                    rawConfiguration.errorMessage = t.getMessage();
                 }
             }
-        } catch (Throwable t) {
-            errors.clear();
-            errors.add("configuation validation failed with" + t.getMessage() + ".");
         }
-        if (!errors.isEmpty()) {
-            throw new PluginContainerException(new ConfigurationValidationException(errors));
+        if (thereAreErrors) {
+            throw new PluginContainerException("One or more files failed validation");
         }
     }
 }

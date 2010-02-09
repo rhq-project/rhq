@@ -38,6 +38,7 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+
 import org.richfaces.model.UploadItem;
 
 import javax.faces.application.FacesMessage;
@@ -185,13 +186,19 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer {
             case FAILURE:
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                     + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
+                for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+                    String message = raw.errorMessage;
+                    if (message != null) {
+                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+                    }
+                }
                 return "failure";
-            }
-        }
-        else {
-            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
-                + "no update request has been sent to the Agent.");
-            return "success";
+            
+            case NOCHANGE:
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
+                    + "no update request has been sent to the Agent.");
+                return "success";     
+            }    
         }
 
         return null;

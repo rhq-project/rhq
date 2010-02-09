@@ -329,6 +329,40 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
         }
     }
 
+    
+    @Test
+    public void catchExceptionThrownByFailedValidationOfStructuredConfigs() throws Exception {
+
+        final Configuration configuration = new Configuration();
+        //final RawConfiguration rawConfiguration = createRawConfiguration("/tmp/foo.txt");
+        //configuration.addRawConfiguration(rawConfiguration);
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {
+            {
+                allowing(componentService).getResourceType(resourceId);
+                will(returnValue(resourceType));
+
+                atLeast(1).of(componentService).getComponent(resourceId, ResourceConfigurationFacet.class,
+                    FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+                will(returnValue(facet));
+
+                //allowing(facet).validateRawConfiguration(rawConfiguration);
+                allowing(facet).validateStructuredConfiguration(configuration);
+                will(throwException(new IllegalArgumentException("message")));
+            }
+        });
+        try {
+            configurationMgr.validate(configuration, resourceId, true);
+            assertTrue(false);
+        } catch (PluginContainerException exception) {
+            //SUCCESS
+        }
+    }
+
+
+    
+    
     @Test
     public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
         Configuration config = new Configuration();

@@ -39,7 +39,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -234,7 +233,7 @@ public class Alert implements Serializable {
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();
 
     @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL)
-    private List<AlertNotificationLog> alertNotificationLog = new ArrayList<AlertNotificationLog>();
+    private List<AlertNotificationLog> alertNotificationLogs = new ArrayList<AlertNotificationLog>();
 
     @Deprecated
     @Column(name = "TRIGGERED_OPERATION", nullable = true)
@@ -257,8 +256,6 @@ public class Alert implements Serializable {
     @JoinColumn(name = "ACK_BY_ID", referencedColumnName = "ID")
     @ManyToOne
     private Subject ackBy;
-
-
 
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
@@ -310,16 +307,16 @@ public class Alert implements Serializable {
         conditionLog.setAlert(this);
     }
 
-    public List<AlertNotificationLog> getAlertNotificationLog() {
-        return alertNotificationLog;
+    public List<AlertNotificationLog> getAlertNotificationLogs() {
+        return alertNotificationLogs;
     }
 
-    public void setAlertNotificationLog(List<AlertNotificationLog> alertNotificationLog) {
-        this.alertNotificationLog = alertNotificationLog;
+    public void setAlertNotificationLogs(List<AlertNotificationLog> alertNotificationLogs) {
+        this.alertNotificationLogs = alertNotificationLogs;
     }
 
     public void addAlertNotificatinLog(AlertNotificationLog log) {
-        this.alertNotificationLog.add(log);
+        this.alertNotificationLogs.add(log);
     }
 
     public String getTriggeredOperation() {

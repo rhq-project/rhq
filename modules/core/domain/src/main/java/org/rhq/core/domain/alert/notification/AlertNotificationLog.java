@@ -51,16 +51,16 @@ import org.rhq.core.domain.alert.Alert;
 @NamedQueries( {
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
             query = "DELETE AlertNotificationLog anl  WHERE anl.id IN ("  +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an WHERE a.ctime BETWEEN :begin AND :end)"),
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an WHERE a.ctime BETWEEN :begin AND :end)"),
 
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE, //
             query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an JOIN a.alertDefinition def " +
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def " +
                     "WHERE def.resource.id = :resourceId)"),
 
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
             query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
-                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an JOIN a.alertDefinition def " +
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLogs an JOIN a.alertDefinition def " +
                     "WHERE def.resource.id IN ( :resourceIds ) )")
   })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")

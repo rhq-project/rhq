@@ -536,6 +536,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 log.getCondition().getMeasurementDefinition().getId();
             }
         }
+        alert.getAlertNotificationLogs().size();
     }
 
     private void fetchCollectionFields(List<Alert> alerts) {
@@ -725,7 +726,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             // log those bad addresses to the gui and their individual senders (if possible)
             if (!badAddresses.isEmpty()) {
-                for (AlertNotificationLog anl : alert.getAlertNotificationLog()) {
+                for (AlertNotificationLog anl : alert.getAlertNotificationLogs()) {
                     if (!(anl.getResultState() == ResultState.DEFERRED_EMAIL))
                         continue;
 

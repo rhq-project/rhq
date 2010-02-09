@@ -95,7 +95,7 @@ class StructuredServer extends ConfigurationServer implements ResourceComponent,
 
   void persistStructuredConfiguration(Configuration configuration) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
-    if (failValidation.booleanValue) {
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
 
@@ -142,7 +142,7 @@ class StructuredServer extends ConfigurationServer implements ResourceComponent,
 
   void validateStructuredConfiguration(Configuration configuration) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
-    if (failValidation.booleanValue) {
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
   }

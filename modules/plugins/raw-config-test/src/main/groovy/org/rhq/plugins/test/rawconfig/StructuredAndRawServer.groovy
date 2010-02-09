@@ -155,7 +155,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
 
   void validateRawConfiguration(RawConfiguration rawConfig) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
-    if (failValidation.booleanValue) {
+    if (failValidation != null && failValidation.booleanValue) {
       def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailValidation").stringValue.split()
       def match = fileNames.find { rawConfig.path.endsWith(it) }
 
@@ -167,14 +167,14 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
 
   void validateStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
-    if (failValidation.getBooleanValue()) {
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $config");
     }
   }
 
   void persistStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
-    if (failValidation.getBooleanValue()) {
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Update failed for $configuration");
     }
 
@@ -183,7 +183,7 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
     def failUpdate = resourceContext.pluginConfiguration.getSimple("failRawUpdate")
-    if (failUpdate.getBooleanValue()) {
+    if (failUpdate != null && failUpdate.booleanValue) {
       def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailUpdate").stringValue.split()
       def match = fileNames.find { rawConfiguration.path.endsWith(it) }
 

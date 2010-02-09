@@ -36,6 +36,22 @@
                                         path does not need to be specified. Simple matching will be done starting from
                                         the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
       </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="structuredUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the structured update method, persistStructuredConfiguration."/>
+        <c:simple-property name="rawUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the raw update method, persistRawConfiguration. Note that
+                                        persistRawConfiguration is called once for each raw config file; so, if you
+                                        specify a delay of 5000 (i.e., 5 seconds) and there are 5 raw config files,
+                                        then this will result in a delay of 25 seconds."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="both">

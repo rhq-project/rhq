@@ -14,13 +14,9 @@ import org.rhq.core.domain.configuration.PropertyList
 
 class StructuredServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
-  ResourceContext resourceContext
-
   File configDir
 
   File structuredConfigFile
-
-  def ant = new AntBuilder()
 
   def simpleProperties = ["foo", "bar", "bam"]
 

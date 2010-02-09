@@ -11,8 +11,6 @@ import org.apache.commons.configuration.PropertiesConfiguration
 
 class StructuredAndRawServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
-  ResourceContext resourceContext
-
   File rawConfigDir
 
   File rawConfigSubdir1
@@ -179,6 +177,11 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
     if (failValidation.getBooleanValue()) {
       throw new RuntimeException("Update failed for $configuration");
     }
+
+    def delay = resourceContext.pluginConfiguration.getSimple("structuredUpdateDelay")
+    if (delay) {
+      Thread.sleep(delay.longValue)
+    }
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
@@ -190,6 +193,11 @@ class StructuredAndRawServer extends ConfigurationServer implements ResourceComp
       if (match) {
         throw new RuntimeException("Update failed for ${rawConfiguration.path}");
       }
+    }
+
+    def delay = resourceContext.pluginConfiguration.getSimple("rawUpdateDelay")
+    if (delay) {
+      Thread.sleep(delay.longValue)
     }
 
     backupAndSave(rawConfiguration)

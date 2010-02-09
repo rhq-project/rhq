@@ -30,8 +30,9 @@
                cellpadding="0"
                cellspacing="0"
                columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
-    <rich:panel id="fileMenuPanel" style="width:100%">
-      <f:facet name="header">Files</f:facet>
+    <rich:panel id="fileMenuPanel" style="width:100%; background-color: rgb(217, 223, 227);">
+      <h:outputLabel value="Files" style="font-weight: bold; padding-left: 5px;"/>
+      <ui:remove><f:facet name="header">Files</f:facet></ui:remove>
       <rich:panelMenu mode="ajax"
                       expandMode="client"
                       iconCollapsedGroup="/images/icn_tree_folder.gif"
@@ -57,27 +58,6 @@
                 <c:otherwise>
                   <rich:panelMenuItem label=""
                                       icon="#{rawConfigUIBean.icon}">
-                    <ui:remove>
-                    <rich:layout>
-                      <rich:layoutPanel position="left">
-                        <h:outputLabel value="#{rawConfigUIBean.fileName}">
-                        <a4j:support event="onmousedown"
-                                     onsubmit="cursor_wait()"
-                                     oncomplete="cursor_clear()"
-                                     action="#{configurationEditor.select(rawConfigUIBean.path)}"
-                                     limitToList="true"
-                                     reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel,uploadWindow"/>
-                      </h:outputLabel>
-                      </rich:layoutPanel>
-                      <rich:layoutPanel position="right">
-                        <a4j:commandButton value="Undo"
-                                         styleClass="rawConfigUndoButton"
-                                         rendered="#{rawConfigUIBean.modified}"
-                                         action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
-                                         reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>  
-                      </rich:layoutPanel>
-                    </rich:layout>
-                    </ui:remove>
                     <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol, rawConfigUndoCol">
                       <h:outputLabel value="#{rawConfigUIBean.fileName}">
                         <a4j:support event="onmousedown"

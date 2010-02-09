@@ -48,7 +48,11 @@ THIS TEXT WILL BE REMOVED.
       <h:panelGrid columns="2" style="width:100%">
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
           <h:panelGroup style="text-align:right">
-            <s:button id="upperEditButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+            <s:button id="upperEditButton"
+                      value="Edit"
+                      view="edit.xhtml"
+                      styleClass="buttonmed"
+                      rendered="#{!configurationViewer.updateInProgress}">
               <f:param name="id" value="#{ResourceUIBean.id}"/>
               <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
             </s:button>
@@ -102,7 +106,11 @@ THIS TEXT WILL BE REMOVED.
 
       <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
         <h:panelGroup style="text-align:right">
-          <s:button id="lowerEditButton" value="Edit" view="edit.xhtml" styleClass="buttonmed">
+          <s:button id="lowerEditButton"
+                    value="Edit"
+                    view="edit.xhtml"
+                    styleClass="buttonmed"
+                    rendered="#{!configurationViewer.updateInProgress}">
             <f:param name="id" value="#{ResourceUIBean.id}"/>
             <f:param name="tab" value="#{configurationViewer.selectedTab}"/>
           </s:button>

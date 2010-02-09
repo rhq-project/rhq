@@ -72,7 +72,7 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @Column(name = "CONTENTS", nullable = false)
     private String contents;
 
-    @Column(name = "SHA256", nullable = false)
+    @Column(name = "SHA256", nullable = true)
     private String sha256;
 
     @Column(name = "CTIME", nullable = false)
@@ -84,6 +84,11 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     @ManyToOne(optional = false)
     @JoinColumn(name = "CONFIG_ID", nullable = false)
     private Configuration configuration;
+
+
+    public RawConfiguration() {
+        
+    }
 
     /** @return The database identifier or primary key */
     public int getId() {
@@ -117,15 +122,6 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
      */
     public void setContents(String contents) {
         this.contents = contents;
-        updateSha256();
-    }
-
-    private void updateSha256() {
-        /* TODO: GWT
-        MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
-        sha256Generator.add(contents.getBytes());
-        sha256 = sha256Generator.getDigestString();
-        */
     }
 
     /**
@@ -135,6 +131,11 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
     public String getSha256() {
         return sha256;
     }
+
+    public void setSha256(String digestString) {
+        this.sha256 = digestString;
+    }
+
 
     /** @return A timestamp of when this object was created */
     public long getCtime() {

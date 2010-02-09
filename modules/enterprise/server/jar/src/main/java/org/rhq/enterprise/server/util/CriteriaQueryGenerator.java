@@ -69,6 +69,7 @@ public final class CriteriaQueryGenerator {
 
     private String alias;
     private String className;
+    private String projection;
     private static String NL = System.getProperty("line.separator");
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
@@ -177,7 +178,11 @@ public final class CriteriaQueryGenerator {
         if (countQuery) {
             results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
-            results.append(alias).append(NL);
+            if (projection == null) {
+                results.append(alias).append(NL);
+            } else {
+                results.append(projection).append(NL);
+            }
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         if (countQuery == false) {
@@ -311,7 +316,7 @@ public final class CriteriaQueryGenerator {
             return true;
         }
 
-        for (Class declaredInterface : fieldType.getInterfaces()) {
+        for (Class<?> declaredInterface : fieldType.getInterfaces()) {
             if (List.class.isAssignableFrom(declaredInterface)) {
                 return true;
             }
@@ -337,6 +342,19 @@ public final class CriteriaQueryGenerator {
      */
     public List<Field> getPersistentBagFields() {
         return persistentBagFields;
+    }
+
+    /**
+     * If you want to return something other than the list of entities represented by the passed Criteria object,
+     * you can alter the projection here to return a customized subset or superset of data.  The projection will
+     * only affect the ResultSet for the data query, not the count query.
+     * 
+     * If you are projecting a composite object that does not directly extend the entity your Criteria object 
+     * represents, then you will need to manually initialize the persistent bags using the methods exposed on
+     * {@link CriteriaQueryRunner} 
+     */
+    public void alterProjection(String projection) {
+        this.projection = projection;
     }
 
     public Query getQuery(EntityManager em) {

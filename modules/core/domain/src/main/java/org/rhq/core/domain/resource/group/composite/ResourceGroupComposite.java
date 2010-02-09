@@ -24,6 +24,8 @@ package org.rhq.core.domain.resource.group.composite;
 
 import java.io.Serializable;
 
+import javax.xml.bind.annotation.XmlTransient;
+
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -59,6 +61,11 @@ public class ResourceGroupComposite implements Serializable {
 
     //def no args constructor for JAXB
     private ResourceGroupComposite() {
+    }
+
+    public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
+        double implicitAvailability, ResourceGroup resourceGroup) {
+        this(explicitCount, explicitAvailability, implicitCount, implicitAvailability, resourceGroup, null);
     }
 
     public ResourceGroupComposite(long explicitCount, double explicitAvailability, long implicitCount,
@@ -134,6 +141,11 @@ public class ResourceGroupComposite implements Serializable {
 
     public String getImplicitFormatted() {
         return getAlignedAvailabilityResults(getImplicitUp(), getImplicitDown());
+    }
+
+    @XmlTransient
+    public void setResourceFacets(ResourceFacets facets) {
+        this.resourceFacets = facets;
     }
 
     public ResourceFacets getResourceFacets() {

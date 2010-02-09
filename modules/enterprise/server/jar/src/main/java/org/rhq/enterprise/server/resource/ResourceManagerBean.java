@@ -150,6 +150,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     private ResourceManagerLocal resourceManager; // ourself, for xactional semantic consistency
     @EJB
+    private ResourceTypeManagerLocal typeManager;
+    @EJB
     @IgnoreDependency
     private OperationManagerLocal operationManager;
     @EJB
@@ -867,11 +869,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         query.setParameter("search", searchString);
         queryCount.setParameter("search", searchString);
         query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
-        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         query.setParameter("parentResource", parentResource);
-        queryCount.setParameter("parentResource", parentResource);        
+        queryCount.setParameter("parentResource", parentResource);
 
         long count = (Long) queryCount.getSingleResult();
 
@@ -1469,9 +1471,9 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         query.setParameter("search", nameFilter);
         queryCount.setParameter("search", nameFilter);
-        
+
         query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
-        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
 
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
@@ -1508,7 +1510,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         query.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
         queryCount.setParameter("inventoryStatus", InventoryStatus.COMMITTED);
-        
+
         long count = (Long) queryCount.getSingleResult();
 
         List<Resource> resources = query.getResultList();
@@ -2083,6 +2085,22 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return results;
     }
 
+    public PageList<ResourceComposite> findResourceCompositesByCriteria(Subject subject, ResourceCriteria criteria) {
+        PageList<Resource> intermediate = findResourcesByCriteria(subject, criteria);
+
+        List<ResourceComposite> results = new ArrayList<ResourceComposite>();
+        for (Resource next : intermediate) {
+            AvailabilityType availType = next.getCurrentAvailability().getAvailabilityType();
+            Resource parent = next.getParentResource();
+            ResourceComposite composite = new ResourceComposite(next, parent, availType);
+            composite.setResourceFacets(typeManager.getResourceFacets(next.getResourceType().getId()));
+            results.add(composite);
+        }
+
+        return new PageList<ResourceComposite>(results, (int) intermediate.getTotalSize(), intermediate
+            .getPageControl());
+    }
+
     @SuppressWarnings("unchecked")
     public PageList<Resource> findResourcesByCriteria(Subject subject, ResourceCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
@@ -2118,25 +2136,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (findChildResources(subject, parentResource, pageControl));
     }
 
-    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent, IntExtractor<? super T> extractor) {
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
+        IntExtractor<? super T> extractor) {
         String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
-        
+
         query = JDBCUtil.transformQueryForMultipleInParameters(query, "@@RESOURCE_IDS@@", results.size());
         Query disambiguateQuery = entityManager.createNativeQuery(query);
         int i = 1;
-        for(T r : results) {
+        for (T r : results) {
             disambiguateQuery.setParameter(i++, extractor.extract(r));
         }
-        
+
         Object[] rs = (Object[]) disambiguateQuery.getSingleResult();
 
         int disambiguationLevel = Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; //the max we support
 
-        int targetCnt = ((BigInteger)rs[0]).intValue();
-        int typeCnt = ((BigInteger)rs[1]).intValue();
-        int typeAndPluginCnt = ((BigInteger)rs[2]).intValue();
+        int targetCnt = ((BigInteger) rs[0]).intValue();
+        int typeCnt = ((BigInteger) rs[1]).intValue();
+        int typeAndPluginCnt = ((BigInteger) rs[2]).intValue();
         for (i = 1; i <= Resource.MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH; ++i) {
-            int levelCnt = ((BigInteger)rs[2 + i]).intValue();
+            int levelCnt = ((BigInteger) rs[2 + i]).intValue();
             if (levelCnt == targetCnt) {
                 disambiguationLevel = i - 1;
                 break;
@@ -2146,7 +2165,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         if (alwaysIncludeParent && disambiguationLevel == 0) {
             disambiguationLevel = 1;
         }
-        
+
         boolean typeResolutionNeeded = typeAndPluginCnt > 1;
         boolean pluginResolutionNeeded = typeAndPluginCnt > typeCnt;
         boolean parentResolutionNeeded = disambiguationLevel > 0;
@@ -2160,8 +2179,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         }
 
         //k, now let's construct the JPQL query to get the parents and type infos...
-        StringBuilder selectBuilder = new StringBuilder(
-            "SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin");
+        StringBuilder selectBuilder = new StringBuilder("SELECT r0.id, r0.resourceType.name, r0.resourceType.plugin");
         StringBuilder fromBuilder = new StringBuilder("FROM Resource r0");
 
         for (i = 1; i <= disambiguationLevel; ++i) {
@@ -2201,7 +2219,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         //now we have all the information to create the result.
         //first create the immutable reports.
         List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(reportByResourceId.size());
-        
+
         for (Map.Entry<Integer, MutableDisambiguationReport<T>> entry : reportByResourceId.entrySet()) {
             resolution.add(entry.getValue().getReport());
         }

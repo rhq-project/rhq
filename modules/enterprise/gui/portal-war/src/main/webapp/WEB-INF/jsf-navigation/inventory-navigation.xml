@@ -4,6 +4,41 @@
               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
               xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-facesconfig_1_2.xsd">
    
+   <!-- Browse Resources -->
+   <navigation-rule>
+      <from-view-id>/rhq/inventory/browseResources.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/inventory/browseResources.xhtml?subtab=#{param.subtab}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/inventory/browseResources.xhtml?subtab=#{param.subtab}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+   <!-- Browse Groups -->
+   <navigation-rule>
+      <from-view-id>/rhq/inventory/browseGroups.xhtml</from-view-id>
+
+      <navigation-case>
+         <from-outcome>success</from-outcome>
+         <to-view-id>/rhq/inventory/browseGroups.xhtml?subtab=#{param.subtab}</to-view-id>
+         <redirect/>
+      </navigation-case>
+      
+      <navigation-case> 
+         <from-outcome>sort</from-outcome>
+         <to-view-id>/rhq/inventory/browseGroups.xhtml?subtab=#{param.subtab}</to-view-id>
+         <redirect/>
+      </navigation-case>
+   </navigation-rule>
+   
+   
    <navigation-rule>
 
       <from-view-id>/rhq/resource/inventory/view.xhtml</from-view-id>

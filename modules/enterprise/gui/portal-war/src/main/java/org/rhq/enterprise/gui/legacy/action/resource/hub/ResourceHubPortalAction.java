@@ -87,10 +87,10 @@ public class ResourceHubPortalAction extends BaseAction {
         ResourceHubForm hubForm = (ResourceHubForm) form;
 
         /*
-         * redirect to the new inventory manager for now; 
-         * eventually this code will be replaced by a new dashboard
+         * once search functionality is complete, this will redirect to the new inventory manager; 
+         * until then, keep it working against the old ResourceHub
          */
-        if (true) {
+        if (false) {
             String filter = hubForm.getKeywords();
             if (filter.equals("Resource Name")) {
                 filter = null; // user didn't type a filter, just selected a category and clicked 'GO'

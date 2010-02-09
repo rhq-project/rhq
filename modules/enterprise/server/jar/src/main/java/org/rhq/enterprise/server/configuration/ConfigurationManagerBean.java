@@ -81,6 +81,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.server.PersistenceUtility;
+import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -381,6 +382,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     private ResourceConfigurationUpdate persistNewAgentReportedResourceConfiguration(Resource resource,
         Configuration liveConfig) throws ConfigurationUpdateStillInProgressException {
+
+        if (liveConfig.getRawConfigurations() != null) {
+            for (RawConfiguration raw : liveConfig.getRawConfigurations()) {
+                MessageDigestGenerator sha256Generator = new MessageDigestGenerator("SHA-256");
+                sha256Generator.add(raw.getContents().getBytes());
+                raw.setSha256(sha256Generator.getDigestString());
+            }
+        }
+
+
         /*
         * NOTE: We pass the overlord, since this is a system side-effect.  here, the system
         * and *not* the user, is choosing to persist the most recent configuration because it was different

@@ -43,7 +43,10 @@ public class PluginContainerException extends Exception {
     private static final long serialVersionUID = 1L;
 
     private static Throwable wrapIfNecessary(Throwable e){
-     // we assume everyone has java.* exception definitions available
+        
+        if (e.getClass().equals(WrappedRemotingException.class)) return e;
+
+        // we assume everyone has java.* exception definitions available
         // see if the exception and all its causes are all java.* exceptions
         Throwable check_for_java = e;
         boolean all_java_exceptions = true; // if false, e or one of its causes is not a java.* exception
@@ -61,9 +64,8 @@ public class PluginContainerException extends Exception {
             }
         }
         
-        // if the exception and all its causes are java.*, then just return e as-is, unless its not serializable
+        // if the exception and all its causes are java.*, then just return e as-is
         if (!all_java_exceptions) {
-            if (e.getClass().equals(WrappedRemotingException.class)) return e;
             return new WrappedRemotingException(e);
         }
         return e;

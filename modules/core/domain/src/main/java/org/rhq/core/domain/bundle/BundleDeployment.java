@@ -49,7 +49,7 @@ import org.rhq.core.domain.resource.Resource;
 /**
  * This is the many-to-many entity that correlates a bundle deployment def with a (platform) resource.  It keeps
  * information about the currently installed bundle and assists with enforcing the def's policy on the deployed bundle.
- * It also provides the anchor for audit information related to the deployment.
+ * It also provides the anchor for audit history related to the deployment.
  * 
  * @author John Mazzitelli
  */
@@ -72,19 +72,10 @@ public class BundleDeployment implements Serializable {
     @Id
     private int id;
 
-    /*
-     * http://opensource.atlassian.com/projects/hibernate/browse/EJB-286 Hibernate seems to want these mappings in the
-     * @IdClass and ignore these here, even though the mappings should be here and no mappings should be needed in the
-     * @IdClass.
-     * Looks like this may be fixed in 3.5, see http://opensource.atlassian.com/projects/hibernate/browse/HHH-4256
-     * Although, it may be a while before that's available to us.
-     */
-    //@Id
     @JoinColumn(name = "BUNDLE_DEPLOY_DEF_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleDeployDefinition bundleDeployDefinition;
 
-    //@Id
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private Resource resource;
@@ -93,7 +84,7 @@ public class BundleDeployment implements Serializable {
     private Long ctime = -1L;
 
     @OneToMany(mappedBy = "bundleDeployment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<BundleDeploymentHistory> audits = new ArrayList<BundleDeploymentHistory>();
+    private List<BundleDeploymentHistory> history = new ArrayList<BundleDeploymentHistory>();
 
     protected BundleDeployment() {
     }
@@ -128,17 +119,17 @@ public class BundleDeployment implements Serializable {
         this.ctime = System.currentTimeMillis();
     }
 
-    public List<BundleDeploymentHistory> getAudits() {
-        return audits;
+    public List<BundleDeploymentHistory> getHistory() {
+        return history;
     }
 
-    public void setAudits(List<BundleDeploymentHistory> audits) {
-        this.audits = audits;
+    public void setHistory(List<BundleDeploymentHistory> history) {
+        this.history = history;
     }
 
-    public void addAudit(BundleDeploymentHistory audit) {
-        audit.setBundleDeployment(this);
-        this.audits.add(audit);
+    public void addHistory(BundleDeploymentHistory history) {
+        history.setBundleDeployment(this);
+        this.history.add(history);
     }
 
     @Override

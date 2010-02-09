@@ -29,7 +29,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
+import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
+import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -60,6 +65,17 @@ public class BundleManagerBean implements BundleManagerLocal {
         Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_ALL);
         List<BundleType> types = q.getResultList();
         return types;
+    }
+
+    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(
+        BundleDeployDefinitionCriteria criteria) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

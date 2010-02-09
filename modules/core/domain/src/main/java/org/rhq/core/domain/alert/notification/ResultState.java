@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.plugin.pc.alert;
+package org.rhq.core.domain.alert.notification;
 
 /**
  * State of a SenderResult

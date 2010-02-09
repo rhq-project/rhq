@@ -27,6 +27,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import org.rhq.core.util.exception.WrappedRemotingException;
+
 /**
  * This generic exception thrown by the plugin container is part of its client API; thus this exception is available to
  * both the plugin container as well as its remote clients.
@@ -40,6 +42,34 @@ import java.util.List;
 public class PluginContainerException extends Exception {
     private static final long serialVersionUID = 1L;
 
+    private static Throwable wrapIfNecessary(Throwable e){
+     // we assume everyone has java.* exception definitions available
+        // see if the exception and all its causes are all java.* exceptions
+        Throwable check_for_java = e;
+        boolean all_java_exceptions = true; // if false, e or one of its causes is not a java.* exception
+
+        while (check_for_java != null) {
+            if (!check_for_java.getClass().getName().startsWith("java.")) {
+                all_java_exceptions = false;
+                break; // don't bother continuing, we found a non-java.* exception
+            }
+
+            if (check_for_java.getCause() == check_for_java) {
+                check_for_java = null; // reached the end of the causes chain
+            } else {
+                check_for_java = check_for_java.getCause();
+            }
+        }
+        
+        // if the exception and all its causes are java.*, then just return e as-is, unless its not serializable
+        if (!all_java_exceptions) {
+            if (e.getClass().equals(WrappedRemotingException.class)) return e;
+            return new WrappedRemotingException(e);
+        }
+        return e;
+    }
+    
+    
     /**
      * Because this exception is part of the plugin container's client API and thus is to be available on remote clients
      * as well, make sure the <code>cause</code> throwable you pass to this constructor is also available to remote
@@ -49,7 +79,7 @@ public class PluginContainerException extends Exception {
      * @see Throwable#Throwable(Throwable)
      */
     public PluginContainerException(Throwable cause) {
-        super(cause);
+        super(wrapIfNecessary(cause));
     }
 
     /**
@@ -61,7 +91,7 @@ public class PluginContainerException extends Exception {
      * @see Throwable#Throwable(String, Throwable)
      */
     public PluginContainerException(String message, Throwable cause) {
-        super(message, cause);
+        super(message, wrapIfNecessary(cause));
      }
 
     /**

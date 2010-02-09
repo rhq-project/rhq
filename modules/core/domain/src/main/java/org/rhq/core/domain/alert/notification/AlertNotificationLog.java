@@ -95,12 +95,11 @@ public class AlertNotificationLog implements Serializable {
 
     private String message;
 
-    @Column(name="EMAILS_SENT")
-    private String goodEmails;
+    @Column(name="ALL_EMAILS")
+    private String allEmails;
 
     @Column(name="EMAILS_FAILED")
     private String badEmails;
-
 
     protected AlertNotificationLog() {
     } // JPA
@@ -151,8 +150,8 @@ public class AlertNotificationLog implements Serializable {
         return message;
     }
 
-    public String getGoodEmails() {
-        return goodEmails;
+    public String getAllEmails() {
+        return allEmails;
     }
 
     public String getBadEmails() {
@@ -167,8 +166,8 @@ public class AlertNotificationLog implements Serializable {
         this.message = message;
     }
 
-    public void setGoodEmails(String goodEmails) {
-        this.goodEmails = goodEmails;
+    public void setAllEmails(String allEmails) {
+        this.allEmails = allEmails;
     }
 
     public void setBadEmails(String badEmails) {

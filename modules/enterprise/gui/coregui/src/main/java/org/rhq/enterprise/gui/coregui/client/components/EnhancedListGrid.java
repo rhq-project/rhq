@@ -19,27 +19,45 @@
 package org.rhq.enterprise.gui.coregui.client.components;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.layout.VStack;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
  * @author Greg Hinkle
  */
-public class EnhancedListGrid extends com.smartgwt.client.widgets.grid.ListGrid {
+public class EnhancedListGrid extends VLayout {
 
+
+    ListGrid grid;
+    ToolStrip footer;
 
     public EnhancedListGrid() {
         super();
-
+        grid = new ListGrid();
+        footer = new ToolStrip();
+        addMember(grid);
+        addMember(footer);
     }
 
-/*
 
-    @Override
-    protected JavaScriptObject create() {
-        VStack stack = new VStack(0);
-        //stack.addMember(super.create());
-}
-*/
+    public ListGrid getGrid() {
+        return grid;
+    }
 
+    public void setGrid(ListGrid grid) {
+        this.grid = grid;
+    }
 
+    public ToolStrip getFooter() {
+        return footer;
+    }
+
+    public void setFooter(ToolStrip footer) {
+        this.footer = footer;
+    }
 }

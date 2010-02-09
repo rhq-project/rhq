@@ -3,6 +3,7 @@ package org.rhq.enterprise.gui.coregui.server.inventory.configuration;
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.enterprise.gui.coregui.client.inventory.configuration.ConfigurationGwtService;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -11,6 +12,35 @@ import org.rhq.enterprise.server.util.HibernateDetachUtility;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class ConfigurationGwtServiceImpl extends RemoteServiceServlet implements ConfigurationGwtService {
+
+
+    public Configuration getPluginConfiguration(int resourceId) {
+
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        Configuration configuration = configurationManager.getPluginConfiguration(subjectManager.getOverlord(), resourceId);
+
+        try {
+            HibernateDetachUtility.nullOutUninitializedFields(configuration, HibernateDetachUtility.SerializationType.SERIALIZATION);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return configuration;
+    }
+
+    public ConfigurationDefinition getPluginConfigurationDefinition(int resourceTypeId) {
+        ConfigurationManagerLocal configurationManager = LookupUtil.getConfigurationManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        ConfigurationDefinition definition = configurationManager.getPluginConfigurationDefinitionForResourceType(subjectManager.getOverlord(), resourceTypeId);
+        try {
+            HibernateDetachUtility.nullOutUninitializedFields(definition, HibernateDetachUtility.SerializationType.SERIALIZATION);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return definition;
+    }
 
 
     public Configuration getResourceConfiguration(int resourceId) {
@@ -39,5 +69,10 @@ public class ConfigurationGwtServiceImpl extends RemoteServiceServlet implements
             e.printStackTrace();
         }
         return definition;
+    }
+
+    public void dummy(RawConfiguration config) {
+        
+        // Dummy method for gwt compiler
     }
 }

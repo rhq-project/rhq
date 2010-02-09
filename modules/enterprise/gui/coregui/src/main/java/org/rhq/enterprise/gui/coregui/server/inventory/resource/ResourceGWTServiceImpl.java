@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.server.inventory.resource;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -160,7 +161,10 @@ public class ResourceGWTServiceImpl extends RemoteServiceServlet implements Reso
     }
 
 
-
+    public RawConfiguration dummy(RawConfiguration config) {
+        System.out.println(config.getPath());
+        return config;
+    }
 
 
 }

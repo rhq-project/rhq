@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
+import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -34,4 +35,5 @@ public interface ResourceGWTServiceAsync {
 
     void findResourcesByCriteria(ResourceCriteria criteria, AsyncCallback<PageList<Resource>> callback);
 
+    void dummy(RawConfiguration config, AsyncCallback<RawConfiguration> callback);
 }

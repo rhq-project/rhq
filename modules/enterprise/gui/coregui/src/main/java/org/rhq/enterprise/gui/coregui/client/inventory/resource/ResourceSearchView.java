@@ -19,35 +19,30 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.fields.DataSourceImageField;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
-import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
-import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.SelectionAppearance;
+import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
-import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
-import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyPressHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
-import com.smartgwt.client.widgets.layout.HLayout;
-import com.smartgwt.client.widgets.layout.SectionStack;
-import com.smartgwt.client.widgets.layout.SectionStackSection;
+import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionEvent;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 /**
  * @author Greg Hinkle
@@ -66,6 +61,9 @@ public class ResourceSearchView extends VLayout {
 
 
         final ResourceDatasource datasource = new ResourceDatasource();
+
+        VLayout gridHolder = new VLayout();
+
         final ListGrid listGrid = new ListGrid();
         listGrid.setWidth100();
         listGrid.setHeight100();
@@ -74,27 +72,69 @@ public class ResourceSearchView extends VLayout {
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
         listGrid.setAlternateRecordStyles(true);
 //        listGrid.setAutoFitData(Autofit.HORIZONTAL);
-//        listGrid.getField("currentAvailability").setAlign(Alignment.CENTER);
         listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
+        listGrid.setSelectionType(SelectionStyle.SIMPLE);
+        listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
+        
 
 
-        ListGridField idField = new ListGridField("id","Id", 55);
+        ListGridField idField = new ListGridField("id", "Id", 55);
         idField.setType(ListGridFieldType.INTEGER);
         ListGridField nameField = new ListGridField("name", "Name", 250);
         ListGridField descriptionField = new ListGridField("description", "Description");
         ListGridField availabilityField = new ListGridField("currentAvailability", "Availability", 55);
+        availabilityField.setAlign(Alignment.CENTER);
         listGrid.setFields(idField, nameField, descriptionField, availabilityField);
 
-        addMember(listGrid);
+
+        gridHolder.addMember(listGrid);
+
+        ToolStrip toolStrip = new ToolStrip();
+        toolStrip.setMembersMargin(15);
+
+        final IButton removeButton = new IButton("Remove");
+        removeButton.setDisabled(true);
+        removeButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                SC.confirm("Are you sure you want to delete " + listGrid.getSelection().length + " resources?",
+                        new BooleanCallback() {
+                            public void execute(Boolean aBoolean) {
+
+                            }
+                        }
+                );
+            }
+        });
 
 
-//        listGrid.setFields(datasource.get);
+
+        final Label tableInfo = new Label("Total: " + listGrid.getTotalRows());
+        tableInfo.setWrap(false);
+
+        toolStrip.addMember(removeButton);
+        toolStrip.addMember(new LayoutSpacer());
+        toolStrip.addMember(tableInfo);        
+
+        gridHolder.addMember(toolStrip);
+
+
+        listGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                int selectedCount = ((ListGrid)selectionEvent.getSource()).getSelection().length;
+                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
+                removeButton.setDisabled(selectedCount == 0);
+            }
+        });
+
+
+
+        addMember(gridHolder);
 
 
         listGrid.addDataArrivedHandler(new DataArrivedHandler() {
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                listGrid.setAutoFitData(Autofit.HORIZONTAL);
-
+                int selectedCount = ((ListGrid)dataArrivedEvent.getSource()).getSelection().length;
+                tableInfo.setContents("Total: " + listGrid.getTotalRows() + " (" + selectedCount + " selected)");
             }
         });
 
@@ -102,15 +142,14 @@ public class ResourceSearchView extends VLayout {
         searchBox.addKeyPressHandler(new KeyPressHandler() {
             public void onKeyPress(KeyPressEvent event) {
                 if (event.getCharacterValue() == KeyCodes.KEY_ENTER) {
-                    datasource.setQuery((String)searchBox.getValue());
-                    Criteria c = new Criteria("name", (String)searchBox.getValue());
+                    datasource.setQuery((String) searchBox.getValue());
+                    Criteria c = new Criteria("name", (String) searchBox.getValue());
                     long start = System.currentTimeMillis();
                     listGrid.fetchData(c);
                     System.out.println("Loaded in: " + (System.currentTimeMillis() - start));
                 }
             }
         });
-
 
 
     }

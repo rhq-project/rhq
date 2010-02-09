@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -69,6 +70,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.domain.util.PersistenceUtility;
+import org.rhq.core.domain.util.StringUtils;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
@@ -695,7 +697,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             if (result.getEmails() != null && !result.getEmails().isEmpty()) {
                                 emailAddresses.addAll(result.getEmails());
                                 alNoLo.setTranisentEmails(result.getEmails());
-                                alNoLo.setAllEmails(result.getEmails().toString());
+                                alNoLo.setAllEmails(StringUtils.getListAsString(result.getEmails(),","));
                             }
                         } else {
                             alNoLo = new AlertNotificationLog(alert, senderName, result);
@@ -730,16 +732,15 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     if (!(anl.getResultState() == ResultState.DEFERRED_EMAIL))
                         continue;
 
-                    StringBuilder b = new StringBuilder();
+                    List<String> badList = new ArrayList<String>();
                     for (String badOne : badAddresses) {
                         if (anl.getTranisentEmails().contains(badOne)) {
                             anl.setResultState(ResultState.FAILED_EMAIL);
-                            b.append(badOne);
-                            b.append(", ");
+                            badList.add(badOne);
                         }
                     }
                     if (anl.getResultState()==ResultState.FAILED_EMAIL)
-                        anl.setBadEmails(b.toString());
+                        anl.setBadEmails(StringUtils.getListAsString(badList,","));
                 }
             }
 

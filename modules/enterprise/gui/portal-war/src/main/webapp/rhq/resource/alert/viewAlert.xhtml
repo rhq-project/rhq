@@ -152,19 +152,35 @@
                 </rich:panel>
             </h:panelGrid>
 
-            <ui:include src="notif/listAlertSender.xhtml">
+            <ui:decorate template="notif/listAlertSender.xhtml">
                 <ui:param name="redirect" value="/rhq/resource/alert/viewAlert.xhtml?ad=#{param.ad}" />
-            </ui:include>
+                <ui:define name="actionButtons">
+                    <br /><br />
+                    <h:outputLink id="addAlertTemplateLink" styleClass="buttonmed" value="#">
+                        <h:outputText value="Add Alert Notifications from Template" />
+                        <rich:componentControl for="addAlertFromTemplatePanel"
+                                            attachTo="addAlertTemplateLink"
+                                            operation="show"
+                                            event="onclick" />
+                    </h:outputLink>
+                </ui:define>
+            </ui:decorate>
 
-            <!-- Temp -->
-            <rich:panel id="addAlertFromTemplatePanel">
+            <br />
+            <br />
+            <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
+                <f:param name="id" value="#{alertDefinition.resource.id}"/>
+                <h:outputText value="Back to Alert Definitions for Resource '#{alertDefinition.resource.name}'"/>
+            </h:outputLink>
+
+            <rich:modalPanel id="addAlertFromTemplatePanel" moveable="false" autosized="true">
                 <f:facet name="header">
                     <h:outputText value="Add Alert Notifications from template"/>
                 </f:facet>
                 <h:form id="newNotificationsFromTemplateForm">
                     <input type="hidden" name="ad" value="${param.ad}"/>
 
-                    <div style="height: 100px;">
+                    <div>
                         <h:selectOneMenu id="templateList" value="#{definitionNotificationsUIBean.selectedTemplate}">
                             <f:selectItems value="#{definitionNotificationsUIBean.notificationTemplates}"/>
                         </h:selectOneMenu>
@@ -175,21 +191,20 @@
                         <h:outputText value="Clear existing notifications"/>
                     </div>
 
+                    <br />
                     <h:commandButton id="addTemplateButton"
-                                   value="Add Alert Notification from Template"
+                                   value="Add Alert Notifications"
                                    action="#{definitionNotificationsUIBean.addAlertSenderFromTemplate}"
                                    styleClass="buttonmed"
                                    style="margin-top: auto;">
                     </h:commandButton>
+                    
+                    <h:outputLink id="alertTemplateCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 10px;">
+                        <h:outputText value="Cancel" />
+                        <rich:componentControl for="addAlertFromTemplatePanel" attachTo="alertTemplateCancelLink" operation="hide" event="onclick" />
+                    </h:outputLink>
                 </h:form>
-            </rich:panel>
-
-            <br />
-            <br />
-            <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
-                <f:param name="id" value="#{alertDefinition.resource.id}"/>
-                <h:outputText value="Back to Alert Definitions for Resource '#{alertDefinition.resource.name}'"/>
-            </h:outputLink>
+            </rich:modalPanel>
 
             <rich:modalPanel id="editAlertDefinitionPanel" moveable="false" autosized="true">
                 <f:facet name="header">
@@ -215,9 +230,9 @@
                         <h:selectBooleanCheckbox id="alertEnabledInput" value="#{alertUIBean.alertDefinition.enabled}" />
                     </h:panelGrid>
 
-                    <h:outputLink id="cancelLink" styleClass="buttonmed" value="#" style="float: right;">
+                    <h:outputLink id="editDefinitionCancelLink" styleClass="buttonmed" value="#" style="float: right;">
                         <h:outputText value="Cancel" />
-                        <rich:componentControl for="editAlertDefinitionPanel" attachTo="cancelLink" operation="hide" event="onclick" />
+                        <rich:componentControl for="editAlertDefinitionPanel" attachTo="editDefinitionCancelLink" operation="hide" event="onclick" />
                     </h:outputLink>
 
                     <h:commandButton id="saveButton" value="Save Changes" styleClass="buttonmed" action="#{alertUIBean.saveAlertDefinition}" />

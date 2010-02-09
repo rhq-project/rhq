@@ -17,6 +17,8 @@
       <runs-inside>
          <parent-resource-type name="Server A" plugin="Test1"/>
       </runs-inside>
+      
+      <bundle type="test-bundle-name"/>
    </service>
 
 </plugin>

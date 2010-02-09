@@ -33,6 +33,7 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
@@ -48,6 +49,7 @@ import org.rhq.core.clientapi.descriptor.plugin.RunsInsideType;
 import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
+import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -88,6 +90,10 @@ public class PluginMetadataParser {
         this.pluginDescriptor = descriptor;
         this.parsersByPlugin = parsersByPlugin;
         parseDescriptor();
+    }
+
+    public PluginDescriptor getDescriptor() {
+        return this.pluginDescriptor;
     }
 
     public String getPluginLifecycleListenerClass() {
@@ -433,6 +439,7 @@ public class PluginMetadataParser {
         // 7) Process matches (for process scan auto-discovery)
         // 8) Artifacts
         // 9) Child subcategories
+        // 10) Bundle Type
 
         String classLoaderTypeString = resourceDescriptor.getClassLoader();
         if (classLoaderTypeString == null) {
@@ -511,6 +518,13 @@ public class PluginMetadataParser {
                         resourceType));
                 }
             }
+
+            Bundle bundle = resourceDescriptor.getBundle();
+            if (bundle != null) {
+                String typeName = bundle.getType();
+                resourceType.setBundleType(new BundleType(typeName, resourceType));
+            }
+
         } catch (InvalidPluginDescriptorException e) {
             // TODO: Should we be storing these for viewing in server? Breaking deployment? What?
             throw e;

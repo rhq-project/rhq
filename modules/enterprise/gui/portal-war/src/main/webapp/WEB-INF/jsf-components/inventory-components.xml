@@ -14,12 +14,28 @@
       </component-extension>
    </component>
    
+   <component>
+      <component-type>org.jboss.on.ResourcePartialLineage</component-type>
+      <component-class>org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent</component-class>
+
+      <component-extension>
+         <component-family>org.jboss.on.ResourcePartialLineage</component-family>
+         <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
+      </component-extension>
+   </component>
+   
    <render-kit>
       <renderer>
          <description>renderer for a ResourceLineage component</description>
          <component-family>org.jboss.on.ResourceLineage</component-family>
          <renderer-type>org.jboss.on.ResourceLineage</renderer-type>
          <renderer-class>org.rhq.enterprise.gui.inventory.resource.ResourceLineageRenderer</renderer-class>
+      </renderer>
+      <renderer>
+         <description>renderer for a ResourcePartialLineage component</description>
+         <component-family>org.jboss.on.ResourcePartialLineage</component-family>
+         <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
+         <renderer-class>org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageRenderer</renderer-class>
       </renderer>
    </render-kit>
 

@@ -410,17 +410,7 @@
 
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
-            <version>2.1-alpha-1</version>
             <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
                <webResources>
                   <resource>
                      <filtering>false</filtering>
@@ -436,7 +426,6 @@
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
             <executions>
                <execution>
                   <id>Generate I18N Resource Bundles</id>

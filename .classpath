@@ -112,7 +112,6 @@
 	<classpathentry kind="src" path="modules/plugins/cobbler/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/cobbler/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/virt/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/virt/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/kickstart/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/aliases/src/test/java"/>
@@ -121,7 +120,6 @@
 	<classpathentry kind="src" path="modules/plugins/byteman/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/lsof/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
-	<classpathentry kind="src" path="modules/plugins/antlr-config/src/main/antlr3"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>

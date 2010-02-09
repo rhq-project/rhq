@@ -27,7 +27,9 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -123,6 +125,13 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     private static final String MANAGED_PROPERTY_GROUP = "managedPropertyGroup";
 
     private static final Pattern METRIC_NAME_PATTERN = Pattern.compile("(.*)\\|(.*)\\|(.*)\\|(.*)");
+
+    public static final Map<String, String> NEW_PROPERTY_NAMES = new HashMap<String, String>();
+    static {
+        NEW_PROPERTY_NAMES.put("transactionCount", "numberOfTransactions");
+        NEW_PROPERTY_NAMES.put("commitCount", "numberOfCommittedTransactions");
+        NEW_PROPERTY_NAMES.put("rollbackCount", "numberOfApplicationRollbacks");
+    }
 
     private final Log log = LogFactory.getLog(this.getClass());
 
@@ -253,11 +262,43 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
                 } else {
                     component = ManagedComponentUtils.getManagedComponent(managementView, componentType, componentName);
                 }
-                Serializable value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+
+                Serializable value = null;
+                boolean foundProperty = false;
+                try {
+                    value = ManagedComponentUtils.getSimplePropertyValue(component, propertyName);
+                    foundProperty = true;
+                } catch (ManagedComponentUtils.PropertyNotFoundException e) {
+                    if (NEW_PROPERTY_NAMES.containsKey(propertyName)) {
+                        String newPropertyName = NEW_PROPERTY_NAMES.get(propertyName);
+                        try {
+                            value = ManagedComponentUtils.getSimplePropertyValue(component, newPropertyName);
+                            foundProperty = true;
+                        } catch (ManagedComponentUtils.PropertyNotFoundException e1) {
+                            // ignore
+                        }
+                    }
+                }
+
+                if (!foundProperty) {
+                    if (NEW_PROPERTY_NAMES.containsKey(propertyName)) {
+                        List<String> propertyNames = new ArrayList<String>(2);
+                        propertyNames.add(propertyName);
+                        propertyNames.add(NEW_PROPERTY_NAMES.get(propertyName));
+                        log.error("Property with one of the following names was not found for ManagedComponent ["
+                            + component + "]: " + propertyNames);
+                    } else {
+                        log.error("Property '" + propertyName + "' was not found for ManagedComponent ["
+                            + component + "].");
+                    }
+                    continue;
+                }
+
                 if (value == null) {
                     log.debug("Null value returned for metric '" + metricName + "'.");
                     continue;
                 }
+
                 if (request.getDataType() == DataType.MEASUREMENT) {
                     Number number = (Number) value;
                     report.addData(new MeasurementDataNumeric(request, number.doubleValue()));
@@ -335,9 +376,10 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
     // ---------------------------------------------------------------
 
     private void connectToProfileService() {
-        if (this.connection != null)
+        if (this.connection != null) {
             return;
-        // TODO: Check for a defunct connection and if found try to reconnect.
+        }
+        // TODO: Check for a defunct connection and if found try to reconnect?
         ProfileServiceConnectionProvider connectionProvider;
         if (runningEmbedded()) {
             connectionProvider = new LocalProfileServiceConnectionProvider();
@@ -348,6 +390,12 @@ public class ApplicationServerComponent implements ResourceComponent, ProfileSer
             String principal = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.PRINCIPAL, null);
             String credentials = pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.CREDENTIALS, null);
             connectionProvider = new RemoteProfileServiceConnectionProvider(namingURL, principal, credentials);
+        }
+        if (Thread.interrupted()) {
+            // In case we've been timed out by the component facet invoker, clear the interrupted status,
+            // so that when the below call to connect() tried to make a remote call, JBoss Remoting
+            // doesn't throw an InterruptedException and short circuit our attempts to reconnect.
+            log.debug("Ignoring facet timeout in order to reconnect to Profile Service.");
         }
         try {
             this.connection = connectionProvider.connect();

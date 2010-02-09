@@ -277,7 +277,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
 
         metricNameFilter = QueryUtility.formatSearchParameter(metricNameFilter);
         resourceNameFilter = QueryUtility.formatSearchParameter(resourceNameFilter);
-        parentNameFilter = QueryUtility.formatSearchParameter(parentNameFilter);
+        parentNameFilter = QueryUtility.formatSearchParameter(parentNameFilter);        
 
         query.setParameter("metricName", metricNameFilter);
         queryCount.setParameter("metricName", metricNameFilter);
@@ -285,6 +285,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         queryCount.setParameter("resourceName", resourceNameFilter);
         query.setParameter("parentName", parentNameFilter);
         queryCount.setParameter("parentName", parentNameFilter);
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
 
         if (!isAdmin) {
             query.setParameter("subjectId", subject.getId());

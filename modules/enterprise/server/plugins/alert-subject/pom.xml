@@ -30,57 +30,11 @@
     <dependencies>
 
         <dependency>
-           <groupId>org.rhq</groupId>
-           <artifactId>rhq-core-domain</artifactId>
-           <version>${project.version}</version>
-           <scope>provided</scope> <!-- by ear -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-            <!-- by JBossAS -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.seam</groupId>
-            <artifactId>jboss-seam</artifactId>
-            <version>${seam.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>xml-apis</groupId>
-                    <artifactId>xml-apis</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-
-        <!-- This is a fix for the Javac bug requiring annotations to be
-             available when compiling dependent classes.  -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>hibernate-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>
-            <!-- needed for referenced domain entities that use Hibernate annotations -->
-        </dependency>
-
-        <dependency>
             <groupId>jboss.jboss-embeddable-ejb3</groupId>
             <artifactId>jboss-ejb3-all</artifactId>
             <version>1.0.0.Alpha9</version>
             <scope>compile</scope>
         </dependency>
-
 
     </dependencies>
 

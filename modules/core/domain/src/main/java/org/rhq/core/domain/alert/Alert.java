@@ -153,8 +153,8 @@ import org.rhq.core.domain.auth.Subject;
          * fetched association was not present in the select list"...even though it clearly is  ;/
          */
         //+ "     JOIN FETCH a.conditionLogs acl " //
-        + "    WHERE (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
-        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "    WHERE (UPPER(res.name) LIKE :resourceFilter ESCAPE :escapeChar OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter ESCAPE :escapeChar OR :parentFilter IS NULL) " //
         + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //
@@ -178,8 +178,8 @@ import org.rhq.core.domain.auth.Subject;
         + "    WHERE res.id IN ( SELECT rr.id FROM Resource rr " //
         + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
         + "                       WHERE s.id = :subjectId ) " //
-        + "      AND (UPPER(res.name) LIKE :resourceFilter OR :resourceFilter IS NULL) " //
-        + "      AND (UPPER(parent.name) LIKE :parentFilter OR :parentFilter IS NULL) " //
+        + "      AND (UPPER(res.name) LIKE :resourceFilter ESCAPE :escapeChar OR :resourceFilter IS NULL) " //
+        + "      AND (UPPER(parent.name) LIKE :parentFilter ESCAPE :escapeChar OR :parentFilter IS NULL) " //
         + "      AND (a.ctime > :startTime OR :startTime IS NULL) " //
         + "      AND (a.ctime < :endTime OR :endTime IS NULL) " //
         + "      AND (a.id IN ( SELECT aa.id FROM Alert aa " //

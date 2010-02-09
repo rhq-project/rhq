@@ -35,17 +35,23 @@ import org.rhq.core.domain.util.PageList;
 public class CriteriaQueryRunner<T> {
 
     private Criteria criteria;
-
     private CriteriaQueryGenerator queryGenerator;
-
     private EntityManager entityManager;
+    private boolean autoInitializeBags;;
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager) {
+        this(criteria, queryGenerator, entityManager, true);
+    }
+
+    public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager,
+        boolean autoInitializeBags) {
         this.criteria = criteria;
         this.queryGenerator = queryGenerator;
         this.entityManager = entityManager;
+        this.autoInitializeBags = autoInitializeBags;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<T> execute() {
         Query query = queryGenerator.getQuery(entityManager);
         Query countQuery = queryGenerator.getCountQuery(entityManager);
@@ -53,28 +59,26 @@ public class CriteriaQueryRunner<T> {
         long count = (Long) countQuery.getSingleResult();
         List<T> results = query.getResultList();
 
-        initAllPersistentBags(results);
+        if (autoInitializeBags) {
+            for (T entity : results) {
+                initPersistentBags(entity);
+            }
+        }
 
         return new PageList<T>(results, (int) count, criteria.getPageControl());
     }
 
-    private void initAllPersistentBags(List<T> entities) {
-        for (T entity : entities) {
-            initPersistentBags(entity);
-        }
-    }
-
-    private void initPersistentBags(T entity) {
+    public void initPersistentBags(Object entity) {
         for (Field persistentBagField : queryGenerator.getPersistentBagFields()) {
-            List persistentBag = getList(entity, persistentBagField);
+            List<?> persistentBag = getList(entity, persistentBagField);
             persistentBag.size();
         }
     }
 
-    private List getList(T entity, Field field) {
+    private List<?> getList(Object entity, Field field) {
         try {
             field.setAccessible(true);
-            return (List) field.get(entity);
+            return (List<?>) field.get(entity);
         } catch (IllegalAccessException e) {
             e.printStackTrace();
             return null;

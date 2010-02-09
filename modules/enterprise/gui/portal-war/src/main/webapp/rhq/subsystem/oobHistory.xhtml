@@ -80,12 +80,12 @@
                   </f:facet>
 
                   <h:outputLink value="/resource/common/monitor/Visibility.do">
-                      <f:param name="m" value="#{item.definitionId}"/>
-                      <f:param name="id" value="#{item.resourceId}"/>
+                      <f:param name="m" value="#{item.original.definitionId}"/>
+                      <f:param name="id" value="#{item.original.resourceId}"/>
                       <f:param name="mode" value="chartSingleMetricSingleResource" />
 
 
-                      <h:outputText value="#{item.scheduleName}"/>
+                      <h:outputText value="#{item.original.scheduleName}"/>
                   </h:outputLink>
                </rich:column>
 
@@ -97,37 +97,31 @@
                    </f:facet>
 
                    <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                      <f:param name="id" value="#{item.resourceId}" />
-                      <h:outputText value="#{item.resourceName}" />
+                      <f:param name="id" value="#{item.original.resourceId}" />
+                      <h:outputText value="#{item.original.resourceName}" />
                    </h:outputLink>
                 </rich:column>
 
                 <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="parent.name">
-                        <h:outputText styleClass="headerText" value="Parent" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentName}">
-                     <f:param name="id" value="#{item.parentId}" />
-                     <h:outputText value="#{item.parentName}" />
-                  </h:outputLink>
+                  <onc:resourcePartialLineage parents="#{item.parents}"/>
                </rich:column>
 
                 <rich:column>
                     <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Band"/>
                     </f:facet>
-                    <h:outputText value="#{item.formattedBaseband}"/>
+                    <h:outputText value="#{item.original.formattedBaseband}"/>
                 </rich:column>
 
                 <rich:column style="text-align:right">
                     <f:facet name="header">
                         <h:outputText styleClass="headerText" value="Outlier value"/>
                     </f:facet>
-                    <h:outputText value="#{item.formattedOutlier}"/>
+                    <h:outputText value="#{item.original.formattedOutlier}"/>
                 </rich:column>
 
                 <rich:column style="background-color: rgb(216,216,216);text-align:right">
@@ -137,7 +131,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                   <h:outputText value="#{item.factor}%" >
+                   <h:outputText value="#{item.original.factor}%" >
                   </h:outputText>
                </rich:column>
 

@@ -311,9 +311,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * RF components, the DataTable component does not see this change.  so, we have to explicitly
              * update the page control to get the view consistent with the backend once again.
              */
-            if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
+            if (results.getTotalSize() < pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
                 if (log.isTraceEnabled()) {
-                    if (results.getTotalSize() <= pc.getStartRow()) {
+                    if (results.getTotalSize() < pc.getStartRow()) {
                         log.trace(pageControlView + ": Results size[" + results.getTotalSize()
                             + "] was less than PageControl startRow[" + pc.getStartRow() + "]");
                     } else {

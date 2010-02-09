@@ -90,6 +90,8 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         query.setParameter("resourceFilter", resourceFilter);
         queryCount.setParameter("parentFilter", parentFilter);
         query.setParameter("parentFilter", parentFilter);
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
         queryCount.setParameter("startTime", startTime);
         query.setParameter("startTime", startTime);
         queryCount.setParameter("endTime", endTime);
@@ -134,6 +136,8 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
         query.setParameter("resourceFilter", resourceFilter);
         queryCount.setParameter("parentFilter", parentFilter);
         query.setParameter("parentFilter", parentFilter);
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
         queryCount.setParameter("startTime", startTime);
         query.setParameter("startTime", startTime);
         queryCount.setParameter("endTime", endTime);

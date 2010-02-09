@@ -101,6 +101,9 @@ public interface ResourceGroupManagerLocal {
         ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
         Integer resourceId, Integer groupId, PageControl pc);
 
+    PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
+        ResourceGroupCriteria criteria);
+
     List<Integer> findDeletedResourceGroupIds(int[] groupIds);
 
     void ensureMembershipMatches(Subject subject, int groupId, int[] resourceIds) throws ResourceGroupUpdateException;

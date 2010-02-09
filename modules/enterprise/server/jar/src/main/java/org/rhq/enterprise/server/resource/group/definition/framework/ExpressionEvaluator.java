@@ -1022,6 +1022,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
                 } else {
                     String whereConditionOperator = " = ";
+                    String ending = " ";
                     if (bindValue != null) {
                         /*
                          * there will *not* necessarily be a replacement value ready at this point in the processing; these
@@ -1032,9 +1033,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         if ((bindValueAsString != null) // whereConditionValue is null when whereCondition isn't a groupBy expression
                             && (bindValueAsString.startsWith("%") || bindValueAsString.endsWith("%"))) {
                             whereConditionOperator = " LIKE ";
+                            ending = QueryUtility.getEscapeClause();
                         }
                     }
-                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + " ";
+                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + ending;
                 }
 
                 first = false;

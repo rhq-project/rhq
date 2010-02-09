@@ -46,9 +46,9 @@ import javax.persistence.Table;
     + "      AND res.id IN ( SELECT rr.id FROM Resource rr " //
     + "                        JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s " //
     + "                       WHERE s.id = :subjectId ) " //
-    + "      AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " //
-    + "      AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " //
-    + "      AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "), //
+    + "      AND (UPPER(def.displayName ) LIKE :metricName ESCAPE :escapeChar OR :metricName is null ) " //
+    + "      AND (UPPER(res.name) LIKE :resourceName ESCAPE :escapeChar OR :resourceName is null ) " //
+    + "      AND (UPPER(parent.name) LIKE :parentName ESCAPE :escapeChar OR :parentName is null ) "), //
     @NamedQuery(name = MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_ADMIN, query = "" //
         + "   SELECT new org.rhq.core.domain.measurement.composite.MeasurementOOBComposite" //
         + "        ( res.name, res.id, def.displayName, sched.id, o.timestamp, def.id, o.oobFactor, " //
@@ -62,9 +62,9 @@ import javax.persistence.Table;
         + "      AND sched.definition = def " //
         + "      AND sched.resource = res " //
         + "      AND bal.schedule = sched " //
-        + "      AND (UPPER(def.displayName ) LIKE :metricName OR :metricName is null ) " //
-        + "      AND (UPPER(res.name) LIKE :resourceName OR :resourceName is null ) " //
-        + "      AND (UPPER(parent.name) LIKE :parentName OR :parentName is null ) "), //
+        + "      AND (UPPER(def.displayName ) LIKE :metricName ESCAPE :escapeChar OR :metricName is null ) " //
+        + "      AND (UPPER(res.name) LIKE :resourceName ESCAPE :escapeChar OR :resourceName is null ) " //
+        + "      AND (UPPER(parent.name) LIKE :parentName ESCAPE :escapeChar OR :parentName is null ) "), //
     @NamedQuery(name = MeasurementOOB.GET_SCHEDULES_WITH_OOB_AGGREGATE_COUNT, query = "" //
         + "   SELECT COUNT(sched.id) " //
         + "     FROM MeasurementOOB o, MeasurementSchedule sched " //

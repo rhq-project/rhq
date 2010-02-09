@@ -3016,7 +3016,11 @@
             </schemaSpec>
 
             <schemaSpec version="2.78">
-                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
+               <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->               
+               <schema-dropTable table="RHQ_BUNDLE_CONFIG CASCADE" />
+               <schema-dropSequence name="rhq_bundle_config_id_seq" />
+
+               <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_CONFIG_DEF">
                         ALTER TABLE RHQ_BUNDLE_VERSION
@@ -3035,11 +3039,6 @@
                         REFERENCES RHQ_RESOURCE_TYPE (ID)
                     </statement>
                 </schema-directSQL>
-
-               <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
-               
-               <schema-dropTable table="RHQ_BUNDLE_CONFIG" />
-               <schema-dropSequence name="rhq_bundle_config_id_seq" />
 
                <!-- RHQ_BUNDLE_DEPLOY_DEF -->
                <schema-directSQL>
@@ -3072,7 +3071,7 @@
                    </statement>
                </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" columnType="BOOLEAN" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="" nullable="FALSE" /> 
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" nullable="FALSE" /> 
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCEMENT_INTERVAL" columnType="INTEGER" />               
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" columnType="INTEGER" />               
                <schema-directSQL>

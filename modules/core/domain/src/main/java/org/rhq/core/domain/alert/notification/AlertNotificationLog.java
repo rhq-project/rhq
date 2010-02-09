@@ -27,6 +27,8 @@ import java.io.Serializable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -87,7 +89,9 @@ public class AlertNotificationLog implements Serializable {
 
     private String sender;
 
-    private String result;
+    @Column(name ="RESULT")
+    @Enumerated(EnumType.STRING)
+    private ResultState result;
 
     private String message;
 
@@ -101,17 +105,25 @@ public class AlertNotificationLog implements Serializable {
     protected AlertNotificationLog() {
     } // JPA
 
-    public AlertNotificationLog(Alert alert, String sender, String result, String message) {
+    public AlertNotificationLog(Alert alert, String sender, SenderResult senderResult) {
         this.alert = alert;
         this.sender = sender;
-        this.result = result;
-        this.message = message;
+        this.result = senderResult.getState();
+        this.message = senderResult.getMessage();
     }
 
     public AlertNotificationLog(Alert alert, String sender) {
         this.alert = alert;
         this.sender = sender;
-        this.result = "FAILURE"; // Default if nothing specified
+        this.result = ResultState.FAILURE; // Default if nothing specified
+    }
+
+    public AlertNotificationLog(Alert alert, String senderName, ResultState state, String message) {
+        this.alert = alert;
+        this.sender = sender;
+        this.result = state;
+        this.message = message;
+
     }
 
     public int getId() {
@@ -131,7 +143,7 @@ public class AlertNotificationLog implements Serializable {
         return sender;
     }
 
-    public String getResult() {
+    public ResultState getResult() {
         return result;
     }
 
@@ -147,7 +159,7 @@ public class AlertNotificationLog implements Serializable {
         return badEmails;
     }
 
-    public void setResult(String result) {
+    public void setResult(ResultState result) {
         this.result = result;
     }
 

@@ -692,22 +692,20 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                         }
                         // TODO log result - especially handle the deferred_email case
                         log.info(result);
-                        alNoLo = new AlertNotificationLog(alert, senderName,
-                                result.getState().toString(),
-                                result.getMessage());
+                        alNoLo = new AlertNotificationLog(alert, senderName, result);
                     }
                     catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
                         if (log.isDebugEnabled())
                             log.debug("Sender " + sender.toString() + "failed: \n", t);
                         alNoLo  = new AlertNotificationLog(alert, senderName,
-                                "FAILED",
+                                ResultState.FAILURE,
                                 "Failed with exception: " + t.getMessage());
                     }
                 }
                 else {
                     alNoLo = new AlertNotificationLog(alert, senderName,
-                            "FAILED",
+                            ResultState.FAILURE,
                             "Failed to obtain a sender with given name");
                 }
                 entityManager.persist(alNoLo);

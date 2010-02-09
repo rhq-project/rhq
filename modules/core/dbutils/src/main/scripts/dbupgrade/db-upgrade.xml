@@ -1,3 +1,4 @@
+
 <project name="db-upgrade" default="upgrade" basedir=".">
 
     <!--
@@ -3017,6 +3018,18 @@
             <schemaSpec version="2.77.3">
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id"/>
+            </schemaSpec>
+            <schemaSpec version="2.77.4">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails"/>
+
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_SENT" columnType="VARCHAR2" precision="4096" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4096" />
+
             </schemaSpec>
         </dbupgrade>
     </target>

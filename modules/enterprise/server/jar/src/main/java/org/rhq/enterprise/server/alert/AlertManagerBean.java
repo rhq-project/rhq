@@ -22,6 +22,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -127,7 +128,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @javax.annotation.Resource(name = "RHQ_DS")
     private DataSource rhqDs;
 
-    private static Date bootTime = null;
 
     /**
      * Persist a detached alert.
@@ -145,16 +145,25 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
     /**
      * Remove the alerts with the specified id's.
+     * @param user caller
+     * @param ids primary keys of the alerts to delete
+     * @return number of alerts deleted
      */
-    private void deleteAlerts(Integer[] ids) {
+    public int deleteAlerts(Subject user, Integer[] ids) {
+        if (!authorizationManager.hasGlobalPermission(user,Permission.MANAGE_ALERTS))
+             throw new PermissionException("User [" + user.getName() + "] does not have permissions to delete alerts ");
+
+        int i = 0;
         for (Integer id : ids) {
             Alert alert = entityManager.find(Alert.class, id);
             if (alert != null) {
-                AlertNotificationLog anl = alert.getAlertNotificationLog();
-                entityManager.remove(anl);
+//                AlertNotificationLog anl = alert.getAlertNotificationLog();  TODO is that all?
+//                entityManager.remove(anl);
                 entityManager.remove(alert); // condition logs will be removed with entity cascading
             }
+            i++;
         }
+        return i;
     }
 
     public void deleteAlerts(Subject user, int resourceId, Integer[] ids) {
@@ -163,7 +172,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 + "for resourceId=" + resourceId);
         }
 
-        deleteAlerts(ids);
+        deleteAlerts(user, ids);
     }
 
     public void deleteAlertsForResourceGroup(Subject user, int resourceGroupId, Integer[] ids) {
@@ -172,7 +181,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 + "for groupId=" + resourceGroupId);
         }
 
-        deleteAlerts(ids);
+        deleteAlerts(user, ids);
     }
 
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
@@ -557,6 +566,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @param user calling user
      * @param resourceId resource the alerts happened on
      * @param alertIds PKs of the alerts to ack
+     * @return number of alerts acknowledged
      */
     public int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds) {
         if (!authorizationManager.hasResourcePermission(user, Permission.MANAGE_ALERTS, resourceId)) {
@@ -601,8 +611,8 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         this.createAlert(newAlert);
         log.debug("New alert identifier=" + newAlert.getId());
 
-        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);
-        entityManager.persist(alertNotifLog);
+//        AlertNotificationLog alertNotifLog = new AlertNotificationLog(newAlert);  TODO - is that all?
+//        entityManager.persist(alertNotifLog);
 
         List<AlertConditionLog> unmatchedConditionLogs = alertConditionLogManager
             .getUnmatchedLogsByAlertDefinitionId(alertDefinitionId);
@@ -640,6 +650,12 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
+    /**
+     * This is the core of the alert sending process. For each AlertNotification that is hanging
+     * on the alerts definition, the sender is instantiated and its send() method called. If a sender
+     * returns a list of email addresses, those will be collected and sent at the end.
+     * @param alert the fired alert
+     */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void sendAlertNotifications(Alert alert) {
         /*
@@ -648,40 +664,71 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
          */
         try {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
-            Collection<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
+            List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
             Set<String> emailAddresses = new LinkedHashSet<String>();
+            List<AlertNotificationLog> logs = new ArrayList<AlertNotificationLog>();
 
             for (AlertNotification alertNotification : alertNotifications) {
 
                 // Send over the new AlertSender plugins
-                if (alertNotification.getSenderName()==null) {
-                    log.warn("Alert notification " + alertNotification + " has no sender name defined");
+                String senderName = alertNotification.getSenderName();
+                if (senderName ==null) {
+                    log.error("Alert notification " + alertNotification + " has no sender name defined");
                     continue;
                 }
 
+                AlertNotificationLog alNoLo ;
                 AlertSender sender = getAlertSender(alertNotification);
+
                 if (sender != null) {
                     try {
                         SenderResult result = sender.send(alert);
                         if (result == null) {
-                            log.warn("- !! -- sender " + alertNotification.getSenderName() +
-                                    " did not return a SenderResult. Please fix this -- !! - ");
+                            log.warn("- !! -- sender [" + senderName +
+                                    "] did not return a SenderResult. Please fix this -- !! - ");
                         } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
                             if (result.getEmails() != null && !result.getEmails().isEmpty())
                                 emailAddresses.addAll(result.getEmails());
                         }
                         // TODO log result - especially handle the deferred_email case
                         log.info(result);
+                        alNoLo = new AlertNotificationLog(alert, senderName,
+                                result.getState().toString(),
+                                result.getMessage());
                     }
                     catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
                         if (log.isDebugEnabled())
                             log.debug("Sender " + sender.toString() + "failed: \n", t);
+                        alNoLo  = new AlertNotificationLog(alert, senderName,
+                                "FAILED",
+                                "Failed with exception: " + t.getMessage());
                     }
+                }
+                else {
+                    alNoLo = new AlertNotificationLog(alert, senderName,
+                            "FAILED",
+                            "Failed to obtain a sender with given name");
+                }
+                entityManager.persist(alNoLo);
+                alert.addAlertNotificatinLog(alNoLo);
+                logs.add(alNoLo);
+            }
+
+            // send them off
+            Collection<String> badAddresses = sendAlertNotificationEmails(alert, emailAddresses);
+            // TODO we may do the same for SMS in the future.
+
+            // TODO log those bad addresses to the gui and their individual senders (if possible)
+            if (!badAddresses.isEmpty()) {
+                for (int i = 0; i < alertNotifications.size(); i++) {
+                    AlertNotification notification = alertNotifications.get(i);
+                // fill in badAdd if needed
                 }
             }
 
-            sendAlertNotificationEmails(alert, emailAddresses);
+
+
         } catch (Exception e) {
             log.error("Failed to send all notifications for " + alert.toSimpleString(), e);
         }
@@ -705,19 +752,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return sender;
     }
 
-    private void processEmailAddress(Alert alert, String emailAddress, Set<String> emailAddresses) {
-        if (emailAddress == null) {
-            return;
-        }
-
-        emailAddress = emailAddress.toLowerCase();
-
-        if (!emailAddresses.contains(emailAddress)) {
-            emailAddresses.add(emailAddress);
-        }
-    }
-
-    private void sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
+    /**
+     *
+     * @param alert
+     * @param emailAddresses
+     * @return
+     */
+    private Collection<String> sendAlertNotificationEmails(Alert alert, Set<String> emailAddresses) {
         log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
 
         AlertDefinition alertDefinition = alert.getAlertDefinition();
@@ -728,12 +769,15 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         String messageSubject = alertMessage.keySet().iterator().next();
         String messageBody = alertMessage.values().iterator().next();
 
-        try {
-            emailManager.sendEmail(emailAddresses, messageSubject, messageBody);
-            log.debug("All notifications for " + alert.toSimpleString() + " succeeded");
-        } catch (Throwable t) {
-            log.error("One or more notifications for " + alert.toSimpleString() + " failed: " + t.getMessage());
+        Collection<String> badAddresses;
+        badAddresses = emailManager.sendEmail(emailAddresses, messageSubject, messageBody);
+        if (log.isDebugEnabled()) {
+            if (badAddresses.isEmpty())
+                log.debug("All notifications for " + alert.toSimpleString() + " succeeded");
+            else
+                log.debug("Sending email notifications for " + badAddresses + " failed");
         }
+        return badAddresses;
     }
 
     private static String NEW_LINE = System.getProperty("line.separator");
@@ -970,7 +1014,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     @SuppressWarnings("unchecked")
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
-        if (authorizationManager.isInventoryManager(subject) == false) {
+        if (!authorizationManager.isInventoryManager(subject)) {
             generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE,
                 "alertDefinition.resource", subject.getId());
         }

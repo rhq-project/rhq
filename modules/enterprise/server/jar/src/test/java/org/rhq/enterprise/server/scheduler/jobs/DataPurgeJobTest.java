@@ -423,7 +423,7 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
         Alert a = new Alert(ad, timestamp);
         em.persist(a);
 
-        AlertNotificationLog anl = new AlertNotificationLog(a);
+        AlertNotificationLog anl = new AlertNotificationLog(a,"dummy");
         em.persist(anl);
 
         AlertCondition ac = ad.getConditions().iterator().next();

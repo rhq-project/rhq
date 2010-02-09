@@ -123,6 +123,15 @@ public interface AlertManagerLocal {
      * @param user calling user
      * @param resourceId resource the alerts happened on
      * @param alertIds PKs of the alerts to ack
+     * @return number of alerts acknowledged
      */
     int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds);
+
+    /**
+     * Remove the alerts with the specified id's.
+     * @param user caller
+     * @param ids primary keys of the alerts to delete
+     * @return number of alerts deleted
+     */
+    int deleteAlerts(Subject user, Integer[] ids);
 }

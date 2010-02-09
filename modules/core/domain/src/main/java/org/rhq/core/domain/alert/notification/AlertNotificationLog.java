@@ -22,18 +22,18 @@
  */
 package org.rhq.core.domain.alert.notification;
 
+
 import java.io.Serializable;
 
-import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -41,25 +41,23 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.AlertDefinition;
 
 @Entity
 @NamedQueries( {
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_ALERT_CTIME, //
-    query = "DELETE AlertNotificationLog anl " + //
-        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
-        "                         FROM Alert a " + //
-        "                        WHERE a.ctime BETWEEN :begin AND :end )"),
+            query = "DELETE AlertNotificationLog anl  WHERE anl.id IN ("  +
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an WHERE a.ctime BETWEEN :begin AND :end)"),
+
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE, //
-    query = "DELETE AlertNotificationLog anl " + //
-        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
-        "                         FROM Alert a " + //
-        "                        WHERE a.alertDefinition.resource.id = :resourceId )"),
+            query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an JOIN a.alertDefinition def " +
+                    "WHERE def.resource.id = :resourceId)"),
+
     @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCES, //
-    query = "DELETE AlertNotificationLog anl " + //
-        "     WHERE anl.id IN ( SELECT a.alertNotificationLog.id " + //
-        "                         FROM Alert a " + //
-        "                        WHERE a.alertDefinition.resource.id IN ( :resourceIds ) )") })
+            query = "DELETE AlertNotificationLog anl WHERE anl.id IN (" +
+                    "SELECT an.id FROM Alert a JOIN a.alertNotificationLog an JOIN a.alertDefinition def " +
+                    "WHERE def.resource.id IN ( :resourceIds ) )")
+  })
 @SequenceGenerator(name = "RHQ_ALERT_NOTIF_LOG_ID_SEQ", sequenceName = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")
 @Table(name = "RHQ_ALERT_NOTIF_LOG")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -81,62 +79,45 @@ public class AlertNotificationLog implements Serializable {
      * note, currently there is no distinction between successful and failed notifications, but there should be in the
      * future
      */
-    @Column(name = "ROLES", nullable = false)
-    private String roles;
-
-    @Column(name = "SUBJECTS", nullable = false)
-    private String subjects;
-
-    @Column(name = "EMAILS", nullable = false)
-    private String emails;
 
     @JoinColumn(name = "ALERT_ID", referencedColumnName = "ID")
-    @OneToOne
+    @ManyToOne
     @XmlTransient
     private Alert alert;
+
+    private String sender;
+
+    private String result;
+
+    private String message;
+
+    @Column(name="EMAILS_SENT")
+    private String goodEmails;
+
+    @Column(name="EMAILS_FAILED")
+    private String badEmails;
+
 
     protected AlertNotificationLog() {
     } // JPA
 
-    public AlertNotificationLog(Alert alert) {
-        AlertDefinition alertDefinition = alert.getAlertDefinition();
-
-        List<AlertNotification> currentNotifications = alertDefinition.getAlertNotifications();
-        for (AlertNotification notification : currentNotifications) {
-                //((SnmpNotification)notification).
-                // TODO: log that this type of AlertNotification is not supported yet for auditing
-        }
-
-        // always make sure each notification field is non-null by "fixing" it
+    public AlertNotificationLog(Alert alert, String sender, String result, String message) {
         this.alert = alert;
-        this.roles ="(none)";
-        this.subjects ="(none)";
-        this.emails ="(none)";
+        this.sender = sender;
+        this.result = result;
+        this.message = message;
     }
 
-    private String fixup(StringBuilder builder) {
-        if (builder.length() == 0) {
-            return "(none)";
-        } else {
-            return builder.toString();
-        }
+    public AlertNotificationLog(Alert alert, String sender) {
+        this.alert = alert;
+        this.sender = sender;
+        this.result = "FAILURE"; // Default if nothing specified
     }
 
     public int getId() {
         return id;
     }
 
-    public String getRoles() {
-        return roles;
-    }
-
-    public String getSubjects() {
-        return subjects;
-    }
-
-    public String getEmails() {
-        return emails;
-    }
 
     public Alert getAlert() {
         return alert;
@@ -144,5 +125,41 @@ public class AlertNotificationLog implements Serializable {
 
     public void setAlert(Alert alert) {
         this.alert = alert;
+    }
+
+    public String getSender() {
+        return sender;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getGoodEmails() {
+        return goodEmails;
+    }
+
+    public String getBadEmails() {
+        return badEmails;
+    }
+
+    public void setResult(String result) {
+        this.result = result;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setGoodEmails(String goodEmails) {
+        this.goodEmails = goodEmails;
+    }
+
+    public void setBadEmails(String badEmails) {
+        this.badEmails = badEmails;
     }
 }

@@ -29,5 +29,7 @@ public enum ResultState {
     /** Deferred_email: this sender itself was successful, but l8er email sending may fail */
     DEFERRED_EMAIL,
     /** Failure: sending of the notification failed */
-    FAILURE
+    FAILURE,
+    /** Sending one ore more emails from the plugin failed */
+    FAILED_EMAIL
 }

@@ -97,7 +97,7 @@
             <field ref="ALERT_ID"/>
         </index>
         <column name="SENDER" required="false" size="200" type="VARCHAR2"/>
-        <column name="RESULT" required="false" size="20" type="VARCHAR2"/>
+        <column name="RESULT_STATE" required="false" size="20" type="VARCHAR2"/>
         <column name="MESSAGE" required="false" size="255" type="VARCHAR2"/>
         <column name="ALL_EMAILS" required="false" size="4096" type="VARCHAR2"/>
         <column name="EMAILS_FAILED" required="false" size="4096" type="VARCHAR2"/>

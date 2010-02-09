@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
@@ -666,7 +665,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
             List<AlertNotification> alertNotifications = alert.getAlertDefinition().getAlertNotifications();
             Set<String> emailAddresses = new LinkedHashSet<String>();
-            List<AlertNotificationLog> logs = new ArrayList<AlertNotificationLog>();
 
             for (AlertNotification alertNotification : alertNotifications) {
 
@@ -677,22 +675,31 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     continue;
                 }
 
-                AlertNotificationLog alNoLo ;
+                AlertNotificationLog alNoLo;
                 AlertSender sender = getAlertSender(alertNotification);
 
                 if (sender != null) {
                     try {
                         SenderResult result = sender.send(alert);
+
                         if (result == null) {
                             log.warn("- !! -- sender [" + senderName +
                                     "] did not return a SenderResult. Please fix this -- !! - ");
+                            alNoLo = new AlertNotificationLog(alert,senderName);
+                            alNoLo.setMessage("Sender did not return a SenderResult, assuming failure");
+
                         } else if (result.getState() == ResultState.DEFERRED_EMAIL) {
-                            if (result.getEmails() != null && !result.getEmails().isEmpty())
+
+                            alNoLo = new AlertNotificationLog(alert, senderName, result);
+                            if (result.getEmails() != null && !result.getEmails().isEmpty()) {
                                 emailAddresses.addAll(result.getEmails());
+                                alNoLo.setTranisentEmails(result.getEmails());
+                                alNoLo.setAllEmails(result.getEmails().toString());
+                            }
+                        } else {
+                            alNoLo = new AlertNotificationLog(alert, senderName, result);
                         }
-                        // TODO log result - especially handle the deferred_email case
                         log.info(result);
-                        alNoLo = new AlertNotificationLog(alert, senderName, result);
                     }
                     catch (Throwable t) {
                         log.error("Sender failed: " + t.getMessage());
@@ -710,18 +717,28 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                 }
                 entityManager.persist(alNoLo);
                 alert.addAlertNotificatinLog(alNoLo);
-                logs.add(alNoLo);
             }
 
             // send them off
             Collection<String> badAddresses = sendAlertNotificationEmails(alert, emailAddresses);
             // TODO we may do the same for SMS in the future.
 
-            // TODO log those bad addresses to the gui and their individual senders (if possible)
+            // log those bad addresses to the gui and their individual senders (if possible)
             if (!badAddresses.isEmpty()) {
-                for (int i = 0; i < alertNotifications.size(); i++) {
-                    AlertNotification notification = alertNotifications.get(i);
-                // fill in badAdd if needed
+                for (AlertNotificationLog anl : alert.getAlertNotificationLog()) {
+                    if (!(anl.getResultState() == ResultState.DEFERRED_EMAIL))
+                        continue;
+
+                    StringBuilder b = new StringBuilder();
+                    for (String badOne : badAddresses) {
+                        if (anl.getTranisentEmails().contains(badOne)) {
+                            anl.setResultState(ResultState.FAILED_EMAIL);
+                            b.append(badOne);
+                            b.append(", ");
+                        }
+                    }
+                    if (anl.getResultState()==ResultState.FAILED_EMAIL)
+                        anl.setBadEmails(b.toString());
                 }
             }
 

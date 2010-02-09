@@ -24,6 +24,8 @@ package org.rhq.core.domain.alert.notification;
 
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -38,6 +40,7 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
@@ -89,9 +92,9 @@ public class AlertNotificationLog implements Serializable {
 
     private String sender;
 
-    @Column(name ="RESULT")
+    @Column(name ="RESULT_STATE")
     @Enumerated(EnumType.STRING)
-    private ResultState result;
+    private ResultState resultState;
 
     private String message;
 
@@ -101,26 +104,29 @@ public class AlertNotificationLog implements Serializable {
     @Column(name="EMAILS_FAILED")
     private String badEmails;
 
+    @Transient
+    transient List<String> tranisentEmails = new ArrayList<String>();
+
     protected AlertNotificationLog() {
     } // JPA
 
     public AlertNotificationLog(Alert alert, String sender, SenderResult senderResult) {
         this.alert = alert;
         this.sender = sender;
-        this.result = senderResult.getState();
+        this.resultState = senderResult.getState();
         this.message = senderResult.getMessage();
     }
 
     public AlertNotificationLog(Alert alert, String sender) {
         this.alert = alert;
         this.sender = sender;
-        this.result = ResultState.FAILURE; // Default if nothing specified
+        this.resultState = ResultState.FAILURE; // Default if nothing specified
     }
 
     public AlertNotificationLog(Alert alert, String senderName, ResultState state, String message) {
         this.alert = alert;
         this.sender = sender;
-        this.result = state;
+        this.resultState = state;
         this.message = message;
 
     }
@@ -142,8 +148,8 @@ public class AlertNotificationLog implements Serializable {
         return sender;
     }
 
-    public ResultState getResult() {
-        return result;
+    public ResultState getResultState() {
+        return resultState;
     }
 
     public String getMessage() {
@@ -158,8 +164,8 @@ public class AlertNotificationLog implements Serializable {
         return badEmails;
     }
 
-    public void setResult(ResultState result) {
-        this.result = result;
+    public void setResultState(ResultState resultState) {
+        this.resultState = resultState;
     }
 
     public void setMessage(String message) {
@@ -172,5 +178,13 @@ public class AlertNotificationLog implements Serializable {
 
     public void setBadEmails(String badEmails) {
         this.badEmails = badEmails;
+    }
+
+    public List<String> getTranisentEmails() {
+        return tranisentEmails;
+    }
+
+    public void setTranisentEmails(List<String> tranisentEmails) {
+        this.tranisentEmails = tranisentEmails;
     }
 }

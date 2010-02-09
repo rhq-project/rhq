@@ -12,7 +12,7 @@ import groovy.util.AntBuilder
 import org.rhq.core.domain.configuration.PropertyMap
 import org.rhq.core.domain.configuration.PropertyList
 
-class StructuredServer implements ResourceComponent, ResourceConfigurationFacet {
+class StructuredServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
   ResourceContext resourceContext
 
@@ -59,17 +59,13 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   Configuration loadStructuredConfiguration() {
-    def propertiesConfig = new PropertiesConfiguration(structuredConfigFile)
-    def config = new Configuration()
+    def configuration = new Configuration()
+    configuration.properties = loadSimpleProperties(structuredConfigFile, simpleProperties)
 
-    loadSimpleProperties(config, propertiesConfig)
-    loadComplexProperties(config, propertiesConfig)
 
-    return config
-  }
+    loadComplexProperties(configuration, new PropertiesConfiguration(structuredConfigFile))
 
-  def loadSimpleProperties(Configuration configuration, PropertiesConfiguration propertiesConfig) {
-    simpleProperties.each { configuration.put(new PropertySimple(it, propertiesConfig.getString(it))) }
+    return configuration
   }
 
   def loadComplexProperties(Configuration configuration, PropertiesConfiguration propertiesConfig) {

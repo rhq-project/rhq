@@ -9,7 +9,7 @@ import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
 
-class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
+class StructuredAndRawServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
   ResourceContext resourceContext
 
@@ -21,9 +21,15 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
 
   File rawConfig1
 
+  List rawConfig1PropertyNames = ["x", "y", "z", "structuredOnlyProperty"]
+
   File rawConfig2
 
+  List rawConfig2PropertyNames = ["username", "password"]
+
   File rawConfig3
+
+  List rawConfig3PropertyNames = ["rhq.server.hostname", "rhq.server.port"]
 
   File rawConfig4
 
@@ -42,7 +48,7 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     rawConfig4 = new File(rawConfigSubdir2, "structured-and-raw-test-4.txt")
 
     createRawConfigDirs()
-    createConfigFile(rawConfig1, ["x": "1", "y": "2", "z": "3"])
+    createConfigFile(rawConfig1, ["x": "1", "y": "2", "z": "3", "structuredOnlyProperty": "a structured property"])
     createConfigFile(rawConfig2, ["username": "rhqadmin", "password": "rhqadmin"])
     createConfigFile(rawConfig3, ["rhq.server.hostname": "localhost", "rhq.server.port": "7080"])
     createConfigFile(rawConfig4, ["raw.only.x": "foo", "raw.only.y": "bar"])
@@ -76,35 +82,14 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   }
 
   Configuration loadStructuredConfiguration() {
-    def config = new Configuration()
+    def properties = loadSimpleProperties(rawConfig1, rawConfig1PropertyNames)
+    properties.addAll(loadSimpleProperties(rawConfig2, rawConfig2PropertyNames))
+    properties.addAll(loadSimpleProperties(rawConfig3, rawConfig3PropertyNames))
 
-    loadStructuredForRawConfig1(config)
-    loadStructuredForRawConfig2(config)
-    loadStructuredForRawConfig3(config)
+    def configuration = new Configuration()
+    configuration.properties = properties
 
-    return config
-  }
-
-  def loadStructuredForRawConfig1(Configuration config) {
-    def propertiesConfig = new PropertiesConfiguration(rawConfig1)
-
-    config.put(new PropertySimple("x", propertiesConfig.getString("x")))
-    config.put(new PropertySimple("y", propertiesConfig.getString("y")))
-    config.put(new PropertySimple("z", propertiesConfig.getString("z")))
-  }
-
-  def loadStructuredForRawConfig2(Configuration config) {
-    def propertiesConfig = new PropertiesConfiguration(rawConfig2)
-
-    config.put(new PropertySimple("username", propertiesConfig.getString("username")))
-    config.put(new PropertySimple("password", propertiesConfig.getString("password")))
-  }
-
-  def loadStructuredForRawConfig3(Configuration config) {
-    def propertiesConfig = new PropertiesConfiguration(rawConfig3)
-
-    config.put(new PropertySimple("rhq.server.hostname", propertiesConfig.getString("rhq.server.hostname")))
-    config.put(new PropertySimple("rhq.server.port", propertiesConfig.getString("rhq.server.port")))
+    return configuration
   }
 
   Set<RawConfiguration> loadRawConfigurations() {
@@ -185,7 +170,7 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   void validateStructuredConfiguration(Configuration config) {
     def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
     if (failValidation.getBooleanValue()) {
-      throw new RuntimeException("Validation failed for $confi153guration");
+      throw new RuntimeException("Validation failed for $config");
     }
   }
 
@@ -196,23 +181,18 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
     }
   }
 
-  void persistRawConfiguration(RawConfiguration rawConfig) {
+  void persistRawConfiguration(RawConfiguration rawConfiguration) {
     def failUpdate = resourceContext.pluginConfiguration.getSimple("failRawUpdate")
     if (failUpdate.getBooleanValue()) {
       def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailUpdate").stringValue.split()
-      def match = fileNames.find { rawConfig.path.endsWith(it) }
+      def match = fileNames.find { rawConfiguration.path.endsWith(it) }
 
       if (match) {
-        throw new RuntimeException("Update failed for ${rawConfig.path}");
+        throw new RuntimeException("Update failed for ${rawConfiguration.path}");
       }
     }
 
-    ant.copy(file: rawConfig.path, tofile: "${rawConfig.path}.orig")
-    ant.delete(file: rawConfig.path)
-
-    def file = new File(rawConfig.path)
-    file.createNewFile()
-    file << rawConfig.contents    
+    backupAndSave(rawConfiguration)
   }
 
 }

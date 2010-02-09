@@ -8,15 +8,11 @@ import org.rhq.core.domain.measurement.AvailabilityType
 import org.rhq.core.pluginapi.inventory.ResourceContext
 import groovy.util.AntBuilder
 
-class RawServer implements ResourceComponent, ResourceConfigurationFacet {
-
-  ResourceContext resourceContext
+class RawServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File rawConfigDir
 
   List rawConfigs = []
-
-  def ant = new AntBuilder()
 
   void start(ResourceContext context) {
     resourceContext = context;
@@ -88,12 +84,7 @@ class RawServer implements ResourceComponent, ResourceConfigurationFacet {
       throw new RuntimeException("Update failed for ${rawConfiguration.path}");
     }
 
-    ant.copy(file: rawConfiguration.path, tofile: "${rawConfiguration.path}.orig")
-    ant.delete(file: rawConfiguration.path)
-
-    def file = new File(rawConfiguration.path)
-    file.createNewFile()
-    file << rawConfiguration.contents
+    backupAndSave(rawConfiguration)
   }
 
   void validateStructuredConfiguration(Configuration configuration) {

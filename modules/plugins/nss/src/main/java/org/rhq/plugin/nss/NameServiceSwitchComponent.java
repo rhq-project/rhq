@@ -24,11 +24,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+
+import org.apache.commons.lang.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -48,11 +53,44 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * 
  * @author Adam Young
  */
-public class NameServiceSwitchComponent implements ResourceComponent<NameServiceSwitchComponent>, OperationFacet, ResourceConfigurationFacet {
+public class NameServiceSwitchComponent implements ResourceComponent<NameServiceSwitchComponent>, OperationFacet,
+    ResourceConfigurationFacet {
+
+    /**
+     * The standard location for the configuration file
+     */
     private static final String ETC_NSSWITCH_CONF = "/tmp/nsswitch.conf";
     //private static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
 
     private final Log log = LogFactory.getLog(NameServiceSwitchComponent.class);
+
+    /**
+     * The set of Services supported by NSS.
+     */
+    final static String[] SERVICES = { "compat", "db", "dns", "files", "hesiod", "nis", "nisplus" };
+
+    final static String[] DATABASES = { "aliases", /*Mail aliases, used by sendmail(8).  Presently ignored.*/
+    "ethers", /*Ethernet numbers.*/
+    "group", /*Groups of users, used by getgrent(3) functions.*/
+    "hosts", /*Host names and numbers, used  by  gethostbyname(3)  and  
+               similar functions.*/
+    "netgroup", /*Network  wide list of hosts and users, used for access rules.
+                  C libraries before glibc 2.1 only support netgroups over NIS.*/
+    "networks", /*Network names and numbers, used by getnetent(3) functions.*/
+    "passwd", /*passwd User passwords, used by getpwent(3) functions.*/
+    "protocols", /* Network protocols, used by getprotoent(3) functions.*/
+    "publickey", /*Public and secret keys for Secure_RPC used by NFS and NIS+.*/
+    "rpc", /*Remote procedure call names and numbers, used by getrpcbyname(3)
+              and similar functions.*/
+    "services" /*shadow Shadow user passwords, used by getspnam(3).*/};
+
+    /**
+     * TODO, Add any custom services registered on the machine
+     */
+    static Set<String> serviceSet = new HashSet<String>(Arrays.asList(SERVICES));
+
+    final static Pattern rulePattern = Pattern
+        .compile("\\[!?(success|notfound|unavail|tryagain|SUCCESS|NOTFOUND|UNAVAIL|TRYAGAIN)=(return|continue|RETURN|CONTINUE)\\]");
 
     private static Pattern linePattern = Pattern.compile("\\s*(\\p{Alpha}*):((?:\\s|\\p{Alpha}|\\[|\\]|\\=)*)");
 
@@ -140,7 +178,7 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     }
 
     public Set<RawConfiguration> loadRawConfigurations() {
-   
+
         Set<RawConfiguration> raws = new HashSet<RawConfiguration>();
         RawConfiguration raw = new RawConfiguration();
 
@@ -155,9 +193,8 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     public Configuration loadStructuredConfiguration() {
         Configuration configuration = new Configuration();
         for (RawConfiguration raw : loadRawConfigurations()) {
-            mergeStructuredConfiguration(raw,configuration);       
+            mergeStructuredConfiguration(raw, configuration);
         }
-
         return configuration;
     }
 
@@ -169,7 +206,7 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
 
         ArrayList<Property> properties = new ArrayList<Property>();
-        
+
         to.addRawConfiguration(from);
         try {
             BufferedReader input = new BufferedReader(new StringReader(from.getContents()));
@@ -189,8 +226,6 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
 
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
 
-        
-        
     }
 
     public void persistStructuredConfiguration(Configuration configuration) {
@@ -199,32 +234,131 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     }
 
     public void validateRawConfiguration(RawConfiguration rawConfiguration) throws RuntimeException {
-        // TODO Auto-generated method stub
 
     }
 
     public void validateStructuredConfiguration(Configuration configuration) {
-        // TODO Auto-generated method stub
+        for (Property prop : configuration.getProperties()) {
+            validateProperty(prop);
+        }
 
     }
-    
-    
-    public static void main(String[] args){
-        String noMatch = "# abcd: val";
-        String yesMatch = "bootparams: nisplus [NOTFOUND=return] files";
 
-        Matcher matcher = linePattern.matcher(noMatch);
-        if (matcher.matches()) {
-            System.exit(1);
-        }
-        matcher = linePattern.matcher(yesMatch);
+    private static void validateProperty(Property prop) {
+        String[] vals = ((PropertySimple) prop).getStringValue().split(" ");
+        ArrayList<String> invalidServices = new ArrayList<String>();
+        ArrayList<String> invalidRules = new ArrayList<String>();
 
-        
-        if (matcher.matches()){
-            System.out.println("Group0="+matcher.group(1));    
-            System.out.println("Group1="+matcher.group(2).trim());    
+        for (String val : vals) {
+            if (val.startsWith("[")) {
+                if (!rulePattern.matcher(val).matches()) {
+                    invalidRules.add(val);
+                }
+            } else {
+                if (!serviceSet.contains(val)) {
+                    invalidServices.add(val);
+                }
+            }
+        }
+        StringBuilder errorMessage = new StringBuilder();
+        if (!invalidServices.isEmpty()) {
+            buildErrorMessage(invalidServices, errorMessage, "Service");
+        }
+        if (!invalidRules.isEmpty()) {
+            buildErrorMessage(invalidRules, errorMessage, "Rule");
+        }
+        if (errorMessage.length() > 0) {
+            prop.setErrorMessage(errorMessage.toString());
+        }
+    }
+
+    private static void buildErrorMessage(ArrayList<String> errors, StringBuilder errorMessage, String type) {
+        if (errors.size() == 1) {
+            errorMessage.append(errors.get(0));
+            errorMessage.append(" is not a valid NSS " + type + ".");
+        } else {
+            int i = 0;
+            for (String db : errors) {
+                errorMessage.append(db);
+                if (i < (errors.size() - 1)) {
+                    errorMessage.append(", ");
+                }
+                if (i == (errors.size() - 2)) {
+                    errorMessage.append("and ");
+                }
+                ++i;
+            }
+            errorMessage.append(" are not a valid NSS Services.  ");
+        }
+    }
+
+    public static void main(String[] args) {
+
+        {
+            String noMatch = "# abcd: val";
+            
+            Matcher matcher = linePattern.matcher(noMatch);
+            if (matcher.matches()) {
+                System.exit(1);
+            }
+        }
+        {
+            String yesMatch = "bootparams: nisplus [NOTFOUND=return] files";
+            Matcher matcher = linePattern.matcher(yesMatch);
+
+            if (matcher.matches()) {
+                System.out.println("Group0=" + matcher.group(1));
+                System.out.println("Group1=" + matcher.group(2).trim());
+            }
+        }
+        {
+            PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
+            validateProperty(prop);
+            if (prop.getErrorMessage() != null) {
+                System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                System.exit(1);
+            }
+        }
+        {
+            PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
+            validateProperty(prop);
+            if (prop.getErrorMessage() != null) {
+                System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                System.exit(1);
+            }
         }
         
+        {
+            PropertySimple prop = new PropertySimple("passwd", "nisplus [UNUSED=return] [!NOWAY=return] files");
+            validateProperty(prop);
+            if (prop.getErrorMessage() != null) {
+                System.out.println("error message is '" + prop.getErrorMessage() + "'");
+            }else{
+                System.exit(1);
+            }
+        }
+
+        {
+            PropertySimple prop = new PropertySimple("passwd", "nisplus nope neither garbage junk files");
+            validateProperty(prop);
+            if (prop.getErrorMessage() != null) {
+                System.out.println("error message is '" + prop.getErrorMessage() + "'");
+            }else{
+                System.exit(1);
+            }
+        }
+
+
+        {
+            PropertySimple prop = new PropertySimple("passwd", "nisplus nope neither [UNUSED=return] [!NOWAY=return] garbage junk files");
+            validateProperty(prop);
+            if (prop.getErrorMessage() != null) {
+                System.out.println("error message is '" + prop.getErrorMessage() + "'");
+            }else{
+                System.exit(1);
+            }
+        }
+
         
     }
 }

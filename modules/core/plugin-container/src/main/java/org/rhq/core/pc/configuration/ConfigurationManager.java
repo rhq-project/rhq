@@ -347,7 +347,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             } catch (IllegalArgumentException e) {
                 thereAreErrors = true;
             } catch (Throwable t) {
-                throw new PluginContainerException(t.getMessage(), new WrappedRemotingException(t));
+                throw new PluginContainerException(t.getMessage(), t);
             }
         } else {
             for (RawConfiguration rawConfiguration : configuration.getRawConfigurations()) {

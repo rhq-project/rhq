@@ -23,7 +23,7 @@
     <dependency>
       <groupId>org.codehaus.groovy</groupId>
       <artifactId>groovy-all</artifactId>
-      <version>1.6.4</version>
+      <version>1.7.0</version>
     </dependency>
 
     <dependency>
@@ -72,7 +72,7 @@
                 <artifactItem>
                   <groupId>org.codehaus.groovy</groupId>
                   <artifactId>groovy-all</artifactId>
-                  <version>1.6.4</version>
+                  <version>1.7.0</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.apache.ant</groupId>

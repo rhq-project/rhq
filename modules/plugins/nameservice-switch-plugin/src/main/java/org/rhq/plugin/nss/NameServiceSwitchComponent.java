@@ -18,36 +18,28 @@
  */
 package org.rhq.plugin.nss;
 
-import java.io.InputStream;
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.rhq.core.domain.content.PackageType;
-import org.rhq.core.domain.content.transfer.DeployPackageStep;
-import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
-import org.rhq.core.domain.content.transfer.RemovePackagesResponse;
-import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
-import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import org.rhq.core.pluginapi.content.ContentFacet;
-import org.rhq.core.pluginapi.content.ContentServices;
-import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
-import org.rhq.core.pluginapi.inventory.CreateResourceReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 
@@ -56,9 +48,13 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * 
  * @author Adam Young
  */
-public class NameServiceSwitchComponent implements ResourceComponent, OperationFacet,
-    ResourceConfigurationFacet {
+public class NameServiceSwitchComponent implements ResourceComponent<NameServiceSwitchComponent>, OperationFacet, ResourceConfigurationFacet {
+    private static final String ETC_NSSWITCH_CONF = "/tmp/nsswitch.conf";
+    //private static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
+
     private final Log log = LogFactory.getLog(NameServiceSwitchComponent.class);
+
+    private static Pattern linePattern = Pattern.compile("\\s*(\\p{Alpha}*):((?:\\s|\\p{Alpha}|\\[|\\]|\\=)*)");
 
     /**
      * Represents the resource configuration of the custom product being managed.
@@ -103,7 +99,6 @@ public class NameServiceSwitchComponent implements ResourceComponent, OperationF
         return AvailabilityType.UP;
     }
 
-
     /**
      * The plugin container will call this method when it wants to invoke an operation on your managed resource. Your
      * plugin will connect to the managed resource and invoke the analogous operation in your own custom way.
@@ -114,14 +109,56 @@ public class NameServiceSwitchComponent implements ResourceComponent, OperationF
         return null;
     }
 
+    static public String getContents(File aFile) {
+        //...checks on aFile are elided
+        StringBuilder contents = new StringBuilder();
+
+        try {
+            //use buffering, reading one line at a time
+            //FileReader always assumes default encoding is OK!
+            BufferedReader input = new BufferedReader(new FileReader(aFile));
+            try {
+                String line = null; //not declared within while loop
+                /*
+                * readLine is a bit quirky :
+                * it returns the content of a line MINUS the newline.
+                * it returns null only for the END of the stream.
+                * it returns an empty String if two newlines appear in a row.
+                */
+                while ((line = input.readLine()) != null) {
+                    contents.append(line);
+                    contents.append(System.getProperty("line.separator"));
+                }
+            } finally {
+                input.close();
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        return contents.toString();
+    }
+
     public Set<RawConfiguration> loadRawConfigurations() {
-        // TODO Auto-generated method stub
-        return null;
+   
+        Set<RawConfiguration> raws = new HashSet<RawConfiguration>();
+        RawConfiguration raw = new RawConfiguration();
+
+        raw.setPath(ETC_NSSWITCH_CONF);
+
+        raw.setContents(getContents(new File(raw.getPath())));
+
+        raws.add(raw);
+        return raws;
     }
 
     public Configuration loadStructuredConfiguration() {
-        // TODO Auto-generated method stub
-        return null;
+        Configuration configuration = new Configuration();
+        for (RawConfiguration raw : loadRawConfigurations()) {
+            mergeStructuredConfiguration(raw,configuration);       
+        }
+
+        return configuration;
     }
 
     public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
@@ -130,27 +167,64 @@ public class NameServiceSwitchComponent implements ResourceComponent, OperationF
     }
 
     public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {
-        // TODO Auto-generated method stub
+
+        ArrayList<Property> properties = new ArrayList<Property>();
         
+        to.addRawConfiguration(from);
+        try {
+            BufferedReader input = new BufferedReader(new StringReader(from.getContents()));
+            String line = null; //not declared within while loop
+            while ((line = input.readLine()) != null) {
+                Matcher matcher = linePattern.matcher(line);
+                if (matcher.matches()) {
+                    properties.add(new PropertySimple(matcher.group(1), matcher.group(2).trim()));
+                }
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        to.setProperties(properties);
+
     }
 
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
-        // TODO Auto-generated method stub
+
+        
         
     }
 
     public void persistStructuredConfiguration(Configuration configuration) {
         // TODO Auto-generated method stub
-        
+
     }
 
     public void validateRawConfiguration(RawConfiguration rawConfiguration) throws RuntimeException {
         // TODO Auto-generated method stub
-        
+
     }
 
     public void validateStructuredConfiguration(Configuration configuration) {
         // TODO Auto-generated method stub
+
+    }
+    
+    
+    public static void main(String[] args){
+        String noMatch = "# abcd: val";
+        String yesMatch = "bootparams: nisplus [NOTFOUND=return] files";
+
+        Matcher matcher = linePattern.matcher(noMatch);
+        if (matcher.matches()) {
+            System.exit(1);
+        }
+        matcher = linePattern.matcher(yesMatch);
+
+        
+        if (matcher.matches()){
+            System.out.println("Group0="+matcher.group(1));    
+            System.out.println("Group1="+matcher.group(2).trim());    
+        }
+        
         
     }
 }

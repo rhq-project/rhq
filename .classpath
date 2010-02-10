@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/nameservice-switch-plugin/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>

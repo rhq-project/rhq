@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name=""
+        displayName="Name Service Switch"
+        version="1.0"
+        package="org.rhq.plugin.nss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Name Server Switch"
+           discovery="NameServiceSwitchDiscoveryComponent"
+           class="NameServiceSwitchComponent"
+           description="Name Service Switch Component">
+         <resource-configuration configurationFormat="both">
+         <c:simple-property name="paswd" displayName="passwd" default="files" />
+      </resource-configuration>
+   </server>
+</plugin>

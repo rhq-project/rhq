@@ -92,7 +92,7 @@ public class BundleDeployDefinition implements Serializable {
     @Column(name = "ENFORCEMENT_INTERVAL", nullable = true)
     private int enforcementInterval;
 
-    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 

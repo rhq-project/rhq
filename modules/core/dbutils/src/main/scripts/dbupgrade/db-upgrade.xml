@@ -3074,7 +3074,8 @@
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" columnType="BOOLEAN" />
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" nullable="FALSE" /> 
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCEMENT_INTERVAL" columnType="INTEGER" />               
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" columnType="INTEGER" />               
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" columnType="INTEGER" />
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" nullable="FALSE" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_BUNDLE_VERSION">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
@@ -3163,6 +3164,9 @@
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" columnType="VARCHAR2" precision="50" />
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" nullable="FALSE" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_MESSAGE" columnType="LONGVARCHAR" />               
+               
+               <!-- Changes to RHQ_BUNDLE_FILE -->
+               <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
                
             </schemaSpec>           
         </dbupgrade>

@@ -16,48 +16,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.sample.custombundle;
+package org.rhq.plugins.filetemplate;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 
 /**
- * This can be the start of your own custom bundle plugin's discovery component.
- * Usually, there isn't much you have to do here.
- *
  * @author John Mazzitelli
  */
 @SuppressWarnings("unchecked")
-public class SampleBundlePluginDiscoveryComponent implements ResourceDiscoveryComponent {
-    private final Log log = LogFactory.getLog(SampleBundlePluginDiscoveryComponent.class);
+public class FileTemplateBundlePluginDiscoveryComponent implements ResourceDiscoveryComponent {
+    //private final Log log = LogFactory.getLog(FileTemplateBundlePluginDiscoveryComponent.class);
 
-    /**
-     * Review the javadoc for both {@link ResourceDiscoveryComponent} and {@link ResourceDiscoveryContext} to learn what
-     * you need to do in this method.
-     *
-     * @see ResourceDiscoveryComponent#discoverResources(ResourceDiscoveryContext)
-     */
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
-
-        log.info("Discovering my custom bundle plugin's main resource");
 
         HashSet<DiscoveredResourceDetails> set = new HashSet<DiscoveredResourceDetails>();
 
-        // key = this must be a unique string across all of your resources - see docs for uniqueness rules
-        // name = this is the name you give the new resource; it does not necessarily have to be unique
-        // version = this is any string that corresponds to the resource's version
-        // description = this is any string that you want to assign as the default description for your resource
-        String key = "My Bundle Handler Resource Key";
-        String name = "My Bundle Handler Resource";
-        String version = "1.0";
-        String description = "This describes My Bundle Handler Resource";
+        String key = "file-template-bundle";
+        String name = "File Template Bundle Handler";
+        String version = this.getClass().getPackage().getImplementationVersion();
+        String description = "Processes file template bundles";
 
         DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
             version, description, null, null);

@@ -3017,9 +3017,10 @@
 
             <schemaSpec version="2.78">
                <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->               
-               <schema-dropTable table="RHQ_BUNDLE_CONFIG CASCADE" />
+               <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
+               <schema-dropTable table="RHQ_BUNDLE_CONFIG" />
                <schema-dropSequence name="rhq_bundle_config_id_seq" />
-
+                  
                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_CONFIG_DEF">
@@ -3029,7 +3030,7 @@
                         REFERENCES RHQ_CONFIG_DEF (ID)
                     </statement>
                 </schema-directSQL>
-               
+
                 <schema-addColumn table="RHQ_BUNDLE_TYPE" column="RESOURCE_TYPE_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_TYPE foreign key relation to RHQ_RESOURCE_TYPE">

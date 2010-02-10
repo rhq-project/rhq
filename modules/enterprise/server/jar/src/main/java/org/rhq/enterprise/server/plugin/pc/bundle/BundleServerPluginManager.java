@@ -16,24 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.bundle;
+package org.rhq.enterprise.server.plugin.pc.bundle;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.rhq.core.clientapi.server.bundle.BundleServerService;
-import org.rhq.core.clientapi.server.bundle.BundleUpdateComplete;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
+import org.rhq.enterprise.server.plugin.pc.ServerPluginManager;
 
 /**
- * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
- * the requests to the appropriate session bean.
+ * This loads in all bundle server plugins that can be found. You can obtain a loaded plugin's
+ * {@link ServerPluginEnvironment environment}, including its classloader, from this object as well.
  *
  * @author John Mazzitelli
  */
-public class BundleServerServiceImpl implements BundleServerService {
-    private final Log log = LogFactory.getLog(this.getClass());
+public class BundleServerPluginManager extends ServerPluginManager {
+    public BundleServerPluginManager(BundleServerPluginContainer pc) {
+        super(pc);
+    }
 
-    public void updateComplete(BundleUpdateComplete buc) {
-        // TODO Auto-generated method stub
+    // TODO override methods like initialize, shutdown, loadPlugin, etc. for custom bundle functionality
+
+    @Override
+    public void initialize() throws Exception {
+        super.initialize();
     }
 }

@@ -208,7 +208,7 @@ public class BundleDeployDefinition implements Serializable {
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
         result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
-        result = prime * result + ((bundle == null) ? 0 : name.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         return result;
     }
 

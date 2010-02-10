@@ -37,6 +37,7 @@ import org.quartz.simpl.SimpleThreadPool;
 
 import org.rhq.core.domain.plugin.PluginKey;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertServerPluginContainer;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.content.ContentServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.entitlement.EntitlementServerPluginContainer;
 import org.rhq.enterprise.server.plugin.pc.generic.GenericServerPluginContainer;
@@ -454,6 +455,7 @@ public class MasterServerPluginContainer {
         pcs.add(new PerspectiveServerPluginContainer(this));
         pcs.add(new AlertServerPluginContainer(this));
         pcs.add(new EntitlementServerPluginContainer(this));
+        pcs.add(new BundleServerPluginContainer(this));
         return pcs;
     }
 

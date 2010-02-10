@@ -28,6 +28,7 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
@@ -43,7 +44,7 @@ import org.rhq.enterprise.server.RHQConstants;
  * @author John Mazzitelli
  */
 @Stateless
-public class BundleManagerBean implements BundleManagerLocal {
+public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
     private final Log log = LogFactory.getLog(this.getClass());
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -60,7 +61,7 @@ public class BundleManagerBean implements BundleManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
-    public List<BundleType> getAllBundleTypes() {
+    public List<BundleType> getAllBundleTypes(Subject subject) {
         // the list of types will be small, no need to support paging
         Query q = entityManager.createNamedQuery(BundleType.QUERY_FIND_ALL);
         List<BundleType> types = q.getResultList();

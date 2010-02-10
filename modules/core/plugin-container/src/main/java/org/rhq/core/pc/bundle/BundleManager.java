@@ -24,6 +24,8 @@ package org.rhq.core.pc.bundle;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
+import org.rhq.core.clientapi.agent.bundle.BundleUpdateRequest;
+import org.rhq.core.clientapi.agent.bundle.BundleUpdateResponse;
 import org.rhq.core.pc.ContainerService;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pc.agent.AgentService;
@@ -53,12 +55,9 @@ public class BundleManager extends AgentService implements BundleAgentService, C
     public void shutdown() {
     }
 
-    /* (non-Javadoc)
-     * @see org.rhq.core.clientapi.agent.bundle.BundleAgentService#dummy()
-     */
-    public void dummy() {
+    public BundleUpdateResponse update(BundleUpdateRequest request) {
         // TODO Auto-generated method stub
-
+        return null;
     }
 
     /**

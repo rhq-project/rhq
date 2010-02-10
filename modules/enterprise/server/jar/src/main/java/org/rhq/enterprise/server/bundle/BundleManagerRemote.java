@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2009 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,22 +18,28 @@
  */
 package org.rhq.enterprise.server.bundle;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import java.util.List;
 
-import org.rhq.core.clientapi.server.bundle.BundleServerService;
-import org.rhq.core.clientapi.server.bundle.BundleUpdateComplete;
+import javax.ejb.Remote;
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+import javax.jws.soap.SOAPBinding;
+
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.enterprise.server.system.ServerVersion;
 
 /**
- * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
- * the requests to the appropriate session bean.
- *
+ * Remote interface to the manager responsible for creating and managing bundles.
+ *  
  * @author John Mazzitelli
  */
-public class BundleServerServiceImpl implements BundleServerService {
-    private final Log log = LogFactory.getLog(this.getClass());
-
-    public void updateComplete(BundleUpdateComplete buc) {
-        // TODO Auto-generated method stub
-    }
+@SOAPBinding(style = SOAPBinding.Style.DOCUMENT)
+@WebService(targetNamespace = ServerVersion.namespace)
+@Remote
+public interface BundleManagerRemote {
+    @WebMethod
+    List<BundleType> getAllBundleTypes( //
+        @WebParam(name = "subject") Subject subject);
 }

@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
@@ -45,6 +46,11 @@ public interface BundleManagerLocal {
 
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
 
-    List<BundleType> getAllBundleTypes();
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    //
+    // The following are shared with the Remote Interface
+    //
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+    List<BundleType> getAllBundleTypes(Subject subject);
 }

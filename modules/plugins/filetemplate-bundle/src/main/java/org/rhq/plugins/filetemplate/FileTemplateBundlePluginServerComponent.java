@@ -16,24 +16,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.bundle;
+package org.rhq.plugins.filetemplate;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.clientapi.server.bundle.BundleServerService;
-import org.rhq.core.clientapi.server.bundle.BundleUpdateComplete;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.pluginapi.bundle.BundleFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 
 /**
- * Server-side implementation of the <code>BundleServerService</code>. This implmentation simply forwards
- * the requests to the appropriate session bean.
- *
  * @author John Mazzitelli
  */
-public class BundleServerServiceImpl implements BundleServerService {
-    private final Log log = LogFactory.getLog(this.getClass());
+@SuppressWarnings("unchecked")
+public class FileTemplateBundlePluginServerComponent implements ResourceComponent, BundleFacet {
 
-    public void updateComplete(BundleUpdateComplete buc) {
-        // TODO Auto-generated method stub
+    private final Log log = LogFactory.getLog(FileTemplateBundlePluginServerComponent.class);
+
+    private ResourceContext resourceContext;
+
+    public void start(ResourceContext context) {
+        resourceContext = context;
+    }
+
+    public void stop() {
+    }
+
+    public AvailabilityType getAvailability() {
+        return AvailabilityType.UP;
     }
 }

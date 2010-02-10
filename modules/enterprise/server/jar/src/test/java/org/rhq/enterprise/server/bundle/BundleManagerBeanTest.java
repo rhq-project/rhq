@@ -110,7 +110,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testGetBundleTypes() throws Exception {
         BundleType bt1 = createBundleType("one");
         BundleType bt2 = createBundleType("two");
-        List<BundleType> bts = bundleManagerBean.getAllBundleTypes();
+        List<BundleType> bts = bundleManagerBean.getAllBundleTypes(LookupUtil.getSubjectManager().getOverlord());
         assert bts.size() >= 2 : "should have at least 2 bundle types";
 
         List<String> btNames = new ArrayList<String>();

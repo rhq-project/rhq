@@ -46,6 +46,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.util.StringUtils;
 
 @Entity
 @NamedQueries( {
@@ -105,7 +106,7 @@ public class AlertNotificationLog implements Serializable {
     private String badEmails;
 
     @Transient
-    transient List<String> tranisentEmails = new ArrayList<String>();
+    transient List<String> transientEmails = new ArrayList<String>();
 
     protected AlertNotificationLog() {
     } // JPA
@@ -115,6 +116,10 @@ public class AlertNotificationLog implements Serializable {
         this.sender = sender;
         this.resultState = senderResult.getState();
         this.message = senderResult.getMessage();
+        if (resultState == ResultState.DEFERRED_EMAIL && senderResult.getEmails() != null) {
+            this.transientEmails.addAll(senderResult.getEmails());
+            this.allEmails = StringUtils.getListAsString(senderResult.getEmails(),",");
+        }
     }
 
     public AlertNotificationLog(Alert alert, String sender) {
@@ -180,11 +185,26 @@ public class AlertNotificationLog implements Serializable {
         this.badEmails = badEmails;
     }
 
-    public List<String> getTranisentEmails() {
-        return tranisentEmails;
+    public List<String> getTransientEmails() {
+        return transientEmails;
     }
 
-    public void setTranisentEmails(List<String> tranisentEmails) {
-        this.tranisentEmails = tranisentEmails;
+    public void setTransientEmails(List<String> transientEmails) {
+        this.transientEmails = transientEmails;
+    }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("AlertNotificationLog");
+        sb.append("{id=").append(id);
+        sb.append(", alert=").append(alert);
+        sb.append(", sender='").append(sender).append('\'');
+        sb.append(", resultState=").append(resultState);
+        sb.append(", message='").append(message).append('\'');
+        sb.append(", allEmails='").append(allEmails).append('\'');
+        sb.append(", badEmails='").append(badEmails).append('\'');
+        sb.append('}');
+        return sb.toString();
     }
 }

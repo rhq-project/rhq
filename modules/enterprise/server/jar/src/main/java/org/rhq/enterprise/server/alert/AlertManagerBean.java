@@ -696,8 +696,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                             alNoLo = new AlertNotificationLog(alert, senderName, result);
                             if (result.getEmails() != null && !result.getEmails().isEmpty()) {
                                 emailAddresses.addAll(result.getEmails());
-                                alNoLo.setTranisentEmails(result.getEmails());
-                                alNoLo.setAllEmails(StringUtils.getListAsString(result.getEmails(),","));
                             }
                         } else {
                             alNoLo = new AlertNotificationLog(alert, senderName, result);
@@ -734,7 +732,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                     List<String> badList = new ArrayList<String>();
                     for (String badOne : badAddresses) {
-                        if (anl.getTranisentEmails().contains(badOne)) {
+                        if (anl.getTransientEmails().contains(badOne)) {
                             anl.setResultState(ResultState.FAILED_EMAIL);
                             badList.add(badOne);
                         }

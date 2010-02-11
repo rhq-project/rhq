@@ -38,6 +38,10 @@
           <param name="id" value="#{ResourceUIBean.id}"/>
         </redirect>
       </rule>
+
+      <rule if-outcome="nochange">
+        <render view-id="/rhq/resource/configuration/edit.xhtml"/>
+      </rule>
     </navigation>
 
     <navigation from-action="#{configurationEditor.finishAddMap}">

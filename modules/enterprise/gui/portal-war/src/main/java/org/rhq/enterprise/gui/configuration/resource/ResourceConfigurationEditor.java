@@ -177,13 +177,23 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 return "failure";
             
             case NOCHANGE:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
-                    + "no update request has been sent to the Agent.");
-                return "success";     
+                addNoChangeMsgToFacesContext();
+                return "nochange";      
             }    
         }
 
-        return null;
+        // updateRequest will be null if there is no change to the configuration. ConfigurationManagerBean checks to
+        // see if the configuration has been modified before sending the request to the agent. If no change is detected,
+        // it simply returns null.
+        
+        addNoChangeMsgToFacesContext();
+
+        return "nochange";
+    }
+
+    private void addNoChangeMsgToFacesContext() {
+        FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN, "No changes were made to the configuration, so "
+            + "no update request has been sent to the Agent.");
     }
 
     public void undoEdit(String path) {

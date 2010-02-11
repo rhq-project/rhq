@@ -3029,7 +3029,16 @@
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4096" />
                 <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4096" />
-
+            </schemaSpec>
+            <schemaSpec version="2.77.5">
+                <schema-directSQL>
+                    <statement>
+                        DROP INDEX IF EXISTS RHQ_ALERT_IDX_ALERT 
+                    </statement>
+                    <statement>
+                        CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
+                    </statement>
+                </schema-directSQL>
             </schemaSpec>
         </dbupgrade>
     </target>

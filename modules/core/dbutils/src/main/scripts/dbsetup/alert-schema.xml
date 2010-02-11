@@ -93,7 +93,7 @@
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="ALERT_ID" required="true" type="INTEGER" references="RHQ_ALERT(ID)"/>
-        <index name="RHQ_ALERT_IDX_ALERT" unique="true">
+        <index name="RHQ_ALERT_IDX_ALERT" unique="false">
             <field ref="ALERT_ID"/>
         </index>
         <column name="SENDER" required="false" size="200" type="VARCHAR2"/>

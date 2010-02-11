@@ -17,9 +17,10 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.StringUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -31,6 +32,12 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
     private String filter;
     private ResourceCategory category;
+
+    private static final IntExtractor<ResourceComposite> RESOURCE_ID_EXTRATOR = new IntExtractor<ResourceComposite>() {
+        public int extract(ResourceComposite object) {
+            return object.getResource().getId();
+        }
+    };
 
     public BrowseResourcesUIBean() {
         String subtab = FacesContextUtility.getOptionalRequestParameter("subtab", "").toLowerCase();
@@ -67,13 +74,13 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
 
     private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
-    private class ResultsDataModel extends PagedListDataModel<ResourceComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<ResourceComposite> {
 
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        public PageList<ResourceComposite> fetchPage(PageControl pc) {
+        public PageList<ResourceComposite> fetchDataForPage(PageControl pc) {
             String filter = getFilter();
             ResourceCategory category = getCategory();
 
@@ -88,6 +95,10 @@ public class BrowseResourcesUIBean extends PagedDataTableUIBean {
             PageList<ResourceComposite> results;
             results = resourceManager.findResourceCompositesByCriteria(getSubject(), criteria);
             return results;
+        }
+
+        protected IntExtractor<ResourceComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRATOR;
         }
     }
 

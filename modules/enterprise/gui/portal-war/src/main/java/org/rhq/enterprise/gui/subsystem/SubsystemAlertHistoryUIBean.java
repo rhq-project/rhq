@@ -32,15 +32,19 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.util.MeasurementConverter;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.gui.util.StringUtility;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -144,6 +148,28 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
 
         return "success";
     }
+    public String acknowledgeSelectedAlerts() {
+
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        Resource resource = EnterpriseFacesContextUtility.getResource();
+        AlertManagerLocal alertManager = LookupUtil.getAlertManager();
+
+        try {
+            Integer[] selectedItems = getSelectedItems();
+            int num = alertManager.acknowledgeAlerts(subject,resource.getId(), selectedItems);
+            if (num==-1)
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,"No Alerts passed to ack");
+            else
+                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,"Acknowledged " + num + " alerts");
+        } catch (Exception e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to acknowledge selected alerts.", e);
+        }
+
+        return "success";
+
+    }
+
+
 
     @Override
     public DataModel getDataModel() {

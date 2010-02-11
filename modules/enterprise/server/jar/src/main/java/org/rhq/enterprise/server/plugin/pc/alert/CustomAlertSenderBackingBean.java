@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.plugin.pc.alert;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -47,5 +48,20 @@ public class CustomAlertSenderBackingBean {
 
         return config;
 
+    }
+
+    protected Configuration persistProperty(Configuration config, String propertyName, Object value) {
+
+        PropertySimple prop = config.getSimple(propertyName);
+        if (prop == null) {
+            prop = new PropertySimple(propertyName,value);
+            config.put(prop);
+        }
+        else {
+            prop.setValue(value);
+        }
+        Configuration ret = persistConfiguration(config);
+
+        return ret;
     }
 }

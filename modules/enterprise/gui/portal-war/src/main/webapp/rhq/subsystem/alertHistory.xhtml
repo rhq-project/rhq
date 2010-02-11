@@ -144,8 +144,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do">
-                     <f:param name="mode" value="viewRoles" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
                      <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
                      <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
 

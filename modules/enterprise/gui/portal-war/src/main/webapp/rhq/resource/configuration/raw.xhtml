@@ -32,7 +32,6 @@
                columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
     <rich:panel id="fileMenuPanel" style="width:100%; background-color: rgb(217, 223, 227);">
       <h:outputLabel value="Files" style="font-weight: bold; padding-left: 5px;"/>
-      <ui:remove><f:facet name="header">Files</f:facet></ui:remove>
       <rich:panelMenu id="fileMenu"
                       mode="ajax"
                       expandMode="client"
@@ -59,20 +58,20 @@
                 <c:otherwise>
                   <rich:panelMenuItem label=""
                                       icon="#{rawConfigUIBean.icon}">
-                    <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol, rawConfigUndoCol">
+                    <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol,rawConfigUndoCol">
                       <h:outputLabel value="#{rawConfigUIBean.fileName}">
                         <a4j:support event="onmousedown"
                                      onsubmit="cursor_wait()"
                                      oncomplete="cursor_clear()"
                                      action="#{configurationEditor.select(rawConfigUIBean.path)}"
                                      limitToList="true"
-                                     reRender="fileContents,selectedFileHeader,modalEditor,fileMenuPanel,uploadWindow"/>
+                                     reRender="fileContents,selectedFileHeader,modalEditor,uploadWindow"/>
                       </h:outputLabel>
                       <a4j:commandButton value="Undo"
                                          styleClass="rawConfigUndoButton"
                                          rendered="#{rawConfigUIBean.modified}"
                                          action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
-                                         reRender="fileMenuPanel,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>
+                                         reRender="fileMenu,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>
                     </h:panelGrid>
                   </rich:panelMenuItem>
                 </c:otherwise>
@@ -115,11 +114,7 @@
           <f:param name="id" value="#{ResourceUIBean.id}"/>
         </h:commandLink>
 
-        <a4j:status id="selectedFileHeader"
-                    startText="Loading #{selectedRawUIBean.path} ..."
-                    stopText="#{selectedRawUIBean.path}"
-                    startStyleClass="rawConfgFileHeader"
-                    stopStyleClass="rawConfigFileHeader"/>
+        <h:outputLabel id="selectedFileHeader" value="#{selectedRawUIBean.path}" styleClass="rawConfigFileHeader"/>
       </h:panelGrid>
 
       <rich:panel style="margin-left:1px; border: none;">

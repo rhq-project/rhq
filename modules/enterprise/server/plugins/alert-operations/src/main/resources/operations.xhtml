@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:a4j="https://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:onc="http://jboss.org/on/component"
+      >
+<head>
+    <title>Operations sender</title>
+</head>
+<body>
+<h:panelGrid columns="2" style="vertical-align:top" >
+    <h:panelGroup style="width:40%" >
+        <rich:panel>
+            <h:outputText value="Select mode"/>
+            <br/>
+            <h:selectOneMenu id="resMode" value="#{operationsBean.resMode}">
+                <f:selectItem itemValue="fixed" itemLabel="Resource ID"/>
+                <f:selectItem itemValue="deferred" itemLabel="Path to resource"/>
+            </h:selectOneMenu>
+            <p/>
+            <h:outputText value="Target resource"/>
+            <br/>
+            <h:inputText id="resourceId" title="Target Resource" value="#{operationsBean.resId}"/>
+            <p/>
+            <h:commandButton id="resourceIdSubmit"
+                             value="Select"
+                             type="submit"
+                             action="#{operationsBean.selectResource}" />
+        </rich:panel>
+    </h:panelGroup>
+
+    <h:panelGroup style="width:60%">
+        <rich:panel rendered="#{not empty operationsBean.operationNames}">
+            <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationName}">
+                <f:selectItems value="#{operationsBean.operationNames}"/>
+            </h:selectOneMenu>
+            <p/>
+            <h:commandButton id="opNameSubmit"
+                             value="Select"
+                             type="submit"
+                             action="#{operationsBean.selectOperation}" />
+        </rich:panel>
+    </h:panelGroup>
+</h:panelGrid>
+<p/>
+    <h:panelGroup style="width:100%">
+        <h:outputText value="3rd panel : "/>
+        <h:outputText value="#{operationsBean.operationName}"/>
+        <br/>
+        <rich:panel rendered="#{not empty operationsBean.operationName}">
+            <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
+                        configuration="#{operationsBean.configuration}"
+                        nullConfigurationDefinitionMessage="NUll configuration definition"
+                        nullConfigurationMessage="null configuration"
+                        nullConfigurationStyle="InfoBlock"
+
+                        id="opParamConfiguration"
+                    />
+            <p/>
+            <h:commandButton id="opParamSubmit"
+                             value="Set"
+                             type="submit"
+                             action="#{operationsBean.useConfiguration}" />
+        </rich:panel>
+    </h:panelGroup>
+
+</body>
+</html>

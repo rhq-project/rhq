@@ -71,6 +71,7 @@
     <module>alert-irc</module>
     <module>alert-mobicents</module>
     <module>alert-microblog</module>
+    <module>alert-operations</module>
     <module>alert-roles</module>
     <module>alert-scriptlang</module>
     <!-- Seeing strange issues with corrupt jar dependencies...

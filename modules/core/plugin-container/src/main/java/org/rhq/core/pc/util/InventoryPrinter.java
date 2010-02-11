@@ -43,6 +43,7 @@ import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.inventory.InventoryFile;
 import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.plugin.PluginManager;
 
 /**
  * @author John Mazzitelli
@@ -147,21 +148,23 @@ public class InventoryPrinter {
 
     public static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean xml,
         ResourceContainer resourceContainer) {
-        outputInventory(exportWriter, recurseChildren, xml, resourceContainer, 0, PluginContainer.getInstance()
+        PluginContainer pc = PluginContainer.getInstance();
+        outputInventory(exportWriter, recurseChildren, xml, resourceContainer, 0, pc.getPluginManager(), pc
             .getInventoryManager(), null, null);
         exportWriter.flush();
     }
 
     public static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean xml,
         InventoryFile file) {
-        outputInventory(exportWriter, recurseChildren, xml, null, 0, PluginContainer.getInstance()
-            .getInventoryManager(), file, null);
+        PluginContainer pc = PluginContainer.getInstance();
+        outputInventory(exportWriter, recurseChildren, xml, null, 0, pc.getPluginManager(), pc.getInventoryManager(),
+            file, null);
         exportWriter.flush();
     }
 
     private static void outputInventory(PrintWriter exportWriter, boolean recurseChildren, boolean dumpXml,
-        ResourceContainer resourceContainer, int descendantDepth, InventoryManager inventoryManager,
-        InventoryFile inventoryFile, InventoryPrinter.ResourceCounter resourceCounter) {
+        ResourceContainer resourceContainer, int descendantDepth, PluginManager pluginManager,
+        InventoryManager inventoryManager, InventoryFile inventoryFile, InventoryPrinter.ResourceCounter resourceCounter) {
         StringBuffer indent = new StringBuffer();
         for (int i = 0; i < descendantDepth; i++) {
             indent.append("   ");
@@ -202,100 +205,108 @@ public class InventoryPrinter {
             exportWriter.printf("!!!RESOURCE IS NULL!!!");
             return;
         }
-        resourceCounter.tallyResource(resource);
-
-        Availability avail = resourceContainer.getAvailability();
-        AvailabilityType availType = null;
-        if (avail != null) {
-            availType = avail.getAvailabilityType();
-        }
-        String availString = (availType == null) ? "UNKNOWN" : availType.toString();
-
-        int installedPackageCount = 0;
-        if (resourceContainer.getInstalledPackages() != null) {
-            installedPackageCount = resourceContainer.getInstalledPackages().size();
+        boolean disabledResource = false; // will be true if the plugin was disabled
+        if (pluginManager != null) {
+            disabledResource = pluginManager.getMetadataManager().getType(resource.getResourceType()) == null;
         }
 
-        if (dumpXml) {
-            exportWriter.printf("%s<resource>\n", indent);
-            exportWriter.printf("%s   <id>%d</id>\n", indent, resource.getId());
-            exportWriter.printf("%s   <key>%s</key>\n", indent, resource.getResourceKey());
-            exportWriter.printf("%s   <name>%s</name>\n", indent, resource.getName());
-            exportWriter.printf("%s   <version>%s</version>\n", indent, resource.getVersion());
-            exportWriter.printf("%s   <uuid>%s</uuid>\n", indent, resource.getUuid());
-            exportWriter.printf("%s   <mtime>%s</mtime>\n", indent, resource.getMtime());
-            exportWriter.printf("%s   <mtime-date>%s</mtime-date>\n", indent, new Date(resource.getMtime()));
-            exportWriter.printf("%s   <description>%s</description>\n", indent, resource.getDescription());
-            exportWriter
-                .printf("%s   <inventory-status>%s</inventory-status>\n", indent, resource.getInventoryStatus());
-            exportWriter.printf("%s   <type>%s</type>\n", indent, (resource.getResourceType() != null) ? resource
-                .getResourceType().getName() : "null");
-            exportWriter.printf("%s   <availabilityType>%s</availabilityType>\n", indent, availString);
-            exportWriter.printf("%s   <category>%s</category>\n", indent,
-                (resource.getResourceType() != null) ? resource.getResourceType().getCategory() : "null");
-            exportWriter.printf("%s   <container>\n", indent);
-            exportWriter.printf("%s      <availability>%s</availability>\n", indent, avail);
-            exportWriter.printf("%s      <state>%s</state>\n", indent, resourceContainer.getResourceComponentState());
-            exportWriter.printf("%s      <installedPackageCount>%d</installedPackageCount>\n", indent,
-                installedPackageCount);
-            exportWriter.printf("%s      <schedules>\n", indent);
+        if (!disabledResource) {
+            resourceCounter.tallyResource(resource);
 
-            Set<MeasurementScheduleRequest> schedules = resourceContainer.getMeasurementSchedule();
-            if (schedules != null) {
-                for (MeasurementScheduleRequest schedule : schedules) {
-                    exportWriter.printf("%s         <schedule>\n", indent);
-                    exportWriter.printf("%s            <schedule-id>%d</schedule-id>\n", indent, schedule
-                        .getScheduleId());
-                    exportWriter.printf("%s            <name>%s</name>\n", indent, schedule.getName());
-                    exportWriter.printf("%s            <enabled>%s</enabled>\n", indent, schedule.isEnabled());
-                    exportWriter.printf("%s            <interval>%d</interval>\n", indent, schedule.getInterval());
-                    exportWriter.printf("%s         </schedule>\n", indent);
-                }
+            Availability avail = resourceContainer.getAvailability();
+            AvailabilityType availType = null;
+            if (avail != null) {
+                availType = avail.getAvailabilityType();
+            }
+            String availString = (availType == null) ? "UNKNOWN" : availType.toString();
+
+            int installedPackageCount = 0;
+            if (resourceContainer.getInstalledPackages() != null) {
+                installedPackageCount = resourceContainer.getInstalledPackages().size();
             }
 
-            exportWriter.printf("%s      </schedules>\n", indent);
-            exportWriter.printf("%s   </container>\n", indent);
+            if (dumpXml) {
+                exportWriter.printf("%s<resource>\n", indent);
+                exportWriter.printf("%s   <id>%d</id>\n", indent, resource.getId());
+                exportWriter.printf("%s   <key>%s</key>\n", indent, resource.getResourceKey());
+                exportWriter.printf("%s   <name>%s</name>\n", indent, resource.getName());
+                exportWriter.printf("%s   <version>%s</version>\n", indent, resource.getVersion());
+                exportWriter.printf("%s   <uuid>%s</uuid>\n", indent, resource.getUuid());
+                exportWriter.printf("%s   <mtime>%s</mtime>\n", indent, resource.getMtime());
+                exportWriter.printf("%s   <mtime-date>%s</mtime-date>\n", indent, new Date(resource.getMtime()));
+                exportWriter.printf("%s   <description>%s</description>\n", indent, resource.getDescription());
+                exportWriter.printf("%s   <inventory-status>%s</inventory-status>\n", indent, resource
+                    .getInventoryStatus());
+                exportWriter.printf("%s   <type>%s</type>\n", indent, (resource.getResourceType() != null) ? resource
+                    .getResourceType().getName() : "null");
+                exportWriter.printf("%s   <availabilityType>%s</availabilityType>\n", indent, availString);
+                exportWriter.printf("%s   <category>%s</category>\n", indent,
+                    (resource.getResourceType() != null) ? resource.getResourceType().getCategory() : "null");
+                exportWriter.printf("%s   <container>\n", indent);
+                exportWriter.printf("%s      <availability>%s</availability>\n", indent, avail);
+                exportWriter.printf("%s      <state>%s</state>\n", indent, resourceContainer
+                    .getResourceComponentState());
+                exportWriter.printf("%s      <installedPackageCount>%d</installedPackageCount>\n", indent,
+                    installedPackageCount);
+                exportWriter.printf("%s      <schedules>\n", indent);
+
+                Set<MeasurementScheduleRequest> schedules = resourceContainer.getMeasurementSchedule();
+                if (schedules != null) {
+                    for (MeasurementScheduleRequest schedule : schedules) {
+                        exportWriter.printf("%s         <schedule>\n", indent);
+                        exportWriter.printf("%s            <schedule-id>%d</schedule-id>\n", indent, schedule
+                            .getScheduleId());
+                        exportWriter.printf("%s            <name>%s</name>\n", indent, schedule.getName());
+                        exportWriter.printf("%s            <enabled>%s</enabled>\n", indent, schedule.isEnabled());
+                        exportWriter.printf("%s            <interval>%d</interval>\n", indent, schedule.getInterval());
+                        exportWriter.printf("%s         </schedule>\n", indent);
+                    }
+                }
+
+                exportWriter.printf("%s      </schedules>\n", indent);
+                exportWriter.printf("%s   </container>\n", indent);
+                if (recurseChildren) {
+                    exportWriter.printf("%s   <children>\n", indent);
+                }
+            } else {
+                Set<MeasurementScheduleRequest> schedules = resourceContainer.getMeasurementSchedule();
+                int enabled = 0;
+                if (schedules != null) {
+                    for (MeasurementScheduleRequest schedule : schedules) {
+                        enabled += (schedule.isEnabled()) ? 1 : 0;
+                    }
+                }
+                exportWriter.printf("%s+ %s (sync=%s, state=%s, avail=%s, sched=%d/%d)\n", indent, resource,
+                    resourceContainer.getSynchronizationState(), resourceContainer.getResourceComponentState(),
+                    availString, enabled, (schedules != null) ? schedules.size() : 0);
+            }
+
             if (recurseChildren) {
-                exportWriter.printf("%s   <children>\n", indent);
-            }
-        } else {
-            Set<MeasurementScheduleRequest> schedules = resourceContainer.getMeasurementSchedule();
-            int enabled = 0;
-            if (schedules != null) {
-                for (MeasurementScheduleRequest schedule : schedules) {
-                    enabled += (schedule.isEnabled()) ? 1 : 0;
+                Set<Resource> children = new HashSet(resource.getChildResources()); // wrap in new HashSet to avoid CCMEs
+                for (Resource child : children) {
+                    ResourceContainer childContainer;
+
+                    if (inventoryFile == null) {
+                        // get the child from the in-memory inventory
+                        childContainer = inventoryManager.getResourceContainer(child);
+                    } else {
+                        // get the child from the inventory found in the file
+                        childContainer = getResourceContainer(child.getId(), inventoryFile.getResourceContainers());
+                    }
+
+                    // recursively call ourselves
+                    outputInventory(exportWriter, recurseChildren, dumpXml, childContainer, descendantDepth + 1,
+                        pluginManager, inventoryManager, inventoryFile, resourceCounter);
                 }
             }
-            exportWriter.printf("%s+ %s (sync=%s, state=%s, avail=%s, sched=%d/%d)\n", indent, resource,
-                resourceContainer.getSynchronizationState(), resourceContainer.getResourceComponentState(),
-                availString, enabled, (schedules != null) ? schedules.size() : 0);
-        }
 
-        if (recurseChildren) {
-            Set<Resource> children = new HashSet(resource.getChildResources()); // wrap in new HashSet to avoid CCMEs
-            for (Resource child : children) {
-                ResourceContainer childContainer;
-
-                if (inventoryFile == null) {
-                    // get the child from the in-memory inventory
-                    childContainer = inventoryManager.getResourceContainer(child);
-                } else {
-                    // get the child from the inventory found in the file
-                    childContainer = getResourceContainer(child.getId(), inventoryFile.getResourceContainers());
+            if (dumpXml) {
+                if (recurseChildren) {
+                    exportWriter.printf("%s   </children>\n", indent);
                 }
 
-                // recursively call ourselves
-                outputInventory(exportWriter, recurseChildren, dumpXml, childContainer, descendantDepth + 1,
-                    inventoryManager, inventoryFile, resourceCounter);
+                exportWriter.printf("%s</resource>\n", indent);
             }
-        }
-
-        if (dumpXml) {
-            if (recurseChildren) {
-                exportWriter.printf("%s   </children>\n", indent);
-            }
-
-            exportWriter.printf("%s</resource>\n", indent);
         }
 
         if (descendantDepth == 0) {

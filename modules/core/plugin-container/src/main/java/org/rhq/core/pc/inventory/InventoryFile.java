@@ -28,6 +28,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +52,7 @@ public class InventoryFile {
 
     private final File inventoryFile;
     private Resource platform;
-    private Map<String, ResourceContainer> resourceContainers;
+    private Map<String, ResourceContainer> resourceContainers; // keyed on UUID
 
     /**
      * Constructor for {@link InventoryFile} that will read and write inventory data to the given file.
@@ -105,35 +107,82 @@ public class InventoryFile {
             FileInputStream fis = new FileInputStream(inventoryFile);
             ObjectInputStream ois = new ObjectInputStream(fis);
 
+            // this list will contain UUIDs of resources that we should ignore usually due to disabled plugins
+            Set<String> uuidsToIgnore = new HashSet<String>();
+
             this.platform = (Resource) ois.readObject();
-            connectTypes(this.platform);
+            connectTypes(this.platform, uuidsToIgnore);
             this.resourceContainers = (Map<String, ResourceContainer>) ois.readObject();
             for (ResourceContainer resourceContainer : this.resourceContainers.values()) {
-                connectTypes(resourceContainer.getResource());
+                connectTypes(resourceContainer.getResource(), uuidsToIgnore);
             }
+
+            for (String uuidToIgnore : uuidsToIgnore) {
+                this.resourceContainers.remove(uuidToIgnore);
+            }
+
+            // purge all resources from disabled plugins - after this call, uuidsToIgnore should be empty
+            removeIgnoredResourcesFromChildren(this.platform, uuidsToIgnore);
+            return;
         } catch (Exception e) {
             throw new PluginContainerException("Cannot load inventory file: " + inventoryFile, e);
         }
     }
 
-    private void connectTypes(Resource resource) {
+    private void removeIgnoredResourcesFromChildren(Resource resource, Set<String> uuidsToIgnore) {
+        Set<Resource> children = resource.getChildResources();
+        if (children != null && !children.isEmpty() && !uuidsToIgnore.isEmpty()) {
+            Iterator<Resource> iterator = children.iterator();
+            while (iterator.hasNext() && !uuidsToIgnore.isEmpty()) {
+                Resource child = iterator.next();
+                removeIgnoredResourcesFromChildren(child, uuidsToIgnore);
+                if (uuidsToIgnore.contains(child.getUuid())) {
+                    iterator.remove();
+                    uuidsToIgnore.remove(child.getUuid());
+                }
+            }
+        }
+        return;
+    }
+
+    private void connectTypes(Resource resource, Set<String> uuidsToIgnore) {
         PluginMetadataManager metadataManager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
         ResourceType resourceType = resource.getResourceType();
 
         if (resourceType != null) {
             ResourceType fullResourceType = metadataManager.getType(resourceType);
-            resource.setResourceType(fullResourceType);
+            if (fullResourceType != null) {
+                resource.setResourceType(fullResourceType);
+
+                // now reconnect all its children's types
+                Set<Resource> children = resource.getChildResources();
+                if (children != null) {
+                    for (Resource child : children) {
+                        connectTypes(child, uuidsToIgnore);
+                    }
+                }
+            } else {
+                log.info("Persisted resource [" + resource + "] has a disabled resource type - will not reconnect it");
+                addAllUUIDsToList(resource, uuidsToIgnore);
+            }
         } else {
-            log.error("Resource [" + resource + "] has a null resource type - cannot reconnect the type");
-            // I guess keep going, reconnect the children's types - but we are probably no good now
+            log.error("Persisted resource [" + resource
+                + "] does not have a resource type - cannot reconnect its type or its children types");
+            addAllUUIDsToList(resource, uuidsToIgnore);
         }
 
+        return;
+    }
+
+    private void addAllUUIDsToList(Resource resource, Set<String> list) {
+        list.add(resource.getUuid());
         Set<Resource> children = resource.getChildResources();
         if (children != null) {
             for (Resource child : children) {
-                connectTypes(child);
+                addAllUUIDsToList(child, list);
             }
         }
+        return;
     }
 
     /**

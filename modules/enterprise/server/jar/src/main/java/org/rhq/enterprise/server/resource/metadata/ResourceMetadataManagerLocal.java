@@ -34,6 +34,15 @@ import org.rhq.core.domain.resource.ResourceCategory;
  */
 @Local
 public interface ResourceMetadataManagerLocal {
+
+    List<Plugin> getAllPluginsById(List<Integer> pluginIds);
+
+    void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception;
+
+    void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception;
+
     /**
      * For server-side registration of plugin archives. At server startup or as new plugins are runtime deployed the jar
      * will have its descriptor read and parsed and the metadata for the plugin will be updated in the db.

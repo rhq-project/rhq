@@ -121,7 +121,7 @@ public class ResourceConfigurationViewer {
             initConfigDirectories();
         }
         else {
-            rawConfigDirectories = Collections.EMPTY_LIST;
+            rawConfigDirectories = Collections.emptyList();
         }
     }
 

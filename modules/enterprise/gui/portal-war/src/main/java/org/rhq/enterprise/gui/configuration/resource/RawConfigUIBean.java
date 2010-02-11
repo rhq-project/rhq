@@ -81,6 +81,10 @@ public class RawConfigUIBean {
     //       good to change the method name to something a bit more descriptive like getFileNameLabel().
     public String getFileName() {
         File file = new File(rawConfiguration.getPath());
+
+        if (isModified()) {
+            return "* " + file.getName();
+        }
         return file.getName();
     }
 

@@ -47,9 +47,14 @@ THIS TEXT WILL BE REMOVED.
       }
     </script>
 
+    <h:panelGroup layout="block" styleClass="InfoBlock"
+                  rendered="#{configurationEditor.updateInProgress}">
+      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
+    </h:panelGroup>
+
     <h:form id="editResourceConfigurationForm"
             onsubmit="prepareInputsForSubmission(this)"
-            rendered="#{!configurationEditor.updateInProgress}">
+            rendered="#{configurationEditor.initialized}">
 
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
@@ -151,12 +156,7 @@ THIS TEXT WILL BE REMOVED.
       upload-modal.xhtml needs to be included outside the above form because the file upload component requires its
       own, separate form.
     -->
-    <ui:include src="upload-modal.xhtml"/>
-
-    <h:panelGroup layout="block" styleClass="InfoBlock"
-                  rendered="#{configurationEditor.updateInProgress}">
-      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-    </h:panelGroup>
+    <ui:include src="upload-modal.xhtml"/>    
   </ui:define>
 
 </ui:composition>

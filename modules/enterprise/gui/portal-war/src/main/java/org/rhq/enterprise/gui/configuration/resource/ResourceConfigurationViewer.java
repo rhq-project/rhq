@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.event.ValueChangeEvent;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -58,13 +59,13 @@ public class ResourceConfigurationViewer {
     @In("webUser")
     protected WebUser loggedInUser;
 
-    @Out
+    @Out(required = false)
     protected Configuration resourceConfiguration;
 
-    @Out
+    @Out(required = false)
     protected ConfigurationDefinition resourceConfigurationDefinition;
 
-    @Out
+    @Out(required = false)
     private Collection<RawConfigDirectory> rawConfigDirectories;
 
     @Out(required = false)
@@ -72,19 +73,44 @@ public class ResourceConfigurationViewer {
 
     protected Integer resourceId;
 
+    protected boolean initialized = false;
+
     /**
+     * <p>
      * This method "bootstraps" the viewer/editor and the model objects used in the view. Specifically, the resource
      * configuration and the corresponding configuration definition are loaded from the database and are outjected for
      * use in the view.
+     * </p>
+     * <p>
+     * If the configuration definition or if the configuration fail to load for whatever reason, the initialized flag
+     * is set to <code>false</code>. When the configuration definition is null a message is added to the Faces context
+     * indicating that the resource does not expose a configuration. When the configuration is null, a message is added
+     * to the Faces context indicating that the resource configuration has not been initialized.
+     * </p>
      */
-    @Create
     public void initialize() {
         resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
         
         loadResourceConfigurationDefinition();
+
+        if (resourceConfigurationDefinition == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                "This resource does not expose a configuration.");
+            return;
+        }
+
         loadResourceConfiguration();
+
+        if (resourceConfiguration == null) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_WARN,
+                "This resource's configuration has not yet been initialized.");
+            return;
+        }
+
         initRawConfigDirectories();
         initMode();
+
+        initialized = true;
 
         doInitialization();
     }
@@ -167,6 +193,10 @@ public class ResourceConfigurationViewer {
             mode = STRUCTURED_MODE;  // the user off in structured mode. We may at some later point want to add logic
                                      // to remember what mode the user should start in.
         }
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /** @return <code>true</code> if the resource configuration supports raw only, <code>false</code> otherwise */
@@ -262,6 +292,10 @@ public class ResourceConfigurationViewer {
     }
 
     public boolean isUpdateInProgress() {
+        if (!isInitialized()) {
+            return false;
+        }
+
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
         return configurationMgr.isResourceConfigurationUpdateInProgress(loggedInUser.getSubject(), resourceId);
     }

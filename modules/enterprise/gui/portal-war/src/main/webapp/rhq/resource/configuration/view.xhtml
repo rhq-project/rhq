@@ -42,7 +42,7 @@ THIS TEXT WILL BE REMOVED.
       <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
     </h:panelGroup>
 
-    <h:form id="viewResourceConfigurationForm">
+    <h:form id="viewResourceConfigurationForm" rendered="#{configurationViewer.initialized}">
       <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
 
       <h:panelGrid columns="2" style="width:100%">
@@ -116,13 +116,6 @@ THIS TEXT WILL BE REMOVED.
 
       <ui:include src="view-raw-modal.xhtml"/>
     </h:form>
-
-    <h:panelGroup layout="block" styleClass="InfoBlock"
-                  rendered="#{configurationViewer.updateInProgress}">
-      <b>${msg['note']}</b> ${msg['resource.config.Current.updateInProgress']}
-    </h:panelGroup>
-
-
   </ui:define>
 
 </ui:composition>

@@ -172,14 +172,18 @@
 
                <rich:column>
                    <f:facet name="header">
-                       <h:outputText styleClass="headerText" value="Ack by" />
+                       <onc:sortableColumnHeader sort="a.ackBy.name">
+                          <h:outputText styleClass="headerText" value="Ack by" />
+                       </onc:sortableColumnHeader>
                    </f:facet>
                    <h:outputText value="#{item.alert.ackBy.name}" title="#{item.alert.ackBy.firstName} #{item.alert.ackBy.lastName}"/>
                </rich:column>
 
                <rich:column>
                    <f:facet name="header">
-                       <h:outputText styleClass="headerText" value="Ack date" />
+                       <onc:sortableColumnHeader sort="a.ackTime">
+                          <h:outputText styleClass="headerText" value="Ack date" />
+                       </onc:sortableColumnHeader>
                    </f:facet>
                    <h:outputText value="#{item.alert.ackTime}">
                         <f:converter converterId="RelativeDurationConverter" />
@@ -195,7 +199,7 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="9" width="100%">
                         <onc:selectCommandButton action="#{ListAlertHistoryUIBean.deleteSelectedAlerts}"
                                                  value="DELETE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceUIBean.permissions.alert}" />

@@ -57,7 +57,7 @@ public class ScriptUtil {
         ResourceManagerRemote resourceManager = client.getRemoteClient().getResourceManagerRemote();
 
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.addFilterName('%' + string + '%');
+        criteria.addFilterName(string);
         return resourceManager.findResourcesByCriteria(client.getSubject(), criteria);
     }
 

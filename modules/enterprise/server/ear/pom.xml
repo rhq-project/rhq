@@ -140,19 +140,8 @@
 
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
-            <version>2.3.1</version>
             <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
-               <displayName>RHQ</displayName>
-               <version>1.4</version>  <!-- J2EE version -->
+               <displayName>RHQ</displayName>               
                <workDirectory>${earDirectory}</workDirectory>
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
@@ -227,7 +216,6 @@
 
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
             <executions>
 
                <execution>
@@ -459,7 +447,6 @@
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>

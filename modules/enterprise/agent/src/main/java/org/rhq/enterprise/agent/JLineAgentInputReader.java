@@ -21,10 +21,13 @@ package org.rhq.enterprise.agent;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-
-import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import java.util.Map;
 
 import jline.ConsoleReader;
+import jline.SimpleCompletor;
+
+import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.agent.promptcmd.AgentPromptCommand;
 
 public class JLineAgentInputReader implements AgentInputReader {
 
@@ -35,13 +38,23 @@ public class JLineAgentInputReader implements AgentInputReader {
     public JLineAgentInputReader(AgentMain agent) throws IOException {
         this.jline = new ConsoleReader();
         this.agent = agent;
+        this.addCompletor();
         this.consoleInput = true;
     }
 
     public JLineAgentInputReader(AgentMain agent, FileInputStream fis) throws IOException {
         this.jline = new ConsoleReader(fis, agent.getOut());
         this.agent = agent;
+        this.addCompletor();
         this.consoleInput = false;
+    }
+
+    public void addCompletor() {
+        Map<String, Class<? extends AgentPromptCommand>> cmds = agent.getPromptCommands();
+        if (cmds != null) {
+            String[] cmdArray = cmds.keySet().toArray(new String[0]);
+            jline.addCompletor(new SimpleCompletor(cmdArray));
+        }
     }
 
     public boolean isConsole() {

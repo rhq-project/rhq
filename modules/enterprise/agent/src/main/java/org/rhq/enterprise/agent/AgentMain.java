@@ -476,12 +476,14 @@ public class AgentMain {
 
         m_commandLineArgs = args;
         processArguments(m_commandLineArgs);
-        if (m_input == null) {
-            m_input = AgentInputReaderFactory.create(this);
-        }
 
         m_promptCommands = new HashMap<String, Class<? extends AgentPromptCommand>>();
         setupPromptCommandsMap(m_promptCommands);
+
+        // Move this last to allow for commands to be inserted into tab-completion.
+        if (m_input == null) {
+            m_input = AgentInputReaderFactory.create(this);
+        }
 
         prepareNativeSystem();
 

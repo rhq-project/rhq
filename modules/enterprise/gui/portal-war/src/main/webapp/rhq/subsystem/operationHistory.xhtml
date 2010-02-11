@@ -92,23 +92,17 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.history.resource.id}" />
-                     <h:outputText value="#{item.history.resource.name}" />
+                     <f:param name="id" value="#{item.original.history.resource.id}" />
+                     <h:outputText value="#{item.original.history.resource.name}" />
                   </h:outputLink>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="parent.name">
-                        <h:outputText styleClass="headerText" value="Parent" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentResourceName}">
-                     <f:param name="id" value="#{item.parentResourceId}" />
-                     <h:outputText value="#{item.parentResourceName}" />
-                  </h:outputLink>
+                  <onc:resourcePartialLineage parents="#{item.parents}" />
                </rich:column>
 
                <rich:column>
@@ -118,7 +112,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.history.createdTime}">
+                  <h:outputText value="#{item.original.history.createdTime}">
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
@@ -130,7 +124,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.history.modifiedTime}"  rendered="#{item.history.status ne 'INPROGRESS'}" >
+                  <h:outputText value="#{item.original.history.modifiedTime}"  rendered="#{item.original.history.status ne 'INPROGRESS'}" >
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
@@ -143,9 +137,9 @@
                   </f:facet>
 
                   <h:outputLink value="/rhq/resource/operation/resourceOperationHistoryDetails.xhtml">
-                     <f:param name="id" value="#{item.history.resource.id}" />
-                     <f:param name="opId" value="#{item.history.id}" />
-                     <h:outputText value="#{item.history.operationDefinition.name}" />
+                     <f:param name="id" value="#{item.original.history.resource.id}" />
+                     <f:param name="opId" value="#{item.original.history.id}" />
+                     <h:outputText value="#{item.original.history.operationDefinition.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -156,14 +150,14 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink rendered="#{item.history.status eq 'FAILURE'}"
-                                value="javascript:displayMessageModal('Stack Trace','#{item.history.errorMessage}')">
+                  <h:outputLink rendered="#{item.original.history.status eq 'FAILURE'}"
+                                value="javascript:displayMessageModal('Stack Trace','#{item.original.history.errorMessage}')">
                       <h:graphicImage value="/images/icons/Operation_failed_16.png"/>
-                     <h:outputText value="#{item.history.status}"/>
+                     <h:outputText value="#{item.original.history.status}"/>
                   </h:outputLink>
 
-                   <h:graphicImage value="/images/icons/Operation_ok_16.png" rendered="#{item.history.status ne 'FAILURE'}"/>
-                  <h:outputText rendered="#{item.history.status ne 'FAILURE'}" value="#{item.history.status}"/>
+                   <h:graphicImage value="/images/icons/Operation_ok_16.png" rendered="#{item.original.history.status ne 'FAILURE'}"/>
+                  <h:outputText rendered="#{item.original.history.status ne 'FAILURE'}" value="#{item.original.history.status}"/>
                </rich:column>
 
                <rich:column>
@@ -173,8 +167,8 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.history.subjectName}" rendered="#{not empty item.history.subjectName}" />
-                  <h:outputText value="Unknown" rendered="#{empty item.history.subjectName}" />
+                  <h:outputText value="#{item.original.history.subjectName}" rendered="#{not empty item.original.history.subjectName}" />
+                  <h:outputText value="Unknown" rendered="#{empty item.original.history.subjectName}" />
                </rich:column>
 
                <f:facet name="footer">

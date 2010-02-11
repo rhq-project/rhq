@@ -22,6 +22,8 @@
  */
 package org.rhq.core.clientapi.server.bundle;
 
+import org.rhq.core.communications.command.annotation.Asynchronous;
+
 /**
  * Interface for agents to use when needing to inform the server about bundle tasks. Implementations of this interface, once registered with the
  * plugin container, will received the requests that were issued updated with the operation results.
@@ -29,4 +31,7 @@ package org.rhq.core.clientapi.server.bundle;
  * @author John Mazzitelli
  */
 public interface BundleServerService {
+
+    @Asynchronous(guaranteedDelivery = true)
+    void updateComplete(BundleUpdateComplete buc);
 }

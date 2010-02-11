@@ -81,7 +81,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
  * @author Ian Springer
  */
 @Entity
-@Table(name = "RHQ_RESOURCE_TYPE")
+@Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME, // TODO: QUERY: This breaks rules, names may not be unique between plugins
@@ -119,14 +119,14 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
         + "WHERE s = :subject " //
         + "AND res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res " //
         + "WHERE res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
@@ -242,6 +242,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
     private static final long serialVersionUID = 2L;
 
+    public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
+    
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
     public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";

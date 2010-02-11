@@ -529,10 +529,9 @@
     <table name="RHQ_BUNDLE_FILE">
         <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
         <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
-        <!-- this probably needs a DTYPE discriminator so we know if its a package or a specific package version -->
-        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="false" references="RHQ_PACKAGE_VERSION"/>
+        <column name="PACKAGE_VERSION_ID" type="INTEGER" required="true" references="RHQ_PACKAGE_VERSION"/>
         <column name="PACKAGE_ID" type="INTEGER" required="false" references="RHQ_PACKAGE"/>
-    </table>
+    </table>    
 
     <!-- A set of configuration values that are used to customize how a bundle version is installed -->
     <table name="RHQ_BUNDLE_DEPLOY_DEF">
@@ -544,8 +543,7 @@
         <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />        
         <column name="ENFORCE_POLICY" type="BOOLEAN" required="true"/> 
         <column name="ENFORCEMENT_INTERVAL" type="INTEGER" required="false"/>
-        <!-- this may need a DTYPE discriminator so we know if its a bundle or a specific bundle version -->
-        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_VERSION"/>
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_VERSION"/>
         <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
     </table>
 

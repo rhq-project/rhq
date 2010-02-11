@@ -83,7 +83,7 @@ public class BundleDeployDefinition implements Serializable {
     private Long mtime = System.currentTimeMillis();
 
     @JoinColumn(name = "CONFIG_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
     private Configuration configuration;
 
     @Column(name = "ENFORCE_POLICY", nullable = false)
@@ -92,7 +92,7 @@ public class BundleDeployDefinition implements Serializable {
     @Column(name = "ENFORCEMENT_INTERVAL", nullable = true)
     private int enforcementInterval;
 
-    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @JoinColumn(name = "BUNDLE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private BundleVersion bundleVersion;
 
@@ -208,7 +208,7 @@ public class BundleDeployDefinition implements Serializable {
         int result = 1;
         result = prime * result + ((bundleVersion == null) ? 0 : bundleVersion.hashCode());
         result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
-        result = prime * result + ((bundle == null) ? 0 : name.hashCode());
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
         return result;
     }
 

@@ -30,5 +30,5 @@ package org.rhq.core.clientapi.agent.bundle;
  * @author John Mazzitelli
  */
 public interface BundleAgentService {
-    void dummy();
+    BundleUpdateResponse update(BundleUpdateRequest request);
 }

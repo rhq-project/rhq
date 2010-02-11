@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function">
+
+<ui:composition template="/rhq/entity/layout/main-wide.xhtml">
+
+<ui:param name="defaultPageTitle" value="Subsystem Views"/>
+
+   <ui:define name="summary"></ui:define>
+   
+   <ui:define name="tabBar">
+      <a4j:region>
+         <h:form>
+            <a4j:poll interval="60000" timeout="5000" 
+                      reRender="browserTabBarPanel" status="commonStatus" />
+         </h:form>
+      </a4j:region>
+      
+      <a4j:outputPanel id="browserTabBarPanel" style="width: 100%;">
+      <onc:tabBar selectedTabName="#{selectedTabName}" >
+         <onc:tab name="Resources" 
+                  displayName="Resources #{InventorySummaryUIBean.resourceCount}"
+                  url="/rhq/inventory/browseResources.xhtml?subtab=all">
+            <onc:subtab name="all" 
+                        displayName="All"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=all" />
+            <onc:subtab name="platform" 
+                        displayName="Platforms #{InventorySummaryUIBean.platformCount}"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=platform" />
+            <onc:subtab name="server" 
+                        displayName="Servers #{InventorySummaryUIBean.serverCount}" 
+                        url="/rhq/inventory/browseResources.xhtml?subtab=server" />
+            <onc:subtab name="service" 
+                        displayName="Services #{InventorySummaryUIBean.serviceCount}"
+                        url="/rhq/inventory/browseResources.xhtml?subtab=service" />
+         </onc:tab>
+         <onc:tab name="Groups" 
+                  displayName="Groups #{InventorySummaryUIBean.groupCount}"
+                  url="/rhq/inventory/browseGroups.xhtml?subtab=all">
+            <onc:subtab name="all" 
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=all" />
+            <onc:subtab name="compatible" 
+                        displayName="Compatible #{InventorySummaryUIBean.compatibleCount}" 
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=compatible" />
+            <onc:subtab name="mixed" 
+                        displayName="Mixed #{InventorySummaryUIBean.mixedCount}"
+                        url="/rhq/inventory/browseGroups.xhtml?subtab=mixed" />
+         </onc:tab>
+         <onc:tab name="GroupDefinitions" 
+                  displayName="Group Definitions #{InventorySummaryUIBean.groupDefinitionCount}"
+                  url="/rhq/definition/group/list.xhtml">
+            <onc:subtab name="all" 
+                        url="/rhq/definition/group/list.xhtml" />
+         </onc:tab>
+      </onc:tabBar>
+      </a4j:outputPanel>
+      <p />
+
+      <h:messages showSummary="true"
+                  showDetail="true"
+                  infoClass="InfoBlock"
+                  warnClass="WarnBlock"
+                  errorClass="ErrorBlock"
+                  fatalClass="FatalBlock"
+                  globalOnly="false"
+                  layout="table"
+                  width="100%"/>
+   </ui:define>
+
+   <ui:define name="content">
+      <p/>
+      <h1>Default Browser Content</h1>
+      <p/>
+   </ui:define>
+
+</ui:composition>
+
+</html>

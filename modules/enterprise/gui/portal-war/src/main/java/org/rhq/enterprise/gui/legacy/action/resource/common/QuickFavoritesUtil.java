@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.gui.legacy.WebUser;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences;
 import org.rhq.enterprise.gui.legacy.WebUserPreferences.FavoriteResourcePortletPreferences;
@@ -29,6 +30,7 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.gui.util.WebUtility;
 
 public class QuickFavoritesUtil {
+
     /**
      * This not only returns the flag to indicate if the resource found in the request is a favorite, but it also adds
      * an attribute "isFavorite" to the request so others can know the status later on down the request chain.
@@ -41,6 +43,14 @@ public class QuickFavoritesUtil {
         WebUser user = SessionUtils.getWebUser(request.getSession());
         int id = WebUtility.getResourceId(request);
         Boolean isFavorite = isFavorite(user, id);
+        request.setAttribute("isFavorite", isFavorite);
+        return isFavorite;
+    }
+
+    public static Boolean determineIfFavoriteResource(int resourceId) {
+        HttpServletRequest request = FacesContextUtility.getRequest();
+        WebUser user = SessionUtils.getWebUser(request.getSession());
+        Boolean isFavorite = isFavorite(user, resourceId);
         request.setAttribute("isFavorite", isFavorite);
         return isFavorite;
     }

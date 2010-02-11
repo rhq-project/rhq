@@ -71,7 +71,7 @@ THIS TEXT WILL BE REMOVED.
 
       <c:choose>
         <c:when test="${configurationEditor.rawSupported}">
-          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+          <rich:tabPanel>
             <rich:tab label="Advanced Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
               <ui:include src="raw.xhtml">
                 <ui:param name="readOnly" value="false"/>
@@ -81,7 +81,7 @@ THIS TEXT WILL BE REMOVED.
         </c:when>
 
         <c:when test="${configurationEditor.structuredSupported}">
-          <rich:tabPanel switchType="ajax" valueChangeListener="changeTabs">
+          <rich:tabPanel>
             <rich:tab label="Basic Mode" onlabelclick="cursor_wait();" oncomplete="cursor_clear();">
               <ui:include src="structured.xhtml">
                 <ui:param name="readOnly" value="false"/>
@@ -108,7 +108,7 @@ THIS TEXT WILL BE REMOVED.
                          valueChangeListener="#{configurationEditor.changeTabs}">
             <rich:tab id="structuredTab"
                       label="Basic Mode"
-                      reRender="upperCommitPanel"
+                      reRender="lowerCommitPanel,upperCommitPanel,modalEditor"
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();">
               <ui:include src="structured.xhtml">
@@ -117,7 +117,7 @@ THIS TEXT WILL BE REMOVED.
             </rich:tab>
             <rich:tab id="rawTab"
                       label="Advanced Mode"
-                      reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
+                      reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel,modalEditor"
                       onlabelclick="cursor_wait();"
                       oncomplete="cursor_clear();">
               <ui:include src="raw.xhtml">
@@ -142,11 +142,16 @@ THIS TEXT WILL BE REMOVED.
         </h:panelGroup>
       </h:panelGrid>
 
-      <ui:include src="upload-modal.xhtml"/>
       <ui:include src="view-raw-modal.xhtml">
         <ui:param name="readOnly" value="false"/>
       </ui:include>
     </h:form>
+
+    <!--
+      upload-modal.xhtml needs to be included outside the above form because the file upload component requires its
+      own, separate form.
+    -->
+    <ui:include src="upload-modal.xhtml"/>
 
     <h:panelGroup layout="block" styleClass="InfoBlock"
                   rendered="#{configurationEditor.updateInProgress}">

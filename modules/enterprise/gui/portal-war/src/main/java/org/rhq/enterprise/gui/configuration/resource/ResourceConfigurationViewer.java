@@ -70,8 +70,7 @@ public class ResourceConfigurationViewer {
     @Out(required = false)
     protected RawConfigUIBean selectedRawUIBean;
 
-    @RequestParameter("id")
-    protected int resourceId;
+    protected Integer resourceId;
 
     /**
      * This method "bootstraps" the viewer/editor and the model objects used in the view. Specifically, the resource
@@ -80,9 +79,12 @@ public class ResourceConfigurationViewer {
      */
     @Create
     public void initialize() {
+        resourceId = FacesContextUtility.getRequiredRequestParameter("id", Integer.class);
+        
         loadResourceConfigurationDefinition();
         loadResourceConfiguration();
         initRawConfigDirectories();
+        initMode();
 
         doInitialization();
     }
@@ -154,6 +156,19 @@ public class ResourceConfigurationViewer {
         return file.getParentFile().getAbsolutePath();
     }
 
+    private void initMode() {
+        if (isStructuredSupported()) {
+            mode = STRUCTURED_MODE;
+        }
+        else if (isRawMode()) {
+            mode = RAW_MODE;
+        }
+        else {                       // else structured and raw is supported and (at least for now) we will just start
+            mode = STRUCTURED_MODE;  // the user off in structured mode. We may at some later point want to add logic
+                                     // to remember what mode the user should start in.
+        }
+    }
+
     /** @return <code>true</code> if the resource configuration supports raw only, <code>false</code> otherwise */
     public boolean isRawSupported() {
         return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.RAW;
@@ -170,6 +185,16 @@ public class ResourceConfigurationViewer {
 
     public boolean isRawMode() {
         return mode == RAW_MODE;
+    }
+
+    public boolean getRenderModalEditor() {
+        // Ideally we want to also check that isRawMode() returns true, but doing so causes the wrong results due to
+        // how/when the component tree is rendered. The mode field is changed when the user changes tabs in the UI;
+        // however this property is read and its value applied to the modalEditor component before the mode is updated.
+        //
+        // jsanda - 02/10/2010
+        
+        return isRawSupported() || isStructuredAndRawSupported();
     }
 
     /**

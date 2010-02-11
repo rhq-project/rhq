@@ -17,21 +17,16 @@
 
   <page view-id="/rhq/resource/configuration/view-map.xhtml" action="#{configurationViewer.initialize}"/>
 
-  <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="5000" >
+  <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="10000" timeout="180000">
     <action execute="#{configurationEditor.initialize}"
             on-postback="false"
             if="#{!conversation.longRunning or (empty resourceConfiguration or resourceConfiguration.id ne ResourceUIBean.id)}"/>
-    <!--<action execute="#{configurationEditor.initialize}" on-postback="false"/>-->
-
-    <!--<begin-conversation join="true" if="#{!conversation.longRunning}"/>-->
-
-    <!--<begin-conversation if="#{empty resourceConfiguration or resourceConfiguration.id ne ResourceUIBean.id}"/>-->
 
     <navigation from-action="#{configurationEditor.initialize}">
       <begin-conversation join="true"/>
       <rule if="#{configurationEditor.updateInProgress}">
         <redirect view-id="/rhq/resource/configuration/view.xhtml" include-page-params="true">
-          <param name="id" value="#{ResourceUIBean.id}"/>        
+          <param name="id" value="#{ResourceUIBean.id}"/>
         </redirect>
       </rule>
     </navigation>

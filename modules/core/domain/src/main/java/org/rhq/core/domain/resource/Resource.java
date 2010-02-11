@@ -1099,6 +1099,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
 
+    //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    //    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
+
     public Resource() {
         this.uuid = UUID.randomUUID().toString();
     }

@@ -60,9 +60,8 @@ public abstract class AbstractTabComponent extends UIComponentBase {
     }
 
     public String getDisplayName() {
-        if (this.displayName == null) {
-            this.displayName = FacesComponentUtility.getExpressionAttribute(this, "displayName");
-        }
+        // always evaluate expression, so that displayNames can be AJAX-updated  
+        this.displayName = FacesComponentUtility.getExpressionAttribute(this, "displayName");
 
         return this.displayName;
     }

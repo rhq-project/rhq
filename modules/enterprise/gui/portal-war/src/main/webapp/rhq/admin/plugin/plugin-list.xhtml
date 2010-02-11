@@ -49,20 +49,20 @@
                          value="#{InstalledPluginsUIBean.installedAgentPlugins}"
                          var="agentPlugin"
                          width="100%"
-                         columnsWidth="20%, 50%, 20%, 10%"
+                         columnsWidth="3%, 20%, 52%, 15%, 10%"
                          headerClass="tableRowHeader"
                          footerClass="on-pager-footer"
                          onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
                          onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
 
 
-            <!--<rich:column>
+            <rich:column>
                <f:facet name="header">
                   <onc:allSelect target="selectedPlugin"/>
                </f:facet>
 
                <onc:select name="selectedPlugin" value="#{agentPlugin.id}"/>
-            </rich:column>-->
+            </rich:column>
 
             <rich:column rendered="#{param.debug}">
                <f:facet name="header">
@@ -114,7 +114,15 @@
 
             <f:facet name="footer">
                <rich:columnGroup>
-                  <rich:column colspan="4" width="100%">
+                  <rich:column colspan="5" width="100%">
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.enableAgentPlugins}"
+                                              value="ENABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                     <onc:selectCommandButton action="#{InstalledPluginsUIBean.disableAgentPlugins}"
+                                              value="DISABLE" target="selectedPlugin" styleClass="on-pager-button buttonsmall">
+                     </onc:selectCommandButton>
+                  </rich:column>
+                  <rich:column colspan="5" width="100%" breakBefore="true">
                      <h:commandButton action="#{InstalledPluginsUIBean.scan}"
                                       value="SCAN FOR UPDATES" styleClass="on-pager-button buttonsmall">
                      </h:commandButton>

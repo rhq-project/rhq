@@ -123,6 +123,9 @@
       <module>twitter</module>
       <module>virt</module>
       <module>kickstart</module>
+      
+      <!-- bundle plugins -->
+      <module>filetemplate-bundle</module>
 
       <!-- make this the last - it will validate all the plugins -->
       <module>validate-all-plugins</module>

@@ -10,6 +10,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function">
 
@@ -20,6 +21,14 @@
    <ui:define name="summary"></ui:define>
    
    <ui:define name="tabBar">
+      <a4j:region>
+         <h:form>
+            <a4j:poll interval="60000" timeout="5000" 
+                      reRender="browserTabBarPanel" status="commonStatus" />
+         </h:form>
+      </a4j:region>
+      
+      <a4j:outputPanel id="browserTabBarPanel" style="width: 100%;">
       <onc:tabBar selectedTabName="#{selectedTabName}" >
          <onc:tab name="Resources" 
                   displayName="Resources #{InventorySummaryUIBean.resourceCount}"
@@ -56,6 +65,7 @@
                         url="/rhq/definition/group/list.xhtml" />
          </onc:tab>
       </onc:tabBar>
+      </a4j:outputPanel>
       <p />
 
       <h:messages showSummary="true"

@@ -74,7 +74,7 @@ public class BundleFile implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     private Package pkg;
 
-    @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = true)
+    @JoinColumn(name = "PACKAGE_VERSION_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
     private PackageVersion packageVersion;
 

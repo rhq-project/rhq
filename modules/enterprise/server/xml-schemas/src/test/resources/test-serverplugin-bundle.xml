@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<bundle-plugin apiVersion="1.2"
+               version="2.3"
+               name="bundle name"
+               displayName="bundle display"
+               description="bundle description"
+               package="bundle.package"
+               xmlns="urn:xmlns:rhq-serverplugin.bundle"
+               xmlns:sp="urn:xmlns:rhq-serverplugin"
+               xmlns:c="urn:xmlns:rhq-configuration"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+    <sp:help><![CDATA[help text with <em>XML</em>]]></sp:help>
+
+    <sp:plugin-component class="bundle.plugin.component" />
+
+    <sp:plugin-configuration>        
+        <!-- custom global config - unrelated to schedules  -->
+        <c:simple-property name="bundleprop1" type="string" required="true" default="bundleprop1value" />
+    </sp:plugin-configuration>
+    
+    <bundle type="bundle.type.name"/>
+</bundle-plugin>

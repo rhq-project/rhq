@@ -74,7 +74,8 @@ public abstract class ResourceNameDisambiguatingPagedListDataModel<T> extends
         currentPageNeedsPluginResolution = disambiguation.isPluginResolutionNeeded();
         currentPageNeedsTypeResolution = disambiguation.isTypeResolutionNeeded();
 
-        return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), pc);
+        return new PageList<DisambiguationReport<T>>(disambiguation.getResolution(), data.getTotalSize(), data
+            .getPageControl());
     }
 
     /**

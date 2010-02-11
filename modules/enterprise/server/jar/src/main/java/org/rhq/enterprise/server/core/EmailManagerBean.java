@@ -120,7 +120,7 @@ public class EmailManagerBean implements EmailManagerLocal {
                 InternetAddress recipient = new InternetAddress(toAddress);
                 Transport.send(mimeMessage, new InternetAddress[] { recipient });
             } catch (Exception e) {
-                LOG.error("Failed to send email [" + messageSubject + "] to recipient [" + toAddress + "]", e);
+                LOG.error("Failed to send email [" + messageSubject + "] to recipient [" + toAddress + "]: " +  e.getMessage());
                 badAdresses.add(toAddress);
 
                 // Remember the first error - in case its due to a session initialization problem,

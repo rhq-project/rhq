@@ -13,7 +13,7 @@ public class InventorySummaryUIBean {
 
     protected final Log log = LogFactory.getLog(InventorySummaryUIBean.class);
 
-    private boolean showCounts;
+    private boolean showCounts = false;
 
     private int platformCount;
     private int serverCount;
@@ -22,15 +22,25 @@ public class InventorySummaryUIBean {
     private int mixedCount;
     private int groupDefinitionCount;
 
+    private Subject subject;
+
     public InventorySummaryUIBean() {
         try {
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            subject = EnterpriseFacesContextUtility.getSubject();
+            load();
+        } catch (Throwable t) {
+            log.error("InventorySummaryUIBean constructor experienced an error: " + t.getMessage());
+        }
+    }
+
+    private void load() {
+        try {
             ResourceBossLocal resourceBoss = LookupUtil.getResourceBoss();
             InventorySummary summary = resourceBoss.getInventorySummary(subject);
             loadFromSummary(summary);
             showCounts = true;
-        } catch (Exception e) {
-            log.error("InventorySummaryUIBean experienced an error: " + e.getMessage());
+        } catch (Throwable t) {
+            log.error("InventorySummaryUIBean loader experienced an error: " + t.getMessage());
             showCounts = false;
         }
     }

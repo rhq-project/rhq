@@ -32,6 +32,7 @@
     </navigation>
 
     <navigation from-action="#{configurationEditor.updateConfiguration}">
+      <!-- success out is used for both success and in progress update statuses -->
       <rule if-outcome="success">
         <end-conversation before-redirect="false"/>
         <redirect view-id="/rhq/resource/configuration/history.xhtml">
@@ -39,7 +40,7 @@
         </redirect>
       </rule>
 
-      <rule if-outcome="nochange">
+      <rule if-outcome="#{nochange or failure}">
         <render view-id="/rhq/resource/configuration/edit.xhtml"/>
       </rule>
     </navigation>

@@ -47,7 +47,12 @@
             <h:outputText> &gt; </h:outputText>
             <h:outputLink value="viewAlert.xhtml">
                 <f:param name="ad" value="#{param.ad}" />
-                <h:outputText value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'" />
+                <h:outputText value=" Definition for '#{alertDefinition.name}' "/>
+            </h:outputLink>
+            <h:outputText> on resource </h:outputText>
+            <h:outputLink value="/rhq/resource/summary/overview.xhtml">
+                <f:param name="id" value="#{alertDefinition.resource.id}" />
+                <h:outputText value=" '#{alertDefinition.resource.name}'" />
             </h:outputLink>
         </ui:define>
 
@@ -198,7 +203,7 @@
                                    styleClass="buttonmed"
                                    style="margin-top: auto;">
                     </h:commandButton>
-                    
+
                     <h:outputLink id="alertTemplateCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 10px;">
                         <h:outputText value="Cancel" />
                         <rich:componentControl for="addAlertFromTemplatePanel" attachTo="alertTemplateCancelLink" operation="hide" event="onclick" />
@@ -237,7 +242,7 @@
 
                     <h:commandButton id="saveButton" value="Save Changes" styleClass="buttonmed" action="#{alertUIBean.saveAlertDefinition}" />
                 </h:form>
-                
+
             </rich:modalPanel>
 
         </ui:define>

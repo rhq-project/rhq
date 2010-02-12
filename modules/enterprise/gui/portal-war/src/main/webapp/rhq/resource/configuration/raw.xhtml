@@ -15,6 +15,15 @@
 
   <c:choose>
     <c:when test="#{readOnly}">
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);"/>
+    </c:otherwise>
+  </c:choose>
+
+  <c:choose>
+    <c:when test="#{readOnly}">
       <c:set var="editor" value="#{configurationViewer}"/>
     </c:when>
     <c:otherwise>
@@ -103,7 +112,7 @@
         <h:outputLink value="#"
                       disabled="#{readOnly}"
                       onclick="#{rich:component('uploadWindow')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+                      style="#{uploadLinkStyle}">
           Upload New
         </h:outputLink>
 

@@ -76,16 +76,21 @@ public class RawConfigUIBean {
     }
 
     /** @return The name of the raw config file excluding its path */
-    // Note: In the mock-up an asterisk is prepended to the file name in the menu to indicate that it has modifications.
-    //       We may want to modify this method to include logic for that as the UI evolves. If so, it might also be
-    //       good to change the method name to something a bit more descriptive like getFileNameLabel().
     public String getFileName() {
         File file = new File(rawConfiguration.getPath());
-
-        if (isModified()) {
-            return "* " + file.getName();
-        }
         return file.getName();
+    }
+
+    /**
+     * @return The name of the raw config file excluding the path. If the file has been modified, an asterisk is
+     * prepended to the name.
+     */
+    public String getFileDisplayName() {
+        if (isModified()) {
+            return "* " + getFileName();
+        }
+
+        return getFileName();
     }
 
     public String getIcon() {

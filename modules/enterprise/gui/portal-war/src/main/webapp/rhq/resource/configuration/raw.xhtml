@@ -43,11 +43,11 @@
                    var="rawConfigDir">
           <rich:panelMenuGroup label="#{rawConfigDir.path}"
                                expanded="true"
-                               selectedChild="#{selectedRawUIBean.fileName}">
+                               selectedChild="#{selectedRawUIBean.fileDisplayName}">
             <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
               <c:choose>
                 <c:when test="#{readOnly}">
-                  <rich:panelMenuItem label="#{rawConfigUIBean.fileName}"
+                  <rich:panelMenuItem label="#{rawConfigUIBean.fileDisplayName}"
                                       icon="/images/blank.png"
                                       onclick="cursor_wait();"
                                       oncomplete="cursor_clear();"
@@ -59,7 +59,7 @@
                   <rich:panelMenuItem label=""
                                       icon="/images/blank.png">
                     <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol,rawConfigUndoCol">
-                      <h:outputLabel value="#{rawConfigUIBean.fileName}">
+                      <h:outputLabel value="#{rawConfigUIBean.fileDisplayName}">
                         <a4j:support event="onmousedown"
                                      onsubmit="cursor_wait()"
                                      oncomplete="cursor_clear()"

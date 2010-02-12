@@ -990,9 +990,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
         try {
-            if (!validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured)){
+            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured); 
+            if (null != invalidConfig){
                 Resource resource = resourceManager.getResourceById(subject, resourceId);
-                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, invalidConfig, subject.getName());
                 resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
                 resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
                 return resourceConfigurationUpdate;
@@ -1011,7 +1012,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
-    private boolean validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+    private Configuration validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean isStructured) throws PluginContainerException {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {

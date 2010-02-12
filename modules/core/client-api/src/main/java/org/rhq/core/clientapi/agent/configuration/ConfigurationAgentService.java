@@ -110,14 +110,15 @@ public interface ConfigurationAgentService {
      * configuration.
      *
      * @param configuration The Configuration with the changes to be merged
-     * @param resourceId The id of the resource to which the configuration belo
-     * @param A flag that if <code>true</code> indicates the Structured configu
-     * validates the raw
-     * @return The <strong>merged</strong> configuration, where a merge consist
-     * followed by the values of the side merging from being applied to the sid
+     * @param resourceId The id of the resource to which the configuration belongs
+     * @param A flag that if <code>true</code> indicates validate the Structured configuration
+     * otherwisre, it validates the raw
+     * 
+     * @return If validate succeeds, it returns null, to avoid doing any unnecessary marshaling.
+     *          If validation fails, it returns the configuration object with embedded messages
      * @throws PluginContainerException 
      * @throws PluginContainerException if a runtime or plugin error occurs.
      */
-    boolean validate(Configuration configuration, int resourceId, boolean isStructured) throws PluginContainerException;
+    Configuration validate(Configuration configuration, int resourceId, boolean isStructured) throws PluginContainerException;
 
 }

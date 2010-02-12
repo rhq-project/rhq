@@ -967,10 +967,10 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
         String replacementSelectList = ""
             + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
-            + "   ( SELECT COUNT(avail) FROM rg.explicitResources res JOIN res.currentAvailability avail) AS explicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM rg.explicitResources res JOIN res.currentAvailability avail) AS explicitAvail,"
-            + "   ( SELECT COUNT(avail) FROM rg.implicitResources res JOIN res.currentAvailability avail) AS implicitCount,"
-            + "   ( SELECT AVG(avail.availabilityType) FROM rg.implicitResources res JOIN res.currentAvailability avail) AS implicitAvail,"
+            + "   ( SELECT COUNT(avail) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail,"
+            + "   ( SELECT COUNT(avail) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
             + "   rg ) ";
         generator.alterProjection(replacementSelectList);
 
@@ -1305,7 +1305,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 ((Number) data[3]).doubleValue(), //
                 group, facets);
         } else {
-            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
+            composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }
         group.getModifiedBy().getFirstName();
 

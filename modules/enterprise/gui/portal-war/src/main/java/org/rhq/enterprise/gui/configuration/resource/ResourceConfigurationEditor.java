@@ -23,12 +23,9 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
-import org.apache.commons.io.FileUtils;
 import org.jboss.seam.ScopeType;
-import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Observer;
-import org.jboss.seam.annotations.Out;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -36,15 +33,10 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.gui.configuration.ConfigurationMaskingUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
-import org.rhq.enterprise.gui.common.upload.FileUploadUIBean;
-import org.rhq.enterprise.gui.inventory.resource.ResourceUIBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
-import org.richfaces.model.UploadItem;
-
 import javax.faces.application.FacesMessage;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
@@ -147,7 +139,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
     }
 
     public boolean getRenderFileUpload() {
-        return isRawMode() && (isRawSupported() || isStructuredAndRawSupported());
+        return isRawSupported() || isStructuredAndRawSupported();
     }    
 
     public String updateConfiguration() {

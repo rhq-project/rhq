@@ -32,6 +32,7 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.gui.configuration.propset.ConfigurationSetComponent;
 import org.rhq.core.gui.util.FacesComponentIdFactory;
 import org.rhq.core.gui.util.FacesComponentUtility;
+import org.rhq.core.template.TemplateEngine;
 
 /**
  * An abstract base class for the {@link ConfigUIComponent} and the {@link ConfigurationSetComponent} JSF component
@@ -185,10 +186,12 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
 
     private Object[] stateValues;
 
+    private TemplateEngine templateEngine;
+
     @Override
     public Object saveState(FacesContext facesContext) {
         if (this.stateValues == null) {
-            this.stateValues = new Object[7];
+            this.stateValues = new Object[8];
         }
 
         this.stateValues[0] = super.saveState(facesContext);
@@ -198,6 +201,8 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.stateValues[4] = this.listIndex;
         this.stateValues[5] = this.prevalidate;
         this.stateValues[6] = this.isGroup;
+        this.stateValues[7] = this.templateEngine;
+
         return this.stateValues;
     }
 
@@ -211,6 +216,9 @@ public abstract class AbstractConfigurationComponent extends UIComponentBase imp
         this.listIndex = (Integer) this.stateValues[4];
         this.prevalidate = (Boolean) this.stateValues[5];
         this.isGroup = (Boolean) this.stateValues[6];
+        this.templateEngine = (TemplateEngine) this.stateValues[7];
     }
 
+    abstract public TemplateEngine getTemplateEngine() ;
+        
 }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name=""
+        displayName="Name Service Switch"
+        version="1.0"
+        package="org.rhq.plugin.nss"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <server name="Name Server Switch"
+           discovery="NameServiceSwitchDiscoveryComponent"
+           class="NameServiceSwitchComponent"
+           description="Name Service Switch Component">
+         <resource-configuration configurationFormat="both">
+         <c:simple-property name="passwd"     displayName="passwd"     default="" />
+         <c:simple-property name="shadow"     displayName="shadow"     default="" />
+         <c:simple-property name="group"      displayName="group"      default="" />
+         <c:simple-property name="hosts"      displayName="hosts"      default="" />
+         <c:simple-property name="bootparams" displayName="bootparams" default="" />
+         <c:simple-property name="ethers"     displayName="ethers"     default="" />
+         <c:simple-property name="netmasks"   displayName="netmasks"   default="" />
+         <c:simple-property name="networks"   displayName="networks"   default="" />
+         <c:simple-property name="protocols"  displayName="protocols"  default="" />
+         <c:simple-property name="rpc"        displayName="rpc"        default="" />
+         <c:simple-property name="services"   displayName="services"   default="" />
+         <c:simple-property name="netgroup"   displayName="netgroup"   default="" />
+         <c:simple-property name="publickey"  displayName="publickey"  default="" />
+         <c:simple-property name="automount"  displayName="automount"  default="" />
+         <c:simple-property name="aliases"    displayName="aliases"    default="" />         
+      </resource-configuration>
+   </server>
+</plugin>

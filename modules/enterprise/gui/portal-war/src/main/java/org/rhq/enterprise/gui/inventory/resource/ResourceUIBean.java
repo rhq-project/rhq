@@ -18,7 +18,9 @@
  */
 package org.rhq.enterprise.gui.inventory.resource;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -29,17 +31,24 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
 import org.rhq.core.domain.resource.ResourceErrorType;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourcePermission;
+import org.rhq.core.template.TemplateEngine;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.perspective.Tab;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -206,6 +215,42 @@ public class ResourceUIBean {
 
     public boolean isCanShowParent() {
         return canShowParent;
+    }
+
+    TemplateEngine templateEngine;
+
+    public TemplateEngine getTemplateEngine() {
+
+        if (null == templateEngine) {
+            Map<String, String> tokens = new HashMap<String, String>();
+
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            Resource platform = this.resourceManager.getPlaformOfResource(subject, this.resource.getId());
+
+            int platformId = platform.getId();
+            
+            MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
+            
+            List<MeasurementDataTrait> traits =  measurementDataManager.findCurrentTraitsForResource(subject, platform.getId(), DisplayType.DETAIL);
+            
+            for(MeasurementData data: traits){
+                tokens.put("rhq.system."+data.getName(),data.toString());
+            }
+            
+            tokens.put("rhq.test.intval", "4");
+            tokens.put("rhq.test.string", "Forty Two");
+            tokens.put("rhq.resource.description", resource.getDescription());
+            if (platform != null) {
+                tokens.put("rhq.platform.description", platform.getDescription());
+            }
+
+            templateEngine = new TemplateEngine(tokens);
+        }
+        return templateEngine;
+    }
+
+    public void setTemplateEngine(TemplateEngine templateEngine) {
+        this.templateEngine = templateEngine;
     }
 
 }

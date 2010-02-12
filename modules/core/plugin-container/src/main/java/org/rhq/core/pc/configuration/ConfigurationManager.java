@@ -54,7 +54,7 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.template.TemplateEngine;
+
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
@@ -186,15 +186,12 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
-
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-                String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
+                String contents = rawConfig.getContents();
                 rawConfig.setContents(contents);
-
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
@@ -218,14 +215,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
             if (mergedRaw != null) {
                 //TODO bypass validation of structured config for template values
-                mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));
+                mergedRaw.setContents(mergedRaw.getContents());
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }
@@ -332,10 +328,10 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return null;
     }
 
-    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+    public boolean validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
 
-        boolean thereAreErrors = false;
+        boolean success = true;
 
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
@@ -345,7 +341,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             try {
                 facet.validateStructuredConfiguration(configuration);
             } catch (IllegalArgumentException e) {
-                thereAreErrors = true;
+                success = false;
             } catch (Throwable t) {
                 throw new PluginContainerException(t.getMessage(), t);
             }
@@ -354,16 +350,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
                 } catch (IllegalArgumentException e) {
-                    thereAreErrors = true;
+                    success = false;
                     rawConfiguration.errorMessage = e.getMessage();
                 } catch (Throwable t) {
-                    thereAreErrors = true;
+                    success = false;
                     rawConfiguration.errorMessage = t.getMessage();
                 }
             }
         }
-        if (thereAreErrors) {
-            throw new PluginContainerException("One or more files failed validation");
-        }
+        return success;
     }
 }

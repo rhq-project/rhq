@@ -118,6 +118,6 @@ public interface ConfigurationAgentService {
      * @throws PluginContainerException 
      * @throws PluginContainerException if a runtime or plugin error occurs.
      */
-    void validate(Configuration configuration, int resourceId, boolean isStructured) throws PluginContainerException;
+    boolean validate(Configuration configuration, int resourceId, boolean isStructured) throws PluginContainerException;
 
 }

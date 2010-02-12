@@ -23,6 +23,8 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -35,6 +37,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -67,8 +70,11 @@ public class Bundle implements Serializable {
     private String name;
 
     @JoinColumn(name = "BUNDLE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne(fetch = FetchType.EAGER, cascade = CascadeType.PERSIST)
+    @ManyToOne(fetch = FetchType.EAGER)
     private BundleType bundleType;
+
+    @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
 
     public Bundle() {
         // for JPA use
@@ -101,6 +107,19 @@ public class Bundle implements Serializable {
 
     public void setBundleType(BundleType bundleType) {
         this.bundleType = bundleType;
+    }
+
+    public List<BundleVersion> getBundleVersions() {
+        return bundleVersions;
+    }
+
+    public void addBundleVersion(BundleVersion bundleVersion) {
+        this.bundleVersions.add(bundleVersion);
+        bundleVersion.setBundle(this);
+    }
+
+    public void setBundleVersions(List<BundleVersion> bundleVersions) {
+        this.bundleVersions = bundleVersions;
     }
 
     @Override

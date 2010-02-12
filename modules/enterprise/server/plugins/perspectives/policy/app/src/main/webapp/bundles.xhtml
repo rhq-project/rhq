@@ -38,7 +38,7 @@
                     <rhq:rowSelector value="#{BundlesUIBean.selectedBundles}"/>
                 </rich:column>
 
-                <rich:column width="235" sortBy="b.name">
+                <rich:column width="235">
                     <f:facet name="header">
                         <rhq:sortableColumnHeader sortBy="b.name">
                             <a4j:support event="onclick"
@@ -47,13 +47,13 @@
                         </rhq:sortableColumnHeader>
                     </f:facet>
 
-                    <h:outputLink value="#{bundle.name}">
+                    <h:outputLink value="bundleVersions.seam">
                         <f:param name="bundleId" value="#{bundle.id}"/>
-                        <h:outputText value="#{resource.id}"/>
+                        <h:outputText value="#{bundle.name}"/>
                     </h:outputLink>
                 </rich:column>
 
-                <rich:column width="235">
+                <rich:column>
                     <f:facet name="header">
                         <rhq:sortableColumnHeader sortBy="b.bundleType.name">
                             <a4j:support event="onclick"
@@ -67,10 +67,10 @@
 
                 <f:facet name="footer">
                     <rich:columnGroup>
-                        <rich:column colspan="4">
+                        <rich:column colspan="3">
                             <rhq:selectedRowsCommandButton
                                     value="DELETE"
-                                    action="#{BundlesUIBean.deleteBundle}"/>
+                                    action="#{BundlesUIBean.deleteSelectedBundles}"/>
 
                             <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                                 <ui:param name="pagedDataUIBean" value="#{BundlesUIBean}"/>

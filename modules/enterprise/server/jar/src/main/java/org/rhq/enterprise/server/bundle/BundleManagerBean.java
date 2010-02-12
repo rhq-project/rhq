@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.bundle;
 
 import java.util.List;
 
+import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -33,10 +34,16 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * Manages the creation and usage of bundles.
@@ -50,14 +57,22 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
-    public BundleType createBundleType(BundleType bundleType) {
+    @EJB
+    private AuthorizationManagerLocal authorizationManager;
+
+    public Bundle createBundle(Subject subject, Bundle bundle) {
+        entityManager.persist(bundle);
+        return bundle;
+    }
+
+    public BundleType createBundleType(Subject subject, BundleType bundleType) {
         entityManager.persist(bundleType);
         return bundleType;
     }
 
-    public Bundle createBundle(Bundle bundle) {
-        entityManager.persist(bundle);
-        return bundle;
+    public BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion) {
+        entityManager.persist(bundleVersion);
+        return bundleVersion;
     }
 
     @SuppressWarnings("unchecked")
@@ -68,15 +83,40 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return types;
     }
 
-    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(
+    public PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
         BundleDeployDefinitionCriteria criteria) {
-        // TODO Auto-generated method stub
-        return null;
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<BundleDeployDefinition> queryRunner = new CriteriaQueryRunner<BundleDeployDefinition>(
+            criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria) {
-        // TODO Auto-generated method stub
-        return null;
+    public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
+
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        if (!authorizationManager.isInventoryManager(subject)) {
+            if (criteria.isInventoryManagerRequired()) {
+                throw new PermissionException("Subject [" + subject.getName()
+                    + "] requires InventoryManager permission for requested query criteria.");
+            }
+
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.RESOURCE, null,
+                subject.getId());
+        }
+
+        CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
+            generator, entityManager);
+
+        return queryRunner.execute();
+    }
+
+    public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
+        return queryRunner.execute();
     }
 
 }

@@ -27,6 +27,8 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -38,19 +40,25 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface BundleManagerLocal {
-    BundleType createBundleType(BundleType bundleType);
 
-    Bundle createBundle(Bundle b);
+    Bundle createBundle(Subject subject, Bundle b);
 
-    PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(BundleDeployDefinitionCriteria criteria);
+    BundleType createBundleType(Subject subject, BundleType bundleType);
 
-    PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria);
+    BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion);
 
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface
     //
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
+        BundleDeployDefinitionCriteria criteria);
+
+    PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria);
+
+    PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 
     List<BundleType> getAllBundleTypes(Subject subject);
 }

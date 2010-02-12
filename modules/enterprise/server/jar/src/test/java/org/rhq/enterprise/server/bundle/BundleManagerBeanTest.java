@@ -26,6 +26,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
+import org.hibernate.LazyInitializationException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -34,18 +35,23 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author John Mazzitelli
  */
+@SuppressWarnings("unchecked")
 @Test
 public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private static final String TEST_PREFIX = "bundletest";
+
+    private static final boolean ENABLED = true;
 
     private BundleManagerLocal bundleManagerBean;
 
@@ -107,6 +113,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = ENABLED)
     public void testGetBundleTypes() throws Exception {
         BundleType bt1 = createBundleType("one");
         BundleType bt2 = createBundleType("two");
@@ -122,6 +129,68 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assert btNames.contains(bt2.getName());
     }
 
+    @Test(enabled = ENABLED)
+    public void testfindBundlesByCriteria() throws Exception {
+        Bundle b1 = createBundle("one");
+        Bundle b2 = createBundle("two");
+        BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
+        BundleCriteria c = new BundleCriteria();
+        PageList<Bundle> bundles = null;
+        Bundle b = null;
+        String name = null;
+
+        // return all with no optional data
+        bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
+        assertNotNull(bundles);
+        assertEquals(2, bundles.size());
+        b = bundles.get(0);
+        name = "one";
+        assertNotNull(b);
+        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
+        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        try {
+            assertTrue(b.getBundleVersions().isEmpty());
+            fail("Should have thrown LazyInitializationException");
+        } catch (LazyInitializationException e) {
+            // expected
+        } catch (Exception e) {
+            fail("Should have thrown LazyInitializationException");
+        }
+
+        b = bundles.get(1);
+        name = "two";
+        assertNotNull(b);
+        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
+        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+
+        // return bundle "two" using all criteria and with all optional data
+        c.addFilterId(b.getId());
+        c.addFilterName(b.getName());
+        c.fetchBundleVersions(true);
+        bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
+        assertNotNull(bundles);
+        assertEquals(1, bundles.size());
+        b = bundles.get(0);
+        assertTrue(b.getBundleType().getName(), b.getName().contains(name));
+        assertTrue(b.getBundleType().getName(), b.getBundleType().getName().contains(name));
+        assertNotNull(b.getBundleVersions());
+        assertEquals(1, b.getBundleVersions().size());
+        BundleVersion bv = b.getBundleVersions().get(0);
+        assertEquals(bv2, bv);
+        assertEquals(b, bv.getBundle());
+    }
+
+    private BundleType createBundleType(String name) throws Exception {
+        final String fullName = TEST_PREFIX + "-type-" + name;
+        BundleType bt = new BundleType(fullName, createResourceType(name));
+        bt = bundleManagerBean.createBundleType(getOverlord(), bt);
+
+        assert bt.getId() > 0;
+        assert bt.getName().endsWith(fullName);
+        return bt;
+    }
+
     private Bundle createBundle(String name) throws Exception {
         BundleType bt = createBundleType(name);
         return createBundle(name, bt);
@@ -130,19 +199,22 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
         Bundle b = new Bundle(fullName, bt);
-        b = bundleManagerBean.createBundle(b);
+        b = bundleManagerBean.createBundle(getOverlord(), b);
+
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
         return b;
     }
 
-    private BundleType createBundleType(String name) throws Exception {
-        final String fullName = TEST_PREFIX + "-type-" + name;
-        BundleType bt = new BundleType(fullName, createResourceType(name));
-        bt = bundleManagerBean.createBundleType(bt);
-        assert bt.getId() > 0;
-        assert bt.getName().endsWith(fullName);
-        return bt;
+    private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
+        final String fullName = TEST_PREFIX + "-version-" + version + "-" + name;
+        final String recipe = TEST_PREFIX + "-recipe-" + name;
+        BundleVersion bv = new BundleVersion(fullName, version, bundle, recipe);
+        bv = bundleManagerBean.createBundleVersion(getOverlord(), bv);
+
+        assert bv.getId() > 0;
+        assert bv.getName().endsWith(fullName);
+        return bv;
     }
 
     private ResourceType createResourceType(String name) throws Exception {

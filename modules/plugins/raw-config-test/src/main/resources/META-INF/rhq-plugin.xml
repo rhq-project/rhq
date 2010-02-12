@@ -55,9 +55,27 @@
     </plugin-configuration>
 
     <resource-configuration configurationFormat="both">
-      <c:simple-property name="x" description="A simple property that is represented in both structured and raw"/>
-      <c:simple-property name="y" description="A simple property that is represented in both structured and raw"/>
-      <c:simple-property name="z" description="A simple property that is represented in both structured and raw"/>
+      <c:simple-property name="x" description="A simple property that is represented in both structured and raw"  type="integer">
+      <c:constraint>
+      		<c:integer-constraint minimum="0"/>
+            <c:integer-constraint maximum="5"/>
+	  </c:constraint>
+      </c:simple-property>
+      
+      
+      <c:simple-property name="y" description="A simple property that is represented in both structured and raw"  type="integer" >
+		<c:constraint>
+      		<c:integer-constraint minimum="6"/>
+            <c:integer-constraint maximum="10"/>
+	  	</c:constraint>
+      </c:simple-property>
+      <c:simple-property name="z" description="A simple property that is represented in both structured and raw"  type="integer" >
+		<c:constraint>
+      		<c:integer-constraint minimum="20"/>
+            <c:integer-constraint maximum="30"/>
+	  	</c:constraint>
+
+      </c:simple-property>
       <c:simple-property name="username" description="A simple property that is represented in both structured and raw"/>
       <c:simple-property name="password" description="A simple property that is represented in both structured and raw"/>
       <c:simple-property name="rhq.server.hostname" description="A simple property that is represented in both structured and raw"/>

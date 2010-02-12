@@ -74,7 +74,7 @@ public class BundleVersion implements Serializable {
     private String version;
 
     @Column(name = "ACTION", nullable = false)
-    private String action;
+    private String recipe;
 
     @JoinColumn(name = "BUNDLE_ID", referencedColumnName = "ID", nullable = false)
     @ManyToOne(fetch = FetchType.LAZY)
@@ -92,10 +92,11 @@ public class BundleVersion implements Serializable {
         // for JPA use
     }
 
-    public BundleVersion(String name, String version, Bundle bundle) {
+    public BundleVersion(String name, String version, Bundle bundle, String recipe) {
         setName(name);
         setVersion(version);
         setBundle(bundle);
+        setRecipe(recipe);
     }
 
     public int getId() {
@@ -122,12 +123,12 @@ public class BundleVersion implements Serializable {
         this.version = version;
     }
 
-    public String getAction() {
-        return action;
+    public String getRecipe() {
+        return recipe;
     }
 
-    public void setAction(String action) {
-        this.action = action;
+    public void setRecipe(String recipe) {
+        this.recipe = recipe;
     }
 
     public Bundle getBundle() {

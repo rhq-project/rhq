@@ -267,6 +267,8 @@ public class RawConfiguration implements Serializable, DeepCopyable<RawConfigura
             copy.setContents(this.getContents());
         }
 
+        copy.errorMessage = this.errorMessage;
+        
         return copy;
     }
 

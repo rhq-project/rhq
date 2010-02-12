@@ -186,7 +186,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
-
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
@@ -329,10 +328,10 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return null;
     }
 
-    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+    public boolean validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
 
-        boolean thereAreErrors = false;
+        boolean success = true;
 
         boolean daemonOnly = true;
         boolean onlyIfStarted = true;
@@ -342,7 +341,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
             try {
                 facet.validateStructuredConfiguration(configuration);
             } catch (IllegalArgumentException e) {
-                thereAreErrors = true;
+                success = false;
             } catch (Throwable t) {
                 throw new PluginContainerException(t.getMessage(), t);
             }
@@ -351,16 +350,14 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 try {
                     facet.validateRawConfiguration(rawConfiguration);
                 } catch (IllegalArgumentException e) {
-                    thereAreErrors = true;
+                    success = false;
                     rawConfiguration.errorMessage = e.getMessage();
                 } catch (Throwable t) {
-                    thereAreErrors = true;
+                    success = false;
                     rawConfiguration.errorMessage = t.getMessage();
                 }
             }
         }
-        if (thereAreErrors) {
-            throw new PluginContainerException("One or more files failed validation");
-        }
+        return success;
     }
 }

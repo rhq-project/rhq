@@ -990,7 +990,13 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
         try {
-            validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
+            if (!validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured)){
+                Resource resource = resourceManager.getResourceById(subject, resourceId);
+                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+                resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
+                resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                return resourceConfigurationUpdate;
+            }
         } catch (PluginContainerException e) {
             Resource resource = resourceManager.getResourceById(subject, resourceId);
             ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
@@ -1005,7 +1011,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
-    private void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+    private boolean validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean isStructured) throws PluginContainerException {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
@@ -1018,7 +1024,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Agent agent = resource.getAgent();
         AgentClient agentClient = this.agentManager.getAgentClient(agent);
         ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
-        configService.validate(configuration, resourceId, isStructured);
+        return configService.validate(configuration, resourceId, isStructured);
     }
 
     private boolean isRawSupported(int resourceId) {

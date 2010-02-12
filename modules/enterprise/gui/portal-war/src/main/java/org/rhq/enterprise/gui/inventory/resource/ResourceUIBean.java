@@ -220,31 +220,25 @@ public class ResourceUIBean {
     TemplateEngine templateEngine;
 
     public TemplateEngine getTemplateEngine() {
+        try {
+            if (null == templateEngine) {
+                Subject subject = EnterpriseFacesContextUtility.getSubject();
+                Resource platform = this.resourceManager.getPlaformOfResource(subject, this.resource.getId());
+                MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
+                List<MeasurementDataTrait> traits = measurementDataManager.findCurrentTraitsForResource(subject,
+                    platform.getId(), null);
 
-        if (null == templateEngine) {
-            Map<String, String> tokens = new HashMap<String, String>();
+                Map<String, String> tokens = new HashMap<String, String>();
+                for (MeasurementData data : traits) {
+                    String name = data.getName().toLowerCase().replace(' ', '_');
+                    tokens.put("rhq.system." + name, data.getValue().toString());
+                }
 
-            Subject subject = EnterpriseFacesContextUtility.getSubject();
-            Resource platform = this.resourceManager.getPlaformOfResource(subject, this.resource.getId());
-
-            int platformId = platform.getId();
-            
-            MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
-            
-            List<MeasurementDataTrait> traits =  measurementDataManager.findCurrentTraitsForResource(subject, platform.getId(), DisplayType.DETAIL);
-            
-            for(MeasurementData data: traits){
-                tokens.put("rhq.system."+data.getName(),data.toString());
+                templateEngine = new TemplateEngine(tokens);
             }
-            
-            tokens.put("rhq.test.intval", "4");
-            tokens.put("rhq.test.string", "Forty Two");
-            tokens.put("rhq.resource.description", resource.getDescription());
-            if (platform != null) {
-                tokens.put("rhq.platform.description", platform.getDescription());
-            }
-
-            templateEngine = new TemplateEngine(tokens);
+        } catch (Throwable t) {
+            //No clean way to recover.  This is probably indicative of a problem elsewhere
+            log.error("Cannot fetch data for template engine", t);
         }
         return templateEngine;
     }

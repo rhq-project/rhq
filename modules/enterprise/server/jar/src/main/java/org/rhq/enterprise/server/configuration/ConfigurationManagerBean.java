@@ -990,17 +990,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
         try {
-            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured); 
-            if (null != invalidConfig){
+            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration,
+                fromStructured);
+            if (null != invalidConfig) {
                 Resource resource = resourceManager.getResourceById(subject, resourceId);
-                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, invalidConfig, subject.getName());
+                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                    invalidConfig, subject.getName());
                 resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
                 resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
                 return resourceConfigurationUpdate;
             }
         } catch (PluginContainerException e) {
             Resource resource = resourceManager.getResourceById(subject, resourceId);
-            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                newConfiguration, subject.getName());
             resourceConfigurationUpdate.setErrorMessage(e.getMessage());
             resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
             return resourceConfigurationUpdate;

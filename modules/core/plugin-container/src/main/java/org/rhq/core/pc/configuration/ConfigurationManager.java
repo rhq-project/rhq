@@ -54,7 +54,7 @@ import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.template.TemplateEngine;
+
 import org.rhq.core.util.exception.WrappedRemotingException;
 
 /**
@@ -186,15 +186,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
     private void mergeRawsIntoStructured(Configuration configuration, ResourceConfigurationFacet facet) {
         Configuration structuredConfig = facet.loadStructuredConfiguration();
 
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
         if (structuredConfig != null) {
             prepareConfigForMergeIntoStructured(configuration, structuredConfig);
 
             for (RawConfiguration rawConfig : configuration.getRawConfigurations()) {
-                String contents = templateEngine.replaceTokens(new String(rawConfig.getContents()));
+                String contents = rawConfig.getContents();
                 rawConfig.setContents(contents);
-
                 structuredConfig.addRawConfiguration(rawConfig);
                 facet.mergeStructuredConfiguration(rawConfig, configuration);
             }
@@ -218,14 +216,13 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         prepareConfigForMergeIntoRaws(configuration, rawConfigs);
 
         Queue<RawConfiguration> queue = new LinkedList<RawConfiguration>(rawConfigs);
-        TemplateEngine templateEngine = SystemInfoFactory.fetchTemplateEngine();
 
         while (!queue.isEmpty()) {
             RawConfiguration originalRaw = queue.poll();
             RawConfiguration mergedRaw = facet.mergeRawConfiguration(configuration, originalRaw);
             if (mergedRaw != null) {
                 //TODO bypass validation of structured config for template values
-                mergedRaw.setContents(templateEngine.replaceTokens(mergedRaw.getContents()));
+                mergedRaw.setContents(mergedRaw.getContents());
                 updateRawConfig(configuration, originalRaw, mergedRaw);
             }
         }

@@ -73,7 +73,7 @@ public class PropertySimpleValueValidator implements Validator, StateHolder {
 
     public void validate(FacesContext facesContext, UIComponent component, Object value) throws ValidatorException {
         String stringValue = (String) value;        
-
+        
         String refresh = FacesContextUtility.getOptionalRequestParameter("refresh");
         if (refresh != null && refresh.equals(ConfigRenderer.PROPERTY_SET_COMPONENT_ID))
             return;                    

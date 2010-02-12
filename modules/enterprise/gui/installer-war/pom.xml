@@ -57,6 +57,13 @@
     </dependency>
 
     <dependency>
+      <!-- need this solely for SecurityUtils -->
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-comm</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
       <version>1.6.5</version>

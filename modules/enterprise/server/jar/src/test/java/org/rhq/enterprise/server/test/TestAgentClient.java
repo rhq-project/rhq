@@ -255,7 +255,8 @@ public class TestAgentClient implements AgentClient, ContentAgentService, Resour
         return null;
     }
 
-    public void validate(Configuration configuration, int resourceId, boolean isStructured)
+    public boolean validate(Configuration configuration, int resourceId, boolean isStructured)
             throws PluginContainerException {
+        return true;
     }
 }

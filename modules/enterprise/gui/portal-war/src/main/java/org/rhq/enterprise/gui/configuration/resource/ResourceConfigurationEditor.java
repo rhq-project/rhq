@@ -46,7 +46,7 @@ import java.util.Set;
 
 @Name("configurationEditor")
 @Scope(ScopeType.CONVERSATION)
-public class ResourceConfigurationEditor extends ResourceConfigurationViewer implements Serializable    {
+public class ResourceConfigurationEditor extends ResourceConfigurationViewer implements Serializable {
 
     private Configuration originalResourceConfiguration;
 
@@ -142,50 +142,49 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
     public boolean getRenderFileUpload() {
         return isRawSupported() || isStructuredAndRawSupported();
-    }    
+    }
 
     public String updateConfiguration() {
         ConfigurationManagerLocal configurationMgr = LookupUtil.getConfigurationManager();
 
         ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
-        AbstractResourceConfigurationUpdate updateRequest = null;
-
         try {
-            configurationMgr.updateStructuredOrRawConfiguration(loggedInUser.getSubject(), resourceId,
-                resourceConfiguration, isStructuredMode());
+            AbstractResourceConfigurationUpdate updateRequest = configurationMgr.updateStructuredOrRawConfiguration(
+                loggedInUser.getSubject(), resourceId, resourceConfiguration, isStructuredMode());
+            if (updateRequest != null) {
+                switch (updateRequest.getStatus()) {
+                case SUCCESS:
+                case INPROGRESS:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
+                        + updateRequest.getId() + " has been sent to the Agent.");
+                    return "success";
+                case FAILURE:
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
+                        + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
+                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+                        String message = raw.errorMessage;
+                        if (message != null) {
+                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+                        }
+                    }
+                    return "failure";
+
+                case NOCHANGE:
+                    addNoChangeMsgToFacesContext();
+                    return "nochange";
+                }
+            }
         } catch (EJBException e) {
             FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
                 .getCause());
-        }
-        if (updateRequest != null) {
-            switch (updateRequest.getStatus()) {
-            case SUCCESS:
-            case INPROGRESS:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Configuration update request with id "
-                    + updateRequest.getId() + " has been sent to the Agent.");
-                return "success";
-            case FAILURE:
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
-                    + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-                for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
-                    String message = raw.errorMessage;
-                    if (message != null) {
-                        FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
-                    }
-                }
-                return "failure";
-
-            case NOCHANGE:
-                addNoChangeMsgToFacesContext();
-                return "nochange";      
-            }    
+            return "failure";
         }
 
         // updateRequest will be null if there is no change to the configuration. ConfigurationManagerBean checks to
         // see if the configuration has been modified before sending the request to the agent. If no change is detected,
         // it simply returns null.
-        
+
         addNoChangeMsgToFacesContext();
 
         return "nochange";

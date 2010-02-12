@@ -20,14 +20,11 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -53,7 +50,6 @@ import org.quartz.Trigger;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
-import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -62,7 +58,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -990,16 +985,21 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
             configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
         }
         try {
-            if (!validateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured)){
+            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration,
+                fromStructured);
+            if (null != invalidConfig) {
                 Resource resource = resourceManager.getResourceById(subject, resourceId);
-                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                    invalidConfig, subject.getName());
                 resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
                 resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                
                 return resourceConfigurationUpdate;
             }
         } catch (PluginContainerException e) {
             Resource resource = resourceManager.getResourceById(subject, resourceId);
-            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource, newConfiguration, subject.getName());
+            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                newConfiguration, subject.getName());
             resourceConfigurationUpdate.setErrorMessage(e.getMessage());
             resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
             return resourceConfigurationUpdate;
@@ -1011,7 +1011,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         return newUpdate;
     }
 
-    private boolean validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+    private Configuration validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean isStructured) throws PluginContainerException {
         Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {

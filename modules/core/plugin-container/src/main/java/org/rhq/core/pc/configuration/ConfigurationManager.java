@@ -328,7 +328,7 @@ public class ConfigurationManager extends AgentService implements ContainerServi
         return null;
     }
 
-    public boolean validate(Configuration configuration, int resourceId, boolean isStructured)
+    public Configuration validate(Configuration configuration, int resourceId, boolean isStructured)
         throws PluginContainerException {
 
         boolean success = true;
@@ -358,6 +358,6 @@ public class ConfigurationManager extends AgentService implements ContainerServi
                 }
             }
         }
-        return success;
+        return success ?  null: configuration;
     }
 }

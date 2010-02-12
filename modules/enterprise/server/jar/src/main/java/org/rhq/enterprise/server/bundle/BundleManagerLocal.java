@@ -47,11 +47,11 @@ public interface BundleManagerLocal {
 
     BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
-    // The following are shared with the Remote Interface
+    // The remaining methods are shared with the Remote Interface.
     //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
         BundleDeployDefinitionCriteria criteria);

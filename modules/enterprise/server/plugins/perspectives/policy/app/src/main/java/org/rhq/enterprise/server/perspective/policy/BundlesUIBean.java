@@ -1,3 +1,21 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2010 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.enterprise.server.perspective.policy;
 
 import org.ajax4jsf.model.KeepAlive;
@@ -8,7 +26,6 @@ import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.table.bean.AbstractPagedDataUIBean;
@@ -17,12 +34,13 @@ import org.rhq.enterprise.client.RemoteClient;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.perspective.AbstractPerspectivePagedDataUIBean;
 import org.rhq.enterprise.server.perspective.PerspectiveClientUIBean;
-import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 
 import java.util.List;
 
 /**
- * Provides CRUD operations for provisioning {@link Bundle}s. The backing bean for bundles.xhtml.
+ * Provides CRUD operations on provisioning {@link Bundle}s. The backing bean for bundles.xhtml.
+ *
+ * @author Ian Springer
  */
 @Name("BundlesUIBean")
 @Scope(ScopeType.EVENT)
@@ -73,7 +91,6 @@ public class BundlesUIBean extends AbstractPerspectivePagedDataUIBean {
         // This is essential, since we are CONVERSATION-scoped and will live on beyond this request.
         setDataModel(null);
     }
-
 
     private class DataModel extends PagedListDataModel<Bundle> {
         private DataModel(AbstractPagedDataUIBean pagedDataBean) {

@@ -60,7 +60,7 @@ THIS TEXT WILL BE REMOVED.
 
       <h:panelGrid columns="2" style="width:100%">
         <h:panelGrid columns="1" style="width:100%" columnClasses="raw-edit-footer">
-          <h:panelGroup id="upperCommitPanel" style="text-align:right">
+          <h:panelGroup id="upperCommitPanel" style="text-align:right;">
             <h:outputText id="upperChangedFilesLabel"
                           rendered="#{configurationEditor.displayChangedFilesLabel}"
                           style="padding-right:10px"
@@ -70,6 +70,14 @@ THIS TEXT WILL BE REMOVED.
                              title="Click to Save Changes"
                              styleClass="buttonmed"
                              rendered="${ResourceUIBean.permissions.configure}"/>
+            <s:button id="upperCancelButton"
+                      value="Cancel"
+                      view="view.xhtml"
+                      styleClass="rawCancelButton"
+                      propagation="end">
+              <f:param name="id" value="#{ResourceUIBean.id}"/>
+              <f:param name="tab" value="#{configurationEditor.selectedTab}"/>
+            </s:button>
           </h:panelGroup>
         </h:panelGrid>
       </h:panelGrid>
@@ -144,6 +152,14 @@ THIS TEXT WILL BE REMOVED.
                            title="Click to Save Changes"
                            styleClass="buttonmed"
                            rendered="${ResourceUIBean.permissions.configure}"/>
+          <s:button id="lowerCancelButton"
+                      value="Cancel"
+                      view="view.xhtml"
+                      styleClass="rawCancelButton"
+                      propagation="end">
+              <f:param name="id" value="#{ResourceUIBean.id}"/>
+              <f:param name="tab" value="#{configurationEditor.selectedTab}"/>
+            </s:button>
         </h:panelGroup>
       </h:panelGrid>
 

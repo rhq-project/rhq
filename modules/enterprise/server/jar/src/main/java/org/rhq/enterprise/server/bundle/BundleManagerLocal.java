@@ -31,6 +31,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -40,7 +41,6 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface BundleManagerLocal {
-
     Bundle createBundle(Subject subject, Bundle b);
 
     BundleType createBundleType(Subject subject, BundleType bundleType);
@@ -61,4 +61,6 @@ public interface BundleManagerLocal {
     PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 
     List<BundleType> getAllBundleTypes(Subject subject);
+
+    void deleteBundles(Subject subject, int[] bundleIds);
 }

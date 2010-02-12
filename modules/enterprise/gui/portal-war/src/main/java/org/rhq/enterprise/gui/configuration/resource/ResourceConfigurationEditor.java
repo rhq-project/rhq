@@ -36,6 +36,9 @@ import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
+import org.richfaces.model.UploadItem;
+
+import javax.ejb.EJBException;
 import javax.faces.application.FacesMessage;
 import java.io.Serializable;
 import java.util.HashSet;
@@ -105,8 +108,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
             // There is kind of an implicit else block to do nothing. If the file is modified and already in the cache,
             // then that means we have already incremented the number of files modified, so we do not need to
             // increment again.
-        }
-        else if (modifiedFiles.contains(rawConfigUIBean.getPath())) {
+        } else if (modifiedFiles.contains(rawConfigUIBean.getPath())) {
             // We fall into this block if the file is not modified and if the cache contains the file, which means it
             // was previously in a modified state; therefore, we remove it from the cache, and decrement the number of
             // files modified.
@@ -147,9 +149,15 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
 
         ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
-        AbstractResourceConfigurationUpdate updateRequest = configurationMgr.updateStructuredOrRawConfiguration(
-            loggedInUser.getSubject(), resourceId, resourceConfiguration, isStructuredMode());
+        AbstractResourceConfigurationUpdate updateRequest = null;
 
+        try {
+            configurationMgr.updateStructuredOrRawConfiguration(loggedInUser.getSubject(), resourceId,
+                resourceConfiguration, isStructuredMode());
+        } catch (EJBException e) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Unable to contact the remote agent.", e
+                .getCause());
+        }
         if (updateRequest != null) {
             switch (updateRequest.getStatus()) {
             case SUCCESS:
@@ -167,7 +175,7 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                     }
                 }
                 return "failure";
-            
+
             case NOCHANGE:
                 addNoChangeMsgToFacesContext();
                 return "nochange";      

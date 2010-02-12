@@ -229,30 +229,35 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
 
     }
 
-    public void validateRawConfiguration(RawConfiguration rawConfiguration) throws RuntimeException {
-
+    public void validateRawConfiguration(RawConfiguration rawConfiguration) throws IllegalArgumentException {
+        throw new IllegalArgumentException("bad config file");
     }
 
-    public void validateStructuredConfiguration(Configuration configuration) {
+    public void validateStructuredConfiguration(Configuration configuration) throws IllegalArgumentException {
+        boolean success = true;
         for (Property prop : configuration.getProperties()) {
-            validateProperty(prop);
+            success &= validateProperty(prop);
         }
-
+        if (!success) {
+            throw new IllegalArgumentException();
+        }
     }
 
-    private static void validateProperty(Property prop) {
+    private static boolean validateProperty(Property prop) {
         String[] vals = ((PropertySimple) prop).getStringValue().split(" ");
         ArrayList<String> invalidServices = new ArrayList<String>();
         ArrayList<String> invalidRules = new ArrayList<String>();
-
+        boolean success = true;
         for (String val : vals) {
             if (val.startsWith("[")) {
                 if (!rulePattern.matcher(val).matches()) {
                     invalidRules.add(val);
+                    success = false;
                 }
             } else {
                 if (!serviceSet.contains(val)) {
                     invalidServices.add(val);
+                    success = false;
                 }
             }
         }
@@ -266,6 +271,7 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
         if (errorMessage.length() > 0) {
             prop.setErrorMessage(errorMessage.toString());
         }
+        return success;
     }
 
     private static void buildErrorMessage(ArrayList<String> errors, StringBuilder errorMessage, String type) {
@@ -292,7 +298,7 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
 
         {
             String noMatch = "# abcd: val";
-            
+
             Matcher matcher = linePattern.matcher(noMatch);
             if (matcher.matches()) {
                 System.exit(1);
@@ -323,13 +329,13 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
                 System.exit(1);
             }
         }
-        
+
         {
             PropertySimple prop = new PropertySimple("passwd", "nisplus [UNUSED=return] [!NOWAY=return] files");
             validateProperty(prop);
             if (prop.getErrorMessage() != null) {
                 System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            }else{
+            } else {
                 System.exit(1);
             }
         }
@@ -339,22 +345,21 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
             validateProperty(prop);
             if (prop.getErrorMessage() != null) {
                 System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            }else{
+            } else {
                 System.exit(1);
             }
         }
 
-
         {
-            PropertySimple prop = new PropertySimple("passwd", "nisplus nope neither [UNUSED=return] [!NOWAY=return] garbage junk files");
+            PropertySimple prop = new PropertySimple("passwd",
+                "nisplus nope neither [UNUSED=return] [!NOWAY=return] garbage junk files");
             validateProperty(prop);
             if (prop.getErrorMessage() != null) {
                 System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            }else{
+            } else {
                 System.exit(1);
             }
         }
 
-        
     }
 }

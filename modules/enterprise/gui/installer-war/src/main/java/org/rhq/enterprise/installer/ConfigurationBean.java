@@ -722,6 +722,9 @@ public class ConfigurationBean {
             // Ensure the install server info is up to date and stored in the DB
             serverInfo.storeServer(configurationAsProperties, haServer);
 
+            // build a keystore whose cert has a CN of this server's public endpoint address
+            serverInfo.createKeystore(haServer);
+
             // now deploy RHQ Server fully
             serverInfo.moveDeploymentArtifacts(true);
         } catch (Exception e) {

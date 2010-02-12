@@ -81,54 +81,106 @@
    <modules>
       <!--  core plugins  -->
       <module>platform</module>
-      <module>jmx</module>
       <module>rhq-agent</module>
-      <module>apache</module>
-      <module>iis</module>
-      <module>database</module>
-      <module>postgres</module>
-
-      <!--  jboss plugins (order is important) -->
-      <module>tomcat</module>
-      <module>jboss-as</module>
-      <module>hibernate</module>
-      <module>rhq-server</module>
-      <module>jboss-cache</module>
-      <module>jboss-as-5</module>
-      <module>jboss-cache-v3</module>
-      <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
-
-      <!--  other, possibly experimental plugins -->
-      <module>augeas</module>
-      <module>cron</module>
-      <module>script</module>
-      <module>script2</module>
-      <module>grub</module>
-      <!-- not behaving       <module>hardware</module> -->
-      <module>hosts</module>
-      <module>cobbler</module>
-      <module>sudoers</module>
-      <module>hudson</module>
-      <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
-      <module>mysql</module>
-      <module>netservices</module>
-      <!-- non-public dependency        <module>onewire</module> -->
-      <module>oracle</module>
-      <module>perftest</module>
-      <module>samba</module>
-      <module>postfix</module>
-      <module>aliases</module>
-      <module>snmptrapd</module>
-      <module>sshd</module>
-      <module>twitter</module>
-      <module>virt</module>
-      <module>kickstart</module>
-      
-      <!-- bundle plugins -->
-      <module>filetemplate-bundle</module>
-
-      <!-- make this the last - it will validate all the plugins -->
-      <module>validate-all-plugins</module>
+      <module>jmx</module>
    </modules>
 
+  <profiles>
+
+    <profile>
+        <id>jboss-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <!--  NOTE: Order is important. -->
+           <module>augeas</module>           
+           <module>apache</module>
+           <module>tomcat</module>
+           <module>jboss-as</module>
+           <module>hibernate</module>
+           <module>rhq-server</module>
+           <module>jboss-cache</module>
+           <module>jboss-as-5</module>
+           <module>jboss-cache-v3</module>
+           <!--  was not in Jopr build at merge time <module>jbossOSGi</module>  -->
+        </modules>
+    </profile>
+
+    <profile>
+        <id>linux-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>augeas</module>
+           <module>cron</module>
+           <module>script</module>
+           <module>script2</module>
+           <module>grub</module>
+           <!-- not behaving       <module>hardware</module> -->
+           <module>hosts</module>
+           <module>cobbler</module>
+           <module>sudoers</module>
+           <module>hudson</module>
+           <module>netservices</module>
+           <module>perftest</module>
+           <module>samba</module>
+           <module>postfix</module>
+           <module>aliases</module>
+           <module>sshd</module>
+           <module>virt</module>
+           <module>kickstart</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>misc-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <module>iis</module>
+           <module>database</module>
+           <module>postgres</module>
+           <module>hudson</module>
+           <!-- error in code generation (see RHQ-1225)  <module>jira</module> -->
+           <module>mysql</module>
+           <!-- non-public dependency        <module>onewire</module> -->
+           <module>oracle</module>
+           <module>perftest</module>
+           <module>snmptrapd</module>
+           <module>twitter</module>
+
+           <!-- bundle plugins -->
+           <module>filetemplate-bundle</module>
+        </modules>
+    </profile>
+
+    <profile>
+        <id>validate-plugins</id>
+         <activation>
+            <property>
+               <name>java.home</name>
+            </property>
+         </activation>
+
+        <modules>
+           <!-- make this the last - it will validate all the plugins -->
+           <module>validate-all-plugins</module>
+        </modules>
+    </profile>
+
+  </profiles>
+
 </project>
+

@@ -74,7 +74,7 @@
                                      oncomplete="cursor_clear()"
                                      action="#{configurationEditor.select(rawConfigUIBean.path)}"
                                      limitToList="true"
-                                     reRender="fileContents,selectedFileHeader,modalEditor,uploadWindow"/>
+                                     reRender="fileContents,selectedFileHeader,modalEditor,uploadWindow,viewErrorsLink,errorWindow"/>
                       </h:outputLabel>
                       <a4j:commandButton value="Undo"
                                          styleClass="rawConfigUndoButton"
@@ -101,11 +101,17 @@
 
     <h:panelGrid columns="1" style="width:100%;">
       <h:panelGrid columns="4" style="width:100%;">
-        <h:outputLabel value=" "/>
+        <h:outputLink id="viewErrorsLink"
+                      value="#"
+                      onclick="#{rich:component('errorWindow')}.show()"
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+          #{selectedRawUIBean.errorLabel}
+        </h:outputLink>
+
 
         <h:outputLink value="#"
                       onclick="#{rich:component('modalEditor')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right;">
           View Full Screen
         </h:outputLink>
 

@@ -81,6 +81,18 @@ public class RawConfigUIBean {
         return file.getName();
     }
 
+    public String getErrorLabel() {
+        if (rawConfiguration.errorMessage == null) {
+            return " ";
+        }
+
+        return "View Errors";
+    }
+
+    public String getErrorMessage() {
+        return rawConfiguration.errorMessage;
+    }
+
     /**
      * @return The name of the raw config file excluding the path. If the file has been modified, an asterisk is
      * prepended to the name.

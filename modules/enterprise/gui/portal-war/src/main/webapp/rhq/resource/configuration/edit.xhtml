@@ -145,7 +145,7 @@ THIS TEXT WILL BE REMOVED.
         <h:panelGroup id="lowerCommitPanel" style="text-align:right">
           <h:outputText id="lowerChangedFilesLabel"
                         value="#{configurationEditor.modifiedFilesMsg}"
-                        rendered="#{configurationEditor .rawMode}"
+                        rendered="#{configurationEditor.rawMode}"
                         style="padding-right:10px"/>
           <h:commandButton value="Commit"
                            action="#{configurationEditor.updateConfiguration}"
@@ -166,13 +166,16 @@ THIS TEXT WILL BE REMOVED.
       <ui:include src="view-raw-modal.xhtml">
         <ui:param name="readOnly" value="false"/>
       </ui:include>
+
+      <ui:include src="error-window.xhtml"/>
     </h:form>
 
     <!--
       upload-modal.xhtml needs to be included outside the above form because the file upload component requires its
       own, separate form.
     -->
-    <ui:include src="upload-modal.xhtml"/>    
+    <ui:include src="upload-modal.xhtml"/>
+
   </ui:define>
 
 </ui:composition>

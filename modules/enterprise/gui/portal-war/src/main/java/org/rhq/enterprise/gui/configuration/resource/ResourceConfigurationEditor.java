@@ -162,12 +162,13 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
                 case FAILURE:
                     FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Configuration update request with id "
                         + updateRequest.getId() + " failed.", updateRequest.getErrorMessage());
-                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
-                        String message = raw.errorMessage;
-                        if (message != null) {
-                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
-                        }
-                    }
+//                    for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+//                        String message = raw.errorMessage;
+//                        if (message != null) {
+//                            FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, raw.getPath(), message);
+//                        }
+//                    }
+                    copyErrorMessages(updateRequest);
                     return "failure";
 
                 case NOCHANGE:
@@ -188,6 +189,26 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         addNoChangeMsgToFacesContext();
 
         return "nochange";
+    }
+
+    private void copyErrorMessages(AbstractResourceConfigurationUpdate update) {
+        Configuration updatedConfiguration = update.getConfiguration();
+        for (RawConfiguration updatedRaw : updatedConfiguration.getRawConfigurations()) {
+            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
+            if (raw != null) {
+                raw.errorMessage = updatedRaw.errorMessage;
+            }
+        }
+    }
+
+    private RawConfiguration findRawConfigurationByPath(String path) {
+        for (RawConfiguration raw : resourceConfiguration.getRawConfigurations()) {
+            if (raw.getPath().equals(path)) {
+                return raw;
+            }
+        }
+
+        return null;
     }
 
     private void addNoChangeMsgToFacesContext() {

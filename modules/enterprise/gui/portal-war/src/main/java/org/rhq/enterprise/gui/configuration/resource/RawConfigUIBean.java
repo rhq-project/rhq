@@ -36,6 +36,8 @@ public class RawConfigUIBean {
 
     private RawConfiguration rawConfiguration;
 
+    private String errorMessage;
+
     public RawConfigUIBean(RawConfiguration rawConfiguration) {
         this.rawConfiguration = rawConfiguration;
         originalRawConfiguration = rawConfiguration.deepCopy(false);
@@ -82,7 +84,7 @@ public class RawConfigUIBean {
     }
 
     public String getErrorLabel() {
-        if (rawConfiguration.errorMessage == null) {
+        if (errorMessage == null) {
             return " ";
         }
 
@@ -90,7 +92,11 @@ public class RawConfigUIBean {
     }
 
     public String getErrorMessage() {
-        return rawConfiguration.errorMessage;
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String msg) {
+        errorMessage = msg;
     }
 
     /**

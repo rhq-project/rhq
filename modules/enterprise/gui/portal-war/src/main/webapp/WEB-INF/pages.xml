@@ -18,7 +18,7 @@
 
   <page view-id="/rhq/resource/configuration/view-map.xhtml" action="#{configurationViewer.initialize}"/>
 
-  <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="10000" timeout="180000">
+  <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="15000" timeout="180000">
     <action execute="#{configurationEditor.initialize}"
             on-postback="false"
             if="#{!conversation.longRunning or (empty resourceConfiguration or resourceConfiguration.id ne ResourceUIBean.id)}"/>

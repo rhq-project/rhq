@@ -66,7 +66,7 @@ public class ResourceConfigurationViewer {
     protected ConfigurationDefinition resourceConfigurationDefinition;
 
     @Out(required = false)
-    private Collection<RawConfigDirectory> rawConfigDirectories;
+    protected Collection<RawConfigDirectory> rawConfigDirectories;
 
     @Out(required = false)
     protected RawConfigUIBean selectedRawUIBean;

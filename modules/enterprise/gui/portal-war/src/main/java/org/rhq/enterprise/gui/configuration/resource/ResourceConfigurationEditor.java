@@ -152,6 +152,9 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         try {
             AbstractResourceConfigurationUpdate updateRequest = configurationMgr.updateStructuredOrRawConfiguration(
                 loggedInUser.getSubject(), resourceId, resourceConfiguration, isStructuredMode());
+
+            clearErrors();
+
             if (updateRequest != null) {
                 switch (updateRequest.getStatus()) {
                 case SUCCESS:
@@ -191,13 +194,26 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         return "nochange";
     }
 
+    private void clearErrors() {
+        for (RawConfigDirectory dir : rawConfigDirectories) {
+            for (RawConfigUIBean bean : dir.getRawConfigUIBeans()) {
+                bean.setErrorMessage(null);
+            }
+        }
+    }
+
     private void copyErrorMessages(AbstractResourceConfigurationUpdate update) {
         Configuration updatedConfiguration = update.getConfiguration();
         for (RawConfiguration updatedRaw : updatedConfiguration.getRawConfigurations()) {
-            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
-            if (raw != null) {
-                raw.errorMessage = updatedRaw.errorMessage;
+            RawConfigUIBean rawUIBean = findRawConfigUIBeanByPath(updatedRaw.getPath());
+            if (rawUIBean != null) {
+                rawUIBean.setErrorMessage(updatedRaw.errorMessage);
             }
+
+//            RawConfiguration raw = findRawConfigurationByPath(updatedRaw.getPath());
+//            if (raw != null) {
+//                raw.errorMessage = updatedRaw.errorMessage;
+//            }
         }
     }
 
@@ -221,6 +237,10 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         rawConfigUIBean.undoEdit();
     }
 
+    /**
+     * 
+     * @return
+     */
     public String finishAddMap() {
         FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Map added.");
         return "success";

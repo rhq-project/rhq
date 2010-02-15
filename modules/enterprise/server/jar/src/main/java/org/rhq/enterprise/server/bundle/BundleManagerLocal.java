@@ -31,6 +31,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -57,6 +58,8 @@ public interface BundleManagerLocal {
         BundleDeployDefinitionCriteria criteria);
 
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria);
+
+    PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria);
 
     PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 

@@ -38,6 +38,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
@@ -109,6 +110,14 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
 
+        return queryRunner.execute();
+    }
+
+    public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
+            entityManager);
         return queryRunner.execute();
     }
 

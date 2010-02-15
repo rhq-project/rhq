@@ -36,6 +36,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
@@ -45,7 +46,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * @author John Mazzitelli
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings( { "unchecked", "unused" })
 @Test
 public class BundleManagerBeanTest extends AbstractEJB3Test {
 
@@ -167,6 +168,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // return bundle "two" using all criteria and with all optional data
         c.addFilterId(b.getId());
         c.addFilterName(b.getName());
+        c.addFilterBundleTypeName(b.getName());
         c.fetchBundleVersions(true);
         bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
         assertNotNull(bundles);
@@ -179,6 +181,41 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv = b.getBundleVersions().get(0);
         assertEquals(bv2, bv);
         assertEquals(b, bv.getBundle());
+    }
+
+    @Test(enabled = false)
+    public void testfindBundleVersionsByCriteria() throws Exception {
+        Bundle b1 = createBundle("one");
+        BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
+        BundleVersion bv2 = createBundleVersion(b1.getName(), "2.0", b1);
+        BundleVersion bv3 = createBundleVersion(b1.getName(), "2.1", b1);
+        BundleVersionCriteria c = new BundleVersionCriteria();
+        PageList<BundleVersion> bvs = null;
+        BundleVersion bv = null;
+
+        // return all with no optional data
+        bvs = bundleManagerBean.findBundleVersionsByCriteria(getOverlord(), c);
+        bv = bvs.get(1);
+        assertNotNull(bvs);
+        assertEquals(3, bvs.size());
+        assertEquals(bv2, bv);
+
+        // return bundle version using all criteria and with all optional data
+        c.addFilterId(bv.getId());
+        c.addFilterName(bv.getName());
+        c.addFilterBundleName("one");
+        c.addFilterVersion(bv.getVersion());
+        c.fetchBundle(true);
+        c.fetchDistribution(true);
+        c.fetchBundleDeployDefinitions(true);
+        bvs = bundleManagerBean.findBundleVersionsByCriteria(getOverlord(), c);
+        assertNotNull(bvs);
+        assertEquals(1, bvs.size());
+        bv = bvs.get(0);
+        assertEquals(bv2, bv);
+        assertEquals(bv.getBundle(), b1);
+        assertNull(bv.getDistribution());
+        assertNull(bv.getBundleDeployDefinitions());
     }
 
     private BundleType createBundleType(String name) throws Exception {

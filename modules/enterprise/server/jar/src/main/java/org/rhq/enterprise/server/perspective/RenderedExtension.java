@@ -26,7 +26,6 @@ import org.rhq.enterprise.server.xmlschema.generated.serverplugin.perspective.Re
  *
  * @author Ian Springer
  */
-@SuppressWarnings("unchecked")
 public abstract class RenderedExtension extends Extension {
 
     private String displayName;

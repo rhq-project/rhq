@@ -57,9 +57,9 @@ import org.rhq.enterprise.server.plugin.pc.content.sync.RepoSourceSynchronizer;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * Responsible for managing {@link ContentProvider} implementations. These implementations
- * come from the content plugins themselves.
- *
+ * Responsible for managing {@link ContentProvider} implementations. These
+ * implementations come from the content plugins themselves.
+ * 
  * @author John Mazzitelli
  * @author Jason Dobies
  */
@@ -70,17 +70,23 @@ public class ContentProviderManager {
     private Map<ContentSource, ContentProvider> adapters;
 
     // This is used as a monitor lock to the synchronizeContentProvider method;
-    // it helps us avoid two content sources getting synchronized at the same time.
+    // it helps us avoid two content sources getting synchronized at the same
+    // time.
     private final Object synchronizeContentSourceLock = new Object();
 
     /**
-     * Asks that the adapter responsible for the given content source return a stream to the package
-     * bits for the package at the given location.
-     *
-     * @param contentSourceId the adapter for this content source will be used to stream the bits
-     * @param location        where the adapter can find the package bits on the content source
+     * Asks that the adapter responsible for the given content source return a
+     * stream to the package bits for the package at the given location.
+     * 
+     * @param contentSourceId
+     *            the adapter for this content source will be used to stream the
+     *            bits
+     * @param location
+     *            where the adapter can find the package bits on the content
+     *            source
      * @return the stream to the package bits
-     * @throws Exception if the adapter failed to load the bits
+     * @throws Exception
+     *             if the adapter failed to load the bits
      */
     public InputStream loadPackageBits(int contentSourceId, String location) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
@@ -97,13 +103,19 @@ public class ContentProviderManager {
     }
 
     /**
-     * Asks that the adapter responsible for the given content source return a stream to the
-     * DistributionFile bits for the DistributionFile at the given location.
-     *
-     * @param contentSourceId the adapter for this content source will be used to stream the bits
-     * @param location        where the adapter can find the DistributionFile bits on the source
+     * Asks that the adapter responsible for the given content source return a
+     * stream to the DistributionFile bits for the DistributionFile at the given
+     * location.
+     * 
+     * @param contentSourceId
+     *            the adapter for this content source will be used to stream the
+     *            bits
+     * @param location
+     *            where the adapter can find the DistributionFile bits on the
+     *            source
      * @return the stream to the DistributionFile bits
-     * @throws Exception if the adapter failed to load the bits
+     * @throws Exception
+     *             if the adapter failed to load the bits
      */
     public InputStream loadDistributionFileBits(int contentSourceId, String location) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
@@ -120,16 +132,20 @@ public class ContentProviderManager {
     }
 
     /**
-     * Asks the provider responsible for the given content source to synchronize with its remote
-     * repository. This will not attempt to load any package bits - it only synchronizes the repos
-     * and package version information. Note that if a synchronization is already currently underway,
-     * this method will not do anything and will return <code>false</code> (in effect, will let the
-     * currently running synchronization continue; we try not to step on it). If this method does
-     * actually do a sync, <code>true</code> will be returned.
-     *
-     * @param contentSourceId identifies the database entry of the provider
-     * @return <code>true</code> if the synchronization completed; <code>false</code> if there was
-     *         already a synchronization happening and this method aborted
+     * Asks the provider responsible for the given content source to synchronize
+     * with its remote repository. This will not attempt to load any package
+     * bits - it only synchronizes the repos and package version information.
+     * Note that if a synchronization is already currently underway, this method
+     * will not do anything and will return <code>false</code> (in effect, will
+     * let the currently running synchronization continue; we try not to step on
+     * it). If this method does actually do a sync, <code>true</code> will be
+     * returned.
+     * 
+     * @param contentSourceId
+     *            identifies the database entry of the provider
+     * @return <code>true</code> if the synchronization completed;
+     *         <code>false</code> if there was already a synchronization
+     *         happening and this method aborted
      * @throws Exception
      */
     public boolean synchronizeContentProvider(int contentSourceId) throws Exception {
@@ -150,11 +166,16 @@ public class ContentProviderManager {
                 throw new Exception("Cannot sync a non-existing content source [" + contentSourceId + "]");
             }
 
-            // This should not take very long so it should be OK to block other callers.
-            // We are avoiding the problem that would occur if we try to synchronize the same source
-            // at the same time. We could do it more cleverly by synchronizing on a per content source
-            // basis, but I don't see a need right now to make this more complicated.
-            // We can come back and revisit if we need more fine-grained locking.
+            // This should not take very long so it should be OK to block other
+            // callers.
+            // We are avoiding the problem that would occur if we try to
+            // synchronize the same source
+            // at the same time. We could do it more cleverly by synchronizing
+            // on a per content source
+            // basis, but I don't see a need right now to make this more
+            // complicated.
+            // We can come back and revisit if we need more fine-grained
+            // locking.
             synchronized (synchronizeContentSourceLock) {
                 progress.append(new Date()).append(": ");
                 progress.append("Start synchronization of content provider [").append(contentSource.getName()).append(
@@ -169,12 +190,17 @@ public class ContentProviderManager {
             }
 
             if (results == null) {
-                // note that it technically is still possible to have concurrent syncs - if two
-                // threads running in two different servers (i.e. different VMs) both try to sync the
-                // same content source and both enter the persistContentSourceSyncResults method at
-                // the same time, you'll get two inprogress rows - this is so rare as to not care.
+                // note that it technically is still possible to have concurrent
+                // syncs - if two
+                // threads running in two different servers (i.e. different VMs)
+                // both try to sync the
+                // same content source and both enter the
+                // persistContentSourceSyncResults method at
+                // the same time, you'll get two inprogress rows - this is so
+                // rare as to not care.
                 // Even if it does happen, it may still work, or
-                // one sync will get an error and rollback its tx and no harm will be done.
+                // one sync will get an error and rollback its tx and no harm
+                // will be done.
                 log.info("Content provider [" + contentSource.getName()
                     + "] is already currently being synchronized, this sync request will be ignored");
                 return false;
@@ -184,7 +210,8 @@ public class ContentProviderManager {
             repoSourceSynchronizer.synchronizeCandidateRepos(progress);
         } catch (Throwable t) {
             if (results != null) {
-                // try to reload the results in case it was updated by the SLSB before the
+                // try to reload the results in case it was updated by the SLSB
+                // before the
                 // exception happened
                 ContentSourceSyncResults reloadedResults = contentSourceManager.getContentSourceSyncResults(results
                     .getId());
@@ -217,21 +244,26 @@ public class ContentProviderManager {
     }
 
     /**
-     * Asks each content provider associated with the given repo to synchronize the following
-     * information for the given repo:
+     * Asks each content provider associated with the given repo to synchronize
+     * the following information for the given repo:
      * <ul>
      * <li>Package Metadata</li>
      * <li>Package Bits</li>
      * <li>Distribution Tree Metadata</li>
      * <li>Distribution Tree Bits</li>
      * </ul>
-     *
-     * @param repoId must indicate a valid repo in the database
-     * @return <code>true</code> if the synchronize took place; <code>false</code> if it did not
-     *         (for instance, if there is already a sync taking place for this repo)
-     * @throws Exception if the data required to perform the sync is missing or invalid
+     * 
+     * @param repoId
+     *            must indicate a valid repo in the database
+     * @return <code>true</code> if the synchronize took place;
+     *         <code>false</code> if it did not (for instance, if there is
+     *         already a sync taking place for this repo)
+     * @throws Exception
+     *             if the data required to perform the sync is missing or
+     *             invalid
      */
-    public boolean synchronizeRepo(int repoId) throws Exception {
+    public boolean synchronizeRepo(int repoId) {
+        log.debug("synchronizeRepo() :: start");
 
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
@@ -241,10 +273,11 @@ public class ContentProviderManager {
         // Load the repo to sync
         Repo repo = repoManager.getRepo(overlord, repoId);
         if (repo == null) {
-            throw new Exception("Invalid repo ID specified for sync: " + repoId);
+            throw new IllegalArgumentException("Invalid repo ID specified for sync: " + repoId);
         }
 
-        // results = contentSourceManager.persistContentSourceSyncResults(results);
+        // results =
+        // contentSourceManager.persistContentSourceSyncResults(results);
         StringBuilder progress = new StringBuilder();
         progress.append(new Date()).append(": ");
         progress.append("Start synchronization of Repository [").append(repo.getName()).append("]");
@@ -255,6 +288,7 @@ public class ContentProviderManager {
         tracker.setResults(progress.toString());
         tracker.setRepoSyncResults(repoManager.persistRepoSyncResults(tracker.getRepoSyncResults()));
         log.debug("synchronizeRepo :: inProgress");
+        tracker = updatePercentComplete(tracker, repoManager);
 
         if (tracker.getRepoSyncResults() == null) {
             log.info("Repository [" + repo.getName()
@@ -262,122 +296,152 @@ public class ContentProviderManager {
             return false;
         }
 
-        // METADATA Loop
-        for (ContentSource source : repo.getContentSources()) {
-            try {
+        Exception ie = null;
+        try {
+            ThreadUtil.checkInterrupted();
+            // METADATA Loop
+            for (ContentSource source : repo.getContentSources()) {
+                try {
+                    ContentProvider provider = getIsolatedContentProvider(source.getId());
+                    SyncProgressWeight sw = provider.getSyncProgressWeight();
+                    PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
+                        provider);
+                    log.debug("synchronizeRepo :: synchronizePackageMetadata");
+
+                    tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEMETADATA);
+                    tracker = packageSourceSynchronizer.synchronizePackageMetadata(tracker);
+                } catch (SyncException e) {
+                    processSyncException(e, tracker, repo, source, repoManager);
+                }
+            }
+            ThreadUtil.checkInterrupted();
+
+            // Setup ProgressWatcher
+            for (ContentSource source : repo.getContentSources()) {
                 ContentProvider provider = getIsolatedContentProvider(source.getId());
                 SyncProgressWeight sw = provider.getSyncProgressWeight();
-                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
-                    provider);
-                log.debug("synchronizeRepo :: synchronizePackageMetadata");
-
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEMETADATA);
-                tracker = packageSourceSynchronizer.synchronizePackageMetadata(tracker);
-            } catch (Exception e) {
-                processSyncException(e, tracker, repo, source, repoManager);
+                tracker.getProgressWatcher().addWork(sw.getPackageMetadataWeight());
+                tracker.addAdvisoryMetadataWork(provider);
+                tracker.getProgressWatcher().addWork(sw.getDistribtutionBitsWeight());
+                tracker.getProgressWatcher().addWork(sw.getDistribtutionMetadataWeight());
+                tracker.addPackageBitsWork(provider);
+                tracker.getProgressWatcher().finishWork(sw.getPackageMetadataWeight());
             }
-        }
+            tracker = updatePercentComplete(tracker, repoManager);
 
-        // Setup ProgressWatcher
-        for (ContentSource source : repo.getContentSources()) {
-            ContentProvider provider = getIsolatedContentProvider(source.getId());
-            SyncProgressWeight sw = provider.getSyncProgressWeight();
-            tracker.getProgressWatcher().addWork(sw.getPackageMetadataWeight());
-            tracker.addAdvisoryMetadataWork(provider);
-            tracker.getProgressWatcher().addWork(sw.getDistribtutionBitsWeight());
-            tracker.getProgressWatcher().addWork(sw.getDistribtutionMetadataWeight());
-            tracker.addPackageBitsWork(provider);
-            tracker.getProgressWatcher().finishWork(sw.getPackageMetadataWeight());
-        }
-        tracker = updatePercentComplete(tracker, repoManager);
+            // PACKAGEBITS Loop
+            // Synchronize every content provider associated with the repo
+            for (ContentSource source : repo.getContentSources()) {
+                // Don't let the entire sync fail if a single content source
+                // fails
+                try {
+                    ContentProvider provider = getIsolatedContentProvider(source.getId());
 
-        // PACKAGEBITS Loop
-        // Synchronize every content provider associated with the repo
-        for (ContentSource source : repo.getContentSources()) {
-            // Don't let the entire sync fail if a single content source fails
+                    PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
+                        provider);
+                    log.debug("synchronizeRepo :: synchronizePackageBits");
+                    tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
+                    tracker = packageSourceSynchronizer.synchronizePackageBits(tracker, provider);
+                    tracker = updatePercentComplete(tracker, repoManager);
+                    // Check to cancel after each contentsource
+                    ThreadUtil.checkInterrupted();
+
+                } catch (SyncException e) {
+                    processSyncException(e, tracker, repo, source, repoManager);
+                }
+            }
+            // Distro meta
+            for (ContentSource source : repo.getContentSources()) {
+                try {
+                    ContentProvider provider = getIsolatedContentProvider(source.getId());
+                    DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
+                        repo, source, provider);
+
+                    log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
+                    tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
+                    tracker = distributionSourceSynchronizer.synchronizeDistributionMetadata(tracker);
+                    tracker = updatePercentComplete(tracker, repoManager);
+                    ThreadUtil.checkInterrupted();
+                } catch (SyncException e) {
+                    processSyncException(e, tracker, repo, source, repoManager);
+                }
+            }
+
+            // Distro bits
+            for (ContentSource source : repo.getContentSources()) {
+                try {
+                    ContentProvider provider = getIsolatedContentProvider(source.getId());
+                    DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
+                        repo, source, provider);
+
+                    log.debug("synchronizeRepo :: synchronizeDistributionBits");
+                    tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
+                    tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
+                    tracker = updatePercentComplete(tracker, repoManager);
+                    ThreadUtil.checkInterrupted();
+                } catch (SyncException e) {
+                    processSyncException(e, tracker, repo, source, repoManager);
+                }
+            }
+
+            // advisory meta
+            for (ContentSource source : repo.getContentSources()) {
+                try {
+                    log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
+                    ContentProvider provider = getIsolatedContentProvider(source.getId());
+                    tracker = updateSyncStatus(tracker, ContentSyncStatus.ADVISORYMETADATA);
+                    AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source,
+                        provider);
+                    tracker = advisorySourcesync.synchronizeAdvisoryMetadata(tracker);
+                    tracker = updatePercentComplete(tracker, repoManager);
+                    ThreadUtil.checkInterrupted();
+                } catch (SyncException e) {
+                    processSyncException(e, tracker, repo, source, repoManager);
+                }
+            }
+
+            // Update status to finished.
+            progress = new StringBuilder();
+            progress.append("\n");
+            progress.append(tracker.getRepoSyncResults().getResults());
+            progress.append("\n");
+            progress.append(new Date()).append(": ");
+            progress.append(" Repository [").append(repo.getName()).append("]");
+            progress.append('\n');
+            progress.append(new Date()).append(": ");
+            progress.append("completed syncing.");
+            tracker.setResults(progress.toString());
+            tracker = updateSyncStatus(tracker, ContentSyncStatus.SUCCESS);
+            log.debug("synchronizeRepo :: Success");
+        } catch (Exception e) {
+            RepoSyncResults recentResults = repoManager.getMostRecentSyncResults(overlord, repo.getId());
+            log.debug("Caught InterruptedException");
+            progress.append("\n ** Cancelled syncing **");
+            tracker.setResults(progress.toString());
+            tracker.getProgressWatcher().resetToZero();
+            tracker = updatePercentComplete(tracker, repoManager);
             try {
-                ContentProvider provider = getIsolatedContentProvider(source.getId());
-
-                PackageSourceSynchronizer packageSourceSynchronizer = new PackageSourceSynchronizer(repo, source,
-                    provider);
-                log.debug("synchronizeRepo :: synchronizePackageBits");
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.PACKAGEBITS);
-                tracker = packageSourceSynchronizer.synchronizePackageBits(tracker, provider);
-                tracker = updatePercentComplete(tracker, repoManager);
-            } catch (Exception e) {
-                processSyncException(e, tracker, repo, source, repoManager);
+                tracker = updateSyncStatus(tracker, ContentSyncStatus.CANCELLED, false);
+            } catch (InterruptedException e1) {
+                throw new RuntimeException("Unexpected InterruptedException", e1);
             }
+            ie = e;
         }
-        // Distro meta
-        for (ContentSource source : repo.getContentSources()) {
-            try {
-                ContentProvider provider = getIsolatedContentProvider(source.getId());
-                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
-                    repo, source, provider);
-
-                log.debug("synchronizeRepo :: synchronizeDistributionMetadata");
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROMETADATA);
-                tracker = distributionSourceSynchronizer.synchronizeDistributionMetadata(tracker);
-                tracker = updatePercentComplete(tracker, repoManager);
-
-            } catch (Exception e) {
-                processSyncException(e, tracker, repo, source, repoManager);
-            }
-        }
-
-        // Distro bits
-        for (ContentSource source : repo.getContentSources()) {
-            try {
-                ContentProvider provider = getIsolatedContentProvider(source.getId());
-                DistributionSourceSynchronizer distributionSourceSynchronizer = new DistributionSourceSynchronizer(
-                    repo, source, provider);
-
-                log.debug("synchronizeRepo :: synchronizeDistributionBits");
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.DISTROBITS);
-                tracker = distributionSourceSynchronizer.synchronizeDistributionBits(tracker);
-                tracker = updatePercentComplete(tracker, repoManager);
-            } catch (Exception e) {
-                processSyncException(e, tracker, repo, source, repoManager);
-            }
-        }
-
-        // advisory meta
-        for (ContentSource source : repo.getContentSources()) {
-            try {
-                log.debug("synchronizeRepo :: synchronizeAdvisoryMetadata");
-                ContentProvider provider = getIsolatedContentProvider(source.getId());
-                tracker = updateSyncStatus(tracker, ContentSyncStatus.ADVISORYMETADATA);
-                AdvisorySourceSynchronizer advisorySourcesync = new AdvisorySourceSynchronizer(repo, source, provider);
-                tracker = advisorySourcesync.synchronizeAdvisoryMetadata(tracker);
-                tracker = updatePercentComplete(tracker, repoManager);
-            } catch (Exception e) {
-                processSyncException(e, tracker, repo, source, repoManager);
-            }
-        }
-
-        // Update status to finished.
-        progress = new StringBuilder();
-        progress.append("\n");
-        progress.append(tracker.getRepoSyncResults().getResults());
-        progress.append("\n");
-        progress.append(new Date()).append(": ");
-        progress.append(" Repository [").append(repo.getName()).append("]");
-        progress.append('\n');
-        progress.append(new Date()).append(": ");
-        progress.append("completed syncing.");
-        tracker.setResults(progress.toString());
-        tracker = updateSyncStatus(tracker, ContentSyncStatus.SUCCESS);
-        log.debug("synchronizeRepo :: Success");
 
         if (tracker.getRepoSyncResults() != null) {
             // pw.stop();
             tracker.getRepoSyncResults().setEndTime(System.currentTimeMillis());
-            // results.setPercentComplete(new Long(pw.getPercentComplete()));
+            // results.setPercentComplete(new
+            // Long(pw.getPercentComplete()));
             repoManager.mergeRepoSyncResults(tracker.getRepoSyncResults());
             log.debug("synchronizeRepo :: merging results.");
         }
+        if (ie != null) {
+            return false;
+        } else {
+            return true;
+        }
 
-        return true;
     }
 
     private SyncTracker updatePercentComplete(SyncTracker tracker, RepoManagerLocal repoManager) {
@@ -393,7 +457,8 @@ public class ContentProviderManager {
         log.error("Error while synchronizing repo [" + repo + "] with content provider [" + source
             + "]. Synchronization for the repo will continue for other providers.", e);
 
-        // try to reload the results in case it was updated by the SLSB before the
+        // try to reload the results in case it was updated by the SLSB before
+        // the
         // exception happened
         RepoSyncResults reloadedResults = repoManager.getRepoSyncResults(tracker.getRepoSyncResults().getId());
         if (reloadedResults != null) {
@@ -414,8 +479,20 @@ public class ContentProviderManager {
 
     }
 
-    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) {
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status) throws InterruptedException {
+        return updateSyncStatus(tracker, status, true);
+    }
+
+    private SyncTracker updateSyncStatus(SyncTracker tracker, ContentSyncStatus status, boolean checkCancelling)
+        throws InterruptedException {
         RepoManagerLocal repoManager = LookupUtil.getRepoManagerLocal();
+        SubjectManagerLocal subjMgr = LookupUtil.getSubjectManager();
+        Subject overlord = subjMgr.getOverlord();
+        int repoId = tracker.getRepoId();
+        RepoSyncResults cancelCheck = repoManager.getMostRecentSyncResults(overlord, repoId);
+        if (cancelCheck.getStatus() == ContentSyncStatus.CANCELLING) {
+            throw new InterruptedException();
+        }
         RepoSyncResults results = tracker.getRepoSyncResults();
         results.setStatus(status);
         results = repoManager.mergeRepoSyncResults(results);
@@ -425,11 +502,14 @@ public class ContentProviderManager {
 
     /**
      * Tests the connection to the content source that has the given ID.
-     *
-     * @param contentSourceId refers to a valid content source in the database
-     * @return <code>true</code> if there is an adapter that can successfully connect to the given
-     *         content source <code>false</code> if there is an adapter but it cannot connect
-     * @throws Exception if failed to get an adapter to attempt the connection
+     * 
+     * @param contentSourceId
+     *            refers to a valid content source in the database
+     * @return <code>true</code> if there is an adapter that can successfully
+     *         connect to the given content source <code>false</code> if there
+     *         is an adapter but it cannot connect
+     * @throws Exception
+     *             if failed to get an adapter to attempt the connection
      */
     public boolean testConnection(int contentSourceId) throws Exception {
         ContentProvider adapter = getIsolatedContentProvider(contentSourceId);
@@ -444,8 +524,9 @@ public class ContentProviderManager {
     }
 
     /**
-     * Returns a set of all content sources whose adapters are managed by this object.
-     *
+     * Returns a set of all content sources whose adapters are managed by this
+     * object.
+     * 
      * @return all content sources
      */
     public Set<ContentSource> getAllContentSources() {
@@ -455,20 +536,25 @@ public class ContentProviderManager {
     }
 
     /**
-     * Call this method when a new content source is added to the system during runtime. This can
-     * also be used to restart an adapter that was previously {@link #shutdownAdapter(ContentSource)
-     * shutdown}.
-     *
-     * <p>If there is already an adapter currently started for the given content source, this
-     * returns silently.</p>
-     *
-     * @param contentSource the new content source that was added
-     * @throws InitializationException if the provider throws an error on its startup
+     * Call this method when a new content source is added to the system during
+     * runtime. This can also be used to restart an adapter that was previously
+     * {@link #shutdownAdapter(ContentSource) shutdown}.
+     * 
+     * <p>
+     * If there is already an adapter currently started for the given content
+     * source, this returns silently.
+     * </p>
+     * 
+     * @param contentSource
+     *            the new content source that was added
+     * @throws InitializationException
+     *             if the provider throws an error on its startup
      */
     public void startAdapter(ContentSource contentSource) throws InitializationException {
         synchronized (this.adapters) {
             if (this.adapters.containsKey(contentSource)) {
-                return; // already exists, which means it was already initialized
+                return; // already exists, which means it was already
+                // initialized
             }
         }
 
@@ -482,8 +568,10 @@ public class ContentProviderManager {
             adapter.initialize(contentSource.getConfiguration());
         } catch (Exception e) {
             log.warn("Failed to initialize adapter for content source [" + contentSource.getName() + "]");
-            // The adapter is put in the adapter cache when it is instantiated. If it failed to start, remove it
-            // from the cache so we don't immediately return at the start of this method.
+            // The adapter is put in the adapter cache when it is instantiated.
+            // If it failed to start, remove it
+            // from the cache so we don't immediately return at the start of
+            // this method.
             this.adapters.remove(contentSource);
 
             throw new InitializationException(e);
@@ -491,14 +579,18 @@ public class ContentProviderManager {
     }
 
     /**
-     * Call this method when a content source is removed from the system during runtime or if you
-     * just want to shutdown the adapter for whatever reason. You can restart the adapter by calling
+     * Call this method when a content source is removed from the system during
+     * runtime or if you just want to shutdown the adapter for whatever reason.
+     * You can restart the adapter by calling
      * {@link #startAdapter(ContentSource)}.
-     *
-     * <p>If there are no adapters currently started for the given content source, this returns
-     * silently.</p>
-     *
-     * @param contentSource the content source being deleted
+     * 
+     * <p>
+     * If there are no adapters currently started for the given content source,
+     * this returns silently.
+     * </p>
+     * 
+     * @param contentSource
+     *            the content source being deleted
      */
     public void shutdownAdapter(ContentSource contentSource) {
         synchronized (this.adapters) {
@@ -521,12 +613,15 @@ public class ContentProviderManager {
     }
 
     /**
-     * Convienence method that simply {@link #shutdownAdapter(ContentSource) shuts down the adapter}
-     * and then {@link #startAdapter(ContentSource) restarts it}. Call this when, for example, a
-     * content source's {@link ContentSource#getConfiguration() configuration} has changed.
-     *
-     * @param contentSource the content source whose adapter is to be restarted
-     * @throws Exception if there is an error asking the provider to shutdown or start
+     * Convienence method that simply {@link #shutdownAdapter(ContentSource)
+     * shuts down the adapter} and then {@link #startAdapter(ContentSource)
+     * restarts it}. Call this when, for example, a content source's
+     * {@link ContentSource#getConfiguration() configuration} has changed.
+     * 
+     * @param contentSource
+     *            the content source whose adapter is to be restarted
+     * @throws Exception
+     *             if there is an error asking the provider to shutdown or start
      */
     public void restartAdapter(ContentSource contentSource) throws Exception {
         shutdownAdapter(contentSource);
@@ -534,13 +629,17 @@ public class ContentProviderManager {
     }
 
     /**
-     * Given a ID to a content source, this returns the adapter that is responsible for communicating
-     * with that content source where that adapter object will ensure invocations on it are isolated
-     * to its plugin classloader.
-     *
-     * @param contentProviderId an ID to a {@link ContentSource}
-     * @return the adapter that is communicating with the content source, isolated to its classloader
-     * @throws RuntimeException if there is no content source with the given ID
+     * Given a ID to a content source, this returns the adapter that is
+     * responsible for communicating with that content source where that adapter
+     * object will ensure invocations on it are isolated to its plugin
+     * classloader.
+     * 
+     * @param contentProviderId
+     *            an ID to a {@link ContentSource}
+     * @return the adapter that is communicating with the content source,
+     *         isolated to its classloader
+     * @throws RuntimeException
+     *             if there is no content source with the given ID
      */
     public ContentProvider getIsolatedContentProvider(int contentProviderId) throws RuntimeException {
         synchronized (this.adapters) {
@@ -555,12 +654,16 @@ public class ContentProviderManager {
     }
 
     /**
-     * Tells this manager to initialize itself which will initialize all the adapters.
-     *
-     * <p>This is protected so only the plugin container and subclasses can use it.</p>
-     *
-     * @param pluginManager the plugin manager this object can use to obtain information from (like
-     *                      classloaders)
+     * Tells this manager to initialize itself which will initialize all the
+     * adapters.
+     * 
+     * <p>
+     * This is protected so only the plugin container and subclasses can use it.
+     * </p>
+     * 
+     * @param pluginManager
+     *            the plugin manager this object can use to obtain information
+     *            from (like classloaders)
      */
     protected void initialize(ContentServerPluginManager pluginManager) {
         this.pluginManager = pluginManager;
@@ -568,8 +671,10 @@ public class ContentProviderManager {
         ContentSourceMetadataManagerLocal metadataManager = LookupUtil.getContentSourceMetadataManager();
         ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
 
-        // Our plugin manager should have parsed all descriptors and have our types for us.
-        // Let's register the types to make sure they are merged with the old existing types.
+        // Our plugin manager should have parsed all descriptors and have our
+        // types for us.
+        // Let's register the types to make sure they are merged with the old
+        // existing types.
         ContentSourcePluginMetadataManager pluginMetadataManager = this.pluginManager.getMetadataManager();
         Set<ContentSourceType> allTypes = pluginMetadataManager.getAllContentSourceTypes();
         metadataManager.registerTypes(allTypes);
@@ -594,14 +699,18 @@ public class ContentProviderManager {
     }
 
     /**
-     * Tells this manager to shutdown. This will effectively shutdown all of its adapters.
-     *
-     * <p>This is protected so only the plugin container and subclasses can use it.</p>
+     * Tells this manager to shutdown. This will effectively shutdown all of its
+     * adapters.
+     * 
+     * <p>
+     * This is protected so only the plugin container and subclasses can use it.
+     * </p>
      */
     protected void shutdown() {
         HashMap<ContentSource, ContentProvider> adaptersCopy;
 
-        // shutdown all adapters to give them a chance to clean up after themselves
+        // shutdown all adapters to give them a chance to clean up after
+        // themselves
         synchronized (this.adapters) {
             adaptersCopy = new HashMap<ContentSource, ContentProvider>(this.adapters);
         }
@@ -623,12 +732,16 @@ public class ContentProviderManager {
     }
 
     /**
-     * This returns the adapter that is responsible for communicating with the given content source
-     * where that adaptor object will ensure invocations on it are isolated to its plugin classloader.
-     *
-     * @param contentSource the returned adapter communicates with this content source
-     * @return the adapter that is communicating with the content source, isolated to its classloader
-     * @throws RuntimeException if there is no content source adapter available
+     * This returns the adapter that is responsible for communicating with the
+     * given content source where that adaptor object will ensure invocations on
+     * it are isolated to its plugin classloader.
+     * 
+     * @param contentSource
+     *            the returned adapter communicates with this content source
+     * @return the adapter that is communicating with the content source,
+     *         isolated to its classloader
+     * @throws RuntimeException
+     *             if there is no content source adapter available
      */
     protected ContentProvider getIsolatedContentSourceAdapter(ContentSource contentSource) throws RuntimeException {
         ContentProvider adapter;
@@ -671,10 +784,13 @@ public class ContentProviderManager {
     }
 
     /**
-     * Creates a provider instance that will service the give {@link ContentSource}.
-     *
-     * @param contentSource the source that the adapter will connect to
-     * @return an adapter instance; will be <code>null</code> if failed to create adapter
+     * Creates a provider instance that will service the give
+     * {@link ContentSource}.
+     * 
+     * @param contentSource
+     *            the source that the adapter will connect to
+     * @return an adapter instance; will be <code>null</code> if failed to
+     *         create adapter
      */
     protected ContentProvider instantiateAdapter(ContentSource contentSource) {
         ContentProvider adapter = null;
@@ -718,8 +834,8 @@ public class ContentProviderManager {
     }
 
     /**
-     * This will handle invocations to an object ensuring that the call is isolated to within the
-     * appropriate classloader.
+     * This will handle invocations to an object ensuring that the call is
+     * isolated to within the appropriate classloader.
      */
     private class IsolatedInvocationHandler implements InvocationHandler {
         private final Object instance;

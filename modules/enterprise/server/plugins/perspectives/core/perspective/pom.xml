@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-parent</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -16,18 +16,6 @@
 
     <name>RHQ Core Perspective</name>
     <description>A Perspective defining Core UI Elements</description>
-
-    <dependencies>
-
-        <!-- Below are the core modules that are required dependencies of all server plugins -->
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-enterprise-server</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope> <!-- provided by the server/plugin-container -->
-        </dependency>
-
-    </dependencies>
 
     <profiles>
 
@@ -91,8 +79,7 @@
                                                 <include name="META-INF/**" />
                                             </patternset>
                                         </unjar>
-                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                            update="true">
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                                         </jar>
                                     </tasks>
                                 </configuration>

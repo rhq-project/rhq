@@ -218,6 +218,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
 
         sender.pluginComponent = getServerPluginComponent(key.getPluginName());
+        sender.serverPluginEnvironment = pluginEnvByName.get(senderName);
 
         return sender;
     }
@@ -237,8 +238,9 @@ public class AlertSenderPluginManager extends ServerPluginManager {
     public Object getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
 
-        if (className == null)
+        if (className == null) {
             return null;
+        }
 
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
         Object bean = null;

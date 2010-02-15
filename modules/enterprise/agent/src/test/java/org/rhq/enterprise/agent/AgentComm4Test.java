@@ -294,8 +294,14 @@ public class AgentComm4Test extends AgentCommTestBase {
      *
      * @throws Exception
      */
-    @Test(enabled = ENABLE_TESTS)
+    @Test(enabled = false)
     public void testAutoDiscovery() throws Exception {
+
+        /* Disabled until we work out the issues of running multicast on the hudson server.
+
+           jdobies, Feb 2, 2010
+         */
+
         Properties props1 = new Properties();
         props1.setProperty(AgentConfigurationConstants.SERVER_AUTO_DETECTION, "true");
         props1.setProperty(AgentConfigurationConstants.CLIENT_SENDER_SERVER_POLLING_INTERVAL, "-1");

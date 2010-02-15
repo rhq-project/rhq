@@ -40,6 +40,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.event.EventSeverity;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -346,6 +347,25 @@ public class FunctionTagLibrary extends AbstractTagLibrary {
     // needs to exist separately from getDefaultContextTabURL because only some facelets understand EntityContext
     public static String getDefaultResourceTabURL() {
         return "/rhq/resource/summary/overview.xhtml";
+    }
+
+    public static String getDefaultGroupTabURL() {
+        return "/rhq/group/inventory/view.xhtml";
+    }
+
+    public static String getAvailabilityURL(AvailabilityType type, int size) {
+        if (size != 16 && size != 24) {
+            throw new IllegalArgumentException("No availability icon for size " + size);
+        }
+        if (type == null) {
+            return (size == 16) ? "/images/icons/availability_gray_16.png" : "/images/icons/availability_gray_24.png";
+        } else if (type == AvailabilityType.UP) {
+            return (size == 16) ? "/images/icons/availability_green_16.png" : "/images/icons/availability_green_24.png";
+        } else if (type == AvailabilityType.DOWN) {
+            return (size == 16) ? "/images/icons/availability_red_16.png" : "/images/icons/availability_red_24.png";
+        } else {
+            throw new IllegalArgumentException("No icon for AvailabilityType[" + type + "]");
+        }
     }
 
     public static String getAlertPriorityURL(AlertPriority priority) {

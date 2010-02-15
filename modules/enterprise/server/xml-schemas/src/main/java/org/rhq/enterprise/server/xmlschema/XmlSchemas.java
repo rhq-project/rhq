@@ -54,6 +54,14 @@ public interface XmlSchemas {
     public static final String XSD_SERVERPLUGIN_ALERT = "rhq-serverplugin-alert.xsd";
     public static final String PKG_SERVERPLUGIN_ALERT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.alert";
 
+    // the server plugin descriptor for the entitlement plugin type
+    public static final String XSD_SERVERPLUGIN_ENTITLEMENT = "rhq-serverplugin-entitlement.xsd";
+    public static final String PKG_SERVERPLUGIN_ENTITLEMENT = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.entitlement";
+
+    // the server plugin descriptor for the bundle plugin type
+    public static final String XSD_SERVERPLUGIN_BUNDLE = "rhq-serverplugin-bundle.xsd";
+    public static final String PKG_SERVERPLUGIN_BUNDLE = "org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle";
+
     // the configuration schema that can be reused in any other server-side schema to define normal configuration properties
     public static final String XSD_CONFIGURATION = "rhq-configuration.xsd";
     public static final String PKG_CONFIGURATION = DescriptorPackages.CONFIGURATION;

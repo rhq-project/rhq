@@ -61,6 +61,7 @@ import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.enterprise.communications.util.SecurityUtil;
 
 /**
  * Finds out information about the RHQ Server and the JBossAS server it is running in. It can also be used to modify
@@ -97,6 +98,7 @@ public class ServerInformation {
     private File binDirectory = null;
     private File logDirectory = null;
     private File dataDirectory = null;
+    private File confDirectory = null;
 
     public ServerInformation() {
         // This is called both within the context of the GUI and the auto-install startup servlet.
@@ -563,6 +565,18 @@ public class ServerInformation {
         }
 
         return dataDirectory;
+    }
+
+    private File getConfDirectory() {
+        if (confDirectory == null) {
+            MBeanServer mbs = getMBeanServer();
+            ObjectName name = ObjectNameFactory.create("jboss.system:type=ServerConfig");
+            Object mbean = MBeanServerInvocationHandler.newProxyInstance(mbs, name, ServerConfig.class, false);
+
+            confDirectory = new File(((ServerConfig) mbean).getServerHomeDir(), "conf");
+        }
+
+        return confDirectory;
     }
 
     private MBeanServer getMBeanServer() {
@@ -1226,6 +1240,42 @@ public class ServerInformation {
         } finally {
             if (null != db) {
                 db.closeConnection(conn);
+            }
+        }
+    }
+
+    public void createKeystore(Server haServer) {
+        File confDir = getConfDirectory();
+        File keystore = new File(confDir, "rhq.keystore");
+        File keystoreBackup = new File(confDir, "rhq.keystore.backup");
+
+        // if there is one out-of-box, we want to remove it and create one with our proper CN
+        if (keystore.exists()) {
+            keystoreBackup.delete();
+            if (!keystore.renameTo(keystoreBackup)) {
+                LOG.warn("Cannot backup existing keystore - cannot generate a new cert with a proper domain name. ["
+                    + keystore + "] will be the keystore used by this server");
+                return;
+            }
+        }
+
+        try {
+            String keystorePath = keystore.getAbsolutePath();
+            String keyAlias = "RHQ";
+            String domainName = "CN=" + haServer.endpointAddress + ", OU=RHQ, O=rhq-project.org, C=US";
+            String keystorePassword = "RHQManagement";
+            String keyPassword = keystorePassword;
+            String keyAlgorithm = "rsa";
+            int validity = 7300;
+            SecurityUtil.createKeyStore(keystorePath, keyAlias, domainName, keystorePassword, keyPassword,
+                keyAlgorithm, validity);
+            LOG.info("New keystore created [" + keystorePath + "] with cert domain name of [" + domainName + "]");
+        } catch (Exception e) {
+            LOG.warn("Could not generate a new cert with a proper domain name, will use the original keystore");
+            keystore.delete();
+            if (!keystoreBackup.renameTo(keystore)) {
+                LOG.warn("Failed to restore the original keystore from backup - please rename [" + keystoreBackup
+                    + "] to [" + keystore + "]");
             }
         }
     }

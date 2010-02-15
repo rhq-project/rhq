@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.content;
 
+
 import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
@@ -27,9 +28,10 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
-import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -41,6 +43,12 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
     private String searchString = null;
     private String searchCategory = null;
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource r) {
+            return r.getId();
+        }
+    };
+    
     public RepoUnsubscriptionsUIBean() {
     }
 
@@ -99,13 +107,12 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class RepoUnsubscriptionsDataModel extends PagedListDataModel<Resource> {
+    private class RepoUnsubscriptionsDataModel extends ResourceNameDisambiguatingPagedListDataModel<Resource> {
         public RepoUnsubscriptionsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        @Override
-        public PageList<Resource> fetchPage(PageControl pc) {
+        public PageList<Resource> fetchDataForPage(PageControl pc) {
             Subject subject = EnterpriseFacesContextUtility.getSubject();
             ResourceManagerLocal manager = LookupUtil.getResourceManager();
             int repoId = Integer.parseInt(FacesContextUtility.getRequiredRequestParameter("id"));
@@ -129,6 +136,10 @@ public class RepoUnsubscriptionsUIBean extends PagedDataTableUIBean {
             //PageList<ResourceComposite> results = manager.findResourceComposites(subject, categoryEnum, null, null, search, pc);
 
             return results;
+        }
+        
+        protected IntExtractor<Resource> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
         }
     }
 

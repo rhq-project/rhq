@@ -42,6 +42,6 @@ public interface AdvisorySource {
      *                   source cannot be connected to.
      */
     void synchronizeAdvisory(String repoName, AdvisorySyncReport report, Collection<AdvisoryDetails> existingAdvisory)
-        throws Exception;
+        throws SyncException, InterruptedException;
 
 }

@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.plugins.disk;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +43,7 @@ import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
 import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
 import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
@@ -117,11 +119,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
-
-        if (!isPackageSource) {
-            return;
-        }
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
 
         if (!isPackageSource) {
             return;
@@ -195,7 +193,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
      * @throws Exception if the sync fails
      */
     protected void syncPackages(PackageSyncReport report, String repoName,
-        List<ContentProviderPackageDetails> packages, File directory) throws Exception {
+        List<ContentProviderPackageDetails> packages, File directory) throws SyncException {
 
         for (File file : directory.listFiles()) {
             if (file.isDirectory()) {
@@ -228,7 +226,7 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         }
     }
 
-    protected ContentProviderPackageDetails createPackage(File file) throws Exception {
+    protected ContentProviderPackageDetails createPackage(File file) throws SyncException {
 
         SupportedPackageType supportedPackageType = determinePackageType(file);
         if (supportedPackageType == null) {
@@ -236,7 +234,12 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         }
 
         ContentFileInfo fileInfo = ContentFileInfoFactory.createContentFileInfo(file);
-        String md5 = MessageDigestGenerator.getDigestString(file);
+        String md5;
+        try {
+            md5 = MessageDigestGenerator.getDigestString(file);
+        } catch (IOException e) {
+            throw new SyncException("Error digesting file", e);
+        }
         String name = file.getName();
         String version = fileInfo.getVersion(md5);
         String packageTypeName = supportedPackageType.packageTypeName;
@@ -310,8 +313,15 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
             SupportedPackageType supportedPackageType = new SupportedPackageType();
             supportedPackageType.packageTypeName = configuration.getSimpleValue("packageTypeName", null);
             supportedPackageType.architectureName = configuration.getSimpleValue("architectureName", null);
-            supportedPackageType.resourceTypeName = configuration.getSimpleValue("resourceTypeName", null);
-            supportedPackageType.resourceTypePluginName = configuration.getSimpleValue("resourceTypePluginName", null);
+
+            String resourceAndPlugin = configuration.getSimpleValue("resourceType", null);
+
+            String resourceType = resourceAndPlugin.substring( (resourceAndPlugin.indexOf('-') + 1) );
+            String pluginType = resourceAndPlugin.substring(0, resourceAndPlugin.indexOf('-'));
+
+            supportedPackageType.resourceTypeName = resourceType;
+            supportedPackageType.resourceTypePluginName = pluginType;
+
             String filenameFilter = configuration.getSimpleValue("filenameFilter", null);
             supportedPackageTypes.put(filenameFilter, supportedPackageType);
         }
@@ -353,7 +363,6 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
         public String resourceTypePluginName;
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return new SyncProgressWeight(10, 1, 0, 0, 0);
     }

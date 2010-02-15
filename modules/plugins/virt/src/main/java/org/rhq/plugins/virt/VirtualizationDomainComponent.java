@@ -35,6 +35,7 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -49,7 +50,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Greg Hinkle
  */
 public class VirtualizationDomainComponent implements ResourceComponent<VirtualizationHostComponent>, MeasurementFacet,
-    OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
+    OperationFacet, ConfigurationFacet, CreateChildResourceFacet, DeleteResourceFacet {
 
     private Log log = LogFactory.getLog(VirtualizationDomainComponent.class);
     private String domainName;
@@ -131,8 +132,10 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
             result = virt.domainShutdown(this.domainName);
         } else if (name.equals("suspend")) {
             result = virt.domainSuspend(this.domainName);
-        } else if (name.equals("create")) {
+        } else if (name.equals("start")) {
             result = virt.domainCreate(this.domainName);
+        } else if (name.equals("destroy")) {
+            result = virt.domainDestroy(this.domainName);
         }
 
         if (result < 0) {
@@ -144,16 +147,6 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
 
     public Configuration loadResourceConfiguration() throws LibvirtException {
         LibVirtConnection virt = getConnection();
-        /*Configuration config = new Configuration();
-        DomainInfo info = virt.getDomainInfo(domainName);
-        //TODO Type
-        //TODO Lifecycle Actions
-        config.put(new PropertySimple("name", info.name));
-        config.put(new PropertySimple("uuid", info.uuid));
-        config.put(new PropertySimple("vcpu", info.domainInfo.nrVirtCpu));
-        config.put(new PropertySimple("memory", info.domainInfo.maxMem));
-        config.put(new PropertySimple("currentMemory", info.domainInfo.memory));
-        return config;*/
 
         String xml = virt.getDomainXML(this.domainName);
         return XMLEditor.getDomainConfiguration(xml);
@@ -217,5 +210,10 @@ public class VirtualizationDomainComponent implements ResourceComponent<Virtuali
 
     public String getDomainName() {
         return this.domainName;
+    }
+
+    public void deleteResource() throws Exception {
+        LibVirtConnection virt = this.getConnection() ;
+        virt.domainDelete(domainName) ;
     }
 }

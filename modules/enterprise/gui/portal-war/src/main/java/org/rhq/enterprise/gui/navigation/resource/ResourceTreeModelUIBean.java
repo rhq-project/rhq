@@ -20,10 +20,10 @@ package org.rhq.enterprise.gui.navigation.resource;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -88,7 +88,6 @@ public class ResourceTreeModelUIBean {
         HibernatePerformanceMonitor.get().stop(monitorId, "ResourceTree agent resource");
         log.debug("Loaded " + resources.size() + " raw resources in " + (end - start));
 
-
         start = System.currentTimeMillis();
         monitorId = HibernatePerformanceMonitor.get().start();
         rootNode = load(rootResource.getId(), resources, false);
@@ -110,7 +109,6 @@ public class ResourceTreeModelUIBean {
         return root;
     }
 
-    
     public static void load(ResourceTreeNode parentNode, boolean alwaysGroup) {
 
         if (parentNode.getData() instanceof Resource) {
@@ -169,9 +167,9 @@ public class ResourceTreeModelUIBean {
                     if (rsc instanceof ResourceSubCategory) {
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceSubCategory) rsc, entries.size());
                     } else if (rsc instanceof ResourceType) {
-                        boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceType)rsc).getName());
+                        boolean isDupResourceTypeName = dupResourceTypeNames.contains(((ResourceType) rsc).getName());
                         agc = new AutoGroupComposite(avail, parentResource, (ResourceType) rsc, entries.size(),
-                                isDupResourceTypeName);
+                            isDupResourceTypeName);
                     }
                     ResourceTreeNode node = new ResourceTreeNode(agc);
                     load(node, alwaysGroup);
@@ -198,42 +196,45 @@ public class ResourceTreeModelUIBean {
             AutoGroupComposite compositeParent = (AutoGroupComposite) parentNode.getData();
 
             Map<Object, List<Resource>> children = new HashMap<Object, List<Resource>>();
-            for (Resource res : compositeParent.getParentResource().getChildResources()) {
-                if (compositeParent.getSubcategory() != null) {
-                    // parent is a sub category
-                    if (res.getResourceType().getSubCategory() != null
-                        && compositeParent.getSubcategory().equals(
-                            res.getResourceType().getSubCategory().getParentSubCategory())
-                        && compositeParent.getParentResource().equals(res.getParentResource())) {
+            log.error("composite parent" + compositeParent);
+            if (compositeParent != null) {
+                for (Resource res : compositeParent.getParentResource().getChildResources()) {
+                    if (compositeParent.getSubcategory() != null) {
+                        // parent is a sub category
+                        if (res.getResourceType().getSubCategory() != null
+                            && compositeParent.getSubcategory().equals(
+                                res.getResourceType().getSubCategory().getParentSubCategory())
+                            && compositeParent.getParentResource().equals(res.getParentResource())) {
 
-                        // A subSubCategory in a subcategory
-                        if (children.containsKey(res.getResourceType().getSubCategory())) {
-                            children.get(res.getResourceType().getSubCategory()).add(res);
-                        } else {
-                            ArrayList<Resource> list = new ArrayList<Resource>();
-                            list.add(res);
-                            children.put(res.getResourceType().getSubCategory(), list);
+                            // A subSubCategory in a subcategory
+                            if (children.containsKey(res.getResourceType().getSubCategory())) {
+                                children.get(res.getResourceType().getSubCategory()).add(res);
+                            } else {
+                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                list.add(res);
+                                children.put(res.getResourceType().getSubCategory(), list);
+                            }
+                        } else if (compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory())
+                            && compositeParent.getParentResource().equals(res.getParentResource())) {
+                            // Direct entries in a subcategory... now group them by autogroup (type)
+                            if (children.containsKey(res.getResourceType())) {
+                                children.get(res.getResourceType()).add(res);
+                            } else {
+                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                list.add(res);
+                                children.put(res.getResourceType(), list);
+                            }
                         }
-                    } else if (compositeParent.getSubcategory().equals(res.getResourceType().getSubCategory())
-                        && compositeParent.getParentResource().equals(res.getParentResource())) {
-                        // Direct entries in a subcategory... now group them by autogroup (type)
-                        if (children.containsKey(res.getResourceType())) {
-                            children.get(res.getResourceType()).add(res);
-                        } else {
-                            ArrayList<Resource> list = new ArrayList<Resource>();
-                            list.add(res);
-                            children.put(res.getResourceType(), list);
-                        }
-                    }
-                } else if (compositeParent.getResourceType() != null) {
-                    if (compositeParent.getResourceType().equals(res.getResourceType())
-                        && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
-                        if (children.containsKey(res.getResourceType())) {
-                            children.get(res.getResourceType()).add(res);
-                        } else {
-                            ArrayList<Resource> list = new ArrayList<Resource>();
-                            list.add(res);
-                            children.put(res.getResourceType(), list);
+                    } else if (compositeParent.getResourceType() != null) {
+                        if (compositeParent.getResourceType().equals(res.getResourceType())
+                            && compositeParent.getParentResource().getId() == res.getParentResource().getId()) {
+                            if (children.containsKey(res.getResourceType())) {
+                                children.get(res.getResourceType()).add(res);
+                            } else {
+                                ArrayList<Resource> list = new ArrayList<Resource>();
+                                list.add(res);
+                                children.put(res.getResourceType(), list);
+                            }
                         }
                     }
                 }
@@ -324,9 +325,9 @@ public class ResourceTreeModelUIBean {
         Set<String> dupResourceTypeNames = new HashSet();
         for (Object rsc : children.keySet()) {
             if (rsc != null
-                && (rsc instanceof ResourceType && (children.get(rsc).size() > 1 || (alwaysGroup && children
-                    .get(rsc).size() == 1)))) {
-                String resourceTypeName = ((ResourceType)rsc).getName();
+                && (rsc instanceof ResourceType && (children.get(rsc).size() > 1 || (alwaysGroup && children.get(rsc)
+                    .size() == 1)))) {
+                String resourceTypeName = ((ResourceType) rsc).getName();
                 if (resourceTypeNames.contains(resourceTypeName)) {
                     dupResourceTypeNames.add(resourceTypeName);
                 }

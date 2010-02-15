@@ -9,10 +9,15 @@
       <component-class>org.rhq.core.gui.configuration.ConfigUIComponent</component-class>
    </component>
 
-    <component>
-       <component-type>org.rhq.ConfigurationSet</component-type>
-       <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
-    </component>
+   <component>
+      <component-type>org.jboss.on.MultiFile</component-type>
+      <component-class>org.rhq.core.gui.configuration.MultiFileUIComponent</component-class>
+   </component>
+
+   <component>
+      <component-type>org.rhq.ConfigurationSet</component-type>
+      <component-class>org.rhq.core.gui.configuration.propset.ConfigurationSetComponent</component-class>
+   </component>
 
    <render-kit>
       <renderer>
@@ -21,6 +26,14 @@
          <renderer-type>org.jboss.on.Config</renderer-type>
          <renderer-class>org.rhq.core.gui.configuration.ConfigRenderer</renderer-class>
       </renderer>
+      
+      <renderer>
+      <description>renderer for Multi-File Editor</description>
+      <component-family>rhq</component-family>
+      <renderer-type>org.jboss.on.MultiFile</renderer-type>
+      <renderer-class>org.rhq.core.gui.configuration.MultiFileRenderer</renderer-class>      
+      </renderer>
+      
    </render-kit>
 
     <component>

@@ -21,7 +21,7 @@
         </title>
     </head>
     
-    <body style="background-color: #CCFF66">
+    <body style="background-color: #CCCC99">
 
     <f:view contentType="text/html; charset=UTF-8">
 
@@ -31,10 +31,41 @@
     <div style="padding: 10px; height: 1000px;">
        <h4>It's always good to see something from another perspective.</h4>
 
-       <p>You should have arrived at this page by choosing to create a new
-          JBoss AS Patch Provider Type.
-          
-          This page would typically start a workflow to create said provider...
+       <p>You should have arrived at this page by choosing to create a new<br/>
+          <br/>
+          <b>JBoss AS Patch Provider Type</b>.<br/>
+          <br/>          
+          This page would typically start a workflow to create said provider...<br/>
+          <br/>                    
+          It was invoked via a Perspective Page Extension defined in the Sample Perspective via:
+<pre>
+
+&lt;!-- Page extensions --&gt;
+
+&lt;page
+      name=&quot;createContentProvider&quot;&gt;
+      &lt;page-link
+         name=&quot;RHNSource&quot;
+         application=&quot;sample&quot;
+         url=&quot;createContentProviderRHN.xhtml&quot; /&gt;
+      &lt;page-link
+         name=&quot;JBossASPatchSource&quot;
+         application=&quot;sample&quot;
+         url=&quot;createContentProviderJBossASPatch.xhtml&quot; /&gt;
+&lt;/page&gt;
+
+</pre>
+...and by enhancing the CreateContentProvider page to be an "Extension Point":
+<pre>
+
+&lt;h:outputLink value=&quot;\#{CreateContentSourceUIBean.getCreateContentProviderPageLink(item.name)}&quot;&gt;
+      &lt;!--  note, do not use f:param with perspectives --&gt;
+
+      &lt;h:outputText value=&quot;#{item.displayName}&quot; /&gt;
+      &lt;h:outputText value=&quot; *&quot; rendered=&quot;#{(not empty param.typeName) and (param.typeName eq item.name)}&quot;/&gt;
+&lt;/h:outputLink&gt;
+
+</pre>
        </p>
     
     </div>

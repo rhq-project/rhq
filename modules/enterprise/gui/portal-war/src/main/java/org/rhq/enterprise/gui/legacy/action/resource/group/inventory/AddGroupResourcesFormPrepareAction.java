@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.legacy.action.resource.group.inventory;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -36,10 +37,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
+import org.rhq.core.domain.resource.composite.ResourceParentFlyweight;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
+import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageComponent;
+import org.rhq.enterprise.gui.inventory.resource.ResourcePartialLineageRenderer;
 import org.rhq.enterprise.gui.legacy.Constants;
 import org.rhq.enterprise.gui.legacy.util.RequestUtils;
 import org.rhq.enterprise.gui.legacy.util.SessionUtils;
@@ -54,6 +61,12 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AddGroupResourcesFormPrepareAction extends Action {
     private static final String CATEGORY_ALL = "None";
 
+    private static final IntExtractor<Resource> RESOURCE_ID_EXTRACTOR = new IntExtractor<Resource>() {
+        public int extract(Resource object) {
+            return object.getId();
+        }
+    };
+    
     /**
      * Retrieve this data and store it in the specified request parameters:
      *
@@ -108,6 +121,11 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         PageList<Resource> pendingResources = resourceManager.findResourceByIds(user, pendingResourceIds, true,
             pcPending);
 
+        ResourceNamesDisambiguationResult<Resource> pendingResourcesDisambiguation =
+            resourceManager.disambiguate(pendingResources, true, RESOURCE_ID_EXTRACTOR);
+
+        pendingResources = buildResourceList(pendingResourcesDisambiguation, pendingResources.getTotalSize(), pendingResources.getPageControl());
+        
         request.setAttribute(Constants.PENDING_RESOURCES_ATTR, pendingResources);
         request.setAttribute(Constants.NUM_PENDING_RESOURCES_ATTR, pendingResources.size());
 
@@ -134,6 +152,11 @@ public class AddGroupResourcesFormPrepareAction extends Action {
                 + resourceGroup.getClass().getSimpleName() + " group type");
         }
 
+        ResourceNamesDisambiguationResult<Resource> availableResourcesDisambiguation =
+            resourceManager.disambiguate(availableResources, true, RESOURCE_ID_EXTRACTOR);
+        
+        availableResources = buildResourceList(availableResourcesDisambiguation, availableResources.getTotalSize(), availableResources.getPageControl());
+                
         request.setAttribute(Constants.AVAIL_RESOURCES_ATTR, availableResources);
         request.setAttribute(Constants.NUM_AVAIL_RESOURCES_ATTR, availableResources.size());
 
@@ -163,5 +186,41 @@ public class AddGroupResourcesFormPrepareAction extends Action {
         }
 
         return resourceCategoryTypes;
+    }
+    
+    //
+    // These two methods are to support the resource names disambiguation in the above code.
+    // Hopefully this page gets rewritten in JSF so that we don't have to employ this kind of
+    // nasties.
+    //
+    
+    private static PageList<Resource> buildResourceList(ResourceNamesDisambiguationResult<Resource> results, int totalSize, PageControl pageControl) {
+        ArrayList<Resource> convertedResults = new ArrayList<Resource>(results.getResolution().size());
+        
+        for(DisambiguationReport<Resource> dr : results.getResolution()) {
+            Resource resource = dr.getOriginal();
+            
+            Resource parent = resource.getParentResource();
+            parent.setName(buildLineage(dr.getParents()));
+            
+            convertedResults.add(resource);
+        }
+        return new PageList<Resource>(convertedResults, totalSize, pageControl);
+    }
+    
+    private static String buildLineage(List<ResourceParentFlyweight> parents) {
+        if (parents == null || parents.size() == 0) {
+            return "";
+        }
+        
+        Iterator<ResourceParentFlyweight> it = parents.iterator();
+        
+        StringBuilder bld = new StringBuilder(it.next().getParentName());
+        
+        while (it.hasNext()) {
+            bld.append(ResourcePartialLineageComponent.DEFAULT_SEPARATOR).append(it.next().getParentName());
+        }
+        
+        return bld.toString();
     }
 }

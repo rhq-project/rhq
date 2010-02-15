@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-scriptlang"
+        displayName="Alert:Scriptlang"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertScriptlang"
+        description="Alert sender plugin that invokes scripts in other (scripting) languages to send alerts"
+        version="1.0"
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to send notifications via scripting languages
+        that run on the JavaVM. Currently those are JavaScript and JRuby
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs -->
+    <serverplugin:plugin-component class="ScriptLangComponent"/>
+
+    <!-- Global preferences -->
+<!--
+    <serverplugin:plugin-configuration>
+        <c:simple-property name="scriptfolder" type="file" default="/scripts"/>
+    </serverplugin:plugin-configuration>
+-->
+    
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Scriptlang</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>ScriptLangSender</plugin-class>
+
+    <!-- User configuration per alert -->
+    <alert-configuration>
+        <c:simple-property name="name"
+                           type="string"
+                           description="The name of the script."
+                           required="true"/>
+        <c:simple-property name="language"
+                           type="string"
+                           description="Language the script is written in"
+                           required="true"
+                           default="JRuby">
+
+            <c:property-options>
+                <c:option value="jruby" name="Ruby" default="true"/>
+                <c:option value="JavaScript"/>
+            </c:property-options>
+        </c:simple-property>
+    </alert-configuration>
+</alert-plugin>

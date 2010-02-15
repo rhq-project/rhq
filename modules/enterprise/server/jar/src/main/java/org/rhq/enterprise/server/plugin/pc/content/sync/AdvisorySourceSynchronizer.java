@@ -49,7 +49,9 @@ import org.rhq.enterprise.server.plugin.pc.content.AdvisoryPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySource;
 import org.rhq.enterprise.server.plugin.pc.content.AdvisorySyncReport;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncTracker;
+import org.rhq.enterprise.server.plugin.pc.content.ThreadUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -83,7 +85,7 @@ public class AdvisorySourceSynchronizer {
         overlord = subjectManager.getOverlord();
     }
 
-    public SyncTracker synchronizeAdvisoryMetadata(SyncTracker tracker) throws Exception {
+    public SyncTracker synchronizeAdvisoryMetadata(SyncTracker tracker) throws SyncException, InterruptedException {
         if (!(provider instanceof AdvisorySource)) {
             log.error(" Advisory Instance:" + provider);
             return tracker;
@@ -97,10 +99,12 @@ public class AdvisorySourceSynchronizer {
 
         List<Advisory> advs = repoManager.findAssociatedAdvisory(overlord, repo.getId(), pc);
         log.error("Found " + advs.size() + " Advisory for repo " + repo.getId());
+        ThreadUtil.checkInterrupted();
 
         AdvisorySyncReport advReport = new AdvisorySyncReport(repo.getId());
         List<AdvisoryDetails> advDetails = new ArrayList<AdvisoryDetails>(advs.size());
         translateDomainToDto(advs, advDetails);
+        ThreadUtil.checkInterrupted();
 
         log.error("Synchronize Advisory: [" + source.getName() + "]: loaded existing list of size=[" + advs.size()
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
@@ -110,18 +114,25 @@ public class AdvisorySourceSynchronizer {
         start = System.currentTimeMillis();
 
         advisorySource.synchronizeAdvisory(repo.getName(), advReport, advDetails);
+        ThreadUtil.checkInterrupted();
 
         log.error("Synchronize Advisory: [" + source.getName() + "]: got sync report from adapter=[" + advReport
             + "] (" + (System.currentTimeMillis() - start) + ")ms");
 
         RepoSyncResults syncResults = contentSourceManager.mergeAdvisorySyncReport(source, advReport, tracker
             .getRepoSyncResults());
+        ThreadUtil.checkInterrupted();
+
+        log.error("Synchronize Advisory: [" + source.getName() + "]: finished mergeAdvisorySyncReport ("
+            + (System.currentTimeMillis() - start) + ")ms");
+
         tracker.setRepoSyncResults(syncResults);
         tracker.finishAdvisoryMetadataWork(provider);
         return tracker;
     }
 
-    private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails) {
+    private void translateDomainToDto(List<Advisory> advs, List<AdvisoryDetails> advDetails)
+        throws InterruptedException {
         AdvisoryManagerLocal advManager = LookupUtil.getAdvisoryManagerLocal();
 
         for (Advisory d : advs) {
@@ -157,6 +168,7 @@ public class AdvisorySourceSynchronizer {
                 }
             }
             advDetails.add(detail);
+            ThreadUtil.checkInterrupted();
         }
     }
 }

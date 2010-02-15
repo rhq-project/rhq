@@ -55,6 +55,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerBean;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RoleManagerBean;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.bundle.BundleManagerBean;
+import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.CloudManagerBean;
@@ -73,6 +75,8 @@ import org.rhq.enterprise.server.common.EntityManagerFacade;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerBean;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
+import org.rhq.enterprise.server.configuration.DynamicConfigurationPropertyBean;
+import org.rhq.enterprise.server.configuration.DynamicConfigurationPropertyLocal;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerBean;
 import org.rhq.enterprise.server.configuration.metadata.ConfigurationMetadataManagerLocal;
 import org.rhq.enterprise.server.content.AdvisoryManagerBean;
@@ -85,6 +89,8 @@ import org.rhq.enterprise.server.content.ContentUIManagerBean;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.DistributionManagerBean;
 import org.rhq.enterprise.server.content.DistributionManagerLocal;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerBean;
+import org.rhq.enterprise.server.content.EntitlementStuffManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerBean;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
 import org.rhq.enterprise.server.content.metadata.ContentSourceMetadataManagerBean;
@@ -97,6 +103,8 @@ import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossBean;
 import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
+import org.rhq.enterprise.server.entitlement.EntitlementManagerBean;
+import org.rhq.enterprise.server.entitlement.EntitlementManagerLocal;
 import org.rhq.enterprise.server.event.EventManagerBean;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean;
@@ -128,6 +136,8 @@ import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
 import org.rhq.enterprise.server.plugin.ServerPluginsLocal;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceManagement;
+import org.rhq.enterprise.server.registration.RegistrationManagerBean;
+import org.rhq.enterprise.server.registration.RegistrationManagerLocal;
 import org.rhq.enterprise.server.report.DataAccessManagerBean;
 import org.rhq.enterprise.server.report.DataAccessManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerBean;
@@ -204,7 +214,7 @@ public final class LookupUtil {
 
     /**
      * Returns the main data source that can be used to directly access the database.
-     * 
+     *
      * @return a transactional data source to connect to the database
      */
     public static DataSource getDataSource() {
@@ -220,7 +230,7 @@ public final class LookupUtil {
     /**
      * Returns the transaction manager that you can use for your own managed transactions.
      * Use this sparingly and only inside code that is outside of any CMT-scoped objects.
-     * 
+     *
      * @return the transaction manager
      */
     public static TransactionManager getTransactionManager() {
@@ -306,12 +316,20 @@ public final class LookupUtil {
         return lookupLocal(AvailabilityManagerBean.class);
     }
 
+    public static BundleManagerLocal getBundleManager() {
+        return lookupLocal(BundleManagerBean.class);
+    }
+
     public static CallTimeDataManagerLocal getCallTimeDataManager() {
         return lookupLocal(CallTimeDataManagerBean.class);
     }
 
     public static ConfigurationManagerLocal getConfigurationManager() {
         return lookupLocal(ConfigurationManagerBean.class);
+    }
+
+    public static DynamicConfigurationPropertyLocal getDynamicConfigurationProperty() {
+        return lookupLocal(DynamicConfigurationPropertyBean.class);
     }
 
     public static ConfigurationSubsystemManagerLocal getConfigurationSubsystemManager() {
@@ -332,6 +350,10 @@ public final class LookupUtil {
 
     public static EmailManagerLocal getEmailManagerBean() {
         return lookupLocal(EmailManagerBean.class);
+    }
+
+    public static EntitlementManagerLocal getEntitlementManagerBean() {
+        return lookupLocal(EntitlementManagerBean.class);
     }
 
     public static EntityManagerFacadeLocal getEntityManagerFacade() {
@@ -418,6 +440,10 @@ public final class LookupUtil {
         return lookupLocal(RepoManagerBean.class);
     }
 
+    public static EntitlementStuffManagerLocal getEntitlementManager() {
+        return lookupLocal(EntitlementStuffManagerBean.class);
+    }
+
     public static DistributionManagerLocal getDistributionManagerLocal() {
         return lookupLocal(DistributionManagerBean.class);
     }
@@ -476,6 +502,10 @@ public final class LookupUtil {
 
     public static ResourceTypeManagerRemote getResourceTypeManagerRemote() {
         return lookupRemote(ResourceTypeManagerBean.class);
+    }
+
+    public static RegistrationManagerLocal getRegistrationManager() {
+        return lookupLocal(RegistrationManagerBean.class);
     }
 
     public static RoleManagerLocal getRoleManager() {

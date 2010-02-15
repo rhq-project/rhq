@@ -42,7 +42,7 @@
                  class="VirtualizationDomainComponent"
                  createDeletePolicy="both" creationDataType="configuration">
 
-            <operation name="create"
+            <operation name="start"
                        description="Launch a defined domain. If the call succeed the domain moves from the defined to the running domains pools."/>
             <operation name="reboot"
                        description="Reboot a domain, the domain object is still usable there after but the domain OS is being stopped for a restart. Note that the guest OS may ignore the request."/>
@@ -62,7 +62,9 @@
                 </parameters>
             </operation>
             <operation name="shutdown"
-                       description="Shutdown a domain, the domain object is still usable there after but the domain OS is being stopped. Note that the guest OS may ignore the request. TODO: should we add an option for reboot, knowing it may not be doable in the general case ?"/>
+                       description="Shutdown a domain, the domain object is still usable there after but the domain OS is being stopped. Note that the guest OS may ignore the request. "/>
+            <operation name="destroy"
+                       description="Force a shutdown right now."/>                       
 
             <metric property="cpuPercentage" displayName="CPU Usage" units="percentage" displayType="summary"/>
             <metric property="memoryUsage" displayName="Memory Usage" units="kilobytes" displayType="summary"/>

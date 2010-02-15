@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
+import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -44,11 +46,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 /**
  * Backing bean for Alert Sender Plugins configuration
  *
- * @author jharris
+ * @author Justin Harris
  */
 @Scope(ScopeType.PAGE)
 @Name("alertNotificationsUIBean")
-public class AlertNotificationsUIBean {
+public class AlertNotificationsUIBean implements Serializable {
 
     private final static String SUCCESS_OUTCOME = "success";
     @RequestParameter("ad")
@@ -59,6 +61,8 @@ public class AlertNotificationsUIBean {
     private Set<AlertNotification> selectedNotifications;
     private String newAlertName;
     private String selectedNewSender;
+    private String selectedTemplate;
+    private Boolean clearExistingNotifications;
     private AlertNotification activeNotification;
     private ConfigurationDefinition activeConfigDefinition;
     private AlertNotificationConverter notificationConverter;
@@ -94,6 +98,22 @@ public class AlertNotificationsUIBean {
 
     public void setSelectedNewSender(String selectedNewSender) {
         this.selectedNewSender = selectedNewSender;
+    }
+
+    public String getSelectedTemplate() {
+        return selectedTemplate;
+    }
+
+    public void setSelectedTemplate(String selectedTemplate) {
+        this.selectedTemplate = selectedTemplate;
+    }
+
+    public Boolean getClearExistingNotifications() {
+        return clearExistingNotifications;
+    }
+
+    public void setClearExistingNotifications(Boolean clearExistingNotifications) {
+        this.clearExistingNotifications = clearExistingNotifications;
     }
 
     public AlertNotification getActiveNotification() {
@@ -182,6 +202,15 @@ public class AlertNotificationsUIBean {
         return SUCCESS_OUTCOME;
     }
 
+    public String addAlertSenderFromTemplate() {
+
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+
+        alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),alertDefinitionId,getClearExistingNotifications());
+
+        return SUCCESS_OUTCOME;
+    }
+
     public String saveConfiguration() {
         if (this.activeNotification != null) {
             this.alertNotificationManager.updateAlertNotification(this.activeNotification);
@@ -223,5 +252,17 @@ public class AlertNotificationsUIBean {
 
     private Integer[] toArray(List<Integer> intList) {
         return intList.toArray(new Integer[intList.size()]);
+    }
+
+    public Map<String, String> getAllNotificationTemplates() {
+        Map<String, String> result = new TreeMap<String, String>();
+
+        List<NotificationTemplate> templates = alertNotificationManager.listNotificationTemplates(EnterpriseFacesContextUtility.getSubject());
+
+        for (NotificationTemplate nt : templates) {
+            String tmp = nt.getName() + " (" + nt.getDescription() + ")";
+            result.put(tmp,nt.getName()); // displayed text, option value
+        }
+        return result;
     }
 }

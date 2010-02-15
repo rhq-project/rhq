@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
@@ -50,7 +51,8 @@ public class VirtualizationDomainDiscoveryComponent implements ResourceDiscovery
         try {
             virt = new LibVirtConnection(uri);
         } catch (Throwable t) {
-            log.warn("Can not load native library for libvirt: " + t.getMessage(), t);
+            log.warn(String.format("Can not load native library for libvirt with uri '%s'. Message is '%s'.: ", uri, t
+                .getMessage()), t);
             return details;
         }
         int[] ids;
@@ -70,8 +72,10 @@ public class VirtualizationDomainDiscoveryComponent implements ResourceDiscovery
 
         }
         for (String guestName : guests) {
-            LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(guestName);
-            details.add(createResource(resourceDiscoveryContext.getResourceType(), domainInfo));
+            if (guestName != null) {
+                LibVirtConnection.DomainInfo domainInfo = virt.getDomainInfo(guestName);
+                details.add(createResource(resourceDiscoveryContext.getResourceType(), domainInfo));
+            }
         }
 
         virt.close();

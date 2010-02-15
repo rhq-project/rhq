@@ -14,6 +14,30 @@
           class="StructuredAndRawServer"
           discovery="StructuredAndRawDiscoveryComponent"
           description="A fake server component that supports both structured and raw configuration">
+
+    <plugin-configuration>
+      <c:group name="Structured">
+        <c:simple-property name="failStructuredValidation" type="boolean" default="false"/>
+        <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      </c:group>
+
+      <c:group name="Raw Validation">        
+        <c:simple-property name="failRawValidation" type="boolean" default="false"/>
+        <c:simple-property name="filesToFailValidation"
+                           description="A whitespace-separated list of file names for which validation will fail. The entire
+                                        path does not need to be specified. Simple matching will be done starting from
+                                        the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      </c:group>
+
+      <c:group name="Raw Update">
+        <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
+        <c:simple-property name="filesToFailUpdate"
+                           description="A whitespace-separated list of file names for which the update will fail. The entire
+                                        path does not need to be specified. Simple matching will be done starting from
+                                        the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
+      </c:group>
+    </plugin-configuration>
+
     <resource-configuration configurationFormat="both">
       <c:simple-property name="x"/>
       <c:simple-property name="y"/>
@@ -29,6 +53,12 @@
           class="RawServer"
           discovery="RawDiscoveryComponent"
           description="A fake server component that supports raw configuration">
+
+    <plugin-configuration>
+      <c:simple-property name="failValidation" type="boolean" default="false"/>
+      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+    </plugin-configuration>
+
     <resource-configuration configurationFormat="raw"/>    
   </server>
 
@@ -36,6 +66,12 @@
           class="StructuredServer"
           discovery="StructuredDiscoveryComponent"
           description="A fake server component that supports structured configuration">
+
+    <plugin-configuration>
+      <c:simple-property name="failValidation" type="boolean" default="false"/>
+      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+    </plugin-configuration>
+
     <resource-configuration configurationFormat="structured">
       <c:simple-property name="foo"/>
       <c:simple-property name="bar"/>

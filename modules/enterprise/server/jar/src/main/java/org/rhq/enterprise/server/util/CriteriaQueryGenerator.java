@@ -34,7 +34,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hibernate.annotations.IndexColumn;
 
-import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.Criteria;
@@ -70,8 +69,8 @@ public final class CriteriaQueryGenerator {
 
     private String alias;
     private String className;
+    private String projection;
     private static String NL = System.getProperty("line.separator");
-    private static String ESCAPE_CHARACTER = null;
 
     private List<Field> persistentBagFields = new ArrayList<Field>();
 
@@ -118,7 +117,7 @@ public final class CriteriaQueryGenerator {
         }
 
         if (fuzzyMatch) {
-            expression += " ESCAPE '" + getEscapeCharacter() + "'";
+            expression += QueryUtility.getEscapeClause();
         }
 
         return expression;
@@ -179,7 +178,11 @@ public final class CriteriaQueryGenerator {
         if (countQuery) {
             results.append("COUNT(").append(alias).append(")").append(NL);
         } else {
-            results.append(alias).append(NL);
+            if (projection == null) {
+                results.append(alias).append(NL);
+            } else {
+                results.append(projection).append(NL);
+            }
         }
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
         if (countQuery == false) {
@@ -230,7 +233,7 @@ public final class CriteriaQueryGenerator {
                     } else {
                         fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                     }
-                    fragment += " ESCAPE '" + getEscapeCharacter() + "'";
+                    fragment += QueryUtility.getEscapeClause();
                 } else {
                     fragment = alias + "." + fieldName + " " + operator + " :" + fieldName;
                 }
@@ -313,7 +316,7 @@ public final class CriteriaQueryGenerator {
             return true;
         }
 
-        for (Class declaredInterface : fieldType.getInterfaces()) {
+        for (Class<?> declaredInterface : fieldType.getInterfaces()) {
             if (List.class.isAssignableFrom(declaredInterface)) {
                 return true;
             }
@@ -341,6 +344,19 @@ public final class CriteriaQueryGenerator {
         return persistentBagFields;
     }
 
+    /**
+     * If you want to return something other than the list of entities represented by the passed Criteria object,
+     * you can alter the projection here to return a customized subset or superset of data.  The projection will
+     * only affect the ResultSet for the data query, not the count query.
+     * 
+     * If you are projecting a composite object that does not directly extend the entity your Criteria object 
+     * represents, then you will need to manually initialize the persistent bags using the methods exposed on
+     * {@link CriteriaQueryRunner} 
+     */
+    public void alterProjection(String projection) {
+        this.projection = projection;
+    }
+
     public Query getQuery(EntityManager em) {
         String queryString = getQueryString(false);
         Query query = em.createQuery(queryString);
@@ -359,30 +375,25 @@ public final class CriteriaQueryGenerator {
     private void setBindValues(Query query, boolean countQuery) {
         boolean wantCaseInsensitiveMatch = !criteria.isCaseSensitive();
         boolean wantsFuzzyMatching = !criteria.isStrict();
-        boolean handleEscapedBackslash = "\\\\".equals(getEscapeCharacter());
 
         for (Map.Entry<String, Object> critField : criteria.getFilterFields().entrySet()) {
             Object value = critField.getValue();
             if (value instanceof String) {
                 String formattedValue = (String) value;
+
+                if (wantsFuzzyMatching) {
+                    formattedValue = "%" + QueryUtility.escapeSearchParameter(formattedValue) + "%";
+                }
+
                 if (wantCaseInsensitiveMatch) {
                     formattedValue = formattedValue.toLowerCase();
                 }
-                /* 
-                 * Double escape backslashes if they are not treated as string literals by the db vendor
-                 * http://opensource.atlassian.com/projects/hibernate/browse/HHH-2674
-                 */
-                if (handleEscapedBackslash) {
-                    formattedValue = ((String) formattedValue).replaceAll("\\_", "\\\\_");
-                }
-                if (wantsFuzzyMatching) {
-                    // append '%' onto edges that don't already have '%' explicitly set from the caller
-                    formattedValue = (formattedValue.startsWith("%") ? "" : "%") + formattedValue
-                        + (formattedValue.endsWith("%") ? "" : "%");
-                }
+
                 value = formattedValue;
             }
-            LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Bind: (" + critField.getKey() + ", " + value + ")");
+            }
             query.setParameter(critField.getKey(), value);
         }
         if (null != this.authorizationPermsFragment) {
@@ -390,14 +401,6 @@ public final class CriteriaQueryGenerator {
             query.setParameter("requiredPerms", requiredPerms);
             query.setParameter("requiredPermsSize", (long) requiredPerms.size());
         }
-    }
-
-    public static String getEscapeCharacter() {
-        if (null == ESCAPE_CHARACTER) {
-            ESCAPE_CHARACTER = DatabaseTypeFactory.getDefaultDatabaseType().getEscapeCharacter();
-        }
-
-        return ESCAPE_CHARACTER;
     }
 
     public static void main(String[] args) {

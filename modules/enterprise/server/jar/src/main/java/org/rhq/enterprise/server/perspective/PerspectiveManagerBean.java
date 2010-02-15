@@ -177,7 +177,7 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
 
     @SuppressWarnings("unchecked")
     private boolean isActive(ActivationContext context, EnumSet<ActivationContextScope> scopes, Extension extension) {
-        List<Activator> activators = extension.getActivators();
+        List<Activator<?>> activators = extension.getActivators();
         for (Activator activator : activators) {
             if (scopes.contains(activator.getScope()) && !activator.isActive(context)) {
                 return false;
@@ -307,7 +307,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getMenuUrl(org.rhq.core.domain.auth.Subject, java.lang.String)
      */
-    @Override
     public String getMenuItemUrl(Subject subject, String menuItemName, boolean makeExplicit, boolean makeSecure) {
         if (null == menuItemName) {
             throw new IllegalArgumentException("Invalid menuItemName: null ");
@@ -350,7 +349,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTabUrl(org.rhq.core.domain.auth.Subject, java.lang.String)
      */
-    @Override
     public String getResourceTabUrl(Subject subject, String tabName, int resourceId, boolean makeExplicit,
         boolean makeSecure) {
         if (null == tabName) {
@@ -395,7 +393,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /*
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getRootUrl(org.rhq.core.domain.auth.Subject)
      */
-    @Override
     public String getRootUrl(Subject subject, boolean makeExplicit, boolean makeSecure) {
         return makeUrl("/", makeExplicit, makeSecure);
     }
@@ -403,7 +400,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /*
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTargetUrl(org.rhq.core.domain.auth.Subject, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
      */
-    @Override
     public String getTargetUrl(Subject subject, PerspectiveTarget target, int targetId, boolean makeExplicit,
         boolean makeSecure) {
 
@@ -413,7 +409,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /*
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTargetUrls(org.rhq.core.domain.auth.Subject, org.rhq.enterprise.server.perspective.PerspectiveTarget, int[], boolean, boolean)
      */
-    @Override
     public Map<Integer, String> getTargetUrls(Subject subject, PerspectiveTarget target, int[] targetIds,
         boolean makeExplicit, boolean makeSecure) {
 
@@ -429,7 +424,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /*
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTargetUrl(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
      */
-    @Override
     public String getResourceTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
         boolean makeExplicit, boolean makeSecure) {
 
@@ -439,7 +433,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /*
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getResourceTargetUrls(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int[], boolean, boolean)
      */
-    @Override
     public Map<Integer, String> getResourceTargetUrls(Subject subject, int resourceId, PerspectiveTarget target,
         int[] targetIds, boolean makeExplicit, boolean makeSecure) {
 
@@ -455,7 +448,6 @@ public class PerspectiveManagerBean implements PerspectiveManagerLocal, Perspect
     /* (non-Javadoc)
      * @see org.rhq.enterprise.server.perspective.PerspectiveManagerLocal#getTemplateTargetUrl(org.rhq.core.domain.auth.Subject, int, org.rhq.enterprise.server.perspective.PerspectiveTarget, int, boolean, boolean)
      */
-    @Override
     public String getTemplateTargetUrl(Subject subject, int resourceId, PerspectiveTarget target, int targetId,
         boolean makeExplicit, boolean makeSecure) {
 

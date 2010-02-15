@@ -465,7 +465,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "          WHERE rc.repo.id = :repoId ) " //
         + "     AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "     AND (res.inventoryStatus = :inventoryStatus) " //
-        + "     AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "     AND (:search is null OR UPPER(res.name) LIKE :search ESCAPE :escapeChar) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -476,7 +476,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -487,7 +487,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP, query = "" //
         + "SELECT res " //
@@ -500,7 +500,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_WITH_PARENT_FOR_RESOURCE_GROUP_WITH_EXCLUDES, query = "" //
         + "SELECT res " //
         + "  FROM Resource AS res " //
@@ -512,7 +512,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:type = res.resourceType OR :type IS NULL) " //
         + "   AND (:category = res.resourceType.category OR :category IS NULL) " //
         + "   AND (res.inventoryStatus = :inventoryStatus) " //
-        + "   AND (UPPER(res.name) LIKE :search OR :search is null) " //
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR :search is null) " //
         + "   AND res.id NOT IN ( :excludeIds ) "),
     @NamedQuery(name = Resource.QUERY_GET_AVAILABLE_RESOURCES_FOR_DASHBOARD_PORTLET, query = "" //
         + "SELECT res " //
@@ -587,7 +587,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "  AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, " //
         + " (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
@@ -609,7 +609,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "  AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "  AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "  AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "  AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT, query = "SELECT count(res) " //
         + "  FROM Resource res " //
         + " WHERE res.id IN (SELECT rr.id FROM Resource rr JOIN rr.implicitGroups g JOIN g.roles r JOIN r.subjects s WHERE s = :subject)"
@@ -618,7 +618,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite(res, a.availabilityType) " //
         + "  FROM Resource res " //
@@ -628,7 +628,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_WITH_PARENT_ADMIN, query = "" //
         + "SELECT new org.rhq.core.domain.resource.composite.ResourceComposite( res, " //
         + "       (SELECT ires FROM Resource ires WHERE ires = res.parentResource), " //
@@ -641,7 +641,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_FIND_COMPOSITE_COUNT_ADMIN, query = "" //
         + " SELECT count(res) " //
         + "  FROM Resource res " //
@@ -650,7 +650,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND (:resourceTypeName = res.resourceType.name OR :resourceTypeName is null) " //
         + "   AND (:pluginName = res.resourceType.plugin OR :pluginName is null) " //
         + "   AND (res.inventoryStatus = :inventoryStatus OR :inventoryStatus is null) " //
-        + "   AND (UPPER(res.name) LIKE :search OR UPPER(res.description) LIKE :search OR :search is null) "),
+        + "   AND (UPPER(res.name) LIKE :search ESCAPE :escapeChar OR UPPER(res.description) LIKE :search ESCAPE :escapeChar OR :search is null) "),
     @NamedQuery(name = Resource.QUERY_GET_STATUSES_BY_PARENT, query = "" //
         + "SELECT r.id, r.inventoryStatus " //
         + "  FROM Resource r " //
@@ -726,10 +726,11 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
 
 })
 @SequenceGenerator(name = "RHQ_RESOURCE_SEQ", sequenceName = "RHQ_RESOURCE_ID_SEQ")
-@Table(name = "RHQ_RESOURCE")
+@Table(name = Resource.TABLE_NAME)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement
 public class Resource implements Comparable<Resource>, Externalizable {
+    public static final String TABLE_NAME = "RHQ_RESOURCE";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT = "Resource.findProblemResourcesAlert";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_ADMIN = "Resource.findProblemResourcesAlert_admin";
     public static final String QUERY_FIND_PROBLEM_RESOURCES_ALERT_COUNT = "Resource.findProblemResourcesAlertCount";
@@ -853,6 +854,87 @@ public class Resource implements Comparable<Resource>, Externalizable {
     public static final String QUERY_RESOURCE_REPORT = "Resource.findResourceReport";
     public static final String QUERY_RESOURCE_VERSION_REPORT = "Resource.findResourceVersionReport";
 
+    public static final int MAX_SUPPORTED_RESOURCE_HIERARCHY_DEPTH = 7;
+    
+    private static final String NAME_CONCAT_SEPARATOR = "~!@#)))";
+
+    /**
+     * Helper for {@link #NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL}.
+     * We need to guard against concatenation with a NULL value which
+     * would yield a NULL result. We don't want that in that query, otherwise
+     * we'd get skewed results for combination of resources on different
+     * levels in the resource hierarchy.
+     * 
+     * @param column
+     * @return
+     */
+    private static String guardNullCase(String column) {
+        return "(CASE WHEN " + column + " IS NULL THEN 'null' ELSE " + column + " END)";
+    }
+    
+    /**
+     * We're trying to find the minimum ancestry level that provides the disambiguate paths 
+     * (in terms of unique resource names) for given resources. Obviously this query only works 
+     * for hierarchies at most 7 levels deep (as the rest of the named queries above).
+     * 
+     * <ul>
+     * <li>target_cnt gives us the number of resources we're trying to disambiguate.
+     * <li>l1_cnt gives us the number of resources with unique names,
+     * <li>l2_cnt gives us the number of resources with unique names with the names of the parent taken into account,
+     * <li>l3_cnt is the number of resource with unique names when parent and grandparent are included, etc.
+     * </ul>
+     * 
+     * So when the caller gets the result row of this query, s/he can reason as follows:
+     * <ul>
+     * <li>l1_cnt = target_cnt: the names of the resources are unique in the given set
+     * <li>l2_cnt = target_cnt: the names + parent names are unique
+     * <li>...
+     * </ul>
+     * 
+     * we need to do the concatenation of names instead of doing a DISTINCT over
+     * more columns because (at least in Postgres) a set of columns doesn't define
+     * equality operator to be used in the COUNT aggregate.
+     * Thus we need to add the "unlikely separator" hack. 
+     * 
+     * This query has to be native because Hibernate doesn't understand the 
+     * COUNT(DISTINCT ...)) where ... is anything else than a path to a property in Hibernate terminology.
+     */
+    public static final String NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL = ""
+        + "SELECT COUNT(r.ID) AS target_cnt, "
+        + "COUNT(DISTINCT(t.name)) AS bare_type_cnt,"
+        + "COUNT(DISTINCT(t.name || '" + NAME_CONCAT_SEPARATOR + "' || t.plugin)) AS full_type_cnt,"
+        + "COUNT(DISTINCT(r.name)) AS l1_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + ")) AS l2_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + ")) AS l3_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + ")) AS l4_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + ")) AS l5_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") + ")) AS l6_cnt,"
+        + "COUNT(DISTINCT(r.name || '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p1.name") + "|| "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p2.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p3.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p4.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p5.name") + " || "
+        + "     '" + NAME_CONCAT_SEPARATOR + "' || " + guardNullCase("p6.name") + ")) AS l7_cnt "
+        + "FROM " + TABLE_NAME + " AS r "
+        + "JOIN " + ResourceType.TABLE_NAME + " AS t ON r.RESOURCE_TYPE_ID = t.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p1 ON r.PARENT_RESOURCE_ID = p1.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p2 ON p1.PARENT_RESOURCE_ID = p2.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p3 ON p2.PARENT_RESOURCE_ID = p3.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p4 ON p3.PARENT_RESOURCE_ID = p4.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p5 ON p4.PARENT_RESOURCE_ID = p5.ID "
+        + "LEFT OUTER JOIN " + TABLE_NAME + " AS p6 ON p5.PARENT_RESOURCE_ID = p6.ID "
+        + "WHERE r.ID IN (@@RESOURCE_IDS@@)";
+    
     private static final long serialVersionUID = 1L;
 
     public static final Resource ROOT = null;
@@ -1016,6 +1098,9 @@ public class Resource implements Comparable<Resource>, Externalizable {
     @JoinColumn(name = "PRODUCT_VERSION_ID", referencedColumnName = "ID")
     @ManyToOne(fetch = FetchType.LAZY)
     private ProductVersion productVersion;
+
+    //    @OneToMany(mappedBy = "resource", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    //    private List<BundleDeployment> deployments = new ArrayList<BundleDeployment>();
 
     public Resource() {
         this.uuid = UUID.randomUUID().toString();

@@ -1119,15 +1119,15 @@
                   defaultInterval="300000" defaultOn="true" category="throughput"/>
 
           <metric displayName="JVM Free Memory" property="MCBean|ServerInfo|*|freeMemory" displayType="summary"
-                  description="The amount of free memory for the JVM this app server instance is running on"
+                  description="An approximation of the total amount of memory currently available in the app server JVM for future allocated objects, measured in bytes"
                   defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
           <metric displayName="JVM Max Memory" property="MCBean|ServerInfo|*|maxMemory"
-                  description="The amount of max memory for the JVM this app server instance is running on"
+                  description="The maximum amount of memory that the app server JVM will attempt to use, measured in bytes; if there is no inherent limit then the value Long.MAX_VALUE will be returned"
                   defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
 
           <metric displayName="JVM Total Memory" property="MCBean|ServerInfo|*|totalMemory" displayType="summary"
-                  description="The amount of total memory for the JVM this app server instance is running on"
+                  description="The total amount of memory currently available in the app server JVM for current and future objects, measured in bytes"
                   defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
           <metric displayName="Total Transactions" property="MCBean|JTA|*|transactionCount" measurementType="trendsup"
@@ -1140,7 +1140,7 @@
 
           <metric displayName="Transactions Rolled Back" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
                   defaultInterval="600000" defaultOn="true" category="utilization"
-                  description="Number of transactions committed since last restart"/>
+                  description="Number of transactions rolled back since last restart"/>
 
           <event name="logEntry" description="an entry was appended to a log file"/>
 

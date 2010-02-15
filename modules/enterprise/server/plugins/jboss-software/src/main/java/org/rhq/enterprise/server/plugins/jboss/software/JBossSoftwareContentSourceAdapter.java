@@ -23,6 +23,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 
+import javax.xml.parsers.ParserConfigurationException;
+
 import churchillobjects.rss4j.RssDocument;
 import churchillobjects.rss4j.parser.RssParser;
 
@@ -42,6 +44,7 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
 /**
@@ -112,17 +115,26 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
         if (!active)
             return;
 
-        RssDocument rssDocument = retrieveRssDocument();
-
-        if (rssDocument == null) {
-            throw new Exception("Null RSS document received from adapter: " + this);
+        RssDocument rssDocument;
+        try {
+            rssDocument = retrieveRssDocument();
+        } catch (Exception e) {
+            throw new SyncException("Error retrieving rss doc", e);
         }
 
-        parser.parseResults(rssDocument, report, existingPackages);
+        if (rssDocument == null) {
+            throw new SyncException("Null RSS document received from adapter: " + this);
+        }
+
+        try {
+            parser.parseResults(rssDocument, report, existingPackages);
+        } catch (ParserConfigurationException e) {
+            throw new SyncException("error parsing results.", e);
+        }
     }
 
     public InputStream getInputStream(String location) throws Exception {
@@ -195,17 +207,17 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
             int status = client.executeMethod(method);
 
             if (status == 404) {
-                throw new Exception("Could not find the feed at URL [" + url + "]. Make sure the URL field correctly "
-                    + "refers to the CSP feed location.");
+                throw new SyncException("Could not find the feed at URL [" + url
+                    + "]. Make sure the URL field correctly " + "refers to the CSP feed location.");
             }
 
             if (status == 401 || status == 403) {
-                throw new Exception("Invalid login credentials specified for user [" + username + "]. Make sure "
+                throw new SyncException("Invalid login credentials specified for user [" + username + "]. Make sure "
                     + "this user has an active account at the CSP and that the password is correct.");
             }
 
             if (status != 200) {
-                throw new Exception("The call to retrieve the RSS feed failed with status code: " + status);
+                throw new SyncException("The call to retrieve the RSS feed failed with status code: " + status);
             }
 
             rawFeed = method.getResponseBodyAsString();
@@ -244,7 +256,6 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         }
     }
 
-    @Override
     public SyncProgressWeight getSyncProgressWeight() {
         return SyncProgressWeight.DEFAULT_WEIGHTS;
     }

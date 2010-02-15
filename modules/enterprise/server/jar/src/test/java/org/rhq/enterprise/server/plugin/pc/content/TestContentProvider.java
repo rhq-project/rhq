@@ -14,21 +14,25 @@ import org.rhq.core.domain.configuration.Configuration;
 public class TestContentProvider implements ContentProvider, PackageSource, RepoSource, DistributionSource {
 
     /**
-     * Packages returned in a call to {@link #synchronizePackages(String, PackageSyncReport, Collection)} will
-     * indicate they are of this type. Any test attempting to call this synchronize method should be sure to
-     * create a package type of this name in the database prior to calling it.
+     * Packages returned in a call to
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} will
+     * indicate they are of this type. Any test attempting to call this
+     * synchronize method should be sure to create a package type of this name
+     * in the database prior to calling it.
      */
     public static final String PACKAGE_TYPE_NAME = "testContentProviderFakePackage";
 
     /**
-     * In order to create a package type (as needed to create the type indicated in {@link #PACKAGE_TYPE_NAME}), the
-     * package type must be created as part of this resource type.
+     * In order to create a package type (as needed to create the type indicated
+     * in {@link #PACKAGE_TYPE_NAME}), the package type must be created as part
+     * of this resource type.
      */
     public static final String RESOURCE_TYPE_NAME = "testContentProviderFakeResourceType";
 
     /**
-     * In order to create a resource type (as needed to create the type indicated in {@link #RESOURCE_TYPE_NAME}), this
-     * resource type plugin name should be used.
+     * In order to create a resource type (as needed to create the type
+     * indicated in {@link #RESOURCE_TYPE_NAME}), this resource type plugin name
+     * should be used.
      */
     public static final String RESOURCE_TYPE_PLUGIN_NAME = "testContentProviderFakeResourceTypePlugin";
 
@@ -36,19 +40,21 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public static final String EXISTING_CANDIDATE_REPO_NAME = "testRepoCandidateExisting";
 
     /**
-     * This content provider will return packages when asked to synchronize a repo with this name.
+     * This content provider will return packages when asked to synchronize a
+     * repo with this name.
      */
     public static final String REPO_WITH_PACKAGES = EXISTING_IMPORTED_REPO_NAME;
 
     /**
-     * This content provider will return distributions when asked to synchronize a repo with this name.
+     * This content provider will return distributions when asked to synchronize
+     * a repo with this name.
      */
     public static final String REPO_WITH_DISTRIBUTIONS = EXISTING_IMPORTED_REPO_NAME;
 
     /**
      * Collection of packages that will be returned from calling
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} passing in a repo with the name
-     * {@link #REPO_WITH_PACKAGES}.
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}
+     * passing in a repo with the name {@link #REPO_WITH_PACKAGES}.
      */
     public static final Map<ContentProviderPackageDetailsKey, ContentProviderPackageDetails> PACKAGES = new HashMap<ContentProviderPackageDetailsKey, ContentProviderPackageDetails>(
         2);
@@ -86,17 +92,18 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     public static final Map<String, DistributionDetails> DISTRIBUTIONS = new HashMap<String, DistributionDetails>(2);
     static {
 
-        // Note: The type "kickstart" should already be in the database from installation
+        // Note: The type "kickstart" should already be in the database from
+        // installation
 
-        /* Note: The md5 sums below will be used to determine if the file needs to be loaded through
-           a call to getPackageBits. I set these to an invalid MD5 so they will *always* be downloaded.
+        /*
+         * Note: The md5 sums below will be used to determine if the file needs
+         * to be loaded through a call to getPackageBits. I set these to an
+         * invalid MD5 so they will *always* be downloaded.
          */
         DistributionDetails dis1 = new DistributionDetails(DISTRIBUTION_1_LABEL, "kickstart");
         dis1.setDistributionPath("/kstrees");
-        DistributionFileDetails file11 = new DistributionFileDetails("dist1file1", System.currentTimeMillis(),
-            "zzz");
-        DistributionFileDetails file12 = new DistributionFileDetails("dist1file2", System.currentTimeMillis(),
-            "zzz");
+        DistributionFileDetails file11 = new DistributionFileDetails("dist1file1", System.currentTimeMillis(), "zzz");
+        DistributionFileDetails file12 = new DistributionFileDetails("dist1file2", System.currentTimeMillis(), "zzz");
         dis1.addFile(file11);
         dis1.addFile(file12);
 
@@ -104,37 +111,45 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
 
         DistributionDetails dis2 = new DistributionDetails(DISTRIBUTION_2_LABEL, "kickstart");
         dis2.setDistributionPath("/kstrees");
-        DistributionFileDetails file21 = new DistributionFileDetails("dist2file1", System.currentTimeMillis(),
-            "zzz");
+        DistributionFileDetails file21 = new DistributionFileDetails("dist2file1", System.currentTimeMillis(), "zzz");
         dis2.addFile(file21);
 
         DISTRIBUTIONS.put(dis2.getLabel(), dis2);
     }
 
-    public static final int PACKAGE_COUNT_FOR_BITS = PACKAGES.size() + 3; // packages + number of distro files
+    public static final int PACKAGE_COUNT_FOR_BITS = PACKAGES.size() + 3; // packages
+    // +
+    // number
+    // of
+    // distro
+    // files
 
     /**
-     * If <code>true</code>, the call to {@link #testConnection()} will throw an exception.
+     * If <code>true</code>, the call to {@link #testConnection()} will throw an
+     * exception.
      */
     private boolean failTest = false;
 
-    private boolean longRunningSyncs = false;
+    // Set this value if you want the packageSync step to take a while
+    private int longRunningSynchSleep = 0;
 
     /**
      * Holds a list of all repo names that were passed into calls to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} to track when and with
-     * what data these calls are made.
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} to
+     * track when and with what data these calls are made.
      */
     private List<String> logSynchronizePackagesRepos = new ArrayList<String>();
 
     /**
-     * Holds a list of all locations passed into calls to {@link #getInputStream(String)}.
+     * Holds a list of all locations passed into calls to
+     * {@link #getInputStream(String)}.
      */
     private List<String> logGetInputStreamLocations = new ArrayList<String>();
 
     /**
      * Holds a list of all repo names that were passed into calls to
-     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)}.
+     * {@link #synchronizeDistribution(String, DistributionSyncReport, Collection)}
+     * .
      */
     private List<String> logSynchronizeDistroRepos = new ArrayList<String>();
 
@@ -173,7 +188,8 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         report.addRepo(repo2);
 
         // Repo with a parent repo created in this sync
-        // Parent explicitly added to this list *after* this child to ensure that's not a problem
+        // Parent explicitly added to this list *after* this child to ensure
+        // that's not a problem
         RepoDetails repo3 = new RepoDetails("testRepo3");
         report.addRepo(repo3);
 
@@ -193,7 +209,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     public void synchronizePackages(String repoName, PackageSyncReport report,
-        Collection<ContentProviderPackageDetails> existingPackages) throws Exception {
+        Collection<ContentProviderPackageDetails> existingPackages) throws SyncException, InterruptedException {
 
         logSynchronizePackagesRepos.add(repoName);
 
@@ -201,9 +217,12 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
             return;
         }
 
-        // For each package this provider wants to introduce, make sure it doesn't exist already.
-        // This basically means the report will only ever contain "added" packages and will only do so
-        // on the first call to this method. This will likely be changed as new requirements emerge.
+        // For each package this provider wants to introduce, make sure it
+        // doesn't exist already.
+        // This basically means the report will only ever contain "added"
+        // packages and will only do so
+        // on the first call to this method. This will likely be changed as new
+        // requirements emerge.
         for (ContentProviderPackageDetails pkg : PACKAGES.values()) {
 
             ContentProviderPackageDetails existingPackage = findDetailsByKey(pkg.getContentProviderPackageDetailsKey(),
@@ -214,10 +233,9 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
             }
 
         }
-        if (this.longRunningSyncs) {
-            System.out.println(this.getClass().getSimpleName() + ".synchronizePackages sleeping for 5 seconds");
-            Thread.sleep(5000);
-        }
+        System.out.println(this.getClass().getSimpleName() + ".synchronizePackages sleeping for "
+            + this.longRunningSynchSleep + " seconds");
+        Thread.sleep(this.longRunningSynchSleep);
     }
 
     public InputStream getInputStream(String location) throws Exception {
@@ -232,7 +250,7 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
     }
 
     public void synchronizeDistribution(String repoName, DistributionSyncReport report,
-        Collection<DistributionDetails> existingDistros) throws Exception {
+        Collection<DistributionDetails> existingDistros) throws SyncException, InterruptedException {
 
         logSynchronizeDistroRepos.add(repoName);
 
@@ -254,37 +272,51 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
                 report.addDistro(distro);
             }
         }
+        System.out.println(this.getClass().getSimpleName() + ".synchronizeDistribution sleeping for "
+            + this.longRunningSynchSleep + " seconds");
+
+        Thread.sleep(this.longRunningSynchSleep);
     }
 
     public String getDistFileRemoteLocation(String repoName, String label, String relativeFilename) {
         return "foo";
     }
 
-    public SyncProgressWeight getSyncProgressWeight() {
-        return SyncProgressWeight.DEFAULT_WEIGHTS;
-    }
-
     /**
      * Returns a list of repo names that were used to all calls to
-     * {@link #synchronizePackages(String, PackageSyncReport, Collection)} either since the creation
-     * of this instance or the last call to {@link #reset()}.
-     *
-     * @return handle to the actual list used to capture these names; be careful about iterating this
-     *         list while making other calls against this instance
+     * {@link #synchronizePackages(String, PackageSyncReport, Collection)}
+     * either since the creation of this instance or the last call to
+     * {@link #reset()}.
+     * 
+     * @return handle to the actual list used to capture these names; be careful
+     *         about iterating this list while making other calls against this
+     *         instance
      */
     public List<String> getLogSynchronizePackagesRepos() {
         return logSynchronizePackagesRepos;
     }
 
     /**
-     * Returns a list of locations passed into all calls to {@link #getInputStream(String)} since
-     * the creation of this instance or the lsat call to {@link #reset()}.
-     *
-     * @return handle to the actual list used to capture these names; be careful about iterating this
-     *         list while making other calls against this instance
+     * Returns a list of locations passed into all calls to
+     * {@link #getInputStream(String)} since the creation of this instance or
+     * the lsat call to {@link #reset()}.
+     * 
+     * @return handle to the actual list used to capture these names; be careful
+     *         about iterating this list while making other calls against this
+     *         instance
      */
     public List<String> getLogGetInputStreamLocations() {
         return logGetInputStreamLocations;
+    }
+
+    /**
+     * Indicate how long you want the provider to sleep during the PackageSync
+     * step
+     * 
+     * @param longRunningSynchSleep
+     */
+    public void setLongRunningSynchSleep(int longRunningSynchSleep) {
+        this.longRunningSynchSleep = longRunningSynchSleep;
     }
 
     /**
@@ -294,16 +326,6 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         logGetInputStreamLocations.clear();
         logSynchronizePackagesRepos.clear();
         logSynchronizeDistroRepos.clear();
-    }
-
-    /**
-     * Indicate you want this test to simulate a long running sync.  Will pause for ~10 seconds during
-     * the package sync phase.
-     *
-     * @param longRunningSyncs enables/disables long syncs
-     */
-    public void setLongRunningSyncs(boolean longRunningSyncs) {
-        this.longRunningSyncs = longRunningSyncs;
     }
 
     private ContentProviderPackageDetails findDetailsByKey(ContentProviderPackageDetailsKey key,
@@ -316,6 +338,10 @@ public class TestContentProvider implements ContentProvider, PackageSource, Repo
         }
 
         return null;
+    }
+
+    public SyncProgressWeight getSyncProgressWeight() {
+        return SyncProgressWeight.DEFAULT_WEIGHTS;
     }
 
 }

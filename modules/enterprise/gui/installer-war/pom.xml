@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -53,6 +53,13 @@
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-core-dbutils</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- need this solely for SecurityUtils -->
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-comm</artifactId>
       <version>${project.version}</version>
     </dependency>
 
@@ -114,15 +121,6 @@
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifest>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-              <Build-Number>${buildNumber}</Build-Number>
-            </manifestEntries>            
-          </archive>
           <webResources>
             <resource>
               <filtering>true</filtering>

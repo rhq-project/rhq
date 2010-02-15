@@ -1,14 +1,11 @@
-<project
-   xmlns="http://maven.apache.org/POM/4.0.0"
-   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
 
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -63,6 +60,13 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-webdav</artifactId>
+         <version>${project.version}</version>
+         <type>war</type>
+      </dependency>
+      
+      <dependency>
+         <groupId>org.rhq</groupId>
+         <artifactId>rhq-content_http</artifactId>
          <version>${project.version}</version>
          <type>war</type>
       </dependency>
@@ -123,11 +127,8 @@
                   <phase>generate-sources</phase>
                   <configuration>
                      <tasks>
-                        <mkdir
-                           dir="${earDirectory}/license" />
-					  <copy
-						 todir="${earDirectory}/license"
-						 file="${basedir}/src/main/license/license.xml" />
+                        <mkdir dir="${earDirectory}/license" />
+					  <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
                      </tasks>
                   </configuration>
                   <goals>
@@ -139,19 +140,8 @@
 
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
-            <version>2.3.1</version>
             <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
-               <displayName>RHQ</displayName>
-               <version>1.4</version>  <!-- J2EE version -->
+               <displayName>RHQ</displayName>               
                <workDirectory>${earDirectory}</workDirectory>
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
@@ -174,6 +164,15 @@
                      <excluded>${exclude-webdav}</excluded>
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
+                  </webModule>
+                  
+                  <!--  used to expose content through http -->
+                  <webModule>
+                     <groupId>${project.groupId}</groupId>
+                     <artifactId>rhq-content_http</artifactId>
+                     <excluded>${exclude-content_http}</excluded>
+                     <bundleFileName>rhq-content_http.war</bundleFileName>
+                     <contextRoot>/content</contextRoot>
                   </webModule>
 
                   <webModule>
@@ -217,7 +216,6 @@
 
          <plugin>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.0</version>
             <executions>
 
                <execution>
@@ -252,6 +250,12 @@
                            <artifactId>rhq-augeas-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+                       
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>rhq-cobbler-plugin</artifactId>
+                           <version>${project.version}</version>
+                       </artifactItem>
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -449,7 +453,6 @@
 
                <plugin>
                   <artifactId>maven-antrun-plugin</artifactId>
-                  <version>1.1</version>
                   <executions>
 
                      <execution>
@@ -457,30 +460,19 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <mkdir
-                                 dir="${earDirectory}/license" />
-                              <copy
-                                 todir="${earDirectory}/license"
-                                 file="${basedir}/src/main/license/license.xml" />
-                              <property
-                                 name="deployment.dir"
-                                 location="${rhq.deploymentDir}" />
+                              <mkdir dir="${earDirectory}/license" />
+                              <copy todir="${earDirectory}/license" file="${basedir}/src/main/license/license.xml" />
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Copying updated files from
                                  target${file.separator}${project.build.finalName}${file.separator} to
                                  ${deployment.dir}${file.separator}...</echo>
-                              <copy
-                                 todir="${deployment.dir}"
-                                 verbose="${rhq.verbose}">
-                                 <fileset
-                                    dir="${basedir}/target/${project.build.finalName}" />
+                              <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                 <fileset dir="${basedir}/target/${project.build.finalName}" />
                               </copy>
-                              <property
-                                 name="deployment.descriptor.file"
-                                 location="${deployment.dir}/META-INF/application.xml" />
+                              <property name="deployment.descriptor.file" location="${deployment.dir}/META-INF/application.xml" />
                               <echo>*** Touching ${deployment.descriptor.file} to force redeployment of
                                  ${rhq.deploymentName}...</echo>
-                              <touch
-                                 file="${deployment.descriptor.file}" />
+                              <touch file="${deployment.descriptor.file}" />
                            </tasks>
                         </configuration>
                         <goals>
@@ -493,12 +485,9 @@
                         <phase>package</phase>
                         <configuration>
                            <tasks>
-                              <unjar
-                                 src="${project.build.directory}/${project.build.finalName}.ear"
-                                 dest="${rhq.deploymentDir}">
+                              <unjar src="${project.build.directory}/${project.build.finalName}.ear" dest="${rhq.deploymentDir}">
                                  <patternset>
-                                    <include
-                                       name="META-INF/**" />
+                                    <include name="META-INF/**" />
                                  </patternset>
                               </unjar>
                            </tasks>
@@ -513,12 +502,9 @@
                         <phase>clean</phase>
                         <configuration>
                            <tasks>
-                              <property
-                                 name="deployment.dir"
-                                 location="${rhq.deploymentDir}" />
+                              <property name="deployment.dir" location="${rhq.deploymentDir}" />
                               <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                              <delete
-                                 dir="${deployment.dir}" />
+                              <delete dir="${deployment.dir}" />
                            </tasks>
                         </configuration>
                         <goals>

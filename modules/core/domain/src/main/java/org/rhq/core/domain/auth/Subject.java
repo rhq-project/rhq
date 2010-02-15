@@ -182,7 +182,10 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "         FROM Role rr JOIN rr.subjects AS ss " //
         + "         WHERE rr.id = :roleId" + "       ) " //
         + "   AND s.fsystem = FALSE " //
-        + "   AND s.factive = TRUE") })
+        + "   AND s.factive = TRUE"), //
+    @NamedQuery(name = Subject.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
+        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false")
+})
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
@@ -210,6 +213,8 @@ public class Subject implements Externalizable {
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE = "Subject.findAvailableSubjectsForRole";
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES = "Subject.findAvailableSubjectsForAlertDefinitionWithExcludes";
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION = "Subject.findAvailableSubjectForAlertDefinition";
+
+    public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Subject.dynamicConfigValues";
 
     private static final long serialVersionUID = 1L;
 

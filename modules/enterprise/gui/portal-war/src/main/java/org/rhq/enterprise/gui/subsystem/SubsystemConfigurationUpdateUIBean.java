@@ -28,14 +28,19 @@ import javax.faces.model.SelectItem;
 
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
+import org.rhq.core.domain.resource.composite.DisambiguationReport;
+import org.rhq.core.domain.resource.composite.ResourceNamesDisambiguationResult;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.subsystem.ConfigurationSubsystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -48,7 +53,7 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     private final String CALENDAR_SUFFIX = "InputDate";
 
     private ConfigurationSubsystemManagerLocal manager = LookupUtil.getConfigurationSubsystemManager();
-
+    
     private static String datePattern;
     private String resourceFilter;
     private String parentFilter;
@@ -57,6 +62,12 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
     private String statusFilter;
     private SelectItem[] statusFilterItems;
 
+    private static final IntExtractor<ConfigurationUpdateComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<ConfigurationUpdateComposite>() {
+        public int extract(ConfigurationUpdateComposite composite) {
+            return composite.getResourceId();
+        }
+    };
+    
     public SubsystemConfigurationUpdateUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
             .getDateTimeFormatTrigger();
@@ -125,13 +136,12 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<ConfigurationUpdateComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<ConfigurationUpdateComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        @Override
-        public PageList<ConfigurationUpdateComposite> fetchPage(PageControl pc) {
+        public PageList<ConfigurationUpdateComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -145,9 +155,14 @@ public class SubsystemConfigurationUpdateUIBean extends PagedDataTableUIBean {
             PageList<ConfigurationUpdateComposite> result;
             result = manager.getResourceConfigurationUpdates(getSubject(), resourceFilter, parentFilter, startMillis,
                 endMillis, status, pc);
+
             return result;
         }
 
+        protected IntExtractor<ConfigurationUpdateComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
+        }
+        
         private void getDataFromRequest() {
             SubsystemConfigurationUpdateUIBean outer = SubsystemConfigurationUpdateUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

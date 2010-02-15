@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.navigation.resource;
 
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.resource.group.composite.AutoGroupComposite;
 import org.rhq.core.util.sort.HumaneStringComparator;
-
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 /**
  * Just a basic node to hold resources, resource auto groups and subcategories
@@ -58,8 +58,11 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
     }
 
     public String toString() {
+        if (level == null) {
+            return "";
+        }
         if (level instanceof AutoGroupComposite) {
-            AutoGroupComposite composite = ((AutoGroupComposite) level) ;
+            AutoGroupComposite composite = ((AutoGroupComposite) level);
             return composite.getName();
         } else if (level instanceof ResourceWithAvailability) {
             return ((ResourceWithAvailability) level).getResource().getName();
@@ -79,12 +82,15 @@ public class ResourceTreeNode implements Comparable<ResourceTreeNode> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
 
         ResourceTreeNode that = (ResourceTreeNode) o;
 
-        if (!level.equals(that.level)) return false;
+        if (!level.equals(that.level))
+            return false;
 
         return true;
     }

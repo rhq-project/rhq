@@ -48,7 +48,6 @@ import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.alert.notification.AlertNotificationLog;
-import org.rhq.core.domain.alert.notification.EmailNotification;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.event.Event;
 import org.rhq.core.domain.event.EventDefinition;
@@ -472,10 +471,6 @@ public class DataPurgeJobTest extends AbstractEJB3Test {
                 ac.setComparator("==");
                 em.persist(ac);
                 ad.addCondition(ac);
-
-                EmailNotification an = new EmailNotification(ad, "foo@bar.com");
-                em.persist(an);
-                ad.addAlertNotification(an);
 
                 EventDefinition ed = new EventDefinition(resourceType, "DataPurgeJobTestEventDefinition");
                 em.persist(ed);

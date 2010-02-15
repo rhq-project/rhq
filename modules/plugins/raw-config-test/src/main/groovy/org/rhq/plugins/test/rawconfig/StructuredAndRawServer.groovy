@@ -8,11 +8,16 @@ import org.rhq.core.domain.configuration.Configuration
 import org.rhq.core.domain.configuration.RawConfiguration
 import org.rhq.core.domain.configuration.PropertySimple
 import org.apache.commons.configuration.PropertiesConfiguration
-import groovy.util.AntBuilder
 
 class StructuredAndRawServer implements ResourceComponent, ResourceConfigurationFacet {
 
+  ResourceContext resourceContext
+
   File rawConfigDir
+
+  File rawConfigSubdir1
+
+  File rawConfigSubdir2
 
   File rawConfig1
 
@@ -20,22 +25,32 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
 
   File rawConfig3
 
+  File rawConfig4
+
   def ant = new AntBuilder()
 
   void start(ResourceContext context) {
-    rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
-    rawConfig1 = new File(rawConfigDir, "structured-and-raw-test-1.txt")
-    rawConfig2 = new File(rawConfigDir, "structured-and-raw-test-2.txt")
-    rawConfig3 = new File(rawConfigDir, "structured-and-raw-test-3.txt")
+    resourceContext = context
 
-    createRawConfigDir()
+    rawConfigDir = new File("${System.getProperty('java.io.tmpdir')}/raw-config-test")
+    rawConfigSubdir1 = new File(rawConfigDir, "structured-and-raw-1")
+    rawConfigSubdir2 = new File(rawConfigDir, "structured-and-raw-2")
+
+    rawConfig1 = new File(rawConfigSubdir1, "structured-and-raw-test-1.txt")
+    rawConfig2 = new File(rawConfigSubdir1, "structured-and-raw-test-2.txt")
+    rawConfig3 = new File(rawConfigSubdir2, "structured-and-raw-test-3.txt")
+    rawConfig4 = new File(rawConfigSubdir2, "structured-and-raw-test-4.txt")
+
+    createRawConfigDirs()
     createConfigFile(rawConfig1, ["x": "1", "y": "2", "z": "3"])
     createConfigFile(rawConfig2, ["username": "rhqadmin", "password": "rhqadmin"])
     createConfigFile(rawConfig3, ["rhq.server.hostname": "localhost", "rhq.server.port": "7080"])
+    createConfigFile(rawConfig4, ["raw.only.x": "foo", "raw.only.y": "bar"])
   }
 
-  def createRawConfigDir() {
-    rawConfigDir.mkdirs()
+  def createRawConfigDirs() {
+    rawConfigSubdir1.mkdirs()
+    rawConfigSubdir2.mkdirs()
   }
 
   def createConfigFile(File rawConfig, Map properties) {
@@ -94,14 +109,19 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
 
   Set<RawConfiguration> loadRawConfigurations() {
     def rawConfigs = new HashSet<RawConfiguration>()
-    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.readBytes()))
-    rawConfigs.add(new RawConfiguration(path: rawConfig2.absolutePath, contents: rawConfig2.readBytes()))
-    rawConfigs.add(new RawConfiguration(path: rawConfig3.absolutePath, contents: rawConfig3.readBytes()))
+    rawConfigs.add(new RawConfiguration(path: rawConfig1.absolutePath, contents: rawConfig1.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig2.absolutePath, contents: rawConfig2.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig3.absolutePath, contents: rawConfig3.text))
+    rawConfigs.add(new RawConfiguration(path: rawConfig4.absolutePath, contents: rawConfig4.text))
 
     return rawConfigs
   }
 
   RawConfiguration mergeRawConfiguration(Configuration configuration, RawConfiguration rawConfiguration) {
+    if (rawConfiguration.path == rawConfig4.absolutePath) {
+      return rawConfiguration
+    }
+
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 
@@ -110,22 +130,25 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
       rawPropertiesConfig.setProperty(propertyName, property.stringValue)
     }
 
-    def stream = new ByteArrayOutputStream()
-    rawPropertiesConfig.save(stream)
-    rawConfiguration.contents = stream.toByteArray()
+    def writer = new StringWriter()
+    rawPropertiesConfig.save(writer)
+    rawConfiguration.contents = writer.toString()
 
     return rawConfiguration
   }
 
   def loadRawPropertiesConfiguration(rawConfig) {
-    def stream = new ByteArrayInputStream(rawConfig.contents)
     def rawPropertiesConfig = new PropertiesConfiguration()
-    rawPropertiesConfig.load(stream)
+    rawPropertiesConfig.load(new StringReader(rawConfig.contents))
 
     return rawPropertiesConfig
   }
 
   void mergeStructuredConfiguration(RawConfiguration rawConfiguration, Configuration configuration) {
+    if (rawConfiguration.path == rawConfig4.absolutePath) {
+      return
+    }
+
     def rawPropertiesConfig = loadRawPropertiesConfiguration(rawConfiguration)
     def propertyNames = getPropertyNames(rawConfiguration)
 
@@ -148,15 +171,42 @@ class StructuredAndRawServer implements ResourceComponent, ResourceConfiguration
   }
 
   void validateRawConfiguration(RawConfiguration rawConfig) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failRawValidation")
+    if (failValidation.getBooleanValue()) {
+      def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailValidation").stringValue.split()
+      def match = fileNames.find { rawConfig.path.endsWith(it) }
+
+      if (match) {
+        throw new RuntimeException("Validation failed for ${rawConfig.path}");
+      }
+    }
   }
 
   void validateStructuredConfiguration(Configuration config) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Validation failed for $confi153guration");
+    }
   }
 
   void persistStructuredConfiguration(Configuration config) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
+    if (failValidation.getBooleanValue()) {
+      throw new RuntimeException("Update failed for $configuration");
+    }
   }
 
   void persistRawConfiguration(RawConfiguration rawConfig) {
+    def failUpdate = resourceContext.pluginConfiguration.getSimple("failRawUpdate")
+    if (failUpdate.getBooleanValue()) {
+      def fileNames = resourceContext.pluginConfiguration.getSimple("filesToFailUpdate").stringValue.split()
+      def match = fileNames.find { rawConfig.path.endsWith(it) }
+
+      if (match) {
+        throw new RuntimeException("Update failed for ${rawConfig.path}");
+      }
+    }
+
     ant.copy(file: rawConfig.path, tofile: "${rawConfig.path}.orig")
     ant.delete(file: rawConfig.path)
 

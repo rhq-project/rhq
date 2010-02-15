@@ -23,18 +23,18 @@
 
 package org.rhq.core.pc.configuration;
 
-import static java.util.Collections.EMPTY_SET;
-
 import org.jmock.Expectations;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
-import static org.testng.Assert.assertNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Set;
+
+import static java.util.Collections.EMPTY_SET;
+import static org.testng.Assert.assertNull;
 
 public class RawConfigManagementTest extends ConfigManagementTest {
 
@@ -116,7 +116,43 @@ public class RawConfigManagementTest extends ConfigManagementTest {
         addDefaultExpectationsForUpdate();
 
         context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw);
+
             oneOf(configFacet).persistRawConfiguration(raw);
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenValidationFailsForSingleRaw() throws Exception {
+        final RawConfiguration raw = createRawConfiguration("/tmp/raw.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw); will(throwException(new RuntimeException()));
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void exceptionShouldBeThrownWhenUpdateFailsForSingleRaw() throws Exception {
+        final RawConfiguration raw = createRawConfiguration("/tmp/raw.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw);
+
+            oneOf(configFacet).persistRawConfiguration(raw); will(throwException(new RuntimeException()));
         }});
 
         rawConfigMgmt.executeUpdate(resourceId, config);
@@ -134,11 +170,82 @@ public class RawConfigManagementTest extends ConfigManagementTest {
         addDefaultExpectationsForUpdate();
 
         context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw1);
+
             oneOf(configFacet).persistRawConfiguration(raw1);
+
+            oneOf(configFacet).validateRawConfiguration(raw2);
+            
             oneOf(configFacet).persistRawConfiguration(raw2);
         }});
 
         rawConfigMgmt.executeUpdate(resourceId, config);        
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void secondRawShouldStillGetUpdatedWhenFirstRawFailsValidation() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw1); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw2);
+
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void secondRawShouldStillGetUpdateWhenFirstRawUpdateFails() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw1);
+
+            oneOf(configFacet).persistRawConfiguration(raw1); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw2);
+
+            oneOf(configFacet).persistRawConfiguration(raw2);
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
+    }
+
+    @Test(expectedExceptions = {ConfigurationUpdateException.class})
+    public void noUpdatesShouldHappenWhenValidationFailsForBothRaws() throws Exception {
+        final RawConfiguration raw1 = createRawConfiguration("/tmp/raw1.txt");
+        final RawConfiguration raw2 = createRawConfiguration("/tmp/raw2.txt");
+
+        final Configuration config = new Configuration();
+        config.addRawConfiguration(raw1);
+        config.addRawConfiguration(raw2);
+
+        addDefaultExpectationsForUpdate();
+
+        context.checking(new Expectations() {{
+            oneOf(configFacet).validateRawConfiguration(raw1); will(throwException(new RuntimeException()));
+
+            oneOf(configFacet).validateRawConfiguration(raw2); will(throwException(new RuntimeException()));
+        }});
+
+        rawConfigMgmt.executeUpdate(resourceId, config);
     }
 
     private void addDefaultExpectationsForUpdate() throws Exception {

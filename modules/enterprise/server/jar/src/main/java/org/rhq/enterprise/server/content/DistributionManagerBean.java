@@ -75,6 +75,11 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public Distribution createDistribution(Subject user, String kslabel, String basepath, DistributionType disttype)
         throws DistributionException {
 
+        DistributionType loaded = distributionManager.getDistributionTypeByName(disttype.getName());
+        if (loaded != null) {
+            disttype = loaded;
+        }
+
         Distribution kstree = new Distribution(kslabel, basepath, disttype);
 
         validateDistTree(kstree);
@@ -110,11 +115,6 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
 
     }
 
-    @RequiredPermission(Permission.MANAGE_INVENTORY)
-    public void getDistributionBits(Subject user, String kslabel) {
-        //TODO: Implement the ks tree bit downloads
-    }
-
     @SuppressWarnings("unchecked")
     public Distribution getDistributionByLabel(String kslabel) {
         Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_LABEL);
@@ -139,7 +139,7 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
     public Distribution getDistributionByPath(String basepath) {
         Query query = entityManager.createNamedQuery(Distribution.QUERY_FIND_BY_DIST_PATH);
 
-        query.setParameter("base_path", basepath);
+        query.setParameter("path", basepath);
         List<Distribution> results = query.getResultList();
 
         if (results.size() > 0) {
@@ -215,6 +215,14 @@ public class DistributionManagerBean implements DistributionManagerLocal, Distri
         } else {
             log.debug("Distribution file [" + distFile + "] doesn't exist - nothing to delete");
         }
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void deleteDistributionTypeByName(Subject subject, String name) {
+        Query query = entityManager.createNamedQuery(DistributionType.QUERY_DELETE_BY_NAME);
+        query.setParameter("name", name);
+
+        query.executeUpdate();
     }
 
     /**

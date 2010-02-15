@@ -58,6 +58,7 @@ import org.rhq.core.domain.util.PersistenceUtility;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * Manager bean for Out-of-Bound measurements.
@@ -274,9 +275,9 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         Query queryCount = PersistenceUtility.createCountQuery(entityManager, queryName, "sched.id");
         Query query = PersistenceUtility.createQueryWithOrderBy(entityManager, queryName, pc);
 
-        metricNameFilter = PersistenceUtility.formatSearchParameter(metricNameFilter);
-        resourceNameFilter = PersistenceUtility.formatSearchParameter(resourceNameFilter);
-        parentNameFilter = PersistenceUtility.formatSearchParameter(parentNameFilter);
+        metricNameFilter = QueryUtility.formatSearchParameter(metricNameFilter);
+        resourceNameFilter = QueryUtility.formatSearchParameter(resourceNameFilter);
+        parentNameFilter = QueryUtility.formatSearchParameter(parentNameFilter);        
 
         query.setParameter("metricName", metricNameFilter);
         queryCount.setParameter("metricName", metricNameFilter);
@@ -284,6 +285,8 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
         queryCount.setParameter("resourceName", resourceNameFilter);
         query.setParameter("parentName", parentNameFilter);
         queryCount.setParameter("parentName", parentNameFilter);
+        query.setParameter("escapeChar", QueryUtility.getEscapeCharacter());
+        queryCount.setParameter("escapeChar", QueryUtility.getEscapeCharacter());        
 
         if (!isAdmin) {
             query.setParameter("subjectId", subject.getId());

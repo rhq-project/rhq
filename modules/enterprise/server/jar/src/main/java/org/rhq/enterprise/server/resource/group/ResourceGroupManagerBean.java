@@ -61,6 +61,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
+import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
@@ -93,6 +94,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 /**
  * A manager that provides methods for creating, updating, deleting, and querying
@@ -939,6 +941,53 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         return (int) count;
     }
 
+    /**
+     * This method adheres to all of the regular semantics of {@link Criteria}-based queries.  In other words,
+     * all of the methods on the {@link Criteria} object - including paging, sorting, filtering, fetching - will
+     * work with this method.  The only thing that differs is the ResultSet which, instead of being a collection
+     * of {@link ResourceGroup} objects is a collection of {@link ResourceGroupComposite} objects.
+     * 
+     * The extended data in the composite object, however, is treated differently:
+     * 
+     *   1) It is always fetched
+     *   2) It can not be a candidate for filtering
+     *   3) It must be sorted by using the zero-based positional ordinal within the projection
+     *   
+     * This method offers 4 new aggregates that you can sort on.  The 
+     * 
+     * explicitCount (ordinal 0) - the count of the number of children in the group
+     * explicitAvail (ordinal 1) - decimal percentage representing the number of UP children relative to the total
+     *                             number of children in the group
+     * implicitCount (ordinal 2) - the count of the number of descendents in the group
+     * implicitAvail (ordinal 3) - decimal percentage representing the number of UP descendents relative to the total
+     *                             number of descendents in the group
+     */
+    public PageList<ResourceGroupComposite> findResourceGroupCompositesByCriteria(Subject subject,
+        ResourceGroupCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+        String replacementSelectList = ""
+            + " new org.rhq.core.domain.resource.group.composite.ResourceGroupComposite( "
+            + "   ( SELECT COUNT(avail) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.explicitResources res JOIN res.currentAvailability avail ) AS explicitAvail,"
+            + "   ( SELECT COUNT(avail) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitCount,"
+            + "   ( SELECT AVG(avail.availabilityType) FROM rg.implicitResources res JOIN res.currentAvailability avail ) AS implicitAvail,"
+            + "   rg ) ";
+        generator.alterProjection(replacementSelectList);
+
+        CriteriaQueryRunner<ResourceGroupComposite> queryRunner = new CriteriaQueryRunner<ResourceGroupComposite>(
+            criteria, generator, entityManager);
+        PageList<ResourceGroupComposite> results = queryRunner.execute();
+        for (ResourceGroupComposite composite : results) {
+            ResourceGroup group = composite.getResourceGroup();
+            queryRunner.initPersistentBags(group); // manually init bags for composite-wrapped entity
+            ResourceType type = group.getResourceType();
+            ResourceFacets facets = (type != null) ? resourceTypeManager.getResourceFacets(type.getId())
+                : ResourceFacets.NONE;
+            composite.setResourceFacets(facets);
+        }
+        return results;
+    }
+
     // note, resourceId and groupId can both be NULL, and so must use the numeric wrapper classes
     public PageList<ResourceGroupComposite> findResourceGroupComposites(Subject subject, GroupCategory groupCategory,
         ResourceCategory resourceCategory, String resourceTypeName, String pluginName, String nameFilter,
@@ -975,7 +1024,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
         if (field.equals("groupName") == false) {
             pc.addDefaultOrderingField("groupName");
         }
-        nameFilter = PersistenceUtility.formatSearchParameter(nameFilter);
+        nameFilter = QueryUtility.formatSearchParameter(nameFilter);
 
         Connection conn = null;
         PreparedStatement stmt = null;
@@ -1027,11 +1076,15 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             if (search == null) {
                 stmt.setNull(++i, Types.VARCHAR);
                 stmt.setNull(++i, Types.VARCHAR);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
                 stmt.setNull(++i, Types.VARCHAR);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
             } else {
                 stmt.setString(++i, search);
                 stmt.setString(++i, search);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
                 stmt.setString(++i, search);
+                stmt.setString(++i, QueryUtility.getEscapeCharacter());
             }
 
             if (resourceTypeName == null) {
@@ -1126,7 +1179,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 facets = ResourceFacets.NONE;
             } else {
                 // compatible group
-                facets = resourceTypeManager.getResourceFacets(group.getResourceType().getId());
+                facets = resourceTypeManager.getResourceFacets(type.getId());
             }
             ResourceGroupComposite composite = new ResourceGroupComposite(explicitCount, explicitAvail, implicitCount,
                 implicitAvail, group, facets);
@@ -1252,7 +1305,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 ((Number) data[3]).doubleValue(), //
                 group, facets);
         } else {
-            composite = new ResourceGroupComposite(0, 0, 0, 0, group, facets);
+            composite = new ResourceGroupComposite(0L, 0.0, 0L, 0.0, group, facets);
         }
         group.getModifiedBy().getFirstName();
 

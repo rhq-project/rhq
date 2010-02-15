@@ -1,0 +1,292 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-enterprise-gui-parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
+
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-content_http</artifactId>
+    <packaging>war</packaging>
+
+    <name>RHQ Enterprise Content HTTP Support</name>
+    <description>Provides http export for content in RHQ.</description>
+
+    <scm>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/content_http-war/</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/content_http-war/</developerConnection>
+    </scm>
+
+    <properties>
+        <scm.module.path>modules/enterprise/gui/content_http-war/</scm.module.path>
+    </properties>
+
+    <dependencies>
+
+        <!-- Internal Deps -->
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-gui</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-server</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-util</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope> <!-- by rhq.ear -->
+        </dependency>
+
+        <!-- 3rd Party Deps -->
+
+        <dependency>
+            <groupId>hibernate</groupId>
+            <artifactId>hibernate3</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <!-- used by a test JSP -->
+        <dependency>
+            <groupId>hibernate-entitymanager</groupId>
+            <artifactId>hibernate-entitymanager</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
+        <dependency>
+            <groupId>hibernate-annotations</groupId>
+            <artifactId>hibernate-annotations</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+
+        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+        
+        <!--
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.1.2</version>
+        </dependency>
+        -->
+
+      <!-- adding to pick up javax.servlet.http.HttpServlet -->
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <version>2.4</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+      <!-- adding so we can extend DefaultServlet 
+      Chose version 2.0.1 so it's compatible with info here for JBoss 4.2.3
+      http://community.jboss.org/wiki/VersionOfTomcatInJBossAS-->
+      <dependency>
+            <groupId>jboss.web</groupId>
+            <artifactId>jbossweb</artifactId>
+            <version>2.0.1.GA</version>
+         <scope>provided</scope> <!-- by JBossAS -->
+      </dependency>
+
+        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-ejb3x</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-j2ee</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.4</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-httpclient</groupId>
+            <artifactId>commons-httpclient</artifactId>
+            <version>3.0.1</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.3.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+            <version>1.0.4</version>
+            <scope>provided</scope> <!-- by JBossAS -->
+        </dependency>
+
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>1.1.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-lang</groupId>
+            <artifactId>commons-lang</artifactId>
+            <version>2.4</version>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>rhq-content_http</finalName>
+        <plugins>
+
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.1-alpha-1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Number>${buildNumber}</Build-Number>
+                        </manifestEntries>
+                    </archive>
+                    <webResources>
+                        <resource>
+                            <filtering>false</filtering>
+                            <directory>${basedir}/src/main/webapp</directory>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+
+        </plugins>
+
+    </build>
+
+    <profiles>
+
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+                <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+
+                            <execution>
+                                <id>deploy-classes</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                                        <echo>*** Copying updated files from target/classes to ${classes.dir}...</echo>
+                                        <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="target/classes" />
+                                        </copy>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                                        <echo>*** Copying updated files from src${file.separator}main${file.separator}webapp${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/src/main/webapp" />
+                                        </copy>
+                                        <!-- TODO: Also copy the files from src/main/webapp-filtered/, and then filter them ourselves. -->
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                                        <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/target/${project.build.finalName}" />
+                                        </copy>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}" />
+                                        <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                                        <delete dir="${deployment.dir}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>

@@ -82,7 +82,7 @@ public class AugeasRawConfigHelper {
             aug.save();
 
             toUpdate.setPath(existingConfig.getPath());
-            toUpdate.setContents(FileUtils.readFileToByteArray(new File(file)));
+            toUpdate.setContents(FileUtils.readFileToString(new File(file)));
         } finally {
             if (aug != null) {
                 aug.close();
@@ -111,18 +111,17 @@ public class AugeasRawConfigHelper {
 
     public void save(RawConfiguration config) throws Exception {
         File f = new File(config.getPath());
-        FileUtils.writeStringToFile(f, normalizeToUnix(config.getContents()));
+        FileUtils.writeStringToFile(f, config.getContents());
     }
 
     private String getFile(Augeas aug) {
         return aug.get(transformPrefix + "/incl");
     }
 
-    private Augeas createAugeas(String lens, byte[] binary) throws Exception {
+    private Augeas createAugeas(String lens, String contents) throws Exception {
         Augeas aug = new Augeas(rootPath, loadPath, Augeas.NO_MODL_AUTOLOAD);
         File fl = File.createTempFile("_rhq", null);
-        String contents = normalizeToUnix(binary);
-        //write the 'to' file to disk 
+        //write the 'to' file to disk
         FileUtils.writeStringToFile(fl, contents);
         aug.set(transformPrefix + "/lens", lens);
         aug.set(transformPrefix + "/incl", fl.getAbsolutePath());

@@ -45,13 +45,14 @@ public class MicroblogSender extends AlertSender {
 
         String user = preferences.getSimpleValue("user",null);
         String password = preferences.getSimpleValue("password",null);
-        String baseUrl = preferences.getSimpleValue("microblogServerUrl","http://twitter.com/api/");
+        String baseUrl = preferences.getSimpleValue("microblogServerUrl","http://twitter.com/");
         if (!baseUrl.endsWith("/"))
            baseUrl = baseUrl +"/";
         Twitter twitter = new Twitter(user,password,baseUrl);
         AlertManagerLocal alertManager = LookupUtil.getAlertManager();
         twitter.setSource("Jopr");
-        StringBuilder b = new StringBuilder("Alert: '");
+        StringBuilder b = new StringBuilder("Alert ");
+        b.append(alert.getId()).append(":'"); // Alert id
         b.append(alert.getAlertDefinition().getResource().getName());
         b.append("' (");
         b.append(alert.getAlertDefinition().getResource().getId());
@@ -61,12 +62,15 @@ public class MicroblogSender extends AlertSender {
         // TODO use some alert url shortening service
 
         SenderResult result ;
+        String txt = "user@baseUrl [" + user + "@" + baseUrl + "]:";
         try {
             Status status = twitter.updateStatus(b.toString());
-            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + baseUrl + " as user " + user + " id: " + status.getId());
+            result = new SenderResult(ResultState.SUCCESS,"Send notification to " + txt + ", msg-id: " + status.getId());
         } catch (TwitterException e) {
-            log.warn("Notification via Microblog failed: ", e);
+
+            log.warn("Notification via Microblog failed for " + txt + " ", e);
             result = new SenderResult(ResultState.FAILURE,"Sending failed :" + e.getMessage());
+
         }
         return result;
     }

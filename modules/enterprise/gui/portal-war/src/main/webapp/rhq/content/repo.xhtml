@@ -66,6 +66,14 @@
               value="#{RepoDetailsUIBean.repo.description}" /></td>
           </tr>
           <tr>
+            <td align="right"><b>Sync Schedule:</b></td>
+            <td align="left"><h:inputText
+              rendered="${mode eq 'edit'}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /> <h:outputText
+              rendered="${mode ne 'edit'}"
+              value="#{RepoDetailsUIBean.repo.syncSchedule}" /></td>
+          </tr>
+          <tr>
             <td align="right"><b>Creation Date:</b></td>
             <td align="left"><h:outputText
               value="#{RepoDetailsUIBean.repo.creationDate}">
@@ -81,17 +89,18 @@
                 timeZone="#{ServerInfoUIBean.timeZone}" />
             </h:outputText></td>
           </tr>
+		
+		  <!-- ******* START AJAX REFRESH/POLLING BLOCK ****** -->
+          <a4j:region>
+          <a4j:poll id="statusPoll" interval="1005"
+            reRender="syncPercent,syncStatus" />
           <tr>
             <td align="right"><b>Synchronization Status:</b></td>
             <td align="left"><c:choose>
               <c:when
                 test="#{RepoDetailsUIBean.percentComplete != '100'}">
-                <a4j:region>
-                  <a4j:poll id="poll" interval="1000"
-                    reRender="syncStatus" />
                   <h:outputText id="syncStatus"
                     value="#{RepoDetailsUIBean.syncStatus}" />
-                </a4j:region>
               </c:when>
               <c:otherwise>
                 <h:outputText id="syncStatus"
@@ -100,19 +109,51 @@
             </c:choose></td>
           </tr>
           <tr>
-            <td align="right"><b>Synchronization Complete:</b></td>
-            <td align="left"><rich:progressBar
-              value="#{RepoDetailsUIBean.percentComplete}"
-              label="#{RepoDetailsUIBean.percentComplete} %"
-              interval="1000" minValue="0" maxValue="99">
-              <f:facet name="complete">
-                <h:outputText value="Synchronizing Complete" />
-              </f:facet>
-              <f:facet name="initial">
-                <h:outputText value="Synching Not Started" />
-              </f:facet>
-            </rich:progressBar></td>
+            <td align="right"><b>Raw Percentage :</b></td>
+            <td align="left">
+                  <h:outputText id="syncPercent"
+                    value="#{RepoDetailsUIBean.percentComplete}" />
+			</td>
           </tr>
+          <tr>
+            <td align="right"><b>Synchronization Progress :</b></td>
+            <td align="left">
+              <c:choose>
+                <c:when
+                  test="#{RepoDetailsUIBean.currentlySyncing}">
+	              <rich:progressBar id="syncProgress"
+	                value="#{RepoDetailsUIBean.percentComplete}"
+	                label="#{RepoDetailsUIBean.percentComplete} %"
+	                interval="999" minValue="-1" maxValue="99">
+	                <f:facet name="complete">
+	                  <h:outputText value="Synchronizing Complete" />
+	                </f:facet>
+	              </rich:progressBar>
+	            </c:when>
+	            <c:otherwise>
+	            	Not Synching
+	            </c:otherwise>
+	          </c:choose>
+            </td>
+          </tr>
+          <!-- 
+          <tr>
+            <td align="right"><b>Synchronization Progress:</b></td>
+            <td align="left">
+              <rich:progressBar id="syncProgress"
+                value="#{RepoDetailsUIBean.percentComplete}"
+                label="#{RepoDetailsUIBean.percentComplete} %"
+                interval="999" minValue="-1" maxValue="99">
+                <f:facet name="complete">
+                  <h:outputText value="Synchronizing Complete" />
+                </f:facet>
+                <f:facet name="initial">
+                  <h:outputText value="Not Synching" />
+                </f:facet>
+              </rich:progressBar>
+            </td>
+          </tr>
+           -->
           <tr>
             <td align="right"><b>Synchronization Results:</b></td>
             <td align="left"><h:outputLink
@@ -139,14 +180,15 @@
                     operation="hide" event="onclick" />
                 </h:panelGroup>
               </f:facet>
-              <PRE><h:outputText
-                value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
+                  <PRE><h:outputText value="#{RepoDetailsUIBean.syncResults.results}" /></PRE>
             </rich:modalPanel></td>
           </tr>
+          </a4j:region>
+          <!-- ******* END AJAX REFRESH/POLLING BLOCK ****** -->
         </table>
       </rich:panel>
 
-      <h:panelGrid columns="2" styleClass="buttons-table"
+      <h:panelGrid columns="3" styleClass="buttons-table"
         columnClasses="button-cell">
         <h:commandButton rendered="${mode ne 'edit'}" value="EDIT"
           action="#{RepoDetailsUIBean.edit}" alt="Edit"
@@ -154,6 +196,9 @@
         <h:commandButton rendered="${mode ne 'edit'}"
           value="SYNCHRONIZE" action="#{RepoDetailsUIBean.sync}"
           alt="Synchronize" styleClass="buttonmed" id="syncButton" />
+        <h:commandButton rendered="#{RepoDetailsUIBean.currentlySyncing}"
+          value="CANCEL SYNCH" action="#{RepoDetailsUIBean.cancelSync}"
+          alt="Cancel Synch" styleClass="buttonmed" id="cancelSyncButton" />
         <h:commandButton rendered="${mode eq 'edit'}" value="SAVE"
           action="#{RepoDetailsUIBean.save}" alt="Save"
           styleClass="buttonmed" id="saveButton" />
@@ -347,10 +392,10 @@
               <f:facet name="header">
                 <onc:allSelect target="selectedRepoResources" />
               </f:facet>
-
+ 
               <onc:select name="selectedRepoResources"
-                value="#{resourceitem.id}" />
-            </rich:column>
+                value="#{resourceitem.original.id}" />
+           </rich:column>
 
             <rich:column rendered="#{param.debug}">
               <f:facet name="header">
@@ -358,8 +403,8 @@
                   <h:outputText styleClass="headerText" value="ID" />
                 </onc:sortableColumnHeader>
               </f:facet>
-
-              <h:outputText value="#{resourceitem.id}" />
+ 
+              <h:outputText value="#{resourceitem.original.id}" />
             </rich:column>
 
             <rich:column>
@@ -370,11 +415,18 @@
               </f:facet>
 
               <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                <f:param name="id" value="#{resourceitem.id}" />
-                <h:outputText value="#{resourceitem.name}" />
+                <f:param name="id" value="#{resourceitem.original.id}" />
+                <h:outputText value="#{resourceitem.original.name}" />
               </h:outputLink>
             </rich:column>
 
+            <rich:column>
+                <f:facet name="header">
+                    <h:outputText value="Parent" />
+                </f:facet>
+                <onc:resourcePartialLineage parents="#{resourceitem.parents}"/>
+            </rich:column>
+            
             <rich:column>
               <f:facet name="header">
                 <onc:sortableColumnHeader
@@ -383,8 +435,8 @@
                     value="Resource Type" />
                 </onc:sortableColumnHeader>
               </f:facet>
-
-              <h:outputText value="#{resourceitem.resourceType.name}" />
+ 
+              <h:outputText value="#{resourceitem.resourceTypeName}" />
             </rich:column>
 
             <rich:column>
@@ -393,8 +445,8 @@
                   <h:outputText styleClass="headerText" value="Version" />
                 </onc:sortableColumnHeader>
               </f:facet>
-
-              <h:outputText value="#{resourceitem.version}" />
+ 
+              <h:outputText value="#{resourceitem.original.version}" />
             </rich:column>
 
             <rich:column>
@@ -404,14 +456,14 @@
                     value="Description" />
                 </onc:sortableColumnHeader>
               </f:facet>
-
-              <h:outputText value="#{resourceitem.description}" />
+ 
+              <h:outputText value="#{resourceitem.original.description}" />
             </rich:column>
 
             <f:facet name="footer">
               <rich:columnGroup>
                 <!-- colspan 6:5 for the debug 'id' column -->
-                <rich:column colspan="#{param.debug ? 6 : 5}"
+                <rich:column colspan="#{param.debug ? 7 : 6}"
                   width="100%">
                   <h:commandButton
                     action="#{RepoResourcesUIBean.subscribeResources}"
@@ -660,8 +712,10 @@
                   <h:outputText styleClass="headerText"
                     value="Last Modified" />
                 </f:facet>
-                <h:outputText value="#{dist.lastModifiedDate}" />
-
+                <h:outputText value="#{dist.lastModifiedDate}">
+					<f:converter converterId="UserDateTimeConverter" />
+				</h:outputText> 
+                
               </rich:column>
 
 

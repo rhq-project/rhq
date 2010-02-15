@@ -22,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.sun.jna.Pointer;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.libvirt.Connect;
@@ -30,6 +32,8 @@ import org.libvirt.DomainBlockStats;
 import org.libvirt.DomainInterfaceStats;
 import org.libvirt.LibvirtException;
 import org.libvirt.Network;
+import org.libvirt.DomainInfo.DomainState;
+import org.libvirt.jna.virError;
 
 /**
  * Represents a connection, via libVirt to domain management.
@@ -48,11 +52,10 @@ public class LibVirtConnection {
 
     public LibVirtConnection(String uri) throws LibvirtException {
         try {
-            //Connect.setErrorCallback(Logger.INSTANCE);
-            //Connect.setErrorCallback(null);
+            Connect.setErrorCallback(Logger.INSTANCE);
             connection = new Connect(uri);
             connected = true;
-            //connection.setConnectionErrorCallback(Logger.INSTANCE);
+            connection.setConnectionErrorCallback(Logger.INSTANCE);
         } catch (LibvirtException e) {
             log.warn("Can not obtain an instance of libvirt");
             connection = null;
@@ -66,7 +69,7 @@ public class LibVirtConnection {
                 throw ie;
             }*/
         } finally {
-            //Connect.setErrorCallback(null);
+            Connect.setErrorCallback(null);
         }
     }
 
@@ -110,25 +113,35 @@ public class LibVirtConnection {
     }
 
     public DomainInfo getDomainInfo(String domainName) throws LibvirtException {
-        Domain domain = connection.domainLookupByName(domainName);
+        try {
+            Domain domain = connection.domainLookupByName(domainName);
 
-        DomainInfo info = new DomainInfo();
-        info.domainInfo = domain.getInfo();
-        info.name = domainName;
-        info.uuid = domain.getUUIDString();
+            DomainInfo info = new DomainInfo();
+            info.domainInfo = domain.getInfo();
+            info.name = domainName;
+            info.uuid = domain.getUUIDString();
 
-        return info;
+            return info;
+        } catch (LibvirtException e) {
+            log.error("Error looking up domain with name " + domainName, e);
+            throw e;
+        }
     }
 
     public DomainInfo getDomainInfo(int id) throws LibvirtException {
-        Domain domain = connection.domainLookupByID(id);
+        try {
+            Domain domain = connection.domainLookupByID(id);
 
-        DomainInfo info = new DomainInfo();
-        info.domainInfo = domain.getInfo();
-        info.name = domain.getName();
-        info.uuid = domain.getUUIDString();
+            DomainInfo info = new DomainInfo();
+            info.domainInfo = domain.getInfo();
+            info.name = domain.getName();
+            info.uuid = domain.getUUIDString();
 
-        return info;
+            return info;
+        } catch (LibvirtException e) {
+            log.error("Error looking up domain with id " + id, e);
+            throw e;
+        }
     }
 
     public String getDomainXML(String domainName) throws LibvirtException {
@@ -147,11 +160,28 @@ public class LibVirtConnection {
         return SUCCESS;
     }
 
+    public int domainDestroy(String domainName) throws LibvirtException {
+        Domain domain = connection.domainLookupByName(domainName);
+        domain.destroy() ;
+        return SUCCESS;
+    }
+    
+    public int domainDelete(String domainName) throws LibvirtException {
+        Domain domain = connection.domainLookupByName(domainName);
+        DomainState state = domain.getInfo().state ;
+        
+        if ((state != DomainState.VIR_DOMAIN_SHUTDOWN) && (state != DomainState.VIR_DOMAIN_SHUTOFF)) {
+            domain.destroy() ;
+        }        
+        domain.undefine() ;        
+        return SUCCESS;
+    }    
+    
     public int domainSave(String domainName, String toPath) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
         domain.save(toPath);
         return SUCCESS;
-    }
+    }    
 
     public int domainResume(String domainName) throws LibvirtException {
         Domain domain = connection.domainLookupByName(domainName);
@@ -317,7 +347,7 @@ public class LibVirtConnection {
     }
 }
 //TODO Put the callbacks in
-/* Comment this out untilt he callbacks get in
+/* Comment this out untilt he callbacks get in*/
 class Logger extends org.libvirt.ErrorCallback {
 
     // Make this static so the callback will always have an object
@@ -328,6 +358,6 @@ class Logger extends org.libvirt.ErrorCallback {
 
     @Override
     public void errorCallback(Pointer arg0, virError arg1) {
-        log.warn(arg1.message);
+        log.warn("Libvirt Error: " + arg1.message);
     }
-}    */
+}    

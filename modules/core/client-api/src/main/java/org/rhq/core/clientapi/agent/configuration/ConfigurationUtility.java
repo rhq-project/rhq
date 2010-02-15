@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -135,6 +136,9 @@ public abstract class ConfigurationUtility {
                 property = new PropertyMap(propertyDefinition.getName());
             } else if (propertyDefinition instanceof PropertyDefinitionList) {
                 property = new PropertyList(propertyDefinition.getName());
+            } else if (propertyDefinition instanceof PropertyDefinitionDynamic) {
+                // Dynamic property values should simply be stored as simple
+                property = new PropertySimple(propertyDefinition.getName(), null);
             } else {
                 throw new IllegalStateException("Unsupported PropertyDefinition subclass: "
                     + propertyDefinition.getClass().getName());

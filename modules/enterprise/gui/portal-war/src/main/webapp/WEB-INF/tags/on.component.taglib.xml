@@ -65,10 +65,10 @@
     </tag>
 
     <tag>
-        <tag-name>rawconfig</tag-name>
+        <tag-name>multifile</tag-name>
         <component>
-            <component-type>org.jboss.on.RawConfig</component-type>
-            <renderer-type>org.jboss.on.RawConfig</renderer-type>
+            <component-type>org.jboss.on.MultiFile</component-type>
+            <renderer-type>org.jboss.on.MultiFile</renderer-type>
         </component>
     </tag>
 
@@ -93,6 +93,14 @@
         <component>
             <component-type>org.jboss.on.ResourceLineage</component-type>
             <renderer-type>org.jboss.on.ResourceLineage</renderer-type>
+        </component>
+    </tag>
+
+    <tag>
+        <tag-name>resourcePartialLineage</tag-name>
+        <component>
+            <component-type>org.jboss.on.ResourcePartialLineage</component-type>
+            <renderer-type>org.jboss.on.ResourcePartialLineage</renderer-type>
         </component>
     </tag>
 

@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>1.4.0-SNAPSHOT</version>
+      <version>3.0.0-SNAPSHOT</version>
    </parent>
 
    <groupId>org.rhq</groupId>
@@ -24,7 +24,7 @@
 
       <!-- dependency versions -->
       <el.version>1.0</el.version>
-      <jsf-facelets.version>1.1.15</jsf-facelets.version>
+      <jsf-facelets.version>1.1.15.B1</jsf-facelets.version>
       <seam.version>2.1.0.SP1</seam.version>
 
       <!-- plugin versions --> 
@@ -383,17 +383,7 @@
 
          <plugin>
             <artifactId>maven-war-plugin</artifactId>
-            <version>2.1-alpha-1</version>
             <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
                <webResources>
                   <resource>
                      <filtering>false</filtering>
@@ -409,7 +399,6 @@
 
          <plugin>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
             <executions>
                <execution>
                   <id>Generate I18N Resource Bundles</id>

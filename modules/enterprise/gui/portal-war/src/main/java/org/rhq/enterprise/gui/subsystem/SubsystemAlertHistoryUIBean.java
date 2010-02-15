@@ -36,9 +36,11 @@ import org.rhq.core.domain.measurement.util.MeasurementConverter;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.converter.SelectItemUtils;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AlertDefUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.subsystem.AlertSubsystemManagerLocal;
@@ -62,6 +64,13 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
     private String categoryFilter;
     private SelectItem[] categoryFilterItems;
 
+    private static final IntExtractor<AlertHistoryComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<AlertHistoryComposite>() {
+        
+        public int extract(AlertHistoryComposite object) {
+            return object.getAlert().getAlertDefinition().getResource().getId();
+        }
+    };
+    
     public SubsystemAlertHistoryUIBean() {
         datePattern = EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getDateTimeDisplayPreferences()
             .getDateTimeFormatTrigger();
@@ -154,13 +163,13 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
         return dataModel;
     }
 
-    private class ResultsDataModel extends PagedListDataModel<AlertHistoryComposite> {
+    private class ResultsDataModel extends ResourceNameDisambiguatingPagedListDataModel<AlertHistoryComposite> {
         public ResultsDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
         @Override
-        public PageList<AlertHistoryComposite> fetchPage(PageControl pc) {
+        public PageList<AlertHistoryComposite> fetchDataForPage(PageControl pc) {
             getDataFromRequest();
 
             String resourceFilter = getResourceFilter();
@@ -207,6 +216,10 @@ public class SubsystemAlertHistoryUIBean extends SubsystemView {
             return result;
         }
 
+        protected IntExtractor<AlertHistoryComposite> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
+        }
+        
         private void getDataFromRequest() {
             SubsystemAlertHistoryUIBean outer = SubsystemAlertHistoryUIBean.this;
             outer.resourceFilter = FacesContextUtility.getOptionalRequestParameter(FORM_PREFIX + "resourceFilter");

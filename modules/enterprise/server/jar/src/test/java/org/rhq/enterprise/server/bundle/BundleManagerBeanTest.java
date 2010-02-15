@@ -183,7 +183,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(b, bv.getBundle());
     }
 
-    @Test(enabled = false)
+    @Test(enabled = ENABLED)
     public void testfindBundleVersionsByCriteria() throws Exception {
         Bundle b1 = createBundle("one");
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
@@ -215,7 +215,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(bv2, bv);
         assertEquals(bv.getBundle(), b1);
         assertNull(bv.getDistribution());
-        assertNull(bv.getBundleDeployDefinitions());
+        assertNotNull(bv.getBundleDeployDefinitions());
+        assertTrue(bv.getBundleDeployDefinitions().isEmpty());
     }
 
     private BundleType createBundleType(String name) throws Exception {

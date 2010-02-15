@@ -38,6 +38,7 @@ import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.apache.util.AugeasNodeSearch;
 import org.rhq.plugins.apache.util.AugeasNodeValueUtil;
 
 /**
@@ -50,6 +51,9 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
     /* (non-Javadoc)
      * @see org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent#discoverResources(org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext)
      */
+    public static final String DIRECTORY_DIRECTIVE = "<Directory";
+    public static final String [] PARENT_DIRECTIVES = {"<IfModule"};
+    
     public Set<DiscoveredResourceDetails> discoverResources(
         ResourceDiscoveryContext<ApacheVirtualHostServiceComponent> context)
         throws InvalidPluginConfigurationException, Exception {
@@ -66,7 +70,8 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             return discoveredResources;
         }
 
-        List<AugeasNode> directories = tree.matchRelative(context.getParentResourceComponent().getNode(tree), "<Directory");
+        AugeasNode parentNode = context.getParentResourceComponent().getNode(tree);
+        List<AugeasNode> directories = AugeasNodeSearch.searchNode(PARENT_DIRECTIVES, DIRECTORY_DIRECTIVE, parentNode);
 
         ResourceType resourceType = context.getResourceType();
 
@@ -76,7 +81,8 @@ public class ApacheDirectoryDiscoveryComponent implements ResourceDiscoveryCompo
             int idx = node.getSeq();
             
             pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.DIRECTIVE_INDEX_PROP, idx));
-            
+            String ifmoduleParams = AugeasNodeSearch.getParamsString(node, parentNode);
+            pluginConfiguration.put(new PropertySimple(ApacheDirectoryComponent.PARAMS_PROPERTY_NAME, ifmoduleParams));
             List<AugeasNode> params = node.getChildByLabel("param");
             
             String directoryParam;

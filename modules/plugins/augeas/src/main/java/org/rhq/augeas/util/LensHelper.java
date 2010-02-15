@@ -66,6 +66,10 @@ public class LensHelper {
 	      
 	 }
 	 
+	 public static String getTempDirectoryPath(){
+           return (String)System.getProperties().get(TEMP_DIRECTORY);
+	 }
+	 
 	 public static File cpFileFromPluginToTemp(File tempDirectory,String fileName) throws IOException,Exception{
 	    	
 	    File destinationFile = new File(tempDirectory,fileName);

@@ -30,6 +30,7 @@ import org.rhq.plugins.apache.augeas.mappingImpl.MappingDirectivePerMap;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingDirectivePerMapIndex;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingDirectiveToSimpleProperty;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingParamPerMap;
+import org.rhq.plugins.apache.augeas.mappingImpl.MappingPositionToConfiguration;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingToAugeasDirectivePerMap;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingToAugeasDirectivePerMapIndex;
 import org.rhq.plugins.apache.augeas.mappingImpl.MappingToAugeasDirectiveToSimple;
@@ -88,7 +89,18 @@ public enum DirectiveMapping {
         	mapping.updateResourceConfiguration(node, configDef, config);
         }
     },
-
+    
+    POSITION_PROPERTY {
+        public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
+            AugeasToConfiguration config = new MappingPositionToConfiguration();
+            config.setTree(tree);
+            return config.loadResourceConfiguration(startNode, resourceConfigDef);
+        };
+        
+        public void mapToAugeas(AugeasTree tree, AugeasNode node, Configuration config, ConfigurationDefinition configDef){            
+        }
+    },
+    
     SIMPLE_PROP {
         public Configuration mapToConfiguration(AugeasTree tree, AugeasNode startNode, ConfigurationDefinition resourceConfigDef) {
             AugeasToConfiguration config = new MappingDirectiveToSimpleProperty();

@@ -35,16 +35,29 @@ public class BundleCriteria extends Criteria {
     private static final long serialVersionUID = 1L;
 
     private Integer filterId;
+    private Integer filterBundleTypeId; // needs override
+    private String filterBundleTypeName; // needs override    
     private String filterName;
 
     private boolean fetchBundleVersions;
 
     public BundleCriteria() {
         super(Bundle.class);
+
+        filterOverrides.put("bundleTypeId", "bundleType.id = ?");
+        filterOverrides.put("bundleTypeName", "bundleType.name like ?");
     }
 
     public void addFilterId(Integer filterId) {
         this.filterId = filterId;
+    }
+
+    public void addFilterBundleTypeId(Integer filterBundleTypeId) {
+        this.filterBundleTypeId = filterBundleTypeId;
+    }
+
+    public void addFilterBundleTypeName(String filterBundleTypeName) {
+        this.filterName = filterBundleTypeName;
     }
 
     public void addFilterName(String filterName) {

@@ -23,6 +23,8 @@
 package org.rhq.core.domain.bundle;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -35,6 +37,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -87,6 +90,9 @@ public class BundleVersion implements Serializable {
     @JoinColumn(name = "CONFIG_DEF_ID", referencedColumnName = "ID", nullable = true)
     @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private ConfigurationDefinition configurationDefinition;
+
+    @OneToMany(mappedBy = "bundleVersion", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<BundleDeployDefinition> bundleDeployDefinitions = new ArrayList<BundleDeployDefinition>();
 
     public BundleVersion() {
         // for JPA use
@@ -161,6 +167,19 @@ public class BundleVersion implements Serializable {
 
     public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
         this.configurationDefinition = configurationDefinition;
+    }
+
+    public List<BundleDeployDefinition> getBundleDeployDefinitions() {
+        return bundleDeployDefinitions;
+    }
+
+    public void addBundleDeployDefinition(BundleDeployDefinition bundleDeployDefinition) {
+        this.bundleDeployDefinitions.add(bundleDeployDefinition);
+        bundleDeployDefinition.setBundleVersion(this);
+    }
+
+    public void setBundleDeployDefinitions(List<BundleDeployDefinition> bundleDeployDefinitions) {
+        this.bundleDeployDefinitions = bundleDeployDefinitions;
     }
 
     @Override

@@ -135,11 +135,11 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
                 ApacheVirtualHostServiceComponent.RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtLogFile.toString());
             pluginConfiguration.put(rtLogProp);
 
-            String resourceName = "Virtual Host ";
+            String resourceName;
             if (serverName != null) {
-                resourceName += address.host + ":" + address.port;
+                resourceName = address.host + ":" + address.port;
             } else {
-                resourceName += resourceKey;
+                resourceName = resourceKey;
             }
 
             discoveredResources.add(new DiscoveredResourceDetails(resourceType, resourceKey, resourceName, null, null,

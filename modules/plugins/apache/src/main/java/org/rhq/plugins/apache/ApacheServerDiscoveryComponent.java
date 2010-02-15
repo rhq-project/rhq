@@ -216,8 +216,7 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
         String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
-        String hostname = discoveryContext.getSystemInformation().getHostname();
-        String name = hostname + " Apache " + version + " (" + httpdConf + ")";
+        String name = httpdConf;
 
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             httpdConf, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);

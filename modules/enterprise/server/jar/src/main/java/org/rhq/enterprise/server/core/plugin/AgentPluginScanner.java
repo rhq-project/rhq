@@ -354,8 +354,10 @@ public class AgentPluginScanner {
                         cachedPluginOnFilesystem.setVersion(version);
                         cachedPluginOnFilesystem.setMd5(md5);
                     } else {
-                        log.info("It appears that the agent plugin [" + dbPlugin
-                            + "] in the database may be obsolete. If so, it will be updated by the plugin deployer.");
+                        if (log.isDebugEnabled()) {
+                            log.debug("It appears the agent plugin [" + dbPlugin
+                                + "] in the database may be obsolete. If so, it will be updated soon.");
+                        }
                     }
                 } else {
                     log.info("Found agent plugin in the DB that we do not yet have: " + name);
@@ -369,20 +371,22 @@ public class AgentPluginScanner {
             JDBCUtil.safeClose(ps, rs);
 
             // write all our updated plugins to the file system
-            ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME
-                + " WHERE DEPLOYMENT = 'AGENT' AND NAME = ? AND ENABLED = ?");
-            for (Plugin plugin : updatedPlugins) {
-                File file = new File(this.agentPluginDeployer.getPluginDir(), plugin.getPath());
+            if (!updatedPlugins.isEmpty()) {
+                ps = conn.prepareStatement("SELECT CONTENT FROM " + Plugin.TABLE_NAME
+                    + " WHERE DEPLOYMENT = 'AGENT' AND NAME = ? AND ENABLED = ?");
+                for (Plugin plugin : updatedPlugins) {
+                    File file = new File(this.agentPluginDeployer.getPluginDir(), plugin.getPath());
 
-                ps.setString(1, plugin.getName());
-                setEnabledFlag(conn, ps, 2, true);
-                rs = ps.executeQuery();
-                rs.next();
-                InputStream content = rs.getBinaryStream(1);
-                StreamUtil.copy(content, new FileOutputStream(file));
-                rs.close();
-                file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
-                updatedFiles.add(file);
+                    ps.setString(1, plugin.getName());
+                    setEnabledFlag(conn, ps, 2, true);
+                    rs = ps.executeQuery();
+                    rs.next();
+                    InputStream content = rs.getBinaryStream(1);
+                    StreamUtil.copy(content, new FileOutputStream(file));
+                    rs.close();
+                    file.setLastModified(plugin.getMtime()); // so our file matches the database mtime
+                    updatedFiles.add(file);
+                }
             }
         } finally {
             JDBCUtil.safeClose(conn, ps, rs);

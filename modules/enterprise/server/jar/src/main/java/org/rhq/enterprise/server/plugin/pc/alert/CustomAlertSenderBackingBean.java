@@ -64,4 +64,16 @@ public class CustomAlertSenderBackingBean {
 
         return ret;
     }
+
+    protected Configuration cleanProperty(Configuration config, String propertyName) {
+
+        Configuration ret = config;
+        PropertySimple prop = config.getSimple(propertyName);
+        if (prop!=null) {
+            config.remove(propertyName);
+            ret = persistConfiguration(config);
+        }
+
+        return ret;
+    }
 }

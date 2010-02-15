@@ -193,7 +193,6 @@ public class BundleVersion implements Serializable {
         int result = 1;
         result = prime * result + ((name == null) ? 0 : name.hashCode());
         result = prime * result + ((version == null) ? 0 : version.hashCode());
-        result = prime * result + ((bundle == null) ? 0 : bundle.hashCode());
         return result;
     }
 
@@ -221,14 +220,6 @@ public class BundleVersion implements Serializable {
                 return false;
             }
         } else if (!version.equals(other.version)) {
-            return false;
-        }
-
-        if (bundle == null) {
-            if (other.bundle != null) {
-                return false;
-            }
-        } else if (!bundle.equals(other.bundle)) {
             return false;
         }
 

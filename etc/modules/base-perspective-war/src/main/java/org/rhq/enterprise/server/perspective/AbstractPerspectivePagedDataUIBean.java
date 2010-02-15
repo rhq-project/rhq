@@ -33,6 +33,9 @@ public abstract class AbstractPerspectivePagedDataUIBean extends AbstractPagedDa
 
     @Create
     public void init() {
-        this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class, true);
+        if (this.perspectiveClient == null) {
+            this.perspectiveClient = (PerspectiveClientUIBean) Component.getInstance(PerspectiveClientUIBean.class,
+                    true);
+        }
     }
 }

@@ -157,6 +157,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
+    public void deleteBundleVersions(Subject subject, int[] bundleVersionIds) {
+        for (int bundleVersionId : bundleVersionIds) {
+            BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
+            this.entityManager.remove(bundleVersion);
+        }
+    }
+
     public BundleType createMockBundleType(Subject subject) {
         ResourceType linuxPlatformResourceType = this.resourceTypeManager.getResourceTypeByNameAndPlugin("Linux",
             "Platforms");
@@ -165,15 +172,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     public Bundle createMockBundle(Subject subject, List<BundleType> bundleTypes) {
+        Random random = new Random();
         BundleType bundleType;
         if (bundleTypes.isEmpty()) {
             bundleType = createMockBundleType(subject);
         } else {
-            Random random = new Random();
             int randomIndex = random.nextInt(bundleTypes.size());
             bundleType = bundleTypes.get(randomIndex);
         }
         Bundle bundle = new Bundle(UUID.randomUUID().toString(), bundleType);
+
+        // Add 1 to 5 bundle versions.
+        int bundleVersionCount = random.nextInt(5) + 1;
+        for (int i = 0; i < bundleVersionCount; i++) {
+            String bundleVersionName = UUID.randomUUID().toString();
+            BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i), null, "blah blah blah");
+            bundle.addBundleVersion(bundleVersion);
+        }
+
         return createBundle(subject, bundle);
     }
 }

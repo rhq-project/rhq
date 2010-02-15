@@ -29,7 +29,9 @@ import javax.jws.soap.SOAPBinding;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.system.ServerVersion;
@@ -49,5 +51,9 @@ public interface BundleManagerRemote {
 
     PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 
+    PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria);
+
     void deleteBundles(Subject subject, int[] bundleIds);
+
+    void deleteBundleVersions(Subject subject, int[] bundleVersionIds);
 }

@@ -65,4 +65,6 @@ public interface BundleManagerLocal {
     List<BundleType> getAllBundleTypes(Subject subject);
 
     void deleteBundles(Subject subject, int[] bundleIds);
+
+    void deleteBundleVersions(Subject subject, int[] bundleVersionIds);
 }

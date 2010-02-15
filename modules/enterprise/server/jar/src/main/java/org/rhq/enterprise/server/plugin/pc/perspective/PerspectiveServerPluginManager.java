@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.management.MBeanException;
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.naming.Context;
@@ -106,29 +107,25 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
                 }
             }
         } catch (Exception e) {
-            getLog().error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, e);
+            Throwable t = (e instanceof MBeanException) ? e.getCause() : e;
+            log.error("Failed to deploy " + env.getPluginKey().getPluginName() + "#" + name, t);
         }
     }
 
-    private void deployWar(ServerPluginEnvironment env, String name, InputStream iStream) {
-        try {
-            // Save the war file to the plugins data directory. This survives restarts and will
-            // act as our deploy directory.
-            File deployFile = writeWarToFile(getDeployFile(env, name), iStream);
+    private void deployWar(ServerPluginEnvironment env, String name, InputStream iStream) throws Exception {        
+        // Save the war file to the plugins data directory. This survives restarts and will
+        // act as our deploy directory.
+        File deployFile = writeWarToFile(getDeployFile(env, name), iStream);
 
-            // get reference to MBean server
-            Context ic = new InitialContext();
-            MBeanServerConnection server = (MBeanServerConnection) ic.lookup("jmx/invoker/RMIAdaptor");
+        // get reference to MBean server
+        Context ic = new InitialContext();
+        MBeanServerConnection server = (MBeanServerConnection) ic.lookup("jmx/invoker/RMIAdaptor");
 
-            // get reference to MainDeployer MBean
-            ObjectName mainDeployer = new ObjectName("jboss.system:service=MainDeployer");
+        // get reference to MainDeployer MBean
+        ObjectName mainDeployer = new ObjectName("jboss.system:service=MainDeployer");
 
-            server.invoke(mainDeployer, "deploy", new Object[] { deployFile.getAbsolutePath() },
-                new String[] { String.class.getName() });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        server.invoke(mainDeployer, "deploy", new Object[] { deployFile.getAbsolutePath() },
+            new String[] { String.class.getName() });
     }
 
     private File getDeployFile(ServerPluginEnvironment env, String name) throws IOException {
@@ -260,5 +257,4 @@ public class PerspectiveServerPluginManager extends ServerPluginManager {
             log.error("Failed to undeploy perspective WAR [" + deployFile + "].", e);
         }
     }
-
 }

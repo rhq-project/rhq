@@ -11,12 +11,11 @@
         xmlns:a4j="http://richfaces.org/a4j"
         xmlns:rich="http://richfaces.org/rich"
         xmlns:rhq="http://rhq-project.org/rhq"
-        xmlns:onc="http://jboss.org/on/component">
-
-    <ui:param name="pageTitle" value="Provisioning Bundles"/>
+        xmlns:onc="http://jboss.org/on/component">    
 
     <ui:define name="breadcrumbs">
-        <h:outputText value="Provisioning Bundles"/>
+        Administration &gt;
+        Provisioning Bundles
     </ui:define>
 
     <ui:define name="body">
@@ -40,14 +39,14 @@
 
                 <rich:column width="235">
                     <f:facet name="header">
-                        <rhq:sortableColumnHeader sortBy="b.name">
+                        <rhq:sortableColumnHeader sortBy="Bundle.name">
                             <a4j:support event="onclick"
                                          actionListener="#{BundlesUIBean.ajaxSortListener}"/>
                             <h:outputText value="Name"/>
                         </rhq:sortableColumnHeader>
                     </f:facet>
 
-                    <h:outputLink value="bundleVersions.seam">
+                    <h:outputLink value="bundleDetails.seam">
                         <f:param name="bundleId" value="#{bundle.id}"/>
                         <h:outputText value="#{bundle.name}"/>
                     </h:outputLink>
@@ -55,7 +54,7 @@
 
                 <rich:column>
                     <f:facet name="header">
-                        <rhq:sortableColumnHeader sortBy="b.bundleType.name">
+                        <rhq:sortableColumnHeader sortBy="Bundle.bundleType.name">
                             <a4j:support event="onclick"
                                          actionListener="#{BundlesUIBean.ajaxSortListener}"/>
                             <h:outputText value="Type"/>

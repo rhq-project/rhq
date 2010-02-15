@@ -19,7 +19,7 @@
    <!-- Administration > Provisioning -->
    <menu-item
       name="administration.provisioning"
-      displayName="Provisioning"
+      displayName="Provisioning Bundles"
       application="policy"
       url="bundles.seam">
       <position

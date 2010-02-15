@@ -99,12 +99,14 @@ public class PerspectivePluginMetadataManager {
         // TODO: Init lists of global tasks and resource tasks.
         this.pageLinks = new ArrayList<PageLink>();
 
-        // Always process the Core perspective first as other perspectives may remove extensions it defines.
-        processCorePerspective();
-        processNonCorePerspectives();
-
-        this.isStarted = true;
-        this.lastModifiedTime = System.currentTimeMillis();
+        // Always process the Core perspective first, as other perspectives may remove extensions it defines.
+        try {
+            processCorePerspective();
+            processNonCorePerspectives();
+        } finally {
+            this.isStarted = true;
+            this.lastModifiedTime = System.currentTimeMillis();
+        }
     }
 
     public synchronized void stop() {
@@ -119,24 +121,26 @@ public class PerspectivePluginMetadataManager {
     private void processCorePerspective() {
         PerspectivePluginDescriptorType corePerspectiveDescriptor = this.loadedPlugins.get(CORE_PERSPECTIVE_NAME);
         if (corePerspectiveDescriptor == null) {
-            throw new IllegalStateException("Core perspective must be loaded. Invalid startup. Load: "
-                + CORE_PERSPECTIVE_NAME);
+            throw new IllegalStateException("Core perspective is required but is missing.");
         }
-        processPerspective(corePerspectiveDescriptor);
-
-        // TODO: remove this debug code
-        //printMenu(this.menu, "");
+        try {
+            processPerspective(corePerspectiveDescriptor);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to load core perspective.", e);
+        }
     }
 
     private void processNonCorePerspectives() {
-        for (String key : this.loadedPlugins.keySet()) {
-            if (!CORE_PERSPECTIVE_NAME.equals(key)) {
-                processPerspective(this.loadedPlugins.get(key));
+        for (String perspectiveName : this.loadedPlugins.keySet()) {
+            if (!CORE_PERSPECTIVE_NAME.equals(perspectiveName)) {
+                PerspectivePluginDescriptorType pluginDescriptor = this.loadedPlugins.get(perspectiveName);
+                try {
+                    processPerspective(pluginDescriptor);
+                } catch (Exception e) {
+                    log.error("Failed to load perspective [" + perspectiveName + "].", e);
+                }
             }
         }
-
-        // TODO: remove this debug code
-        //printMenu(this.menu, "");
     }
 
     private void processPerspective(PerspectivePluginDescriptorType perspective) {

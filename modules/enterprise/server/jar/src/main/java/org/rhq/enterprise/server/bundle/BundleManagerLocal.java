@@ -41,18 +41,17 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface BundleManagerLocal {
-
     Bundle createBundle(Subject subject, Bundle b);
 
     BundleType createBundleType(Subject subject, BundleType bundleType);
 
     BundleVersion createBundleVersion(Subject subject, BundleVersion bundleVersion);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
-    // The following are shared with the Remote Interface
+    // The remaining methods are shared with the Remote Interface.
     //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     PageList<BundleDeployDefinition> findBundleDeployDefinitionsByCriteria(Subject subject,
         BundleDeployDefinitionCriteria criteria);
@@ -64,4 +63,6 @@ public interface BundleManagerLocal {
     PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 
     List<BundleType> getAllBundleTypes(Subject subject);
+
+    void deleteBundles(Subject subject, int[] bundleIds);
 }

@@ -50,9 +50,12 @@ import javax.xml.bind.annotation.XmlAccessorType;
  */
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = Bundle.QUERY_FIND_ALL, query = "SELECT b FROM Bundle b"), //
-    @NamedQuery(name = Bundle.QUERY_FIND_BY_TYPE_AND_NAME, query = "SELECT b FROM Bundle b WHERE " +
-            "(:type = b.bundleType.name OR :type IS NULL) AND (:name = b.name OR :name IS NULL)")
+    // Below queries primarily used for domain test code.    
+    @NamedQuery(name = Bundle.QUERY_FIND_ALL, query = "SELECT b FROM Bundle b"), //    
+    @NamedQuery(name = Bundle.QUERY_FIND_BY_NAME, query = "SELECT b FROM Bundle b WHERE :name = b.name"),
+    @NamedQuery(name = Bundle.QUERY_FIND_BY_TYPE_AND_NAME, query = "SELECT b FROM Bundle b WHERE "
+        + "(:type = b.bundleType.name OR :type IS NULL) AND (:name = b.name OR :name IS NULL)")
+
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_BUNDLE_ID_SEQ")
 @Table(name = "RHQ_BUNDLE")
@@ -61,6 +64,7 @@ public class Bundle implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "Bundle.findAll";
+    public static final String QUERY_FIND_BY_NAME = "Bundle.findByName";
     public static final String QUERY_FIND_BY_TYPE_AND_NAME = "Bundle.findByTypeAndName";
 
     @Column(name = "ID", nullable = false)

@@ -144,12 +144,9 @@
                         </h:panelGroup>
                     </h:panelGrid>
 
-                    <!-- Temp -->
                     <br /><br />
-                    <h:outputLink id="editConditionsLink" styleClass="buttonmed" value="/alerts/Config.do">
-                        <f:param name="mode" value="editConditions" />
+                    <h:outputLink id="editConditionsLink" styleClass="buttonmed" value="listConditions.xhtml">
                         <f:param name="ad" value="#{param.ad}" />
-                        <f:param name="id" value="#{alertDefinition.resource.id}" />
 
                         <h:outputText value="Edit Alert Conditions" />
                     </h:outputLink>

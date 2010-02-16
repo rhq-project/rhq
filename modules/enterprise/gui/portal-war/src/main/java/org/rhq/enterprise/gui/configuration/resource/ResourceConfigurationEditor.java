@@ -150,8 +150,16 @@ public class ResourceConfigurationEditor extends ResourceConfigurationViewer imp
         ConfigurationMaskingUtility.unmaskConfiguration(resourceConfiguration, resourceConfigurationDefinition);
 
         try {
-            AbstractResourceConfigurationUpdate updateRequest = configurationMgr.updateStructuredOrRawConfiguration(
-                loggedInUser.getSubject(), resourceId, resourceConfiguration, isStructuredMode());
+            AbstractResourceConfigurationUpdate updateRequest;
+
+            if (isStructuredAndRawSupported()) {
+                updateRequest = configurationMgr.updateStructuredOrRawConfiguration(loggedInUser.getSubject(),
+                    resourceId, resourceConfiguration, isStructuredMode());                
+            }
+            else {
+                updateRequest = configurationMgr.updateResourceConfiguration(loggedInUser.getSubject(),
+                    resourceId, resourceConfiguration);
+            }
 
             clearErrors();
 

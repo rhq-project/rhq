@@ -128,9 +128,7 @@
            <module>hosts</module>
            <module>cobbler</module>
            <module>sudoers</module>
-           <module>hudson</module>
            <module>netservices</module>
-           <module>perftest</module>
            <module>samba</module>
            <module>postfix</module>
            <module>aliases</module>

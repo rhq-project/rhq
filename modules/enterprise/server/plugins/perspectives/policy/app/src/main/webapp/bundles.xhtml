@@ -69,7 +69,8 @@
                         <rich:column colspan="3">
                             <rhq:selectedRowsCommandButton
                                     value="DELETE"
-                                    action="#{BundlesUIBean.deleteSelectedBundles}"/>
+                                    action="#{BundlesUIBean.deleteSelectedBundles}"
+                                    rendered="#{BundlesUIBean.dataModel.rowCount gt 0}"/>
 
                             <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                                 <ui:param name="pagedDataUIBean" value="#{BundlesUIBean}"/>

@@ -23,20 +23,22 @@
 
     <ui:define name="body">
 
-        <div><h:panelGroup layout="block" rendered="#{ServerInfoUIBean.debugModeEnabled}">
-            <b>Id:</b> #{bundle.id}
-        </h:panelGroup></div>
-        <div><h:panelGroup layout="block">
-            <b>Name:</b> #{bundle.name}
-        </h:panelGroup></div>
-        <div><h:panelGroup layout="block">
-            <b>Type:</b> #{bundle.bundleType.name}
-        </h:panelGroup></div>
+        <rich:panel>
+            <div><h:panelGroup layout="block" rendered="#{ServerInfoUIBean.debugModeEnabled}">
+                <b>Id:</b> #{bundle.id}
+            </h:panelGroup></div>
+            <div><h:panelGroup layout="block">
+                <b>Name:</b> #{bundle.name}
+            </h:panelGroup></div>
+            <div><h:panelGroup layout="block">
+                <b>Type:</b> #{bundle.bundleType.name}
+            </h:panelGroup></div>
+        </rich:panel>
         
         <ui:remove><!-- NOTE: The table needs to be surrounded by a form for paging and sorting to work! --></ui:remove>
         <a4j:form ajaxSubmit="false" reRender="bundlesVersionsDataTable">
 
-            <f:param name="bundleId" value="#{bundleId}"/>
+            <f:param name="bundleId" value="#{param.bundleId}"/>
             
             <rich:dataTable id="bundleVersionsDataTable"
                             value="#{BundleDetailsUIBean.dataModel}" var="bundleVersion"
@@ -77,7 +79,7 @@
                         </rhq:sortableColumnHeader>
                     </f:facet>
 
-                    <h:outputLink value="bundleDeploymentDefinitions.seam">
+                    <h:outputLink value="bundleVersionDetails.seam">
                         <f:param name="bundleVersionId" value="#{bundleVersion.id}"/>
                         <h:outputText value="#{bundleVersion.name}"/>
                     </h:outputLink>
@@ -88,7 +90,8 @@
                         <rich:column colspan="3">
                             <rhq:selectedRowsCommandButton
                                     value="DELETE"
-                                    action="#{BundleDetailsUIBean.deleteSelectedBundleVersions}"/>
+                                    action="#{BundleDetailsUIBean.deleteSelectedBundleVersions}"
+                                    rendered="#{BundleDetailsUIBean.dataModel.rowCount gt 0}"/>
 
                             <ui:include src="/WEB-INF/includes/pageControls.xhtml">
                                 <ui:param name="pagedDataUIBean" value="#{BundleDetailsUIBean}"/>

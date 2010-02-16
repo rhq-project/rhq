@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2010 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -55,6 +55,7 @@ import org.rhq.enterprise.server.util.CriteriaQueryRunner;
  * Manages the creation and usage of bundles.
  *
  * @author John Mazzitelli
+ * @author Ian Springer
  */
 @Stateless
 public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemote {
@@ -182,14 +183,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
         Bundle bundle = new Bundle(UUID.randomUUID().toString(), bundleType);
 
+        bundle = createBundle(subject, bundle);
+
         // Add 1 to 5 bundle versions.
         int bundleVersionCount = random.nextInt(5) + 1;
         for (int i = 0; i < bundleVersionCount; i++) {
             String bundleVersionName = UUID.randomUUID().toString();
-            BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i), null, "blah blah blah");
+            final String RECIPE = "repo rhel-x86_64-5\n" +
+                "package foo-1.25.rpm\n" +
+                "package bar-1.25.rpm\n" +
+                "script foo.bash -c some parameter\n" +
+                "deploy jboss.tar %{jboss.home.directory}\n" +
+                "realize %{jboss.home.directory}/server/default/setting.xml\n" +
+                "file example.setting /etc/some/setting.ini\n" +
+                "service example restart\n";
+            BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i + 1), null, RECIPE);
             bundle.addBundleVersion(bundleVersion);
         }
 
-        return createBundle(subject, bundle);
+        bundle = entityManager.merge(bundle);
+        return bundle;
     }
 }

@@ -26,8 +26,9 @@ import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.international.StatusMessage;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleVersion;
-import org.rhq.core.domain.criteria.BundleCriteria;
+import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -41,28 +42,32 @@ import org.rhq.enterprise.server.perspective.PerspectiveClientUIBean;
 import java.util.List;
 
 /**
- * Provides details about a particular provisioning {@link Bundle bundle}, including CRUD operations on
- * the {@link org.rhq.core.domain.bundle.BundleVersion version}s defined for that bundle. The backing bean for
- * bundleDetails.xhtml.
+ * Provides details about a particular {@link org.rhq.core.domain.bundle.BundleVersion version} of a provisioning
+ * bundle, including CRUD operations on the {@link org.rhq.core.domain.bundle.BundleDeployDefinition deployment
+ * definition}s defined for that bundle version. The backing bean for bundleVersionDetails.xhtml.
  *
  * @author Ian Springer
  */
-@Name("BundleDetailsUIBean")
+@Name("BundleVersionDetailsUIBean")
 @Scope(ScopeType.EVENT)
 @KeepAlive
-public class BundleDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
-    private List<BundleVersion> selectedBundleVersions;
+public class BundleVersionDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
+    private List<BundleDeployDefinition> selectedBundleDeployDefinitions;
 
     @RequestParameter
-    private int bundleId;
+    private int bundleVersionId;
 
-    private Bundle bundle;
+    private BundleVersion bundleVersion;
+
+    public BundleVersion getBundleVersion() {
+        if (this.bundleVersion == null) {
+            this.bundleVersion = loadBundleVersion();
+        }
+        return this.bundleVersion;
+    }
 
     public Bundle getBundle() {
-        if (this.bundle == null) {
-            this.bundle = loadBundle();
-        }
-        return this.bundle;
+        return getBundleVersion().getBundle();
     }
 
     @Override
@@ -70,15 +75,15 @@ public class BundleDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
         return new DataModel(this);
     }
 
-    public List<BundleVersion> getSelectedBundleVersions() {
-        return this.selectedBundleVersions;
+    public List<BundleDeployDefinition> getSelectedBundleDeployDefinitions() {
+        return this.selectedBundleDeployDefinitions;
     }
 
-    public void setSelectedBundleVersions(List<BundleVersion> selectedBundleVersions) {
-        this.selectedBundleVersions = selectedBundleVersions;
+    public void setSelectedBundleDeployDefinitions(List<BundleDeployDefinition> selectedBundleDeployDefinitions) {
+        this.selectedBundleDeployDefinitions = selectedBundleDeployDefinitions;
     }
 
-    public void deleteSelectedBundles() throws Exception {
+    public void deleteSelectedBundleDeployDefinitions() throws Exception {
         RemoteClient remoteClient;
         Subject subject;
         try {
@@ -92,24 +97,24 @@ public class BundleDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
         // ***NOTE***: The javassist.NotFoundException stack traces that are logged by this call can be ignored.
         BundleManagerRemote bundleManager = remoteClient.getBundleManagerRemote();
 
-        int[] selectedBundleVersionIds = new int[this.selectedBundleVersions.size()];
-        for (int i = 0, selectedBundlesSize = this.selectedBundleVersions.size(); i < selectedBundlesSize; i++) {
-            BundleVersion selectedBundleVersion = this.selectedBundleVersions.get(i);
-            selectedBundleVersionIds[i] = selectedBundleVersion.getId();
+        int[] selectedBundleDeployDefinitionIds = new int[this.selectedBundleDeployDefinitions.size()];
+        for (int i = 0, selectedBundlesSize = this.selectedBundleDeployDefinitions.size(); i < selectedBundlesSize; i++) {
+            BundleDeployDefinition selectedBundleDeployDefinition = this.selectedBundleDeployDefinitions.get(i);
+            selectedBundleDeployDefinitionIds[i] = selectedBundleDeployDefinition.getId();
         }
 
-        bundleManager.deleteBundleVersions(subject, selectedBundleVersionIds);
+        //bundleManager.deleteBundleDeploymentDefinitions(subject, selectedBundleDeploymentDefinitionsIds);
 
         // Add message to tell the user the uninventory was a success.
-        String pluralizer = (this.selectedBundleVersions.size() == 1) ? "" : "s";
-        this.facesMessages.add("Deleted " + this.selectedBundleVersions.size() + " bundle version" + pluralizer + ".");
+        String pluralizer = (this.selectedBundleDeployDefinitions.size() == 1) ? "" : "s";
+        this.facesMessages.add("Deleted " + this.selectedBundleDeployDefinitions.size() + " bundle deployment definition" + pluralizer + ".");
 
         // Reset the data model, so the current page will get refreshed to reflect the Resources we just uninventoried.
         // This is essential, since we are CONVERSATION-scoped and will live on beyond this request.
         setDataModel(null);
     }
 
-    private Bundle loadBundle() {
+    private BundleVersion loadBundleVersion() {
         BundleManagerRemote bundleManager;
         Subject subject;
         try {
@@ -118,40 +123,41 @@ public class BundleDetailsUIBean extends AbstractPerspectivePagedDataUIBean {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        BundleCriteria bundleCriteria = new BundleCriteria();
-        bundleCriteria.addFilterId(this.bundleId);
-        PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, bundleCriteria);
-        if (bundles.isEmpty()) {
-            throw new IllegalStateException("Bundle with id " + this.bundleId + " not found.");
+        BundleVersionCriteria bundleVersionCriteria = new BundleVersionCriteria();
+        bundleVersionCriteria.addFilterId(this.bundleVersionId);
+        PageList<BundleVersion> bundleVersions = bundleManager.findBundleVersionsByCriteria(subject, bundleVersionCriteria);
+        if (bundleVersions.isEmpty()) {
+            throw new IllegalStateException("Bundle version with id " + this.bundleVersionId + " not found.");
         }
-        return bundles.get(0);
+        return bundleVersions.get(0);
     }
 
-    private class DataModel extends PagedListDataModel<BundleVersion> {
+    private class DataModel extends PagedListDataModel<BundleDeployDefinition> {
         private DataModel(AbstractPagedDataUIBean pagedDataBean) {
             super(pagedDataBean);
         }
 
         @Override
-        public PageList<BundleVersion> fetchPage(PageControl pageControl) {
-            PerspectiveClientUIBean perspectiveClient = BundleDetailsUIBean.this.perspectiveClient;
+        public PageList<BundleDeployDefinition> fetchPage(PageControl pageControl) {
+            PerspectiveClientUIBean perspectiveClient = BundleVersionDetailsUIBean.this.perspectiveClient;
             BundleManagerRemote bundleManager;
             Subject subject;
             try {
                 bundleManager = perspectiveClient.getRemoteClient().getBundleManagerRemote();
-                subject = BundleDetailsUIBean.this.perspectiveClient.getSubject();
+                subject = BundleVersionDetailsUIBean.this.perspectiveClient.getSubject();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
 
-            BundleVersionCriteria bundleVersionCriteria = new BundleVersionCriteria();
-            bundleVersionCriteria.setPageControl(pageControl);
-            String bundleName = BundleDetailsUIBean.this.getBundle().getName();            
-            bundleVersionCriteria.addFilterBundleName(bundleName);
+            BundleDeployDefinitionCriteria bundleDeployDefinitionCriteria = new BundleDeployDefinitionCriteria();
+            bundleDeployDefinitionCriteria.setPageControl(pageControl);
+            // TODO
+            //bundleDeployDefinitionCriteria.addFilterVersionId(BundleVersionDetailsUIBean.this.bundleVersionId);
+            bundleDeployDefinitionCriteria.fetchBundle(true);
             // TODO: Implement user-specified filters.
-            PageList<BundleVersion> bundleVersions = bundleManager.findBundleVersionsByCriteria(subject,
-                    bundleVersionCriteria);
-            return bundleVersions;
+            PageList<BundleDeployDefinition> bundleDeployDefinitions = bundleManager.findBundleDeployDefinitionsByCriteria(subject,
+                    bundleDeployDefinitionCriteria);
+            return bundleDeployDefinitions;
         }
     }
 }

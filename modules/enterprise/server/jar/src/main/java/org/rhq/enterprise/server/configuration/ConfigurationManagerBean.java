@@ -20,12 +20,11 @@ package org.rhq.enterprise.server.configuration;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -59,7 +58,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.Property;
-import org.rhq.core.domain.configuration.RawConfiguration;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.configuration.composite.ConfigurationUpdateComposite;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -978,35 +976,44 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     public ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException {
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException {
 
         Configuration configToUpdate = newConfiguration;
 
         if (isStructuredAndRawSupported(resourceId)) {
-            configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration,
-            fromStructured);
+            configToUpdate = translateResourceConfiguration(subject, resourceId, newConfiguration, fromStructured);
+        }
+        try {
+            Configuration invalidConfig = validateResourceConfiguration(subject, resourceId, newConfiguration,
+                fromStructured);
+            if (null != invalidConfig) {
+                Resource resource = resourceManager.getResourceById(subject, resourceId);
+                ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                    invalidConfig, subject.getName());
+                resourceConfigurationUpdate.setErrorMessage("resource.validation.failed");
+                resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+                
+                return resourceConfigurationUpdate;
+            }
+        } catch (PluginContainerException e) {
+            Resource resource = resourceManager.getResourceById(subject, resourceId);
+            ResourceConfigurationUpdate resourceConfigurationUpdate = new ResourceConfigurationUpdate(resource,
+                newConfiguration, subject.getName());
+            resourceConfigurationUpdate.setErrorMessage(e.getMessage());
+            resourceConfigurationUpdate.setStatus(ConfigurationUpdateStatus.FAILURE);
+            return resourceConfigurationUpdate;
         }
 
-	if (isRawSupported(resourceId)){
-	    try{
-	    validateResourceConfiguration(subject, resourceId, newConfiguration,false);
-	    } catch(PluginContainerException e){
-		ResourceConfigurationUpdate response = new ResourceConfigurationUpdate(null, newConfiguration, subject.getName());
-		response.setErrorMessage(e.getMessage());
-		response.setStatus(ConfigurationUpdateStatus.UNSENT);
-		return response;
-	    } 
-	}
-
-        ResourceConfigurationUpdate newUpdate =
-            configurationManager.persistNewResourceConfigurationUpdateHistory(subject, resourceId, configToUpdate,
-                ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
+        ResourceConfigurationUpdate newUpdate = configurationManager.persistNewResourceConfigurationUpdateHistory(
+            subject, resourceId, configToUpdate, ConfigurationUpdateStatus.INPROGRESS, subject.getName(), false);
         executeResourceConfigurationUpdate(newUpdate, fromStructured);
         return newUpdate;
     }
-    private void validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,boolean isStructured) throws PluginContainerException {
-     Resource resource = entityManager.find(Resource.class, resourceId);
+
+    private Configuration validateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
+        boolean isStructured) throws PluginContainerException {
+        Resource resource = entityManager.find(Resource.class, resourceId);
         if (resource == null) {
             throw new NoResultException("Cannot get live configuration for unknown resource [" + resourceId + "]");
         }
@@ -1017,16 +1024,16 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         Agent agent = resource.getAgent();
         AgentClient agentClient = this.agentManager.getAgentClient(agent);
         ConfigurationAgentService configService = agentClient.getConfigurationAgentService();
-        configService.validate(configuration, resourceId, isStructured);
+        return configService.validate(configuration, resourceId, isStructured);
     }
 
     private boolean isRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
         ConfigurationDefinition configDef = resource.getResourceType().getResourceConfigurationDefinition();
 
-        return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef.getConfigurationFormat()));
+        return (ConfigurationFormat.STRUCTURED_AND_RAW == configDef.getConfigurationFormat() || (ConfigurationFormat.RAW == configDef
+            .getConfigurationFormat()));
     }
-
 
     private boolean isStructuredAndRawSupported(int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
@@ -1041,10 +1048,10 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         throws ResourceNotFoundException {
 
         if (isStructuredAndRawSupported(resourceId)) {
-            throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that " +
-                "supports both structured and raw configuration using this method because there is insufficient " +
-                "information. You should instead call updateStructuredOrRawConfiguration() which requires you " +
-                "whether the structured or raw was updated.");
+            throw new ConfigurationUpdateNotSupportedException("Cannot update a resource configuration that "
+                + "supports both structured and raw configuration using this method because there is insufficient "
+                + "information. You should instead call updateStructuredOrRawConfiguration() which requires you "
+                + "whether the structured or raw was updated.");
         }
 
         // must do this in a separate transaction so it is committed prior to sending the agent request
@@ -1101,8 +1108,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
         if (isStructuredAndRawSupported(resourceId)) {
             updateStructuredOrRawConfiguration(subject, resourceId, configuration, false);
-        }
-        else {
+        } else {
             updateResourceConfiguration(subject, resourceId, configuration);
         }
     }
@@ -1934,8 +1940,8 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         boolean fromStructured) {
 
         if (!isStructuredAndRawSupported(resourceId)) {
-            throw new TranslationNotSupportedException("The translation operation is only supported for " +
-                "configurations that support both structured and raw.");
+            throw new TranslationNotSupportedException("The translation operation is only supported for "
+                + "configurations that support both structured and raw.");
         }
 
         Resource resource = entityManager.find(Resource.class, resourceId);

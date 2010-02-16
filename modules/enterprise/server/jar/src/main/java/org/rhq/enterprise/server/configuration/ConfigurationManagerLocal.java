@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.configuration;
 
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
+
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -96,9 +99,9 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
-    
+
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
-            boolean fromStructured) throws Exception;
+        boolean fromStructured) throws Exception;
 
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
@@ -472,8 +475,8 @@ public interface ConfigurationManagerLocal {
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException;
 
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 

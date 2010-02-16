@@ -10,32 +10,20 @@
 
     
     <component name="org.jboss.seam.core.init">
-        <property name="debug">false</property> <!-- enable only when needed -->
+        <property name="debug">true</property> <!-- enable only when needed -->
         <property name="transactionManagementEnabled">false</property>
-        <property name="jndi-pattern">rhq/#{ejbName}/local</property>
+        <property name="jndiPattern">rhq/#{ejbName}/local</property>
     </component>
 
 
-    <component class="org.jboss.seam.web.MultipartFilter">
-       <property name="createTempFiles">true</property>
-       <property name="maxRequestSize">1000000</property>
-       <property name="urlPattern">*.xhtml</property>
-    </component>
-
-  <component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"
-             name="ExistingResourceConfigurationViewUIBean"
-             scope="page"/>
-
-  <component class="org.rhq.enterprise.gui.configuration.resource.ExistingResourceConfigurationUIBean"
-             name="ExistingResourceConfigurationUIBean"
-             scope="session"/>
-
-  <!-- Load i18n bundles -->
+    <!-- Load i18n bundles -->
     <core:resource-loader>
         <core:bundle-names>
             <value>messages</value>
             <value>ApplicationResources</value>
         </core:bundle-names>
-    </core:resource-loader> 
+    </core:resource-loader>
+
+  <core:manager conversation-timeout="180000" concurrent-request-timeout="10000"/>
 
 </components>

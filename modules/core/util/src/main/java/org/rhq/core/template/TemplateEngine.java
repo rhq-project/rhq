@@ -1,10 +1,16 @@
 package org.rhq.core.template;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TemplateEngine {
+public class TemplateEngine implements Serializable{
+    /**
+     * 
+     */
+    private static final long serialVersionUID = -6490715202402123042L;
+
     private final Map<String, String> tokens;
 
     /**

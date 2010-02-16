@@ -3,43 +3,57 @@
 
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:c="http://java.sun.com/jstl/core"
                 xmlns:h="http://java.sun.com/jsf/html"
                 xmlns:f="http://java.sun.com/jsf/core"
                 xmlns:a4j="http://richfaces.org/a4j"
                 xmlns:rich="http://richfaces.org/rich">
 
-  <f:subview id="modalEditorSubview">
-    <rich:modalPanel id="modalEditor" width="800" height="600">
-      <f:facet name="header">
-        <h:panelGroup>
-          <h:outputText value="#{ExistingResourceConfigurationUIBean.modalEditorHeader}"/>          
-        </h:panelGroup>
-      </f:facet>
-      <f:facet name="controls">
-        <h:panelGroup>
-          <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hidelink"/>
-          <rich:componentControl for="modalEditor" attachTo="hidelink" operation="hide" event="onclick"/>
-        </h:panelGroup>
-      </f:facet>
-      <rich:panel style="margin-left:1px; border: none;">
-        <h:inputTextarea id="modalFileContents"
-                         style="width:100%; height:100%; overflow:visible;"
-                         rows="30"
-                         cols="30"
-                         value="#{ExistingResourceConfigurationUIBean.modalEditorContents}"
-                         readonly="false"/>
-      </rich:panel>
-      <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
-        <h:panelGroup style="text-align:right">
-          <a4j:commandButton value="Save"
-                             action="#{ExistingResourceConfigurationUIBean.saveModalEditorContents}"
-                             reRender="fileContents,fileMenu"
-                             styleClass="buttonmed"
-                             onclick="#{rich:component('modalEditor')}.hide()"/>
-          <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>
-        </h:panelGroup>
-      </h:panelGrid>
-    </rich:modalPanel>
-  </f:subview>
+  <c:if test="${empty readOnly}">
+    <c:set var="readOnly" value="true"/>
+  </c:if>
+
+  <c:choose>
+    <c:when test="#{readOnly}">
+      <c:set var="editor" value="#{configurationViewer}"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="editor" value="#{configurationEditor}"/>
+    </c:otherwise>
+  </c:choose>
+
+  <rich:modalPanel id="modalEditor" width="800" height="600" rendered="#{editor.renderModalEditor}">
+    <f:facet name="header">
+      <h:panelGroup>
+        <h:outputText value="#{editor.modalEditorHeader}" styleClass="rawConfigFileHeader"/>
+      </h:panelGroup>
+    </f:facet>
+    <f:facet name="controls">
+      <h:panelGroup>
+        <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hideModalEditorLink"/>
+        <rich:componentControl for="modalEditor" attachTo="hideModalEditorLink" operation="hide" event="onclick"/>
+      </h:panelGroup>
+    </f:facet>
+    <rich:panel style="margin-left:1px; border: none;">
+      <h:inputTextarea id="modalFileContents"
+                       styleClass="rawConfigFileContents"
+                       style="width:100%; height:100%; overflow:visible;"
+                       rows="30"
+                       cols="30"
+                       value="#{editor.modalEditorContents}"
+                       readonly="#{readOnly}"/>
+    </rich:panel>
+    <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
+      <h:panelGroup style="text-align:right">
+        <a4j:commandButton value="Save"
+                           action="#{configurationEditor.applyModalEditContents}"
+                           rendered="#{!readOnly}"
+                           reRender="fileContents,fileMenuPanel,lowerChangedFilesLabel,upperChangedFilesLabel"
+                           styleClass="buttonmed"
+                           onclick="#{rich:component('modalEditor')}.hide()"/>
+        <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>
+      </h:panelGroup>
+    </h:panelGrid>
+  </rich:modalPanel>
 
 </ui:composition>

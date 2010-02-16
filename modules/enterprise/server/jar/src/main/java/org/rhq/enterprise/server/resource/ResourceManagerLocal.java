@@ -437,6 +437,9 @@ public interface ResourceManagerLocal {
 
     PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
 
+    Resource getPlaformOfResource(Subject subject, int resourceId);
+
+    
     Resource getParentResource(Subject subject, int resourceId);
 
     /**

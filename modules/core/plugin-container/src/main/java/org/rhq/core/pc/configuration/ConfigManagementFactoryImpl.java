@@ -28,7 +28,10 @@ import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.domain.configuration.definition.ConfigurationFormat;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceFacets;
+import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pc.util.ComponentService;
+import org.rhq.core.pc.util.ComponentUtil;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -55,6 +58,7 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
         configManagement.setConfigurationUtilityService(configUtilityService);
     }
 
+    @SuppressWarnings("unchecked")
     private ConfigManagement createStrategy(int resourceId) throws PluginContainerException {
         ResourceType resourceType = componentService.getResourceType(resourceId);
         ConfigurationFormat format = resourceType.getResourceConfigurationDefinition().getConfigurationFormat();
@@ -70,12 +74,8 @@ public class ConfigManagementFactoryImpl implements ConfigManagementFactory {
             return new StructuredAndRawConfigManagement();
         case STRUCTURED:
         default:
-            boolean daemonOnly = true;
-            boolean onlyIfStarted = true;
-            ResourceComponent resourceComponent = componentService.getComponent(resourceId,
-                ResourceComponent.class, FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT,
-                daemonOnly, onlyIfStarted);
-            if (resourceComponent instanceof ResourceConfigurationFacet){
+            
+            if (componentService.fetchResourceComponent(resourceId) instanceof ResourceConfigurationFacet){
                 return new StructuredConfigManagement();
             } else{
                 return new LegacyConfigManagement();

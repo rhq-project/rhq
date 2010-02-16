@@ -111,7 +111,7 @@ public class ApplicationServerOperationsDelegate {
 			ApplicationServerComponent serverComponent, SystemInfo systemInfo) {
 		this.serverComponent = serverComponent;
 		this.resourceContext = serverComponent.getResourceContext();
-		this.pluginConfig = resourceContext.getPluginConfiguration();
+		this.pluginConfig = this.resourceContext.getPluginConfiguration();
 		this.systemInfo = systemInfo;
 	}
 
@@ -284,7 +284,7 @@ public class ApplicationServerOperationsDelegate {
 			throw new IllegalStateException(
 					"The '"
 							+ ApplicationServerPluginConfigurationProperties.JAVA_HOME
-							+ "' connection property must be set in order to start or stop the application server via script.");
+							+ "' connection property must be set in order to start the application server or to stop it via script.");
 		}
 
 		validateJavaHomePathProperty();
@@ -596,30 +596,16 @@ public class ApplicationServerOperationsDelegate {
 	}
 
 	/**
-	 * Return the absolute path of this JBoss server's JAVA_HOME directory (e.g.
-	 * "C:\opt\jdk1.5.0_14"); will only return null in the rare case when the
-	 * "java.home" system property is not set, and when this is the case, a
-	 * warning will be logged.
+	 * Return the absolute path of this JBoss server's JAVA_HOME directory (e.g. "C:\opt\jdk1.5.0_14"), as defined by
+     * the 'javaHome' plugin config prop, or null if that prop is not set.
 	 * 
-	 * @return the absolute path of this JBoss server's JAVA_HOME directory
-	 *         (e.g. "C:\opt\jdk1.5.0_14"); will only be null in the rare case
-	 *         when the "java.home" system property is not set
+	 * @return the absolute path of this JBoss server's JAVA_HOME directory, as defined by
+     *         the 'javaHome' plugin config prop, or null if that prop is not set
 	 */
 	@Nullable
 	public File getJavaHomePath() {
-		Configuration pluginConfig = serverComponent.getResourceContext()
-				.getPluginConfiguration();
-		String javaHomePath = pluginConfig.getSimpleValue(
-				ApplicationServerPluginConfigurationProperties.JAVA_HOME, null);
-
-		if (javaHomePath == null) {
-			log
-					.warn("The '"
-							+ "JAVA_HOME"
-							+ "' System property is not set - unable to set default value for the '"
-							+ "JAVA_HOME" + "' connection property.");
-		}
-
+		String javaHomePath = this.pluginConfig.getSimpleValue(ApplicationServerPluginConfigurationProperties.JAVA_HOME,
+                null);
 		File javaHome = (javaHomePath != null) ? new File(javaHomePath) : null;
 		return javaHome;
 	}

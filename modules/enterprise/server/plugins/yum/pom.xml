@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>3.0.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -27,14 +27,6 @@
     <dependencies>
 
         <!-- Internal Deps -->
-
-        <dependency>
-            <groupId>org.rhq</groupId>
-            <artifactId>rhq-core-domain</artifactId>
-            <version>${project.version}</version>
-            <scope>provided</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.rhq</groupId>
             <artifactId>rhq-core-client-api</artifactId>
@@ -47,25 +39,6 @@
             <artifactId>jdom</artifactId>
             <version>1.0</version>
             <scope>provided</scope> <!-- this version of jdom is included in the server, we'll juse reuse it -->
-        </dependency>
-
-        <!-- 3rd Party Deps -->
-
-        <!-- TODO: This is a fix for the Javac bug requiring annotations to be
-         available when compiling dependent classes. It is fixed in JDK 6 -->
-        <dependency>
-            <groupId>javax.persistence</groupId>
-            <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>jboss.jboss-embeddable-ejb3</groupId>
-            <artifactId>hibernate-all</artifactId>
-            <version>1.0.0.Alpha9</version>
-            <scope>provided</scope>
-            <!-- needed for referenced domain entities that use Hibernate annotations -->
         </dependency>
 
     </dependencies>
@@ -148,8 +121,7 @@
                                                 <include name="META-INF/**" />
                                             </patternset>
                                         </unjar>
-                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                            update="true">
+                                        <jar destfile="${deployment.file}" manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF" update="true">
                                         </jar>
                                     </tasks>
                                 </configuration>

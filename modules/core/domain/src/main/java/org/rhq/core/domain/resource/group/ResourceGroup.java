@@ -44,6 +44,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -273,15 +275,15 @@ public class ResourceGroup extends Group {
         + "          WHERE %GROUP_AND_VISIBILITY_FRAGMENT_WHERE% " // postgres uses true/false, oracle uses 1/0
         + "                %RESOURCE_FRAGMENT_WHERE% " //
         + "            AND ( ? IS NULL " // :search
-        + "                  OR UPPER(rg.name) LIKE ? " // :search
-        + "                  OR UPPER(rg.description) LIKE ? ) " // :search
+        + "                  OR UPPER(rg.name) LIKE ? ESCAPE ?" // :search :escapeChar
+        + "                  OR UPPER(rg.description) LIKE ? ESCAPE ?) " // :search escapeChar
         + "            AND ( rg.resource_type_id IS NULL " //
         + "                  OR ( ( resType.name = ? OR ? IS NULL ) " // :resourceTypeName x2
         + "                      AND ( resType.plugin = ? OR ? IS NULL ) " // :pluginName x2
         + "                      AND ( resType.category = ? OR ? IS NULL ) ) ) " // :resourceCategory x2
         + "            AND ( rg.category = ? OR ? IS NULL ) " // :groupCategory x2
         + "                %SECURITY_FRAGMENT_WHERE%" //
-        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name ";
+        + "       GROUP BY rg.id, rg.category, rg.name, rg.group_by, rg.description, resType.name, resType.plugin ";
 
     public static final String QUERY_NATIVE_FIND_FILTERED_MEMBER_SECURITY_FRAGMENT_JOIN = ""
         + " INNER JOIN rhq_role_resource_group_map roleMap " //
@@ -625,6 +627,18 @@ public class ResourceGroup extends Group {
 
     public void setAlertDefinitions(Set<AlertDefinition> alertDefinitions) {
         this.alertDefinitions = alertDefinitions;
+    }
+
+    @PrePersist
+    @PreUpdate
+    void onPersist() {
+        // always normalize empty string descriptions to NULL, which will give consistent sorting 
+        // between databases that treat empty string and null as distinct entities (e.g. postgres) 
+        // and those that interpret empty string and null as being equivalent (oracle)
+        String description = getDescription();
+        if (description != null && description.trim().equals("")) {
+            setDescription(null);
+        }
     }
 
     @Override

@@ -313,8 +313,15 @@ public class DiskSource implements ContentProvider, PackageSource, RepoSource {
             SupportedPackageType supportedPackageType = new SupportedPackageType();
             supportedPackageType.packageTypeName = configuration.getSimpleValue("packageTypeName", null);
             supportedPackageType.architectureName = configuration.getSimpleValue("architectureName", null);
-            supportedPackageType.resourceTypeName = configuration.getSimpleValue("resourceTypeName", null);
-            supportedPackageType.resourceTypePluginName = configuration.getSimpleValue("resourceTypePluginName", null);
+
+            String resourceAndPlugin = configuration.getSimpleValue("resourceType", null);
+
+            String resourceType = resourceAndPlugin.substring( (resourceAndPlugin.indexOf('-') + 1) );
+            String pluginType = resourceAndPlugin.substring(0, resourceAndPlugin.indexOf('-'));
+
+            supportedPackageType.resourceTypeName = resourceType;
+            supportedPackageType.resourceTypePluginName = pluginType;
+
             String filenameFilter = configuration.getSimpleValue("filenameFilter", null);
             supportedPackageTypes.put(filenameFilter, supportedPackageType);
         }

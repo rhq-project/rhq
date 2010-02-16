@@ -92,7 +92,7 @@ import org.rhq.core.domain.auth.Subject;
         + "                       FROM RoleNotification rn" //
         + "                      WHERE rn.alertDefinition.id = :alertDefinitionId ) "), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT r.name FROM Role AS r")
+        + "SELECT r.name, r.name FROM Role AS r")
 })
 @SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")

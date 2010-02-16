@@ -34,7 +34,7 @@ import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.util.HibernatePerformanceMonitor;
 
 /**
- * <p>A special type of JSF DataModel to allow a datatable and datascroller to page through a large set of data without
+ * <p>A special type of JSF DataModel to allow a table and datascroller to page through a large set of data without
  * having to hold the entire set of data in memory at once.</p>
  *
  * <p>Any time a managed bean wants to avoid holding an entire dataset, the managed bean should declare an inner class
@@ -311,9 +311,9 @@ public abstract class PagedListDataModel<T> extends DataModel {
              * RF components, the DataTable component does not see this change.  so, we have to explicitly
              * update the page control to get the view consistent with the backend once again.
              */
-            if (results.getTotalSize() <= pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
+            if (results.getTotalSize() < pc.getStartRow() || (results.isEmpty() && pc.getPageNumber() != 0)) {
                 if (log.isTraceEnabled()) {
-                    if (results.getTotalSize() <= pc.getStartRow()) {
+                    if (results.getTotalSize() < pc.getStartRow()) {
                         log.trace(pageControlView + ": Results size[" + results.getTotalSize()
                             + "] was less than PageControl startRow[" + pc.getStartRow() + "]");
                     } else {

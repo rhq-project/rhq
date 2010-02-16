@@ -24,6 +24,7 @@ package org.rhq.enterprise.gui.configuration;
 
 import java.util.List;
 
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 import org.rhq.core.gui.configuration.helper.DynamicPropertyRetriever;
 import org.rhq.enterprise.server.configuration.DynamicConfigurationPropertyLocal;
@@ -36,10 +37,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class DatabaseDynamicPropertyRetriever implements DynamicPropertyRetriever {
 
-    public List<String> loadValues(PropertyDefinitionDynamic propertyDefinition) {
+    public List<DynamicConfigurationPropertyValue> loadValues(PropertyDefinitionDynamic propertyDefinition) {
         String key = propertyDefinition.getKey();
         DynamicConfigurationPropertyLocal bean = LookupUtil.getDynamicConfigurationProperty();
-        List<String> values = bean.lookupValues(key);
+        List<DynamicConfigurationPropertyValue> values = bean.lookupValues(key);
 
         return values;
     }

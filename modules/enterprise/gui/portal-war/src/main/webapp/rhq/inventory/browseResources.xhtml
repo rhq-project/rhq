@@ -1,0 +1,230 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:onc="http://jboss.org/on/component"
+      xmlns:onf="http://jboss.org/on/function"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+<ui:composition template="/rhq/inventory/layout/main.xhtml">
+
+   <ui:define name="breadcrumbs">
+      <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=#{param.subtab}">
+         <h:outputText value="Browse Resources"/>
+      </h:outputLink>
+      <p />
+   </ui:define>
+
+   <ui:param name="pageTitle" value="Browse Resources"/>
+   <ui:param name="selectedTabName" value="Resources.#{param.subtab}" />
+   <ui:define name="content">
+   
+      <a4j:keepAlive beanName="BrowseResourcesUIBean"/>
+
+      <h:form id="browseResourcesForm">
+            <input type="hidden" name="subtab" value="${param.subtab}"/>
+            
+            <p/>
+            <h:panelGroup>
+               <h:outputLabel for="filter" value="Search: " />
+               <h:inputText id="filter" value="#{BrowseResourcesUIBean.filter}"
+                            onkeypress="return ignoreEnterKey(event);"
+                            style="width: 600px;" />
+               <rich:suggestionbox id="suggest" for="filter" 
+                                   tokens=",[]"
+                                   width="600" height="400"
+                                   border="1" cellpadding="1" cellspacing="1"
+                                   minChars="0"
+                                   first="0" rows="10"
+                                   frequency="0.1"
+                                   var="suggestItem" 
+                                   fetchValue="#{suggestItem.value}"
+                                   suggestionAction="#{BrowseResourcesUIBean.autocomplete}" 
+                                   nothingLabel="Start typing for simple text matches" 
+                                   usingSuggestObjects="true"
+                                   eventsQueue="resourceSearchSuggestions"
+                                   ignoreDupResponses="true"
+                                   rendered="false"> <!-- disable until auto-completer is added -->
+                   <h:column>
+                      <h:outputText value="#{suggestItem.label}" />
+                   </h:column>
+               </rich:suggestionbox>
+               <rich:spacer/>
+               <a4j:commandButton value="GO" 
+                                  reRender="browseResourcesDataTable, browseResourcesDataTableScroller"
+                                  actionListener="#{BrowseResourcesUIBean.clearDataModel}"
+                                  styleClass="buttonmed">
+                   <s:defaultAction/>
+               </a4j:commandButton>
+            </h:panelGroup>
+            <p/>
+
+            <h:panelGrid columns="1" width="100%">
+
+            <ui:param name="browseResourcesDataModel" value="#{BrowseResourcesUIBean.dataModel}"/>
+            <rich:dataTable id="browseResourcesDataTable"
+                            rows="#{PageControl.BrowseResources.pageSize}"
+                            value="#{browseResourcesDataModel}"
+                            var="item"
+                            width="100%"
+                            columnsWidth="1%, 5%, 20%, 20%, 5%, 10%, 10%, 25%, 4%"
+                            headerClass="tableRowHeader"
+                            footerClass="on-pager-footer"
+                            onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
+                            onRowMouseOut="this.style.backgroundColor='#{a4jSkin.tableBackgroundColor}'">
+
+               <f:facet name="PageControlView">
+                  <onc:paginationControl id="BrowseResources" />
+               </f:facet>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:allSelect target="selectedItems" />
+                  </f:facet>
+
+                  <onc:select name="selectedItems"
+                              value="#{item.original.resource.id}" />
+               </rich:column>
+               
+               <rich:column>
+                  <onc:quickNav>
+                     <f:param name="id" value="#{item.original.resource.id}"/>
+            
+                     <onc:icon name="Monitor"
+                               url="/rhq/resource/monitor/graphs.xhtml" 
+                               alt="Monitor"
+                               visible="#{monitorEnabled}">
+                     </onc:icon>
+            
+                     <onc:icon name="Inventory"
+                               url="/rhq/resource/inventory/view.xhtml" 
+                               alt="Inventory"/>
+            
+                     <onc:icon name="Alert"
+                               url="/rhq/resource/alert/listAlertDefinitions.xhtml" 
+                               alt="Alerts" 
+                               visible="#{monitorEnabled}"/>
+            
+                     <onc:icon name="Configure"
+                               url="/rhq/resource/configuration/view.xhtml" 
+                               alt="Configure" 
+                               visible="#{item.original.resourceFacets.configuration}"/>
+            
+                     <onc:icon name="Operation"
+                               url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
+                               alt="Operations" 
+                               visible="#{item.original.resourceFacets.operation}"/>
+            
+                     <onc:icon name="Content" 
+                               url="/rhq/resource/content/view.xhtml" 
+                               alt="Content"
+                               visible="#{item.original.resourceFacets.content}"/>
+                     
+                     <!--  Is this necessary? It's being passed for all quick nav urls. -->   
+                     <f:param name="mode" value="list"/>
+                  </onc:quickNav>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.name">
+                        <h:outputText styleClass="headerText" value="Name" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
+                     <f:param name="id" value="#{item.original.resource.id}" />
+                     <h:outputText value="#{item.original.resource.name}" />
+                  </h:outputLink>
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Parent" />
+                  </f:facet>
+
+                  <onc:resourcePartialLineage parents="#{item.parents}" renderLinks="true"/>
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.resourceType.category">
+                        <h:outputText styleClass="headerText" value="Category" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.original.resource.resourceType.category.name}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.resourceType.name">
+                        <h:outputText styleClass="headerText" value="Type" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.original.resource.resourceType.name}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.resourceType.plugin">
+                        <h:outputText styleClass="headerText" value="Plugin" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:outputText value="#{item.original.resource.resourceType.plugin}" />
+               </rich:column>
+               
+               <rich:column>
+                  <f:facet name="header">
+                     <h:outputText styleClass="headerText" value="Description" />
+                  </f:facet>
+
+                  <h:outputText value="#{item.original.resource.description}" />
+               </rich:column>
+
+               <rich:column>
+                  <f:facet name="header">
+                     <onc:sortableColumnHeader sort="r.currentAvailability.availabilityType">
+                        <h:outputText styleClass="headerText" value="Availability" />
+                     </onc:sortableColumnHeader>
+                  </f:facet>
+
+                  <h:graphicImage value="#{onf:getAvailabilityURL(item.original.resource.currentAvailability.availabilityType, 16)}" />
+               </rich:column>
+
+               <f:facet name="footer">
+                  <rich:columnGroup>
+                     <rich:column colspan="9" width="100%">
+                        <onc:selectCommandButton action="#{BrowseResourcesUIBean.uninventorySelectedResources}"
+                                                 value="UNINVENTORY SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.inventory}" />
+
+                        <ui:param name="paginationDataTableName" value="browseResourcesDataTable"/>
+                        <ui:param name="paginationDataModel" value="#{browseResourcesDataModel}"/>
+                        <ui:param name="paginationPageControl" value="#{PageControl.BrowseResources}"/>
+                        <ui:include src="/rhq/resource/include/pagination.xhtml"/>
+                     </rich:column>
+                  </rich:columnGroup>
+               </f:facet>
+
+            </rich:dataTable>
+
+            </h:panelGrid>
+      </h:form>
+
+   </ui:define>
+
+</ui:composition>
+
+</html>

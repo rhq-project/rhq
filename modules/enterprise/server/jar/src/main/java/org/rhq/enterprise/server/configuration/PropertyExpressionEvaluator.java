@@ -28,7 +28,9 @@ import java.util.Map;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.content.Architecture;
 import org.rhq.core.domain.content.PackageType;
+import org.rhq.core.domain.resource.ResourceType;
 
 /**
  * Translates the configuration property value lookup key into a named query in the system.
@@ -42,6 +44,8 @@ public class PropertyExpressionEvaluator {
     public static final String KEY_USERS = "users";
     public static final String KEY_ROLES = "roles";
     public static final String KEY_PACKAGE_TYPES = "package-types";
+    public static final String KEY_RESOURCE_TYPE_PLUGIN = "resource-type-with-plugin";
+    public static final String KEY_PACKAGE_ARCHITECTURES = "package-architectures";
 
     /**
      * @see #getQueryNameForKey(String)
@@ -53,6 +57,8 @@ public class PropertyExpressionEvaluator {
         temp.put(KEY_USERS, Subject.QUERY_DYNAMIC_CONFIG_VALUES);
         temp.put(KEY_ROLES, Role.QUERY_DYNAMIC_CONFIG_VALUES);
         temp.put(KEY_PACKAGE_TYPES, PackageType.QUERY_DYNAMIC_CONFIG_VALUES);
+        temp.put(KEY_RESOURCE_TYPE_PLUGIN, ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN);
+        temp.put(KEY_PACKAGE_ARCHITECTURES, Architecture.QUERY_DYNAMIC_CONFIG_VALUES);
 
         KEY_TO_QUERY_NAME = Collections.unmodifiableMap(temp);
     }

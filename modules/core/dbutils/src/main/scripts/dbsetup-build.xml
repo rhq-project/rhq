@@ -38,7 +38,8 @@ To run the default target, you must set one of the following properties to true:
    <!-- define the location of things we are going to generate -->
    <property name="dbsetup.scripts.dir"     value="${basedir}/src/main/scripts/dbsetup" />
    <property name="dbsetup.output.dir"      value="${basedir}/target/dbsetup" /> <!-- away from classes so it doesn't go into the jar -->
-   <property name="dbsetup.subsystems"      value="config,cluster,inventory,auth,authz,operation,events,sysconfig,scheduler,amps,measurement,content,resource-request,jms"/>
+   <!-- define the setup creation processing order. note, removals are done in the reverse order -->
+   <property name="dbsetup.subsystems"      value="config,cluster,inventory,auth,authz,operation,event,alert,sysconfig,scheduler,amps,measurement,content,resource-request,jms,obsolete"/>
    <property name="dbsetup.combined.schema" value="${dbsetup.output.dir}/all-schema.xml" />
    <property name="dbsetup.combined.data"   value="${dbsetup.output.dir}/all-data.xml" />
    <property name="dbsetup.tstamp.file"     value="${dbsetup.output.dir}/dbsetup-combine.tstamp" />
@@ -54,7 +55,6 @@ To run the default target, you must set one of the following properties to true:
            unless="dbsetup-init-taskdefs.notrequired">
      <path id="full.task.classpath">
         <pathelement path="${task.classpath.property}" />
-        <!--<pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>-->
         <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
         <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
         <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>
@@ -306,7 +306,6 @@ To run the default target, you must set one of the following properties to true:
            print="true"
            showheaders="false">
          <classpath>
-            <!--<pathelement location="${settings.localRepository}/ojdbc14/ojdbc14/${ojdbc14.version}/ojdbc14-${ojdbc14.version}.jar"/>-->
             <pathelement location="${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar"/>
             <pathelement location="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"/>
             <pathelement location="${settings.localRepository}/com/h2database/h2/${h2.version}/h2-${h2.version}.jar"/>

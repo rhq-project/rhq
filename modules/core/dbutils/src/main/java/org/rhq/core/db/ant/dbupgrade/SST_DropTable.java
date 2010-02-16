@@ -19,8 +19,11 @@
 package org.rhq.core.db.ant.dbupgrade;
 
 import java.sql.Connection;
+
 import mazz.i18n.Msg;
+
 import org.apache.tools.ant.BuildException;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.ant.DbAntI18NFactory;
 import org.rhq.core.db.ant.DbAntI18NResourceKeys;
@@ -56,15 +59,7 @@ public class SST_DropTable extends SchemaSpecTask {
         Connection conn = getConnection();
 
         try {
-            Connection new_conn = null;
-            boolean table_exists = false;
-
-            try {
-                new_conn = getNewConnection();
-                table_exists = db_type.checkTableExists(new_conn, table);
-            } finally {
-                db_type.closeConnection(new_conn);
-            }
+            boolean table_exists = db_type.checkTableExists(conn, table);
 
             if (!table_exists) {
                 log(MSG.getMsg(DbAntI18NResourceKeys.DROP_TABLE_TABLE_DOES_NOT_EXIST, table));
@@ -76,6 +71,7 @@ public class SST_DropTable extends SchemaSpecTask {
         } catch (Exception e) {
             throw new BuildException(MSG.getMsg(DbAntI18NResourceKeys.DROP_TABLE_ERROR, table, e), e);
         }
+
     }
 
     private void validateAttributes() throws BuildException {

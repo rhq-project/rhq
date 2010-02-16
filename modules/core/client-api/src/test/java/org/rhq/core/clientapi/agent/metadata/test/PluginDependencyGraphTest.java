@@ -23,6 +23,7 @@
 package org.rhq.core.clientapi.agent.metadata.test;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import org.testng.annotations.Test;
@@ -80,6 +81,41 @@ public class PluginDependencyGraphTest {
         assert dependents.contains("C") : dependents;
         assert dependents.contains("D") : dependents;
         assert dependents.size() == 2 : dependents;
+
+        Collection<String> dependents2 = graph.getAllDependents("F");
+        assert dependents2.contains("A") : dependents2;
+        assert dependents2.contains("B") : dependents2;
+        assert dependents2.contains("C") : dependents2;
+        assert dependents2.contains("D") : dependents2;
+        assert dependents2.contains("G") : dependents2;
+        assert dependents2.size() == 5 : dependents2;
+
+        //    plugin A depends on plugin B (required)
+        //    plugin B depends on plugin D and C (required)
+        //    plugin C depends on plugin E and F (optional)
+
+        Collection<String> dependencies3 = graph.getAllDependencies("F");
+        assert dependencies3.isEmpty() : dependencies3;
+
+        dependencies3 = graph.getAllDependencies("A");
+        assert dependencies3.contains("B") : dependencies3;
+        assert dependencies3.contains("D") : dependencies3;
+        assert dependencies3.contains("C") : dependencies3;
+        assert dependencies3.contains("E") : dependencies3;
+        assert dependencies3.contains("F") : dependencies3;
+        assert dependencies3.size() == 5 : dependencies3;
+
+        dependencies3 = graph.getAllDependencies("B");
+        assert dependencies3.contains("D") : dependencies3;
+        assert dependencies3.contains("C") : dependencies3;
+        assert dependencies3.contains("E") : dependencies3;
+        assert dependencies3.contains("F") : dependencies3;
+        assert dependencies3.size() == 4 : dependencies3;
+
+        dependencies3 = graph.getAllDependencies("C");
+        assert dependencies3.contains("E") : dependencies3;
+        assert dependencies3.contains("F") : dependencies3;
+        assert dependencies3.size() == 2 : dependencies3;
 
         // Use the same dependency graph, but do not deploy plugin F.
         // With F missing, G will fail because it required F
@@ -255,6 +291,30 @@ public class PluginDependencyGraphTest {
         assert order.get(0).equals("C") : order;
         assert order.get(1).equals("B") : order;
         assert order.get(2).equals("A") : order;
+
+        Collection<String> dependents = graph.getAllDependents("unknownPlugin");
+        assert dependents.isEmpty() : dependents;
+        dependents = graph.getAllDependents("A");
+        assert dependents.isEmpty() : dependents;
+        dependents = graph.getAllDependents("B");
+        assert dependents.contains("A") : dependents;
+        assert dependents.size() == 1 : dependents;
+        dependents = graph.getAllDependents("C");
+        assert dependents.contains("A") : dependents;
+        assert dependents.contains("B") : dependents;
+        assert dependents.size() == 2 : dependents;
+
+        Collection<String> dependencies = graph.getAllDependencies("unknownPlugin");
+        assert dependencies.isEmpty() : dependencies;
+        dependencies = graph.getAllDependencies("C");
+        assert dependencies.isEmpty() : dependencies;
+        dependencies = graph.getAllDependencies("B");
+        assert dependencies.contains("C") : dependencies;
+        assert dependencies.size() == 1 : dependencies;
+        dependencies = graph.getAllDependencies("A");
+        assert dependencies.contains("C") : dependencies;
+        assert dependencies.contains("B") : dependencies;
+        assert dependencies.size() == 2 : dependencies;
     }
 
     public void testComplexDependencyGraph() {

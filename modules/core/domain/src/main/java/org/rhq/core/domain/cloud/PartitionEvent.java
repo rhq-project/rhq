@@ -58,7 +58,7 @@ import javax.persistence.Table;
         + "  FROM PartitionEvent pe" //
         + " WHERE (:type = pe.eventType OR :type is null) " //
         + "   AND (:status = pe.executionStatus OR :status is null)" //
-        + "   AND (UPPER(pe.eventDetail) LIKE :details OR :details is null) "),
+        + "   AND (UPPER(pe.eventDetail) LIKE :details ESCAPE :escapeChar OR :details is null) "),
     @NamedQuery(name = PartitionEvent.QUERY_FIND_BY_EXECUTION_STATUS, query = "SELECT pe FROM PartitionEvent pe WHERE pe.executionStatus = :executionStatus") //
 })
 @SequenceGenerator(name = "id", sequenceName = "RHQ_PARTITION_EVENT_ID_SEQ")

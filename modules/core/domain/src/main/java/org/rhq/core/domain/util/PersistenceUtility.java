@@ -224,14 +224,6 @@ public class PersistenceUtility {
         }
     }
 
-    public static String formatSearchParameter(String value) {
-        if (value == null || value.trim().equals("")) {
-            return null;
-        }
-
-        return "%" + value.replaceAll("\\_", "\\\\_").toUpperCase() + "%";
-    }
-
     /**
      * Creates and executes a filter query for a collection relationship. This executes without passing back the query
      * object because the most common case is to simply paginate for a relationship. Use the createFilter method to

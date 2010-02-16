@@ -44,6 +44,7 @@ import javax.faces.validator.ValidatorException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyDefinitionDynamic;
 import org.rhq.core.domain.configuration.PropertyDynamicType;
@@ -130,11 +131,11 @@ public class PropertyRenderingUtility {
         }
 
         // Retrieve the values and load them into UI options
-        List<String> values = retriever.loadValues(propertyDefinitionDynamic);
-        for (String option : values) {
+        List<DynamicConfigurationPropertyValue> values = retriever.loadValues(propertyDefinitionDynamic);
+        for (DynamicConfigurationPropertyValue option : values) {
             UISelectItem selectItem = FacesComponentUtility.createComponent(UISelectItem.class, null);
-            selectItem.setItemLabel(option);
-            selectItem.setItemValue(option);
+            selectItem.setItemLabel(option.getDisplay());
+            selectItem.setItemValue(option.getValue());
             input.getChildren().add(selectItem);
         }
 

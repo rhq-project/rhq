@@ -51,6 +51,7 @@ import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.PrePersist;
 import javax.persistence.PreUpdate;
@@ -61,6 +62,7 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlTransient;
 
+import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
@@ -79,15 +81,15 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
  * @author Ian Springer
  */
 @Entity
-@Table(name = "RHQ_RESOURCE_TYPE")
+@Table(name = ResourceType.TABLE_NAME)
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_RESOURCE_TYPE_ID_SEQ")
 @NamedQueries( {
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME, // TODO: QUERY: This breaks rules, names may not be unique between plugins
     query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name)"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PLUGIN, query = "SELECT rt FROM ResourceType AS rt WHERE rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, // TODO: QUERY: names are case-sensitive
-    hints = { @QueryHint(name = "org.hibernate.cacheable", value = "true"),
-        @QueryHint(name = "org.hibernate.cacheRegion", value = "metadata") }, query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
+    hints = { @QueryHint(name = "org.hibernate.able", value = "true"),
+        @QueryHint(name = "org.hibernate.Region", value = "metadata") }, query = "SELECT rt FROM ResourceType AS rt WHERE LOWER(rt.name) = LOWER(:name) AND rt.plugin = :plugin"),
     @NamedQuery(name = ResourceType.QUERY_FIND_ALL, query = "SELECT rt FROM ResourceType AS rt"),
     @NamedQuery(name = ResourceType.QUERY_FIND_BY_PARENT_AND_NAME, // TODO: QUERY: Not looking up by the full key, get rid of this query
     query = "SELECT rt FROM ResourceType AS rt WHERE :parent MEMBER OF rt.parentResourceTypes AND rt.name = :name"),
@@ -117,19 +119,17 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s " //
         + "WHERE s = :subject " //
         + "AND res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
         + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_BY_CATEGORY_admin, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res " //
         + "WHERE res.resourceType.category = :category "
-        + "AND (UPPER(res.name) LIKE :nameFilter OR :nameFilter is null) "
+        + "AND (UPPER(res.name) LIKE :nameFilter ESCAPE :escapeChar OR :nameFilter is null) "
         + "AND (res.resourceType.plugin = :pluginName OR :pluginName is null) "
         + "AND (:inventoryStatus = res.inventoryStatus OR :inventoryStatus is null) "
-        + "ORDER BY res.resourceType.name "
-
-    ),
+        + "ORDER BY res.resourceType.name "),
     @NamedQuery(name = ResourceType.QUERY_FIND_UTILIZED_CHILDREN_BY_CATEGORY, query = "SELECT DISTINCT res.resourceType "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject "
@@ -177,7 +177,8 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "         (SELECT COUNT(resConfig) FROM rt.resourceConfigurationDefinition resConfig)," // configuration
         + "         (SELECT COUNT(operationDef) FROM rt.operationDefinitions operationDef)," // operation
         + "         (SELECT COUNT(packageType) FROM rt.packageTypes packageType)," // content
-        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)" // calltime
+        + "         (SELECT COUNT(metricDef) FROM rt.metricDefinitions metricDef WHERE metricDef.dataType = 3)," // calltime
+        + "         (SELECT COUNT(propDef) FROM rt.pluginConfigurationDefinition pluginConfig JOIN pluginConfig.propertyDefinitions propDef WHERE propDef.name = 'snapshotLogEnabled')" // support 
         + "       ) " //
         + "  FROM ResourceType rt " //
         + " WHERE ( rt.id = :resourceTypeId OR :resourceTypeId IS NULL )"),
@@ -185,7 +186,10 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "  SELECT rt.name " //
         + "    FROM ResourceType rt " //
         + "GROUP BY rt.name " //
-        + "  HAVING COUNT(rt.name) > 1") })
+        + "  HAVING COUNT(rt.name) > 1"), //
+    @NamedQuery(name = ResourceType.QUERY_DYNAMIC_CONFIG_WITH_PLUGIN, query = "" //
+        + "SELECT rt.plugin || ' - ' || rt.name, rt.plugin || '-' || rt.name FROM ResourceType rt" ) //
+})
 @NamedNativeQueries( {
     // TODO: Add authz conditions to the below query.
     @NamedNativeQuery(name = ResourceType.QUERY_FIND_CHILDREN_BY_CATEGORY, query = "" //
@@ -231,12 +235,15 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM RHQ_resource_type_parents rtp2 "
         + "WHERE rtp2.resource_type_id = crt2.id) " + "AND crt2.category = ? " +
         //               "ORDER BY crt2.name" +
-        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) })
+        ")) ORDER BY name", resultSetMapping = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY) //
+    })
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Externalizable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
+    public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
+    
     public static final ResourceType ANY_PLATFORM_TYPE = null;
 
     public static final String QUERY_FIND_BY_NAME = "ResourceType.findByName";
@@ -268,6 +275,8 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
     public static final String MAPPING_FIND_CHILDREN_BY_CATEGORY = "ResourceType.findChildrenByCategoryMapping";
     public static final String QUERY_FIND_RESOURCE_FACETS = "ResourceType.findResourceFacets";
     public static final String QUERY_FIND_DUPLICATE_TYPE_NAMES = "ResourceType.findDuplicateTypeNames";
+
+    public static final String QUERY_DYNAMIC_CONFIG_WITH_PLUGIN = "ResourceType.dynamicConfigWithPlugin";
 
     @Id
     @Column(name = "ID", nullable = false)
@@ -369,6 +378,9 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
 
     @OneToMany(mappedBy = "resourceType", cascade = CascadeType.ALL)
     private Set<ProductVersion> productVersions;
+
+    @OneToOne(mappedBy = "resourceType", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE }, optional = true)
+    private BundleType bundleType;
 
     @Transient
     private transient String helpText;
@@ -743,6 +755,14 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         this.classLoaderType = classLoaderType;
     }
 
+    public BundleType getBundleType() {
+        return this.bundleType;
+    }
+
+    public void setBundleType(BundleType bundleType) {
+        this.bundleType = bundleType;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -831,6 +851,7 @@ public class ResourceType implements Externalizable, Comparable<ResourceType> {
         out.writeLong(this.ctime);
         out.writeLong(this.mtime);
         out.writeObject(this.subCategory);
+        out.writeObject(this.bundleType);
         out.writeObject((null == childResourceTypes) ? null : new LinkedHashSet<ResourceType>(childResourceTypes));
         out.writeObject((null == parentResourceTypes) ? null : new LinkedHashSet<ResourceType>(parentResourceTypes));
         out.writeObject(pluginConfigurationDefinition);

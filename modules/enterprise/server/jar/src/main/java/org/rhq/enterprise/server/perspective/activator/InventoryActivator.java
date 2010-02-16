@@ -19,19 +19,13 @@
 package org.rhq.enterprise.server.perspective.activator;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.perspective.activator.context.GlobalActivationContext;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -41,8 +35,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class InventoryActivator extends AbstractGlobalActivator {
     static final long serialVersionUID = 1L;
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     private List<ResourceConditionSet> resourceConditionSets;
 
@@ -58,6 +50,7 @@ public class InventoryActivator extends AbstractGlobalActivator {
      */
     public boolean isActive(GlobalActivationContext context) {
         ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
+        Subject subject = context.getSubject();
 
         for (ResourceConditionSet rcs : this.resourceConditionSets) {
             ResourceCriteria criteria = new ResourceCriteria();
@@ -72,56 +65,7 @@ public class InventoryActivator extends AbstractGlobalActivator {
 
             PageList<Resource> resources = resourceManager.findResourcesByCriteria(context.getSubject(), criteria);
             if (!((null == resources) || resources.isEmpty())) {
-                return traitsSatisfied(context, rcs.getTraitMatchers(), resources);
-            }
-        }
-
-        return false;
-    }
-
-    /** 
-     * If any returned resource satisfies all trait activators then return true since it means there
-     * is at least one inventoried resource satisfying all activation conditions.
-     * If a trait activator exists for a trait not returned by the resource it is ignored.
-     * // TODO: is a warning needed for ignored trait conditions? 
-     */
-    private boolean traitsSatisfied(GlobalActivationContext context, Map<String, Matcher> traitMatchers,
-        PageList<Resource> resources) {
-
-        // return true if there are no trait activators to satisfy
-        if (traitMatchers.isEmpty()) {
-            return true;
-        }
-
-        MeasurementDataManagerLocal measurementDataManager = LookupUtil.getMeasurementDataManager();
-
-        for (Resource resource : resources) {
-            boolean traitsSatisfied = true;
-            List<MeasurementDataTrait> traits = measurementDataManager.findCurrentTraitsForResource(context
-                .getSubject(), resource.getId(), null);
-
-            int numTraitsTested = 0;
-            for (MeasurementDataTrait trait : traits) {
-                Matcher traitMatcher = traitMatchers.get(trait.getName());
-                if (null != traitMatcher) {
-                    ++numTraitsTested;
-
-                    traitMatcher.reset(trait.getValue());
-                    if (!traitMatcher.find()) {
-                        traitsSatisfied = false;
-                        break;
-                    }
-                }
-            }
-
-            if (traitsSatisfied) {
-                if (numTraitsTested != traitMatchers.size()) {
-                    String error = "Potential error in perspective descriptor. Not all trait activators matched trait for resource type: "
-                        + traitMatchers.keySet();
-                    log.warn(error);
-                    return false;
-                }
-                return true;
+                return ActivatorHelper.areTraitsSatisfied(subject, rcs.getTraitMatchers(), resources, false);
             }
         }
 

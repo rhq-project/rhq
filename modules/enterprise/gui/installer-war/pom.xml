@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -13,7 +13,7 @@
   <packaging>war</packaging>
 
   <name>RHQ Enterprise Installer War</name>
-  <description>The ON Enterprise Installer webapp</description>
+  <description>The RHQ Enterprise Installer webapp</description>
 
   <scm>
     <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/installer-war/</connection>
@@ -24,10 +24,8 @@
     <scm.module.path>modules/enterprise/gui/installer-war/</scm.module.path>
     <war.dir>${basedir}/target/${final.name}</war.dir>
 
-    <!-- dependency versions -->
-    <el.version>1.0</el.version>
-    <jsf-facelets.version>1.1.14</jsf-facelets.version>
-    <jetty-jspc.version>7.0.0.RC6</jetty-jspc.version>
+    <!-- plugin versions -->
+    <jetty-jspc-maven-plugin.version>7.0.1.v20091125</jetty-jspc-maven-plugin.version>    
 
     <product.shortName>RHQ</product.shortName>
     <product.name>RHQ</product.name>
@@ -59,6 +57,13 @@
     </dependency>
 
     <dependency>
+      <!-- need this solely for SecurityUtils -->
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-enterprise-comm</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>ant</groupId>
       <artifactId>ant</artifactId>
       <version>1.6.5</version>
@@ -84,54 +89,12 @@
       <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
 
-    <!--
-    <dependency>
-      <groupId>com.sun.facelets</groupId>
-      <artifactId>jsf-facelets</artifactId>
-      <version>${jsf-facelets.version}</version>
-    </dependency>
-    -->
-
-    <!--
-    <dependency>
-      <groupId>commons-el</groupId>
-      <artifactId>commons-el</artifactId>
-      <version>1.0</version>
-    </dependency>
-    -->
-
-    <!--
-    <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <version>1.0.4</version>
-    </dependency>
-    -->
-
-    <!--
-    <dependency>
-      <groupId>javax.el</groupId>
-      <artifactId>el-api</artifactId>
-      <version>${el.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    -->
-
     <dependency>
         <groupId>javax.servlet</groupId>
         <artifactId>servlet-api</artifactId>
         <version>2.4</version>
         <scope>provided</scope> <!-- by JBossAS -->
     </dependency>
-
-    <!--
-    <dependency>
-      <groupId>javax.servlet</groupId>
-      <artifactId>jsp-api</artifactId>
-      <version>2.0</version>
-      <scope>provided</scope>
-    </dependency>
-    -->
 
     <dependency>
       <groupId>javax.faces</groupId>
@@ -158,15 +121,6 @@
       <plugin>
         <artifactId>maven-war-plugin</artifactId>
         <configuration>
-          <archive>
-            <manifest>
-              <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-            </manifest>
-            <manifestEntries>
-              <Build-Number>${buildNumber}</Build-Number>
-            </manifestEntries>            
-          </archive>
           <webResources>
             <resource>
               <filtering>true</filtering>
@@ -299,7 +253,6 @@
          </build>
       </profile>
 
-      <!-- 
       <profile>
          <id>dist</id>
 
@@ -307,13 +260,13 @@
             <plugins>
 
                <plugin>
-                  // See http://jetty.mortbay.org/jspc-maven-plugin/
+                  <!-- See http://jetty.mortbay.org/jspc-maven-plugin/ -->
                   <groupId>org.mortbay.jetty</groupId>
                   <artifactId>jetty-jspc-maven-plugin</artifactId>
-                  <version>${jetty-jspc.version}</version>
+                  <version>${jetty-jspc-maven-plugin.version}</version>
                   <configuration>
                      <keepSources>false</keepSources>
-                     <validateXml>false</validateXml>  // TODO: set to true
+                     <validateXml>false</validateXml>
                      <generatedClasses>${project.build.outputDirectory}</generatedClasses>
                   </configuration>
                   <executions>
@@ -324,7 +277,6 @@
             </plugins>
          </build>
       </profile>
-       -->
 
   </profiles>
 

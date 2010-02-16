@@ -1005,6 +1005,12 @@
                                               (e.g. 10.11.14.233 or foo.example.com); specify 0.0.0.0 to tell the
                                               application server to bind to all available network interfaces; defaults to
                                               '127.0.0.1'."/>
+               <c:simple-property name="javaHome" required="false"
+                                 description="The absolute path to a JRE or JDK installation directory containing
+                                              the JVM that should be used to start and shutdown this JBoss AS server;
+                                              this property must be set in order for the Start operation to work,
+                                              or for the Shutdown operation to work when the shutdown method is set
+                                              to 'shutdown script'."/>
              </c:group>
 
            <c:group name="advanced" displayName="Advanced" hiddenByDefault="true">
@@ -1134,7 +1140,7 @@
 
           <metric displayName="Transactions Rolled Back" property="MCBean|JTA|*|rollbackCount" measurementType="trendsup"
                   defaultInterval="600000" defaultOn="true" category="utilization"
-                  description="Number of transactions committed since last restart"/>
+                  description="Number of transactions rolled back since last restart"/>
 
           <event name="logEntry" description="an entry was appended to a log file"/>
 

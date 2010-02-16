@@ -102,8 +102,8 @@ public class PluginDependencyGraph {
 
     /**
      * Given a plugin that is in this dependency graph, this will return the list of its direct dependencies (the
-     * plugins this plugin explicitly depends on). The list will be empty if there are no dependencies. <code>
-     * null</code> will be returned if the plugin does not exist in this graph.
+     * plugins this plugin explicitly depends on). The list will be empty if there are no dependencies or the
+     * plugin does not exist in this graph.
      *
      * Note that if a dependency is not required to exist, and it does not exist, it will not be returned
      * in the list.  This is to say that if a plugin was configured to depend on another plugin, but that
@@ -112,7 +112,7 @@ public class PluginDependencyGraph {
      * 
      * @param  pluginName the plugin name
      *
-     * @return list of plugin dependencies (<code>null</code> if the plugin doesn't exist yet in the graph)
+     * @return list of plugin dependencies
      */
     public List<String> getPluginDependencies(String pluginName) {
         List<String> dependencies = new ArrayList<String>();
@@ -145,6 +145,51 @@ public class PluginDependencyGraph {
             // see if current plugin optionally depends on the given pluginName, if so, add it to the list
             for (PluginDependency dependency : entry.getValue()) {
                 if (!dependency.required && dependency.name.equals(pluginName)) {
+                    dependents.add(entry.getKey());
+                    break;
+                }
+            }
+        }
+        return dependents;
+    }
+
+    /**
+     * Given a plugin that is in this dependency graph, this will return all those plugins
+     * the plugin either directly or indirectly depends on it. This is different
+     * than {@link #getPluginDependencies(String)} because this method does a deep
+     * dive and returns all direct dependencies and dependencies of those dependencies.
+     * 
+     * @param pluginName the plugin whose dependencies are to be returned
+     * 
+     * @return list of all plugins that the given plugin depends on
+     */
+    public Collection<String> getAllDependencies(String pluginName) {
+        if (this.dependencyMap.containsKey(pluginName)) {
+            return getDeepDependencies(pluginName, new ArrayList<String>(), true);
+        } else {
+            return new HashSet<String>();
+        }
+    }
+
+    /**
+     * Given a plugin that is in this dependency graph, this will return all those plugins
+     * that either directly or indirectly depend on it (both optional and required dependencies).
+     * 
+     * @param pluginName the plugin whose dependents are to be returned
+     * 
+     * @return list of all plugins that depend on the given plugin
+     */
+    public Collection<String> getAllDependents(String pluginName) {
+        Set<String> dependents = new HashSet<String>();
+        for (Map.Entry<String, List<PluginDependency>> entry : this.dependencyMap.entrySet()) {
+            if (entry.getKey().equals(pluginName)) {
+                continue; // don't bother examining the plugin itself
+            }
+
+            // see if current plugin depends on the given pluginName, if so, add it to the list
+            for (PluginDependency dependency : entry.getValue()) {
+                if (dependency.name.equals(pluginName)) {
+                    dependents.addAll(getAllDependents(entry.getKey()));
                     dependents.add(entry.getKey());
                     break;
                 }

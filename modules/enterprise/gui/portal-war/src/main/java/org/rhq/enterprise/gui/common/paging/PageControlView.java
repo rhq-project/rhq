@@ -72,6 +72,8 @@ import org.rhq.enterprise.gui.ha.ViewAffinityGroupServerMembersUIBean;
 import org.rhq.enterprise.gui.ha.ViewAgentUIBean;
 import org.rhq.enterprise.gui.ha.ViewPartitionEventUIBean;
 import org.rhq.enterprise.gui.ha.ViewServerUIBean;
+import org.rhq.enterprise.gui.inventory.browse.BrowseGroupsUIBean;
+import org.rhq.enterprise.gui.inventory.browse.BrowseResourcesUIBean;
 import org.rhq.enterprise.gui.inventory.group.ListResourceGroupMembersUIBean;
 import org.rhq.enterprise.gui.inventory.group.ResourceGroupSummaryUIBean;
 import org.rhq.enterprise.gui.inventory.group.ViewGroupConnectionPropertyDetailsUIBean;
@@ -296,7 +298,14 @@ public enum PageControlView {
     /** */
     SubsystemAlertDefinition(SubsystemAlertDefinitionUIBean.class),
     /** */
-    SubsystemOOBHistory(SubsystemOOBHistoryUIBean.class);
+    SubsystemOOBHistory(SubsystemOOBHistoryUIBean.class),
+
+    // Inventory Browser
+
+    /** */
+    BrowseResources(BrowseResourcesUIBean.class),
+    /** */
+    BrowseGroups(BrowseGroupsUIBean.class);
 
     private Class<? extends PagedDataTableUIBean> beanClass;
     private boolean isUnlimited = false;

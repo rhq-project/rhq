@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich">
+<ui:remove>
+    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
+  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
+  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
+  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
+  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
+</ui:remove>
+
+    <head>        
+        <title>
+            Create JBoss AS Patch Content Provider
+        </title>
+    </head>
+    
+    <body style="background-color: #CCCC99">
+
+    <f:view contentType="text/html; charset=UTF-8">
+
+    <!-- Force the page to be taller than the height of the browser
+         to test that a vertical scrollbar is not added to the
+         enclosing iframe. -->
+    <div style="padding: 10px; height: 1000px;">
+       <h4>It's always good to see something from another perspective.</h4>
+
+       <p>You should have arrived at this page by choosing to create a new<br/>
+          <br/>
+          <b>JBoss AS Patch Provider Type</b>.<br/>
+          <br/>          
+          This page would typically start a workflow to create said provider...<br/>
+          <br/>                    
+          It was invoked via a Perspective Page Extension defined in the Sample Perspective via:
+<pre>
+
+&lt;!-- Page extensions --&gt;
+
+&lt;page
+      name=&quot;createContentProvider&quot;&gt;
+      &lt;page-link
+         name=&quot;RHNSource&quot;
+         application=&quot;sample&quot;
+         url=&quot;createContentProviderRHN.xhtml&quot; /&gt;
+      &lt;page-link
+         name=&quot;JBossASPatchSource&quot;
+         application=&quot;sample&quot;
+         url=&quot;createContentProviderJBossASPatch.xhtml&quot; /&gt;
+&lt;/page&gt;
+
+</pre>
+...and by enhancing the CreateContentProvider page to be an "Extension Point":
+<pre>
+
+&lt;h:outputLink value=&quot;\#{CreateContentSourceUIBean.getCreateContentProviderPageLink(item.name)}&quot;&gt;
+      &lt;!--  note, do not use f:param with perspectives --&gt;
+
+      &lt;h:outputText value=&quot;#{item.displayName}&quot; /&gt;
+      &lt;h:outputText value=&quot; *&quot; rendered=&quot;#{(not empty param.typeName) and (param.typeName eq item.name)}&quot;/&gt;
+&lt;/h:outputLink&gt;
+
+</pre>
+       </p>
+    
+    </div>
+
+    </f:view>
+
+    </body>
+
+</html>

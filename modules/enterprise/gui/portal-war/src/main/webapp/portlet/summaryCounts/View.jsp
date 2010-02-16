@@ -31,8 +31,8 @@
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/ResourceHub.do?resourceCategory=PLATFORM"><fmt:message key="dash.home.DisplayCategory.PlatformTotal"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/ResourceHub.do?resourceCategory=PLATFORM"><c:out value="${summary.platformCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=platform"><fmt:message key="dash.home.DisplayCategory.PlatformTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=platform"><c:out value="${summary.platformCount}"/></html:link></td>
           </tr>
         </c:if>
       
@@ -41,8 +41,8 @@
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/ResourceHub.do?resourceCategory=SERVER"><fmt:message key="dash.home.DisplayCategory.ServerTotal"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/ResourceHub.do?resourceCategory=SERVER"><c:out value="${summary.serverCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=server"><fmt:message key="dash.home.DisplayCategory.ServerTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=server"><c:out value="${summary.serverCount}"/></html:link></td>
           </tr>
         </c:if>
       
@@ -51,8 +51,8 @@
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/ResourceHub.do?resourceCategory=SERVICE"><fmt:message key="dash.home.DisplayCategory.ServiceTotal"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/ResourceHub.do?resourceCategory=SERVICE"><c:out value="${summary.serviceCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=service"><fmt:message key="dash.home.DisplayCategory.ServiceTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/inventory/browseResources.xhtml?subtab=service"><c:out value="${summary.serviceCount}"/></html:link></td>
           </tr>
         </c:if>
 
@@ -61,8 +61,8 @@
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/GroupHub.do?groupCategory=COMPATIBLE"><fmt:message key="dash.home.DisplayCategory.group.CompatGroupTotal"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/GroupHub.do?groupCategory=COMPATIBLE"><c:out value="${summary.compatibleGroupCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/inventory/browseGroups.xhtml?subtab=compatible"><fmt:message key="dash.home.DisplayCategory.group.CompatGroupTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/inventory/browseGroups.xhtml?subtab=compatible"><c:out value="${summary.compatibleGroupCount}"/></html:link></td>
           </tr>
         </c:if>
 
@@ -71,8 +71,8 @@
             <td colspan="2">&nbsp;</td>
           </tr>
           <tr>
-            <td class="FormLabel"><html:link page="/GroupHub.do?groupCategory=MIXED"><fmt:message key="dash.home.DisplayCategory.group.MixedGroupTotal"/></html:link></td>
-            <td class="FormLabelRight"><html:link page="/GroupHub.do?groupCategory=MIXED"><c:out value="${summary.mixedGroupCount}"/></html:link></td>
+            <td class="FormLabel"><html:link page="/rhq/inventory/browseGroups.xhtml?subtab=mixed"><fmt:message key="dash.home.DisplayCategory.group.MixedGroupTotal"/></html:link></td>
+            <td class="FormLabelRight"><html:link page="/rhq/inventory/browseGroups.xhtml?subtab=mixed"><c:out value="${summary.mixedGroupCount}"/></html:link></td>
           </tr>
         </c:if>
 

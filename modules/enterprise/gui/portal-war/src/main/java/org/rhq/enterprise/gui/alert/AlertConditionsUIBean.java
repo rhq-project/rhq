@@ -30,6 +30,7 @@ import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.faces.FacesMessages;
 import org.jboss.seam.international.StatusMessage.Severity;
 import org.jboss.seam.log.Log;
@@ -52,31 +53,22 @@ public class AlertConditionsUIBean {
 
     @Logger
     private Log log;
-
     @In
     private FacesMessages facesMessages;
-
     @In("#{webUser.subject}")
     private Subject subject;
-
     @In
     private ResourceType resourceType;
-
     @In
     private AlertDefinitionManagerLocal alertDefinitionManager;
-
     @In
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
     @In
     private ConfigurationManagerLocal configurationManager;
-
     @In
     private AlertDefinition alertDefinition;
-
     @In
     private AlertDescriber alertDescriber;
-
     private MetricAbsoluteConverter metricAbsoluteConverter = new MetricAbsoluteConverter();
     private Map<AlertConditionCategory, String> categories;
     private List<ConditionDescription> conditionDescriptions;
@@ -84,6 +76,14 @@ public class AlertConditionsUIBean {
 
     private Integer measurementDefinitionId = 0;
     private Double threshold;
+    private Integer resourceId;
+
+    @RequestParameter("id")
+    public void setResourceId(Integer resourceId) {
+        if (resourceId != null) {
+            this.resourceId = resourceId;
+        }
+    }
 
     public String getMeasurementDefinitionId() {
         return measurementDefinitionId.toString();
@@ -125,7 +125,10 @@ public class AlertConditionsUIBean {
 
             if (measurement != null) {
                 setMeasurementDefinitionId(Integer.toString(measurement.getId()));
-                this.threshold = metricAbsoluteConverter.getForDisplay(this.currentCondition.getThreshold(), measurement);
+
+                if (this.currentCondition.getCategory() == AlertConditionCategory.THRESHOLD) {
+                    this.threshold = metricAbsoluteConverter.getForDisplay(this.currentCondition.getThreshold(), measurement);
+                }
             }
         }
     }
@@ -147,19 +150,11 @@ public class AlertConditionsUIBean {
         return descriptions;
     }
 
-    public void addCondition() {
+    public void createCondition() {
         setCurrentCondition(new AlertCondition());
     }
 
-    public String removeCondition() {
-        this.conditionDescriptions.remove(findCurrentDescription());
-        setCurrentCondition(null);
-
-        // persist to DB
-        return saveConditions();
-    }
-
-    public String saveConditions() {
+    public void updateCondition() {
         if (shouldSetMeasurementDefinition()) {
             MeasurementDefinition measurementDefinition = this.measurementDefinitionManager.getMeasurementDefinition(subject, this.measurementDefinitionId);
             currentCondition.setMeasurementDefinition(measurementDefinition);
@@ -170,24 +165,46 @@ public class AlertConditionsUIBean {
             }
         }
 
-        Set<AlertCondition> conditions = findConditions();
+        for (ConditionDescription description : conditionDescriptions) {
+            if (description.condition.equals(this.currentCondition)) {
+                description.description = this.alertDescriber.describeCondition(description.condition);
 
-        // in case of a newly added condition
-        if (this.currentCondition != null && !conditions.contains(this.currentCondition)) {
-            conditions.add(this.currentCondition);
+                return;
+            }
         }
 
-        alertDefinition.setConditions(conditions);
+        // otherwise, this is a new condition
+        this.conditionDescriptions.add(new ConditionDescription(this.currentCondition));
+    }
 
-        return saveAlertDefinition();
+    public void removeCondition() {
+        this.conditionDescriptions.remove(findCurrentDescription());
+        setCurrentCondition(null);
     }
 
     public String saveAlertDefinition() {
+        alertDefinition.setConditions(findConditions());
+
         try {
             alertDefinitionManager.updateAlertDefinition(subject, alertDefinition.getId(), alertDefinition, true);
         } catch(Exception e) {
             this.facesMessages.add(Severity.ERROR, "There was an error saving the alert conditions.");
-            this.log.error("Error persisting AlertCondition on AlertDefinition:  " + alertDefinition.getName(), e);
+            this.log.error("Error persisting AlertDefinition:  " + alertDefinition.getName(), e);
+
+            return null;
+        }
+
+        return SUCCESS_OUTCOME;
+    }
+
+    public String newAlertDefinition() {
+        alertDefinition.setConditions(findConditions());
+
+        try {
+            alertDefinitionManager.createAlertDefinition(subject, alertDefinition, resourceId);
+        } catch(Exception e) {
+            this.facesMessages.add(Severity.ERROR, "There was an error creating the alert definitino.");
+            this.log.error("Error persisting AlertDefinition:  " + alertDefinition.getName(), e);
 
             return null;
         }

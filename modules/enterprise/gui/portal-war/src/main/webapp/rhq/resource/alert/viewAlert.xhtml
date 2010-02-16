@@ -46,7 +46,7 @@
             </h:outputLink>
             <h:outputText> &gt; </h:outputText>
             <h:outputLink value="viewAlert.xhtml">
-                <f:param name="ad" value="#{param.ad}" />
+                <f:param name="ad" value="#{alertDefinition.id}" />
                 <h:outputText value=" Definition for '#{alertDefinition.name}' "/>
             </h:outputLink>
             <h:outputText> on resource </h:outputText>
@@ -216,21 +216,7 @@
                 <h:form id="editAlertDefinitionForm">
                     <input type="hidden" name="ad" value="#{param.ad}" />
 
-                    <h:panelGrid columns="2" border="1" cellpadding="5" style="margin: 15px;">
-                        <h:outputLabel for="alertNameInput" value="Name:  " />
-                        <h:inputText id="alertNameInput" value="#{alertUIBean.alertDefinition.name}" style="width: 300px;" />
-
-                        <h:outputLabel for="alertDescriptionInput" value="Description:  " />
-                        <h:inputTextarea id="alertDescriptionInput" value="#{alertUIBean.alertDefinition.description}" style="width: 300px;" />
-
-                        <h:outputLabel for="alertPriorityInput" value="Priority:  " />
-                        <h:selectOneMenu id="alertPriorityInput" value="#{alertUIBean.alertDefinition.priority}">
-                            <f:selectItems value="#{alertUIBean.priorities}" />
-                        </h:selectOneMenu>
-
-                        <h:outputLabel for="alertEnabledInput" value="Active:  " />
-                        <h:selectBooleanCheckbox id="alertEnabledInput" value="#{alertUIBean.alertDefinition.enabled}" />
-                    </h:panelGrid>
+                    <ui:include src="alertDefinitionProperties.xhtml" />
 
                     <h:outputLink id="editDefinitionCancelLink" styleClass="buttonmed" value="#" style="float: right;">
                         <h:outputText value="Cancel" />

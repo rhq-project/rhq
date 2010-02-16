@@ -28,6 +28,7 @@ import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
+import org.jboss.seam.annotations.web.RequestParameter;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
@@ -56,28 +57,20 @@ public class AlertConditionUIBean {
 
     @In("#{webUser.subject}")
     private Subject subject;
-
     @In
     private ResourceType resourceType;
-
     @In
     private AlertDefinition alertDefinition;
-
     @In
     private AlertDefinitionManagerLocal alertDefinitionManager;
-
     @In
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
-
     @In
     private OperationManagerLocal operationManager;
-
     @In
     private MeasurementScheduleManagerLocal measurementScheduleManager;
-
     @In
     private Map<String, String> messages;
-
     private Map<String, String> conditionExpressions;
     private Map<String, String> availabilities;
     private Map<String, String> severities;
@@ -92,6 +85,7 @@ public class AlertConditionUIBean {
     private Map<String, String> dampeningCategories;
     private Map<String, String> timeUnits;
 
+    private Integer resourceId;
 
     public Map<String, String> getConditionExpressions() {
         return conditionExpressions;
@@ -141,6 +135,21 @@ public class AlertConditionUIBean {
         return timeUnits;
     }
 
+    @RequestParameter("id")
+    public void setResourceId(Integer resourceId) {
+        if (resourceId != null) {
+            this.resourceId = resourceId;
+        }
+    }
+
+    public Integer getResourceId() {
+        if (this.alertDefinition != null && this.alertDefinition.getResource() != null) {
+            return this.alertDefinition.getResource().getId();
+        }
+
+        return this.resourceId;
+    }
+
     @Create
     public void init() {
         this.conditionExpressions = createBooleanMap();
@@ -171,7 +180,7 @@ public class AlertConditionUIBean {
         Map<String, Integer> alertsMap = new HashMap<String, Integer>();
 
         PageList<AlertDefinition> alerts = alertDefinitionManager.findAlertDefinitions(subject,
-                this.alertDefinition.getResource().getId(), PageControl.getUnlimitedInstance());
+                getResourceId(), PageControl.getUnlimitedInstance());
 
         for (AlertDefinition alert : alerts) {
             alertsMap.put(alert.getName(), alert.getId());
@@ -225,7 +234,7 @@ public class AlertConditionUIBean {
         }
 
         List<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByResourceIdAndDefinitionIds(subject,
-                this.alertDefinition.getResource().getId(), definitionIds);
+                getResourceId(), definitionIds);
 
         for (MeasurementSchedule schedule : schedules) {
             baselineMap.put(getLabel(MeasurementConstants.BASELINE_OPT_MIN, schedule), MeasurementConstants.BASELINE_OPT_MIN);
@@ -244,8 +253,9 @@ public class AlertConditionUIBean {
     private Map<String, Integer> lookupMeasurements(DataType type) {
         Map<String, Integer> measurementMap = new HashMap<String, Integer>();
 
-        List<MeasurementDefinition> definitions = this.measurementDefinitionManager.findMeasurementDefinitionsByResourceType(subject,
-                resourceType.getId(), type, null);
+        List<MeasurementDefinition> definitions =
+                this.measurementDefinitionManager.findMeasurementDefinitionsByResourceType(
+                subject, resourceType.getId(), type, null);
 
         for (MeasurementDefinition definition : definitions) {
             measurementMap.put(definition.getDisplayName(), definition.getId());

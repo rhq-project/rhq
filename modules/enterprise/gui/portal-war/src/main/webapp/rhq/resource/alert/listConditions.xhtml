@@ -29,13 +29,15 @@
             </h:outputLink>
             <h:outputText value=">" />
             <h:outputLink value="viewAlert.xhtml">
-                <f:param name="ad" value="#{param.ad}" />
+                <f:param name="ad" value="#{alertDefinition.id}" />
                 <h:outputText value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'" />
             </h:outputLink>
         </ui:define>
 
         <ui:define name="body">
-            <a4j:form>
+            <a4j:form id="alertConditionsForm">
+                <ui:insert name="formTop" />
+
                 <rich:panel id="conditionsPanel">
                     <f:facet name="header">
                         <h:outputText value="Alert Conditions"/>
@@ -80,6 +82,7 @@
                                                 reRender="categoryTable">
 
                                     <f:setPropertyActionListener value="#{conditionDescription.condition}" target="#{alertConditionsUIBean.currentCondition}" />
+                                    <a4j:support event="onclick" reRender="categoryTable" />
                                 </a4j:commandButton>
                             </rich:column>
                         </rich:dataTable>
@@ -87,7 +90,7 @@
                         <br />
                         <a4j:commandButton id="addConditionButton"
                                         value="Add a new Condition"
-                                        action="#{alertConditionsUIBean.addCondition}"
+                                        action="#{alertConditionsUIBean.createCondition}"
                                         styleClass="buttonmed">
                             <rich:componentControl for="categoryModalPanel" attachTo="addConditionButton" operation="show" event="onclick" />
                             <a4j:support event="onclick" reRender="categoryOptionsPanel"  />
@@ -179,10 +182,14 @@
                         </a4j:status>
 
                 </rich:panel>
-            <h:commandButton id="saveButton"
-                           value="OK"
-                           action="#{alertConditionsUIBean.saveAlertDefinition}"
-                           styleClass="buttonmed" />
+
+                <ui:insert name="actionButton">
+                    <h:commandButton id="saveButton"
+                                   value="OK"
+                                   action="#{alertConditionsUIBean.saveAlertDefinition}"
+                                   styleClass="buttonmed"
+                                   style="margin: 10px;" />
+                </ui:insert>
             </a4j:form>
 
             <rich:modalPanel id="categoryModalPanel" moveable="false" autosized="true" width="400">
@@ -208,7 +215,7 @@
                             </f:facet>
 
                             <f:facet name="stop">
-                                <h:form>
+                                <a4j:form id="EditConditionForm">
                                     <rich:panel id="categoryOptions" style="width: %100;">
 
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'CONTROL'}">
@@ -329,16 +336,18 @@
 
                                     <h:commandButton id="categoryOptionOkButton"
                                                    value="OK"
-                                                   action="#{alertConditionsUIBean.saveConditions}"
+                                                   action="#{alertConditionsUIBean.updateCondition}"
                                                    styleClass="buttonmed"
                                                    style="margin: 5px;">
+                                        <rich:componentControl for="categoryModalPanel" attachTo="categoryOptionOkButton" operation="hide" event="onclick" />
+                                        <a4j:support event="onclick" reRender="categoryTable" />
                                     </h:commandButton>
 
                                     <h:outputLink id="conditionCancelLink" styleClass="buttonmed" value="#" style="float: right; margin: 5px;">
                                         <h:outputText value="Cancel" />
                                         <rich:componentControl for="categoryModalPanel" attachTo="conditionCancelLink" operation="hide" event="onclick" />
                                     </h:outputLink>
-                                </h:form>
+                                </a4j:form>
                             </f:facet>
                         </a4j:status>
 

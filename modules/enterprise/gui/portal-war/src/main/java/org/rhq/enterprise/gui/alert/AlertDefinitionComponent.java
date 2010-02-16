@@ -26,6 +26,7 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.Unwrap;
 import org.jboss.seam.annotations.web.RequestParameter;
+import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -45,8 +46,13 @@ public class AlertDefinitionComponent implements Serializable {
 
     @Unwrap
     public AlertDefinition lookupAlertDefinition() {
-        if (this.alertDefinitionId != null) {
-            this.alertDefinition = this.alertDefinitionManager.getAlertDefinitionById(this.subject , this.alertDefinitionId);
+        if (this.alertDefinition == null) {
+            if (this.alertDefinitionId != null) {
+                this.alertDefinition = this.alertDefinitionManager.getAlertDefinitionById(this.subject , this.alertDefinitionId);
+            } else {
+                this.alertDefinition = new AlertDefinition();
+                this.alertDefinition.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+            }
         }
 
         return this.alertDefinition;

@@ -22,7 +22,6 @@ package org.rhq.enterprise.gui.alert;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import javax.faces.model.SelectItem;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
@@ -34,7 +33,6 @@ import org.jboss.seam.log.Log;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionUpdateException;
@@ -62,7 +60,6 @@ public class AlertUIBean implements Serializable {
     private AlertDefinition alertDefinition;
     private List<String> alertConditions;
     private String alertDampening;
-    private List<SelectItem> priorities;
 
     public String getAlertDampening() {
         return this.alertDampening;
@@ -78,10 +75,6 @@ public class AlertUIBean implements Serializable {
 
     public List<String> getAlertConditions() {
         return alertConditions;
-    }
-
-    public List<SelectItem> getPriorities() {
-        return this.priorities;
     }
 
     public String saveAlertDefinition() {
@@ -103,7 +96,6 @@ public class AlertUIBean implements Serializable {
     public void init() {
         this.alertConditions = lookupAlertConditions();
         this.alertDampening = lookupAlertDampening();
-        this.priorities = lookupPriorities();
     }
 
     private List<String> lookupAlertConditions() {
@@ -120,15 +112,5 @@ public class AlertUIBean implements Serializable {
         AlertDampening dampening = this.alertDefinition.getAlertDampening();
 
         return this.alertDescriber.describeDampening(dampening);
-    }
-
-    private List<SelectItem> lookupPriorities() {
-        List<SelectItem> items = new ArrayList<SelectItem>();
-
-        for (AlertPriority priority : AlertPriority.values()) {
-            items.add(new SelectItem(priority.name(), priority.getDisplayName()));
-        }
-
-        return items;
     }
 }

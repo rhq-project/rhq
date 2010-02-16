@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+      xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:rhq="http://rhq-project.org/rhq"
+      xmlns:onc="http://jboss.org/on/component">
+
+<ui:remove>
+    <!-- Set the content type to "text/html" (overriding the default of "application/xhtml+xml") to force
+Firefox and other Gecko-based browsers to render the page in "Almost Standards" (i.e. transitional) mode. -->
+</ui:remove>
+<f:view contentType="text/html; charset=UTF-8">
+
+<head>
+    <title>${msg["product.shortName"]} - #{(!empty pageTitle) ? pageTitle : defaultPageTitle}</title>
+
+    <ui:insert name="metaHeaders"/>
+
+    <link rel="stylesheet" type="text/css" media="screen" href="#{PerspectiveClientUIBean.coreGuiBaseUrl}/css/win.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="#{PerspectiveClientUIBean.coreGuiBaseUrl}/css/form-style.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="#{PerspectiveClientUIBean.coreGuiBaseUrl}/css/menu.css"/>
+
+    <!-- Trims up the headers of RF toggle panel headers -->
+    <style type="text/css">
+        .BlockTitle {
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+
+        HTML, BODY {
+            overflow: hidden;
+        }
+    </style>
+
+    <link rel="stylesheet" type="text/css" media="screen" href="#{PerspectiveClientUIBean.coreGuiBaseUrl}/css/tabular.css"/>
+    <link rel="stylesheet" type="text/css" media="screen" href="#{PerspectiveClientUIBean.coreGuiBaseUrl}/css/layout.css"/>
+
+    <script type="text/javascript">
+        var imagePath = "/images/";
+    </script>
+
+</head>
+
+<body bgcolor="#FFFFFF" style="height: 100%;">
+
+<h:panelGroup layout="block" style="font-weight: bold; margin-left: 15px; margin-bottom: 15px;">
+    <ui:insert name="breadcrumbs"/>
+</h:panelGroup>
+
+<rich:messages globalOnly="true"
+               infoClass="InfoBlock"
+               warnClass="WarnBlock"
+               errorClass="ErrorBlock"
+               fatalClass="FatalBlock" />
+
+<ui:insert name="body"/>
+
+</body>
+</f:view>
+</html>

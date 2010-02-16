@@ -219,7 +219,7 @@
             <executions>
 
                <execution>
-                  <id>copy-core-plugins</id>
+                  <id>copy-core-agent-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
@@ -252,7 +252,7 @@
                </execution>
 
                <execution>
-                  <id>copy-rhq-serverplugins</id>
+                  <id>copy-core-server-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
@@ -281,6 +281,12 @@
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-core-perspective</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>rhq-enterprise-server-policy-perspective</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
 

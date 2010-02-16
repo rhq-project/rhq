@@ -3168,7 +3168,15 @@
                <!-- Changes to RHQ_BUNDLE_FILE -->
                <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
                
-            </schemaSpec>           
+            </schemaSpec>
+
+            <schemaSpec version="2.79">
+                <schema-directSQL>
+                    <statement desc="Normalizing resource group descriptions">
+                        UPDATE RHQ_RESOURCE_GROUP SET DESCRIPTION = NULL WHERE DESCRIPTION = ''
+                     </statement>
+                </schema-directSQL>
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

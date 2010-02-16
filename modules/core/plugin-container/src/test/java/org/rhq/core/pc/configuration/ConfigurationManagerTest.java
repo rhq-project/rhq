@@ -27,6 +27,7 @@ import org.hamcrest.Matcher;
 import org.jmock.Expectations;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationServerService;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -324,10 +325,44 @@ public class ConfigurationManagerTest extends ConfigManagementTest {
             configurationMgr.validate(configuration, resourceId, false);
             assertTrue(false);
         } catch (PluginContainerException exception) {
-            assertEquals(exception.getMessage(), "file /tmp/foo.txt failed validation with message.");
+            //SUCCESS
         }
     }
 
+    
+    @Test
+    public void catchExceptionThrownByFailedValidationOfStructuredConfigs() throws Exception {
+
+        final Configuration configuration = new Configuration();
+        //final RawConfiguration rawConfiguration = createRawConfiguration("/tmp/foo.txt");
+        //configuration.addRawConfiguration(rawConfiguration);
+        final ResourceConfigurationFacet facet = context.mock(ResourceConfigurationFacet.class);
+
+        context.checking(new Expectations() {
+            {
+                allowing(componentService).getResourceType(resourceId);
+                will(returnValue(resourceType));
+
+                atLeast(1).of(componentService).getComponent(resourceId, ResourceConfigurationFacet.class,
+                    FacetLockType.READ, ConfigManagement.FACET_METHOD_TIMEOUT, daemonThread, onlyIfStarted);
+                will(returnValue(facet));
+
+                //allowing(facet).validateRawConfiguration(rawConfiguration);
+                allowing(facet).validateStructuredConfiguration(configuration);
+                will(throwException(new IllegalArgumentException("message")));
+            }
+        });
+        try {
+            configurationMgr.validate(configuration, resourceId, true);
+            assertTrue(false);
+        } catch (PluginContainerException exception) {
+            //SUCCESS
+        }
+    }
+
+
+    
+    
     @Test
     public void mergingRawsIntoStructuredShouldIgnoreNull() throws Exception {
         Configuration config = new Configuration();

@@ -36,16 +36,51 @@
                                         path does not need to be specified. Simple matching will be done starting from
                                         the end of the path. For a path of /foo/bar.txt, you could specify bar.txt."/>
       </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="structuredUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the structured update method, persistStructuredConfiguration."/>
+        <c:simple-property name="rawUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the raw update method, persistRawConfiguration. Note that
+                                        persistRawConfiguration is called once for each raw config file; so, if you
+                                        specify a delay of 5000 (i.e., 5 seconds) and there are 5 raw config files,
+                                        then this will result in a delay of 25 seconds."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="both">
-      <c:simple-property name="x"/>
-      <c:simple-property name="y"/>
-      <c:simple-property name="z"/>
-      <c:simple-property name="username"/>
-      <c:simple-property name="password"/>
-      <c:simple-property name="rhq.server.hostname"/>
-      <c:simple-property name="rhq.server.port"/>
+      <c:simple-property name="x" description="A simple property that is represented in both structured and raw"  type="integer">
+      <c:constraint>
+      		<c:integer-constraint minimum="0"/>
+            <c:integer-constraint maximum="5"/>
+	  </c:constraint>
+      </c:simple-property>
+      
+      
+      <c:simple-property name="y" description="A simple property that is represented in both structured and raw"  type="integer" >
+		<c:constraint>
+      		<c:integer-constraint minimum="6"/>
+            <c:integer-constraint maximum="10"/>
+	  	</c:constraint>
+      </c:simple-property>
+      <c:simple-property name="z" description="A simple property that is represented in both structured and raw"  type="integer" >
+		<c:constraint>
+      		<c:integer-constraint minimum="20"/>
+            <c:integer-constraint maximum="30"/>
+	  	</c:constraint>
+
+      </c:simple-property>
+      <c:simple-property name="username" description="A simple property that is represented in both structured and raw"/>
+      <c:simple-property name="password" description="A simple property that is represented in both structured and raw"/>
+      <c:simple-property name="rhq.server.hostname" description="A simple property that is represented in both structured and raw"/>
+      <c:simple-property name="rhq.server.port" description="A simple property that is represented in both structured and raw"/>
+      <c:simple-property name="structuredOnlyProperty" description="A simple property that is represented only in structured"/>
     </resource-configuration>
   </server>
 
@@ -55,8 +90,21 @@
           description="A fake server component that supports raw configuration">
 
     <plugin-configuration>
-      <c:simple-property name="failValidation" type="boolean" default="false"/>
-      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+      <c:group name="Raw Validation">
+        <c:simple-property name="failRawValidation" type="boolean" default="false"/>
+        <c:simple-property name="failRawUpdate" type="boolean" default="false"/>
+      </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="rawUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the raw update method, persistRawConfiguration. Note that
+                                        persistRawConfiguration is called once for each raw config file; so, if you
+                                        specify a delay of 5000 (i.e., 5 seconds) and there are 5 raw config files,
+                                        then this will result in a delay of 25 seconds."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="raw"/>    
@@ -68,14 +116,32 @@
           description="A fake server component that supports structured configuration">
 
     <plugin-configuration>
-      <c:simple-property name="failValidation" type="boolean" default="false"/>
-      <c:simple-property name="failUpdate" type="boolean" default="false"/>
+      <c:group name="Structured Validation">
+        <c:simple-property name="failStructuredValidation" type="boolean" default="false"/>
+        <c:simple-property name="failStructuredUpdate" type="boolean" default="false"/>
+      </c:group>
+
+      <c:group name="Operation Delays">
+        <c:simple-property name="structuredUpdateDelay"
+                           type="integer"
+                           required="false"
+                           description="A delay specified in milliseconds to simulate a long running operation. This
+                                        delay will affect the structured update method, persistStructuredConfiguration."/>
+      </c:group>
     </plugin-configuration>
 
     <resource-configuration configurationFormat="structured">
       <c:simple-property name="foo"/>
       <c:simple-property name="bar"/>
       <c:simple-property name="bam"/>
+
+      <c:list-property name="listProperty" required="false">
+        <c:map-property name="listPropertyValues">
+          <c:simple-property name="listProperty.x" displayName="listProperty.x"/>
+          <c:simple-property name="listProperty.y" displayName="listProperty.y"/>
+          <c:simple-property name="listProperty.z" displayName="listProperty.z"/>
+        </c:map-property>
+      </c:list-property>
     </resource-configuration>
   </server>
 </plugin>

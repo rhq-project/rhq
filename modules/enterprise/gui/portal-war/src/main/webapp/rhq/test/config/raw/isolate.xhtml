@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+
+<!DOCTYPE html
+      PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:a4j="http://richfaces.org/a4j"
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich">
+
+
+<body>
+
+<h:form>
+    <rich:panel bodyClass="rich-laguna-panel-no-header">
+        <a4j:commandButton value="Set Name to Alex"  reRender="rep" >
+            <a4j:actionparam name="username" value="Alex" assignTo="#{userBean.name}"/>
+        </a4j:commandButton>
+        <rich:spacer width="20" />
+        <a4j:commandButton value="Set Name to John"  reRender="rep" >
+            <a4j:actionparam name="username" value="John" assignTo="#{userBean.name}"/>
+        </a4j:commandButton>
+    </rich:panel>
+    <rich:spacer height="1" />
+    <rich:panel bodyClass="rich-laguna-panel-no-header">
+        <h:outputText id="rep" value="Selected Name:#{userBean.name}"/>
+    </rich:panel>
+</h:form>
+</body>
+</html>

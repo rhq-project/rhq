@@ -22,6 +22,10 @@
 */
 package org.rhq.core.gui.converter;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
@@ -30,65 +34,70 @@ import javax.faces.convert.Converter;
 import javax.faces.validator.Validator;
 import javax.faces.validator.ValidatorException;
 
+import org.rhq.core.gui.configuration.AbstractConfigurationComponent;
+import org.rhq.core.template.TemplateEngine;
+
 /**
  * @author Ian Springer
  */
-public class PropertySimpleValueConverter implements Converter
-{
+
+public class PropertySimpleValueConverter implements Converter , Serializable{
+
+    TemplateEngine engine = null;
+
+    
+    public void setEngine(TemplateEngine engine) {
+        this.engine = engine;
+    }
+
+    public PropertySimpleValueConverter(TemplateEngine engine ) {
+        this.engine = engine;
+    }
+
     /**
      * A special value for an input that tells the server-side that the corresponding value should be set to null.
      */
     public static final String NULL_INPUT_VALUE = " ";
 
-    public Object getAsObject(FacesContext context, UIComponent component, String string)
-    {
+    public Object getAsObject(FacesContext context, UIComponent component, String string) {
+
+        if ((engine != null) && (string != null)) {
+            string = engine.replaceTokens(string);
+        }
         //noinspection UnnecessaryLocalVariable
         Object object = NULL_INPUT_VALUE.equals(string) ? null : string;
+
         validateEmptyString(context, component, string);
         return object;
     }
 
-    public String getAsString(FacesContext facesContext, UIComponent component, Object object)
-    {
+    public String getAsString(FacesContext facesContext, UIComponent component, Object object) {
         //noinspection UnnecessaryLocalVariable
-        String string = (String)object;
+        String string = (String) object;
         return string;
     }
 
-    private static void validateEmptyString(FacesContext context, UIComponent component, String string)
-    {
-        UIInput input = (UIInput)component;
-        if (input.isValid() && string != null && string.length() == 0)
-        {
-            if (input.getValidators() != null)
-            {
-                for (Validator validator : input.getValidators())
-                {
-                    try
-                    {
+    private static void validateEmptyString(FacesContext context, UIComponent component, String string) {
+        UIInput input = (UIInput) component;
+        if (input.isValid() && string != null && string.length() == 0) {
+            if (input.getValidators() != null) {
+                for (Validator validator : input.getValidators()) {
+                    try {
                         validator.validate(context, input, string);
-                    }
-                    catch (ValidatorException ve)
-                    {
+                    } catch (ValidatorException ve) {
                         // If the validator throws an exception, we're
                         // invalid, and we need to add a message
                         input.setValid(false);
                         FacesMessage message;
                         String validatorMessageString = input.getValidatorMessage();
-                        if (null != validatorMessageString)
-                        {
-                            message =
-                                    new FacesMessage(FacesMessage.SEVERITY_ERROR,
-                                            validatorMessageString,
-                                            validatorMessageString);
+                        if (null != validatorMessageString) {
+                            message = new FacesMessage(FacesMessage.SEVERITY_ERROR, validatorMessageString,
+                                validatorMessageString);
                             message.setSeverity(FacesMessage.SEVERITY_ERROR);
-                        }
-                        else
-                        {
+                        } else {
                             message = ve.getFacesMessage();
                         }
-                        if (message != null)
-                        {
+                        if (message != null) {
                             context.addMessage(input.getClientId(context), message);
                         }
                     }

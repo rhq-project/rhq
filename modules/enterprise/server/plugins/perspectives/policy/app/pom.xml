@@ -27,7 +27,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
-         <version>1.0.0-SNAPSHOT</version>                  
+         <version>${project.version}</version>                  
          <type>pom</type>
          <scope>import</scope>
       </dependency>
@@ -42,7 +42,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
-         <version>1.0.0-SNAPSHOT</version>  
+         <version>${project.version}</version>  
          <type>war</type>                         
       </dependency>
       
@@ -51,7 +51,7 @@
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-enterprise-server-base-perspective-war</artifactId>
-         <version>1.0.0-SNAPSHOT</version>
+         <version>${project.version}</version>
          <type>warpath</type>
       </dependency>
 

@@ -61,9 +61,9 @@
             <module>server/jar</module>
             <module>server/safe-invoker</module>
             <module>server/sars</module>
+            <module>remoting</module>
             <module>gui</module>
             <module>server/plugins</module>
-            <module>remoting</module>
             <module>server/ear</module>
             <module>server/container-lib</module>
             <module>server/container</module>

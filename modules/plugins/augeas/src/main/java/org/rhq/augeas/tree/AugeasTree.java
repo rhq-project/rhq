@@ -40,10 +40,15 @@ import org.rhq.augeas.node.AugeasNode;
 public interface AugeasTree {
     
     /**
+     * Path separator in the Augeas expressions.
+     */
+    public static final char PATH_SEPARATOR = '/'; //or should this be File.separatorChar instead?
+    
+    /**
      * All the paths to nodes representing configuration data in Augeas are
      * prefixed by this.
      */
-    public static final String AUGEAS_DATA_PATH = File.separatorChar + "files";
+    public static final String AUGEAS_DATA_PATH = PATH_SEPARATOR + "files";
     
     /**
      * Persists the tree using Augeas to the individual files.
@@ -133,6 +138,12 @@ public interface AugeasTree {
      */
     public void setValue(AugeasNode node, String value);
 
+    /**
+     * @param node
+     * @return the file in which the configuration represented by the node is defined.
+     */
+    public File getFile(AugeasNode node);
+    
     /**
      * @return a summary of an update error obtained from the Augeas library.
      */

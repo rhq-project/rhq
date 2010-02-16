@@ -22,9 +22,20 @@
  */
 package org.rhq.core.pc.plugin;
 
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
+
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
@@ -39,18 +50,6 @@ import org.rhq.core.pluginapi.plugin.PluginLifecycleListener;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.MessageDigestGenerator;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This container service will load in all plugins that can be found and will maintain the complete set of
@@ -108,6 +107,7 @@ public class PluginManager implements ContainerService {
 
         PluginFinder finder = configuration.getPluginFinder();
         File tmpDir = configuration.getTemporaryDirectory();
+        List<String> disabledPlugins = configuration.getDisabledPlugins();
 
         // The root classloader for all plugins will have all classes hidden except for those configured in the regex.
         // Notice this root classloader has no jar URLs - it will provide no classes except for what it will allow
@@ -131,8 +131,12 @@ public class PluginManager implements ContainerService {
                     log.debug("Plugin found at: " + url);
                     try {
                         PluginDescriptor descriptor = AgentPluginDescriptorUtil.loadPluginDescriptorFromUrl(url);
-                        AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
-                        pluginNamesUrls.put(descriptor.getName(), url);
+                        if (!disabledPlugins.contains(descriptor.getName())) {
+                            AgentPluginDescriptorUtil.addPluginToDependencyGraph(graph, descriptor);
+                            pluginNamesUrls.put(descriptor.getName(), url);
+                        } else {
+                            log.info("Not loading disabled plugin: " + url);
+                        }
                     } catch (Throwable t) {
                         // probably due to invalid XML syntax in the deployment descriptor - the plugin will be ignored
                         log.error("Plugin at [" + url + "] could not be loaded and will therefore not be deployed.", t);
@@ -173,23 +177,6 @@ public class PluginManager implements ContainerService {
     }
 
     private void initUpdateLoadedPluginsCallback() {
-//        if (configuration.isInsideAgent()) {
-//            updateLoadedPlugins = new UpdateLoadedPlugins() {
-//                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
-//                    loadPluginIfFoundInListFromServer(pluginDescriptor);
-//                }
-//            };
-//        }
-//        else {
-//            updateLoadedPlugins = new UpdateLoadedPlugins() {
-//                PluginTransformer transformer = new PluginTransformer();
-//
-//                public void execute(PluginDescriptor pluginDescriptor, URL pluginURL) {
-//                    Plugin plugin = transformer.toPlugin(pluginDescriptor, pluginURL);
-//                    loadedPlugins.add(plugin);
-//                }
-//            };
-//        }
         updateLoadedPlugins = new UpdateLoadedPlugins() {
             PluginTransformer transformer = new PluginTransformer();
 
@@ -198,15 +185,6 @@ public class PluginManager implements ContainerService {
                 loadedPlugins.add(plugin);
             }
         };
-    }
-
-    private void loadPluginIfFoundInListFromServer(PluginDescriptor pluginDescriptor) {
-        for (Plugin plugin : configuration.getPluginsOnServer()) {
-            if (pluginDescriptor.getName().equals(plugin.getName())) {
-                loadedPlugins.add(plugin);
-                return;
-            }
-        }
     }
 
     /**
@@ -247,7 +225,7 @@ public class PluginManager implements ContainerService {
         this.loadedPlugins.clear();
         this.loadedPlugins = null;
 
-        pluginLifecycleListenerMgr.shutdown();;
+        pluginLifecycleListenerMgr.shutdown();
 
         this.metadataManager = null;
         this.classLoaderManager = null;
@@ -385,17 +363,6 @@ public class PluginManager implements ContainerService {
         return pluginLifecycleListenerMgr.loadListener(pluginDescriptor, pluginEnvironment);
     }
 
-    private String getPluginLifecycleListenerClass(PluginDescriptor pluginDescriptor) {
-        String className = pluginDescriptor.getPluginLifecycleListener();
-        if (className != null) {
-            String pkg = pluginDescriptor.getPackage();
-            if ((className.indexOf('.') == -1) && (pkg != null)) {
-                className = pkg + '.' + className;
-            }
-        }
-        return className;
-    }
-
     private PluginContext createPluginContext(String pluginName) {
         SystemInfo sysInfo = SystemInfoFactory.createSystemInfo();
         File dataDir = new File(this.configuration.getDataDirectory(), pluginName);
@@ -404,32 +371,6 @@ public class PluginManager implements ContainerService {
 
         PluginContext context = new PluginContext(pluginName, sysInfo, tmpDir, dataDir, pcName);
         return context;
-    }
-
-    private Object instantiatePluginClass(PluginEnvironment environment, String className)
-        throws PluginContainerException {
-
-        ClassLoader loader = environment.getPluginClassLoader();
-
-        log.debug("Loading class [" + className + "]...");
-
-        try {
-            Class<?> clazz = Class.forName(className, true, loader);
-            log.debug("Loaded class [" + clazz + "].");
-            return clazz.newInstance();
-        } catch (InstantiationException e) {
-            throw new PluginContainerException("Could not instantiate plugin class [" + className
-                + "] from plugin environment [" + environment + "]", e);
-        } catch (IllegalAccessException e) {
-            throw new PluginContainerException("Could not access plugin class " + className
-                + "] from plugin environment [" + environment + "]", e);
-        } catch (ClassNotFoundException e) {
-            throw new PluginContainerException("Could not find plugin class " + className
-                + "] from plugin environment [" + environment + "]", e);
-        } catch (NullPointerException npe) {
-            throw new PluginContainerException("Plugin class was 'null' in plugin environment [" + environment + "]",
-                npe);
-        }
     }
 
     /**

@@ -36,6 +36,12 @@ import javax.persistence.NamedQuery;
 @DiscriminatorValue("AGENT")
 @NamedQueries( {
 //
+    // this query is how you enable and disable plugins
+    @NamedQuery(name = Plugin.UPDATE_PLUGIN_ENABLED_BY_ID, query = "" //
+        + "UPDATE Plugin p " //
+        + "   SET p.enabled = :enabled " //
+        + " WHERE p.id = :id)"),
+
     // helps you determine if a plugin is installed or was deleted
     @NamedQuery(name = Plugin.QUERY_GET_STATUS_BY_NAME, query = "" //
         + " SELECT p.status " //
@@ -68,6 +74,25 @@ import javax.persistence.NamedQuery;
         + "   FROM Plugin AS p " //
         + "  WHERE p.id IN (:ids) " //
         + "        AND p.status = 'INSTALLED' "), //
+
+    // this query does not load the content blob, but loads everything else
+    @NamedQuery(name = Plugin.QUERY_FIND_ALL_BY_IDS, query = "" //
+        + " SELECT new org.rhq.core.domain.plugin.Plugin( " //
+        + "        p.id, " //
+        + "        p.name, " //
+        + "        p.path, " //
+        + "        p.displayName, " //
+        + "        p.enabled, " //
+        + "        p.status, " //
+        + "        p.description, " //
+        + "        p.help, " //
+        + "        p.md5, " //
+        + "        p.version, " //
+        + "        p.ampsVersion, " //
+        + "        p.ctime, " //
+        + "        p.mtime) " //
+        + "   FROM Plugin AS p " //
+        + "  WHERE p.id IN (:ids) "), //
 
     // this query does not load the content blob, but loads everything else
     @NamedQuery(name = Plugin.QUERY_FIND_BY_NAME, query = "" //
@@ -167,11 +192,13 @@ public class Plugin extends AbstractPlugin {
     public static final String QUERY_GET_STATUS_BY_NAME = "Plugin.queryGetStatusByName";
     public static final String QUERY_GET_NAMES_BY_ENABLED = "Plugin.queryGetNamesByEnabled";
     public static final String QUERY_FIND_BY_IDS = "Plugin.findByIds";
+    public static final String QUERY_FIND_ALL_BY_IDS = "Plugin.findAllByIds";
     public static final String QUERY_FIND_BY_NAME = "Plugin.findByName";
     public static final String QUERY_FIND_ANY_BY_NAME = "Plugin.findAnyByName";
     public static final String QUERY_FIND_ALL_INSTALLED = "Plugin.findAllInstalled";
     public static final String UPDATE_PLUGINS_ENABLED_BY_IDS = "Plugin.updatePluginsEnabledByIds";
     public static final String QUERY_FIND_BY_RESOURCE_TYPE_AND_CATEGORY = "Plugin.findByResourceType";
+    public static final String UPDATE_PLUGIN_ENABLED_BY_ID = "Plugin.updatePluginEnabledById";
 
     public Plugin() {
         super();

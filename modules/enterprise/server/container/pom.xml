@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-parent</artifactId>
-    <version>1.4.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -170,7 +170,6 @@
                   <!-- dependency versions -->
                   <property name="rhq.version" value="${project.version}" />
                   <property name="jboss.version" value="${jboss.version}" />
-                  <!--<property name="ojdbc14.version" value="${ojdbc14.version}" />-->
                   <property name="ojdbc5.version" value="${ojdbc5.version}" />
                   <property name="postgresql.version" value="${postgresql.version}" />
                   <property name="h2.version" value="${h2.version}" />
@@ -319,8 +318,6 @@
                                <fileset dir="${deployment.dir}/bin" includes="*.sh" />
                                <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                             </chmod>
-                            <!-- Delete old ojdbc14 jar(s). -->
-                            <delete verbose="true"><fileset dir="${deployment.dir}/jbossas/server/default/lib" includes="ojdbc14-*.jar" /></delete>
                           </tasks>
                         </configuration>
                         <goals>

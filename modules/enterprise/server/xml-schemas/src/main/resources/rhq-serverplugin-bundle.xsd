@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+           xmlns:bundle="urn:xmlns:rhq-serverplugin.bundle"
+           targetNamespace="urn:xmlns:rhq-serverplugin.bundle"
+           elementFormDefault="qualified"
+           jaxb:version="2.0"
+           xmlns:jaxb="http://java.sun.com/xml/ns/jaxb"
+           blockDefault="">
+
+    <xs:import namespace="urn:xmlns:rhq-serverplugin" schemaLocation="rhq-serverplugin.xsd" />
+
+    <xs:annotation>
+        <xs:documentation>
+            Schema for bundle server-side plugins.
+        </xs:documentation>
+        <xs:appinfo>
+            <jaxb:schemaBindings>
+                <jaxb:package name="org.rhq.enterprise.server.xmlschema.generated.serverplugin.bundle" />
+            </jaxb:schemaBindings>
+        </xs:appinfo>
+    </xs:annotation>
+
+    <xs:element name="bundle-plugin" type="bundle:BundlePluginDescriptorType" substitutionGroup="serverplugin:server-plugin">
+        <xs:annotation>
+            <xs:documentation>
+                Defines a bundle plugin. This type of plugin performs tasks that the core
+                server needs in order to properly process and manage bundles of specific bundle types.
+                Each bundle server plugin knows about and can process a single bundle type.
+            </xs:documentation>
+            <xs:appinfo>
+                <jaxb:class name="BundlePluginElement" />
+            </xs:appinfo>
+        </xs:annotation>
+    </xs:element>
+
+    <xs:complexType name="BundlePluginDescriptorType">
+        <xs:complexContent>
+            <xs:extension base="serverplugin:ServerPluginDescriptorType">
+               <xs:sequence>
+                   <xs:element name="bundle" type="bundle:BundleType" minOccurs="1" maxOccurs="1">
+                       <xs:annotation>
+                           <xs:documentation>
+                              Identifies the type of bundle that this server plugin can process.
+                              There must be a corresponding agent plugin that defines the same
+                              bundle type in order for the RHQ bundle subsystem to work properly.
+                           </xs:documentation>
+                       </xs:annotation>
+                   </xs:element>
+               </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:complexType name="BundleType">
+        <xs:attribute name="type" type="xs:string" use="required"/>
+    </xs:complexType>
+
+</xs:schema>

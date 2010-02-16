@@ -40,6 +40,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.enterprise.server.common.EntityManagerFacadeLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.util.QueryUtility;
 
 public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result> {
 
@@ -550,11 +551,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 String argumentValue = (String) whereReplacements.get(lastArgumentName);
 
                 if (nextToken.equals("startswith")) {
-                    argumentValue = argumentValue.replaceAll("\\_", "\\\\_") + "%";
+                    argumentValue = QueryUtility.escapeSearchParameter(argumentValue) + "%";
                 } else if (nextToken.equals("endswith")) {
-                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_");
+                    argumentValue = "%" + QueryUtility.escapeSearchParameter(argumentValue);
                 } else if (nextToken.equals("contains")) {
-                    argumentValue = "%" + argumentValue.replaceAll("\\_", "\\\\_") + "%";
+                    argumentValue = "%" + QueryUtility.escapeSearchParameter(argumentValue) + "%";
                 } else {
                     throw new InvalidExpressionException("Unrecognized string function '" + nextToken
                         + "' at end of condition");
@@ -1021,6 +1022,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     whereReplacements.remove(whereCondition.getValue()); // no longer needed, literal rendered here
                 } else {
                     String whereConditionOperator = " = ";
+                    String ending = " ";
                     if (bindValue != null) {
                         /*
                          * there will *not* necessarily be a replacement value ready at this point in the processing; these
@@ -1031,9 +1033,10 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         if ((bindValueAsString != null) // whereConditionValue is null when whereCondition isn't a groupBy expression
                             && (bindValueAsString.startsWith("%") || bindValueAsString.endsWith("%"))) {
                             whereConditionOperator = " LIKE ";
+                            ending = QueryUtility.getEscapeClause();
                         }
                     }
-                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + " ";
+                    result += whereCondition.getKey() + whereConditionOperator + ":" + whereCondition.getValue() + ending;
                 }
 
                 first = false;

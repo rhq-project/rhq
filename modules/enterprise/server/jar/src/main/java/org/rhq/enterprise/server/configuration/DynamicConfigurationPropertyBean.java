@@ -22,6 +22,7 @@
 */
 package org.rhq.enterprise.server.configuration;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,11 +34,12 @@ import javax.persistence.Query;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.configuration.DynamicConfigurationPropertyValue;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
  * @see DynamicConfigurationPropertyLocal
- * 
+ *
  * @author Jason Dobies
  */
 @Stateless
@@ -49,7 +51,7 @@ public class DynamicConfigurationPropertyBean implements DynamicConfigurationPro
     private EntityManager entityManager;
 
     @SuppressWarnings("unchecked")
-    public List<String> lookupValues(String key) {
+    public List<DynamicConfigurationPropertyValue> lookupValues(String key) {
 
         String queryName = PropertyExpressionEvaluator.getQueryNameForKey(key);
 
@@ -62,8 +64,21 @@ public class DynamicConfigurationPropertyBean implements DynamicConfigurationPro
         }
 
         Query query = entityManager.createNamedQuery(queryName);
-        List<String> results = query.getResultList();
+        List<Object[]> results = query.getResultList();
 
-        return results;
+        List<DynamicConfigurationPropertyValue> values =
+            new ArrayList<DynamicConfigurationPropertyValue>(results.size());
+        for (Object[] result : results) {
+            DynamicConfigurationPropertyValue value = translate(result);
+            values.add(value);
+        }
+
+        return values;
+    }
+
+    public DynamicConfigurationPropertyValue translate(Object[] results) {
+        DynamicConfigurationPropertyValue value =
+            new DynamicConfigurationPropertyValue((String) results[0], (String) results[1]);
+        return value;
     }
 }

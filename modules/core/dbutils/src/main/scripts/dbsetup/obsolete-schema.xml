@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+        
+<dbsetup name="content-schema.xml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="urn:xmlns:rhq-dbsetup-schema">
+    
+    <!-- NOTE: The tables will be dropped in the *** REVERSE ORDER *** as listed in this file! -->
+    <!-- NOTE: So, put the table you want dropped first at the bottom, and so on... -->
+
+
+    <!-- !!! REMOVED FROM CONTENT-SCHEMA !!!! -->
+    
+    <table name="RHQ_BUNDLE_CONFIG" obsolete="true">
+        <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER"/>
+        <column name="CONFIG_ID" type="INTEGER" required="false" references="RHQ_CONFIG" />
+        <!-- this probably needs a DTYPE discriminator so we know if its a bundle or a specific bundle version -->
+        <column name="BUNDLE_VERSION_ID" type="INTEGER" required="false" references="RHQ_BUNDLE_VERSION"/>
+        <column name="BUNDLE_ID" type="INTEGER" required="false" references="RHQ_BUNDLE"/>
+    </table>
+
+    <table name="RHQ_BUNDLE_DEPLOYMENT" obsolete="true">
+        <column name="BUNDLE_CONFIG_ID" type="INTEGER" required="true" references="RHQ_BUNDLE_CONFIG"/>
+        <column name="RESOURCE_ID" type="INTEGER" required="true" references="RHQ_RESOURCE" />
+
+        <constraint name="RHQ_BUNDLE_DEPLOYMENT_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_CONFIG_ID"/>
+                <field ref="RESOURCE_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>    
+
+
+   <!-- !!! REMOVED FROM MEASUREMENT-SCHEMA !!!! -->
+
+   <table name="RHQ_MEASUREMENT_OOB" obsolete="true">
+      <column name="ID" type="INTEGER" default="sequence-only" initial="10001" primarykey="true" required="true"/>
+      <column name="SCHEDULE_ID" type="INTEGER" references="RHQ_MEASUREMENT_SCHED(ID)" required="true"/>
+      <column name="OCCURRED" type="LONG" required="true"/>
+      <column name="DIFF" type="DOUBLE" required="true"/>
+
+      <index name="RHQ_MEASUREMENT_OOB_IDX" unique="true">
+         <field ref="SCHEDULE_ID" />
+         <field ref="OCCURRED" />
+      </index>
+   </table>
+
+</dbsetup>
+

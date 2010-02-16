@@ -372,7 +372,9 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @Nullable
     public ResourceContainer getResourceContainer(CanonicalResourceKey canonicalId) {
         ResourceContainer resourceContainer = null;
-        for (Map.Entry<String, ResourceContainer> entry : this.resourceContainers.entrySet()) {
+        Map<String, ResourceContainer> copy = new HashMap<String, ResourceContainer>(this.resourceContainers); // avoids concurrent mod exception, kinda
+
+        for (Map.Entry<String, ResourceContainer> entry : copy.entrySet()) {
             ResourceContainer container = entry.getValue();
             Resource resource = container.getResource();
             if (resource != null) {
@@ -390,6 +392,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         }
+
+        copy.clear(); // help GC
         return resourceContainer;
     }
 
@@ -415,13 +419,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         List<ResourceContainer> containers = new ArrayList<ResourceContainer>(this.resourceContainers.values()); // avoids concurrent mod exception
+        ResourceContainer retContainer = null;
         for (ResourceContainer container : containers) {
             if (resourceId.equals(container.getResource().getId())) {
-                return container;
+                retContainer = container;
+                break;
             }
         }
-
-        return null;
+        containers.clear(); // help GC
+        return retContainer;
     }
 
     void executePlatformScan() {
@@ -2173,14 +2179,32 @@ public class InventoryManager extends AgentService implements ContainerService, 
             log.debug("Merging [" + unknownResourceIds.size()
                 + "] unknown Resources and their descendants into local inventory...");
         }
-        Set<Resource> unknownResources = configuration.getServerServices().getDiscoveryServerService().getResources(
-            unknownResourceIds, true);
-        for (Resource unknownResource : unknownResources) {
-            mergeResource(unknownResource);
-            syncSchedulesRecursively(unknownResource);
-        }
 
-        //print(this.platform, 0);
+        if (!unknownResourceIds.isEmpty()) {
+            PluginMetadataManager pmm = this.pluginManager.getMetadataManager();
+
+            Set<Resource> unknownResources = configuration.getServerServices().getDiscoveryServerService()
+                .getResources(unknownResourceIds, true);
+
+            Set<Resource> toBeIgnored = new HashSet<Resource>();
+
+            for (Resource unknownResource : unknownResources) {
+                ResourceType resourceType = pmm.getType(unknownResource.getResourceType());
+                if (resourceType != null) {
+                    mergeResource(unknownResource);
+                    syncSchedulesRecursively(unknownResource);
+                } else {
+                    toBeIgnored.add(unknownResource);
+                    if (log.isDebugEnabled()) {
+                        log.debug("During an inventory sync, the server gave us resource [" + unknownResource
+                            + "] but its type is disabled in the agent; ignoring it");
+                    }
+                }
+            }
+
+            unknownResources.removeAll(toBeIgnored);
+        }
+        return;
     }
 
     private void print(Resource resourceTreeNode, int level) {

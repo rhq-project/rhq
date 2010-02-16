@@ -41,12 +41,15 @@ import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
 import org.rhq.enterprise.server.content.ContentSourceManagerLocal;
+import org.rhq.enterprise.server.perspective.PerspectiveManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 public class CreateContentSourceUIBean extends PagedDataTableUIBean {
     public static final String MANAGED_BEAN_NAME = "CreateContentSourceUIBean";
 
-    private ContentSourceManagerLocal manager = LookupUtil.getContentSourceManager();
+    private ContentSourceManagerLocal contentSourceManager = LookupUtil.getContentSourceManager();
+
+    private PerspectiveManagerLocal perspectiveManager = LookupUtil.getPerspectiveManager();
 
     private ContentSource newContentSource = new ContentSource();
     private ContentSourceType selectedContentSourceType = null;
@@ -176,7 +179,7 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
                 if (this.selectedContentSourceType == null
                     || (this.selectedContentSourceType != null && !typeName.equals(this.selectedContentSourceType
                         .getName()))) {
-                    this.selectedContentSourceType = manager.getContentSourceType(typeName);
+                    this.selectedContentSourceType = contentSourceManager.getContentSourceType(typeName);
                     updateSelectedContentSourceType(this.selectedContentSourceType);
                 }
             }
@@ -192,11 +195,24 @@ public class CreateContentSourceUIBean extends PagedDataTableUIBean {
 
         @Override
         public PageList<ContentSourceType> fetchPage(PageControl pc) {
-            Set<ContentSourceType> types = manager.getAllContentSourceTypes();
+            Set<ContentSourceType> types = contentSourceManager.getAllContentSourceTypes();
 
             PageList<ContentSourceType> results = null;
             results = new PageList<ContentSourceType>(types, types.size(), PageControl.getUnlimitedInstance());
             return results;
         }
+    }
+
+    public String getCreateContentProviderPageLink(String typeName) {
+        Subject subject = EnterpriseFacesContextUtility.getSubject();
+        String link = perspectiveManager.getPageLink(subject, "createContentProvider", typeName, null);
+
+        if (null == link) {
+            link = "/rhq/content/createContentProvider.xhtml?mode=new&typeName=" + typeName;
+        } else {
+            link += "&mode=new&typeName=" + typeName;
+        }
+
+        return link;
     }
 }

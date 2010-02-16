@@ -45,7 +45,9 @@ import org.rhq.core.domain.resource.Resource;
 @Entity
 @NamedQueries( {
     @NamedQuery(name = Architecture.QUERY_FIND_BY_NAME, query = "SELECT arch FROM Architecture arch WHERE arch.name = :name"),
-    @NamedQuery(name = Architecture.QUERY_FIND_ALL, query = "SELECT arch FROM Architecture arch") })
+    @NamedQuery(name = Architecture.QUERY_FIND_ALL, query = "SELECT arch FROM Architecture arch"),
+    @NamedQuery(name = Architecture.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT arch.name, arch.name FROM Architecture arch")
+})
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_ARCHITECTURE_ID_SEQ")
 @Table(name = "RHQ_ARCHITECTURE")
 public class Architecture implements Serializable {
@@ -55,6 +57,8 @@ public class Architecture implements Serializable {
 
     public static final String QUERY_FIND_BY_NAME = "Architecture.findByName";
     public static final String QUERY_FIND_ALL = "Architecture.findAll";
+
+    public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Architecture.dynamicConfigValues";
 
     // Attributes  --------------------------------------------
 

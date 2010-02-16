@@ -152,6 +152,63 @@ public class InstalledPluginsUIBean {
         return;
     }
 
+    public void enableAgentPlugins() {
+        List<Plugin> allSelectedPlugins = getSelectedAgentPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        List<Plugin> pluginsToEnable = new ArrayList<Plugin>();
+
+        for (Plugin selectedPlugin : allSelectedPlugins) {
+            if (!selectedPlugin.isEnabled() && selectedPlugin.getStatus() == PluginStatusType.INSTALLED) {
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
+                pluginsToEnable.add(selectedPlugin);
+            }
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No disabled plugins were selected. Nothing to enable");
+            return;
+        }
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            resourceMetadataManagerBean.enablePlugins(subject, getIds(pluginsToEnable));
+            FacesContextUtility
+                .addMessage(FacesMessage.SEVERITY_INFO, "Enabled server plugins: " + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to enable agent plugins", e);
+        }
+        return;
+    }
+
+    public void disableAgentPlugins() {
+        List<Plugin> allSelectedPlugins = getSelectedAgentPlugins();
+        List<String> selectedPluginNames = new ArrayList<String>();
+        List<Plugin> pluginsToDisable = new ArrayList<Plugin>();
+
+        for (Plugin selectedPlugin : allSelectedPlugins) {
+            if (selectedPlugin.isEnabled()) {
+                selectedPluginNames.add(selectedPlugin.getDisplayName());
+                pluginsToDisable.add(selectedPlugin);
+            }
+        }
+
+        if (selectedPluginNames.isEmpty()) {
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO,
+                "No enabled plugins were selected. Nothing to disable");
+            return;
+        }
+
+        try {
+            Subject subject = EnterpriseFacesContextUtility.getSubject();
+            resourceMetadataManagerBean.disablePlugins(subject, getIds(pluginsToDisable));
+            FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Disabled plugins: " + selectedPluginNames);
+        } catch (Exception e) {
+            processException("Failed to disable agent plugins", e);
+        }
+        return;
+    }
+
     public void enableServerPlugins() {
         List<ServerPlugin> allSelectedPlugins = getSelectedServerPlugins();
         List<String> selectedPluginNames = new ArrayList<String>();
@@ -288,6 +345,13 @@ public class InstalledPluginsUIBean {
             ids.add(plugin.getId());
         }
         return ids;
+    }
+
+    private List<Plugin> getSelectedAgentPlugins() {
+        Integer[] integerItems = getSelectedPluginIds();
+        List<Integer> ids = Arrays.asList(integerItems);
+        List<Plugin> plugins = resourceMetadataManagerBean.getAllPluginsById(ids);
+        return plugins;
     }
 
     private List<ServerPlugin> getSelectedServerPlugins() {

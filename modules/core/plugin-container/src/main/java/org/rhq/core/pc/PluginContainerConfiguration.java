@@ -24,15 +24,14 @@ package org.rhq.core.pc;
 
 import java.io.File;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
 
 import org.rhq.core.pc.plugin.PluginFinder;
 import org.rhq.core.pc.plugin.RootPluginClassLoader;
 import org.rhq.core.pluginapi.inventory.PluginContainerDeployment;
-import org.rhq.core.domain.plugin.Plugin;
 
 /**
  * Configuration properties for the plugin container and all its internal managers.
@@ -47,6 +46,7 @@ public class PluginContainerConfiguration {
     private static final String CONTAINER_NAME_PROP = PROP_PREFIX + "container-name";
     private static final String DATA_DIRECTORY_PROP = PROP_PREFIX + "data-directory";
     private static final String TEMP_DIRECTORY_PROP = PROP_PREFIX + "temp-directory";
+    private static final String DISABLED_PLUGINS = PROP_PREFIX + "disabled-plugins";
     private static final String ROOT_PLUGIN_CLASSLOADER_REGEX_PROP = PROP_PREFIX + "root-plugin-classloader-regex";
     private static final String CREATE_RESOURCE_CLASSLOADERS = PROP_PREFIX + "create-resource-classloaders";
 
@@ -127,11 +127,6 @@ public class PluginContainerConfiguration {
     private ServerServices serverServices = null;
 
     /**
-     * The plugins that reside on the server which are sent down to the agent.
-     */
-    private Set<Plugin> pluginsOnServer = new HashSet<Plugin>();
-
-    /**
      * This is our hash map that contains the actual properties. We use a map (as opposed to individual data member
      * variables) to support a future enhancement by which our plugins can squirrel away their own custom global
      * properties here.
@@ -192,6 +187,39 @@ public class PluginContainerConfiguration {
      */
     public void setTemporaryDirectory(File tmpDir) {
         configuration.put(TEMP_DIRECTORY_PROP, tmpDir);
+    }
+
+    /**
+     * If any plugins are to be disabled (i.e. not loaded by the plugin container), the plugin
+     * names will be returned in a list. If no plugins are to be disabled, and empty list is
+     * returned. The returned list is a copy, not the actual list used internally.
+     * Note that the plugin name is the name found in the plugin .xml descriptor in the plugin root element.
+     * 
+     * @return list of plugin names identifying plugins to be disabled
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getDisabledPlugins() {
+        List<String> list = (List<String>) configuration.get(DISABLED_PLUGINS);
+        if (list == null) {
+            return new ArrayList<String>(0);
+        } else {
+            return new ArrayList<String>(list);
+        }
+    }
+
+    /**
+     * If one or more plugins are not to be loaded by the plugin container, the given
+     * list should be the names of the plugins to be disabled. Note that the plugin name
+     * is the name found in the plugin .xml descriptor in the plugin root element.
+     * 
+     * @param disabledPlugins
+     */
+    public void setDisabledPlugins(List<String> disabledPlugins) {
+        if (disabledPlugins != null) {
+            configuration.put(DISABLED_PLUGINS, disabledPlugins);
+        } else {
+            configuration.remove(DISABLED_PLUGINS);
+        }
     }
 
     /**
@@ -710,14 +738,6 @@ public class PluginContainerConfiguration {
      */
     public void setServerServices(ServerServices serverServices) {
         this.serverServices = serverServices;
-    }
-
-    public Set<Plugin> getPluginsOnServer() {
-        return pluginsOnServer;
-    }
-
-    public void setPluginsOnServer(Set<Plugin> plugins) {
-        pluginsOnServer = plugins;
     }
 
     /**

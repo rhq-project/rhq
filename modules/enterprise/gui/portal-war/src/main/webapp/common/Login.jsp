@@ -84,7 +84,7 @@ input.button_submit {
 <div id="PageHeader">
 
 <table width="100%" border="0" cellpadding="20" cellspacing="0" height="70px">
-    <tr valign="bottom">
+    <tr valign="top">
         <td align="left" rowspan="2">
             <fmt:message var="urlDomain" key="product.url.domain" />
             <fmt:message var="productName" key="product.fullName" />

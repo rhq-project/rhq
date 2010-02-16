@@ -1,42 +1,27 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<?xml version="1.0"?>
 
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
-      xmlns:h="http://java.sun.com/jsf/html"
+<ui:composition
+      template="/WEB-INF/templates/mainTemplate.xhtml"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:s="http://jboss.com/products/seam/taglib"
+      xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:c="http://java.sun.com/jstl/core"
+      xmlns:fn="http://java.sun.com/jsp/jstl/functions"
       xmlns:a4j="http://richfaces.org/a4j"
-      xmlns:rich="http://richfaces.org/rich">
-<ui:remove>
-    <!-- Set the content type to "text/html" to ensure "application/xhtml+xml", which would put Firefox and
-  other Gecko-based browsers into XML mode (which requires pages to be well-formed XML), is not used.
-  We also specify the charset/encoding here, since we cannot specify it via the xml prolog, since
-  including an xml prolog causes IE6 to go into the undesirable "quirks mode".
-  (see https://jira.jboss.org/jira/browse/EMBJOPR-19) -->
-</ui:remove>
+      xmlns:rich="http://richfaces.org/rich"
+      xmlns:rhq="http://rhq-project.org/rhq"
+      xmlns:onc="http://jboss.org/on/component">
 
-    <head>        
-        <title>
-            Meet Your Soul-Resource!
-        </title>
-    </head>
-    
-    <body bgcolor="#DDF">
+    <ui:param name="pageTitle" value="Meet Your Soul-Resource!"/>
 
-    <f:view contentType="text/html; charset=UTF-8">
+    <ui:define name="body">
 
-    <h1>Meet Your Soul-Resource!</h1>
-
-    <p>
-    This page uses a Seam component which connects to the RHQ Server running on 127.0.0.1:7080 and
-    utilizes the RHQ remote API to obtain a Resource from that Server's inventory that has been
-    matched to you based on 29 dimensions of compatibility for lasting and fulfilling relationships.
-    </p>
-
-    <rich:panel>
-        <f:facet name="header">
-            This is a RichFaces panel component.
-        </f:facet>
+        <h:panelGroup layout="block">
+            This page uses a Seam component which connects to the RHQ Server running on 127.0.0.1:7080 and
+            utilizes the RHQ remote API to obtain a Resource from that Server's inventory that has been
+            matched to you based on 29 dimensions of compatibility for lasting and fulfilling relationships.
+        </h:panelGroup>
 
         <h3>And the lucky Resource is...</h3>
 
@@ -44,12 +29,9 @@
         with id #{RandomResourceUIBean.randomResource.id}</h2>
 
         <a href="javascript:location.reload(true)">
-        #{RandomResourceUIBean.randomResource.resourceType.name}s are not my ResourceType - find me another one.
+        #{RandomResourceUIBean.randomResource.resourceType.name}s are just not my ResourceType - find me another one.
         </a>
-    </rich:panel>
             
-    </f:view>
+    </ui:define>
 
-    </body>
-
-</html>
+</ui:composition>

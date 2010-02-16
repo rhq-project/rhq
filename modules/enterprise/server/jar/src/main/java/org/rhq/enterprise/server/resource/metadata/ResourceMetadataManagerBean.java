@@ -18,8 +18,36 @@
  */
 package org.rhq.enterprise.server.resource.metadata;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.ejb.EJB;
+import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.sql.DataSource;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.clientapi.agent.metadata.PluginDependencyGraph;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.agent.metadata.SubCategoriesMetadataParser;
 import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
@@ -47,28 +75,6 @@ import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-
-import javax.ejb.EJB;
-import javax.ejb.Stateless;
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.NonUniqueResultException;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.sql.DataSource;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * This class manages the metadata for resources. Plugins are registered against this bean so that their metadata can be
@@ -103,6 +109,123 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
     private ResourceManagerLocal resourceManager;
     @EJB
     private EventManagerLocal eventManager;
+    @EJB
+    private ResourceMetadataManagerLocal resourceMetadataManager; // self
+
+    @SuppressWarnings("unchecked")
+    public List<Plugin> getAllPluginsById(List<Integer> pluginIds) {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return new ArrayList<Plugin>(); // nothing to do
+        }
+        Query query = entityManager.createNamedQuery(Plugin.QUERY_FIND_ALL_BY_IDS);
+        query.setParameter("ids", pluginIds);
+        return query.getResultList();
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void enablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return; // nothing to do
+        }
+
+        // we need to make sure that if a plugin is enabled, all of its dependencies are enabled
+        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        List<Plugin> allPlugins = getPlugins();
+        Set<String> pluginsThatNeedToBeEnabled = new HashSet<String>();
+
+        for (Integer pluginId : pluginIds) {
+            Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
+            if (plugin != null) {
+                Collection<String> dependencyNames = graph.getAllDependencies(plugin.getName());
+                for (String dependencyName : dependencyNames) {
+                    Plugin dependencyPlugin = getPluginFromListByName(allPlugins, dependencyName);
+                    if (dependencyPlugin != null && !dependencyPlugin.isEnabled()
+                        && !pluginIds.contains(Integer.valueOf(dependencyPlugin.getId()))) {
+                        pluginsThatNeedToBeEnabled.add(dependencyPlugin.getDisplayName()); // this isn't enabled and isn't getting enabled, but it needs to be
+                    }
+                }
+            }
+        }
+
+        if (!pluginsThatNeedToBeEnabled.isEmpty()) {
+            throw new IllegalArgumentException("You must enable the following plugin dependencies also: "
+                + pluginsThatNeedToBeEnabled);
+        }
+
+        // everything is OK, we can enable them 
+        for (Integer pluginId : pluginIds) {
+            resourceMetadataManager.setPluginEnabledFlag(subject, pluginId, true);
+        }
+
+        return;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void disablePlugins(Subject subject, List<Integer> pluginIds) throws Exception {
+        if (pluginIds == null || pluginIds.size() == 0) {
+            return; // nothing to do
+        }
+
+        // we need to make sure that if a plugin is disabled, no other plugins that depend on it are enabled
+        PluginDependencyGraph graph = PLUGIN_METADATA_MANAGER.buildDependencyGraph();
+        List<Plugin> allPlugins = getPlugins();
+        Set<String> pluginsThatNeedToBeDisabled = new HashSet<String>();
+
+        for (Integer pluginId : pluginIds) {
+            Plugin plugin = getPluginFromListById(allPlugins, pluginId.intValue());
+            if (plugin != null) {
+                Collection<String> dependentNames = graph.getAllDependents(plugin.getName());
+                for (String dependentName : dependentNames) {
+                    Plugin dependentPlugin = getPluginFromListByName(allPlugins, dependentName);
+                    if (dependentPlugin != null && dependentPlugin.isEnabled()
+                        && !pluginIds.contains(Integer.valueOf(dependentPlugin.getId()))) {
+                        pluginsThatNeedToBeDisabled.add(dependentPlugin.getDisplayName()); // this isn't disabled and isn't getting disabled, but it needs to be
+                    }
+                }
+            }
+        }
+
+        if (!pluginsThatNeedToBeDisabled.isEmpty()) {
+            throw new IllegalArgumentException("You must disable the following dependent plugins also: "
+                + pluginsThatNeedToBeDisabled);
+        }
+
+        // everything is OK, we can disable them 
+        for (Integer pluginId : pluginIds) {
+            resourceMetadataManager.setPluginEnabledFlag(subject, pluginId, false);
+        }
+
+        return;
+    }
+
+    private Plugin getPluginFromListByName(List<Plugin> plugins, String name) {
+        for (Plugin plugin : plugins) {
+            if (name.equals(plugin.getName())) {
+                return plugin;
+            }
+        }
+        return null;
+    }
+
+    private Plugin getPluginFromListById(List<Plugin> plugins, int id) {
+        for (Plugin plugin : plugins) {
+            if (id == plugin.getId()) {
+                return plugin;
+            }
+        }
+        return null;
+    }
+
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void setPluginEnabledFlag(Subject subject, int pluginId, boolean enabled) throws Exception {
+        Query q = entityManager.createNamedQuery(Plugin.UPDATE_PLUGIN_ENABLED_BY_ID);
+        q.setParameter("id", pluginId);
+        q.setParameter("enabled", Boolean.valueOf(enabled));
+        q.executeUpdate();
+        log.info((enabled ? "Enabling" : "Disabling") + " plugin [" + pluginId + "]");
+        return;
+    }
 
     /**
      * Returns the information on the given plugin as found in the database.
@@ -155,6 +278,7 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                 newOrUpdated = true;
             }
             plugin.setId(existingPlugin.getId());
+            plugin.setEnabled(existingPlugin.isEnabled());
         }
 
         // If this is a brand new plugin, it gets "updated" too - which ends up being a simple persist.
@@ -183,6 +307,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
         }
 
         // TODO GH: JBNADM-1310/JBNADM-1630 - Push updated plugins to running agents and have them reboot their PCs
+        // We probably want to be smart about this - perhaps have the agents periodically poll their server to see
+        // if there are new plugins and if so download them - this of course would be configurable/disablable
         return;
     }
 
@@ -460,6 +586,8 @@ public class ResourceMetadataManagerBean implements ResourceMetadataManagerLocal
                     + oldSubCat + " to " + existingSubCat);
                 existingType.setSubCategory(existingSubCat);
             }
+
+            existingType.setBundleType(resourceType.getBundleType());
 
             existingType = entityManager.merge(existingType);
             entityManager.flush();

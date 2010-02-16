@@ -27,40 +27,39 @@
             <rich:dropDownMenu>
                 <f:facet name="label">
                     <h:panelGroup>
-                        <h:outputLink value="/ResourceHub.do">
+                        <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=all">
                             <h:outputText value="${msg['resource.hub.ResourceHubPageTitle']}" />
                         </h:outputLink>
                     </h:panelGroup>
                 </f:facet>
 
                 <rich:menuItem submitMode="none">
-                    <h:outputLink value="/ResourceHub.do?resourceCategory=PLATFORM">
+                    <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=platform">
                         <h:outputText value="Platforms" />
                     </h:outputLink>
                 </rich:menuItem>
 
                 <rich:menuItem submitMode="none">
-                    <h:outputLink value="/ResourceHub.do?resourceCategory=SERVER">
+                    <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=server">
                         <h:outputText value="Servers" />
                     </h:outputLink>
                 </rich:menuItem>
 
                 <rich:menuItem submitMode="none">
-                    <h:outputLink value="/ResourceHub.do?resourceCategory=SERVICE">
+                    <h:outputLink value="/rhq/inventory/browseResources.xhtml?subtab=service">
                         <h:outputText value="Services" />
                     </h:outputLink>
                 </rich:menuItem>
 
                 <rich:menuGroup value="Groups">
                     <rich:menuItem submitMode="none">
-                        <h:outputLink value="/GroupHub.do">
-                            <f:param name="groupCategory" value="COMPATIBLE" />
+                        <h:outputLink value="/rhq/inventory/browseGroups.xhtml?subtab=compatible">
                             <h:outputText value="Compatible Groups" />
                         </h:outputLink>
                     </rich:menuItem>
 
                     <rich:menuItem submitMode="none">
-                        <h:outputLink value="/GroupHub.do?groupCategory=MIXED">
+                        <h:outputLink value="/rhq/inventory/browseGroups.xhtml?subtab=mixed">
                             <h:outputText value="Mixed Groups" />
                         </h:outputLink>
                     </rich:menuItem>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<perspectivePlugin
+<perspective-plugin
    apiVersion="1.0"
    version="1.0"
    description="A Sample Perspective Utilizing Every Extension Point and Filter"
@@ -11,4 +11,4 @@
    xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 
-</perspectivePlugin>
+</perspective-plugin>

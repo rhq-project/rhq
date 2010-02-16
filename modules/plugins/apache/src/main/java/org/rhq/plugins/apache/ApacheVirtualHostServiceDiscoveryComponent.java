@@ -251,7 +251,7 @@ public class ApacheVirtualHostServiceDiscoveryComponent implements ResourceDisco
         }
 
         DiscoveredResourceDetails mainServer = new DiscoveredResourceDetails(resourceType,
-            ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main Server", null, null,
+            ApacheVirtualHostServiceComponent.MAIN_SERVER_RESOURCE_KEY, "Main", null, null,
             mainServerPluginConfig, null);
         discoveredResources.add(mainServer);
     }

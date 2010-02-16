@@ -21,6 +21,7 @@ package org.rhq.plugins.apache;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -216,7 +217,15 @@ public class ApacheServerDiscoveryComponent implements ResourceDiscoveryComponen
         Configuration pluginConfig, ProcessInfo processInfo, ApacheBinaryInfo binaryInfo) throws Exception {
         String httpdConf = pluginConfig.getSimple(ApacheServerComponent.PLUGIN_CONFIG_PROP_HTTPD_CONF).getStringValue();
         String version = binaryInfo.getVersion();
-        String name = httpdConf;
+        String serverUrl = pluginConfig.getSimpleValue(ApacheServerComponent.PLUGIN_CONFIG_PROP_URL, null);
+        //use the server url if we could detect it, otherwise use something unique
+        String name;
+        if (serverUrl == null) {
+            name = httpdConf;
+        } else {
+            URI uri = new URI(serverUrl);
+            name = uri.getHost() + ":" + uri.getPort(); 
+        }
 
         DiscoveredResourceDetails resourceDetails = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
             httpdConf, name, version, PRODUCT_DESCRIPTION, pluginConfig, processInfo);

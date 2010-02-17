@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import org.rhq.enterprise.gui.alert.converter.AlertNotificationConverter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;

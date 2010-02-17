@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.alert;
 
-import java.io.Serializable;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.AutoCreate;
 import org.jboss.seam.annotations.In;
@@ -26,35 +25,45 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.Unwrap;
 import org.jboss.seam.annotations.web.RequestParameter;
-import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 
 @AutoCreate
 @Scope(ScopeType.PAGE)
-@Name("alertDefinition")
-public class AlertDefinitionComponent implements Serializable {
+@Name("resourceType")
+public class ResourceTypeComponent {
+
+    @RequestParameter("id")
+    private Integer resourceId;
 
     @In("#{webUser.subject}")
     private Subject subject;
+
     @In
-    private AlertDefinitionManagerLocal alertDefinitionManager;
-    @RequestParameter("ad")
-    private Integer alertDefinitionId;
+    private ResourceManagerLocal resourceManager;
+
+    @In
     private AlertDefinition alertDefinition;
 
+    private ResourceType resourceType;
+
     @Unwrap
-    public AlertDefinition lookupAlertDefinition() {
-        if (this.alertDefinition == null) {
-            if (this.alertDefinitionId != null) {
-                this.alertDefinition = this.alertDefinitionManager.getAlertDefinitionById(this.subject , this.alertDefinitionId);
-            } else {
-                this.alertDefinition = new AlertDefinition();
-                this.alertDefinition.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+    public ResourceType lookupResourceType() {
+        if (this.alertDefinition.getResource() != null) {
+            this.resourceType = this.alertDefinition.getResource().getResourceType();
+        } else if (this.alertDefinition.getResourceGroup() != null) {
+            this.resourceType = this.alertDefinition.getResourceGroup().getResourceType();
+        } else if (this.resourceId != null) {
+            Resource resource = this.resourceManager.getResource(this.subject, this.resourceId);
+
+            if (resource != null) {
+                this.resourceType = resource.getResourceType();
             }
         }
 
-        return this.alertDefinition;
+        return this.resourceType;
     }
 }

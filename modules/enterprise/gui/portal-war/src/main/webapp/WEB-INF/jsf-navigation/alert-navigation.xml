@@ -17,7 +17,7 @@
 
       <navigation-case>
          <from-outcome>createNewAlertDefinition</from-outcome>
-         <to-view-id>/alerts/Config.do?id=#{param.id}&amp;mode=new</to-view-id>
+         <to-view-id>/rhq/resource/alert/newAlert.xhtml?id=#{param.id}</to-view-id>
          <redirect/>
       </navigation-case>
       
@@ -118,5 +118,31 @@
         </navigation-case>
 
     </navigation-rule>
+
+    <navigation-rule>
+        <from-view-id>/rhq/resource/alert/listConditions.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?ad=#{alertDefinition.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+    
+    <navigation-rule>
+        <from-view-id>/rhq/resource/alert/newAlert.xhtml</from-view-id>
+
+        <navigation-case>
+            <from-outcome>success</from-outcome>
+            <to-view-id>/rhq/resource/alert/viewAlert.xhtml?ad=#{alertDefinition.id}</to-view-id>
+
+            <redirect />
+        </navigation-case>
+
+    </navigation-rule>
+
+
    
 </faces-config>

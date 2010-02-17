@@ -23,66 +23,92 @@
 
 package org.rhq.enterprise.gui.configuration.resource;
 
+import org.jboss.seam.core.Events;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.RawConfiguration;
-import org.richfaces.component.html.HtmlPanelMenuItem;
 
 import javax.faces.component.NamingContainer;
 import java.io.File;
 
 public class RawConfigUIBean {
 
+    private RawConfiguration originalRawConfiguration;
+
     private RawConfiguration rawConfiguration;
 
-    private boolean modified;
+    private String errorMessage;
 
-    private String modifiedContents;
-
-    private HtmlPanelMenuItem panelMenuItem;
-
-    public RawConfiguration getRawConfiguration() {
-        return rawConfiguration;
+    public RawConfigUIBean(RawConfiguration rawConfiguration) {
+        this.rawConfiguration = rawConfiguration;
+        originalRawConfiguration = rawConfiguration.deepCopy(false);
     }
 
     public void setRawConfiguration(RawConfiguration rawConfiguration) {
         this.rawConfiguration = rawConfiguration;
     }
 
-    public HtmlPanelMenuItem getPanelMenuItem() {
-        return panelMenuItem;
-    }
-
-    public void setPanelMenuItem(HtmlPanelMenuItem panelMenuItem) {
-        this.panelMenuItem = panelMenuItem;
-    }
-
-    public String getModifiedContents() {
-        return modifiedContents;
-    }
-
-    public void setModifiedContents(String contents) {
-        modifiedContents = contents;
-    }
-
     public boolean isModified() {
-        return modified;
+        return !rawConfiguration.getSha256().equals(originalRawConfiguration.getSha256());
     }
 
-    public void setModified(boolean modified) {
-        this.modified = modified;
-        panelMenuItem.setIcon(getIcon());
+    public String getContents() {
+        return rawConfiguration.getContents();
     }
 
+    public void setContents(String contents) {
+        Configuration configuration = rawConfiguration.getConfiguration();
+        configuration.removeRawConfiguration(rawConfiguration);
+        rawConfiguration.setContents(contents);
+        configuration.addRawConfiguration(rawConfiguration);
+
+        fireRawConfigUpdateEvent();
+    }
+
+    public void undoEdit() {
+        setContents(originalRawConfiguration.getContents());
+    }
+
+    private void fireRawConfigUpdateEvent() {
+        Events.instance().raiseEvent("rawConfigUpdate", this);
+    }
+
+    /** @return The full path name of the raw config file */
     public String getPath() {
         return rawConfiguration.getPath();
     }
 
-    public String getPathAsId() {
-        return rawConfiguration.getPath().replace('/', NamingContainer.SEPARATOR_CHAR);
-    }
-
+    /** @return The name of the raw config file excluding its path */
     public String getFileName() {
         File file = new File(rawConfiguration.getPath());
         return file.getName();
+    }
+
+    public String getErrorLabel() {
+        if (errorMessage == null) {
+            return " ";
+        }
+
+        return "View Errors";
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String msg) {
+        errorMessage = msg;
+    }
+
+    /**
+     * @return The name of the raw config file excluding the path. If the file has been modified, an asterisk is
+     * prepended to the name.
+     */
+    public String getFileDisplayName() {
+        if (isModified()) {
+            return "* " + getFileName();
+        }
+
+        return getFileName();
     }
 
     public String getIcon() {
@@ -93,7 +119,4 @@ public class RawConfigUIBean {
         return "/images/blank.png";
     }
 
-    public void setIcon(String icon) {
-        panelMenuItem.setIcon(icon);
-    }
 }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/jboss-as/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/nss/src/main/java"/>
 	<classpathentry kind="src" path="etc/modules/base-perspective-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/jboss-software/src/main/java"/>
@@ -65,6 +66,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-microblog/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/alert-mobicents/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/plugins/cobbler/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/portal-war/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
@@ -122,6 +124,7 @@
 	<classpathentry kind="src" path="modules/plugins/jdbctrace/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/augeas/src/test/java"/>
+	<classpathentry kind="src" path="modules/plugins/filetemplate-bundle/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>

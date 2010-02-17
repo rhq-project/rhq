@@ -138,5 +138,5 @@ public interface ResourceManagerRemote {
     Resource getParentResource( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "resourceId") int resourceId);
-
+    
 }

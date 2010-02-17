@@ -59,6 +59,7 @@ import org.rhq.core.gui.util.FacesComponentUtility;
 import org.rhq.core.gui.util.FacesContextUtility;
 import org.rhq.core.gui.util.PropertyIdGeneratorUtility;
 import org.rhq.core.gui.validator.PropertySimpleValueValidator;
+import org.rhq.core.template.TemplateEngine;
 
 /**
  * A class that provides methods for rendering RHQ {@link Property}s.
@@ -88,7 +89,7 @@ public class PropertyRenderingUtility {
     @NotNull
     public static UIInput createInputForSimpleProperty(PropertyDefinitionSimple propertyDefinitionSimple,
         PropertySimple propertySimple, ValueExpression propertyValueExpression, Integer listIndex,
-        boolean isGroupConfig, boolean configReadOnly, boolean configFullyEditable, boolean prevalidate) {
+        boolean isGroupConfig, boolean configReadOnly, boolean configFullyEditable, boolean prevalidate, TemplateEngine templateEngine) {
         UIInput input = createInput(propertyDefinitionSimple);
 
         if (propertySimple != null)
@@ -106,7 +107,7 @@ public class PropertyRenderingUtility {
         FacesComponentUtility.setUnset(input, isUnset);
         FacesComponentUtility.setReadonly(input, isReadOnly);
 
-        addValidatorsAndConverter(input, propertyDefinitionSimple, configReadOnly);
+        addValidatorsAndConverter(input, propertyDefinitionSimple, configReadOnly, templateEngine);
 
         addErrorMessages(input, propertyDefinitionSimple, propertySimple, prevalidate);
         return input;
@@ -471,11 +472,11 @@ public class PropertyRenderingUtility {
     }
 
     private static void addValidatorsAndConverter(UIInput input, PropertyDefinitionSimple propertyDefinitionSimple,
-        boolean readOnly) {
+        boolean readOnly,TemplateEngine templateEngine ) {
         if (!readOnly) {
             input.setRequired(propertyDefinitionSimple.isRequired());
             input.addValidator(new PropertySimpleValueValidator(propertyDefinitionSimple));
-            input.setConverter(new PropertySimpleValueConverter());
+            input.setConverter(new PropertySimpleValueConverter(templateEngine));
         }
     }
 

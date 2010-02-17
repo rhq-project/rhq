@@ -33,6 +33,7 @@ import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
 import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.bundle.BundleManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.AdvisoryManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
@@ -72,6 +73,7 @@ public class RemoteClient {
         AlertManager(AlertManagerRemote.class), //
         AlertDefinitionManager(AlertDefinitionManagerRemote.class), //
         AvailabilityManager(AvailabilityManagerRemote.class), //
+        BundleManager(BundleManagerRemote.class), //
         CallTimeDataManager(CallTimeDataManagerRemote.class), //
         RepoManager(RepoManagerRemote.class), //
         ConfigurationManager(ConfigurationManagerRemote.class), //
@@ -319,6 +321,10 @@ public class RemoteClient {
 
     public AvailabilityManagerRemote getAvailabilityManagerRemote() {
         return RemoteClientProxy.getProcessor(this, Manager.AvailabilityManager);
+    }
+
+    public BundleManagerRemote getBundleManagerRemote() {
+        return RemoteClientProxy.getProcessor(this, Manager.BundleManager);
     }
 
     public CallTimeDataManagerRemote getCallTimeDataManagerRemote() {

@@ -34,6 +34,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationAgentService;
 import org.rhq.core.clientapi.agent.content.ContentAgentService;
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
@@ -45,6 +46,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.agent.AgentServiceLifecycleListener;
 import org.rhq.core.pc.agent.AgentServiceStreamRemoter;
+import org.rhq.core.pc.bundle.BundleManager;
 import org.rhq.core.pc.configuration.ConfigurationManager;
 import org.rhq.core.pc.configuration.ConfigurationManagerInitializer;
 import org.rhq.core.pc.content.ContentManager;
@@ -93,6 +95,7 @@ public class PluginContainer implements ContainerService {
     private ContentManager contentManager;
     private EventManager eventManager;
     private SupportManager supportManager;
+    private BundleManager bundleManager;
 
     private Collection<AgentServiceLifecycleListener> agentServiceListeners = new LinkedHashSet<AgentServiceLifecycleListener>();
     private AgentServiceStreamRemoter agentServiceStreamRemoter = null;
@@ -237,6 +240,7 @@ public class PluginContainer implements ContainerService {
                 contentManager = new ContentManager();
                 eventManager = new EventManager();
                 supportManager = new SupportManager();
+                bundleManager = new BundleManager();
 
                 startContainerService(pluginManager);
                 startContainerService(pluginComponentFactory);
@@ -248,6 +252,7 @@ public class PluginContainer implements ContainerService {
                 startContainerService(contentManager);
                 startContainerService(eventManager);
                 startContainerService(supportManager);
+                startContainerService(bundleManager);
 
                 started = true;
 
@@ -278,6 +283,7 @@ public class PluginContainer implements ContainerService {
 
                 boolean isInsideAgent = configuration.isInsideAgent();
 
+                bundleManager.shutdown();
                 supportManager.shutdown();
                 eventManager.shutdown();
                 contentManager.shutdown();
@@ -296,6 +302,7 @@ public class PluginContainer implements ContainerService {
 
                 ResourceContainer.shutdown();
 
+                bundleManager = null;
                 supportManager = null;
                 eventManager = null;
                 contentManager = null;
@@ -358,7 +365,7 @@ public class PluginContainer implements ContainerService {
 
             if (containerService instanceof ConfigurationManager) {
                 ConfigurationManagerInitializer initializer = new ConfigurationManagerInitializer();
-                initializer.initialize((ConfigurationManager)containerService);
+                initializer.initialize((ConfigurationManager) containerService);
             }
         }
 
@@ -508,6 +515,15 @@ public class PluginContainer implements ContainerService {
         }
     }
 
+    public BundleManager getBundleManager() {
+        Lock lock = obtainReadLock();
+        try {
+            return bundleManager;
+        } finally {
+            releaseLock(lock);
+        }
+    }
+
     // The methods below return the manager implementations wrapped in their remote client interfaces.
     // External clients to the plugin container should probably use these rather than the getXXXManager() methods.
 
@@ -537,6 +553,10 @@ public class PluginContainer implements ContainerService {
 
     public SupportAgentService getSupportAgentService() {
         return getSupportManager();
+    }
+
+    public BundleAgentService getBundleAgentService() {
+        return getBundleManager();
     }
 
     public boolean isInsideAgent() {

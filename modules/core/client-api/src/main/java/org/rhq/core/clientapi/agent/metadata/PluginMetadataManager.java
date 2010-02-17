@@ -32,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -211,4 +212,14 @@ public class PluginMetadataManager {
     public Set<String> getPluginNames() {
         return this.parsersByPlugin.keySet();
     }
+
+    public PluginDependencyGraph buildDependencyGraph() {
+        PluginDependencyGraph dependencyGraph = new PluginDependencyGraph();
+        for (String pluginName : getPluginNames()) {
+            PluginDescriptor descriptor = this.parsersByPlugin.get(pluginName).getDescriptor();
+            AgentPluginDescriptorUtil.addPluginToDependencyGraph(dependencyGraph, descriptor);
+        }
+        return dependencyGraph;
+    }
+
 }

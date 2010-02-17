@@ -1,35 +1,38 @@
- /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2008 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ */
 package org.rhq.core.clientapi.agent.metadata.test;
 
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.ValidationEventCollector;
+
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
@@ -173,6 +176,11 @@ public class MetadataManagerTest {
         assert testC.getParentResourceTypes().contains(parentB);
         assert testD.getParentResourceTypes().contains(parentA);
         assert !testD.getParentResourceTypes().contains(parentB);
+
+        // ensure the bundle metadata is correct
+        assert testD.getBundleType() != null : "missing the bundle for 'Injection D To Server A'";
+        assert testD.getBundleType().getName().equals("test-bundle-name");
+        assert testD.getBundleType().getResourceType().equals(testD);
     }
 
     private ResourceType getResourceType(ResourceType typeToGet) {
@@ -244,6 +252,8 @@ public class MetadataManagerTest {
         assert t.getConfiguration().getSimple("alpha").getStringValue().equals("template1:alpha value");
         assert t.getConfiguration().getSimple("charlie").getBooleanValue();
         assert t.getConfiguration().getSimple("delta").getIntegerValue() == 42;
+
+        assert serverType.getBundleType() == null : "bundle should not be defined for type: " + serverType;
     }
 
     private void outputType(ResourceType type, int depth) {

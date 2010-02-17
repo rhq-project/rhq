@@ -44,6 +44,8 @@ import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -625,6 +627,18 @@ public class ResourceGroup extends Group {
 
     public void setAlertDefinitions(Set<AlertDefinition> alertDefinitions) {
         this.alertDefinitions = alertDefinitions;
+    }
+
+    @PrePersist
+    @PreUpdate
+    void onPersist() {
+        // always normalize empty string descriptions to NULL, which will give consistent sorting 
+        // between databases that treat empty string and null as distinct entities (e.g. postgres) 
+        // and those that interpret empty string and null as being equivalent (oracle)
+        String description = getDescription();
+        if (description != null && description.trim().equals("")) {
+            setDescription(null);
+        }
     }
 
     @Override

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:c="http://java.sun.com/jstl/core"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:a4j="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich"
+                xmlns:onc="http://jboss.org/on/component">
+
+  <c:if test="#{empty readOnly}">
+    <c:set var="readOnly" value="true"/>
+  </c:if>
+
+  <c:choose>
+    <c:when test="#{readOnly}">
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);"/>
+    </c:otherwise>
+  </c:choose>
+
+  <c:choose>
+    <c:when test="#{readOnly}">
+      <c:set var="editor" value="#{configurationViewer}"/>
+    </c:when>
+    <c:otherwise>
+      <c:set var="editor" value="#{configurationEditor}"/>
+    </c:otherwise>
+  </c:choose>
+
+  <h:outputText value=" #{messages.nopermissionedit}"
+                rendered="#{!ResourceUIBean.permissions.configure}"/>
+
+  <h:panelGrid columns="2"
+               styleClass="raw-outer-table"
+               cellpadding="0"
+               cellspacing="0"
+               columnClasses="raw-outer-table-left-col,raw-outer-table-right-col">
+    <rich:panel id="fileMenuPanel" style="width:100%; background-color: rgb(217, 223, 227);">
+      <h:outputLabel value="Files" style="font-weight: bold; padding-left: 5px;"/>
+      <rich:panelMenu id="fileMenu"
+                      mode="ajax"
+                      expandMode="client"
+                      iconCollapsedGroup="/images/icn_tree_folder.gif"
+                      iconExpandedGroup="/images/icn_tree_folder.gif"
+                      limitToList="true"
+                      reRender="fileContents">
+        <c:forEach items="#{rawConfigDirectories}"
+                   var="rawConfigDir">
+          <rich:panelMenuGroup label="#{rawConfigDir.path}"
+                               expanded="true"
+                               selectedChild="#{selectedRawUIBean.fileDisplayName}">
+            <c:forEach items="#{rawConfigDir.rawConfigUIBeans}" var="rawConfigUIBean">
+              <c:choose>
+                <c:when test="#{readOnly}">
+                  <rich:panelMenuItem label="#{rawConfigUIBean.fileDisplayName}"
+                                      icon="/images/blank.png"
+                                      onclick="cursor_wait();"
+                                      oncomplete="cursor_clear();"
+                                      action="#{configurationViewer.select(rawConfigUIBean.path)}"
+                                      limitToList="true"
+                                      reRender="fileContents,selectedFileHeader,modalEditor"/>
+                </c:when>
+                <c:otherwise>
+                  <rich:panelMenuItem label=""
+                                      icon="/images/blank.png">
+                    <h:panelGrid columns="2" columnClasses="rawConfigFileNameCol,rawConfigUndoCol">
+                      <h:outputLabel value="#{rawConfigUIBean.fileDisplayName}">
+                        <a4j:support event="onmousedown"
+                                     onsubmit="cursor_wait()"
+                                     oncomplete="cursor_clear()"
+                                     action="#{configurationEditor.select(rawConfigUIBean.path)}"
+                                     limitToList="true"
+                                     reRender="fileContents,selectedFileHeader,modalEditor,uploadWindow,viewErrorsLink,errorWindow"/>
+                      </h:outputLabel>
+                      <a4j:commandButton value="Undo"
+                                         styleClass="rawConfigUndoButton"
+                                         rendered="#{rawConfigUIBean.modified}"
+                                         action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
+                                         reRender="fileMenu,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>
+                    </h:panelGrid>
+                  </rich:panelMenuItem>
+                </c:otherwise>
+              </c:choose>
+            </c:forEach>
+          </rich:panelMenuGroup>
+        </c:forEach>
+      </rich:panelMenu>
+
+      <c:if test="#{!readOnly}">
+        <div class="raw-outer-table-left-col-footer">
+          <br/>
+          <div class="raw-outer-table-left-col-footer-content">* - Contains uncommitted changes.</div>
+        </div>
+      </c:if>
+
+    </rich:panel>
+
+    <h:panelGrid columns="1" style="width:100%;">
+      <h:panelGrid columns="4" style="width:100%;">
+        <h:outputLink id="viewErrorsLink"
+                      value="#"
+                      onclick="#{rich:component('errorWindow')}.show()"
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+          #{selectedRawUIBean.errorLabel}
+        </h:outputLink>
+
+
+        <h:outputLink value="#"
+                      onclick="#{rich:component('modalEditor')}.show()"
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right;">
+          View Full Screen
+        </h:outputLink>
+
+        <h:outputLink value="#"
+                      disabled="#{readOnly}"
+                      onclick="#{rich:component('uploadWindow')}.show()"
+                      style="#{uploadLinkStyle}">
+          Upload New
+        </h:outputLink>
+
+        <h:commandLink action="#{editor['download']}"
+                       value="Download"
+                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+          <h:graphicImage value="/images/download.png"/>
+          <f:param name="id" value="#{ResourceUIBean.id}"/>
+        </h:commandLink>
+
+        <h:outputLabel id="selectedFileHeader" value="#{selectedRawUIBean.path}" styleClass="rawConfigFileHeader"/>
+      </h:panelGrid>
+
+      <rich:panel style="margin-left:1px; border: none;">
+        <h:inputTextarea id="fileContents"
+                         styleClass="rawConfigFileContents"
+                         value="#{selectedRawUIBean.contents}"
+                         readonly="#{readOnly}"/>
+        <c:if test="#{!readOnly}">
+          <a4j:support event="onkeyup"
+                       ignoreDupeResponses="true"
+                       reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
+                       requestDelay="1000"/>
+        </c:if>
+      </rich:panel>
+    </h:panelGrid>
+  </h:panelGrid>
+
+</ui:composition>

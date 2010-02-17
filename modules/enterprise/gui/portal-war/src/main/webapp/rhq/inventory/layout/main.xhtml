@@ -28,8 +28,8 @@
          </h:form>
       </a4j:region>
       
-      <a4j:outputPanel id="browserTabBarPanel" style="width: 100%;">
-      <onc:tabBar selectedTabName="#{selectedTabName}" >
+      
+      <onc:tabBar id="browserTabBarPanel" selectedTabName="#{selectedTabName}" >
          <onc:tab name="Resources" 
                   displayName="Resources #{InventorySummaryUIBean.resourceCount}"
                   url="/rhq/inventory/browseResources.xhtml?subtab=all">
@@ -65,7 +65,7 @@
                         url="/rhq/definition/group/list.xhtml" />
          </onc:tab>
       </onc:tabBar>
-      </a4j:outputPanel>
+      
       <p />
 
       <h:messages showSummary="true"

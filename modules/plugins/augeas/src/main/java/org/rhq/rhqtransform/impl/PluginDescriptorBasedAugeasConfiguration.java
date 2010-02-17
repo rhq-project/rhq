@@ -93,7 +93,8 @@ public class PluginDescriptorBasedAugeasConfiguration implements AugeasConfigura
         AugeasModuleConfig config = new AugeasModuleConfig();
           config.setIncludedGlobs(includes);
           config.setExcludedGlobs(excludes);
-          LensHelper.cpFileFromPluginToTemp(tempDir, augeasModuleName+".aug");
+          String modName = Character.toLowerCase(augeasModuleName.charAt(0))+augeasModuleName.substring(1);
+          LensHelper.cpFileFromPluginToTemp(this.getClass().getClassLoader(),tempDir, modName+".aug");
           config.setLensPath(getAugeasModuleName(pluginConfiguration) + ".lns");
           config.setModuletName(getAugeasModuleName(pluginConfiguration));
         modules.add(config);

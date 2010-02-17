@@ -24,7 +24,7 @@
 
       <dependency>
          <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-server-base-perspective-war-deps</artifactId>
+         <artifactId>rhq-enterprise-server-base-perspective-jar</artifactId>
          <version>${project.version}</version>  
          <type>pom</type>                
       </dependency>

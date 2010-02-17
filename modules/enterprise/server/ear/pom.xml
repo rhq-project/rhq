@@ -219,13 +219,19 @@
             <executions>
 
                <execution>
-                  <id>copy-core-plugins</id>
+                  <id>copy-core-agent-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>rhq-platform-plugin</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-agent-plugin</artifactId>
@@ -234,102 +240,7 @@
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
-                           <artifactId>rhq-aliases-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-apache-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-augeas-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-                       
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-cobbler-plugin</artifactId>
-                           <version>${project.version}</version>
-                       </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-cron-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-database-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-grub-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-hosts-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-hudson-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-iis-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <!--
-                           TODO: Uncomment once errors from RHQ-1226 are fixed. <artifactItem>
-                           <groupId>org.rhq</groupId> <artifactId>rhq-jira-plugin</artifactId>
-                           <version>${project.version}</version> </artifactItem>
-                        -->
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
                            <artifactId>rhq-jmx-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-mysql-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-netservices-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-oracle-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-perftest-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-platform-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
                      </artifactItems>
@@ -338,14 +249,13 @@
                </execution>
 
                <execution>
-                  <id>copy-rhq-serverplugins</id>
+                  <id>copy-core-server-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
                   </goals>
                   <configuration>
                      <artifactItems>
-
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-serverplugin-disk</artifactId>
@@ -369,7 +279,6 @@
                            <artifactId>rhq-core-perspective</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
-
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>

@@ -70,6 +70,7 @@
 	<classpathentry kind="src" path="modules/enterprise/gui/installer-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/webdav-war/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/gui/content_http-war/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/gui/base-perspective-jar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/webservices/src/main/java"/>

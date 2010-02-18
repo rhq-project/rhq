@@ -55,8 +55,8 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     /**
      * The standard location for the configuration file
      */
-    private static final String ETC_NSSWITCH_CONF = "/tmp/nsswitch.conf";
-    //private static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
+    public static final String ETC_NSSWITCH_CONF = "/tmp/nsswitch.conf";
+    //public static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
 
     private final Log log = LogFactory.getLog(NameServiceSwitchComponent.class);
 

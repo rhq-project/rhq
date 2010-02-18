@@ -63,7 +63,7 @@
          <version>${project.version}</version>
          <type>war</type>
       </dependency>
-      
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-content_http</artifactId>
@@ -141,7 +141,7 @@
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
             <configuration>
-               <displayName>RHQ</displayName>               
+               <displayName>RHQ</displayName>
                <workDirectory>${earDirectory}</workDirectory>
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
@@ -165,7 +165,7 @@
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
                   </webModule>
-                  
+
                   <!--  used to expose content through http -->
                   <webModule>
                      <groupId>${project.groupId}</groupId>
@@ -279,6 +279,54 @@
                            <artifactId>rhq-core-perspective</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq.server</groupId>
+                           <artifactId>alert-email</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-irc</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-mobicents</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-microblog</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-roles</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-scriptlang</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-snmp</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-subject</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>
@@ -300,7 +348,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>
@@ -388,7 +436,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>
@@ -513,7 +561,7 @@
              </activation>
 
              <build>
-               <plugins>   
+               <plugins>
                  <plugin>
                     <artifactId>maven-dependency-plugin</artifactId>
                     <executions>

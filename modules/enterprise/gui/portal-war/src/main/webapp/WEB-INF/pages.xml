@@ -8,11 +8,7 @@
     <action execute="#{configurationViewer.initialize}" on-postback="false"/>
 
     <navigation from-action="#{ConfigHelperUIBean.accessMap}">
-      <redirect view-id="/rhq/resource/configuration/view-map.xhtml">
-        <param name="id" value="#{ResourceUIBean.id}"/>
-        <param name="listName" value="#{param.listName}"/>
-        <param name="listIndex" value="#{param.listIndex}"/>
-      </redirect>
+      <render view-id="/rhq/resource/configuration/view-map.xhtml"/>
     </navigation>
   </page>
 
@@ -21,7 +17,7 @@
   <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="15000" timeout="180000">
     <action execute="#{configurationEditor.initialize}"
             on-postback="false"
-            if="#{!conversation.longRunning or (empty resourceConfiguration or resourceConfiguration.id ne ResourceUIBean.id)}"/>
+            if="#{!conversation.longRunning or (empty resourceConfiguration)}"/>
 
     <navigation from-action="#{configurationEditor.initialize}">
       <rule if="#{configurationEditor.initialized}">

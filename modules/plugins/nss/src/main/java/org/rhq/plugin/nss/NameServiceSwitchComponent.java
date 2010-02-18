@@ -19,9 +19,11 @@
 package org.rhq.plugin.nss;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,8 +197,36 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     }
 
     public RawConfiguration mergeRawConfiguration(Configuration from, RawConfiguration to) {
-        // TODO Auto-generated method stub
-        return null;
+
+        try {
+            BufferedReader input = new BufferedReader(new StringReader(to.getContents()));
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+            PrintStream writer = new PrintStream(outputStream);
+
+            String line = null; //not declared within while loop
+            while ((line = input.readLine()) != null) {
+                Matcher matcher = linePattern.matcher(line);
+                if (matcher.matches()) {
+                    String key = matcher.group(1);
+                    Property property = from.get(key);
+                    if (property != null) {
+                        writer.print(key);
+                        writer.print(":");
+                        if (property instanceof PropertySimple) {
+                            writer.println(((PropertySimple) property).getStringValue());
+                        }
+                    }
+                } else {
+                    writer.println(line);
+                }
+            }
+            to.setContents(outputStream.toString());
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
+        return to;
     }
 
     public void mergeStructuredConfiguration(RawConfiguration from, Configuration to) {

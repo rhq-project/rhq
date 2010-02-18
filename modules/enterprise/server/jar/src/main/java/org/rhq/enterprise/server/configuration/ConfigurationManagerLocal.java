@@ -349,7 +349,7 @@ public interface ConfigurationManagerLocal {
      * @param subject the current subject
      * @param groupId the id of the compatible group
      * @return
-     * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress, 
+     * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress,
      * @throws Exception if 1) one or more of the group's members are DOWN, or 2) we fail to retrieve one or more member
      *         live configs from the corresponding Agents
      */
@@ -467,7 +467,7 @@ public interface ConfigurationManagerLocal {
      * @param  resourceId       identifies the resource to be updated
      * @param  newConfiguration the resource's desired new configuration
      *
-     * @return the resource configuration update item corresponding to this request. null 
+     * @return the resource configuration update item corresponding to this request. null
      * if newConfiguration is equal to the existing configuration.
      */
     @Nullable
@@ -488,4 +488,5 @@ public interface ConfigurationManagerLocal {
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
+    Configuration mergeConfiguration(Configuration config);
 }

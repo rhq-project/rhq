@@ -28,11 +28,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.ResultState;
+import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
-import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
-import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -128,8 +128,9 @@ public class MobicentsSender extends AlertSender {
             }
             baseUrl = baseUrl +telEnc;
             if (kind==MobiKind.VOICE) {
-                if (!tel.endsWith("@callwithus.com")) { // TODO parametrize
-                    baseUrl = baseUrl + "@callwithus.com";
+                if (!tel.contains("@")) { // Append domain from preferences if user has none provided
+                    String domain = preferences.getSimpleValue("defaultVoipDomain","localhost");
+                    baseUrl = baseUrl + "@" + domain;
                 }
             }
             // TODO SMS url

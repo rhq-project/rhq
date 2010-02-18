@@ -20,26 +20,29 @@ package org.rhq.enterprise.gui.alert;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
-import org.jboss.seam.annotations.Logger;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
 import org.jboss.seam.contexts.Context;
 import org.jboss.seam.contexts.Contexts;
-import org.jboss.seam.log.Log;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderInfo;
-import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.enterprise.server.plugin.pc.alert.CustomAlertSenderBackingBean;
 
 @Scope(ScopeType.PAGE)
 @Name("customContentUIBean")
 public class CustomContentUIBean {
 
-    @Logger
-    private Log log;
-
     @RequestParameter
     private String senderName;
+
+    @RequestParameter("nid")
+    private Integer notificationId;
+
+    @In
+    private AlertNotificationManagerLocal alertNotificationManager;
+
     private String contentUrl;
 
     public String getContentUrl() {
@@ -48,7 +51,6 @@ public class CustomContentUIBean {
 
     @Create
     public void init()  {
-        AlertNotificationManagerLocal alertNotificationManager = LookupUtil.getAlertNotificationManager();
         AlertSenderInfo info = alertNotificationManager.getAlertInfoForSender(this.senderName);
 
         if (info != null && info.getUiSnippetUrl() != null) {
@@ -56,7 +58,8 @@ public class CustomContentUIBean {
         }
 
         String backingBeanName = alertNotificationManager.getBackingBeanNameForSender(this.senderName);
-        Object backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName);
+        CustomAlertSenderBackingBean backingBean = alertNotificationManager.getBackingBeanForSender(this.senderName, // TODO notificationId may be stale after removal of notification
+                notificationId);
 
         if (backingBeanName != null && backingBean != null) {
             outjectBean(backingBeanName, backingBean);
@@ -65,11 +68,11 @@ public class CustomContentUIBean {
 
     /**
      * We are just getting an Object from the plugin manager which acts as our backing bean.
-     * This method is used instead of @Out or @Factory because we need to be able to 
+     * This method is used instead of @Out or @Factory because we need to be able to
      * dynamically assign the component's name so that the plugin author can define the
      * name of bean, but this class is not an "official" seam component.
      */
-    private void outjectBean(String name, Object bean) {
+    private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
         Context pageContext = Contexts.getPageContext();
         pageContext.set(name, bean);
     }

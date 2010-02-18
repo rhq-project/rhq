@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import org.rhq.enterprise.gui.alert.converter.AlertNotificationConverter;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -29,19 +30,15 @@ import java.util.TreeMap;
 
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
+import org.jboss.seam.annotations.In;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 import org.jboss.seam.annotations.web.RequestParameter;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.AlertNotification;
-import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Backing bean for Alert Sender Plugins configuration
@@ -53,20 +50,24 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AlertNotificationsUIBean implements Serializable {
 
     private final static String SUCCESS_OUTCOME = "success";
-    @RequestParameter("ad")
-    private Integer alertDefinitionId;
+
     @RequestParameter("nid")
     private Integer notificationId;
+    @In
+    private AlertNotificationManagerLocal alertNotificationManager;
+    @In
+    private AlertNotificationStore alertNotificationStore;
+    @In("#{webUser.subject}")
+    private Subject subject;
+
     private List<AlertNotification> alertNotifications;
     private Set<AlertNotification> selectedNotifications;
     private String newAlertName;
     private String selectedNewSender;
-    private String selectedTemplate;
-    private Boolean clearExistingNotifications;
     private AlertNotification activeNotification;
     private ConfigurationDefinition activeConfigDefinition;
     private AlertNotificationConverter notificationConverter;
-    private AlertNotificationManagerLocal alertNotificationManager;
+    private Map<String, String> alertSenders;
 
     public List<AlertNotification> getAlertNotifications() {
         return alertNotifications;
@@ -100,22 +101,6 @@ public class AlertNotificationsUIBean implements Serializable {
         this.selectedNewSender = selectedNewSender;
     }
 
-    public String getSelectedTemplate() {
-        return selectedTemplate;
-    }
-
-    public void setSelectedTemplate(String selectedTemplate) {
-        this.selectedTemplate = selectedTemplate;
-    }
-
-    public Boolean getClearExistingNotifications() {
-        return clearExistingNotifications;
-    }
-
-    public void setClearExistingNotifications(Boolean clearExistingNotifications) {
-        this.clearExistingNotifications = clearExistingNotifications;
-    }
-
     public AlertNotification getActiveNotification() {
         return activeNotification;
     }
@@ -134,6 +119,10 @@ public class AlertNotificationsUIBean implements Serializable {
         return notificationConverter;
     }
 
+    public Map<String, String> getAlertSenders() {
+        return this.alertSenders;
+    }
+
     private void lookupActiveConfigDefinition() {
         if (this.activeNotification != null) {
             String senderName = this.activeNotification.getSenderName();
@@ -141,22 +130,13 @@ public class AlertNotificationsUIBean implements Serializable {
         }
     }
 
-    public AlertDefinition getAlertDefinition() {
-        AlertDefinitionManagerLocal definitionManager = LookupUtil.getAlertDefinitionManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-
-        return definitionManager.getAlertDefinitionById(subject, alertDefinitionId);
-    }
-
     @Create
     public void initNotifications() {
-        this.alertNotificationManager = LookupUtil.getAlertNotificationManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-
-        this.alertNotifications = this.alertNotificationManager.getNotificationsForAlertDefinition(subject, alertDefinitionId);
+        this.alertNotifications = this.alertNotificationStore.lookupNotifications(this.subject);
         this.selectedNotifications = new HashSet<AlertNotification>();
         this.notificationConverter = new AlertNotificationConverter();
         this.notificationConverter.setAlertNotifications(alertNotifications);
+        this.alertSenders = lookupAlertSenders();
 
         selectActiveNotification();
     }
@@ -176,7 +156,7 @@ public class AlertNotificationsUIBean implements Serializable {
         }
     }
 
-    public Map<String, String> getAllAlertSenders() {
+    private Map<String, String> lookupAlertSenders() {
         Map<String, String> result = new TreeMap<String, String>();
 
         for (String sender : this.alertNotificationManager.listAllAlertSenders()) {
@@ -187,7 +167,6 @@ public class AlertNotificationsUIBean implements Serializable {
     }
 
     public String addAlertSender() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
         Configuration newSenderConfig = null;
         ConfigurationDefinition configDefinition = this.alertNotificationManager.getConfigurationDefinitionForSender(selectedNewSender);
 
@@ -197,16 +176,7 @@ public class AlertNotificationsUIBean implements Serializable {
             newSenderConfig = new Configuration();
         }
 
-        this.activeNotification = this.alertNotificationManager.addAlertNotification(subject, alertDefinitionId, selectedNewSender, newAlertName, newSenderConfig);
-
-        return SUCCESS_OUTCOME;
-    }
-
-    public String addAlertSenderFromTemplate() {
-
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-
-        alertNotificationManager.applyNotificationTemplateToAlertDefinition(getSelectedTemplate(),alertDefinitionId,getClearExistingNotifications());
+        this.activeNotification = this.alertNotificationStore.addNotification(this.subject, this.selectedNewSender, this.newAlertName, newSenderConfig);
 
         return SUCCESS_OUTCOME;
     }
@@ -220,10 +190,9 @@ public class AlertNotificationsUIBean implements Serializable {
     }
 
     public String removeSelected() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
         List<Integer> ids = getSelectedIds(this.selectedNotifications);
 
-        alertNotificationManager.removeNotifications(subject, alertDefinitionId, toArray(ids));
+        this.alertNotificationStore.removeNotifications(this.subject, toArray(ids));
 
         return SUCCESS_OUTCOME;
     }
@@ -252,17 +221,5 @@ public class AlertNotificationsUIBean implements Serializable {
 
     private Integer[] toArray(List<Integer> intList) {
         return intList.toArray(new Integer[intList.size()]);
-    }
-
-    public Map<String, String> getAllNotificationTemplates() {
-        Map<String, String> result = new TreeMap<String, String>();
-
-        List<NotificationTemplate> templates = alertNotificationManager.listNotificationTemplates(EnterpriseFacesContextUtility.getSubject());
-
-        for (NotificationTemplate nt : templates) {
-            String tmp = nt.getName() + " (" + nt.getDescription() + ")";
-            result.put(tmp,nt.getName()); // displayed text, option value
-        }
-        return result;
     }
 }

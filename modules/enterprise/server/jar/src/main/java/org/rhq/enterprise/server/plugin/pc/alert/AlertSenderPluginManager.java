@@ -235,7 +235,7 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         return senderInfoByName.get(shortName);
     }
 
-    public Object getBackingBeanForSender(String shortName) {
+    public CustomAlertSenderBackingBean getBackingBeanForSender(String shortName) {
         String className = backingBeanByName.get(shortName);
 
         if (className == null) {
@@ -243,13 +243,15 @@ public class AlertSenderPluginManager extends ServerPluginManager {
         }
 
         ServerPluginEnvironment env = pluginEnvByName.get(shortName);
-        Object bean = null;
+        CustomAlertSenderBackingBean bean = null;
 
         try {
-            bean = instantiatePluginClass(env, className);
+            bean = (CustomAlertSenderBackingBean) instantiatePluginClass(env, className);
+            bean.alertParameters = new Configuration(); // Just to be sure
         } catch (Exception e) {
             log.error("Can't instantiate alert sender backing bean [" + className + "]. Cause: " + e.getMessage());
         }
+
 
         return bean;
     }

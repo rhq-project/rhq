@@ -36,7 +36,6 @@ import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
-import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -179,24 +178,7 @@ public class AlertSubsystemManagerBean implements AlertSubsystemManagerLocal {
     }
 
     public int deleteAlertHistories(Subject subject, Integer[] historyIds) {
-        int removed = 0;
-        for (Integer id : historyIds) {
-            try {
-                Alert alert = entityManager.find(Alert.class, id);
-                if (alert != null) {
-                    AlertNotificationLog anl = alert.getAlertNotificationLog();
-                    entityManager.remove(anl);
-                    entityManager.remove(alert); // condition logs will be removed with entity cascading
-                }
-                removed++;
-            } catch (Throwable t) {
-                if (log.isDebugEnabled()) {
-                    log.error("Could not remove alert[id=" + id + "] from subsystme view: " + t.getMessage(), t);
-                } else {
-                    log.error("Could not remove alert[id=" + id + "] from subsystme view: " + t.getMessage());
-                }
-            }
-        }
+        int removed = alertManager.deleteAlerts(subject,historyIds);
         return removed;
     }
 

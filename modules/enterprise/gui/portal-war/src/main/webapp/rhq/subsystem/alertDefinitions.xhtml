@@ -143,20 +143,17 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do" rendered="#{empty item.original.alertDefinition.resourceType and empty item.original.alertDefinition.resourceGroup}">
-                     <f:param name="mode" value="viewRoles" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{empty item.original.alertDefinition.resourceType and empty item.original.alertDefinition.resourceGroup}">
                      <f:param name="id" value="#{item.original.alertDefinition.resource.id}"  />
                      <f:param name="ad" value="#{item.original.alertDefinition.id}" />
                      <h:outputText value="#{item.original.alertDefinition.name}" />
                   </h:outputLink>
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.resourceType}">
-                     <f:param name="mode" value="viewRoles" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.original.alertDefinition.resourceType}">
                      <f:param name="type" value="#{item.original.alertDefinition.resourceType.id}" />
                      <f:param name="ad" value="#{item.original.alertDefinition.id}" />
                      <h:outputText value="#{item.original.alertDefinition.name}" />
                   </h:outputLink>
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.resourceGroup}">
-                     <f:param name="mode" value="viewRoles" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.original.alertDefinition.resourceGroup}">
                      <f:param name="groupId" value="#{item.original.alertDefinition.resourceGroup.id}" />
                      <f:param name="ad" value="#{item.original.alertDefinition.id}" />
                      <h:outputText value="#{item.original.alertDefinition.name}" />

@@ -116,4 +116,22 @@ public interface AlertManagerLocal {
     PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria);
 
     String prettyPrintAlertURL(Alert alert);
+
+    /**
+     * Acknowledge the alerts (that got fired) so that admins know who is working
+     * on fixing the situation.
+     * @param user calling user
+     * @param resourceId resource the alerts happened on
+     * @param alertIds PKs of the alerts to ack
+     * @return number of alerts acknowledged
+     */
+    int acknowledgeAlerts(Subject user, int resourceId, Integer[] alertIds);
+
+    /**
+     * Remove the alerts with the specified id's.
+     * @param user caller
+     * @param ids primary keys of the alerts to delete
+     * @return number of alerts deleted
+     */
+    int deleteAlerts(Subject user, Integer[] ids);
 }

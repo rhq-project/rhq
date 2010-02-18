@@ -112,7 +112,7 @@ public class AlertManagerBeanTest extends AbstractEJB3Test {
                 Alert a = new Alert(ad, now);
                 em.persist(a);
 
-                AlertNotificationLog anl = new AlertNotificationLog(a);
+                AlertNotificationLog anl = new AlertNotificationLog(a,"dummy");
                 em.persist(anl);
 
             } catch (Exception e) {

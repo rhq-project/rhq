@@ -19,12 +19,12 @@
 
    <ui:param name="pageTitle" value="List Fired Alerts for Resource '#{ResourceUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Alert.History"/>
-   
+
    <ui:define name="content">
-   
+
       <h:form id="alertHistoryForm">
          <input type="hidden" name="id" value="${param.id}"/>
-         
+
          <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Alerts"/>
@@ -34,7 +34,7 @@
                <h:outputLabel for="alertDefinitionFilter" value="Alert Definition Filter: " />
                <h:selectOneMenu id="alertDefinitionFilter" value="#{ListAlertHistoryUIBean.alertDefinitionFilter}"
                                 style="width: 300px;">
-                   <a4j:support event="onchange" 
+                   <a4j:support event="onchange"
                                 reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                 actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
                                 status="commonStatus" />
@@ -47,7 +47,7 @@
                <h:outputLabel for="alertPriorityFilter" value="Alert Priority Filter: " />
                <h:selectOneMenu id="alertPriorityFilter" value="#{ListAlertHistoryUIBean.alertPriorityFilter}"
                                 style="width: 300px;">
-                   <a4j:support event="onchange" 
+                   <a4j:support event="onchange"
                                 reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                 actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
                                 status="commonStatus" />
@@ -61,10 +61,10 @@
                <h:inputText id="dateFilter" value="#{ListAlertHistoryUIBean.dateFilter}"
                             onkeypress="return ignoreEnterKey(event);"
                             style="width: 300px;" />
-               <a4j:commandButton value="GO" 
+               <a4j:commandButton value="GO"
                                   reRender="alertHistoryDataTable, alertHistoryDataTableScroller, dateErrors"
                                   actionListener="#{ListAlertHistoryUIBean.clearDataModel}"
-                                  status="commonStatus" 
+                                  status="commonStatus"
                                   styleClass="buttonmed">
                   <s:defaultAction />
                </a4j:commandButton>
@@ -81,7 +81,7 @@
                             value="#{alertHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 20%, 20%, 20%, 30%, 9%"
+                            columnsWidth="1%, 15%, 20%, 20%, 20%, 7%, 8%,  9%"
                             styleClass="resources-table"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
@@ -91,25 +91,25 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="AlertHistoryList" />
                </f:facet>
-      
+
                <rich:column>
                   <f:facet name="header">
                      <onc:allSelect target="selectedAlerts" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedAlerts" value="#{item.alert.id}" />
                </rich:column>
-      
+
                <rich:column rendered="#{param.debug}">
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.id">
                         <h:outputText styleClass="headerText" value="ID" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-                  
+
                   <h:outputText value="#{item.alert.id}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.alertDefinition.priority">
@@ -123,14 +123,14 @@
 
                   <h:outputText value="#{item.alert.alertDefinition.priority.name}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.ctime">
                         <h:outputText styleClass="headerText" value="Date Created" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputLink value="/alerts/Alerts.do">
                      <f:param name="mode" value="viewAlert" />
                      <f:param name="id" value="#{Resource.id}" />
@@ -140,14 +140,14 @@
                      </h:outputText>
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.alertDefinition.name">
                         <h:outputText styleClass="headerText" value="Alert Definition" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputLink value="/alerts/Config.do">
                      <f:param name="mode" value="viewRoles"/>
                      <f:param name="id" value="#{Resource.id}"/>
@@ -155,21 +155,39 @@
                      <h:outputText value="#{item.alert.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
                   <h:outputText value="#{item.conditionText}" />
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Actual Value" />
                   </f:facet>
                   <h:outputText value="#{item.conditionValue}" />
                </rich:column>
-               
+
+               <rich:column>
+                   <f:facet name="header">
+                          <h:outputText styleClass="headerText" value="Ack by" />
+                   </f:facet>
+                   <h:outputText value="#{item.alert.ackBy.name}" title="#{item.alert.ackBy.firstName} #{item.alert.ackBy.lastName}"/>
+               </rich:column>
+
+               <rich:column>
+                   <f:facet name="header">
+                       <onc:sortableColumnHeader sort="a.ackTime">
+                          <h:outputText styleClass="headerText" value="Ack date" />
+                       </onc:sortableColumnHeader>
+                   </f:facet>
+                   <h:outputText value="#{item.alert.ackTime}">
+                        <f:converter converterId="RelativeDurationConverter" />
+                   </h:outputText>
+               </rich:column>
+
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Recovery Info" />
@@ -179,13 +197,18 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="9" width="100%">
                         <onc:selectCommandButton action="#{ListAlertHistoryUIBean.deleteSelectedAlerts}"
                                                  value="DELETE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{ResourceUIBean.permissions.alert}" />
                         <h:commandButton action="#{ListAlertHistoryUIBean.purgeAllAlerts}"
                                          value="PURGE ALL" styleClass="on-pager-button buttonsmall"
                                          rendered="#{ResourceUIBean.permissions.alert}" />
+                         <onc:selectCommandButton action="#{ListAlertHistoryUIBean.acknowledgeSelectedAlerts}"
+                                                  value="ACKNOWLEDGE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
+                                                  rendered="#{ResourceUIBean.permissions.alert}" />
+
+
 
                         <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>
@@ -196,9 +219,9 @@
                </f:facet>
 
             </rich:dataTable>
- 
+
             </h:panelGrid>
-            
+
             <a4j:keepAlive beanName="ListAlertHistoryUIBean"/>
 
          </rich:panel>

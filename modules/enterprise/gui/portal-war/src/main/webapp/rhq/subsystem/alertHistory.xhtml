@@ -74,7 +74,7 @@
                             value="#{alertHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 15%, 15%, 15%, 15%, 15%, 10%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 15%, 10%, 10%, 10% 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -138,8 +138,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do">
-                     <f:param name="mode" value="viewRoles" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
                      <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
                      <f:param name="ad" value="#{item.original.alert.alertDefinition.id}" />
 
@@ -166,6 +165,25 @@
                </rich:column>
 
                <rich:column>
+                   <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Ack by" />
+                     </f:facet>
+                     <h:outputText value="#{item.original.alert.ackBy.name}" title="#{item.original.alert.ackBy.firstName} #{item.original.alert.ackBy.lastName}"/>
+                 </rich:column>
+
+                 <rich:column>
+                     <f:facet name="header">
+                         <onc:sortableColumnHeader sort="a.ackTime">
+                            <h:outputText styleClass="headerText" value="Ack date" />
+                         </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputText value="#{item.original.alert.ackTime}">
+                          <f:converter converterId="RelativeDurationConverter" />
+                     </h:outputText>
+                 </rich:column>
+
+
+               <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Recovery Info" />
                   </f:facet>
@@ -174,13 +192,17 @@
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="10" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />
                         <h:commandButton action="#{SubsystemAlertHistoryUIBean.purge}"
                                          value="PURGE ALL" styleClass="on-pager-button buttonsmall"
                                          rendered="#{GlobalPermissionsUIBean.superuser}" />
+                        <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.acknowledgeSelectedAlerts}"
+                                                 value="ACKNOWLEDGE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
+
 
                         <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>

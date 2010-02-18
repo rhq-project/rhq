@@ -1,3 +1,4 @@
+
 <project name="db-upgrade" default="upgrade" basedir=".">
 
     <!--
@@ -3014,13 +3015,37 @@
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="snmp_oid"/>
                 <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="email_address"/>
             </schemaSpec>
+            <schemaSpec version="2.77.3">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="role_id"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIFICATION" column="subject_id"/>
+            </schemaSpec>
+            <schemaSpec version="2.77.4">
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="roles"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="subjects"/>
+                <schema-deleteColumn table="RHQ_ALERT_NOTIF_LOG" column="emails"/>
 
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="SENDER" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="RESULT_STATE" columnType="VARCHAR2" precision="20" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="MESSAGE" columnType="VARCHAR2" precision="255" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="ALL_EMAILS" columnType="VARCHAR2" precision="4096" />
+                <schema-addColumn table="RHQ_ALERT_NOTIF_LOG" column="EMAILS_FAILED" columnType="VARCHAR2" precision="4096" />
+            </schemaSpec>
+            <schemaSpec version="2.77.5">
+                <schema-directSQL>
+                    <statement>
+                        DROP INDEX IF EXISTS RHQ_ALERT_IDX_ALERT
+                    </statement>
+                    <statement>
+                        CREATE INDEX RHQ_ALERT_IDX_ALERT ON RHQ_ALERT_NOTIF_LOG (alert_id)
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
             <schemaSpec version="2.78">
-               <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->               
+               <!-- Remove obsolete tables RHQ_BUNDLE_CONFIG and RHQ_BUNDLE_DEPLOYMENT (the latter by cascade) -->
                <schema-dropTable table="RHQ_BUNDLE_DEPLOYMENT" />
                <schema-dropTable table="RHQ_BUNDLE_CONFIG" />
                <schema-dropSequence name="rhq_bundle_config_id_seq" />
-                  
+
                <schema-addColumn table="RHQ_BUNDLE_VERSION" column="CONFIG_DEF_ID" columnType="INTEGER" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_BUNDLE_VERSION foreign key relation to RHQ_CONFIG_DEF">
@@ -3054,15 +3079,15 @@
                        ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF ADD PRIMARY KEY ( ID )
                    </statement>
                </schema-directSQL>
-               
+
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="NAME" columnType="VARCHAR2" precision="200" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="NAME" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="NAME" nullable="FALSE" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="CTIME" columnType="LONG" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="CTIME" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="CTIME" nullable="FALSE" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="MTIME" columnType="LONG" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="MTIME" nullable="FALSE" /> 
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="CONFIG_ID" columnType="INTEGER" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="MTIME" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="CONFIG_ID" columnType="INTEGER" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_CONFIG">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
@@ -3072,8 +3097,8 @@
                    </statement>
                </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" columnType="BOOLEAN" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" nullable="FALSE" /> 
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCEMENT_INTERVAL" columnType="INTEGER" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCE_POLICY" nullable="FALSE" />
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="ENFORCEMENT_INTERVAL" columnType="INTEGER" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" columnType="INTEGER" />
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_VERSION_ID" nullable="FALSE" />
                <schema-directSQL>
@@ -3084,7 +3109,7 @@
                        REFERENCES RHQ_BUNDLE_VERSION (ID)
                    </statement>
                </schema-directSQL>
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_ID" columnType="INTEGER" />               
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_DEF" column="BUNDLE_ID" columnType="INTEGER" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY_DEF foreign key relation to RHQ_BUNDLE">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY_DEF
@@ -3092,7 +3117,7 @@
                        FOREIGN KEY (BUNDLE_ID)
                        REFERENCES RHQ_BUNDLE (ID)
                    </statement>
-               </schema-directSQL>               
+               </schema-directSQL>
 
                <!-- RHQ_BUNDLE_DEPLOY -->
                <schema-directSQL>
@@ -3108,7 +3133,7 @@
                    </statement>
                </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" columnType="INTEGER" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="BUNDLE_DEPLOY_DEF_ID" nullable="FALSE" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to BUNDLE_DEPLOY_DEF">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY
@@ -3116,9 +3141,9 @@
                        FOREIGN KEY (BUNDLE_DEPLOY_DEF_ID)
                        REFERENCES RHQ_BUNDLE_DEPLOY_DEF (ID)
                    </statement>
-               </schema-directSQL>               
+               </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_ID" columnType="INTEGER" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_ID" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="RESOURCE_ID" nullable="FALSE" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY foreign key relation to RESOURCE">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY
@@ -3126,9 +3151,9 @@
                        FOREIGN KEY (RESOURCE_ID)
                        REFERENCES RHQ_RESOURCE (ID)
                    </statement>
-               </schema-directSQL>               
+               </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY" column="CTIME" columnType="LONG" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="CTIME" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY" column="CTIME" nullable="FALSE" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY unique constraint on def-resource mapping">
                        CREATE UNIQUE INDEX RHQ_BUNDLE_DEPLOY_MAP_IX ON RHQ_BUNDLE_DEPLOY (BUNDLE_DEPLOY_DEF_ID, RESOURCE_ID)
@@ -3149,7 +3174,7 @@
                    </statement>
                </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="BUNDLE_DEPLOY_ID" columnType="INTEGER" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="BUNDLE_DEPLOY_ID" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="BUNDLE_DEPLOY_ID" nullable="FALSE" />
                <schema-directSQL>
                    <statement desc="Creating RHQ_BUNDLE_DEPLOY_HIST foreign key relation to BUNDLE_DEPLOY">
                        ALTER TABLE RHQ_BUNDLE_DEPLOY_HIST
@@ -3157,17 +3182,17 @@
                        FOREIGN KEY (BUNDLE_DEPLOY_ID)
                        REFERENCES RHQ_BUNDLE_DEPLOY (ID)
                    </statement>
-               </schema-directSQL>               
+               </schema-directSQL>
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="SUBJECT_NAME" columnType="VARCHAR2" precision="255" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_TIME" columnType="LONG" />
-               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_TIME" nullable="FALSE" />               
+               <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_TIME" nullable="FALSE" />
                <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" columnType="VARCHAR2" precision="50" />
                <schema-alterColumn table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_ACTION" nullable="FALSE" />
-               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_MESSAGE" columnType="LONGVARCHAR" />               
-               
+               <schema-addColumn   table="RHQ_BUNDLE_DEPLOY_HIST" column="AUDIT_MESSAGE" columnType="LONGVARCHAR" />
+
                <!-- Changes to RHQ_BUNDLE_FILE -->
                <schema-alterColumn table="RHQ_BUNDLE_FILE" column="PACKAGE_VERSION_ID" nullable="FALSE" />
-               
+
             </schemaSpec>
 
             <schemaSpec version="2.79">

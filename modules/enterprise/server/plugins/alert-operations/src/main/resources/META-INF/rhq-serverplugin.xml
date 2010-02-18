@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<alert-plugin
+        name="alert-operations"
+        displayName="Alert:Operations"
+        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:c="urn:xmlns:rhq-configuration"
+        xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
+        package="org.rhq.enterprise.server.plugins.alertOperations"
+        description="Alert sender plugin that can run operations on resources in RHQ inventory."
+        >
+
+    <serverplugin:help>
+        This alert sender plugin is used to run operations on resources in RHQ inventory.
+        Operations need to exist on a resource before the plugin can use them.
+    </serverplugin:help>
+
+    <!-- startup & tear down listener, + scheduled jobs
+    <serverplugin:plugin-component class="Foo" />
+    -->
+
+    <!-- How does this sender show up in drop downs etc -->
+    <short-name>Operations</short-name>
+
+    <!-- Class that does the actual sending -->
+    <plugin-class>OperationsSender</plugin-class>
+
+    <custom-ui>
+        <ui-snippet-name>operations.xhtml</ui-snippet-name>
+        <backing-bean-class>OperationsBackingBean</backing-bean-class>
+        <backing-bean-name>operationsBean</backing-bean-name>
+    </custom-ui>
+</alert-plugin>

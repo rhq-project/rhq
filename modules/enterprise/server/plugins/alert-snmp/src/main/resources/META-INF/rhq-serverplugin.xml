@@ -36,7 +36,7 @@
             <c:simple-property name="agentAddress" description="Address of our SNMP agent" required="false"/>
         </c:group>
         <!--
-        <c:group name="2c" displayName="Snmp version 2c properties" hiddenByDefault="true">
+        <c:group name="2c" displayName="SNMP version 2c properties" hiddenByDefault="true">
              Nothing special
         </c:group>
         -->

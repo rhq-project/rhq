@@ -18,17 +18,16 @@
  */
 package org.rhq.plugin.nss;
 
+import java.io.File;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.rhq.core.domain.configuration.Configuration;
+
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-
 
 /**
  *
@@ -47,18 +46,7 @@ public class NameServiceSwitchDiscoveryComponent implements ResourceDiscoveryCom
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         log.info("Calling discoverResources for NSS");
 
-        // if your plugin descriptor defined one or more <process-scan>s, then see if the plugin container
-        // auto-discovered processes using those process scan definitions.  Process all those that were found.
-        List<ProcessScanResult> autoDiscoveryResults = context.getAutoDiscoveredProcesses();
-        for (ProcessScanResult autoDiscoveryResult : autoDiscoveryResults) {
-            // determine if you want to include the result in this method's returned set of discovered resources
-        }
-
-        List<Configuration> pluginConfigs = context.getPluginConfigurations();
-        for (Configuration pluginConfig : pluginConfigs) {
-            // pluginConfig contains information on a resource that was manually discovered/entered by the user
-            // take it and build a details object that represents that resource
-        }
+        File nssFile = new File(NameServiceSwitchComponent.getConfigFile());
 
         // now perform your own discovery mechanism, if you have one.  For each resource discovered, you need to
         // create a details object that describe the resource that you discovered.
@@ -72,12 +60,12 @@ public class NameServiceSwitchDiscoveryComponent implements ResourceDiscoveryCom
         String name = "NSSwitch";
         String version = "0.0.2";
         String description = "Name Service Switch Infrastructure";
+        if (nssFile.exists()) {
+            DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
+                version, description, null, null);
 
-        DiscoveredResourceDetails resource = new DiscoveredResourceDetails(context.getResourceType(), key, name,
-            version, description, null, null);
-
-        set.add(resource);
-
+            set.add(resource);
+        }
         return set;
     }
 }

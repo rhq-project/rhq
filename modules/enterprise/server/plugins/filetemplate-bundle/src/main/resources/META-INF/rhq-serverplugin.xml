@@ -23,6 +23,6 @@
                            description="A property my bundle plugin needs to be properly configured" />
     </serverplugin:plugin-configuration>
 
-    <bundle type="File Template"/>
+    <bundle type="File Template Bundle"/>
 
 </bundle-plugin>

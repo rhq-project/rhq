@@ -106,7 +106,7 @@
 <%
     if (hql != null || namedQuery != null) {
         System.out.println("hql: " + hql);
-        String sql = null;
+        List<String> sqlStrings = null;
         Set<String> parameterNames = null;
         try {
             qt = new ASTQueryTranslatorFactory().createQueryTranslator(
@@ -116,12 +116,10 @@
                     (SessionFactoryImplementor) s.getSessionFactory());
 
             qt.compile(null, false);
-            sql = qt.getSQLString();
+            sqlStrings = qt.collectSqlStrings();
 
-            if (sql == null) {
-               out.write("Could not get SQL translation for DML-style operation");
-            } else {
-               out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + sql + "</textarea>");
+            for (String nextSQL : sqlStrings) {
+               out.write("<b>SQL: </b><textarea rows=\"10\" cols=\"120\">" + nextSQL + "</textarea>");
             }
 
             ParameterTranslations pt = qt.getParameterTranslations();

@@ -588,11 +588,9 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
                     writeLock.unlock();
                 }
             } else {
-                if (m_needToCallInitializeCallback) {
-                    Throwable t = new Throwable("Initialize callback lock could not be acquired");
-                    LOG.error(CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, t.getMessage());
-                    return new GenericCommandResponse(command, false, null, t);
-                }
+                Throwable t = new Throwable("Initialize callback lock could not be acquired");
+                LOG.error(CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, t.getMessage());
+                return new GenericCommandResponse(command, false, null, t);
             }
         }
         return null;

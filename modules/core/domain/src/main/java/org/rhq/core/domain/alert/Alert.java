@@ -23,7 +23,9 @@
 package org.rhq.core.domain.alert;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -37,7 +39,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -111,10 +112,10 @@ import org.rhq.core.domain.auth.Subject;
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId " //
         + "   AND definition.resource.id = ( :resourceId ) " //
         + "   AND ( a.ctime BETWEEN :startDate AND :endDate )"),
-    @NamedQuery(name = Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES, query = "SELECT sched.id, count(*) "
-        + "  FROM Alert AS a " + "  JOIN a.alertDefinition aDef " + "  JOIN aDef.conditions condition "
-        + "  JOIN aDef.resource res" + "  JOIN condition.measurementDefinition mDef " + "  JOIN mDef.schedules sched"
-        + " WHERE sched.definition = mDef.id" + "   AND sched.resource = res " + "   AND sched.id IN (:schedIds) "
+    @NamedQuery(name = Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES, query = "SELECT sched.id, count(*) " +
+            "  FROM Alert AS a JOIN a.alertDefinition aDef  JOIN aDef.conditions condition " +
+            "  JOIN aDef.resource res  JOIN condition.measurementDefinition mDef   JOIN mDef.schedules sched" +
+            " WHERE sched.definition = mDef.id   AND sched.resource = res    AND sched.id IN (:schedIds) "
         + "   AND (a.ctime BETWEEN :startDate AND :endDate)" + "GROUP BY sched.id"),
     @NamedQuery(name = Alert.QUERY_FIND_BY_RESOURCE_DATED, //
     query = "SELECT a " //
@@ -231,8 +232,8 @@ public class Alert implements Serializable {
     // primary key
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();
 
-    @OneToOne(mappedBy = "alert")
-    private AlertNotificationLog alertNotificationLog;
+    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL)
+    private List<AlertNotificationLog> alertNotificationLogs = new ArrayList<AlertNotificationLog>();
 
     @Deprecated
     @Column(name = "TRIGGERED_OPERATION", nullable = true)
@@ -249,17 +250,12 @@ public class Alert implements Serializable {
     @Column(name = "WILL_RECOVER", nullable = false)
     private boolean willRecover;
 
-
-
-
     @Column(name ="ACK_TIME")
-    private long ackTime;
+    private long ackTime = -1;
 
     @JoinColumn(name = "ACK_BY_ID", referencedColumnName = "ID")
     @ManyToOne
     private Subject ackBy;
-
-
 
     /**
      * Creates a new alert. (required by EJB3 spec, but not used)
@@ -311,13 +307,16 @@ public class Alert implements Serializable {
         conditionLog.setAlert(this);
     }
 
-    public AlertNotificationLog getAlertNotificationLog() {
-        return this.alertNotificationLog;
+    public List<AlertNotificationLog> getAlertNotificationLogs() {
+        return alertNotificationLogs;
     }
 
-    public void setAlertNotificationLog(AlertNotificationLog alertNotificationLog) {
-        this.alertNotificationLog = alertNotificationLog;
-        alertNotificationLog.setAlert(this);
+    public void setAlertNotificationLogs(List<AlertNotificationLog> alertNotificationLogs) {
+        this.alertNotificationLogs = alertNotificationLogs;
+    }
+
+    public void addAlertNotificatinLog(AlertNotificationLog log) {
+        this.alertNotificationLogs.add(log);
     }
 
     public String getTriggeredOperation() {

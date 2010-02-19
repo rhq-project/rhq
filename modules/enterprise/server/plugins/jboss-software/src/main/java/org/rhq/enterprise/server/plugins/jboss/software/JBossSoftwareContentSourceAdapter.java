@@ -44,6 +44,9 @@ import org.rhq.enterprise.server.plugin.pc.content.ContentProvider;
 import org.rhq.enterprise.server.plugin.pc.content.ContentProviderPackageDetails;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSource;
 import org.rhq.enterprise.server.plugin.pc.content.PackageSyncReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoDetails;
+import org.rhq.enterprise.server.plugin.pc.content.RepoImportReport;
+import org.rhq.enterprise.server.plugin.pc.content.RepoSource;
 import org.rhq.enterprise.server.plugin.pc.content.SyncException;
 import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
 
@@ -52,7 +55,7 @@ import org.rhq.enterprise.server.plugin.pc.content.SyncProgressWeight;
  *
  * @author Jason Dobies
  */
-public class JBossSoftwareContentSourceAdapter implements ContentProvider, PackageSource {
+public class JBossSoftwareContentSourceAdapter implements ContentProvider, PackageSource, RepoSource {
 
     // Connection properties, read from the user specified values specified at content source creation time
     private String url;
@@ -160,6 +163,15 @@ public class JBossSoftwareContentSourceAdapter implements ContentProvider, Packa
         InputStream stream = method.getResponseBodyAsStream();
 
         return stream;
+    }
+
+    public RepoImportReport importRepos() throws Exception {
+        RepoDetails repo = new RepoDetails("JBoss Patches");
+
+        RepoImportReport report = new RepoImportReport();
+        report.addRepo(repo);
+
+        return report;
     }
 
     public String toString() {

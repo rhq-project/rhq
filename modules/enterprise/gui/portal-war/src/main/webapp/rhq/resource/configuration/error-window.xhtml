@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:c="http://java.sun.com/jstl/core"
+                xmlns:a4j="http://richfaces.org/a4j"
+                xmlns:rich="http://richfaces.org/rich">
+
+  <rich:modalPanel id="errorWindow" width="800" height="600">
+    <f:facet name="header">
+      <h:panelGroup>
+        <h:outputText value="#{selectedRawUIBean.path}"/>
+      </h:panelGroup>
+    </f:facet>
+
+    <f:facet name="controls">
+      <h:panelGroup>
+        <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hideErrorWindowLink"/>
+        <rich:componentControl for="errorWindow" attachTo="hideErrorWindowLink" operation="hide" event="onclick"/>
+      </h:panelGroup>
+    </f:facet>
+
+    <h:inputTextarea
+                styleClass="rawConfigFileContents"
+                style="width:100%; height:90%; overflow:visible; border-width:0px"
+                rows="30"
+                cols="30"
+                value="#{selectedRawUIBean.errorMessage}"
+                readonly="true"/>
+
+    <h:panelGrid columns="1" columnClasses="raw-edit-footer" style="width:100%">
+      <h:panelGroup style="text-align:right">
+        <a4j:commandButton value="Cancel" onclick="#{rich:component('errorWindow')}.hide()" styleClass="buttonmed"/>
+      </h:panelGroup>
+    </h:panelGrid>
+  </rich:modalPanel>
+
+</ui:composition>

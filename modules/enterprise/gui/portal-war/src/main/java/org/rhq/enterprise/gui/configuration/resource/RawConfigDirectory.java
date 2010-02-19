@@ -48,8 +48,6 @@ public class RawConfigDirectory {
     }
 
     public void addRawConfig(RawConfiguration rawConfig) {
-        RawConfigUIBean bean = new RawConfigUIBean();
-        bean.setRawConfiguration(rawConfig);
-        rawConfigUIBeans.add(bean);
+        rawConfigUIBeans.add(new RawConfigUIBean(rawConfig));
     }
 }

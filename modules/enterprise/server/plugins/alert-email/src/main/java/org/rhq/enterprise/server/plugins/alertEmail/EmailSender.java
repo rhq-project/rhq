@@ -19,22 +19,14 @@
 package org.rhq.enterprise.server.plugins.alertEmail;
 
 import java.util.Arrays;
-import java.util.Properties;
-
-import javax.mail.Message;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-
-import com.sun.mail.smtp.SMTPMessage;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.notification.SenderResult;
+import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
-import org.rhq.enterprise.server.plugin.pc.alert.ResultState;
-import org.rhq.enterprise.server.plugin.pc.alert.SenderResult;
 
 /**
  * Class to send emails. Actually it does not do the work

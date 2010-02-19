@@ -26,6 +26,8 @@ package org.rhq.core.pc.util;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 public interface ComponentService {
 
@@ -35,5 +37,7 @@ public interface ComponentService {
             boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException;
 
     String getAmpsVersion(int resourceId) throws PluginContainerException;
+
+    ResourceComponent fetchResourceComponent(int resourceId);
 
 }

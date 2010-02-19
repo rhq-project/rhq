@@ -437,10 +437,20 @@ public interface ResourceManagerLocal {
 
     PageList<Resource> findChildResources(Subject subject, int resourceId, PageControl pageControl);
 
+    Resource getPlaformOfResource(Subject subject, int resourceId);
+
+    
     Resource getParentResource(Subject subject, int resourceId);
 
     /**
-     * Given a list of results, this method produces
+     * Given a list of results, this method produces an object decorates the provided original results
+     * with data needed to disambiguate the results with respect to resource names, their types and ancestory.
+     * <p>
+     * The disambiguation result contains information on what types of information are needed to make the resources
+     * in the original result unambiguous and contains the decorated original data in the same order as the 
+     * supplied result list.
+     * 
+     * @see ResourceNamesDisambiguationResult
      * 
      * @param <T> the type of the result elements
      * @param results the results to disambiguate

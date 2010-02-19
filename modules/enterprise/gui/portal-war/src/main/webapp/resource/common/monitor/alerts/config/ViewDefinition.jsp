@@ -22,8 +22,6 @@
 
 <tiles:insert definition=".events.config.view.controlactionbox"/>
 
-<tiles:insert definition=".events.config.view.syslogactionbox"/>
-
 <tiles:insert definition=".events.config.view.nav"/>
 
 <a href="/rhq/resource/alert/notif/listAlertSender.xhtml?id=${param.id}&ad=${param.ad}">To Alert sender plugins</a>

@@ -114,12 +114,12 @@ public class Glob {
                 //move the parent path down to the nearest parent of the wildcard part of the 
                 //glob pattern
                 parentPath = new File(parentPath, globPattern.substring(0, globParentIdx));
-                globPattern = parentPath.getAbsolutePath() + globPattern.substring(globParentIdx);
+                globPattern = createGlobPattern(parentPath.getAbsolutePath(), globPattern.substring(globParentIdx));
             } else {
-                globPattern = parentPath.getAbsolutePath() + globPattern;
+                globPattern = createGlobPattern(parentPath.getAbsolutePath(),globPattern);
             }
         } else {
-            globPattern = parentPath.getAbsolutePath() + globPattern;            
+            globPattern = createGlobPattern(parentPath.getAbsolutePath(),globPattern);            
         }
 
         globPattern = new File(globPattern).getAbsolutePath();
@@ -130,6 +130,11 @@ public class Glob {
         return Arrays.asList(files);
     }
     
+    private static String createGlobPattern(String parent,String pattern){
+        if (!parent.endsWith(File.separator))
+            parent = parent + File.separatorChar;
+         return parent+pattern;
+    }
     public static List<File> matchAll(File parentPath, String... globPattern) {
         return matchAll(parentPath, Arrays.asList(globPattern));
     }

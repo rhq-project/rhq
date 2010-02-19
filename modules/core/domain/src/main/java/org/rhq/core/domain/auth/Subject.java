@@ -49,7 +49,6 @@ import javax.persistence.Transient;
 
 import org.jetbrains.annotations.NotNull;
 
-import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.util.EntitySerializer;
@@ -140,28 +139,6 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.resourceGroups) g, IN (g.implicitResources) res "
         + "WHERE s = :subject AND p = :permission"),
 
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES, query = "" //
-        + "SELECT s" + "  FROM Subject s" //
-        + " WHERE s.id NOT IN" //
-        + "       ( " //
-        + "         SELECT sn.subject.id" //
-        + "           FROM SubjectNotification sn" //
-        + "          WHERE sn.alertDefinition.id = :alertDefinitionId " //
-        + "       ) " //
-        + "   AND s.id NOT IN ( :excludes ) " //
-        + "   AND s.fsystem = FALSE " //
-        + "   AND s.factive = TRUE"),
-    @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION, query = "" //
-        + "SELECT s" //
-        + "  FROM Subject s" //
-        + " WHERE s.id NOT IN" //
-        + "       ( " //
-        + "         SELECT sn.subject.id" //
-        + "           FROM SubjectNotification sn" //
-        + "          WHERE sn.alertDefinition.id = :alertDefinitionId " //
-        + "       ) " //
-        + "   AND s.fsystem = FALSE" //
-        + "   AND s.factive = TRUE"), //
     @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES, query = "" //
         + "SELECT DISTINCT s " + "  FROM Subject AS s LEFT JOIN s.roles AS r " //
         + " WHERE s.id NOT IN " //
@@ -211,8 +188,6 @@ public class Subject implements Externalizable {
 
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES = "Subject.findAvailableSubjectsForRoleWithExcludes";
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE = "Subject.findAvailableSubjectsForRole";
-    public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION_WITH_EXCLUDES = "Subject.findAvailableSubjectsForAlertDefinitionWithExcludes";
-    public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ALERT_DEFINITION = "Subject.findAvailableSubjectForAlertDefinition";
 
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Subject.dynamicConfigValues";
 
@@ -257,9 +232,6 @@ public class Subject implements Externalizable {
     @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
     @ManyToMany
     private java.util.Set<Role> roles;
-
-    @OneToMany(mappedBy = "subject", cascade = javax.persistence.CascadeType.ALL)
-    private Set<SubjectNotification> subjectNotifications = new HashSet<SubjectNotification>();
 
     @Transient
     private Integer sessionId = null;
@@ -408,18 +380,6 @@ public class Subject implements Externalizable {
 
     public void removeRole(Role role) {
         getRoles().remove(role);
-    }
-
-    public Set<SubjectNotification> getSubjectNotifications() {
-        return subjectNotifications;
-    }
-
-    public void setSubjectNotifications(Set<SubjectNotification> subjectNotifications) {
-        this.subjectNotifications = subjectNotifications;
-    }
-
-    public void addSubjectNotification(SubjectNotification subjectNotification) {
-        this.subjectNotifications.add(subjectNotification);
     }
 
     @Override

@@ -2119,6 +2119,32 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return queryRunner.execute();
     }
 
+    public Resource getPlaformOfResource(Subject subject, int resourceId) {
+        Resource resource = null;
+        Resource parent = null;
+        do {
+            resource = parent;
+            if (resource != null) {
+                resourceId = parent.getId();
+            }
+            parent = getParentResource(resourceId);
+            int parentId = parent.getId();
+            if (parent.getResourceType().getCategory().equals(ResourceCategory.PLATFORM)){
+                resource = parent;
+                parent = null;
+                break;
+            }
+            
+        } while (parent != null);
+        if (resource != null) {
+            if (!authorizationManager.canViewResource(subject, resource.getId())) {
+                throw new PermissionException("User [" + subject + "] does not have permission to view resource ["
+                    + resource.getId() + "]");
+            }
+        }
+        return resource;
+    }
+
     public Resource getParentResource(Subject subject, int resourceId) {
         Resource resource = getParentResource(resourceId);
 
@@ -2136,8 +2162,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return (findChildResources(subject, parentResource, pageControl));
     }
 
-    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent,
-        IntExtractor<? super T> extractor) {
+    public <T> ResourceNamesDisambiguationResult<T> disambiguate(List<T> results, boolean alwaysIncludeParent, IntExtractor<? super T> extractor) {
+        if (results.isEmpty()) {
+            return new ResourceNamesDisambiguationResult<T>(new ArrayList<DisambiguationReport<T>>(), false, false, false);
+        }
+        
         String query = Resource.NATIVE_QUERY_FIND_DISAMBIGUATION_LEVEL;
 
         query = JDBCUtil.transformQueryForMultipleInParameters(query, "@@RESOURCE_IDS@@", results.size());

@@ -181,15 +181,6 @@
       <form-bean name="EditAlertDefinitionControlActionForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ControlActionForm"/>
 
-      <form-bean name="EditAlertDefinitionSyslogActionForm"
-                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.SyslogActionForm"/>
-
-      <form-bean name="AddAlertUsersForm"
-                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddUsersForm"/>
-
-      <form-bean name="AddAlertRolesForm"
-                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.AddRolesForm"/>
-
       <form-bean name="EditMetricBaselineForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.EditMetricBaselineForm"/>
 
@@ -363,7 +354,7 @@
 
       <action path="/Logout"
               type="org.rhq.enterprise.gui.authentication.LogoutAction">
-         <forward name="success" path="/Start.do" redirect="true"/>
+         <forward name="success" path="/Dashboard.do" redirect="true"/>
       </action>
 
       <action path="/Login"
@@ -2577,42 +2568,6 @@
       <action path="/alerts/ViewControlAction"
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionControlActionAction"/>
-
-      <action path="/alerts/ViewSyslogAction"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionSyslogActionAction"/>
-
-      <action path="/alerts/ViewNotificationsRoles"
-              name="RemoveNotificationsForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsRolesAction">
-         <set-property property="title" value="View+Alert+Detail"/>
-      </action>
-
-      <action path="/alerts/ViewNotificationsUsers"
-              name="RemoveNotificationsForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionNotificationsUsersAction">
-         <set-property property="title" value="View+Alert+Detail"/>
-      </action>
-
-      <action path="/alerts/RemoveRoles"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveRolesAction"
-              name="RemoveNotificationsForm"
-              scope="request"
-              input="/alerts/Config.do?mode=viewRoles">
-         <forward name="success" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=viewRoles" redirect="true"/>
-      </action>
-
-      <action path="/alerts/RemoveUsers"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.RemoveUsersAction"
-              name="RemoveNotificationsForm"
-              scope="request"
-              input="/alerts/Config.do?mode=viewUsers">
-         <forward name="success" path="/alerts/Config.do?mode=viewUsers" redirect="true"/>
-         <forward name="failure" path="/alerts/Config.do?mode=viewUsers" redirect="true"/>
-      </action>
 
       <!-- JBNADM-536 update for name and title property-->
       <action path="/software/ListSoftware"

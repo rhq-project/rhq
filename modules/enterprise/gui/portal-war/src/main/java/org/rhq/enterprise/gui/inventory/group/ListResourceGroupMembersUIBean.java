@@ -31,9 +31,11 @@ import org.rhq.core.domain.resource.composite.ResourceFacets;
 import org.rhq.core.domain.resource.composite.ResourceWithAvailability;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.gui.common.framework.PagedDataTableUIBean;
 import org.rhq.enterprise.gui.common.paging.PageControlView;
 import org.rhq.enterprise.gui.common.paging.PagedListDataModel;
+import org.rhq.enterprise.gui.common.paging.ResourceNameDisambiguatingPagedListDataModel;
 import org.rhq.enterprise.server.alert.engine.internal.Tuple;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -45,6 +47,13 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
     private ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
     private boolean showRecursiveMembers = false;
 
+    private static final IntExtractor<ResourceWithAvailability> RESOURCE_ID_EXTRACTOR = new IntExtractor<ResourceWithAvailability>() {
+        
+        public int extract(ResourceWithAvailability object) {
+            return object.getResource().getId();
+        }
+    }; 
+    
     public ListResourceGroupMembersUIBean() {
     }
 
@@ -116,15 +125,14 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
         return results;
     }
 
-    protected class ListResourceGroupMembersDataModel extends PagedListDataModel<ResourceWithAvailability> {
+    protected class ListResourceGroupMembersDataModel extends ResourceNameDisambiguatingPagedListDataModel<ResourceWithAvailability> {
         private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
         public ListResourceGroupMembersDataModel(PageControlView view, String beanName) {
-            super(view, beanName);
+            super(view, beanName, true);
         }
 
-        @Override
-        public PageList<ResourceWithAvailability> fetchPage(PageControl pageControl) {
+        public PageList<ResourceWithAvailability> fetchDataForPage(PageControl pageControl) {
             PageList<ResourceWithAvailability> results = null;
             if (getShowRecursiveMembers()) {
                 results = resourceManager.findImplicitResourceWithAvailabilityByResourceGroup(LookupUtil
@@ -140,6 +148,10 @@ public class ListResourceGroupMembersUIBean extends PagedDataTableUIBean {
             }
 
             return results;
+        }
+        
+        protected IntExtractor<ResourceWithAvailability> getResourceIdExtractor() {
+            return RESOURCE_ID_EXTRACTOR;
         }
     }
 }

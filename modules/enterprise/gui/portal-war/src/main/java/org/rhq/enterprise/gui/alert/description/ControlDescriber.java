@@ -42,10 +42,10 @@ public class ControlDescriber extends AlertConditionDescriber {
 
         if (definition != null) {
             builder.append(definition.getDisplayName());
+        } else {
+            builder.append(condition.getName());
         }
-
-        builder.append(' ');
-        builder.append(definition.getDisplayName());
+        
         builder.append(' ');
         builder.append(condition.getOption());
     }

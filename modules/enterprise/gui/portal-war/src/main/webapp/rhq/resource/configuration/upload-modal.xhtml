@@ -8,49 +8,60 @@
                 xmlns:a4j="http://richfaces.org/a4j"
                 xmlns:rich="http://richfaces.org/rich">
 
-  <f:subview id="uploadSubview" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
+  <rich:modalPanel id="uploadWindow" width="800" height="400" rendered="#{configurationEditor.renderFileUpload}">
+    <f:facet name="header">
+      <h:panelGroup>
+        <h:outputText value="#{selectedRawUIBean.path}"/>
+      </h:panelGroup>
+    </f:facet>
+    <f:facet name="controls">
+      <h:panelGroup>
+        <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hideUploadModalLink"/>
+        <rich:componentControl for="uploadWindow" attachTo="hideUploadModalLink" operation="hide" event="onclick"/>
+      </h:panelGroup>
+    </f:facet>
 
-    <script type="text/javascript">
-      function prepareFormForUpload() {
-        var form = document.getElementById('editResourceConfigurationForm');
-        form.encoding = 'multipart/form-data';
-      }
-    </script>
+    <!--
+      Note that the form *must* being nested inside the modalPanel; otherwise, the file upload listener is not invoked.
+      This was discovered through trial and error along this jira (https://jira.jboss.org/jira/browse/RF-3492).
+    -->
+    <h:form id="uploadForm">
+      <ui:remove>
+      <!--
+        Adding the keepAlive here for ResourceUIBean so that the current instance of ResourceUIBean lives across
+        upload requests. There are a number of places that look for and expect to find the id request parameter. Even
+        though the file upload is done via an ajax request, things still break down without the id parameter because
+        ajax requests still trigger the JSF lifecycle, and that id parameter is expected in various places during the
+        update model phase.
 
-    <rich:modalPanel id="uploadWindow" width="800" height="400">
-      <f:facet name="header">
-        <h:panelGroup>
-          <h:outputText value="#{ExistingResourceConfigurationUIBean.current.path}"/>
-        </h:panelGroup>
-      </f:facet>
-      <f:facet name="controls">
-        <h:panelGroup>
-          <h:graphicImage value="/images/close.png" styleClass="hidelink" id="hidelink"/>
-          <rich:componentControl for="uploadWindow" attachTo="hidelink" operation="hide" event="onclick"/>
-        </h:panelGroup>
-      </f:facet>
+        With a file upload submission, richfaces sets the form's enctype attribute to multipart/form-data which prevents
+        other input values from being submitted with the form. Along with a bit of refactoring and the keepAlive for
+        ResourceUIBean, we are able to circumvent the need for passing the id parameter.
 
+        jsanda - 02/10/2010
+      -->
+      </ui:remove>
+      <a4j:keepAlive beanName="ResourceUIBean"/>
 
-        <rich:panel id="uploadPanel" rendered="#{ExistingResourceConfigurationUIBean.fileUploadAvailable}">
-
-          <input type="hidden" name="currentResourceId" value="#{ResourceUIBean.id}"/>
-
-          <rich:fileUpload id="fileUpload"
-                           listHeight="50px"
-                           fileUploadListener="#{fileUploader.fileUploadListener}"
-                           addControlLabel="Browse"
-                           immediateUpload="false">
-            <f:facet name="label">
-              <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}"/>
-            </f:facet>
-            <a4j:support event="onuploadcomplete"
-                         action="#{ExistingResourceConfigurationUIBean.completeUpload}"
-                         reRender="fileUpload,fileContents,fileMenu"
-                         onsubmit="#{rich:component('uploadWindow')}.hide()"/>
-          </rich:fileUpload>
-
-        </rich:panel>   
-    </rich:modalPanel>
-  </f:subview>
+      <rich:panel id="uploadPanel">
+        <rich:fileUpload id="fileUpload"
+                         listHeight="50px"
+                         fileUploadListener="#{fileUploader.listener}"
+                         noDuplicates="true"
+                         allowFlash="false"
+                         addControlLabel="Browse"
+                         immediateUpload="false">
+          <f:facet name="label">
+            <h:outputText value="{_KB}KB from {KB}KB uploaded --- {mm}:{ss}"/>
+          </f:facet>
+          <a4j:support event="onuploadcomplete"
+                       action="#{fileUploader.completeUpload}"
+                       limitToList="true"
+                       reRender="fileContents,fileMenu,fileUpload,modalEditor"
+                       onsubmit="#{rich:component('uploadWindow')}.hide()"/>
+        </rich:fileUpload>
+      </rich:panel>
+    </h:form>
+  </rich:modalPanel>
 
 </ui:composition>

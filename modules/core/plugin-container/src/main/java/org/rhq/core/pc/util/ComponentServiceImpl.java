@@ -28,6 +28,8 @@ import org.rhq.core.domain.plugin.Plugin;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.plugin.PluginManager;
+import org.rhq.core.pluginapi.configuration.ResourceConfigurationFacet;
+import org.rhq.core.pluginapi.inventory.ResourceComponent;
 
 public class ComponentServiceImpl implements ComponentService {
 
@@ -47,5 +49,9 @@ public class ComponentServiceImpl implements ComponentService {
         ResourceType resourceType = getResourceType(resourceId);
 
         return pluginMgr.getAmpsVersion(resourceType.getPlugin());
+    }
+
+    public ResourceComponent fetchResourceComponent(int resourceId) {
+        return ComponentUtil.fetchResourceComponent(resourceId);
     }
 }

@@ -20,6 +20,9 @@ package org.rhq.enterprise.server.configuration;
 
 import org.jetbrains.annotations.Nullable;
 import org.quartz.SchedulerException;
+
+import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.configuration.ConfigurationValidationException;
 import org.rhq.core.clientapi.server.configuration.ConfigurationUpdateResponse;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.AbstractResourceConfigurationUpdate;
@@ -96,9 +99,9 @@ public interface ConfigurationManagerLocal {
      */
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst)
         throws Exception;
-    
+
     Configuration getLiveResourceConfiguration(Subject subject, int resourceId, boolean pingAgentFirst,
-            boolean fromStructured) throws Exception;
+        boolean fromStructured) throws Exception;
 
     PageList<PluginConfigurationUpdate> findPluginConfigurationUpdates(Subject subject, int resourceId, Long beginDate,
         Long endDate, PageControl pc);
@@ -346,7 +349,7 @@ public interface ConfigurationManagerLocal {
      * @param subject the current subject
      * @param groupId the id of the compatible group
      * @return
-     * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress, 
+     * @throws ConfigurationUpdateInProgressException if config updates, for the group or any member, are in progress,
      * @throws Exception if 1) one or more of the group's members are DOWN, or 2) we fail to retrieve one or more member
      *         live configs from the corresponding Agents
      */
@@ -464,7 +467,7 @@ public interface ConfigurationManagerLocal {
      * @param  resourceId       identifies the resource to be updated
      * @param  newConfiguration the resource's desired new configuration
      *
-     * @return the resource configuration update item corresponding to this request. null 
+     * @return the resource configuration update item corresponding to this request. null
      * if newConfiguration is equal to the existing configuration.
      */
     @Nullable
@@ -472,8 +475,8 @@ public interface ConfigurationManagerLocal {
         Configuration newConfiguration) throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
 
     ResourceConfigurationUpdate updateStructuredOrRawConfiguration(Subject subject, int resourceId,
-        Configuration newConfiguration, boolean fromStructured)
-        throws ResourceNotFoundException, ConfigurationUpdateStillInProgressException;
+        Configuration newConfiguration, boolean fromStructured) throws ResourceNotFoundException,
+        ConfigurationUpdateStillInProgressException;
 
     Configuration getResourceConfiguration(Subject subject, int resourceId);
 
@@ -485,4 +488,5 @@ public interface ConfigurationManagerLocal {
     Configuration translateResourceConfiguration(Subject subject, int resourceId, Configuration configuration,
         boolean fromStructured) throws ResourceNotFoundException, TranslationNotSupportedException;
 
+    Configuration mergeConfiguration(Configuration config);
 }

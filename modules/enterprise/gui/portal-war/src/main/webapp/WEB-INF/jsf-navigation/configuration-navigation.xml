@@ -17,10 +17,10 @@
          <redirect/>
       </navigation-case>
      
-      <navigation-case>
-         <from-action>#{ConfigHelperUIBean.accessMap}</from-action>
-         <to-view-id>/rhq/resource/configuration/view-map.xhtml</to-view-id>
-      </navigation-case>
+      <!--<navigation-case>-->
+         <!--<from-action>#{ConfigHelperUIBean.accessMap}</from-action>-->
+         <!--<to-view-id>/rhq/resource/configuration/view-map.xhtml</to-view-id>-->
+      <!--</navigation-case>-->
    </navigation-rule>
 
    <navigation-rule>

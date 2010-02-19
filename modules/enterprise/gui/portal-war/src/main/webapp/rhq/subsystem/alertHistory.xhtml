@@ -74,7 +74,7 @@
                             value="#{alertHistoryDataModel}"
                             var="item"
                             width="100%"
-                            columnsWidth="1%, 15%, 15%, 15%, 15%, 15%, 15%, 10%"
+                            columnsWidth="1%, 15%, 10%, 10%, 10%, 15%, 10%, 10%, 10% 10%"
                             headerClass="tableRowHeader"
                             footerClass="on-pager-footer"
                             onRowMouseOver="this.style.backgroundColor='#E7E7E7'"
@@ -90,7 +90,7 @@
                   </f:facet>
 
                   <onc:select name="selectedItems"
-                              value="#{item.alert.id}" />
+                              value="#{item.original.alert.id}" />
                </rich:column>
 
                <rich:column>
@@ -101,23 +101,17 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
-                     <h:outputText value="#{item.alert.alertDefinition.resource.name}" />
+                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
+                     <h:outputText value="#{item.original.alert.alertDefinition.resource.name}" />
                   </h:outputLink>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="parent.name">
-                        <h:outputText styleClass="headerText" value="Parent" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentResourceName}">
-                     <f:param name="id" value="#{item.parentResourceId}" />
-                     <h:outputText value="#{item.parentResourceName}" />
-                  </h:outputLink>
+                  <onc:resourcePartialLineage parents="#{item.parents}"/>
                </rich:column>
 
                <rich:column>
@@ -129,9 +123,9 @@
 
                   <h:outputLink value="/alerts/Alerts.do">
                      <f:param name="mode" value="viewAlert" />
-                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
-                     <f:param name="a" value="#{item.alert.id}" />
-                     <h:outputText value="#{item.alert.ctime}">
+                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
+                     <f:param name="a" value="#{item.original.alert.id}" />
+                     <h:outputText value="#{item.original.alert.ctime}">
                         <f:converter converterId="UserDateTimeConverter" />
                      </h:outputText>
                   </h:outputLink>
@@ -144,16 +138,15 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do">
-                     <f:param name="mode" value="viewRoles" />
-                     <f:param name="id" value="#{item.alert.alertDefinition.resource.id}" />
-                     <f:param name="ad" value="#{item.alert.alertDefinition.id}" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
+                     <f:param name="id" value="#{item.original.alert.alertDefinition.resource.id}" />
+                     <f:param name="ad" value="#{item.original.alert.alertDefinition.id}" />
 
 
-                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'LOW'}" value="/images/icons/Flag_blue_16.png"/>
-                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icons/Flag_yellow_16.png"/>
-                      <h:graphicImage rendered="#{item.alert.alertDefinition.priority == 'HIGH'}" value="/images/icons/Flag_red_16.png"/>
-                     <h:outputText value="#{item.alert.alertDefinition.name}" />
+                      <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'LOW'}" value="/images/icons/Flag_blue_16.png"/>
+                      <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'MEDIUM'}" value="/images/icons/Flag_yellow_16.png"/>
+                      <h:graphicImage rendered="#{item.original.alert.alertDefinition.priority == 'HIGH'}" value="/images/icons/Flag_red_16.png"/>
+                     <h:outputText value="#{item.original.alert.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -161,32 +154,55 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
-                  <h:outputText value="#{item.conditionText}" />
+                  <h:outputText value="#{item.original.conditionText}" />
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Actual Value" />
                   </f:facet>
-                  <h:outputText value="#{item.conditionValue}" />
+                  <h:outputText value="#{item.original.conditionValue}" />
                </rich:column>
+
+               <rich:column>
+                   <f:facet name="header">
+                            <h:outputText styleClass="headerText" value="Ack by" />
+                     </f:facet>
+                     <h:outputText value="#{item.original.alert.ackBy.name}" title="#{item.original.alert.ackBy.firstName} #{item.original.alert.ackBy.lastName}"/>
+                 </rich:column>
+
+                 <rich:column>
+                     <f:facet name="header">
+                         <onc:sortableColumnHeader sort="a.ackTime">
+                            <h:outputText styleClass="headerText" value="Ack date" />
+                         </onc:sortableColumnHeader>
+                     </f:facet>
+                     <h:outputText value="#{item.original.alert.ackTime}">
+                          <f:converter converterId="RelativeDurationConverter" />
+                     </h:outputText>
+                 </rich:column>
+
 
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Recovery Info" />
                   </f:facet>
-                  <h:outputText value="#{item.recoveryInfo}" />
+                  <h:outputText value="#{item.original.recoveryInfo}" />
                </rich:column>
 
                <f:facet name="footer">
                   <rich:columnGroup>
-                     <rich:column colspan="8" width="100%">
+                     <rich:column colspan="10" width="100%">
                         <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.deleteSelected}"
                                                  value="DELETE SELECTED" target="selectedItems" styleClass="on-pager-button buttonsmall"
                                                  rendered="#{GlobalPermissionsUIBean.superuser}" />
                         <h:commandButton action="#{SubsystemAlertHistoryUIBean.purge}"
                                          value="PURGE ALL" styleClass="on-pager-button buttonsmall"
                                          rendered="#{GlobalPermissionsUIBean.superuser}" />
+                        <onc:selectCommandButton action="#{SubsystemAlertHistoryUIBean.acknowledgeSelectedAlerts}"
+                                                 value="ACKNOWLEDGE SELECTED" target="selectedAlerts" styleClass="on-pager-button buttonsmall"
+                                                 rendered="#{GlobalPermissionsUIBean.superuser}" />
+
 
                         <ui:param name="paginationDataTableName" value="alertHistoryDataTable"/>
                         <ui:param name="paginationDataModel" value="#{alertHistoryDataModel}"/>

@@ -19,10 +19,9 @@
 package org.rhq.enterprise.gui.alert;
 
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import javax.faces.model.SelectItem;
-import org.jboss.seam.Component;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
@@ -34,13 +33,10 @@ import org.jboss.seam.log.Log;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionUpdateException;
 import org.rhq.enterprise.server.alert.InvalidAlertDefinitionException;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  *
@@ -48,16 +44,21 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Scope(ScopeType.PAGE)
 @Name("alertUIBean")
-public class AlertUIBean {
+public class AlertUIBean implements Serializable {
 
     @Logger
     private Log log;
+    @In("#{webUser.subject}")
+    private Subject subject;
     @In
     private FacesMessages facesMessages;
     @In
     private AlertDescriber alertDescriber;
-    private List<String> alertConditions;
+    @In
+    private AlertDefinitionManagerLocal alertDefinitionManager;
+    @In
     private AlertDefinition alertDefinition;
+    private List<String> alertConditions;
     private String alertDampening;
 
     public String getAlertDampening() {
@@ -76,23 +77,10 @@ public class AlertUIBean {
         return alertConditions;
     }
 
-    public List<SelectItem> getPriorities() {
-        List<SelectItem> items = new ArrayList<SelectItem>();
-
-        for (AlertPriority priority : AlertPriority.values()) {
-            items.add(new SelectItem(priority.name(), priority.getDisplayName()));
-        }
-
-        return items;
-    }
-
     public String saveAlertDefinition() {
-        // TODO:  Use dependency injection to look these up
-        AlertDefinitionManagerLocal definitionManager = LookupUtil.getAlertDefinitionManager();
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-
         try {
-            definitionManager.updateAlertDefinition(subject, this.alertDefinition.getId(), this.alertDefinition, false);
+            alertDefinitionManager.updateAlertDefinition(this.subject,
+                    this.alertDefinition.getId(), this.alertDefinition, false);
         } catch (InvalidAlertDefinitionException e) {
             facesMessages.add("There was an error finding the requested alert definition.");
             log.error("Invalid alert definition:  " + this.alertDefinition.toSimpleString(), e);
@@ -106,25 +94,23 @@ public class AlertUIBean {
 
     @Create
     public void init() {
-        // Look this up from the Seam context instead of DI - this way the form submission updates
-        // the defintion's values properly
-        this.alertDefinition = (AlertDefinition) Component.getInstance("alertDefinition");
-
-        lookupAlertConditions();
-        lookupAlertDampening();
+        this.alertConditions = lookupAlertConditions();
+        this.alertDampening = lookupAlertDampening();
     }
 
-    private void lookupAlertConditions() {
-        Subject subject = EnterpriseFacesContextUtility.getSubject();
-        this.alertConditions = new ArrayList<String>();
+    private List<String> lookupAlertConditions() {
+        List<String> conditions = new ArrayList<String>();
 
         for (AlertCondition condition : this.alertDefinition.getConditions()) {
-            this.alertConditions.add(this.alertDescriber.describeCondition(condition));
+            conditions.add(this.alertDescriber.describeCondition(condition));
         }
+
+        return conditions;
     }
 
-    private void lookupAlertDampening() {
+    private String lookupAlertDampening() {
         AlertDampening dampening = this.alertDefinition.getAlertDampening();
-        this.alertDampening = this.alertDescriber.describeDampening(dampening);
+
+        return this.alertDescriber.describeDampening(dampening);
     }
 }

@@ -174,8 +174,8 @@
          <onc:allSelect target="selectedResources" />
       </f:facet>
       
-      <onc:select name="selectedResources" value="#{resourceWithAvailability.resource.id}"
-                  rendered="#{resourceWithAvailability.explicit}"/>
+      <onc:select name="selectedResources" value="#{resourceWithAvailability.original.resource.id}"
+                  rendered="#{resourceWithAvailability.original.explicit}"/>
    </rich:column>
 
    <rich:column>
@@ -184,7 +184,7 @@
       </f:facet>
 
       <onc:quickNav>
-         <f:param name="id" value="#{resourceWithAvailability.resource.id}"/>
+         <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
 
          <onc:icon name="Monitor"
                    url="/rhq/resource/monitor/graphs.xhtml" 
@@ -204,17 +204,17 @@
          <onc:icon name="Configure"
                    url="/rhq/resource/configuration/view.xhtml" 
                    alt="Configure" 
-                   visible="#{resourceWithAvailability.resourceFacets.configuration}"/>
+                   visible="#{resourceWithAvailability.original.resourceFacets.configuration}"/>
 
          <onc:icon name="Operation"
                    url="/rhq/resource/operation/resourceOperationScheduleNew.xhtml" 
                    alt="Operations" 
-                   visible="#{resourceWithAvailability.resourceFacets.operation}"/>
+                   visible="#{resourceWithAvailability.original.resourceFacets.operation}"/>
 
          <onc:icon name="Content" 
                    url="/rhq/resource/content/view.xhtml" 
                    alt="Content"
-                   visible="#{resourceWithAvailability.resourceFacets.content}"/>
+                   visible="#{resourceWithAvailability.original.resourceFacets.content}"/>
          
          <!--  Is this necessary? It's being passed for all quick nav urls. -->   
          <f:param name="mode" value="list"/>
@@ -230,22 +230,17 @@
       </f:facet>
 
       <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-         <f:param name="id" value="#{resourceWithAvailability.resource.id}"/>
-         <h:outputText value="#{resourceWithAvailability.resource.name}"/>
+         <f:param name="id" value="#{resourceWithAvailability.original.resource.id}"/>
+         <h:outputText value="#{resourceWithAvailability.original.resource.name}"/>
       </h:outputLink>
    </rich:column>
 
    <rich:column >
       <f:facet name="header">
-         <onc:sortableColumnHeader sort="parent.name">
-            <h:outputText styleClass="headerText" value="Parent"/>
-         </onc:sortableColumnHeader>
+         <h:outputText styleClass="headerText" value="Parent"/>
       </f:facet>
 
-      <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-         <f:param name="id" value="#{resourceWithAvailability.parent.id}"/>
-         <h:outputText value="#{resourceWithAvailability.parent.name}"/>
-      </h:outputLink>
+      <onc:resourcePartialLineage parents="#{resourceWithAvailability.parents}" />
    </rich:column>
 
    <rich:column>
@@ -255,7 +250,7 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputText value="#{resourceWithAvailability.resource.resourceType.category}"/>
+      <h:outputText value="#{resourceWithAvailability.original.resource.resourceType.category}"/>
    </rich:column>
 
    <rich:column>
@@ -265,7 +260,7 @@
          </onc:sortableColumnHeader>
       </f:facet>
 
-      <h:outputText value="#{resourceWithAvailability.resource.resourceType.name}"/>
+      <h:outputText value="#{resourceWithAvailability.resourceTypeName}"/>
    </rich:column>
 
    <rich:column>
@@ -273,7 +268,7 @@
          <h:outputText styleClass="headerText" value="Description"/>
       </f:facet>
 
-      <h:outputText value="#{resourceWithAvailability.resource.description}"/>
+      <h:outputText value="#{resourceWithAvailability.original.resource.description}"/>
    </rich:column>
 
    <rich:column>
@@ -284,11 +279,11 @@
       </f:facet>
 
       <h:graphicImage value="/images/icons/availability_green_16.png" alt="Up" title="Up"
-                      rendered="#{resourceWithAvailability.availability == 'UP'}"/>
+                      rendered="#{resourceWithAvailability.original.availability == 'UP'}"/>
       <h:graphicImage value="/images/icons/availability_red_16.png" alt="Down" title="Down"
-                      rendered="#{resourceWithAvailability.availability == 'DOWN'}"/>
+                      rendered="#{resourceWithAvailability.original.availability == 'DOWN'}"/>
       <h:graphicImage value="/images/icons/availability_grey_16.png" alt="Unknown" title="Unknown"
-                      rendered="#{resourceWithAvailability.availability == null}"/>
+                      rendered="#{resourceWithAvailability.original.availability == null}"/>
    </rich:column>
 
    <f:facet name="footer">

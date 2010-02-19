@@ -9,16 +9,16 @@ import org.rhq.core.domain.configuration.Configuration
 import org.apache.commons.configuration.PropertiesConfiguration
 import org.rhq.core.domain.configuration.RawConfiguration
 import groovy.util.AntBuilder
+import org.rhq.core.domain.configuration.PropertyMap
+import org.rhq.core.domain.configuration.PropertyList
 
-class StructuredServer implements ResourceComponent, ResourceConfigurationFacet {
-
-  ResourceContext resourceContext
+class StructuredServer extends ConfigurationServer implements ResourceComponent, ResourceConfigurationFacet {
 
   File configDir
 
   File structuredConfigFile
 
-  def ant = new AntBuilder()
+  def simpleProperties = ["foo", "bar", "bam"]
 
   void start(ResourceContext context) {
     resourceContext = context
@@ -39,11 +39,11 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
       return null
     }
 
-    def properties = ["foo": "1", "bar": "2", "bam": "3"]
+    int index = 1
 
     structuredConfigFile.createNewFile()
     structuredConfigFile.withWriter { writer ->
-      properties.each { key, value -> writer.writeLine("${key}=${value}") }
+      simpleProperties.each { writer.writeLine("${it} = ${index++}") }
     }
   }
 
@@ -55,14 +55,31 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   Configuration loadStructuredConfiguration() {
-    def propertiesConfig = new PropertiesConfiguration(structuredConfigFile)
-    def config = new Configuration()
+    def configuration = new Configuration()
+    configuration.properties = loadSimpleProperties(structuredConfigFile, simpleProperties)
 
-    config.put(new PropertySimple("foo", propertiesConfig.getString("foo")))
-    config.put(new PropertySimple("bar", propertiesConfig.getString("bar")))
-    config.put(new PropertySimple("bam", propertiesConfig.getString("bam")))
 
-    return config
+    loadComplexProperties(configuration, new PropertiesConfiguration(structuredConfigFile))
+
+    return configuration
+  }
+
+  def loadComplexProperties(Configuration configuration, PropertiesConfiguration propertiesConfig) {
+    def listProperty = new PropertyList("listProperty")
+    def index = 0
+    def complexProperties = propertiesConfig.subset("listProperty.${index}")
+
+    while (!complexProperties.isEmpty()) {
+      def x = new PropertySimple("listProperty.x", complexProperties.getString("x"))
+      def y = new PropertySimple("listProperty.y", complexProperties.getString("y"))
+      def z = new PropertySimple("listProperty.z", complexProperties.getString("z"))
+
+      listProperty.add(new PropertyMap("listPropertyValues", x, y, z))
+
+      complexProperties = propertiesConfig.subset("listProperty.${++index}")
+    }
+
+    configuration.put(listProperty)
   }
 
   Set<RawConfiguration> loadRawConfigurations() {
@@ -77,10 +94,12 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
   }
 
   void persistStructuredConfiguration(Configuration configuration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failUpdate")
-    if (failValidation.getBooleanValue()) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredUpdate")
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
+
+    pauseForStructuredUpdateIfDelaySet()
 
     ant.copy(file: structuredConfigFile.absolutePath, tofile: "${structuredConfigFile.absolutePath}.orig")
     ant.delete(file: structuredConfigFile)
@@ -90,16 +109,40 @@ class StructuredServer implements ResourceComponent, ResourceConfigurationFacet 
 
     def propertiesConfig = new PropertiesConfiguration(structuredConfigFile)
 
-    configuration.properties.each { propertiesConfig.setProperty(it.name, it.stringValue)  }
+    persistSimpleProperties(configuration, propertiesConfig)
+    persistComplexProperties(configuration, propertiesConfig)
+
     propertiesConfig.save(file) 
+  }
+
+  def persistSimpleProperties(Configuration configuration, PropertiesConfiguration propertiesConfig) {
+    simpleProperties.each { propertyName ->
+      def property = configuration.getSimple(propertyName)
+      propertiesConfig.setProperty(property.name, property.stringValue)
+    }
+  }
+
+  def persistComplexProperties(Configuration configuration, PropertiesConfiguration propertiesConfig) {
+    def listProperty = configuration.getList("listProperty")
+
+    if (listProperty == null) {
+      return
+    }
+
+    for (i in 0 ..< listProperty.list.size()) {
+      def mapProperty = listProperty.list[i]
+      propertiesConfig.setProperty("listProperty.${i}.x", mapProperty.getSimpleValue("listProperty.x", null))
+      propertiesConfig.setProperty("listProperty.${i}.y", mapProperty.getSimpleValue("listProperty.y", null))
+      propertiesConfig.setProperty("listProperty.${i}.z", mapProperty.getSimpleValue("listProperty.z", null))
+    }
   }
 
   void persistRawConfiguration(RawConfiguration rawConfiguration) {
   }
 
   void validateStructuredConfiguration(Configuration configuration) {
-    def failValidation = resourceContext.pluginConfiguration.getSimple("failValidation")
-    if (failValidation.getBooleanValue()) {
+    def failValidation = resourceContext.pluginConfiguration.getSimple("failStructuredValidation")
+    if (failValidation != null && failValidation.booleanValue) {
       throw new RuntimeException("Validation failed for $configuration");
     }
   }

@@ -63,7 +63,7 @@
          <version>${project.version}</version>
          <type>war</type>
       </dependency>
-      
+
       <dependency>
          <groupId>org.rhq</groupId>
          <artifactId>rhq-content_http</artifactId>
@@ -141,7 +141,7 @@
          <plugin>
             <artifactId>maven-ear-plugin</artifactId>
             <configuration>
-               <displayName>RHQ</displayName>               
+               <displayName>RHQ</displayName>
                <workDirectory>${earDirectory}</workDirectory>
                <resourcesDir>${basedir}/target/classes</resourcesDir>
                <defaultJavaBundleDir>lib</defaultJavaBundleDir>
@@ -165,7 +165,7 @@
                      <bundleFileName>rhq-webdav.war</bundleFileName>
                      <contextRoot>/webdav</contextRoot>
                   </webModule>
-                  
+
                   <!--  used to expose content through http -->
                   <webModule>
                      <groupId>${project.groupId}</groupId>
@@ -219,13 +219,18 @@
             <executions>
 
                <execution>
-                  <id>copy-rhq-plugins</id>
+                  <id>copy-core-agent-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
                   </goals>
                   <configuration>
                      <artifactItems>
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>rhq-platform-plugin</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -235,167 +240,22 @@
 
                         <artifactItem>
                            <groupId>org.rhq</groupId>
-                           <artifactId>rhq-aliases-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-apache-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-augeas-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-cron-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-database-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-grub-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-hosts-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-hudson-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-iis-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <!--
-                           TODO: Uncomment once errors from RHQ-1226 are fixed. <artifactItem>
-                           <groupId>org.rhq</groupId> <artifactId>rhq-jira-plugin</artifactId>
-                           <version>${project.version}</version> </artifactItem>
-                        -->
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
                            <artifactId>rhq-jmx-plugin</artifactId>
                            <version>${project.version}</version>
                         </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-mysql-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-netservices-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-oracle-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-perftest-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-platform-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-postfix-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-postgres-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-samba-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-script-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-snmptrapd-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-sshd-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                           <groupId>org.rhq</groupId>
-                           <artifactId>rhq-sudoers-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                          <groupId>org.rhq</groupId>
-                          <artifactId>rhq-virt-plugin</artifactId>
-                          <version>${project.version}</version>
-                        </artifactItem>
-
-                        <artifactItem>
-                          <groupId>org.rhq</groupId>
-                          <artifactId>rhq-kickstart-plugin</artifactId>
-                          <version>${project.version}</version>
-                        </artifactItem>
-
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                   </configuration>
                </execution>
 
                <execution>
-                  <id>copy-rhq-serverplugins</id>
+                  <id>copy-core-server-plugins</id>
                   <phase>process-resources</phase>
                   <goals>
                      <goal>copy</goal>
                   </goals>
                   <configuration>
                      <artifactItems>
-
                         <artifactItem>
                            <groupId>org.rhq</groupId>
                            <artifactId>rhq-serverplugin-disk</artifactId>
@@ -420,6 +280,53 @@
                            <version>${project.version}</version>
                         </artifactItem>
 
+                        <artifactItem>
+                           <groupId>org.rhq.server</groupId>
+                           <artifactId>alert-email</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-irc</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-mobicents</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-microblog</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                           <artifactId>alert-roles</artifactId>
+                           <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-scriptlang</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-snmp</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
+
+                        <artifactItem>
+                           <groupId>org.rhq</groupId>
+                            <artifactId>alert-subject</artifactId>
+                            <version>${project.version}</version>
+                        </artifactItem>
                      </artifactItems>
                      <outputDirectory>${earDirectory}/rhq-serverplugins</outputDirectory>
                   </configuration>
@@ -431,6 +338,308 @@
    </build>
 
    <profiles>
+
+        <profile>
+            <id>jboss-plugins</id>
+             <activation>
+                <property>
+                   <name>java.home</name>
+                </property>
+             </activation>
+
+             <build>
+               <plugins>
+                 <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+
+                       <execution>
+                          <id>copy-jboss-plugins</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-augeas-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-apache-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-tomcat-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-jboss-as-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-hibernate-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-rhq-server-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-jboss-cache-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-jboss-as-5-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.jboss.on</groupId>
+                                  <artifactId>jopr-jboss-cache-v3-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                             </artifactItems>
+                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+                          </configuration>
+                       </execution>
+
+                    </executions>
+                 </plugin>
+              </plugins>
+           </build>
+        </profile>
+
+        <profile>
+            <id>linux-plugins</id>
+             <activation>
+                <property>
+                   <name>java.home</name>
+                </property>
+             </activation>
+
+             <build>
+               <plugins>
+                 <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+
+                       <execution>
+                          <id>copy-linux-plugins</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-augeas-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-cron-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-script-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-script2-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-grub-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-hosts-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-cobbler-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-sudoers-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-netservices-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-samba-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-postfix-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-aliases-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-sshd-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-virt-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-kickstart-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                             </artifactItems>
+                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+                          </configuration>
+                       </execution>
+
+                    </executions>
+                 </plugin>
+              </plugins>
+           </build>
+
+        </profile>
+
+        <profile>
+            <id>misc-plugins</id>
+             <activation>
+                <property>
+                   <name>java.home</name>
+                </property>
+             </activation>
+
+             <build>
+               <plugins>
+                 <plugin>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <executions>
+
+                       <execution>
+                          <id>copy-misc-plugins</id>
+                          <phase>process-resources</phase>
+                          <goals>
+                             <goal>copy</goal>
+                          </goals>
+                          <configuration>
+                             <artifactItems>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-hudson-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                   <groupId>org.rhq</groupId>
+                                   <artifactId>rhq-iis-plugin</artifactId>
+                                   <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-database-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-postgres-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-mysql-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-oracle-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-snmptrapd-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-twitter-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-filetemplate-bundle-plugin</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+
+                             </artifactItems>
+                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
+                          </configuration>
+                       </execution>
+
+                    </executions>
+                 </plugin>
+              </plugins>
+           </build>
+
+        </profile>
 
       <profile>
          <id>dev</id>
@@ -516,3 +725,4 @@
    </profiles>
 
 </project>
+

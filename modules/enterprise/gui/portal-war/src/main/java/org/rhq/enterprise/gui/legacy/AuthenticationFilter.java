@@ -88,22 +88,30 @@ public final class AuthenticationFilter extends BaseFilter {
             if ("/Login.do".equals(path) || "/j_security_check.do".equals(path)) {
                 chain.doFilter(request, response);
             } else {
-                //copy the url and request parameters so that the user can be
-                // forwarded to the originally requested page after authorization
-                Map parameters = request.getParameterMap();
-                if (!parameters.isEmpty()) {
-                    Map<String, String> newMap = new HashMap<String, String>();
-                    for (Object keyObj : parameters.keySet()) {
-                        String key = (String) keyObj;
-                        newMap.put(key, request.getParameter(key));
+                if (isAjaxRequest(request)) {
+                    // If this is an ajax request, allow the rest of the chain to process the filter so that the
+                    // RichFaces filter can handle the request. Previously all of the request parameters were tacked
+                    // onto the redirect url, even for ajax requests. This break redirects for ajax requests though as
+                    // the url query string gets all mangled with JSF parameters.
+                    chain.doFilter(request, response);
+                } else {
+                    //copy the url and request parameters so that the user can be
+                    // forwarded to the originally requested page after authorization
+                    Map parameters = request.getParameterMap();
+                    if (!parameters.isEmpty()) {
+                        Map<String, String> newMap = new HashMap<String, String>();
+                        for (Object keyObj : parameters.keySet()) {
+                            String key = (String) keyObj;
+                            newMap.put(key, request.getParameter(key));
+                        }
+
+                        session.setAttribute(ParamConstants.LOGON_URL_PARAMETERS, newMap);
                     }
 
-                    session.setAttribute(ParamConstants.LOGON_URL_PARAMETERS, newMap);
+                    session.setAttribute(KeyConstants.LOGON_URL_KEY, path);
+                    response.setStatus(401);
+                    response.sendRedirect(request.getContextPath() + "/Login.do");
                 }
-
-                session.setAttribute(KeyConstants.LOGON_URL_KEY, path);
-                response.setStatus(401);
-                response.sendRedirect(request.getContextPath() + "/Login.do");
             }
         } else {
             // Now check if the license is up and running
@@ -131,6 +139,10 @@ public final class AuthenticationFilter extends BaseFilter {
                 log.warn("Caught IO Exception from client " + request.getRemoteAddr() + ": " + e.getMessage());
             }
         }
+    }
+
+    private boolean isAjaxRequest(HttpServletRequest request) {
+        return request.getParameter("AJAXREQUEST") != null;
     }
 
 }

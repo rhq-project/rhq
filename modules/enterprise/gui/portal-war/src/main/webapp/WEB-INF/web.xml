@@ -217,6 +217,11 @@
       <param-value>false</param-value>
    </context-param>
 
+   <context-param>
+      <param-name>org.ajax4jsf.handleViewExpiredOnClient</param-name>
+      <param-value>true</param-value>
+  </context-param>
+
    <!-- Allows completeUpload of files through JSF (i.e. software uploads) -->
    <filter>
       <filter-name>MultipartFilter</filter-name>

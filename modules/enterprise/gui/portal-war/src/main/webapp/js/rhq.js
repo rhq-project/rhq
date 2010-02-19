@@ -717,3 +717,8 @@ var WindowResizeTracker = {
 
 // initialize the resize tracker
 Event.observe(window, "load", WindowResizeTracker.init);
+
+A4J.AJAX.onExpired = function(location, expiredMsg) {
+    window.alert("You session has expired.");
+    window.location = "/Login.do";
+};

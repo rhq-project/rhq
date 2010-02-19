@@ -199,6 +199,10 @@ public class ResourceConfigurationViewer {
         return initialized;
     }
 
+    public int getResourceId() {
+        return resourceId;
+    }
+
     /** @return <code>true</code> if the resource configuration supports raw only, <code>false</code> otherwise */
     public boolean isRawSupported() {
         return resourceConfigurationDefinition.getConfigurationFormat() == ConfigurationFormat.RAW;

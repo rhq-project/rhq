@@ -110,8 +110,12 @@
 
     <f:verbatim>
         <script type="text/javascript">
+          Event.observe("#{rich:clientId('leftTreeHolder')}", "contextmenu", Event.stop);
 
-            Event.observe("#{rich:clientId('leftTreeHolder')}", "contextmenu", Event.stop);
+          A4J.AJAX.onExpired = function(location, expiredMsg) {
+            window.alert("You session has expired.");
+            window.location = "/Login.do";
+          };
         </script>
     </f:verbatim>
 

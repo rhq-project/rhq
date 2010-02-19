@@ -46,7 +46,7 @@ public class NameServiceSwitchDiscoveryComponent implements ResourceDiscoveryCom
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
         log.info("Calling discoverResources for NSS");
 
-        File nssFile = new File(NameServiceSwitchComponent.ETC_NSSWITCH_CONF);
+        File nssFile = new File(NameServiceSwitchComponent.getConfigFile());
 
         // now perform your own discovery mechanism, if you have one.  For each resource discovered, you need to
         // create a details object that describe the resource that you discovered.

@@ -21,6 +21,7 @@ package org.rhq.plugin.nss;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -54,11 +55,29 @@ import org.rhq.core.pluginapi.operation.OperationResult;
 public class NameServiceSwitchComponent implements ResourceComponent<NameServiceSwitchComponent>, OperationFacet,
     ResourceConfigurationFacet {
 
+    public static boolean debug = true;
     /**
      * The standard location for the configuration file
      */
-    public static final String ETC_NSSWITCH_CONF = "/tmp/nsswitch.conf";
-    //public static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
+    private static final String TMP_NSSWITCH_CONF = "/tmp/nsswitch.conf";
+
+    private static final String ETC_NSSWITCH_CONF = "/etc/nsswitch.conf";
+
+    public static final String getConfigFile() {
+        if (debug) {
+            return TMP_NSSWITCH_CONF;
+        } else {
+            return ETC_NSSWITCH_CONF;
+        }
+    }
+
+    public boolean isDebug() {
+        return debug;
+    }
+
+    public void setDebug(boolean debug) {
+        NameServiceSwitchComponent.debug = debug;
+    }
 
     private final Log log = LogFactory.getLog(NameServiceSwitchComponent.class);
 
@@ -180,7 +199,7 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
         Set<RawConfiguration> raws = new HashSet<RawConfiguration>();
         RawConfiguration raw = new RawConfiguration();
 
-        raw.setPath(ETC_NSSWITCH_CONF);
+        raw.setPath(getConfigFile());
 
         raw.setContents(getContents(new File(raw.getPath())));
 
@@ -251,16 +270,30 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     }
 
     public void persistRawConfiguration(RawConfiguration rawConfiguration) {
-
+        if (rawConfiguration.getPath().equals(getConfigFile())) {
+            try {
+                File file = new File(getConfigFile());
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                fileOutputStream.write(rawConfiguration.getContents().getBytes());
+                fileOutputStream.close();
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
     }
 
     public void persistStructuredConfiguration(Configuration configuration) {
-        // TODO Auto-generated method stub
-
+        RawConfiguration raw = new RawConfiguration();
+        raw.setPath(getConfigFile());
+        mergeRawConfiguration(configuration, raw);
+        persistRawConfiguration(raw);
     }
 
     public void validateRawConfiguration(RawConfiguration rawConfiguration) throws IllegalArgumentException {
-        throw new IllegalArgumentException("bad config file");
+        Configuration configuration = new Configuration();
+        mergeStructuredConfiguration(rawConfiguration, configuration);
+        validateStructuredConfiguration(configuration);
     }
 
     public void validateStructuredConfiguration(Configuration configuration) throws IllegalArgumentException {
@@ -325,71 +358,84 @@ public class NameServiceSwitchComponent implements ResourceComponent<NameService
     }
 
     public static void main(String[] args) {
+        /*
+                {
+                    String noMatch = "# abcd: val";
 
-        {
-            String noMatch = "# abcd: val";
+                    Matcher matcher = linePattern.matcher(noMatch);
+                    if (matcher.matches()) {
+                        System.exit(1);
+                    }
+                }
+                {
+                    String yesMatch = "bootparams: nisplus [NOTFOUND=return] files";
+                    Matcher matcher = linePattern.matcher(yesMatch);
 
-            Matcher matcher = linePattern.matcher(noMatch);
-            if (matcher.matches()) {
-                System.exit(1);
-            }
-        }
-        {
-            String yesMatch = "bootparams: nisplus [NOTFOUND=return] files";
-            Matcher matcher = linePattern.matcher(yesMatch);
+                    if (matcher.matches()) {
+                        System.out.println("Group0=" + matcher.group(1));
+                        System.out.println("Group1=" + matcher.group(2).trim());
+                    }
+                }
+                {
+                    PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
+                    validateProperty(prop);
+                    if (prop.getErrorMessage() != null) {
+                        System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                        System.exit(1);
+                    }
+                }
+                {
+                    PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
+                    validateProperty(prop);
+                    if (prop.getErrorMessage() != null) {
+                        System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                        System.exit(1);
+                    }
+                }
 
-            if (matcher.matches()) {
-                System.out.println("Group0=" + matcher.group(1));
-                System.out.println("Group1=" + matcher.group(2).trim());
-            }
-        }
-        {
-            PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
-            validateProperty(prop);
-            if (prop.getErrorMessage() != null) {
-                System.out.println("error message is '" + prop.getErrorMessage() + "'");
-                System.exit(1);
-            }
-        }
-        {
-            PropertySimple prop = new PropertySimple("passwd", "nisplus [NOTFOUND=return] files");
-            validateProperty(prop);
-            if (prop.getErrorMessage() != null) {
-                System.out.println("error message is '" + prop.getErrorMessage() + "'");
-                System.exit(1);
-            }
-        }
+                {
+                    PropertySimple prop = new PropertySimple("passwd", "nisplus [UNUSED=return] [!NOWAY=return] files");
+                    validateProperty(prop);
+                    if (prop.getErrorMessage() != null) {
+                        System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                    } else {
+                        System.exit(1);
+                    }
+                }
 
-        {
-            PropertySimple prop = new PropertySimple("passwd", "nisplus [UNUSED=return] [!NOWAY=return] files");
-            validateProperty(prop);
-            if (prop.getErrorMessage() != null) {
-                System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            } else {
-                System.exit(1);
-            }
-        }
+                {
+                    PropertySimple prop = new PropertySimple("passwd", "nisplus nope neither garbage junk files");
+                    validateProperty(prop);
+                    if (prop.getErrorMessage() != null) {
+                        System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                    } else {
+                        System.exit(1);
+                    }
+                }
 
-        {
-            PropertySimple prop = new PropertySimple("passwd", "nisplus nope neither garbage junk files");
-            validateProperty(prop);
-            if (prop.getErrorMessage() != null) {
-                System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            } else {
-                System.exit(1);
-            }
-        }
+                {
+                    PropertySimple prop = new PropertySimple("passwd",
+                        "nisplus nope neither [UNUSED=return] [!NOWAY=return] garbage junk files");
+                    validateProperty(prop);
+                    if (prop.getErrorMessage() != null) {
+                        System.out.println("error message is '" + prop.getErrorMessage() + "'");
+                    } else {
+                        System.exit(1);
+                    }
+                }
+        */
 
-        {
-            PropertySimple prop = new PropertySimple("passwd",
-                "nisplus nope neither [UNUSED=return] [!NOWAY=return] garbage junk files");
-            validateProperty(prop);
-            if (prop.getErrorMessage() != null) {
-                System.out.println("error message is '" + prop.getErrorMessage() + "'");
-            } else {
-                System.exit(1);
-            }
-        }
+        NameServiceSwitchComponent component = new NameServiceSwitchComponent();
+        RawConfiguration rawConfiguration = component.loadRawConfigurations().iterator().next();
+
+        Configuration configuration = component.loadStructuredConfiguration();
+        PropertySimple simple = (PropertySimple) configuration.get("passwd");
+        System.out.println("Simple key=" + simple.getName());
+        System.out.println("Simple val=" + simple.getStringValue());
+        simple.setStringValue("files dns");
+        configuration.getAllProperties().put(simple.getName(), simple);
+        component.mergeRawConfiguration(configuration, rawConfiguration);
+        System.out.println(rawConfiguration.getContents());
 
     }
 }

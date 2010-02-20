@@ -90,7 +90,7 @@
                   </f:facet>
 
                   <onc:select name="selectedItems"
-                              value="#{item.alertDefinition.id}" />
+                              value="#{item.original.alertDefinition.id}" />
                </rich:column>
 
                <rich:column>
@@ -101,33 +101,27 @@
                   </f:facet>
 
                   <h:outputLink value="#{onf:getDefaultResourceTabURL()}">
-                     <f:param name="id" value="#{item.alertDefinition.resource.id}" />
-                     <h:outputText value="#{item.alertDefinition.resource.name}" />
+                     <f:param name="id" value="#{item.original.alertDefinition.resource.id}" />
+                     <h:outputText value="#{item.original.alertDefinition.resource.name}" />
                   </h:outputLink>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
-                     <onc:sortableColumnHeader sort="parent.name">
-                        <h:outputText styleClass="headerText" value="Parent" />
-                     </onc:sortableColumnHeader>
+                     <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="#{onf:getDefaultResourceTabURL()}"
-                                rendered="#{not empty item.parentResourceName}">
-                     <f:param name="id" value="#{item.parentResourceId}" />
-                     <h:outputText value="#{item.parentResourceName}" />
-                  </h:outputLink>
+                  <onc:resourcePartialLineage parents="#{item.parents}"/>
                </rich:column>
 
                <rich:column>
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Type" />
                   </f:facet>
-                  <h:outputText value="Group Alert Definition" rendered="#{not empty item.alertDefinition.resourceGroup}" />
-                  <h:outputText value="Alert Template" rendered="#{not empty item.alertDefinition.resourceType}" />
-                  <h:outputText value="Child Definition" rendered="#{item.alertDefinition.parentId ne 0}" />
-                  <h:outputText value="Alert Definition" rendered="#{not empty item.alertDefinition.resource and item.alertDefinition.parentId eq 0}" />
+                  <h:outputText value="Group Alert Definition" rendered="#{not empty item.original.alertDefinition.resourceGroup}" />
+                  <h:outputText value="Alert Template" rendered="#{not empty item.original.alertDefinition.resourceType}" />
+                  <h:outputText value="Child Definition" rendered="#{item.original.alertDefinition.parentId ne 0}" />
+                  <h:outputText value="Alert Definition" rendered="#{not empty item.original.alertDefinition.resource and item.original.alertDefinition.parentId eq 0}" />
                </rich:column>
 
                <rich:column>
@@ -137,7 +131,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.alertDefinition.ctime}">
+                  <h:outputText value="#{item.original.alertDefinition.ctime}">
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
@@ -149,20 +143,20 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{empty item.alertDefinition.resourceType and empty item.alertDefinition.resourceGroup}">
-                     <f:param name="id" value="#{item.alertDefinition.resource.id}"  />
-                     <f:param name="ad" value="#{item.alertDefinition.id}" />
-                     <h:outputText value="#{item.alertDefinition.name}" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{empty item.original.alertDefinition.resourceType and empty item.original.alertDefinition.resourceGroup}">
+                     <f:param name="id" value="#{item.original.alertDefinition.resource.id}"  />
+                     <f:param name="ad" value="#{item.original.alertDefinition.id}" />
+                     <h:outputText value="#{item.original.alertDefinition.name}" />
                   </h:outputLink>
-                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.alertDefinition.resourceType}">
-                     <f:param name="type" value="#{item.alertDefinition.resourceType.id}" />
-                     <f:param name="ad" value="#{item.alertDefinition.id}" />
-                     <h:outputText value="#{item.alertDefinition.name}" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.original.alertDefinition.resourceType}">
+                     <f:param name="type" value="#{item.original.alertDefinition.resourceType.id}" />
+                     <f:param name="ad" value="#{item.original.alertDefinition.id}" />
+                     <h:outputText value="#{item.original.alertDefinition.name}" />
                   </h:outputLink>
-                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.alertDefinition.resourceGroup}">
-                     <f:param name="groupId" value="#{item.alertDefinition.resourceGroup.id}" />
-                     <f:param name="ad" value="#{item.alertDefinition.id}" />
-                     <h:outputText value="#{item.alertDefinition.name}" />
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml" rendered="#{not empty item.original.alertDefinition.resourceGroup}">
+                     <f:param name="groupId" value="#{item.original.alertDefinition.resourceGroup.id}" />
+                     <f:param name="ad" value="#{item.original.alertDefinition.id}" />
+                     <h:outputText value="#{item.original.alertDefinition.name}" />
                   </h:outputLink>
                </rich:column>
 
@@ -170,7 +164,7 @@
                   <f:facet name="header">
                      <h:outputText styleClass="headerText" value="Alert Condition" />
                   </f:facet>
-                  <h:outputText value="#{item.conditionText}" />
+                  <h:outputText value="#{item.original.conditionText}" />
                </rich:column>
 
                <rich:column>
@@ -180,7 +174,7 @@
                      </onc:sortableColumnHeader>
                   </f:facet>
 
-                  <h:outputText value="#{item.alertDefinition.enabled}"/>
+                  <h:outputText value="#{item.original.alertDefinition.enabled}"/>
                </rich:column>
 
                <rich:column>
@@ -188,24 +182,24 @@
                      <h:outputText styleClass="headerText" value="Parent" />
                   </f:facet>
 
-                  <h:outputLink value="/alerts/Config.do" rendered="#{item.alertDefinition.parentId ne 0}">
+                  <h:outputLink value="/alerts/Config.do" rendered="#{item.original.alertDefinition.parentId ne 0}">
                      <f:param name="mode" value="viewRoles"/>
-                     <f:param name="type" value="#{item.alertDefinition.resource.resourceType.id}"/>
-                     <f:param name="from" value="#{item.alertDefinition.id}"/>
-                     <f:param name="ad" value="#{item.alertDefinition.parentId}"/>
+                     <f:param name="type" value="#{item.original.alertDefinition.resource.resourceType.id}"/>
+                     <f:param name="from" value="#{item.original.alertDefinition.id}"/>
+                     <f:param name="ad" value="#{item.original.alertDefinition.parentId}"/>
                      <h:outputText value="View Template" />
                   </h:outputLink>
-
-                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.alertDefinition.groupAlertDefinition}">
+                  
+                  <h:outputLink value="/alerts/Config.do" rendered="#{not empty item.original.alertDefinition.groupAlertDefinition}">
                      <f:param name="mode" value="viewRoles"/>
-                     <f:param name="groupId" value="#{item.alertDefinition.groupAlertDefinition.resourceGroup.id}"/>
-                     <f:param name="from" value="#{item.alertDefinition.id}"/>
-                     <f:param name="ad" value="#{item.alertDefinition.groupAlertDefinition.id}"/>
+                     <f:param name="groupId" value="#{item.original.alertDefinition.groupAlertDefinition.resourceGroup.id}"/>
+                     <f:param name="from" value="#{item.original.alertDefinition.id}"/>
+                     <f:param name="ad" value="#{item.original.alertDefinition.groupAlertDefinition.id}"/>
                      <h:outputText value="View Group Definition" />
                   </h:outputLink>
-
-                  <h:outputText value="N/A"
-                                rendered="#{item.alertDefinition.parentId eq 0 and empty item.alertDefinition.groupAlertDefinition}" />
+                  
+                  <h:outputText value="N/A" 
+                                rendered="#{item.original.alertDefinition.parentId eq 0 and empty item.original.alertDefinition.groupAlertDefinition}" />
                </rich:column>
 
                <f:facet name="footer">

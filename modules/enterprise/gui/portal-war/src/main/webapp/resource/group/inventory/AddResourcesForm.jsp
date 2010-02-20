@@ -407,8 +407,7 @@ widgetProperties = getWidgetProperties('<c:out value="${widgetInstanceName}"/>')
                           width="30%" 
                           sortAttr="res.name" />
           <display:column property="parentResource.name" title="resource.group.inventory.ParentTH" 
-                          width="30%" 
-                          sortAttr="parent.name" />
+                          width="30%" />
           <display:column property="resourceType.name" title="resource.group.inventory.TypeTH" 
                           width="39%" 
                           sortAttr="res.resourceType.name" >

@@ -71,7 +71,7 @@ import org.rhq.core.domain.resource.ResourceType;
         + "JOIN pt.resourceType rt "
         + "LEFT JOIN FETCH pt.deploymentConfigurationDefinition cd "
         + "LEFT JOIN FETCH cd.templates cts " + "WHERE rt.id = :typeId AND pt.isCreationData = true"),
-    @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.displayName, pt.name FROM PackageType AS pt")
+    @NamedQuery(name = PackageType.QUERY_DYNAMIC_CONFIG_VALUES, query = "SELECT pt.resourceType.plugin || ' - ' || pt.resourceType.name || ' - ' || pt.displayName, pt.name FROM PackageType AS pt")
 })
 @SequenceGenerator(name = "SEQ", sequenceName = "RHQ_PACKAGE_TYPE_ID_SEQ")
 @Table(name = "RHQ_PACKAGE_TYPE")

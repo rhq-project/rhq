@@ -40,7 +40,6 @@ import org.rhq.rhqtransform.RhqAugeasMapping;
 public class ApacheAugeasMapping implements RhqAugeasMapping {
 
 	private AugeasTree tree;
-	
 	public ApacheAugeasMapping(AugeasTree tree) {
 	    this.tree = tree;
 	}

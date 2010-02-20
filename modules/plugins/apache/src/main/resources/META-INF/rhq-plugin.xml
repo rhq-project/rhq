@@ -47,6 +47,21 @@
     </c:list-property>
 '>
 
+<!ENTITY IfModulePosition '
+    <c:list-property name="IfModules" readOnly="true" displayName="IfModule Conditions">
+        <c:description>
+        List of modules which must be loaded to use directive configuration.
+        </c:description>
+        <c:map-property name="IfModule" readOnly="true">
+            <c:simple-property readOnly="true" name="condition">
+                <c:description>
+                 Name of module which must be loaded to use the configuration.
+                </c:description>
+            </c:simple-property>
+        </c:map-property>
+    </c:list-property>
+'>
+
 <!ENTITY DefaultType '
     <c:simple-property name="DefaultType" default="text/plain" required="false">
         <c:description>
@@ -279,8 +294,6 @@
                   displayName="Httpd config file" required="true" readOnly="true"
                                               default="/etc/httpd/conf/httpd.conf" 
               description="Location of the Apache main configuration file."/>
-              <c:simple-property name="augeasLoadPath" required="true" readOnly="true"
-                                             default="/usr/share/augeas/lenses"/>
           
           </c:group>
          
@@ -673,6 +686,30 @@
                                    description="Does the name of this directory denote a regular expression?"/>
             </plugin-configuration>
             <resource-configuration>
+                &IfModulePosition;
+                &Order;
+                &Allow;
+                &Deny;
+                <c:list-property name="AllowOverride" required="false">
+                  <c:map-property name="AllowOverride" required="false">
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                  </c:map-property>
+                </c:list-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+           <service name="IfModule Parameters" discovery="ApacheIfModuleDirectoryDiscoveryComponent" class="ApacheIfModuleDirectoryComponent" createDeletePolicy="both">
+              <resource-configuration>
+                &IfModulePosition;
                 &Order;
                 &Allow;
                 &Deny;
@@ -694,7 +731,31 @@
                 &UseCanonicalPhysicalPort;
             </resource-configuration>
          </service>
-         
+         </service>
+         <service name="IfModule" discovery="ApacheIfModuleDiscoveryComponent" class="ApacheIfModuleComponent" createDeletePolicy="both">
+              <resource-configuration>
+                &IfModulePosition;
+                &Order;
+                &Allow;
+                &Deny;
+                <c:list-property name="AllowOverride" required="false">
+                  <c:map-property name="AllowOverride" required="false">
+                      <c:description>
+                          When the server finds an .htaccess file (as specified by AccessFileName) it needs to know which directives declared in that file can override earlier configuration directives.
+                      </c:description>
+                      <c:simple-property name="param" required="false" description="Any directive which has the .htaccess Context is allowed in .htaccess files" />
+                      <c:simple-property name="_index" required="false" description="Helper property to retain the consistent ordering inside Apache configuration files."/>
+                  </c:map-property>
+                </c:list-property>
+                &AddDefaultCharset;
+                &DefaultType;
+                &DirectoryIndex;
+                &ErrorDocuments;
+                &Options;
+                &UseCanonicalName;
+                &UseCanonicalPhysicalPort;
+            </resource-configuration>
+         </service>
    <!--     <service name="Files" class="ApacheFilesComponent" createDeletePolicy="both">
             <plugin-configuration>
                 <c:simple-property name="directiveIndex" readOnly="true" required="true" type="integer"/>
@@ -749,7 +810,7 @@
           </plugin-configuration>
 
       </service>
-
+      
    </server>
 
 </plugin>

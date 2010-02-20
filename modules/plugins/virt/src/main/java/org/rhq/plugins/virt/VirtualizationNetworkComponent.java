@@ -104,7 +104,7 @@ public class VirtualizationNetworkComponent implements ResourceComponent<Virtual
         LibVirtConnection virt = getConnection();
 
         String xml = virt.getNetworkXML(networkName);
-        boolean autostart = virt.getNetwork(networkName).getAutostart();
+        boolean autostart = virt.getNetwork(networkName).autostart;
         return XMLEditor.getNetworkConfiguration(xml, autostart);
     }
 

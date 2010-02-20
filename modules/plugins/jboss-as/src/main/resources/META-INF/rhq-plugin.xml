@@ -192,15 +192,15 @@
               defaultInterval="300000" defaultOn="true" category="throughput"/>
 
       <metric property="jboss.system:type=ServerInfo:FreeMemory" displayName="JVM Free Memory" displayType="summary"
-              description="The amount of free memory for the JVM this app server instance is running on"
+              description="An approximation of the total amount of memory currently available in the app server JVM for future allocated objects, measured in bytes"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss.system:type=ServerInfo:MaxMemory" displayName="JVM Max Memory"
-              description="The amount of max memory for the JVM this app server instance is running on"
+              description="The maximum amount of memory that the app server JVM will attempt to use, measured in bytes; if there is no inherent limit then the value Long.MAX_VALUE will be returned"
               defaultInterval="1800000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss.system:type=ServerInfo:TotalMemory" displayName="JVM Total Memory" displayType="summary"
-              description="The amount of total memory for the JVM this app server instance is running on"
+              description="The total amount of memory currently available in the app server JVM for current and future objects, measured in bytes"
               defaultInterval="300000" defaultOn="true" category="utilization" units="bytes"/>
 
       <metric property="jboss:service=TransactionManager:TransactionCount" displayName="Total Transactions" measurementType="trendsup"

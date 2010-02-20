@@ -64,6 +64,7 @@ public class ApacheDirectiveRegExpression {
         MAPPING_TYPE.put("AllowOverride", DirectiveMapping.PARAM_PER_MAP);
         MAPPING_TYPE.put("DirectoryIndex", DirectiveMapping.PARAM_PER_MAP);
         MAPPING_TYPE.put("NameVirtualHost", DirectiveMapping.DIRECTIVE_PER_MAP_INDEX);
+        MAPPING_TYPE.put("IfModules",DirectiveMapping.POSITION_PROPERTY);
     }
 
     private static final String WORD = "\"(?:[^\"\n]|\\\")*\"|'(?:[^'\n]|\\\')*'|[^'\" \t\n]+";
@@ -94,7 +95,7 @@ public class ApacheDirectiveRegExpression {
             .compile("(?:((?:\\[[a-zA-Z0-9:]+\\])|(?:[0-9\\.]+)):)?([0-9]+)(?:" + WS_MAN + "(" + WORD + "))?") });
         DIRECTIVE_REGEX.put("ServerAlias", new Pattern[] { Pattern.compile(WS + "(" + WORD + ")") });
         DIRECTIVE_REGEX.put("AllowOverride", new Pattern[] { Pattern
-            .compile(WS+"(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)") });
+            .compile(WS+"(All|None|AuthConfig|FileInfo|Indexes|Limit|Options)") });
         DIRECTIVE_REGEX.put("DirectoryIndex", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")" + WS) });
         DIRECTIVE_REGEX.put("NameVirtualHost", new Pattern[] { Pattern.compile(WS+ "(" + WORD + ")"+ WS) });
     }
@@ -113,7 +114,7 @@ public class ApacheDirectiveRegExpression {
             DIRECTIVEREGEX_TO_AUGEAS.put("CustomLog", new Pattern[] { Pattern.compile(WS_MAN + "(" + WORD + ")" + "(?:" + WS_MAN + "("
                     + WORD + ")" + ")?") });
             DIRECTIVEREGEX_TO_AUGEAS.put("AllowOverride", new Pattern[] { Pattern
-                    .compile(WS+"(All)|(None)|(AuthConfig)|(FileInfo)|(Indexes)|(Limit)|(Options)") });
+                    .compile(WS+"(All|None|AuthConfig|FileInfo|Indexes|Limit|Options)") });
             DIRECTIVEREGEX_TO_AUGEAS.put("Listen", new Pattern[] { Pattern.compile(WS_MAN+ "(" + WORD + ")")});
             DIRECTIVEREGEX_TO_AUGEAS.put("NameVirtualHost", new Pattern[] { Pattern.compile(WS+ "(" + WORD +")" + WS) });
             DIRECTIVEREGEX_TO_AUGEAS.put("ErrorDocument", new Pattern[] { Pattern.compile(WS_MAN + "(" + NUM + ")" + WS_MAN + "(" + WORD
@@ -155,9 +156,9 @@ public class ApacheDirectiveRegExpression {
         Pattern[] patterns = DIRECTIVE_REGEX.get(nodeName);
 
         int startIndex = 0;
-
-        while (startIndex < value.length())
-
+        boolean updated = true;
+        while (updated & startIndex < value.length())
+            updated = false;
             for (Pattern pattern : patterns) {
                 Matcher m = pattern.matcher(value);
                 while (m.find(startIndex)) {
@@ -165,6 +166,7 @@ public class ApacheDirectiveRegExpression {
                         String val = m.group(i);
                         result.add(val);
                     }
+                    updated = true;
                     startIndex = m.end();
                 }
             }
@@ -187,9 +189,10 @@ public class ApacheDirectiveRegExpression {
         Pattern[] patterns = DIRECTIVEREGEX_TO_AUGEAS.get(name);
 
         int startIndex = 0;
-
-        while (startIndex < params.length())
-
+        boolean updated =true;         
+        
+        while (updated  & startIndex < params.length())
+            updated = false;
             for (Pattern pattern : patterns) {
                 Matcher m = pattern.matcher(params);
                 while (m.find(startIndex)) {
@@ -198,6 +201,7 @@ public class ApacheDirectiveRegExpression {
                         if (val!=null)
                            nodeParams.add(val);
                     }
+                    updated = true;
                     startIndex = m.end();
                 }
             }

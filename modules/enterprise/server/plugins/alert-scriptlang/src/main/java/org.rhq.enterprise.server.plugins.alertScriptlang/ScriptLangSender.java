@@ -93,7 +93,7 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
             Object[] args = new Object[3];
             args[0] = alert;
             args[1] = alertManager.prettyPrintAlertURL(alert);
-            args[2] = alertManager.prettyPrintAlertConditions(alert);
+            args[2] = alertManager.prettyPrintAlertConditions(alert, false);
             result = ((Invocable) engine).invokeFunction("sendAlert", args);
 
             if (result == null) {

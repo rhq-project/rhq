@@ -780,7 +780,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         Map<String, String> alertMessage = emailManager.getAlertEmailMessage(
             prettyPrintResourceHierarchy(alertDefinition.getResource()), alertDefinition.getResource().getName(),
             alertDefinition.getName(), alertDefinition.getPriority().toString(), new Date(alert.getCtime()).toString(),
-            prettyPrintAlertConditions(alert.getConditionLogs()), prettyPrintAlertURL(alert));
+            prettyPrintAlertConditions(alert.getConditionLogs(), false), prettyPrintAlertURL(alert));
         String messageSubject = alertMessage.keySet().iterator().next();
         String messageBody = alertMessage.values().iterator().next();
 
@@ -834,13 +834,14 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     /**
      * Create a human readable description of the conditions that led to this alert.
      * @param alert Alert to create human readable condition description
+     * @param shortVersion if true the messages printed are abbreviated to save space
      * @return human readable condition log
      */
-    public String prettyPrintAlertConditions(Alert alert) {
-        return prettyPrintAlertConditions(alert.getConditionLogs());
+    public String prettyPrintAlertConditions(Alert alert, boolean shortVersion) {
+        return prettyPrintAlertConditions(alert.getConditionLogs(), shortVersion);
     }
 
-    private String prettyPrintAlertConditions(Set<AlertConditionLog> conditionLogs) {
+    private String prettyPrintAlertConditions(Set<AlertConditionLog> conditionLogs, boolean shortVersion) {
         StringBuilder builder = new StringBuilder();
 
         int conditionCounter = 1;
@@ -858,16 +859,27 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
             builder.append(NEW_LINE);
 
-            builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT,
-                conditionCounter, prettyPrintAlertCondition(aLog.getCondition()), new SimpleDateFormat(
-                    "yyyy/MM/dd HH:mm:ss z").format(new Date(aLog.getCtime())), formattedValue));
+            String format;
+            if (shortVersion)
+                format = AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT_SHORT;
+            else
+                format = AlertI18NResourceKeys.ALERT_EMAIL_CONDITION_LOG_FORMAT;
+            SimpleDateFormat dateFormat;
+            if (shortVersion)
+                dateFormat= new SimpleDateFormat(
+                        "yy/MM/dd HH:mm:ss z");
+            else
+                dateFormat= new SimpleDateFormat(
+                        "yyyy/MM/dd HH:mm:ss z");
+            builder.append(AlertI18NFactory.getMessage(format,
+                conditionCounter, prettyPrintAlertCondition(aLog.getCondition(), shortVersion), dateFormat.format(new Date(aLog.getCtime())), formattedValue));
             conditionCounter++;
         }
 
         return builder.toString();
     }
 
-    private String prettyPrintAlertCondition(AlertCondition condition) {
+    private String prettyPrintAlertCondition(AlertCondition condition, boolean shortVersion) {
         StringBuilder builder = new StringBuilder();
 
         AlertConditionCategory category = condition.getCategory();
@@ -915,19 +927,38 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             }
         } else if ((category == AlertConditionCategory.RESOURCE_CONFIG) || (category == AlertConditionCategory.CHANGE)
             || (category == AlertConditionCategory.TRAIT)) {
-            builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
+
+            if (shortVersion)
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT));
+            else
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CURRENT_LIST_VALUE_CHANGED));
+
         } else if (category == AlertConditionCategory.EVENT) {
             if ((condition.getOption() != null) && (condition.getOption().length() > 0)) {
+                String propsCbEventSeverityRegexMatch;
+                if (shortVersion)
+                    propsCbEventSeverityRegexMatch = AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH_SHORT;
+                else
+                    propsCbEventSeverityRegexMatch = AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH;
+
                 builder.append(AlertI18NFactory.getMessage(
-                    AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH, condition.getName(),
+                        propsCbEventSeverityRegexMatch, condition.getName(),
                     condition.getOption()));
             } else {
-                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY,
-                    condition.getName()));
+                if (shortVersion)
+                    builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT,
+                            condition.getName()));
+                else
+                    builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY,
+                        condition.getName()));
             }
         } else if (category == AlertConditionCategory.AVAILABILITY) {
-            builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY,
-                condition.getOption()));
+            if (shortVersion)
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT,
+                    condition.getOption()));
+            else
+                builder.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_CONFIG_PROPS_CB_AVAILABILITY,
+                    condition.getOption()));
         } else {
             // do nothing
         }

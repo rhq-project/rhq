@@ -68,7 +68,7 @@ public class SnmpSender extends AlertSender {
         String result;
         List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource().getId());
         String platformName = lineage.get(0).getName();
-        String conditions = alertManager.prettyPrintAlertConditions(alert);
+        String conditions = alertManager.prettyPrintAlertConditions(alert, false);
         String alertUrl = alertManager.prettyPrintAlertURL(alert);
 
         SenderResult res ;

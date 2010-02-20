@@ -57,14 +57,19 @@ public class MicroblogSender extends AlertSender {
         b.append("' (");
         b.append(alert.getAlertDefinition().getResource().getId());
         b.append("): ");
-        b.append(alertManager.prettyPrintAlertConditions(alert));
+        b.append(alertManager.prettyPrintAlertConditions(alert, true));
         b.append("-by @JBossJopr"); // TODO not for production :-)
         // TODO use some alert url shortening service
 
         SenderResult result ;
         String txt = "user@baseUrl [" + user + "@" + baseUrl + "]:";
         try {
-            Status status = twitter.updateStatus(b.toString());
+            String msg = b.toString();
+            if (msg.length()>140)
+                msg = msg.substring(0,140);
+
+            Status status = twitter.updateStatus(msg);
+
             result = new SenderResult(ResultState.SUCCESS,"Send notification to " + txt + ", msg-id: " + status.getId());
         } catch (TwitterException e) {
 

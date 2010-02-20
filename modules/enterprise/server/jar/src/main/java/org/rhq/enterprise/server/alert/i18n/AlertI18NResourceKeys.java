@@ -32,20 +32,41 @@ public interface AlertI18NResourceKeys {
         @I18NMessage(locale = "de", value = "Verfügbarkeit wird {0}") })
     String ALERT_CONFIG_PROPS_CB_AVAILABILITY = "alert.config.props.CB.Availability";
 
+    @I18NMessages( { @I18NMessage("Avail goes {0}"),
+        @I18NMessage(locale = "de", value = "Verf. wird {0}") })
+    String ALERT_CONFIG_PROPS_CB_AVAILABILITY_SHORT = "alert.config.props.CB.Availability.short";
+
     @I18NMessages( { @I18NMessage("Event Severity: {0}"),
         @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0}") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY = "alert.config.props.CB.EventSeverity";
+
+    @I18NMessages( { @I18NMessage("Sev: {0}"),
+        @I18NMessage(locale = "de", value = "Schwere: {0}") })
+    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_SHORT = "alert.config.props.CB.EventSeverity.short";
 
     @I18NMessages( { @I18NMessage("Event Severity: {0} and matching expression \"{1}\""),
         @I18NMessage(locale = "de", value = "Schwere des Ereignesses: {0} und zugehöriger Ausdruck  \"{1}\"") })
     String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH = "alert.config.props.CB.EventSeverity.RegexMatch";
 
+    @I18NMessages( { @I18NMessage("Sev: {0} & exp \"{1}\""),
+        @I18NMessage(locale = "de", value = "Schwere: {0} & Ausdruck  \"{1}\"") })
+    String ALERT_CONFIG_PROPS_CB_EVENT_SEVERITY_REGEX_MATCH_SHORT = "alert.config.props.CB.EventSeverity.RegexMatch.short";
+
     @I18NMessages( { @I18NMessage("value changed"), @I18NMessage(locale = "de", value = "Der Wert hat sich geändert") })
     String ALERT_CURRENT_LIST_VALUE_CHANGED = "alert.current.list.ValueChanged";
+
+    @I18NMessages( { @I18NMessage("val chg"), @I18NMessage(locale = "de", value = "Wertänd.") })
+    String ALERT_CURRENT_LIST_VALUE_CHANGED_SHORT = "alert.current.list.ValueChanged.short";
 
     @I18NMessages( {
         @I18NMessage("\\  - Condition {0}: {1}\\n\\\n" + "\\  - Date/Time: {2}\\n\\\n" + "\\  - Details: {3}\\n\\\n"),
         @I18NMessage(locale = "de", value = "  - Bedingung {0}: {1}\\n\\\n  - Datum/Uhrzeit: {2}\\n\\\n"
             + "\\  - Details: {3}\\n\\\n") })
     String ALERT_EMAIL_CONDITION_LOG_FORMAT = "alert.email.condition.log.format";
+
+    @I18NMessages( {
+        @I18NMessage("\\  - Cond {0}: {1}\\n\\\n" + "\\  - Time: {2}\\n\\\n" + "\\  - Det: {3}\\n\\\n"),
+        @I18NMessage(locale = "de", value = "  - Bed {0}: {1}\\n\\\n  - Zeit: {2}\\n\\\n"
+            + "\\  - Det: {3}\\n\\\n") })
+    String ALERT_EMAIL_CONDITION_LOG_FORMAT_SHORT = "alert.email.condition.log.format.short";
 }

@@ -113,8 +113,8 @@ public class AlertNotificationLog implements Serializable {
     @PrePersist
     @PreUpdate
     public void trimMessage() {
-        if (message.length()>255)
-            message = message.substring(0,254);
+        if (message!=null && message.length()>255)
+            message = message.substring(0,255);
     }
 
     protected AlertNotificationLog() {

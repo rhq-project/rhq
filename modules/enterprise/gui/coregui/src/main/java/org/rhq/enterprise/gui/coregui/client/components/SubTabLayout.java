@@ -35,13 +35,13 @@ public class SubTabLayout extends VLayout {
 
     ToolStrip buttonBar;
 
-    LinkedHashMap<String,Canvas> subtabs = new LinkedHashMap<String, Canvas>();
+    LinkedHashMap<String, Canvas> subtabs = new LinkedHashMap<String, Canvas>();
 
     Canvas currentlyDisplayed;
 
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
 
         setWidth100();
         setHeight100();
@@ -51,7 +51,6 @@ public class SubTabLayout extends VLayout {
         buttonBar = new ToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
-        
 
 
         for (final String title : subtabs.keySet()) {
@@ -65,6 +64,8 @@ public class SubTabLayout extends VLayout {
             button.setActionType(SelectionType.RADIO);
             button.setRadioGroup("subtabs");
             button.setBorder(null);
+
+            button.setBaseStyle("SubTabButton");
 //            button.setStyleName("SubTabButton");
 //            button.setStylePrimaryName("SubTabButton");
 
@@ -89,8 +90,6 @@ public class SubTabLayout extends VLayout {
         b.select();
         addMember(currentlyDisplayed);
     }
-
-
 
 
     public void registerSubTab(String title, Canvas canvas) {

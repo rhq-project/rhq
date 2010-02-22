@@ -49,7 +49,9 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
     private Tab monitoringTab;
     private Tab inventoryTab;
     private Tab operationsTab;
+    private Tab alertsTab;
     private Tab configurationTab;
+    private Tab eventsTab;
     private Tab contentTab;
     private TabSet topTabSet;
 
@@ -75,16 +77,17 @@ public class ResourceDetailView extends VLayout implements Presenter, ResourceSe
         topTabSet.setHeight100();
 
 
-        summaryTab = new Tab("Summary");
-        
-        monitoringTab = new Tab("Monitoring");
-        inventoryTab = new Tab("Inventory");
-        operationsTab = new Tab("Operations");
-        configurationTab = new Tab("Configuration");
-        contentTab = new Tab("Content");
+        summaryTab = new Tab("Summary", "/images/icons/Service_up_16.png");
+        monitoringTab = new Tab("Monitoring","/images/icons/Monitor_grey_16.png");
+        inventoryTab = new Tab("Inventory","/images/icons/Inventory_grey_16.png");
+        operationsTab = new Tab("Operations","/images/icons/Operation_grey_16.png");
+        alertsTab = new Tab("Alerts","/images/icons/Alert_grey_16.png");
+        configurationTab = new Tab("Configuration","/images/icons/Configure_grey_16.png");
+        eventsTab = new Tab("Events","/images/icons/Events_grey_16.png");
+        contentTab = new Tab("Content","/images/icons/Content_grey_16.png");
 
 
-        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, configurationTab, contentTab);
+        topTabSet.setTabs(summaryTab, monitoringTab, inventoryTab, operationsTab, alertsTab, configurationTab, eventsTab, contentTab);
 
         title.setContents("Loading...");
         addMember(title);

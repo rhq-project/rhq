@@ -72,11 +72,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private ResourceTypeManagerLocal resourceTypeManager;
 
     public Bundle createBundle(Subject subject, Bundle bundle) {
-        // add the implicit bundle repo
-        Repo repo = new Repo(bundle.getName());
-        repo.setCandidate(false);
-        repo.setSyncSchedule(null);
-        bundle.setRepo(repo);
+        // add the implicit bundle repo, if necessary
+        if (null == bundle.getRepo()) {
+            Repo repo = new Repo(bundle.getName());
+            repo.setCandidate(false);
+            repo.setSyncSchedule(null);
+            bundle.setRepo(repo);
+        }
 
         entityManager.persist(bundle);
         return bundle;

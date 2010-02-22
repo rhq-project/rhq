@@ -40,6 +40,7 @@ public class BundleCriteria extends Criteria {
     private String filterName;
 
     private boolean fetchBundleVersions;
+    private boolean fetchRepo;
 
     public BundleCriteria() {
         super(Bundle.class);
@@ -67,4 +68,9 @@ public class BundleCriteria extends Criteria {
     public void fetchBundleVersions(boolean fetchBundleVersions) {
         this.fetchBundleVersions = fetchBundleVersions;
     }
+
+    public void fetchRepo(boolean fetchRepo) {
+        this.fetchRepo = fetchRepo;
+    }
+
 }

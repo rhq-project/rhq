@@ -240,7 +240,9 @@ public class BundleTest extends AbstractEJB3Test {
             em.persist(b);
             id = b.getId();
             assert id > 0;
-            assert b.getBundleType().getId() != 0 : "bundleType should have been cascade persisted too";
+            assert b.getBundleType().getId() != 0 : "bundleType should have been persisted independently";
+            assert b.getRepo().getId() != 0 : "bundle's repo should have been cascade persisted with the bundle";
+            assert name.equals(b.getRepo().getName()) : "bundle's repo should have same name as bundle";
 
             q = em.createNamedQuery(Bundle.QUERY_FIND_BY_NAME);
             q.setParameter("name", name);
@@ -280,6 +282,15 @@ public class BundleTest extends AbstractEJB3Test {
             assert q.getResultList().size() == 0 : "didn't clean up test bundle type";
 
             deleteResourceType(em, bundleType.getResourceType());
+            em.close();
+            getTransactionManager().commit();
+
+            // make sure we did cascade delete the repo
+            getTransactionManager().begin();
+            em = getEntityManager();
+            q = em.createNamedQuery(Repo.QUERY_FIND_BY_NAME);
+            q.setParameter("name", bFind.getRepo().getName());
+            assert q.getResultList().size() == 0 : "didn't clean up test repo";
             em.close();
             getTransactionManager().commit();
 

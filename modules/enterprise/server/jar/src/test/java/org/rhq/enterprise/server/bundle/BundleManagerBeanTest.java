@@ -35,6 +35,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -84,6 +85,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Bundle.class, ((Bundle) removeMe).getId()));
+            }
+
+            q = em.createQuery("SELECT r FROM Repo r WHERE r.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
             }
 
             q = em.createQuery("SELECT bt FROM BundleType bt WHERE bt.name LIKE '" + TEST_PREFIX + "%'");
@@ -170,6 +177,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         c.addFilterName(b.getName());
         c.addFilterBundleTypeName(b.getName());
         c.fetchBundleVersions(true);
+        c.fetchRepo(true);
         bundles = bundleManagerBean.findBundlesByCriteria(getOverlord(), c);
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
@@ -181,6 +189,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         BundleVersion bv = b.getBundleVersions().get(0);
         assertEquals(bv2, bv);
         assertEquals(b, bv.getBundle());
+        Repo r = b.getRepo();
+        assertNotNull(r);
+        assertEquals(b.getName(), r.getName());
     }
 
     @Test(enabled = ENABLED)

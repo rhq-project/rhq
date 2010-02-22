@@ -27,6 +27,18 @@
         </constraint>
     </table>
 
+    <table name="RHQ_ROLE_LDAP_GROUP_MAP">
+        <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
+        <column name="LDAP_GROUP_NAME" required="true" type="VARCHAR2"/>
+
+        <constraint name="RHQ_ROLE_LDAP_GROUP_MAP_KEY">
+            <primaryKey>
+                <field ref="ROLE_ID"/>
+                <field ref="LDAP_GROUP_NAME"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
     <table name="RHQ_PERMISSION">
         <column name="ROLE_ID" type="INTEGER" references="RHQ_ROLE" required="true"/>
         <column name="OPERATION" type="INTEGER" required="true"/>
@@ -60,6 +72,7 @@
     <table name="RHQ_SUBJECT_ROLE_MAP">
         <column name="SUBJECT_ID" required="true" type="INTEGER" references="RHQ_SUBJECT"/>
         <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
+        <column name="IS_LDAP" required="true" type="BOOLEAN" default="false"/>
 
         <constraint name="RHQ_SUBJECT_ROLE_MAPPING_KEY">
             <primaryKey>

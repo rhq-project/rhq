@@ -15,8 +15,18 @@
       xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
       xmlns:rich="http://richfaces.ajax4jsf.org/rich">
 
+    <c:choose>
+        <c:when test="#{not empty param.type}">
+            <c:set var="title" value="Definition for '#{alertDefinition.name}' on resource type '#{ResourceTypeUIBean.name}'"/>
+        </c:when>
+        <c:otherwise>
+            <c:set var="title" value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'"/>
+        </c:otherwise>
+    </c:choose>
+
     <ui:composition template="/rhq/layout/main.xhtml">
-        <ui:param name="pageTitle" value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'"/>
+        <ui:param name="pageTitle" value="#{title}"/>
+
 
         <ui:define name="metaHeaders">
             <style>
@@ -49,11 +59,21 @@
                 <f:param name="ad" value="#{alertDefinition.id}" />
                 <h:outputText value=" Definition for '#{alertDefinition.name}' "/>
             </h:outputLink>
-            <h:outputText> on resource </h:outputText>
-            <h:outputLink value="/rhq/resource/summary/overview.xhtml">
-                <f:param name="id" value="#{alertDefinition.resource.id}" />
-                <h:outputText value=" '#{alertDefinition.resource.name}'" />
-            </h:outputLink>
+            <c:choose>
+                <c:when test="#{not empty param.type}">
+                    <h:outputText> on resource type </h:outputText>
+                    <h:outputLink value="/rhq/admin/listAlertTemplates.xhtml?type=${param.type}">
+                      <h:outputText value=" #{ResourceTypeUIBean.name}"/>
+                    </h:outputLink>
+                </c:when>
+                <c:otherwise>
+                    <h:outputText> on resource </h:outputText>
+                    <h:outputLink value="/rhq/resource/summary/overview.xhtml">
+                        <f:param name="id" value="#{alertDefinition.resource.id}" />
+                        <h:outputText value=" '#{alertDefinition.resource.name}'" />
+                    </h:outputLink>
+                </c:otherwise>
+            </c:choose>
         </ui:define>
 
         <ui:define name="body">
@@ -170,10 +190,19 @@
 
             <br />
             <br />
-            <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
-                <f:param name="id" value="#{alertDefinition.resource.id}"/>
-                <h:outputText value="Back to Alert Definitions for Resource '#{alertDefinition.resource.name}'"/>
-            </h:outputLink>
+            <c:choose>
+                <c:when test="#{not empty param.type}">
+                    <h:outputLink value="/rhq/admin/listAlertTemplates.xhtml?type=${param.type}">
+                        <h:outputText value="Back to Alert Definitions for Resource Type '#{ResourceTypeUIBean.name}'"/>
+                    </h:outputLink>
+                </c:when>
+                <c:otherwise>
+                    <h:outputLink value="/rhq/resource/alert/listAlertDefinitions.xhtml">
+                        <f:param name="id" value="#{alertDefinition.resource.id}"/>
+                        <h:outputText value="Back to Alert Definitions for Resource '#{alertDefinition.resource.name}'"/>
+                    </h:outputLink>
+                </c:otherwise>
+            </c:choose>
 
             <rich:modalPanel id="addAlertFromTemplatePanel" moveable="false" autosized="true">
                 <f:facet name="header">

@@ -15,10 +15,10 @@
 
   <c:choose>
     <c:when test="#{readOnly}">
-      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray"/>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray; vertical-align: top;"/>
     </c:when>
     <c:otherwise>
-      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);"/>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;"/>
     </c:otherwise>
   </c:choose>
 
@@ -104,14 +104,14 @@
         <h:outputLink id="viewErrorsLink"
                       value="#"
                       onclick="#{rich:component('errorWindow')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;">
           #{selectedRawUIBean.errorLabel}
         </h:outputLink>
 
 
         <h:outputLink value="#"
                       onclick="#{rich:component('modalEditor')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right;">
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right; vertical-align: top;">
           View Full Screen
         </h:outputLink>
 
@@ -124,8 +124,7 @@
 
         <h:commandLink action="#{editor['download']}"
                        value="Download"
-                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202);">
-          <h:graphicImage value="/images/download.png"/>
+                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;">
           <f:param name="id" value="#{ResourceUIBean.id}"/>
         </h:commandLink>
 

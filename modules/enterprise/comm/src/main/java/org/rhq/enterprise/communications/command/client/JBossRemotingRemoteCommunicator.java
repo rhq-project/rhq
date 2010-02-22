@@ -21,6 +21,9 @@ package org.rhq.enterprise.communications.command.client;
 import java.net.MalformedURLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import mazz.i18n.Logger;
 
@@ -95,10 +98,22 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     private InitializeCallback m_initializeCallback;
 
     /**
-     * When the first element is <code>true</code>, the initialize callback will need to be called prior
-     * to sending any commands. This is an array because the array itself is used for its lock.
+     * When <code>true</code>, the initialize callback will need to be called prior
+     * to sending any commands. Used in conjunection with its associated RW lock.
      */
-    private final boolean[] m_needToCallInitializeCallback;
+    private boolean m_needToCallInitializeCallback;
+
+    /**
+     * RW lock when needing to access its associated atomic boolean flag.
+     */
+    private final ReentrantReadWriteLock m_needToCallInitializeCallbackLock;
+
+    /**
+     * Number of minutes to wait while attempting to aquire a lock before attempting
+     * to invoke the initialize callback. If this amount of minutes expires before the lock
+     * is acquired, an error will occur and the initialize callback will have to be attempted later.
+     */
+    private final long m_initializeCallbackLockAcquisitionTimeoutMins;
 
     /**
      * Constructor for {@link JBossRemotingRemoteCommunicator} that initializes the client with no invoker locator
@@ -200,7 +215,17 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
             m_clientConfiguration.putAll(client_config);
         }
 
-        m_needToCallInitializeCallback = new boolean[] { false };
+        m_needToCallInitializeCallback = false;
+        m_needToCallInitializeCallbackLock = new ReentrantReadWriteLock();
+
+        long mins;
+        try {
+            String minsStr = System.getProperty("rhq.communications.initial-callback-lock-wait-mins", "60");
+            mins = Long.parseLong(minsStr);
+        } catch (Throwable t) {
+            mins = 60L;
+        }
+        m_initializeCallbackLockAcquisitionTimeoutMins = mins;
 
         return;
     }
@@ -319,7 +344,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
         if (m_remotingClient != null) {
             m_remotingClient.disconnect();
             m_remotingClient = null;
-            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
+            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
         }
 
         LOG.info(CommI18NResourceKeys.COMMUNICATOR_CHANGING_ENDPOINT, m_invokerLocator, locator);
@@ -377,7 +402,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
 
     public void setInitializeCallback(InitializeCallback callback) {
         m_initializeCallback = callback;
-        m_needToCallInitializeCallback[0] = (callback != null); // specifically do not synchronize, just set it
+        m_needToCallInitializeCallback = (callback != null); // specifically do not synchrononize by using lock, just set it
     }
 
     public String getRemoteEndpoint() {
@@ -403,7 +428,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     public void connect() throws Exception {
         if ((m_remotingClient != null) && !m_remotingClient.isConnected()) {
             m_remotingClient.connect();
-            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
+            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
         }
 
         return;
@@ -412,7 +437,7 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     public void disconnect() {
         if (m_remotingClient != null) {
             m_remotingClient.disconnect();
-            m_needToCallInitializeCallback[0] = (getInitializeCallback() != null); // specifically do not synchronize, just set it
+            m_needToCallInitializeCallback = (getInitializeCallback() != null); // specifically do not synchrononize by using lock, just set it
         }
 
         return;
@@ -535,18 +560,37 @@ public class JBossRemotingRemoteCommunicator implements RemoteCommunicator {
     private CommandResponse invokeInitializeCallbackIfNeeded(Command command) {
         InitializeCallback callback = getInitializeCallback();
         if (callback != null) {
-            // block here - in effect, this will stop all commands from going out until the callback is done 
-            synchronized (m_needToCallInitializeCallback) {
-                if (m_needToCallInitializeCallback[0]) {
-                    try {
-                        m_needToCallInitializeCallback[0] = !callback.sendingInitialCommand(this, command);
-                        LOG.debug(CommI18NResourceKeys.INITIALIZE_CALLBACK_DONE, m_needToCallInitializeCallback[0]);
-                    } catch (Throwable t) {
-                        m_needToCallInitializeCallback[0] = true; // callback failed, we'll want to call it again
-                        LOG.error(t, CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, ThrowableUtil.getAllMessages(t));
-                        return new GenericCommandResponse(command, false, null, t);
+            // block here - in effect, this will stop all commands from going out until the callback is done
+            // to avoid infinite blocking, we'll only wait for a set time (though long).
+
+            WriteLock writeLock = m_needToCallInitializeCallbackLock.writeLock();
+            boolean locked;
+            try {
+                locked = writeLock.tryLock(m_initializeCallbackLockAcquisitionTimeoutMins, TimeUnit.MINUTES);
+            } catch (InterruptedException ie) {
+                locked = false;
+            }
+
+            if (locked) {
+                try {
+                    if (m_needToCallInitializeCallback) {
+                        try {
+                            m_needToCallInitializeCallback = (!callback.sendingInitialCommand(this, command));
+                            LOG.debug(CommI18NResourceKeys.INITIALIZE_CALLBACK_DONE, m_needToCallInitializeCallback);
+                        } catch (Throwable t) {
+                            m_needToCallInitializeCallback = true; // callback failed, we'll want to call it again
+                            LOG.error(t, CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, ThrowableUtil
+                                .getAllMessages(t));
+                            return new GenericCommandResponse(command, false, null, t);
+                        }
                     }
+                } finally {
+                    writeLock.unlock();
                 }
+            } else {
+                Throwable t = new Throwable("Initialize callback lock could not be acquired");
+                LOG.error(CommI18NResourceKeys.INITIALIZE_CALLBACK_FAILED, t.getMessage());
+                return new GenericCommandResponse(command, false, null, t);
             }
         }
         return null;

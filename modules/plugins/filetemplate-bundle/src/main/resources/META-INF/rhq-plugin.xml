@@ -14,7 +14,7 @@
            singleton="true"
            description="This plugin is used to process File Template bundles">
 
-      <bundle type="File Template" />
+      <bundle type="File Template Bundle" />
 
    </server>
 </plugin>

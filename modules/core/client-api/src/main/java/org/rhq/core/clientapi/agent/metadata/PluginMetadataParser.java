@@ -50,6 +50,7 @@ import org.rhq.core.clientapi.descriptor.plugin.ServerDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ServiceDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.SubCategoryDescriptor;
 import org.rhq.core.domain.bundle.BundleType;
+import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.event.EventDefinition;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ClassLoaderType;
@@ -59,6 +60,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
 import org.rhq.core.domain.resource.ResourceSubCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.StringUtils;
 
 /**
  * This is a stateful class intended to hold the related metadata for a single plugin descriptor. It is designed to be
@@ -164,6 +166,8 @@ public class PluginMetadataParser {
             LOG.warn("Platforms do not currently support running inside other resources. "
                 + "The <runs-inside> information will be ignored in resource type: " + platformResourceType);
         }
+
+        platformResourceType.setCreateDeletePolicy(CreateDeletePolicy.NEITHER);
 
         return platformResourceType;
     }
@@ -523,6 +527,18 @@ public class PluginMetadataParser {
             if (bundle != null) {
                 String typeName = bundle.getType();
                 resourceType.setBundleType(new BundleType(typeName, resourceType));
+
+                // create the peer package type for the bundle type
+                PackageType bundlePackageType = new PackageType();
+                bundlePackageType.setName(typeName);
+                bundlePackageType.setDescription("Package type for content of bundles of type " + typeName);
+                bundlePackageType.setCategory(null);
+                bundlePackageType.setSupportsArchitecture(false);
+                bundlePackageType.setDisplayName(StringUtils.deCamelCase(typeName));
+                bundlePackageType.setDiscoveryInterval(-1L);
+                bundlePackageType.setCreationData(false);
+                bundlePackageType.setDeploymentConfigurationDefinition(null);
+                resourceType.addPackageType(bundlePackageType);
             }
 
         } catch (InvalidPluginDescriptorException e) {

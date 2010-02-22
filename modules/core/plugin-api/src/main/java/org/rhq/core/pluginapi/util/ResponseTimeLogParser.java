@@ -218,12 +218,13 @@ public class ResponseTimeLogParser {
     }
 
     private void truncateLog(File logFile) throws IOException {
-        log.debug("Truncating response-time log file '" + logFile + "'...");
+        log.debug("Truncating response-time log file: '" + logFile + "'...");
         RandomAccessFile randomAccessFile = null;
 
         try {
             String mode = "rws";
             randomAccessFile = new RandomAccessFile(logFile, mode);
+            log.debug("Truncating response-time log file: setting length to 0.");
             randomAccessFile.setLength(0);
         } catch (SecurityException e) {
             /* User doesn't have permission to change the length, so
@@ -238,6 +239,7 @@ public class ResponseTimeLogParser {
         } finally {
             if (null != randomAccessFile) {
                 try {
+                    log.debug("Truncating response-time log file: closing file.");
                     randomAccessFile.close();
                 } catch (Exception e) {
                     log.error("Unable to close response-time log file.", e);

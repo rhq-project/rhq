@@ -15,10 +15,10 @@
 
   <c:choose>
     <c:when test="#{readOnly}">
-      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray; vertical-align: top;"/>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: gray; vertical-align: top; padding-left: 10px;"/>
     </c:when>
     <c:otherwise>
-      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;"/>
+      <c:set var="uploadLinkStyle" value="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top; padding-left: 10px;"/>
     </c:otherwise>
   </c:choose>
 
@@ -99,19 +99,19 @@
 
     </rich:panel>
 
-    <h:panelGrid columns="1" style="width:100%;">
-      <h:panelGrid columns="4" style="width:100%;">
-        <h:outputLink id="viewErrorsLink"
+    <h:panelGrid columns="1" width="97%">
+      <rich:panel style="width: 600px; text-align: right;">
+      <h:outputLink id="viewErrorsLink"
                       value="#"
                       onclick="#{rich:component('errorWindow')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;">
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top; padding-left: 10px;">
           #{selectedRawUIBean.errorLabel}
         </h:outputLink>
 
 
         <h:outputLink value="#"
                       onclick="#{rich:component('modalEditor')}.show()"
-                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right; vertical-align: top;">
+                      style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); text-align: right; vertical-align: top; padding-left: 10px;">
           View Full Screen
         </h:outputLink>
 
@@ -124,25 +124,24 @@
 
         <h:commandLink action="#{editor['download']}"
                        value="Download"
-                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top;">
+                       style="white-space: nowrap; font-weight: normal; color: rgb(62, 118, 202); vertical-align: top; padding-left: 10px;">
           <f:param name="id" value="#{ResourceUIBean.id}"/>
         </h:commandLink>
+      </rich:panel>
 
-        <h:outputLabel id="selectedFileHeader" value="#{selectedRawUIBean.path}" styleClass="rawConfigFileHeader"/>
-      </h:panelGrid>
+      <h:outputLabel id="selectedFileHeader" value="#{selectedRawUIBean.path}" styleClass="rawConfigFileHeader"/>
 
-      <rich:panel style="margin-left:1px; border: none;">
-        <h:inputTextarea id="fileContents"
-                         styleClass="rawConfigFileContents"
-                         value="#{selectedRawUIBean.contents}"
-                         readonly="#{readOnly}"/>
+      <h:inputTextarea id="fileContents"
+                       styleClass="rawConfigFileContents"
+                       value="#{selectedRawUIBean.contents}"
+                       readonly="#{readOnly}">
         <c:if test="#{!readOnly}">
           <a4j:support event="onkeyup"
                        ignoreDupeResponses="true"
                        reRender="fileMenuPanel,upperCommitPanel,lowerCommitPanel"
                        requestDelay="1000"/>
         </c:if>
-      </rich:panel>
+      </h:inputTextarea>
     </h:panelGrid>
   </h:panelGrid>
 

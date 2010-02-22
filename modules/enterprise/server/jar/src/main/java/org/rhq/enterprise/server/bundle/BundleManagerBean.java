@@ -37,6 +37,7 @@ import org.rhq.core.domain.bundle.BundleDeployDefinition;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeployDefinitionCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
@@ -71,6 +72,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     private ResourceTypeManagerLocal resourceTypeManager;
 
     public Bundle createBundle(Subject subject, Bundle bundle) {
+        // add the implicit bundle repo
+        Repo repo = new Repo(bundle.getName());
+        repo.setCandidate(false);
+        repo.setSyncSchedule(null);
+        bundle.setRepo(repo);
+
         entityManager.persist(bundle);
         return bundle;
     }
@@ -189,14 +196,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         int bundleVersionCount = random.nextInt(5) + 1;
         for (int i = 0; i < bundleVersionCount; i++) {
             String bundleVersionName = UUID.randomUUID().toString();
-            final String RECIPE = "repo rhel-x86_64-5\n" +
-                "package foo-1.25.rpm\n" +
-                "package bar-1.25.rpm\n" +
-                "script foo.bash -c some parameter\n" +
-                "deploy jboss.tar %{jboss.home.directory}\n" +
-                "realize %{jboss.home.directory}/server/default/setting.xml\n" +
-                "file example.setting /etc/some/setting.ini\n" +
-                "service example restart\n";
+            final String RECIPE = "repo rhel-x86_64-5\n" //
+                + "package foo-1.25.rpm\n" //
+                + "package bar-1.25.rpm\n" //
+                + "script foo.bash -c some parameter\n" //
+                + "deploy jboss.tar %{jboss.home.directory}\n" //                
+                + "realize %{jboss.home.directory}/server/default/setting.xml\n" //                
+                + "file example.setting /etc/some/setting.ini\n" + "service example restart\n";
             BundleVersion bundleVersion = new BundleVersion(bundleVersionName, String.valueOf(i + 1), null, RECIPE);
             bundle.addBundleVersion(bundleVersion);
         }

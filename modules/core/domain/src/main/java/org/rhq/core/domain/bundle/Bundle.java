@@ -38,10 +38,13 @@ import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+
+import org.rhq.core.domain.content.Repo;
 
 /**
  * Defines a bundle of content that can be versioned.
@@ -79,6 +82,10 @@ public class Bundle implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER)
     private BundleType bundleType;
 
+    @JoinColumn(name = "REPO_ID", referencedColumnName = "ID", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = CascadeType.PERSIST)
+    private Repo repo;
+
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
 
@@ -115,6 +122,14 @@ public class Bundle implements Serializable {
         this.bundleType = bundleType;
     }
 
+    public Repo getRepo() {
+        return repo;
+    }
+
+    public void setRepo(Repo repo) {
+        this.repo = repo;
+    }
+
     public List<BundleVersion> getBundleVersions() {
         return bundleVersions;
     }
@@ -138,7 +153,6 @@ public class Bundle implements Serializable {
         final int prime = 31;
         int result = 1;
         result = (prime * result) + ((name == null) ? 0 : name.hashCode());
-        result = (prime * result) + ((bundleType == null) ? 0 : bundleType.hashCode());
         return result;
     }
 
@@ -159,14 +173,6 @@ public class Bundle implements Serializable {
                 return false;
             }
         } else if (!name.equals(other.name)) {
-            return false;
-        }
-
-        if (bundleType == null) {
-            if (other.bundleType != null) {
-                return false;
-            }
-        } else if (!bundleType.equals(other.bundleType)) {
             return false;
         }
 

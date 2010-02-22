@@ -51,8 +51,8 @@
   <tr>
     <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPLoginPropertyLabel"/></td>
     <td width="30%" class="BlockContent"><html:text size="31" property="ldapLoginProperty"/></td>
-    <td width="20%" class="BlockLabel">&nbsp;</td>
-    <td width="30%" class="BlockContent">&nbsp;</td>
+    <td width="20%" class="BlockLabel"><fmt:message key="admin.settings.LDAPGroupSearchLabel"/></td>
+    <td width="30%" class="BlockContent"><html:text size="31" property="ldapGroupFilter"/></td>
   </tr>
 
   <tr>

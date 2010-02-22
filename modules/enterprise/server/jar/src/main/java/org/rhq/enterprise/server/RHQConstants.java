@@ -46,6 +46,7 @@ public class RHQConstants {
     public static final String LDAPProtocol = "CAM_LDAP_PROTOCOL";
     public static final String LDAPLoginProperty = "CAM_LDAP_LOGIN_PROPERTY";
     public static final String LDAPFilter = "CAM_LDAP_FILTER";
+    public static final String LDAPGroupFilter = "CAM_LDAP_GROUP_FILTER";
     public static final String LDAPBaseDN = "CAM_LDAP_BASE_DN";
     public static final String LDAPBindDN = "CAM_LDAP_BIND_DN";
     public static final String LDAPBindPW = "CAM_LDAP_BIND_PW";
@@ -61,7 +62,8 @@ public class RHQConstants {
     // Are we allowing automatic AgentUpdate binary download
     public static final String EnableAgentAutoUpdate = "ENABLE_AGENT_AUTO_UPDATE";
 
-    // Are we rendering a special "debug" menu for administrators?
+
+   // Are we rendering a special "debug" menu for administrators?
     public static final String EnableDebugMode = "ENABLE_DEBUG_MODE";
 
     // How long do we keep data compressed in hourly intervals?

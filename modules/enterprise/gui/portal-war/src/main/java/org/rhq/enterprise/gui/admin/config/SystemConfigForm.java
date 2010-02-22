@@ -60,6 +60,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String ldapLoginProperty = "";
     private String ldapSearchBase = "";
     private String ldapSearchFilter = "";
+    private String ldapGroupFilter = "";
     private String ldapUsername = "";
     private String ldapPassword = "";
     private Boolean ldapEnabled = null;
@@ -83,6 +84,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" ldapSearchFilter=").append(ldapSearchFilter);
         buf.append(" ldapUsername=").append(ldapUsername);
         buf.append(" ldapPassword=").append(ldapPassword);
+        buf.append(" ldapGroupFilter=").append(ldapGroupFilter);
 
         return buf.toString();
     }
@@ -125,6 +127,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapSearchFilter = "";
         ldapUsername = "";
         ldapPassword = "";
+        ldapGroupFilter = "";
 
         super.reset(mapping, request);
     }
@@ -213,6 +216,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapLoginProperty = prop.getProperty(RHQConstants.LDAPLoginProperty);
         ldapSearchBase = prop.getProperty(RHQConstants.LDAPBaseDN);
         ldapSearchFilter = prop.getProperty(RHQConstants.LDAPFilter);
+        ldapGroupFilter = prop.getProperty(RHQConstants.LDAPGroupFilter);
         ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
         ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
@@ -312,6 +316,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(RHQConstants.LDAPLoginProperty, ldapLoginProperty);
         prop.setProperty(RHQConstants.LDAPBaseDN, ldapSearchBase);
         prop.setProperty(RHQConstants.LDAPFilter, ldapSearchFilter);
+        prop.setProperty(RHQConstants.LDAPGroupFilter, ldapGroupFilter);
         prop.setProperty(RHQConstants.LDAPBindDN, ldapUsername);
         prop.setProperty(RHQConstants.LDAPBindPW, ldapPassword);
         prop.setProperty(RHQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
@@ -557,6 +562,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setLdapSearchFilter(String s) {
         ldapSearchFilter = s;
+    }
+    
+    public String getLdapGroupFilter() {
+        return ldapGroupFilter;
+    }
+
+    public void setLdapGroupFilter(String s) {
+        ldapGroupFilter = s;
     }
 
     public String getLdapUsername() {

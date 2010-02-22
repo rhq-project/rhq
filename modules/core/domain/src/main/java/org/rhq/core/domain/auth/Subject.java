@@ -25,6 +25,7 @@ package org.rhq.core.domain.auth;
 import org.rhq.core.domain.alert.notification.SubjectNotification;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.util.Recordizable;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -185,7 +186,7 @@ import java.util.Set;
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
-public class Subject implements Serializable {
+public class Subject implements Serializable, Recordizable { 
     public static final String QUERY_FIND_ALL = "Subject.findAll";
     public static final String QUERY_FIND_BY_IDS = "Subject.findByIds";
     public static final String QUERY_FIND_BY_NAME = "Subject.findByName";

@@ -899,7 +899,7 @@ public class Resource implements Comparable<Resource>, Serializable {
     private String location;
 
     @JoinColumn(name = "RESOURCE_TYPE_ID", referencedColumnName = "ID", nullable = false)
-    @ManyToOne
+    @ManyToOne  // TODO GH: It would be prefferable for this to be lazy, but will need cleanup throughout the app (fetch = FetchType.LAZY)
     @Summary(index = 4)
     private ResourceType resourceType;
 

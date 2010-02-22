@@ -22,11 +22,11 @@
   */
 package org.rhq.core.domain.util.units.test;
 
+ import org.rhq.core.domain.measurement.MeasurementConverter;
  import org.rhq.core.domain.measurement.MeasurementUnits;
  import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
  import org.rhq.core.domain.measurement.util.MeasurementConversionException;
  import org.rhq.core.domain.test.AbstractEJB3Test;
- import org.rhq.core.server.MeasurementConverter;
  import org.rhq.core.server.MeasurementParser;
 
  import org.testng.annotations.Test;

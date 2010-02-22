@@ -63,7 +63,7 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.domain.measurement.MeasurementConverter;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;

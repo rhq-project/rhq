@@ -23,7 +23,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -31,16 +33,12 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.data.Record;
-import com.smartgwt.client.data.fields.DataSourceFloatField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
-import com.smartgwt.client.types.FieldType;
-import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 
@@ -52,6 +50,9 @@ public class ResourceDatasource extends DataSource {
 
 
     private String query;
+
+    private ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
+
 
     public ResourceDatasource() {
         setClientOnly(false);
@@ -121,7 +122,6 @@ public class ResourceDatasource extends DataSource {
 
 //        criteria.addSortAgentName(PageOrdering.ASC);
 
-        ResourceGWTServiceAsync resourceService = ResourceGWTService.App.getInstance();
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
@@ -154,6 +154,7 @@ public class ResourceDatasource extends DataSource {
                 for (int x=0; x<result.size(); x++) {
                     Resource res = result.get(x);
                     ListGridRecord record = new ListGridRecord();
+                    record.setAttribute("resouce",res);
                     record.setAttribute("id",res.getId());
                     record.setAttribute("name",res.getName());
                     record.setAttribute("description",res.getDescription());

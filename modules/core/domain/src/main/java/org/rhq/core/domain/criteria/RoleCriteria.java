@@ -39,6 +39,7 @@ public class RoleCriteria extends Criteria {
     private Integer filterId;
     private String filterName;
     private String filterDescription;
+    private Integer filterSubjectId;
 
     private boolean fetchSubjects;
     private boolean fetchResourceGroups;
@@ -49,6 +50,9 @@ public class RoleCriteria extends Criteria {
 
     public RoleCriteria() {
         super(Role.class);
+
+        filterOverrides.put("subjectId", "id in (select sr.id from Role sr JOIN sr.subjects s where s.id = :id)");
+
     }
 
     @Override
@@ -70,6 +74,10 @@ public class RoleCriteria extends Criteria {
 
     public void setFilterDescription(String filterDescription) {
         this.filterDescription = filterDescription;
+    }
+
+    public void setFilterSubjectId(Integer filterSubjectId) {
+        this.filterSubjectId = filterSubjectId;
     }
 
     public boolean getFetchSubjects() {

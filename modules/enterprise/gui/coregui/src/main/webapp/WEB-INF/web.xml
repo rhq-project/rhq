@@ -6,18 +6,44 @@
            version="2.5">
 
     <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.RoleGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl</servlet-class>
+    </servlet>
+
+    <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.inventory.group.ResourceGroupGWTServiceImpl</servlet-class>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.inventory.resource.ResourceGWTServiceImpl</servlet-class>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGwtService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.inventory.configuration.ConfigurationGwtServiceImpl
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl
         </servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl
+        </servlet-class>
+    </servlet>
+
+
+
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RoleGWTService</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SubjectGWTService</url-pattern>
+    </servlet-mapping>
 
 
     <servlet-mapping>
@@ -29,7 +55,11 @@
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceGWTService</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGwtService</servlet-name>
-        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ConfigurationGwtService</url-pattern>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ConfigurationGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceTypeGWTService</url-pattern>
     </servlet-mapping>
 </web-app>

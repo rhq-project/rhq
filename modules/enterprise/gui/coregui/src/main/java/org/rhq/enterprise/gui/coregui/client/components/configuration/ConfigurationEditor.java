@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
+import org.rhq.core.domain.configuration.AbstractPropertyMap;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -35,28 +36,33 @@ import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
-import org.rhq.enterprise.gui.coregui.client.inventory.configuration.ConfigurationGwtService;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.CanvasUtility;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.AnimationEffect;
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TreeModelType;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.AnimationCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
+import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.ItemChangedEvent;
 import com.smartgwt.client.widgets.form.events.ItemChangedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
-import com.smartgwt.client.widgets.form.fields.FileItem;
 import com.smartgwt.client.widgets.form.fields.FloatItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
@@ -69,7 +75,8 @@ import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -93,7 +100,6 @@ import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
-import com.smartgwt.client.widgets.toolbar.ToolStripSeparator;
 import com.smartgwt.client.widgets.tree.Tree;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 import com.smartgwt.client.widgets.tree.TreeNode;
@@ -101,6 +107,7 @@ import com.smartgwt.client.widgets.tree.TreeNode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -112,6 +119,8 @@ import java.util.Set;
 public class ConfigurationEditor extends VLayout {
 
 
+    private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
+
     private TabSet tabSet;
     private ToolStrip toolStrip;
 
@@ -121,6 +130,7 @@ public class ConfigurationEditor extends VLayout {
 
     private boolean changed = false;
 
+    private Label loadingLabel = new Label("<b>Loading...</b>");
 
     private int resourceId;
     private int resourceTypeId;
@@ -131,6 +141,11 @@ public class ConfigurationEditor extends VLayout {
         plugin, resource
     }
 
+    ; // Need this extra semicolon for the qdox parser
+
+    public ConfigurationEditor() {
+
+    }
 
     public ConfigurationEditor(int resourceId, int resourceTypeId) {
         this(resourceId, resourceTypeId, ConfigType.resource);
@@ -144,37 +159,51 @@ public class ConfigurationEditor extends VLayout {
     }
 
 
+    public void showError(Throwable failure) {
+        addMember(new Label(failure.getMessage()));
+    }
+    public void showError(String message) {
+        addMember(new Label(message));
+    }
+
     @Override
-    protected void onInit() {
-        super.onInit();
+    protected void onDraw() {
+        super.onDraw();
+        System.out.println("onInit");
 
-//        addMember(new Label("<b>Loading...</b>"));
-//        this.redraw();
+        addMember(loadingLabel);
+        this.redraw();
 
+        final long start = System.currentTimeMillis();
 
         if (configType == ConfigType.resource) {
-            ConfigurationGwtService.App.getInstance().getResourceConfiguration(resourceId, new AsyncCallback<Configuration>() {
+            configurationService.getResourceConfiguration( resourceId, new AsyncCallback<Configuration>() {
                 public void onFailure(Throwable caught) {
+                    showError(caught);
                 }
 
                 public void onSuccess(Configuration result) {
                     configuration = result;
+                    System.out.println("Config retreived in: " + (System.currentTimeMillis() - start));
                     reload();
                 }
             });
 
-            ConfigurationGwtService.App.getInstance().getResourceConfigurationDefinition(resourceTypeId, new AsyncCallback<ConfigurationDefinition>() {
-                public void onFailure(Throwable caught) {
-                }
-
-                public void onSuccess(ConfigurationDefinition result) {
-                    definition = result;
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition), new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                    System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                    definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
+                    if (definition == null) {
+                        showError("No configuration supported for this resource");
+                    }
                     reload();
                 }
             });
+
         } else if (configType == ConfigType.plugin) {
-            ConfigurationGwtService.App.getInstance().getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
+            configurationService.getPluginConfiguration(resourceId, new AsyncCallback<Configuration>() {
                 public void onFailure(Throwable caught) {
+                    showError(caught);
                 }
 
                 public void onSuccess(Configuration result) {
@@ -183,12 +212,10 @@ public class ConfigurationEditor extends VLayout {
                 }
             });
 
-            ConfigurationGwtService.App.getInstance().getPluginConfigurationDefinition(resourceTypeId, new AsyncCallback<ConfigurationDefinition>() {
-                public void onFailure(Throwable caught) {
-                }
-
-                public void onSuccess(ConfigurationDefinition result) {
-                    definition = result;
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                    System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
+                    definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
                     reload();
                 }
             });
@@ -201,6 +228,7 @@ public class ConfigurationEditor extends VLayout {
             // Wait for both to load
             return;
         }
+
 
         originalConfiguration = configuration.deepCopy();
 
@@ -220,6 +248,8 @@ public class ConfigurationEditor extends VLayout {
             tab.setPane(buildStructuredPane());
             tabSet.addTab(tab);
         }
+
+        removeMember(loadingLabel);
 
         addMember(tabSet);
 
@@ -337,7 +367,17 @@ public class ConfigurationEditor extends VLayout {
         saveButton.setAlign(Alignment.CENTER);
         saveButton.setDisabled(true);
         toolStrip.addMember(saveButton);
-        toolStrip.addMember(new IButton("Reset"));
+
+
+        IButton resetButton = new IButton("Reset");
+        resetButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                reload();
+            }
+        });
+
+
+        toolStrip.addMember(resetButton);
         toolStrip.addMember(new LayoutSpacer());
         toolStrip.addMember(new MenuButton("Jump to Section", menu));
 
@@ -358,11 +398,24 @@ public class ConfigurationEditor extends VLayout {
         } else {
             section = new SectionStackSection(group.getDisplayName() +
                     (group.getDescription() != null
-                            ? ("<div style='padding-left: 20px; font-weight: normal; font-size: smaller;'>" + group.getDescription() + "</div>")
+                            ? ("<div style='padding-left: 30px; font-weight: normal; font-size: smaller;'>" + group.getDescription() + "</div>")
                             : ""));
             section.setExpanded(!group.isDefaultHidden());
         }
 
+        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(
+                ((group == null) ? definition.getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName()))
+        );
+        Collections.sort(definitions, new PropertyDefinitionComparator());
+
+        DynamicForm form = buildPropertiesForm(definitions, configuration);
+
+        section.addItem(form);
+        return section;
+    }
+
+
+    private DynamicForm buildPropertiesForm(ArrayList<PropertyDefinition> definitions, AbstractPropertyMap propertyMap) {
         DynamicForm form = new DynamicForm();
         form.setValidateOnChange(true);
 
@@ -370,17 +423,8 @@ public class ConfigurationEditor extends VLayout {
             public void onItemChanged(ItemChangedEvent itemChangedEvent) {
                 if (!changed) {
                     changed = true;
-                    toolStrip.setBackgroundColor("yellow");
-                    saveButton.animateHide(AnimationEffect.FADE, new AnimationCallback() {
-                        public void execute(boolean b) {
-                            saveButton.setDisabled(false);                            
-                            saveButton.animateShow(AnimationEffect.FADE, new AnimationCallback() {
-                                public void execute(boolean b) {
-
-                                }
-                            },1000);
-                        }
-                    }, 1000);
+                    CanvasUtility.blink(saveButton);
+                    saveButton.setDisabled(false);
                 }
             }
         });
@@ -395,26 +439,25 @@ public class ConfigurationEditor extends VLayout {
 
         boolean odd = true;
 
-        ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(
-                ((group == null) ? definition.getNonGroupedProperties() : definition.getPropertiesInGroup(group.getName()))
-        );
-        Collections.sort(definitions, new PropertyDefinitionComparator());
 
-
-        for (PropertyDefinition property : definitions) {
-            addItems(fields, property, odd);
+        for (PropertyDefinition propertyDefinition : definitions) {
+            Property property = propertyMap.get(propertyDefinition.getName());
+            if (property == null) {
+                if (propertyDefinition instanceof PropertyDefinitionSimple) {
+                    property = new PropertySimple(propertyDefinition.getName(), null);
+                    propertyMap.put(property);
+                }
+            }
+            addItems(fields, propertyDefinition, property, odd);
             odd = !odd;
         }
 
         form.setFields(fields.toArray(new FormItem[fields.size()]));
-
-        section.addItem(form);
-        return section;
+        return form;
     }
 
 
-    public void addItems(ArrayList<FormItem> fields, PropertyDefinition propertyDefinition, boolean oddRow) {
-        Property property = configuration.get(propertyDefinition.getName());
+    public void addItems(ArrayList<FormItem> fields, PropertyDefinition propertyDefinition, Property property, boolean oddRow) {
 
         StaticTextItem nameItem = new StaticTextItem();
         nameItem.setValue("<b>" + propertyDefinition.getDisplayName() + "</b>");
@@ -446,13 +489,15 @@ public class ConfigurationEditor extends VLayout {
         }
     }
 
-    private void buildListOfMapsField(ArrayList<FormItem> fields, PropertyDefinitionMap propertyDefinition, boolean oddRow, PropertyList property) {
+    private void buildListOfMapsField(ArrayList<FormItem> fields, final PropertyDefinitionMap propertyDefinition, boolean oddRow, final PropertyList propertyList) {
 
         final ListGrid summaryTable = new ListGrid();
+//        summaryTable.setID("config_summaryTable_" + propertyDefinition.getName());
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
         summaryTable.setBodyOverflow(Overflow.VISIBLE);
         summaryTable.setOverflow(Overflow.VISIBLE);
+        summaryTable.setAutoFitData(Autofit.HORIZONTAL);
 
         ArrayList<ListGridField> fieldsList = new ArrayList<ListGridField>();
         ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(propertyDefinition.getPropertyDefinitions().values());
@@ -485,6 +530,7 @@ public class ConfigurationEditor extends VLayout {
         editField.addRecordClickHandler(new RecordClickHandler() {
             public void onRecordClick(RecordClickEvent recordClickEvent) {
                 System.out.println("You want to edit: " + recordClickEvent.getRecord());
+                displayMapEditor(summaryTable, recordClickEvent.getRecord(), propertyDefinition, propertyList, (PropertyMap) recordClickEvent.getRecord().getAttributeAsObject("_RHQ_PROPERTY"));
             }
         });
         fieldsList.add(editField);
@@ -521,29 +567,59 @@ public class ConfigurationEditor extends VLayout {
         summaryTable.setFields(fieldsList.toArray(new ListGridField[fieldsList.size()]));
 
 
-        ListGridRecord[] rows = new ListGridRecord[property.getList().size()];
-        int i = 0;
-        for (Property row : property.getList()) {
-            PropertyMap rowMap = (PropertyMap) row;
-
-            ListGridRecord record = new ListGridRecord();
-            for (PropertyDefinition subDef : definitions) {
-                PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
-                record.setAttribute(subDefSimple.getName(), ((PropertySimple) rowMap.get(subDefSimple.getName())).getStringValue());
-            }
-            rows[i++] = record;
-        }
+        ListGridRecord[] rows = buildSummaryRecords(propertyList, definitions);
         summaryTable.setData(rows);
 
 
+        VLayout summaryTableHolder = new VLayout();
+
+        ToolStrip toolStrip = new ToolStrip();
+        IButton addRowButton = new IButton();
+        addRowButton.setIcon(Window.getImgURL("[SKIN]/actions/add.png"));
+        addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                displayMapEditor(summaryTable, null, propertyDefinition, propertyList, null);
+            }
+        });
+
+        toolStrip.addMember(addRowButton);
+
+
+        summaryTableHolder.setMembers(summaryTable, toolStrip);
+
+
         CanvasItem item = new CanvasItem();
-        item.setCanvas(summaryTable);
+        item.setCanvas(summaryTableHolder);
 //        item.setHeight(500);
         item.setColSpan(3);
         item.setEndRow(true);
         item.setShowTitle(false);
         fields.add(item);
 
+    }
+
+    private ListGridRecord[] buildSummaryRecords(PropertyList propertyList, ArrayList<PropertyDefinition> definitions) {
+        ListGridRecord[] rows = new ListGridRecord[propertyList.getList().size()];
+        int i = 0;
+        for (Property row : propertyList.getList()) {
+            PropertyMap rowMap = (PropertyMap) row;
+
+            ListGridRecord record = buildSummaryRecord(definitions, rowMap);
+            rows[i++] = record;
+        }
+        return rows;
+    }
+
+    private ListGridRecord buildSummaryRecord(ArrayList<PropertyDefinition> definitions, PropertyMap rowMap) {
+        ListGridRecord record = new ListGridRecord();
+        for (PropertyDefinition subDef : definitions) {
+            PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
+            PropertySimple propertySimple = ((PropertySimple) rowMap.get(subDefSimple.getName()));
+            record.setAttribute(subDefSimple.getName(), propertySimple != null ? propertySimple.getStringValue() : null);
+            //((PropertySimple) rowMap.get(subDefSimple.getName())).getStringValue());
+        }
+        record.setAttribute("_RHQ_PROPERTY", rowMap);
+        return record;
     }
 
 
@@ -587,6 +663,8 @@ public class ConfigurationEditor extends VLayout {
             switch (propertyDefinition.getType()) {
 
                 case STRING:
+                case FILE:
+                case DIRECTORY:
                     valueItem = new TextItem();
                     valueItem.setValue(property == null ? "" : propertySimple.getStringValue());
                     break;
@@ -600,7 +678,10 @@ public class ConfigurationEditor extends VLayout {
                     break;
                 case BOOLEAN:
                     valueItem = new RadioGroupItem();
-                    ((RadioGroupItem) valueItem).setValueMap("Yes", "No");
+                    LinkedHashMap<String, String> valMap = new LinkedHashMap<String, String>();
+                    valMap.put("true", "Yes");
+                    valMap.put("false", "No");
+                    valueItem.setValueMap(valMap);
                     valueItem.setValue(property == null || propertySimple.getStringValue() == null ? false : propertySimple.getBooleanValue());
                     break;
                 case INTEGER:
@@ -613,12 +694,6 @@ public class ConfigurationEditor extends VLayout {
                 case DOUBLE:
                     valueItem = new FloatItem();
                     valueItem.setValue(property == null || propertySimple.getStringValue() == null ? 0 : propertySimple.getDoubleValue());
-                    break;
-                case FILE:
-                    valueItem = new FileItem();
-                    break;
-                case DIRECTORY:
-                    valueItem = new TextItem();
                     break;
             }
         }
@@ -663,6 +738,14 @@ public class ConfigurationEditor extends VLayout {
 
 
         final FormItem finalValueItem = valueItem;
+
+
+        finalValueItem.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent changedEvent) {
+                propertySimple.setValue(changedEvent.getValue());
+            }
+        });
+
         unsetItem.addChangeHandler(new ChangeHandler() {
             public void onChange(ChangeEvent changeEvent) {
                 Boolean isUnset = (Boolean) changeEvent.getValue();
@@ -673,11 +756,103 @@ public class ConfigurationEditor extends VLayout {
                     finalValueItem.setDisabled(false);
                     finalValueItem.focusInItem();
                 }
-                propertySimple.setValue(changeEvent.getValue());
+                propertySimple.setValue(finalValueItem.getValue());
             }
         });
 
         return valueItem;
+    }
+
+
+    private void displayMapEditor(final ListGrid summaryTable, final Record existingRecord, PropertyDefinitionMap definition, final PropertyList list, PropertyMap map) {
+
+
+        final ArrayList<PropertyDefinition> definitions = new ArrayList<PropertyDefinition>(
+                definition.getPropertyDefinitions().values());
+
+        Collections.sort(definitions, new PropertyDefinitionComparator());
+
+        final boolean newRow = map == null;
+        if (newRow)
+            map = new PropertyMap(definition.getName());
+
+
+        final PropertyMap finalMap = map;
+        final PropertyMap copy = finalMap.deepCopy(true);
+
+        VLayout layout = new VLayout();
+        layout.setHeight100();
+
+        DynamicForm childForm = buildPropertiesForm(definitions, finalMap);
+        childForm.setHeight100();
+        layout.addMember(childForm);
+
+        final Window popup = new Window();
+        popup.setTitle("Edit Configuration Row");
+        popup.setWidth(800);
+        popup.setHeight(600);
+        popup.setIsModal(true);
+        popup.setShowModalMask(true);
+        popup.setShowCloseButton(false);
+        popup.centerInPage();
+
+        final IButton saveButton = new IButton("Save");
+//        saveButton.setID("config_structured_button_save");
+        saveButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+
+                if (newRow) {
+                    list.add(finalMap);
+                    ListGridRecord record = buildSummaryRecord(definitions, finalMap);
+
+                    System.out.println("here");
+                    try {
+                        summaryTable.addData(record);
+                        System.out.println("there");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    for (PropertyDefinition subDef : definitions) {
+                        PropertyDefinitionSimple subDefSimple = (PropertyDefinitionSimple) subDef;
+                        PropertySimple propertySimple = ((PropertySimple) finalMap.get(subDefSimple.getName()));
+                        existingRecord.setAttribute(subDefSimple.getName(), propertySimple != null ? propertySimple.getStringValue() : null);
+                    }
+                    summaryTable.updateData(existingRecord);
+                }
+                summaryTable.redraw();
+
+//                ListGridRecord[] rows = buildSummaryRecords(list, definitions);
+//                summaryTable.setData(rows);
+//                summaryTable.redraw();
+//                summaryTable.addData();
+                popup.destroy();
+
+            }
+        });
+
+
+        final IButton cancelButton = new IButton("Cancel");
+        cancelButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            public void onClick(ClickEvent clickEvent) {
+                if (!newRow) {
+                    list.getList().set(list.getList().indexOf(finalMap), copy);
+                }
+                popup.destroy();
+            }
+        });
+
+        HLayout buttons = new HLayout();
+        buttons.setAlign(Alignment.CENTER);
+        buttons.setMembersMargin(10);
+        buttons.setMembers(saveButton, cancelButton);
+        layout.addMember(buttons);
+
+        popup.addItem(layout);
+
+        popup.show();
+
+
     }
 
 

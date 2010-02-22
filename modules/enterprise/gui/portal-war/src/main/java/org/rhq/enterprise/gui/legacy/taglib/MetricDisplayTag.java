@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.util.RequestUtils;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.domain.measurement.MeasurementConverter;
 
 /**
  * This is a locale aware tag for displaying metrics and units. Suppose you have a metricDisplaySummary.setMin(9234289)

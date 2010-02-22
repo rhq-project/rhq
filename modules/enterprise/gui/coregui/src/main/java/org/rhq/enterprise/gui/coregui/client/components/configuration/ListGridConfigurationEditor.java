@@ -23,7 +23,9 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.enterprise.gui.coregui.client.inventory.configuration.ConfigurationGwtService;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Autofit;
@@ -46,9 +48,14 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import java.util.List;
 
 /**
+ * Note: This was a failed attempt at an editor composed with ListGrid components instead of DynamicForm components.
+ * I had problems with having different editors active for different rows in the table at the same time. Smart says
+ * they're working on enhancing this area... but the DynamicForm might be a better option anyway.
  * @author Greg Hinkle
  */
 public class ListGridConfigurationEditor extends VLayout {
+
+    private ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
 
     private ConfigurationDefinition definition;
     private Configuration configuration;
@@ -59,7 +66,7 @@ public class ListGridConfigurationEditor extends VLayout {
         setOverflow(Overflow.AUTO);
 
 
-        ConfigurationGwtService.App.getInstance().getResourceConfiguration(10005, new AsyncCallback<Configuration>() {
+        configurationService.getResourceConfiguration(10005, new AsyncCallback<Configuration>() {
             public void onFailure(Throwable caught) {
                 // TODO: Implement this method.
             }
@@ -71,7 +78,7 @@ public class ListGridConfigurationEditor extends VLayout {
             }
         });
 
-        ConfigurationGwtService.App.getInstance().getResourceConfigurationDefinition(10060, new AsyncCallback<ConfigurationDefinition>() {
+        configurationService.getResourceConfigurationDefinition(10060, new AsyncCallback<ConfigurationDefinition>() {
             public void onFailure(Throwable caught) {
                 // TODO: Implement this method.
             }

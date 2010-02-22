@@ -1,348 +1,379 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-   <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-   <parent>
-      <groupId>org.rhq</groupId>
-      <artifactId>rhq-parent</artifactId>
-      <version>3.0.0-SNAPSHOT</version>
-   </parent>
+    <parent>
+        <groupId>org.rhq</groupId>
+        <artifactId>rhq-parent</artifactId>
+        <version>3.0.0-SNAPSHOT</version>
+    </parent>
 
-   <groupId>org.rhq</groupId>
-   <artifactId>rhq-coregui</artifactId>
-   <packaging>war</packaging>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-coregui</artifactId>
+    <packaging>war</packaging>
 
-   <name>RHQ Enterprise Core GUI</name>
-   <description>the RHQ Enterprise Core GUI webapp</description>
+    <name>RHQ Enterprise Core GUI</name>
+    <description>the RHQ Enterprise Core GUI webapp</description>
 
-   <scm>
-      <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</connection>
-      <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</developerConnection>
-   </scm>
+    <scm>
+        <connection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/</connection>
+        <developerConnection>scm:git:ssh://git.fedorahosted.org/git/rhq.git/modules/enterprise/gui/coregui/
+        </developerConnection>
+    </scm>
 
-   <properties>
+    <properties>
 
-      <scm.module.path>modules/enterprise/gui/coregui/</scm.module.path>
+        <scm.module.path>modules/enterprise/gui/coregui/</scm.module.path>
 
-      <!-- dependency versions -->
+        <!-- dependency versions -->
 
-      <gwt.version>2.0.0</gwt.version>
+        <gwt.version>2.0.0</gwt.version>
 
-      <product.shortName>RHQ</product.shortName>
-      <product.name>RHQ</product.name>
-      <product.fullName>RHQ</product.fullName>
-      <product.url.domain>rhq-project.org</product.url.domain>
-      <product.sales.email>sales@rhq-project.org</product.sales.email>
-      <product.support.email>info@rhq-project.org</product.support.email>
-      <product.version>${project.version}</product.version>
-      <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
-   </properties>
+        <product.shortName>RHQ</product.shortName>
+        <product.name>RHQ</product.name>
+        <product.fullName>RHQ</product.fullName>
+        <product.url.domain>rhq-project.org</product.url.domain>
+        <product.sales.email>sales@rhq-project.org</product.sales.email>
+        <product.support.email>info@rhq-project.org</product.support.email>
+        <product.version>${project.version}</product.version>
+        <product.help.doc.root>http://support.rhq-project.org/display/RHQ/</product.help.doc.root>
+    </properties>
 
-   <dependencies>
-
-
-       <dependency>
-           <groupId>com.google.gwt</groupId>
-           <artifactId>gwt-servlet</artifactId>
-           <version>${gwt.version}</version>
-           <scope>compile</scope>
-       </dependency>
-       <dependency>
-           <groupId>com.google.gwt</groupId>
-           <artifactId>gwt-user</artifactId>
-           <version>${gwt.version}</version>
-           <scope>provided</scope>
-       </dependency>
-
-       <!--<dependency>
-           <groupId>com.google.gwt</groupId>
-           <artifactId>gwt-incubator</artifactId>
-           <scope>provided</scope>
-           <version>2.0</version>
-       </dependency>-->
+    <dependencies>
 
 
-         <dependency>
-             <groupId>com.smartgwt</groupId>
-             <artifactId>smartgwt</artifactId>
-             <version>2.0</version>
-         </dependency>
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-servlet</artifactId>
+            <version>${gwt.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-user</artifactId>
+            <version>${gwt.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--<dependency>
+            <groupId>com.google.gwt</groupId>
+            <artifactId>gwt-incubator</artifactId>
+            <scope>provided</scope>
+            <version>2.0</version>
+        </dependency>-->
 
 
-       <!-- Internal Deps -->
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-enterprise-server</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by rhq.ear (as ejb-jar) -->
-      </dependency>
-
-      <dependency>
-         <groupId>org.rhq</groupId>
-         <artifactId>rhq-core-util</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by rhq.ear -->
-      </dependency>
-
-      <!-- 3rd Party Deps -->
+        <dependency>
+            <groupId>com.smartgwt</groupId>
+            <artifactId>smartgwt</artifactId>
+            <version>2.0</version>
+        </dependency>
 
 
-      <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+        <!-- Internal Deps -->
 
-      <!-- transitive dependency needed for JspC -->
-      <dependency>
-         <groupId>javax.servlet</groupId>
-         <artifactId>servlet-api</artifactId>
-         <version>2.4</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
 
-      <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-enterprise-server</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear (as ejb-jar) -->
+        </dependency>
 
-      <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-ejb3x</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-util</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+            <!-- by rhq.ear -->
+        </dependency>
 
-      <!-- Needed due to JDK 1.5 bug. -->
-      <dependency>
-         <groupId>jboss</groupId>
-         <artifactId>jboss-annotations-ejb3</artifactId>
-         <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
-         <scope>provided</scope> <!-- by JBossAS -->
-      </dependency>
-
-   </dependencies>
-
-   <build>
-      <finalName>coregui</finalName>
+        <!-- 3rd Party Deps -->
 
 
+        <!-- needed for referenced domain entities that use Hibernate annotations (due to JDK5 bug) -->
+        <dependency>
+            <groupId>hibernate-annotations</groupId>
+            <artifactId>hibernate-annotations</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
 
-    <resources>
-      <resource>
-        <directory>src/main/java</directory>
-        <includes>
-          <include>**/*.java</include>
-          <include>**/*.gwt.xml</include>
-        </includes>
-      </resource>
-    </resources>
+        <!-- transitive dependency needed for JspC -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>servlet-api</artifactId>
+            <version>2.4</version>
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
 
-       
-      <plugins>
+        <!-- needed for referenced domain entities that use JPA annotations (due to JDK5 bug) -->
+        <dependency>
+            <groupId>javax.persistence</groupId>
+            <artifactId>persistence-api</artifactId>
+            <version>1.0</version>
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
 
-           <plugin>
-               <groupId>org.codehaus.mojo</groupId>
-               <artifactId>gwt-maven-plugin</artifactId>
-               <version>1.2.0-11137</version>
-               <configuration>
-                   <noServer>true</noServer>
-                   <inplace>false</inplace>
-                   <logLevel>INFO</logLevel>
-                   <runTarget>coregui/CoreGUI.html</runTarget>
-                   <extraJvmArgs>-Xmx512m</extraJvmArgs>
-                   <localWorkers>2</localWorkers>
-                   <draftCompile>true</draftCompile>
-                   <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
-		   <hostedWebapp>target/hostedwar</hostedWebapp>
-               </configuration>
-               <executions>
-                   <execution>
-                       <goals>
-                           <goal>compile</goal>
-                       </goals>
-                   </execution>
-               </executions>
-           </plugin>
+        <!-- needed for EJB3 annotations (e.g. ApplicationException) -->
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-ejb3x</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
+
+        <!-- Needed due to JDK 1.5 bug. -->
+        <dependency>
+            <groupId>jboss</groupId>
+            <artifactId>jboss-annotations-ejb3</artifactId>
+            <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
+            <scope>provided</scope>
+            <!-- by JBossAS -->
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>coregui</finalName>
 
 
-         <plugin>
-            <artifactId>maven-war-plugin</artifactId>
-            <version>2.1-beta-1</version>
-            <configuration>
-               <archive>
-                  <manifest>
-                     <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                     <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                  </manifest>
-                  <manifestEntries>
-                     <Build-Number>${buildNumber}</Build-Number>
-                  </manifestEntries>
-               </archive>
-               <webResources>
-                  <resource>
-                     <filtering>false</filtering>
-                     <directory>${basedir}/src/main/webapp</directory>
-                  </resource>
-               </webResources>
-            </configuration>
-         </plugin>
+        <resources>
+            <resource>
+                <directory>src/main/java</directory>
+                <includes>
+                    <include>**/*.java</include>
+                    <include>**/*.gwt.xml</include>
+                </includes>
+            </resource>
+        </resources>
 
-      <!--
-         <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.1</version>
-            <executions>
-               <execution>
-                  <id>Generate I18N Resource Bundles</id>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <tasks>
-                        <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
-                        <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
-                           <classpath refid="maven.runtime.classpath" />
-                           <classfileset dir="${project.build.outputDirectory}">
-                              <include name="**/*I18NResourceKeys.class" />
-                           </classfileset>
-                        </i18n>
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-               <execution>
-                  <id>Maintain an unfiltered copy of i18n properties files</id>
-                  <phase>process-classes</phase>
-                  <configuration>
-                     <tasks>
-                        <copy todir="${project.build.outputDirectory}">
-                           <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
-                              <include name="ApplicationResources.properties" />
-                           </fileset>
-                           <mapper type="glob" from="*" to="*.unfiltered" />
-                        </copy>
-                     </tasks>
-                  </configuration>
-                  <goals>
-                     <goal>run</goal>
-                  </goals>
-               </execution>
-            </executions>
-         </plugin>
-      -->
-      </plugins>
 
-   </build>
+        <plugins>
 
-   <profiles>
-      <profile>
-         <id>dev</id>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>gwt-maven-plugin</artifactId>
+                <version>1.2</version>
+                <configuration>
+                    <noServer>true</noServer>
+                    <inplace>false</inplace>
+                    <logLevel>INFO</logLevel>
+                    <runTarget>http://localhost:7080/coregui/CoreGUI.html</runTarget>
+                    <extraJvmArgs>-Xmx512m</extraJvmArgs>
+                    <localWorkers>2</localWorkers>
+                    <draftCompile>true</draftCompile>
+                    <buildOutputDirectory>target/gwtclasses</buildOutputDirectory>
+                    <hostedWebapp>target/hostedwar</hostedWebapp>
+                    <debugSuspend>false</debugSuspend>
+                    <servicePattern>**/gwt/*GWTService.java</servicePattern>
 
-         <properties>
-            <rhq.rootDir>../../../..</rhq.rootDir>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
-            <rhq.deploymentDir>${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}</rhq.deploymentDir>
-         </properties>
+                </configuration>
+                <executions>
+                    <execution>
 
-         <build>
-            <plugins>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>generateAsync</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
+
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.1-beta-1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                        <manifestEntries>
+                            <Build-Number>${buildNumber}</Build-Number>
+                        </manifestEntries>
+                    </archive>
+                    <webResources>
+                        <resource>
+                            <filtering>false</filtering>
+                            <directory>${basedir}/src/main/webapp</directory>
+                        </resource>
+                    </webResources>
+                </configuration>
+            </plugin>
+
+            <!--
                <plugin>
-                 <artifactId>maven-antrun-plugin</artifactId>
-                 <version>1.1</version>
-                 <executions>
-
+                  <artifactId>maven-antrun-plugin</artifactId>
+                  <version>1.1</version>
+                  <executions>
                      <execution>
-                        <id>deploy-classes</id>
-                        <phase>compile</phase>
+                        <id>Generate I18N Resource Bundles</id>
+                        <phase>process-classes</phase>
                         <configuration>
-                          <tasks>
-                            <!--
-                            <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
-                            <echo>*** Copying updated files from target/${project.build.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
-                            <copy todir="${classes.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="war/WEB-INF/classes" />
-                            </copy>
-                            -->
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from src${file.separator}main${file.separator}webapp${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="${basedir}/src/main/webapp" />
-                            </copy>
-                          </tasks>
+                           <tasks>
+                              <taskdef name="i18n" classpathref="maven.runtime.classpath" classname="mazz.i18n.ant.I18NAntTask" />
+                              <i18n outputdir="${project.build.outputDirectory}" defaultlocale="en" verbose="false" append="false" verify="true">
+                                 <classpath refid="maven.runtime.classpath" />
+                                 <classfileset dir="${project.build.outputDirectory}">
+                                    <include name="**/*I18NResourceKeys.class" />
+                                 </classfileset>
+                              </i18n>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
-
                      <execution>
-                        <id>deploy</id>
-                        <phase>package</phase>
+                        <id>Maintain an unfiltered copy of i18n properties files</id>
+                        <phase>process-classes</phase>
                         <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Copying updated files from target${file.separator}${project.build.finalName}${file.separator} to ${deployment.dir}${file.separator}...</echo>
-                            <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
-                               <fileset dir="${basedir}/target/${project.build.finalName}" />
-                            </copy>
-                          </tasks>
+                           <tasks>
+                              <copy todir="${project.build.outputDirectory}">
+                                 <fileset dir="src/main/webapp-filtered/WEB-INF/classes">
+                                    <include name="ApplicationResources.properties" />
+                                 </fileset>
+                                 <mapper type="glob" from="*" to="*.unfiltered" />
+                              </copy>
+                           </tasks>
                         </configuration>
                         <goals>
-                          <goal>run</goal>
+                           <goal>run</goal>
                         </goals>
                      </execution>
-
-                     <execution>
-                        <id>undeploy</id>
-                        <phase>clean</phase>
-                        <configuration>
-                          <tasks>
-                            <property name="deployment.dir" location="${rhq.deploymentDir}" />
-                            <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
-                            <delete dir="${deployment.dir}" />
-                          </tasks>
-                        </configuration>
-                        <goals>
-                          <goal>run</goal>
-                        </goals>
-                     </execution>
-
                   </executions>
                </plugin>
+            -->
+        </plugins>
 
-            </plugins>
-         </build>
-      </profile>
+    </build>
+
+    <profiles>
+        <profile>
+            <id>dev</id>
+
+            <properties>
+                <rhq.rootDir>../../../..</rhq.rootDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.deploymentName>${project.build.finalName}.war</rhq.deploymentName>
+                <rhq.deploymentDir>
+                    ${rhq.containerDir}/jbossas/server/default/deploy/${rhq.earName}/${rhq.deploymentName}
+                </rhq.deploymentDir>
+            </properties>
+
+            <build>
+                <plugins>
+
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+
+                            <execution>
+                                <id>deploy-classes</id>
+                                <phase>compile</phase>
+                                <configuration>
+                                    <tasks>
+                                        <!--
+                                        <property name="classes.dir" location="${rhq.deploymentDir}/WEB-INF/classes" />
+                                        <echo>*** Copying updated files from target/${project.build.finalName}/WEB-INF/classes to ${classes.dir}...</echo>
+                                        <copy todir="${classes.dir}" verbose="${rhq.verbose}">
+                                           <fileset dir="war/WEB-INF/classes" />
+                                        </copy>
+                                        -->
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <echo>*** Copying updated files from
+                                            src${file.separator}main${file.separator}webapp${file.separator} to
+                                            ${deployment.dir}${file.separator}...
+                                        </echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/src/main/webapp"/>
+                                        </copy>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>deploy</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <echo>*** Copying updated files from
+                                            target${file.separator}${project.build.finalName}${file.separator} to
+                                            ${deployment.dir}${file.separator}...
+                                        </echo>
+                                        <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
+                                            <fileset dir="${basedir}/target/${project.build.finalName}"/>
+                                        </copy>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>undeploy</id>
+                                <phase>clean</phase>
+                                <configuration>
+                                    <tasks>
+                                        <property name="deployment.dir" location="${rhq.deploymentDir}"/>
+                                        <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
+                                        <delete dir="${deployment.dir}"/>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                </plugins>
+            </build>
+        </profile>
 
 
-   </profiles>
+    </profiles>
 
-   <repositories>
-       <repository>
-         <id>smartgwt</id>
-         <name>SmartGWT</name>
-         <url>http://www.smartclient.com/maven2</url>
-         <snapshots>
-           <enabled>false</enabled>
-         </snapshots>
-       </repository>
+    <repositories>
+        <repository>
+            <id>smartgwt</id>
+            <name>SmartGWT</name>
+            <url>http://www.smartclient.com/maven2</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
 
-   </repositories>
+        <repository>
+            <id>codehaus</id>
+            <name>codehaus</name>
+            <url>http://repository.codehaus.org/</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+
+    </repositories>
 
 </project>

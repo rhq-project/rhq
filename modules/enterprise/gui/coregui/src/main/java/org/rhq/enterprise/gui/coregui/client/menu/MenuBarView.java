@@ -18,9 +18,25 @@
  */
 package org.rhq.enterprise.gui.coregui.client.menu;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.DemoCanvas;
+import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+
+import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.ClickListener;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Hyperlink;
 import com.google.gwt.user.client.ui.Widget;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.WidgetCanvas;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuBar;
 import com.smartgwt.client.widgets.menu.MenuItem;
@@ -30,9 +46,8 @@ import java.util.LinkedHashMap;
 /**
  * @author Greg Hinkle
  */
-public class MenuBarView extends Composite {
+public class MenuBarView extends HLayout {
 
-    WidgetCanvas canvas;
     MenuBar menuBar;
 
 
@@ -40,12 +55,18 @@ public class MenuBarView extends Composite {
 
     public MenuBarView() {
 
+        setHeight(30);
+        setAlign(VerticalAlignment.BOTTOM);
+        setAlign(Alignment.LEFT);
+/*
         menuBar = new MenuBar();
-
+        menuBar.setBackgroundColor("gray");
+        
 
         Menu icon = new Menu();
         icon.setTitle("iManage");
-        menus.put("icon",icon);
+        icon.addItem(new MenuItem("Dashboard"));
+        menuBar.addMenus(new Menu[]{icon},0);
 
 
         Menu overview = new Menu();
@@ -53,7 +74,7 @@ public class MenuBarView extends Composite {
         overview.addItem(new MenuItem("Content Configuration"));
         overview.addItem(new MenuItem("Monitoring"));
         overview.addItem(new MenuItem("Administration"));
-        menus.put(overview.getTitle(), overview);
+        menuBar.addMenus(new Menu[]{overview},1);
 
 
         Menu views = new Menu();
@@ -62,13 +83,76 @@ public class MenuBarView extends Composite {
         views.addItem(new MenuItem("Configuration Changes"));
         views.addItem(new MenuItem("Content Changes"));
         views.addItem(new MenuItem("Recent Administration"));
-        menus.put(views.getTitle(),views);
-
-        menuBar.setMenus(menus.values().toArray(new Menu[menus.size()]));
+        menuBar.addMenus(new Menu[]{views},2);
 
 
-        initWidget(menuBar);
-        setWidth("100%");
+        menuBar.setWidth100();
+
+        
+
+        addChild(menuBar);
+        setWidth100();*/
     }
 
+
+    @Override
+    protected void onInit() {
+        super.onInit();
+
+        setMembersMargin(20);
+
+        Img logo = new Img("RHQ.png", 100, 35);
+        addMember(logo);
+
+        Hyperlink dashboardLink = new Hyperlink("Dashboard", "Dashboard");
+        dashboardLink.setStylePrimaryName("TopSectionLink");
+        addMember(dashboardLink);
+
+        Hyperlink demoLink = new Hyperlink("Demo", "Demo");
+        demoLink.setStylePrimaryName("TopSectionLink");
+        addMember(demoLink);
+
+        Hyperlink resourcesLink = new Hyperlink("Resources", "Resources");
+        resourcesLink.setStylePrimaryName("TopSectionLink");
+        addMember(resourcesLink);
+
+        Hyperlink bundlesLink = new Hyperlink("Bundles", "Bundles");
+        bundlesLink.setStylePrimaryName("TopSectionLink");
+        addMember(bundlesLink);
+        
+
+        Hyperlink adminLink = new Hyperlink("Administration", "Administration");
+        adminLink.setStylePrimaryName("TopSectionLink");
+        addMember(adminLink);
+
+
+
+//
+//        LinkItem demoLink = new LinkItem("Demo");
+//        demoLink.setShowTitle(false);
+//        demoLink.setLinkTitle("Demo");
+//        demoLink.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent clickEvent) {
+//                CoreGUI.setContent(new DemoCanvas());
+//            }
+//        });
+//
+//
+//        LinkItem adminLink = new LinkItem("Administration");
+//        adminLink.setShowTitle(false);
+//        adminLink.setLinkTitle("Administration");
+//
+//        demoLink.addClickHandler(new ClickHandler() {
+//            public void onClick(ClickEvent clickEvent) {
+//                CoreGUI.setContent(new AdministrationView());
+//            }
+//        });
+//
+//        DynamicForm form = new DynamicForm();
+//
+//        form.setItems(demoLink, adminLink);
+//
+//        addMember(form);
+
+    }
 }

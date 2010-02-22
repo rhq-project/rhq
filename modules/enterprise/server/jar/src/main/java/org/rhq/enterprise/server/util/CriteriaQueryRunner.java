@@ -53,7 +53,9 @@ public class CriteriaQueryRunner<T> {
         long count = (Long) countQuery.getSingleResult();
         List<T> results = query.getResultList();
 
-        initAllPersistentBags(results);
+        if (!queryGenerator.getPersistentBagFields().isEmpty()) {
+            initAllPersistentBags(results);
+        }
 
         return new PageList<T>(results, (int) count, criteria.getPageControl());
     }

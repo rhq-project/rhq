@@ -632,6 +632,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         int childResourceId = resourceId;
         Resource parent;
         while ((parent = getParentResource(childResourceId)) != null) {
+            resourceLineage.addAll(parent.getChildResources());
             resourceLineage.addFirst(parent);
             childResourceId = parent.getId(); // This also ensures Hibernate actually populates parent's fields.
         }

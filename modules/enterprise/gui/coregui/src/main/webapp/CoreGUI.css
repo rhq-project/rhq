@@ -51,7 +51,43 @@ body {
 }
 
 
+.TopSectionLink {
+    font-size: 16pt;
+    font-weight: bold;
+    text-decoration: none;
+    color: black;
+}
+
+z
+
+.BreadCrumb {
+    font-size: 12pt;
+    font-weidght: bold;
+    text-decoration: none;
+    color: darkgray;
+}
+
+.SectionHeader {
+    font-size: 16pt;
+    font-weight: bold;
+}
+
+
 .textItemDisabled {
     background: rgb(214, 213, 217);
+}
 
+.formTitle, .formTitleFocused {
+    font-weight:bold;
+}
+
+
+.SubTabButton,.SubTabButtonSelected {
+    font-family: Arial,Verdana,Bitstream Vera Sans,sans-serif;
+    font-size: 11px;
+    padding: 2px;
+}
+
+.SubTabButtonSelected {
+    font-weight: bold;   
 }

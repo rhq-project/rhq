@@ -32,7 +32,7 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertConditionLog;
 import org.rhq.core.domain.alert.composite.AlertHistoryComposite;
-import org.rhq.core.server.MeasurementConverter;
+import org.rhq.core.domain.measurement.MeasurementConverter;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;

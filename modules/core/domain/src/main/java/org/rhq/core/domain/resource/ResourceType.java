@@ -650,6 +650,10 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
         return operationDefinitions;
     }
 
+    public void setOperationDefinitions(Set<OperationDefinition> operationDefinitions) {
+        this.operationDefinitions = operationDefinitions;
+    }
+
     public boolean addOperationDefinition(OperationDefinition operationDefinition) {
         operationDefinition.setResourceType(this);
         return this.operationDefinitions.add(operationDefinition);

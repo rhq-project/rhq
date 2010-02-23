@@ -87,7 +87,7 @@ public class SavedSearch {
     @Column(name = "SUBJECT_ID", nullable = false)
     private Subject subject;
 
-    @Column(name = "RESOURCE_ID", insertable = false, updatable = false)
+    @Column(name = "SUBJECT_ID", insertable = false, updatable = false)
     private int subjectId;
 
     @Column(name = "GLOBAL", nullable = false)

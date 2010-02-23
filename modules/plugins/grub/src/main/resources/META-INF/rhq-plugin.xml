@@ -11,7 +11,8 @@
    <server name="GRUB"
            description="The GRUB boot loader"
            discovery="GrubDiscoveryComponent"
-           class="GrubComponent">
+           class="GrubComponent"
+           singleton="true">
 
       <plugin-configuration>
          <c:group name="augeas" displayName="Augeas Settings">

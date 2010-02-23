@@ -29,12 +29,18 @@
             <h:commandButton id="resourceIdSubmit"
                              value="Select"
                              type="submit"
-                             action="#{operationsBean.selectResource}" />
+                             action="#{operationsBean.selectResource}"
+                             styleClass="buttonmed"
+                    />
         </rich:panel>
     </h:panelGroup>
 
-    <h:panelGroup style="width:60%">
+    <h:panelGroup style="width:60%; vertical-align:top;" >
         <rich:panel rendered="#{not empty operationsBean.operationNames}">
+
+            Operations for:  <h:outputText value=" #{operationsBean.resourceName}"/>
+            <br/>
+
             <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationName}">
                 <f:selectItems value="#{operationsBean.operationNames}"/>
             </h:selectOneMenu>
@@ -42,29 +48,38 @@
             <h:commandButton id="opNameSubmit"
                              value="Select"
                              type="submit"
-                             action="#{operationsBean.selectOperation}" />
+                             action="#{operationsBean.selectOperation}"
+                             styleClass="buttonmed"
+                    />
         </rich:panel>
     </h:panelGroup>
 </h:panelGrid>
 <p/>
     <h:panelGroup style="width:100%">
-        <h:outputText value="3rd panel : "/>
-        <h:outputText value="#{operationsBean.operationName}"/>
-        <br/>
+        <h:messages />
         <rich:panel rendered="#{not empty operationsBean.operationName}">
+            <br/>
+            Parameters for <h:outputText value=" #{operationsBean.operationName}"/>
+            <p/>
+            <h:selectOneMenu id="tokenModeMenu" value="#{operationsBean.tokenMode}">
+                <f:selectItem itemValue="literal" itemLabel="Literal"/>
+                <f:selectItem itemValue="interpreted" itemLabel="Interpreted"/>
+            </h:selectOneMenu>
+            <p/>
             <onc:config configurationDefinition="#{operationsBean.configurationDefinition}"
                         configuration="#{operationsBean.configuration}"
-                        nullConfigurationDefinitionMessage="NUll configuration definition"
-                        nullConfigurationMessage="null configuration"
+                        nullConfigurationDefinitionMessage="#{operationsBean.nullConfigurationDefinitionMessage}"
+                        nullConfigurationMessage="#{nullConfigurationMessage}"
                         nullConfigurationStyle="InfoBlock"
-
-                        id="opParamConfiguration"
+                        readOnly="false"
                     />
             <p/>
             <h:commandButton id="opParamSubmit"
                              value="Set"
                              type="submit"
-                             action="#{operationsBean.useConfiguration}" />
+                             action="#{operationsBean.useConfiguration}"
+                             styleClass="buttonmed"
+                    />
         </rich:panel>
     </h:panelGroup>
 

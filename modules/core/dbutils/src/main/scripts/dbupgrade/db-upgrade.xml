@@ -3202,6 +3202,31 @@
                      </statement>
                 </schema-directSQL>
             </schemaSpec>
+        	
+            <schemaSpec version="2.82">
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_SAVED_SEARCH">
+                        CREATE TABLE RHQ_SAVED_SEARCH ( ID INTEGER )
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="CONTEXT" columnType="VARCHAR2" precision="25" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="CONTEXT" nullable="FALSE" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="NAME" columnType="VARCHAR2" precision="200" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="DESCRIPTION" columnType="VARCHAR2" precision="500" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="PATTERN" columnType="VARCHAR2" precision="1000" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="PATTERN" nullable="FALSE" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="JPQL_TRANSLATION" columnType="VARCHAR2" precision="4000" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="LAST_COMPUTE_TIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="RESULT_COUNT" columnType="LONG" />
+                
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="SUBJECT_ID" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_SAVED_SEARCH" column="GLOBAL" columnType="BOOLEAN" />
+                <schema-alterColumn table="RHQ_SAVED_SEARCH" column="GLOBAL" nullable="FALSE" />
+            </schemaSpec>
         </dbupgrade>
     </target>
 </project>

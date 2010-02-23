@@ -229,9 +229,9 @@ public class Subject implements Externalizable {
 
     @OneToMany
     @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") })
-    private java.util.Set<SubjectRoleEntity> subjectRoles;
+    private Set<SubjectRoleEntity> subjectRoles;
 
-    private java.util.Set<Role> roles;
+    private Set<Role> roles;
 
     @Transient
     private Integer sessionId = null;
@@ -362,14 +362,18 @@ public class Subject implements Externalizable {
         this.configuration = configuration;
     }
 
-    public java.util.Set<SubjectRoleEntity> getSubjectRoles() {
+    public Set<SubjectRoleEntity> getSubjectRoles() {
         if (subjectRoles == null) {
             subjectRoles = new HashSet<SubjectRoleEntity>();
         }
         return subjectRoles;
     }
 
-    public java.util.Set<Role> getRoles() {
+    public void setSubjectRoles(Set<SubjectRoleEntity> subjectRolesIn) {
+        subjectRoles = subjectRolesIn;
+    }
+
+    public Set<Role> getRoles() {
         Set<Role> r = new HashSet<Role>();
         for (SubjectRoleEntity s : getSubjectRoles()) {
             r.add(s.getRole());
@@ -378,15 +382,39 @@ public class Subject implements Externalizable {
     }
 
     public void setRoles(Set<Role> roles) {
-        this.roles = roles;
+        Set<SubjectRoleEntity> sroles = getSubjectRoles();
+        sroles.clear();
+        for (Role r : roles) {
+            SubjectRoleEntity s = new SubjectRoleEntity();
+            s.setSubject(this);
+            s.setRole(r);
+            sroles.add(s);
+        }
+    }
+
+    public void addRole(Role role, boolean ldap) {
+        SubjectRoleEntity s = new SubjectRoleEntity();
+        s.setSubject(this);
+        s.setRole(role);
+        s.setLdap(ldap);
+        getSubjectRoles().add(s);
     }
 
     public void addRole(Role role) {
-        getRoles().add(role);
+        addRole(role, false);
     }
 
     public void removeRole(Role role) {
-        getRoles().remove(role);
+        SubjectRoleEntity toRemove = null;
+        for (SubjectRoleEntity s : getSubjectRoles()) {
+            if (s.getSubject().equals(this) && s.getRole().equals(role)) {
+                toRemove = s;
+                break;
+            }
+        }
+        if (toRemove != null) {
+            getSubjectRoles().remove(toRemove);
+        }
     }
 
     @Override

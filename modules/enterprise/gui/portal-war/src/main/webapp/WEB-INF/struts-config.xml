@@ -2559,6 +2559,16 @@
                     path="/common/GenericError.jsp"/>
       </action>
 
+       <action path="/alerts/AckAlert"
+               scope="request"
+               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.AckAlertAction">
+           <set-property property="title" value="View+Alert"/>
+           <exception key="exception.AlertNotFoundException"
+                      type="org.rhq.enterprise.server.legacy.events.AlertNotFoundException"
+                      path="/common/GenericError.jsp"/>
+           <forward name="success" path="/alerts/Alerts.do" redirect="true" />
+       </action>
+
       <action path="/alerts/ViewDefinition"
               scope="request"
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.alerts.config.ViewDefinitionAction">

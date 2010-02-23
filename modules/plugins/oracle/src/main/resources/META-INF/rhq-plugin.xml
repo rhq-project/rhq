@@ -580,7 +580,7 @@
             <c:simple-property name="table" default="DBA_USERS"/>
             <c:simple-property name="metricQuery" default="SELECT * FROM DBA_USERS"/>
             <c:simple-property name="keyColumn" default="username"/>
-            <c:simple-property name="name" default="Oracle User - {key}"/>
+            <c:simple-property name="name" default="{key}"/>
             <c:simple-property name="description" default="Oracle User"/>
          </plugin-configuration>
 

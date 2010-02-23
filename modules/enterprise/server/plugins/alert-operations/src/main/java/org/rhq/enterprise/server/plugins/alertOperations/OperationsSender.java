@@ -18,9 +18,8 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,7 +33,7 @@ import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.exception.ScheduleException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -51,7 +50,7 @@ public class OperationsSender extends AlertSender {
 
     private final Log log = LogFactory.getLog(OperationsSender.class);
     static final String RESOURCE_ID = "resourceId";
-    static final String OPERATION_NAME = "operationName";
+    static final String OPERATION_ID = "operationName";
     static final String USABLE = "usable";
     protected static final String TOKEN_MODE = "tokenMode";
     private static final String LITERAL = "literal";
@@ -62,8 +61,8 @@ public class OperationsSender extends AlertSender {
     public SenderResult send(Alert alert) {
 
         PropertySimple resProp = alertParameters.getSimple(RESOURCE_ID);
-        PropertySimple opNameProp = alertParameters.getSimple(OPERATION_NAME);
-        if (resProp==null || resProp.getIntegerValue() == null || opNameProp == null || opNameProp.getStringValue() == null)
+        PropertySimple opIdProp = alertParameters.getSimple(OPERATION_ID);
+        if (resProp==null || resProp.getIntegerValue() == null || opIdProp == null || opIdProp.getStringValue() == null)
             return new SenderResult(ResultState.FAILURE, "Not enough parameters given");
 
         PropertySimple usableProp = alertParameters.getSimple(USABLE);
@@ -71,10 +70,25 @@ public class OperationsSender extends AlertSender {
             return new SenderResult(ResultState.FAILURE,"Not yet configured");
 
         Integer resourceId = resProp.getIntegerValue();
-        String opName = opNameProp.getStringValue();
+        Integer opId = opIdProp.getIntegerValue();
+
+        String opName = null;
 
         OperationManagerLocal opMgr = LookupUtil.getOperationManager();
         Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO get real subject
+
+        List<OperationDefinition> opdefs = opMgr.findSupportedResourceOperations(subject,resourceId,false);
+        for (OperationDefinition opdef : opdefs ) {
+            if (opdef.getId() == opId) {
+                opName = opdef.getName();
+                break;
+            }
+        }
+
+        if (opName==null) {
+            return new SenderResult(ResultState.FAILURE, "No operation found ");
+        }
+
 
         PropertySimple parameterConfigProp = alertParameters.getSimple(PARAMETERS_CONFIG);
         Configuration parameters = null ;

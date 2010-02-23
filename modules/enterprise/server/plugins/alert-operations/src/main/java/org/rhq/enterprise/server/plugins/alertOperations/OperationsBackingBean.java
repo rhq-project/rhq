@@ -28,7 +28,6 @@ import org.apache.commons.logging.LogFactory;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.annotations.web.RequestParameter;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
@@ -54,8 +53,8 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
     private String resMode;
     private String tokenMode;
     Integer resId;
-    private Integer operationName;
-    private Map<String, Integer> operationNames = new HashMap<String, Integer>();
+    private Integer operationId;
+    private Map<String, Integer> operationIds = new HashMap<String, Integer>();
     private String resourceName;
 
 
@@ -79,12 +78,12 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
         if (resId != null) {
             persistProperty(alertParameters, OperationsSender.RESOURCE_ID,resId);
-            cleanProperty(alertParameters,OperationsSender.OPERATION_NAME);
+            cleanProperty(alertParameters,OperationsSender.OPERATION_ID);
             cleanProperty(alertParameters,OperationsSender.USABLE);
 
         }
 
-        obtainOperationNames();
+        obtainOperationIds();
 
         return ALERT_NOTIFICATIONS;
     }
@@ -92,10 +91,10 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
 
     public String selectOperation() {
-        log.info("In selectOperation, resId is " + resId + " opName is " + operationName);
+        log.info("In selectOperation, resId is " + resId + " opName is " + operationId);
 
-        if (operationName != null ) {
-            persistProperty(alertParameters, OperationsSender.OPERATION_NAME,operationName);
+        if (operationId != null ) {
+            persistProperty(alertParameters, OperationsSender.OPERATION_ID, operationId);
             lookupConfiguration();
         }
 
@@ -112,10 +111,10 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
 
 //            int operationId = Integer.valueOf(FacesContextUtility.getRequiredRequestParameter("opId"));
             OperationManagerLocal opMan = LookupUtil.getOperationManager();
-            obtainOperationNames();
+            obtainOperationIds();
 
 
-            OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationName);
+            OperationDefinition operationDefinition = opMan.getOperationDefinition(subject, operationId);
             configurationDefinition = operationDefinition.getParametersConfigurationDefinition();
 
 
@@ -140,7 +139,7 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
         return ALERT_NOTIFICATIONS;
     }
 
-    private void obtainOperationNames() {
+    private void obtainOperationIds() {
 
         PropertySimple prop = alertParameters.getSimple(OperationsSender.RESOURCE_ID);
         if (prop!=null)
@@ -152,7 +151,7 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
             Subject subject = LookupUtil.getSubjectManager().getOverlord(); // TODO replace with real subject
             List<OperationDefinition> opDefs = opMan.findSupportedResourceOperations(subject, resId, false);
             for (OperationDefinition def : opDefs) {
-                operationNames.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
+                operationIds.put(def.getDisplayName(),def.getId()); // TODO add more distinctive stuff in display
             }
         }
     }
@@ -205,30 +204,30 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
         this.resourceName = resourceName;
     }
 
-    public Integer getOperationName() {
+    public Integer getOperationId() {
 
-        if (operationName==null) {
-            PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_NAME);
+        if (operationId ==null) {
+            PropertySimple prop = alertParameters.getSimple(OperationsSender.OPERATION_ID);
             if (prop!=null)
-                operationName = prop.getIntegerValue();
+                operationId = prop.getIntegerValue();
         }
 
-        return operationName;
+        return operationId;
     }
 
-    public void setOperationName(Integer operationName) {
-        this.operationName = operationName;
+    public void setOperationId(Integer operationId) {
+        this.operationId = operationId;
     }
 
-    public Map<String, Integer> getOperationNames() {
+    public Map<String, Integer> getOperationIds() {
 
-        obtainOperationNames();
+        obtainOperationIds();
 
-        return operationNames;
+        return operationIds;
     }
 
-    public void setOperationNames(Map<String, Integer> operationNames) {
-        this.operationNames = operationNames;
+    public void setOperationIds(Map<String, Integer> operationIds) {
+        this.operationIds = operationIds;
     }
 
     public ConfigurationDefinition getConfigurationDefinition() {
@@ -239,15 +238,11 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
     }
 
     public void setConfigurationDefinition(ConfigurationDefinition configurationDefinition) {
-        log.info("set CD: " + configurationDefinition);
         this.configurationDefinition = configurationDefinition;
     }
 
     public Configuration getConfiguration() {
-
         return configuration;
-
-
     }
 
     public void setConfiguration(Configuration configuration) {
@@ -255,7 +250,7 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
         log.info("setC: " + configuration);
     }
 
-        public String getNullConfigurationDefinitionMessage() {
+    public String getNullConfigurationDefinitionMessage() {
         return "This operation does not take any parameters.";
     }
 
@@ -279,6 +274,5 @@ log.info("gConfig: " + configuration + ", " + configuration.hashCode() + ", " + 
 
         persistProperty(alertParameters, OperationsSender.TOKEN_MODE,tokenMode);
     }
-
 
 }

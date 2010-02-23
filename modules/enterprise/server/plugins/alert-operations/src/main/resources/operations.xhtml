@@ -36,13 +36,13 @@
     </h:panelGroup>
 
     <h:panelGroup style="width:60%; vertical-align:top;" >
-        <rich:panel rendered="#{not empty operationsBean.operationNames}">
+        <rich:panel rendered="#{not empty operationsBean.operationIds}">
 
             Operations for:  <h:outputText value=" #{operationsBean.resourceName}"/>
             <br/>
 
-            <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationName}">
-                <f:selectItems value="#{operationsBean.operationNames}"/>
+            <h:selectOneMenu id="selectOperationMenu" value="#{operationsBean.operationId}">
+                <f:selectItems value="#{operationsBean.operationIds}"/>
             </h:selectOneMenu>
             <p/>
             <h:commandButton id="opNameSubmit"
@@ -57,9 +57,9 @@
 <p/>
     <h:panelGroup style="width:100%">
         <h:messages />
-        <rich:panel rendered="#{not empty operationsBean.operationName}">
+        <rich:panel rendered="#{not empty operationsBean.operationId}">
             <br/>
-            Parameters for <h:outputText value=" #{operationsBean.operationName}"/>
+            Parameters for <h:outputText value=" #{operationsBean.operationId}"/>
             <p/>
             <h:selectOneMenu id="tokenModeMenu" value="#{operationsBean.tokenMode}">
                 <f:selectItem itemValue="literal" itemLabel="Literal"/>

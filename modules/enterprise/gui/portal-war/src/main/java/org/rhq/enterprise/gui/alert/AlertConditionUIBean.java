@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.alert;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
@@ -74,9 +75,9 @@ public class AlertConditionUIBean {
     private Map<String, String> conditionExpressions;
     private Map<String, String> availabilities;
     private Map<String, String> severities;
-    private Map<String, String> operationStatuses;
     private Map<String, String> comparators;
     private Map<String, String> baselines;
+    private Map<String, String> operationStatuses;
 
     private Map<String, Integer> measurements;
     private Map<String, Integer> traits;

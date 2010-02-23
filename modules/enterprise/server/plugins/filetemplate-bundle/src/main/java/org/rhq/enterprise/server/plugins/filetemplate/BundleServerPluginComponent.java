@@ -25,13 +25,14 @@ import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginContext;
+import org.rhq.enterprise.server.plugin.pc.bundle.BundleServerPluginFacet;
 
 /**
  * A bundle server-side plugin component that the server uses to process file template bundles.
  * 
  * @author John Mazzitelli
  */
-public class BundleServerPluginComponent implements ServerPluginComponent, ControlFacet {
+public class BundleServerPluginComponent implements ServerPluginComponent, BundleServerPluginFacet, ControlFacet {
 
     private ServerPluginContext context;
 

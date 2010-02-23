@@ -366,6 +366,13 @@
           <artifactId>test-utils</artifactId>
           <version>${version}</version>
        </dependency>
+       
+       <dependency>
+          <groupId>org.antlr</groupId>
+          <artifactId>antlr</artifactId>
+          <version>3.2</version>
+          <scope>compile</scope>
+       </dependency>
    </dependencies>
 
    <build>
@@ -452,6 +459,41 @@
                   <additionalClasspathElement>${settings.localRepository}/com/oracle/ojdbc5/${ojdbc5.version}/ojdbc5-${ojdbc5.version}.jar</additionalClasspathElement>
                </additionalClasspathElements>
             </configuration>
+         </plugin>
+
+         <plugin>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr3-maven-plugin</artifactId>
+            <version>3.2</version>
+            <executions>
+               <execution>
+                  <phase>compile</phase>
+                     <goals>
+                        <goal>antlr</goal>
+                     </goals>
+                  <configuration>
+                     <conversionTimeout>30000</conversionTimeout>
+                     <debug>false</debug>
+                     <dfa>false</dfa>
+                     <nfa>false</nfa>
+                     <excludes>
+                        
+                     </excludes>
+                     <includes>
+                        
+                     </includes>
+                     <libDirectory>src/main/antlr3/imports</libDirectory>
+                     <messageFormat>antlr</messageFormat>
+                     <outputDirectory>target/generated-sources/antlr3</outputDirectory>
+                     <printGrammar>false</printGrammar>
+                     <profile>false</profile>
+                     <report>false</report>
+                     <sourceDirectory>src/main/antlr3</sourceDirectory>
+                     <trace>false</trace>
+                     <verbose>true</verbose>
+                  </configuration>
+               </execution>
+            </executions>
          </plugin>
 
       </plugins>

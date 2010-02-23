@@ -38,6 +38,8 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
+import javax.persistence.PrePersist;
+import javax.persistence.PreUpdate;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
@@ -108,6 +110,13 @@ public class AlertNotificationLog implements Serializable {
     @Transient
     transient List<String> transientEmails = new ArrayList<String>();
 
+    @PrePersist
+    @PreUpdate
+    public void trimMessage() {
+        if (message!=null && message.length()>255)
+            message = message.substring(0,255);
+    }
+
     protected AlertNotificationLog() {
     } // JPA
 
@@ -130,7 +139,6 @@ public class AlertNotificationLog implements Serializable {
 
     public AlertNotificationLog(Alert alert, String senderName, ResultState state, String message) {
         this.alert = alert;
-        this.sender = sender;
         this.resultState = state;
         this.message = message;
 

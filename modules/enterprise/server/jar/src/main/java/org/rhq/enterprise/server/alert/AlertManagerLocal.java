@@ -96,9 +96,10 @@ public interface AlertManagerLocal {
     /**
      * Create a human readable description of the conditions that led to this alert.
      * @param alert Alert to create human readable condition description
+     * @param shortVersion if true the messages printed are abbreviated to save space
      * @return human readable condition log
      */
-    String prettyPrintAlertConditions(Alert alert);
+    String prettyPrintAlertConditions(Alert alert, boolean shortVersion);
 
     /**
      * Tells us if the definition of the passed alert will be disabled after this alert was fired

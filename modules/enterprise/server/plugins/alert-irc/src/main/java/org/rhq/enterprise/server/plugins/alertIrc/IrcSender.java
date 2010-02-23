@@ -65,7 +65,7 @@ public class IrcSender extends AlertSender<IrcAlertComponent> {
         b.append("):  ");
         b.append(alertManager.prettyPrintAlertURL(alert));
         b.append("\n");
-        b.append(alertManager.prettyPrintAlertConditions(alert));
+        b.append(alertManager.prettyPrintAlertConditions(alert, false));
 
         return b.toString();
     }

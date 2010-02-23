@@ -74,7 +74,7 @@ public class MobicentsSender extends AlertSender {
                 // Switch locale to english, as the voice synthesizer expects this for now
                 Locale currentLocale = Locale.getDefault();
                 Locale.setDefault(Locale.ENGLISH);
-                b.append(alertManager.prettyPrintAlertConditions(alert));
+                b.append(alertManager.prettyPrintAlertConditions(alert, false));
                 Locale.setDefault(currentLocale);
 
                 boolean willBeDisabled = alertManager.willDefinitionBeDisabled(alert);

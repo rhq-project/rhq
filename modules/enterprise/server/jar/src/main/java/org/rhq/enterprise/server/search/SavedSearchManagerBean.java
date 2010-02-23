@@ -24,10 +24,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * This bean provides functionality to CRUD saved search patterns.
@@ -77,6 +81,18 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
         SavedSearch savedSearch = entityManager.find(SavedSearch.class, savedSearchId);
         validateReadPermission(subject, savedSearch);
         return savedSearch;
+    }
+
+    public PageList<SavedSearch> findSavedSearchesByCriteria(Subject subject, SavedSearchCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
+
+        if (!authorizationManager.isInventoryManager(subject)) {
+            generator.setAuthorizationCustomConditionFragment("(subject.id=" + subject.getId() + " OR global=true)");
+        }
+
+        CriteriaQueryRunner<SavedSearch> queryRunner = new CriteriaQueryRunner<SavedSearch>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
     }
 
     private void validateManipulatePermission(Subject subject, SavedSearch savedSearch) {

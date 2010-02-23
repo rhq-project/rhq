@@ -25,7 +25,9 @@ import javax.jws.WebService;
 import javax.jws.soap.SOAPBinding;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.system.ServerVersion;
 
@@ -99,4 +101,18 @@ public interface SavedSearchManagerRemote {
     public SavedSearch getSavedSearchById( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "savedSearchId") int savedSearchId);
+
+    /**
+     * Returns the {@link PageList} of {@link SavedSearch} entities that match the criteria filters that are visible
+     * to the user
+     *
+     * @param subject  the logged in user requesting the {@link PageList} of {@link SavedSearch} to be returned
+     * @param criteria the {@link SavedSearchCriteria} object that will filter the returned results
+     *
+     * @return the {@link PageList} of {@link SavedSearch} entities that match the criteria filters, an empty list
+     *         will be returned if no results were found or none matches the given filters
+     */
+    public PageList<SavedSearch> findSavedSearchesByCriteria( //
+        @WebParam(name = "subject") Subject subject, //
+        @WebParam(name = "criteria") SavedSearchCriteria criteria);
 }

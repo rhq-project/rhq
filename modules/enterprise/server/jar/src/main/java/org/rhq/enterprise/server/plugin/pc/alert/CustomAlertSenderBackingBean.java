@@ -40,8 +40,23 @@ public class CustomAlertSenderBackingBean {
     public void setAlertParameters(Configuration alertParameters) {
         this.alertParameters = alertParameters;
     }
+    /**
+     * This method is called when the alert notification that uses this backing bean
+     * is removed, so that the backing bean can do some cleanup work
+     */
+    protected void cleanup() {}
 
+    /**
+     * Persist the passed configuration object. This can be a new object or one
+     * that already exists in the database. If the input is null, not persistence
+     * happens and null is returned.
+     * @param config configuration to persist or update
+     * @return  a merged copy of the configuration or null
+     */
     protected Configuration persistConfiguration(Configuration config) {
+
+        if (config==null)
+            return null;
 
         ConfigurationManagerLocal mgr = LookupUtil.getConfigurationManager();
         config = mgr.mergeConfiguration(config);
@@ -50,6 +65,14 @@ public class CustomAlertSenderBackingBean {
 
     }
 
+    /**
+     * Persist a single property of a given configuration. If the property does not yet exist,
+     * it is created otherwise overwritten with the new value.
+     * @param config configuration the property is on
+     * @param propertyName name of the property to persist
+     * @param value (new) value of the property to persist
+     * @return the updated configuration
+     */
     protected Configuration persistProperty(Configuration config, String propertyName, Object value) {
 
         PropertySimple prop = config.getSimple(propertyName);
@@ -65,6 +88,12 @@ public class CustomAlertSenderBackingBean {
         return ret;
     }
 
+    /**
+     * Remove one property from the passed configuration. Returns the updated configuration
+     * @param config configuration the property is on
+     * @param propertyName name of the property to remove
+     * @return the updated configuration
+     */
     protected Configuration cleanProperty(Configuration config, String propertyName) {
 
         Configuration ret = config;
@@ -76,4 +105,5 @@ public class CustomAlertSenderBackingBean {
 
         return ret;
     }
+
 }

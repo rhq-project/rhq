@@ -37,7 +37,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -161,8 +160,7 @@ import org.rhq.core.domain.util.serial.ExternalizableStrategy;
         + "   AND s.fsystem = FALSE " //
         + "   AND s.factive = TRUE"), //
     @NamedQuery(name = Subject.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false")
-})
+        + "SELECT s.name, s.name FROM Subject AS s WHERE s.fsystem = false") })
 @SequenceGenerator(name = "RHQ_SUBJECT_ID_SEQ", sequenceName = "RHQ_SUBJECT_ID_SEQ")
 @Table(name = "RHQ_SUBJECT")
 /*@Cache(usage= CacheConcurrencyStrategy.TRANSACTIONAL)*/
@@ -229,8 +227,10 @@ public class Subject implements Externalizable {
     @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE })
     private Configuration configuration;
 
-    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
-    @ManyToMany
+    @OneToMany
+    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") })
+    private java.util.Set<SubjectRoleEntity> subjectRoles;
+
     private java.util.Set<Role> roles;
 
     @Transient
@@ -362,12 +362,19 @@ public class Subject implements Externalizable {
         this.configuration = configuration;
     }
 
-    public java.util.Set<Role> getRoles() {
-        if (this.roles == null) {
-            this.roles = new HashSet<Role>();
+    public java.util.Set<SubjectRoleEntity> getSubjectRoles() {
+        if (subjectRoles == null) {
+            subjectRoles = new HashSet<SubjectRoleEntity>();
         }
+        return subjectRoles;
+    }
 
-        return this.roles;
+    public java.util.Set<Role> getRoles() {
+        Set<Role> r = new HashSet<Role>();
+        for (SubjectRoleEntity s : getSubjectRoles()) {
+            r.add(s.getRole());
+        }
+        return r;
     }
 
     public void setRoles(Set<Role> roles) {

@@ -47,6 +47,7 @@ import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.auth.SubjectRoleEntity;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
@@ -78,8 +79,7 @@ import org.rhq.core.domain.auth.Subject;
         + "                          JOIN ss.roles AS rr " //
         + "                         WHERE ss.id = :subjectId )"), //
     @NamedQuery(name = Role.QUERY_DYNAMIC_CONFIG_VALUES, query = "" //
-        + "SELECT r.name, r.name FROM Role AS r")
-})
+        + "SELECT r.name, r.name FROM Role AS r") })
 @SequenceGenerator(name = "RHQ_ROLE_ID_SEQ", sequenceName = "RHQ_ROLE_ID_SEQ")
 @Table(name = "RHQ_ROLE")
 public class Role implements Serializable {
@@ -106,7 +106,10 @@ public class Role implements Serializable {
     @Column(name = "FSYSTEM")
     private Boolean fsystem;
 
-    @ManyToMany(mappedBy = "roles")
+    @OneToMany
+    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "ROLE_ID") })
+    private java.util.Set<SubjectRoleEntity> roleSubjects;
+
     private java.util.Set<Subject> subjects = new HashSet<Subject>();
 
     @ManyToMany(mappedBy = "roles")

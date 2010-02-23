@@ -110,8 +110,6 @@ public class Role implements Serializable {
     @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "ROLE_ID") })
     private java.util.Set<SubjectRoleEntity> roleSubjects;
 
-    private java.util.Set<Subject> subjects = new HashSet<Subject>();
-
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
 
@@ -183,30 +181,60 @@ public class Role implements Serializable {
         return this.permissions.remove(permission);
     }
 
+    public Set<SubjectRoleEntity> getRoleSubjects() {
+        if (roleSubjects == null) {
+            roleSubjects = new HashSet<SubjectRoleEntity>();
+        }
+        return roleSubjects;
+    }
+
+    public void setRoleSubjects(Set<SubjectRoleEntity> subjectsIn) {
+        roleSubjects = subjectsIn;
+    }
+
     public java.util.Set<Subject> getSubjects() {
-        return subjects;
+        Set<Subject> s = new HashSet<Subject>();
+        for (SubjectRoleEntity sre : getRoleSubjects()) {
+            s.add(sre.getSubject());
+        }
+        return s;
     }
 
     public void setSubjects(Set<Subject> subjects) {
-        this.subjects = subjects;
+        Set<SubjectRoleEntity> sroles = getRoleSubjects();
+        sroles.clear();
+        for (Subject subject : subjects) {
+            SubjectRoleEntity s = new SubjectRoleEntity();
+            s.setRole(this);
+            s.setSubject(subject);
+            sroles.add(s);
+        }
+    }
+
+    public void addSubject(Subject subject, boolean ldap) {
+        SubjectRoleEntity s = new SubjectRoleEntity();
+        s.setSubject(subject);
+        s.setRole(this);
+        s.setLdap(ldap);
+        getRoleSubjects().add(s);
     }
 
     public void addSubject(Subject subject) {
-        if (this.subjects == null) {
-            this.subjects = new HashSet<Subject>();
-        }
-
-        subject.addRole(this);
-        this.subjects.add(subject);
+        addSubject(subject, false);
     }
 
     public void removeSubject(Subject subject) {
-        if (this.subjects == null) {
-            this.subjects = new HashSet<Subject>();
+        SubjectRoleEntity toRemove = null;
+        for (SubjectRoleEntity s : getRoleSubjects()) {
+            if (s.getSubject().equals(subject) && s.getRole().equals(this)) {
+                toRemove = s;
+                break;
+            }
         }
-
-        subject.removeRole(this);
-        this.subjects.remove(subject);
+        if (toRemove != null) {
+            getRoleSubjects().remove(toRemove);
+            subject.removeRole(this);
+        }
     }
 
     public Set<org.rhq.core.domain.resource.group.ResourceGroup> getResourceGroups() {

@@ -231,13 +231,11 @@ public class Subject implements Externalizable {
     @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") })
     private Set<SubjectRoleEntity> subjectRoles;
 
-    private Set<Role> roles;
-
     @Transient
     private Integer sessionId = null;
 
     private void init() {
-        roles = new HashSet<Role>();
+        subjectRoles = new HashSet<SubjectRoleEntity>();
     }
 
     /**
@@ -505,7 +503,7 @@ public class Subject implements Externalizable {
         out.writeBoolean(factive);
         out.writeBoolean(fsystem);
         out.writeObject(configuration);
-        out.writeObject(roles);
+        out.writeObject(getRoles());
         // not supplied by remote: subjectNotifications
         out.writeInt(this.sessionId == null ? 0 : this.sessionId);
     }
@@ -523,7 +521,7 @@ public class Subject implements Externalizable {
         this.factive = in.readBoolean();
         this.fsystem = in.readBoolean();
         this.configuration = (Configuration) in.readObject();
-        this.roles = (Set<Role>) in.readObject();
+        setRoles((Set<Role>) in.readObject());
         this.sessionId = in.readInt();
     }
 

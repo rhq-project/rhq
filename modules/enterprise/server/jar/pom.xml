@@ -467,10 +467,10 @@
             <version>3.2</version>
             <executions>
                <execution>
-                  <phase>compile</phase>
-                     <goals>
-                        <goal>antlr</goal>
-                     </goals>
+                  <phase>generate-sources</phase>
+                  <goals>
+                     <goal>antlr</goal>
+                  </goals>
                   <configuration>
                      <conversionTimeout>30000</conversionTimeout>
                      <debug>false</debug>

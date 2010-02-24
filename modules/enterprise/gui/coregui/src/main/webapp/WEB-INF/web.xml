@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+        
 <web-app xmlns="http://java.sun.com/xml/ns/javaee"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
@@ -13,7 +14,6 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.SubjectGWTServiceImpl</servlet-class>
     </servlet>
-
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceGroupGWTServiceImpl</servlet-class>
@@ -34,20 +34,20 @@
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
         <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
     </servlet>
-
-
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI AlertGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.AlertGWTServiceImpl
+        </servlet-class>
+    </servlet>
 
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI RoleGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/RoleGWTService</url-pattern>
     </servlet-mapping>
-
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI SubjectGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/SubjectGWTService</url-pattern>
     </servlet-mapping>
-
-
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceGroupGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceGroupGWTService</url-pattern>

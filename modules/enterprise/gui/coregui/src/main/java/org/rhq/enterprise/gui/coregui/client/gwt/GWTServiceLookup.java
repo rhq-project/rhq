@@ -18,14 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
-
 import com.google.gwt.http.client.RequestBuilder;
 import com.google.gwt.user.client.Cookies;
 import com.google.gwt.user.client.rpc.RpcRequestBuilder;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 
 /**
- * This lookup service retreives each RPC service and sets a
+ * This lookup service retrieves each RPC service and sets a
  * custom RpcRequestBuilder that adds the login session id to
  * be security checked on the server.
  *
@@ -34,7 +33,6 @@ import com.google.gwt.user.client.rpc.ServiceDefTarget;
 public class GWTServiceLookup {
 
     public static final String SESSION_NAME = "RHQ_Sesssion";
-
 
     public static ConfigurationGWTServiceAsync getConfigurationService() {
         return secure(ConfigurationGWTServiceAsync.Util.getInstance());
@@ -64,6 +62,9 @@ public class GWTServiceLookup {
         return secure(MeasurementDataGWTServiceAsync.Util.getInstance());
     }
 
+    public static AlertGWTServiceAsync getAlertService() {
+        return secure(AlertGWTServiceAsync.Util.getInstance());
+    }
 
     private static <T> T secure(Object sdt) {
         if (!(sdt instanceof ServiceDefTarget)) return null;
@@ -72,7 +73,6 @@ public class GWTServiceLookup {
 
         return (T) sdt;
     }
-
 
     public static void registerSession(String sessionId) {
         Cookies.setCookie(SESSION_NAME, sessionId);
@@ -90,6 +90,5 @@ public class GWTServiceLookup {
             }
         }
     }
-
 
 }

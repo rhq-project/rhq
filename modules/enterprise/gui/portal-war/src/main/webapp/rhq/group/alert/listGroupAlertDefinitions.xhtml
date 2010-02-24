@@ -18,10 +18,10 @@
    <ui:param name="pageTitle" value="List Alert Definitions for Group '#{ResourceGroupUIBean.name}'"/>
    <ui:param name="selectedTabName" value="Alert.Definitions"/>
    <ui:define name="content">
-   
+
       <h:form id="alertDefinitionsListForm">
          <input type="hidden" name="groupId" value="${param.groupId}"/>
-         
+
          <rich:panel styleClass="BlockContent">
             <f:facet name="header">
                <h:outputText value="Alert Definitions"/>
@@ -48,12 +48,12 @@
                <f:facet name="PageControlView">
                   <onc:paginationControl id="GroupAlertDefinitionsList" />
                </f:facet>
-      
+
                <rich:column>
                   <f:facet name="header">
                      <onc:allSelect target="selectedAlertDefinitions" />
                   </f:facet>
-                  
+
                   <onc:select name="selectedAlertDefinitions" value="#{item.id}" />
                </rich:column>
 
@@ -63,25 +63,24 @@
                         <h:outputText styleClass="headerText" value="Name" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
-                  <h:outputLink value="/alerts/Config.do">
-                     <f:param name="mode" value="viewRoles"/>
+
+                  <h:outputLink value="/rhq/resource/alert/viewAlert.xhtml">
                      <f:param name="groupId" value="#{param.groupId}"/>
                      <f:param name="ad" value="#{item.id}"/>
                      <h:outputText value="#{item.name}" />
                   </h:outputLink>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.description">
                         <h:outputText styleClass="headerText" value="Description" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.description}"/>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.ctime">
@@ -93,14 +92,14 @@
                      <f:converter converterId="UserDateTimeConverter" />
                   </h:outputText>
                </rich:column>
-               
+
                <rich:column>
                   <f:facet name="header">
                      <onc:sortableColumnHeader sort="a.enabled">
                         <h:outputText styleClass="headerText" value="Active" />
                      </onc:sortableColumnHeader>
                   </f:facet>
-               
+
                   <h:outputText value="#{item.enabled}"/>
                </rich:column>
 
@@ -134,7 +133,7 @@
             </rich:dataTable>
 
             </h:panelGrid>
-            
+
          </rich:panel>
       </h:form>
 

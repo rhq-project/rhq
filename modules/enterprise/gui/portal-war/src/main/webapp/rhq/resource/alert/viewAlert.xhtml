@@ -19,6 +19,9 @@
         <c:when test="#{not empty param.type}">
             <c:set var="title" value="Definition for '#{alertDefinition.name}' on resource type '#{ResourceTypeUIBean.name}'"/>
         </c:when>
+        <c:when test="#{not empty param.groupId}">
+            <c:set var="title" value="Definition for '#{alertDefinition.name}' on group '#{ResourceGroupUIBean.name}'"/>
+        </c:when>
         <c:otherwise>
             <c:set var="title" value="Definition for '#{alertDefinition.name}' on resource '#{alertDefinition.resource.name}'"/>
         </c:otherwise>
@@ -55,18 +58,25 @@
                 <h:outputText>Alert Definitions</h:outputText>
             </h:outputLink>
             <h:outputText> &gt; </h:outputText>
-            <h:outputLink value="viewAlert.xhtml">
-                <f:param name="ad" value="#{alertDefinition.id}" />
-                <h:outputText value=" Definition for '#{alertDefinition.name}' "/>
-            </h:outputLink>
             <c:choose>
                 <c:when test="#{not empty param.type}">
-                    <h:outputText> on resource type </h:outputText>
+                    <h:outputText value=" Definition for alert template '#{alertDefinition.name}' "/>
+                    <h:outputText> on Resource Type </h:outputText>
                     <h:outputLink value="/rhq/admin/listAlertTemplates.xhtml?type=${param.type}">
                       <h:outputText value=" #{ResourceTypeUIBean.name}"/>
                     </h:outputLink>
                 </c:when>
+                <c:when test="#{not empty param.groupId}">
+                    <h:outputText> on resource group </h:outputText>
+                    <h:outputLink value="/rhq/group/alert/listGroupAlertDefinitions.xhtml?groupId=${param.groupId}">
+                      <h:outputText value=" #{ResourceGroupUIBean.name}"/>
+                    </h:outputLink>
+                </c:when>
                 <c:otherwise>
+                    <h:outputLink value="viewAlert.xhtml">
+                        <f:param name="ad" value="#{alertDefinition.id}" />
+                        <h:outputText value=" Definition for '#{alertDefinition.name}' "/>
+                    </h:outputLink>
                     <h:outputText> on resource </h:outputText>
                     <h:outputLink value="/rhq/resource/summary/overview.xhtml">
                         <f:param name="id" value="#{alertDefinition.resource.id}" />
@@ -194,6 +204,11 @@
                 <c:when test="#{not empty param.type}">
                     <h:outputLink value="/rhq/admin/listAlertTemplates.xhtml?type=${param.type}">
                         <h:outputText value="Back to Alert Definitions for Resource Type '#{ResourceTypeUIBean.name}'"/>
+                    </h:outputLink>
+                </c:when>
+                <c:when test="#{not empty param.groupId}">
+                    <h:outputLink value="/rhq/group/alert/listGroupAlertDefinitions.xhtml?groupId=${param.groupId}">
+                        <h:outputText value="Back to Alert Definitions for Resource Group '#{ResourceGroupUIBean.name}'"/>
                     </h:outputLink>
                 </c:when>
                 <c:otherwise>

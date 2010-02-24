@@ -33,8 +33,8 @@ import org.rhq.core.clientapi.util.units.ScaleConstants;
 import org.rhq.core.clientapi.util.units.UnitNumber;
 import org.rhq.core.clientapi.util.units.UnitsConstants;
 import org.rhq.core.clientapi.util.units.UnitsFormat;
-import org.rhq.core.domain.measurement.MeasurementConverter;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.server.MeasurementConverter;
 
 /**
  * This class is a two in one decorator/tag for use within the <code>TableTag</code>; it is a <code>

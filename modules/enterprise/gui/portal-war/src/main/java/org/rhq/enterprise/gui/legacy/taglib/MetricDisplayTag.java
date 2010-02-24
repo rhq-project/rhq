@@ -18,17 +18,20 @@
  */
 package org.rhq.enterprise.gui.legacy.taglib;
 
-import java.io.IOException;
-import java.text.NumberFormat;
-import java.util.Locale;
-import javax.servlet.jsp.JspException;
-import javax.servlet.jsp.tagext.TagSupport;
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.server.MeasurementConverter;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.struts.util.RequestUtils;
 import org.apache.taglibs.standard.tag.el.core.ExpressionUtil;
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.MeasurementConverter;
+
+import javax.servlet.jsp.JspException;
+import javax.servlet.jsp.tagext.TagSupport;
+
+import java.io.IOException;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 /**
  * This is a locale aware tag for displaying metrics and units. Suppose you have a metricDisplaySummary.setMin(9234289)

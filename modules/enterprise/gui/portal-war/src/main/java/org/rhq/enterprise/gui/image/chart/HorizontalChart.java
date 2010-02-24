@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.image.chart;
 
+import org.rhq.core.server.MeasurementConverter;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
+import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
+
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Iterator;
-
-import org.rhq.core.domain.measurement.MeasurementConverter;
-import org.rhq.enterprise.gui.image.data.IDataPoint;
-import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
 
 public class HorizontalChart extends Chart {
     private Rectangle m_rect;

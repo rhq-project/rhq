@@ -20,8 +20,8 @@ package org.rhq.enterprise.gui.alert.description;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.measurement.MeasurementConverter;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.server.MeasurementConverter;
 import org.rhq.enterprise.server.measurement.util.MeasurementFormatter;
 
 /**

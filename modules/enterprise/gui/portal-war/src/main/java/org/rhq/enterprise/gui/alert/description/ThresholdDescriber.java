@@ -21,7 +21,7 @@ package org.rhq.enterprise.gui.alert.description;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.measurement.MeasurementConverter;
+import org.rhq.core.server.MeasurementConverter;
 
 /**
  * Describes <code>THRESHOLD </code> {@link AlertCondition}s.

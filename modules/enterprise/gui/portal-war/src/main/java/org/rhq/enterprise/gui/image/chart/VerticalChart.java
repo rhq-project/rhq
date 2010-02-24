@@ -18,18 +18,18 @@
  */
 package org.rhq.enterprise.gui.image.chart;
 
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.server.MeasurementConverter;
+import org.rhq.enterprise.gui.image.data.IDataPoint;
+import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
+import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;
+
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Collection;
 import java.util.Iterator;
-
-import org.rhq.core.domain.measurement.MeasurementConverter;
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.enterprise.gui.image.data.IDataPoint;
-import org.rhq.enterprise.gui.image.data.IDisplayDataPoint;
-import org.rhq.enterprise.gui.image.data.IHighLowDataPoint;
 
 public class VerticalChart extends Chart {
 

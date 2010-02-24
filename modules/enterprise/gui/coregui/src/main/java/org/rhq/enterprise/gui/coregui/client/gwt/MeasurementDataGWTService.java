@@ -18,9 +18,31 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+
+import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
+
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Greg Hinkle
  */
-public interface MeasurementDataGWTService {
+@RemoteServiceRelativePath("MeasurementDataGWTService")
+public interface MeasurementDataGWTService extends RemoteService {
+
+
+    List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType);
+
+    Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds);
+
+    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId,
+        int[] definitionIds, long beginTime, long endTime, int numPoints);
+
 
 }

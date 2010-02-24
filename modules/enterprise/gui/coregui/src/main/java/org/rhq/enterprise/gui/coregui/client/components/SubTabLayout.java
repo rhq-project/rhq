@@ -47,10 +47,12 @@ public class SubTabLayout extends VLayout {
         setHeight100();
         setMargin(0);
         setPadding(0);
+        
 
         buttonBar = new ToolStrip();
         buttonBar.setBackgroundColor("grey");
         buttonBar.setWidth100();
+        buttonBar.setBorder(null);
 
 
         for (final String title : subtabs.keySet()) {
@@ -66,6 +68,7 @@ public class SubTabLayout extends VLayout {
             button.setBorder(null);
 
             button.setBaseStyle("SubTabButton");
+            
 //            button.setStyleName("SubTabButton");
 //            button.setStylePrimaryName("SubTabButton");
 

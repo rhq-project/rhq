@@ -162,6 +162,16 @@ public interface ResourceManagerLocal {
     @NotNull
     List<Resource> getResourceLineage(int resourceId);
 
+
+    /**
+     * Returns the lineage of a resource plus all the siblings of the resources in the lineage. This is
+     * useful for prepopulating all the resources visible in an expanded tree.
+     * @param resourceId id of resource
+     * @return resoure lineage and siblings
+     */
+    List<Resource> getResourceLineageAndSiblings(int resourceId);
+
+
     /**
      * Looks up the root of a subtree in the inventory. This will generally find the platform on which
      * a resource is running.

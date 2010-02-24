@@ -171,7 +171,8 @@ public class ResourceTreeDatasource extends DataSource {
 
     private void processIncomingData(List<Resource> result, final DSResponse response, final String requestId) {
 
-        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result, EnumSet.of(ResourceTypeRepository.MetadataType.operations),
+        ResourceTypeRepository.Cache.getInstance().loadResourceTypes(result,
+                EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children),
                 new ResourceTypeRepository.ResourceTypeLoadedCallback() {
                     public void onResourceTypeLoaded(List<Resource> result) {
                         response.setData(build(result));

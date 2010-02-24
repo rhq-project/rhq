@@ -39,9 +39,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param username The user whose password will be changed
      * @param password The new password for the user
      */
-    void changePassword(
-            String username,
-            String password);
+    void changePassword(String username, String password);
 
     /**
      * Creates a new principal (username and password) in the internal database. The password will be encoded before
@@ -51,9 +49,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param password The password part ofthe principal
      * @throws Exception if the principal could not be added
      */
-    void createPrincipal(
-            String username,
-            String password);
+    void createPrincipal(String username, String password);
 
     /**
      * Create a a new subject. This <b>ignores</b> the roles in <code>subject</code>. The created subject will not be
@@ -62,8 +58,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectToCreate The subject to be created.
      * @return the newly persisted {@link Subject}
      */
-    Subject createSubject(
-            Subject subjectToCreate);
+    Subject createSubject(Subject subjectToCreate);
 
     /**
      * Deletes the given set of users, including both the {@link Subject} and {@link org.rhq.core.domain.auth.Principal} objects associated with
@@ -72,8 +67,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectIds identifies the subject IDs for all the users that are to be deleted
      * @throws Exception if failed to delete one or more users
      */
-    void deleteSubjects(
-            int[] subjectIds);
+    void deleteSubjects(int[] subjectIds);
 
 
     /**
@@ -86,17 +80,14 @@ public interface SubjectGWTService extends RemoteService {
      * @throws org.rhq.enterprise.server.exception.LoginException
      *          if the login failed for some reason
      */
-    Subject login(
-            String username,
-            String password);
+    Subject login(String username, String password);
 
     /**
      * Logs out a user.
      *
      * @param subject The username for the current user
      */
-    void logout(
-            Subject subject);
+    void logout(Subject subject);
 
     /**
      * Updates an existing subject with new data. This does <b>not</b> cascade any changes to the roles but it will save
@@ -105,8 +96,7 @@ public interface SubjectGWTService extends RemoteService {
      * @param subjectToModify the subject whose data is to be updated (which may or may not be the same as <code>user</code>)
      * @return the merged subject, which may or may not be the same instance of <code>subjectToModify</code>
      */
-    Subject updateSubject(
-            Subject subjectToModify);
+    Subject updateSubject(Subject subjectToModify);
 
     PageList<Subject> findSubjectsByCriteria(
             SubjectCriteria criteria);

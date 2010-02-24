@@ -24,7 +24,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
@@ -62,6 +61,11 @@ public class ResourceTypeRepository {
 
 
     public static interface TypeLoadedCallback {
+        void onTypesLoaded( ResourceType type);
+    }
+
+
+    public static interface TypesLoadedCallback {
         void onTypesLoaded(HashMap<Integer, ResourceType> types);
     }
 
@@ -74,18 +78,6 @@ public class ResourceTypeRepository {
     }
 
     public void loadResourceTypes(final List<Resource> resources, final EnumSet<MetadataType> metadataTypes, final ResourceTypeLoadedCallback callback) {
-
-
-        resourceTypeService.dummy(new RawConfiguration(), new AsyncCallback<RawConfiguration>() {
-            public void onFailure(Throwable caught) {
-                System.out.println("dummy failed");
-            }
-
-            public void onSuccess(RawConfiguration result) {
-                System.out.println("dummy worked");
-            }
-        });
-
         if (resources.size() == 0) {
             callback.onResourceTypeLoaded(resources);
             return;
@@ -98,7 +90,7 @@ public class ResourceTypeRepository {
         for (Resource res : resources) {
             types.add(res.getResourceType().getId());
         }
-        getResourceTypes(types.toArray(new Integer[types.size()]), metadataTypes, new TypeLoadedCallback() {
+        getResourceTypes(types.toArray(new Integer[types.size()]), metadataTypes, new TypesLoadedCallback() {
             public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
                 for (Resource res : resources) {
                     res.setResourceType(types.get(res.getResourceType().getId()));
@@ -112,33 +104,43 @@ public class ResourceTypeRepository {
     }
 
 
-    public void getResourceTypes(Integer[] resourceTypeIds, final TypeLoadedCallback callback) {
+    public void getResourceTypes(Integer[] resourceTypeIds, final TypesLoadedCallback callback) {
         getResourceTypes(resourceTypeIds, null, callback);
     }
 
 
-    public void getResourceTypes(Integer[] resourceTypeIds, final EnumSet<MetadataType> metadataTypes, final TypeLoadedCallback callback) {
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+    public void getResourceTypes(final Integer resourceTypeId, final EnumSet<MetadataType> metadataTypes, final TypeLoadedCallback callback) {
+        getResourceTypes(new Integer[]{resourceTypeId}, metadataTypes, new TypesLoadedCallback() {
+            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                callback.onTypesLoaded(types.get(resourceTypeId));
+            }
+        });
+    }
 
-        ArrayList<Integer> typesNeeded = new ArrayList<Integer>();
+    public void getResourceTypes(Integer[] resourceTypeIds, final EnumSet<MetadataType> metadataTypes, final TypesLoadedCallback callback) {
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
 
         final HashMap<Integer, ResourceType> cachedTypes = new HashMap<Integer, ResourceType>();
 
-        for (Integer typeId : resourceTypeIds) {
-            if (!typeCache.containsKey(typeId) || (metadataTypes != null && !typeCacheLevel.get(typeId).containsAll(metadataTypes))) {
-                typesNeeded.add(typeId);
-            } else {
-                cachedTypes.put(typeId, typeCache.get(typeId));
+        if (resourceTypeIds == null) {
+            //preload all
+        } else {
+            ArrayList<Integer> typesNeeded = new ArrayList<Integer>();
+
+            for (Integer typeId : resourceTypeIds) {
+                if (!typeCache.containsKey(typeId) || (metadataTypes != null && !typeCacheLevel.get(typeId).containsAll(metadataTypes))) {
+                    typesNeeded.add(typeId);
+                } else {
+                    cachedTypes.put(typeId, typeCache.get(typeId));
+                }
             }
+
+            if (typesNeeded.isEmpty()) {
+                callback.onTypesLoaded(cachedTypes);
+                return;
+            }
+            criteria.addFilterIds(typesNeeded.toArray(new Integer[typesNeeded.size()]));
         }
-
-
-
-        if (typesNeeded.isEmpty()) {
-            callback.onTypesLoaded(cachedTypes);
-            return;
-        }
-
 
         if (metadataTypes != null) {
             for (MetadataType metadataType : metadataTypes) {
@@ -167,8 +169,6 @@ public class ResourceTypeRepository {
                 }
             }
         }
-
-        criteria.addFilterIds(typesNeeded.toArray(new Integer[typesNeeded.size()]));
 
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 
@@ -229,4 +229,11 @@ public class ResourceTypeRepository {
     }
 
 
+    public void preloadAll() {
+        getResourceTypes((Integer[]) null, EnumSet.allOf(MetadataType.class), new TypesLoadedCallback() {
+            public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                System.out.println("Preloaded ["+ types.size() + "] resource types");
+            }
+        });
+    }
 }

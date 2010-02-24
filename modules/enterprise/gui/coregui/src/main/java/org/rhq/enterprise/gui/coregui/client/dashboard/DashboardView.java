@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.dashboard;
 import org.rhq.enterprise.gui.coregui.client.Presenter;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSearchView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.SmallGraphView;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.Random;
@@ -67,12 +68,14 @@ public class DashboardView extends VLayout implements Presenter {
             Portlet portlet = new Portlet();
             portlet.setTitle("Portlet");
 
-            Label label = new Label();
-            label.setAlign(Alignment.CENTER);
-            label.setLayoutAlign(VerticalAlignment.CENTER);
-            label.setContents("Portlet contents");
-            label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
-            portlet.addItem(label);
+            // Label label = new Label();
+            // label.setAlign(Alignment.CENTER);
+            // label.setLayoutAlign(VerticalAlignment.CENTER);
+            // label.setContents("Portlet contents");
+            // label.setBackgroundColor(colors[Random.nextInt(colors.length - 1)]);
+            
+            portlet.addItem(new SmallGraphView());
+            portlet.setHeight(400);
             portalLayout.addPortlet(portlet);
         }
 

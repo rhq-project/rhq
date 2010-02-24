@@ -18,9 +18,113 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceSelectListener;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.core.java.util.Arrays;
+import com.smartgwt.client.util.SC;
+import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.layout.VLayout;
+
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
+
 /**
  * @author Greg Hinkle
  */
-public class GraphListView {
+public class GraphListView extends VLayout implements ResourceSelectListener {
 
+
+    private Resource resource;
+
+
+    public GraphListView() {
+    }
+
+    public GraphListView(Resource resource) {
+        this.resource = resource;
+    }
+
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+
+        for (Canvas c : getMembers()) {
+            c.destroy();
+        }
+        buildGraphs();
+    }
+
+
+    private void buildGraphs() {
+
+
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                resource.getResourceType().getId(), EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                new ResourceTypeRepository.TypeLoadedCallback() {
+                    public void onTypesLoaded(final ResourceType type) {
+
+                        final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
+
+                        for (MeasurementDefinition def : type.getMetricDefinitions()) {
+                            if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
+                                measurementDefinitions.add(def);
+                            }
+                        }
+
+                        int[] measDefIdArray = new int[measurementDefinitions.size()];
+                        for (int i = 0; i < measDefIdArray.length; i++) {
+                            measDefIdArray[i] = measurementDefinitions.get(i).getId();
+                        }
+
+                        GWTServiceLookup.getMeasurementDataService().findDataForResource(
+                                resource.getId(),
+                                measDefIdArray,
+                                System.currentTimeMillis() - (1000L*60*60*8),
+                                System.currentTimeMillis(),
+                                60,
+                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                    public void onFailure(Throwable caught) {
+                                        SC.say("Failed data load");
+                                    }
+
+                                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                        int i = 0;
+                                        for (List<MeasurementDataNumericHighLowComposite> data : result) {
+                                            buildGraph(measurementDefinitions.get(i++), data);
+                                        }
+                                    }
+                                }
+                                );
+
+                    }
+                }
+        );
+    }
+
+    private void buildGraph(MeasurementDefinition def, List<MeasurementDataNumericHighLowComposite> data) {
+
+        addMember(new SmallGraphView(def, data));
+
+    }
+
+    public void onResourceSelected(Resource resource) {
+        this.resource = resource;
+
+
+
+
+        buildGraphs();
+        markForRedraw();
+    }
 }

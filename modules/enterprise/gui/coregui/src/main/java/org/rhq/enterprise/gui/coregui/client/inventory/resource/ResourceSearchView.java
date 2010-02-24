@@ -96,7 +96,7 @@ public class ResourceSearchView extends VLayout {
         listGrid.setCriteria(new Criteria("name", searchPanel.getValueAsString("query")));
         listGrid.setSelectionType(SelectionStyle.SIMPLE);
         listGrid.setSelectionAppearance(SelectionAppearance.CHECKBOX);
-
+        listGrid.setResizeFieldsInRealTime(true);
 
 
         ListGridField idField = new ListGridField("id", "Id", 55);

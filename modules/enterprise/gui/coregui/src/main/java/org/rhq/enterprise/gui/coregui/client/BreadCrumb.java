@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client;
 import org.rhq.enterprise.gui.coregui.client.places.Place;
 
 import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Hyperlink;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.HTMLPane;
@@ -107,6 +108,8 @@ public class BreadCrumb extends HTMLPane {
         setContents(content);
 
         History.newItem(path);
+        if (!trail.isEmpty())
+            Window.setTitle("RHQ: " + trail.get(trail.size()-1));
 
         redraw();
     }

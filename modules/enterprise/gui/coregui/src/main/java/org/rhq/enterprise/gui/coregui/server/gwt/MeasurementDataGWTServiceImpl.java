@@ -18,9 +18,44 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementData;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.enterprise.gui.coregui.client.gwt.MeasurementDataGWTService;
+import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.util.LookupUtil;
+
+import java.util.List;
+import java.util.Set;
+
 /**
  * @author Greg Hinkle
  */
-public class MeasurementDataGWTServiceImpl {
+public class MeasurementDataGWTServiceImpl extends AbstractGWTServiceImpl implements MeasurementDataGWTService {
 
+    private MeasurementDataManagerLocal dataManager = LookupUtil.getMeasurementDataManager();
+
+    public List<MeasurementDataTrait> findCurrentTraitsForResource(int resourceId, DisplayType displayType) {
+        return SerialUtility.prepare(
+                dataManager.findCurrentTraitsForResource(getSessionSubject(), resourceId, displayType),
+                "MeasurementDataService.findCurrentTraitsForResource");
+    }
+
+
+    public Set<MeasurementData> findLiveData(int resourceId, int[] definitionIds) {
+                return SerialUtility.prepare(
+                        dataManager.findLiveData(getSessionSubject(), resourceId, definitionIds),
+                        "MeasurementDataService.findLiveData");
+    }
+
+
+    public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(int resourceId, int[] definitionIds, long beginTime, long endTime, int numPoints) {
+        return SerialUtility.prepare(
+                dataManager.findDataForResource(
+                        getSessionSubject(), resourceId, definitionIds, beginTime, endTime, numPoints),
+                "MeasurementDataService.findDataForResource");
+    }
 }

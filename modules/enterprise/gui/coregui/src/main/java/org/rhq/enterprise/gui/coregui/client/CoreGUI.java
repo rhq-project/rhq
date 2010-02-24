@@ -91,7 +91,18 @@ public class CoreGUI implements EntryPoint {
             public void onSuccess(Subject result) {
                 System.out.println("Logged in: " + result.getSessionId());
                 setSessionSubject(result);
+
                 buildCoreUI();
+
+                /* We can cache all metadata right here
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                        (Integer[]) null, EnumSet.allOf(ResourceTypeRepository.MetadataType.class), new ResourceTypeRepository.TypesLoadedCallback() {
+                    public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
+                        System.out.println("Preloaded [" + types.size() + "] resource types");
+                        buildCoreUI();
+                    }
+                });
+                */
             }
         });
     }
@@ -151,7 +162,6 @@ public class CoreGUI implements EntryPoint {
             public void onValueChange(ValueChangeEvent<String> historyChangeEvent) {
                 System.out.println("History request: " + historyChangeEvent.getValue());
 
-                
 
                 breadCrumb.verify(historyChangeEvent.getValue());
 
@@ -192,33 +202,11 @@ public class CoreGUI implements EntryPoint {
         } else if (key.equals("Resources")) {
             c = new ResourcesView();
         } else if (key.equals("Resource")) {
-            c = new ResourceView();    
+            c = new ResourceView();
         } else if (key.equals("Dashboard")) {
             c = new DashboardView();
         }
         return c;
-    }
-
-
-    private void buildCaches() {
-
-
-/*        final long start = System.currentTimeMillis();
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.fetchOperationDefinitions(true);
-        criteria.setPageControl(PageControl.getUnlimitedInstance());
-//        criteria.fetchMetricDefinitions(true);
-
-        ResourceTypeGWTService.App.getInstance().findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                System.out.println("bad" + caught);
-            }
-
-            public void onSuccess(PageList<ResourceType> result) {
-                System.out.println("Resource Types loaded in: " + (System.currentTimeMillis() - start));
-                SC.say("Loaded " + result.size() + " resource types in " + (System.currentTimeMillis() - start));
-            }
-        });*/
     }
 
 

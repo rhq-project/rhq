@@ -58,8 +58,6 @@ public class UsersDataSource extends RPCDataSource {
     protected UsersDataSource() {
         super("Users");
 
-
-
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID");
         idDataField.setPrimaryKey(true);
 
@@ -93,11 +91,9 @@ public class UsersDataSource extends RPCDataSource {
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
-
         
-
         SubjectCriteria criteria = new SubjectCriteria();
-//        criteria.addFilterName(query);
+        // criteria.addFilterName(query);
 
         if (request.getStartRow() != null && request.getEndRow() != null) {
             criteria.setPageControl(PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow()));
@@ -105,7 +101,7 @@ public class UsersDataSource extends RPCDataSource {
             criteria.setPageControl(PageControl.getSingleRowInstance());
         }
 
-//        criteria.addSortAgentName(PageOrdering.ASC);
+        // criteria.addSortAgentName(PageOrdering.ASC);
 
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
@@ -117,7 +113,6 @@ public class UsersDataSource extends RPCDataSource {
             }
 
             public void onSuccess(PageList<Subject> result) {
-
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
                 ListGridRecord[] records = new ListGridRecord[result.size()];
@@ -139,7 +134,6 @@ public class UsersDataSource extends RPCDataSource {
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
                 processResponse(requestId, response);
-
             }
         });
     }

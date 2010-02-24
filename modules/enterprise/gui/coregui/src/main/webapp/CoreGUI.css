@@ -6,8 +6,6 @@ body {
     margin: 8px;
 }
 
-
-
 .OddRow {
     background-color: white;
     border-bottom-color: rgb(230, 234, 239);
@@ -18,6 +16,7 @@ body {
     border-right-width: 1px;
 
 }
+
 .OddRowDisabled {
     background-color: white;
     border-bottom-color: rgb(230, 234, 239);
@@ -39,6 +38,7 @@ body {
     border-right-width: 1px;
 
 }
+
 .EvenRowDisabled {
     background-color: rgb(246, 246, 246);
     border-bottom-color: rgb(230, 234, 239);
@@ -49,7 +49,6 @@ body {
     border-right-width: 1px;
 
 }
-
 
 .TopSectionLink {
     font-size: 16pt;
@@ -72,22 +71,71 @@ z
     font-weight: bold;
 }
 
-
 .textItemDisabled {
     background: rgb(214, 213, 217);
 }
 
 .formTitle, .formTitleFocused {
-    font-weight:bold;
+    font-weight: bold;
 }
 
 
-.SubTabButton,.SubTabButtonSelected {
-    font-family: Arial,Verdana,Bitstream Vera Sans,sans-serif;
+.SubTabButton,
+.SubTabButtonOver,
+.SubTabButtonFocused,
+.SubTabButtonFocusedOver,
+.SubTabButtonDown,
+.SubTabButtonFocusedDown,
+.SubTabButtonSelected,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedDown,
+.SubTabButtonSelectedFocusedDown,
+.SubTabButtonSelectedOver,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonDisabled,
+.SubTabButtonSelectedDisabled {
+    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
     font-size: 11px;
     padding: 2px;
+    }
+
+.SubTabButtonDisabled {
+
 }
 
-.SubTabButtonSelected {
-    font-weight: bold;   
+.SubTabButtonDisabled,
+.SubTabButtonSelectedDisabled {
+    font-weight: normal;
+    color: #AAAAAA;
+}
+
+.SubTabButtonFocused,
+.SubTabButtonFocusedOver,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonSelectedFocusedDown {
+
+}
+
+.SubTabButtonOver,
+.SubTabButtonFocusedOver,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedFocusedOver {
+    font-weight: bold;
+}
+
+.SubTabButtonDown,
+.SubTabButtonFocusedDown,
+.SubTabButtonSelectedDown,
+.SubTabButtonSelectedFocusedDown {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.SubTabButtonSelected,
+.SubTabButtonSelectedFocused,
+.SubTabButtonSelectedOver,
+.SubTabButtonSelectedFocusedOver,
+.SubTabButtonSelectedDisabled {
+    font-weight: bold;
 }

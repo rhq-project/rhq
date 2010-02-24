@@ -24,13 +24,15 @@
     </servlet>
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ConfigurationGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl
-        </servlet-class>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
-        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl
-        </servlet-class>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
+        <servlet-class>org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl</servlet-class>
     </servlet>
 
 
@@ -61,5 +63,9 @@
     <servlet-mapping>
         <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI ResourceTypeGWTService</servlet-name>
         <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/ResourceTypeGWTService</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>org.rhq.enterprise.gui.coregui.CoreGUI MeasurementDataGWTService</servlet-name>
+        <url-pattern>/org.rhq.enterprise.gui.coregui.CoreGUI/MeasurementDataGWTService</url-pattern>
     </servlet-mapping>
 </web-app>

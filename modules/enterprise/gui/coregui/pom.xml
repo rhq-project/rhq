@@ -70,6 +70,14 @@
         </dependency>
 
 
+        <!-- The graphing library -->
+        <dependency>
+            <groupId>ca.nanometrics</groupId>
+            <artifactId>gflot</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
+
         <!-- Internal Deps -->
 
         <dependency>
@@ -374,6 +382,10 @@
             </snapshots>
         </repository>
 
+        <repository>
+            <id>gflot-repository</id>
+            <url>http://codemonkey.dumontierlab.com/maven/repo/</url>
+        </repository>
     </repositories>
 
 </project>

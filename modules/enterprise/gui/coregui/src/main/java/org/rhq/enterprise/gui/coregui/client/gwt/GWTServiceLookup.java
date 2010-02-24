@@ -60,7 +60,9 @@ public class GWTServiceLookup {
         return secure(SubjectGWTServiceAsync.Util.getInstance());
     }
 
-
+    public static MeasurementDataGWTServiceAsync getMeasurementDataService() {
+        return secure(MeasurementDataGWTServiceAsync.Util.getInstance());
+    }
 
 
     private static <T> T secure(Object sdt) {

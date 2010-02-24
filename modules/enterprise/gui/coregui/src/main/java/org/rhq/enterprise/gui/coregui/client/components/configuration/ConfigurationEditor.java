@@ -37,7 +37,6 @@ import org.rhq.core.domain.configuration.definition.constraint.Constraint;
 import org.rhq.core.domain.configuration.definition.constraint.IntegerRangeConstraint;
 import org.rhq.core.domain.configuration.definition.constraint.RegexConstraint;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -189,7 +188,9 @@ public class ConfigurationEditor extends VLayout {
                 }
             });
 
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition), new ResourceTypeRepository.TypeLoadedCallback() {
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId},
+                    EnumSet.of(ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                    new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
                     System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                     definition = types.get(resourceTypeId).getResourceConfigurationDefinition();
@@ -212,10 +213,13 @@ public class ConfigurationEditor extends VLayout {
                 }
             });
 
-            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypeLoadedCallback() {
+            ResourceTypeRepository.Cache.getInstance().getResourceTypes(new Integer[]{resourceTypeId}, EnumSet.of(ResourceTypeRepository.MetadataType.pluginConfigurationDefinition), new ResourceTypeRepository.TypesLoadedCallback() {
                 public void onTypesLoaded(HashMap<Integer, ResourceType> types) {
                     System.out.println("ConfigDef retreived in: " + (System.currentTimeMillis() - start));
                     definition = types.get(resourceTypeId).getPluginConfigurationDefinition();
+                    if (definition == null) {
+                        showError("No configuration supported for this resource");
+                    }                    
                     reload();
                 }
             });

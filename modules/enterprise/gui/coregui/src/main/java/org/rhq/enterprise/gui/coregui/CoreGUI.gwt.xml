@@ -8,6 +8,8 @@
 
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
+
+    <inherits name='ca.nanometrics.gflot.GFlot'/>
     <!--
         <inherits name='com.google.gwt.widgetideas.WidgetIdeas'/>
     -->
@@ -27,5 +29,6 @@
     <servlet path="/ResourceGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceGWTServiceImpl"/>
     <servlet path="/ConfigurationGwtService" class="org.rhq.enterprise.gui.coregui.server.gwt.ConfigurationGWTServiceImpl"/>
     <servlet path="/ResourceTypeGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.ResourceTypeGWTServiceImpl"/>
+    <servlet path="/MeasurementDataGWTService" class="org.rhq.enterprise.gui.coregui.server.gwt.MeasurementDataGWTServiceImpl"/>
 
 </module>

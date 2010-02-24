@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail;
 
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.components.configuration.ConfigurationEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
@@ -58,6 +59,7 @@ public class ResourceTreeView extends VLayout {
     private Resource rootResource;
 
     private TreeGrid treeGrid;
+    Menu contextMenu;
 
     private ArrayList<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
@@ -75,12 +77,6 @@ public class ResourceTreeView extends VLayout {
         if (selectedResource != null) {
             setSelectedResource(selectedResource);
         }
-//        ResourceTreeDatasource ds = new ResourceTreeDatasource();
-//
-//        setDataSource(new ResourceTreeDatasource());
-//        setCriteria(new Criteria("selectedResourceId",String.valueOf(selectedResource.getId())));
-
-//        setCriteria(new Criteria("",));
     }
 
     public void onInit() {
@@ -97,8 +93,12 @@ public class ResourceTreeView extends VLayout {
         treeGrid.setAutoFetchData(true);
         treeGrid.setAnimateFolders(false);
         treeGrid.setSelectionType(SelectionStyle.SINGLE);
+        treeGrid.setShowRollOver(false);
+        treeGrid.setSortField("name");
+        treeGrid.setShowHeader(false);
+        
 
-        final Menu contextMenu = new Menu();
+        contextMenu = new Menu();
         MenuItem item = new MenuItem("Expand node");
         item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
             public void onClick(MenuItemClickEvent event) {
@@ -149,89 +149,139 @@ public class ResourceTreeView extends VLayout {
         // This constructs the context menu for the resource at the time of the click.
         setContextMenu(contextMenu);
         treeGrid.addNodeContextClickHandler(new NodeContextClickHandler() {
-            public void onNodeContextClick(final NodeContextClickEvent nodeContextClickEvent) {
-                nodeContextClickEvent.getNode();
-                contextMenu.setItems(new MenuItem(nodeContextClickEvent.getNode().getName()));
+            public void onNodeContextClick(final NodeContextClickEvent event) {
+                event.getNode();
 
-                contextMenu.addItem(new MenuItem("Id: " + nodeContextClickEvent.getNode().getAttribute("id")));
-                contextMenu.addItem(new MenuItem("Parent: " + nodeContextClickEvent.getNode().getAttribute("parentId")));
-
-
-                if (nodeContextClickEvent.getNode() instanceof ResourceTreeDatasource.ResourceTreeNode) {
-
-                    ResourceTreeDatasource.ResourceTreeNode node = (ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode();
-                    contextMenu.addItem(new MenuItem("Type: " + ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResourceType().getName()));
-
-
-                    MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
-                    editPluginConfiguration.addClickHandler(new ClickHandler() {
-                        public void onClick(MenuItemClickEvent event) {
-                            Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResource();
-                            int resourceId = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResource().getId();
-                            int resourceTypeId = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResourceType().getId();
-
-                            Window configEditor = new Window();
-                            configEditor.setTitle("Edit " + resource.getName() + " plugin configuration");
-                            configEditor.setWidth(800);
-                            configEditor.setHeight(800);
-                            configEditor.setIsModal(true);
-                            configEditor.setShowModalMask(true);
-                            configEditor.centerInPage();
-//                            configEditor.setShowResizeBar =
-                            configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.plugin));
-                            configEditor.show();
-
-                        }
-                    });
-                    editPluginConfiguration.setEnabled(node.getResource().getResourceType().getPluginConfigurationDefinition() != null);
-                    contextMenu.addItem(editPluginConfiguration);
-
-
-                    MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
-                    editResourceConfiguration.addClickHandler(new ClickHandler() {
-                        public void onClick(MenuItemClickEvent event) {
-                            Resource resource = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResource();
-                            int resourceId = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResource().getId();
-                            int resourceTypeId = ((ResourceTreeDatasource.ResourceTreeNode) nodeContextClickEvent.getNode()).getResourceType().getId();
-
-                            final Window configEditor = new Window();
-                            configEditor.setTitle("Edit " + resource.getName() + " resource configuration");
-                            configEditor.setWidth(800);
-                            configEditor.setHeight(800);
-                            configEditor.setIsModal(true);
-                            configEditor.setShowModalMask(true);
-                            configEditor.centerInPage();
-                            configEditor.addCloseClickHandler(new CloseClickHandler() {
-                                public void onCloseClick(CloseClientEvent closeClientEvent) {
-                                    configEditor.destroy();
-                                }
-                            });
-                            configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.resource));
-                            configEditor.show();
-
-                        }
-                    });
-                    editResourceConfiguration.setEnabled(node.getResource().getResourceType().getResourceConfigurationDefinition() != null);
-                    contextMenu.addItem(editResourceConfiguration);
-
-                    contextMenu.addItem(new MenuItemSeparator());
-
-                    MenuItem operations = new MenuItem("Operations");
-                    Menu opSubMenu = new Menu();
-                    for (OperationDefinition operationDefinition : node.getResourceType().getOperationDefinitions()) {
-                        opSubMenu.addItem(new MenuItem(operationDefinition.getDisplayName()));
-
-                    }
-                    operations.setEnabled(!node.getResourceType().getOperationDefinitions().isEmpty());
-                    operations.setSubmenu(opSubMenu);
-                    contextMenu.addItem(operations);
-
-                }
-
+                buildContextMenu(event.getNode());
 
                 contextMenu.showContextMenu();
             }
         });
+    }
+
+
+    private void buildContextMenu(TreeNode node) {
+        if (node instanceof ResourceTreeDatasource.TypeTreeNode) {
+            buildContextMenu((ResourceTreeDatasource.TypeTreeNode) node);
+        } else if (node instanceof ResourceTreeDatasource.ResourceTreeNode) {
+            buildContextMenu((ResourceTreeDatasource.ResourceTreeNode) node);
+        }
+    }
+
+
+    private void buildContextMenu(ResourceTreeDatasource.TypeTreeNode node) {
+
+        contextMenu.setItems(new MenuItem(node.getName()));
+
+
+    }
+
+    private void buildContextMenu(final ResourceTreeDatasource.ResourceTreeNode node) {
+
+        contextMenu.setItems(new MenuItem(node.getName()));
+
+        contextMenu.addItem(new MenuItem("Type: " + node.getResourceType().getName()));
+
+
+        MenuItem editPluginConfiguration = new MenuItem("Plugin Configuration");
+        editPluginConfiguration.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                Resource resource = node.getResource();
+                int resourceId = node.getResource().getId();
+                int resourceTypeId = node.getResourceType().getId();
+
+                Window configEditor = new Window();
+                configEditor.setTitle("Edit " + resource.getName() + " plugin configuration");
+                configEditor.setWidth(800);
+                configEditor.setHeight(800);
+                configEditor.setIsModal(true);
+                configEditor.setShowModalMask(true);
+                configEditor.setCanDragResize(true);
+                configEditor.centerInPage();
+                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.plugin));
+                configEditor.show();
+
+            }
+        });
+        editPluginConfiguration.setEnabled(node.getResource().getResourceType().getPluginConfigurationDefinition() != null);
+        contextMenu.addItem(editPluginConfiguration);
+
+
+        MenuItem editResourceConfiguration = new MenuItem("Resource Configuration");
+        editResourceConfiguration.addClickHandler(new ClickHandler() {
+            public void onClick(MenuItemClickEvent event) {
+                Resource resource = node.getResource();
+                int resourceId = node.getResource().getId();
+                int resourceTypeId = node.getResourceType().getId();
+
+                final Window configEditor = new Window();
+                configEditor.setTitle("Edit " + resource.getName() + " resource configuration");
+                configEditor.setWidth(800);
+                configEditor.setHeight(800);
+                configEditor.setIsModal(true);
+                configEditor.setShowModalMask(true);
+                configEditor.setCanDragResize(true);
+                configEditor.setShowResizer(true);
+                configEditor.centerInPage();
+                configEditor.addCloseClickHandler(new CloseClickHandler() {
+                    public void onCloseClick(CloseClientEvent closeClientEvent) {
+                        configEditor.destroy();
+                    }
+                });
+                configEditor.addItem(new ConfigurationEditor(resourceId, resourceTypeId, ConfigurationEditor.ConfigType.resource));
+                configEditor.show();
+
+            }
+        });
+        editResourceConfiguration.setEnabled(node.getResource().getResourceType().getResourceConfigurationDefinition() != null);
+        contextMenu.addItem(editResourceConfiguration);
+
+        contextMenu.addItem(new MenuItemSeparator());
+
+
+        // Operations Menu
+        MenuItem operations = new MenuItem("Operations");
+        Menu opSubMenu = new Menu();
+        for (OperationDefinition operationDefinition : node.getResourceType().getOperationDefinitions()) {
+            opSubMenu.addItem(new MenuItem(operationDefinition.getDisplayName()));
+            // todo action
+        }
+        operations.setEnabled(!node.getResourceType().getOperationDefinitions().isEmpty());
+        operations.setSubmenu(opSubMenu);
+        contextMenu.addItem(operations);
+
+
+
+        // Create Menu
+        MenuItem createChildMenu = new MenuItem("Create Child");
+        Menu createChildSubMenu = new Menu();
+        for (ResourceType childType : node.getResourceType().getChildResourceTypes()) {
+            if (childType.isCreatable()) {
+                createChildSubMenu.addItem(new MenuItem(childType.getName()));
+                //todo action
+            }
+        }
+        createChildMenu.setSubmenu(createChildSubMenu);
+        createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
+        contextMenu.addItem(createChildMenu);
+
+
+        // Manually Menu
+        MenuItem importChildMenu = new MenuItem("Import");
+        Menu importChildSubMenu = new Menu();
+        for (ResourceType childType : node.getResourceType().getChildResourceTypes()) {
+            if (childType.isSupportsManualAdd()) {
+                importChildSubMenu.addItem(new MenuItem(childType.getName()));
+                //todo action
+            }
+        }
+        importChildMenu.setSubmenu(importChildSubMenu);
+        importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
+        contextMenu.addItem(importChildMenu);
+
+
+
+
     }
 
 
@@ -244,7 +294,7 @@ public class ResourceTreeView extends VLayout {
             treeGrid.getTree().openFolder(node);
         } else {
             final ResourceGWTServiceAsync resourceService = GWTServiceLookup.getResourceService();
-            resourceService.getResourceLineage(selectedResource.getId(), new AsyncCallback<List<Resource>>() {
+            resourceService.getResourceLineageAndSiblings(selectedResource.getId(), new AsyncCallback<List<Resource>>() {
                 public void onFailure(Throwable caught) {
                     SC.say("Failed to lookup platform");
                     System.out.println("Failed to lookup parent");
@@ -260,23 +310,16 @@ public class ResourceTreeView extends VLayout {
                         }
                         buildTree();
 
-//                    TreeNode[] selectedLineage = ResourceTreeDatasource.build(result);
-//                    TreeNode[] preloadData = ResourceTreeDatasource.build(preload(result));
-//
-//                    TreeNode[] rootData = ResourceTreeDatasource.build(result.subList(0,0));
-
-
                         ResourceTreeView.this.rootResource = root;
 
 
-//                    treeGrid.setLoadDataOnDemand(true);
                         ResourceTreeDatasource dataSource = new ResourceTreeDatasource(result);
                         treeGrid.setDataSource(dataSource);
+                        // GH: couldn't get initial data to mix with the datasource... so i put the inital data in
+                        // the first datasource request
 //                    treeGrid.setInitialData(selectedLineage);
 
-
                         addMember(treeGrid);
-//                    treeGrid.fetchData();
 
 
                         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
@@ -303,18 +346,7 @@ public class ResourceTreeView extends VLayout {
                         for (TreeNode n : ResourceTreeDatasource.build(result)) {
                             treeGrid.getDataSource().addData(n);
                         }
-//
-//                    TreeNode selectedNode = treeGrid.getTree().findById(String.valueOf(selectedResource.getId()));
-//                    if (selectedNode != null) {
-//                        treeGrid.getTree().openFolders(treeGrid.getTree().getParents(selectedNode));
-//                        treeGrid.selectRecord(selectedNode);
-//                    } else {
-//                        System.out.println("Couldn't select " + selectedResource.getId());
-//                    }
                     }
-
-//                TreeNode[] selectedLineage = ResourceTreeDatasource.build(result);
-//                getTree().linkNodes(selectedLineage);
 
 
                     // CoreGUI.addBreadCrumb(new Place(String.valueOf(result.getId()), result.getName()));

@@ -137,9 +137,13 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         }
     }
 
-
     public List<Resource> getResourceLineage(int resourceId) {
         return SerialUtility.prepare(resourceManager.getResourceLineage(resourceId), "ResourceService.getResourceLineage");
+    }
+
+
+    public List<Resource> getResourceLineageAndSiblings(int resourceId) {
+        return SerialUtility.prepare(resourceManager.getResourceLineageAndSiblings(resourceId), "ResourceService.getResourceLineage");
     }
 
 

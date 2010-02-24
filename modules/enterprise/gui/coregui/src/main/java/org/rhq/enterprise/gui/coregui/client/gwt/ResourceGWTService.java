@@ -36,6 +36,8 @@ public interface ResourceGWTService extends RemoteService {
 
     List<Resource> getResourceLineage(int resourceId);
 
+    List<Resource> getResourceLineageAndSiblings(int resourceId);
+
     Resource getPlatformForResource(int resourceId);
 
 }

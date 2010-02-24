@@ -34,6 +34,7 @@ import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.composite.AlertDefinitionComposite;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.gui.util.FacesContextUtility;
@@ -74,7 +75,8 @@ public class SubsystemAlertDefinitionUIBean extends SubsystemView {
     private IntExtractor<AlertDefinitionComposite> RESOURCE_ID_EXTRACTOR = new IntExtractor<AlertDefinitionComposite>() {
         
         public int extract(AlertDefinitionComposite object) {
-            return object.getAlertDefinition().getResource().getId();
+            Resource resource = object.getAlertDefinition().getResource();
+            return resource == null ? 0 : resource.getId();
         }
     };
     

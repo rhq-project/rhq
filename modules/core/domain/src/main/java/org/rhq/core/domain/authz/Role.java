@@ -110,6 +110,9 @@ public class Role implements Serializable {
     private java.util.Set<SubjectRoleEntity> roleSubjects;
 
     @ManyToMany(mappedBy = "roles")
+    private Set<Subject> subjects = new HashSet<Subject>();
+
+    @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
 
     @Cascade( { CascadeType.ALL })
@@ -192,22 +195,14 @@ public class Role implements Serializable {
     }
 
     public java.util.Set<Subject> getSubjects() {
-        Set<Subject> s = new HashSet<Subject>();
-        for (SubjectRoleEntity sre : getRoleSubjects()) {
-            s.add(sre.getSubject());
+        if (subjects == null) {
+            subjects = new HashSet<Subject>();
         }
-        return s;
+        return subjects;
     }
 
     public void setSubjects(Set<Subject> subjects) {
-        Set<SubjectRoleEntity> sroles = getRoleSubjects();
-        sroles.clear();
-        for (Subject subject : subjects) {
-            SubjectRoleEntity s = new SubjectRoleEntity();
-            s.setRole(this);
-            s.setSubject(subject);
-            sroles.add(s);
-        }
+        this.subjects = subjects;
     }
 
     public void addSubject(Subject subject, boolean ldap) {

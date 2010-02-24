@@ -36,6 +36,8 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -229,6 +231,10 @@ public class Subject implements Externalizable {
     @OneToMany(mappedBy = "subject")
     private Set<SubjectRoleEntity> subjectRoles;
 
+    @ManyToMany
+    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
+    private Set<Role> roles = new HashSet<Role>();
+
     @Transient
     private Integer sessionId = null;
 
@@ -370,22 +376,14 @@ public class Subject implements Externalizable {
     }
 
     public Set<Role> getRoles() {
-        Set<Role> r = new HashSet<Role>();
-        for (SubjectRoleEntity s : getSubjectRoles()) {
-            r.add(s.getRole());
+        if (roles == null) {
+            roles = new HashSet<Role>();
         }
-        return r;
+        return roles;
     }
 
     public void setRoles(Set<Role> roles) {
-        Set<SubjectRoleEntity> sroles = getSubjectRoles();
-        sroles.clear();
-        for (Role r : roles) {
-            SubjectRoleEntity s = new SubjectRoleEntity();
-            s.setSubject(this);
-            s.setRole(r);
-            sroles.add(s);
-        }
+        this.roles = roles;
     }
 
     public void addRole(Role role, boolean ldap) {
@@ -501,7 +499,7 @@ public class Subject implements Externalizable {
         out.writeBoolean(factive);
         out.writeBoolean(fsystem);
         out.writeObject(configuration);
-        out.writeObject(getRoles());
+        out.writeObject(roles);
         // not supplied by remote: subjectNotifications
         out.writeInt(this.sessionId == null ? 0 : this.sessionId);
     }

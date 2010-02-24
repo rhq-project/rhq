@@ -201,7 +201,10 @@ public class AddGroupResourcesFormPrepareAction extends Action {
             Resource resource = dr.getOriginal();
             
             Resource parent = resource.getParentResource();
-            parent.setName(buildLineage(dr.getParents()));
+            //platforms don't have parents, need to check for null here
+            if (parent != null) {
+                parent.setName(buildLineage(dr.getParents()));
+            }
             
             convertedResults.add(resource);
         }

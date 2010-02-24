@@ -50,7 +50,8 @@
                            rendered="#{!readOnly}"
                            reRender="fileContents,fileMenuPanel,lowerChangedFilesLabel,upperChangedFilesLabel"
                            styleClass="buttonmed"
-                           onclick="#{rich:component('modalEditor')}.hide()"/>
+                           onclick="#{rich:component('modalEditor')}.hide(); cursor_wait();"
+                           oncomplete="cursor_clear();"/>
         <a4j:commandButton value="Cancel" onclick="#{rich:component('modalEditor')}.hide()" styleClass="buttonmed"/>
       </h:panelGroup>
     </h:panelGrid>

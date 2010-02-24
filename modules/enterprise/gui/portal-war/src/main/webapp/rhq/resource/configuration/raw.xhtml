@@ -80,6 +80,8 @@
                                          styleClass="rawConfigUndoButton"
                                          rendered="#{rawConfigUIBean.modified}"
                                          action="#{configurationEditor.undoEdit(rawConfigUIBean.path)}"
+                                         onclick="cursor_wait()"
+                                         oncomplete="cursor_clear()"
                                          reRender="fileMenu,fileContents,upperChangedFilesLabel,lowerChangedFilesLabel,modalFileContents"/>
                     </h:panelGrid>
                   </rich:panelMenuItem>

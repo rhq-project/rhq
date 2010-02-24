@@ -28,10 +28,12 @@ THIS TEXT WILL BE REMOVED.
     <script type="text/javascript">
       function cursor_wait() {
         document.body.style.cursor = 'wait';
+        return true;
       }
 
       function cursor_clear() {
         document.body.style.cursor = 'default';
+        return true;
       }
 
       var currentFileModified = false;

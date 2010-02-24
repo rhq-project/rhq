@@ -139,3 +139,46 @@ z
 .SubTabButtonSelectedDisabled {
     font-weight: bold;
 }
+
+
+
+.SimpleButton,
+.SimpleButtonOver,
+.SimpleButtonFocused,
+.SimpleButtonFocusedOver,
+.SimpleButtonDown,
+.SimpleButtonFocusedDown,
+.SimpleButtonSelected,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedDown,
+.SimpleButtonSelectedFocusedDown,
+.SimpleButtonSelectedOver,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonDisabled,
+.SimpleButtonSelectedDisabled,
+.SimpleButtonDisabled,
+.SimpleButtonDisabled,
+.SimpleButtonSelectedDisabled,
+.SimpleButtonFocused,
+.SimpleButtonFocusedOver,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonSelectedFocusedDown ,
+.SimpleButtonOver,
+.SimpleButtonFocusedOver,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedFocusedOver ,
+.SimpleButtonDown,
+.SimpleButtonFocusedDown,
+.SimpleButtonSelectedDown,
+.SimpleButtonSelectedFocusedDown ,
+.SimpleButtonSelected,
+.SimpleButtonSelectedFocused,
+.SimpleButtonSelectedOver,
+.SimpleButtonSelectedFocusedOver,
+.SimpleButtonSelectedDisabled{
+    font-family: Arial, Verdana, Bitstream Vera Sans, sans-serif;
+    font-size: 11px;
+    padding: 2px;
+    font-weight: bold;
+}

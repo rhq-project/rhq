@@ -39,26 +39,37 @@
     <td class="BlockLabel"><fmt:message key="alert.current.detail.props.AlertDate"/></td>
     <td class="BlockContent" colspan="2"><hq:dateFormatter time="false" value="${alert.ctime}"/></td>
   </tr>
-  <tr valign="top">
-      <td class="BlockLabel">Acknowledged by:</td>
-      <td class="BlockContent">
-          <c:if test="${not empty alert.ackBy}">
-              <c:out value="${alert.ackBy.firstName}"/>
-              <c:out value=" "/>
-              <c:out value="${alert.ackBy.lastName}"/>
-              <c:out value=" ("/>
-              <c:out value="${alert.ackBy.name}"/>
-              <c:out value=")"/>
-          </c:if>
-      </td>
-      <td class="BlockLabel">Acknowledged at:</td>
-      <td class="BlockContent">
-          <c:if test="${alert.ackTime > 0}">
-              <hq:dateFormatter time="false" value="${alert.ackTime}"/>
-          </c:if>
+  <c:choose>
+      <c:when test="${not empty alert.ackBy}">
+          <tr valign="top">
+              <td class="BlockLabel">Acknowledged by:</td>
+              <td class="BlockContent">
+                      <c:out value="${alert.ackBy.firstName}"/>
+                      <c:out value=" "/>
+                      <c:out value="${alert.ackBy.lastName}"/>
+                      <c:out value=" ("/>
+                      <c:out value="${alert.ackBy.name}"/>
+                      <c:out value=")"/>
+              </td>
+              <td class="BlockLabel">Acknowledged at:</td>
+              <td class="BlockContent">
+                      <hq:dateFormatter time="false" value="${alert.ackTime}"/>
+              </td>
+          </tr>
+          </c:when>
+      <c:otherwise>
+          <tr valign="top">
+              <td class="BlockLabel">Acknowledge Alert</td>
+              <td class="BlockContent">
+                  <a href="/alerts/AckAlert.do?id=${Resource.id}&a=${alert.id}&mode=${param.mode}">click here</a>
+              </td>
+              <td class="BlockContent">&nbsp;</td>
+              <td class="BlockContent">&nbsp;</td>
+          </tr>
 
-      </td>
-  </tr>
+      </c:otherwise>
+
+  </c:choose>
   <tr>
     <td colspan="5" class="BlockContent"><html:img page="/images/spacer.gif" width="1" height="1" border="0"/></td>
   </tr>

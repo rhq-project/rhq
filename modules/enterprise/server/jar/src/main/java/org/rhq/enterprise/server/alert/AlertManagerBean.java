@@ -739,6 +739,16 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     }
                     if (anl.getResultState()==ResultState.FAILED_EMAIL)
                         anl.setBadEmails(StringUtils.getListAsString(badList,","));
+                    if (anl.getResultState()==ResultState.DEFERRED_EMAIL && badList.isEmpty())
+                        anl.setResultState(ResultState.SUCCESS);
+                }
+            }
+            else { // No bad addresses
+                // Only set the result state to success for email sending notifications
+                // We must not set them if the notification failed.
+                for (AlertNotificationLog anl : alert.getAlertNotificationLogs()) {
+                    if (anl.getResultState()==ResultState.DEFERRED_EMAIL)
+                        anl.setResultState(ResultState.SUCCESS);
                 }
             }
 

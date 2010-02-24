@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.alert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +37,7 @@ import org.jboss.seam.international.StatusMessage.Severity;
 import org.jboss.seam.log.Log;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -70,7 +72,7 @@ public class AlertConditionsUIBean {
     @In
     private AlertDescriber alertDescriber;
     private MetricAbsoluteConverter metricAbsoluteConverter = new MetricAbsoluteConverter();
-    private Map<AlertConditionCategory, String> categories;
+    private Map<String, String> categories;
     private List<ConditionDescription> conditionDescriptions;
     private AlertCondition currentCondition;
 
@@ -86,11 +88,19 @@ public class AlertConditionsUIBean {
     }
 
     public String getMeasurementDefinitionId() {
-        return measurementDefinitionId.toString();
+        if (this.measurementDefinitionId != null) {
+            return measurementDefinitionId.toString();
+        }
+
+        return null;
     }
 
     public void setMeasurementDefinitionId(String measurementDefinitionId) {
-        this.measurementDefinitionId  = Integer.parseInt(measurementDefinitionId);
+        try {
+            this.measurementDefinitionId  = Integer.parseInt(measurementDefinitionId);
+        } catch (NumberFormatException e) {
+            this.measurementDefinitionId = null;
+        }
     }
 
     public String getThreshold() {
@@ -109,7 +119,7 @@ public class AlertConditionsUIBean {
         return conditionDescriptions;
     }
 
-    public Map<AlertConditionCategory, String> getCategories() {
+    public Map<String, String> getCategories() {
         return categories;
     }
 
@@ -136,7 +146,10 @@ public class AlertConditionsUIBean {
     @Create
     public void init() {
         this.conditionDescriptions = createDescriptions();
-        this.categories = createCategoryMap();
+        this.categories = createCategories();
+
+        // start out with an empty condition
+        createCondition();
     }
 
     private List<ConditionDescription> createDescriptions() {
@@ -183,6 +196,10 @@ public class AlertConditionsUIBean {
     }
 
     public String saveAlertDefinition() {
+        if (!validateDefinition()) {
+            return null;
+        }
+
         alertDefinition.setConditions(findConditions());
 
         try {
@@ -198,18 +215,44 @@ public class AlertConditionsUIBean {
     }
 
     public String newAlertDefinition() {
+        if (!validateDefinition()) {
+            return null;
+        }
+
         alertDefinition.setConditions(findConditions());
 
         try {
             alertDefinitionManager.createAlertDefinition(subject, alertDefinition, resourceId);
         } catch(Exception e) {
-            this.facesMessages.add(Severity.ERROR, "There was an error creating the alert definitino.");
+            this.facesMessages.add(Severity.ERROR, "There was an error creating the alert definition.");
             this.log.error("Error persisting AlertDefinition:  " + alertDefinition.getName(), e);
 
             return null;
         }
 
         return SUCCESS_OUTCOME;
+    }
+
+    private boolean validateDefinition() {
+        Set<AlertCondition> conditions = findConditions();
+
+        if (conditions.isEmpty()) {
+            this.facesMessages.add(Severity.ERROR, "Please add at least one condition.");
+
+            return false;
+        }
+
+        AlertDampening dampening = alertDefinition.getAlertDampening();
+
+        if (dampening.getCategory() == AlertDampening.Category.PARTIAL_COUNT) {
+            if (dampening.getValue() > dampening.getPeriod()) {
+                this.facesMessages.addFromResourceBundle(Severity.ERROR, "alert.config.error.PartialCountRangeTooSmall");
+
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private boolean shouldSetMeasurementDefinition() {
@@ -245,17 +288,17 @@ public class AlertConditionsUIBean {
         return conditionSet;
     }
 
-    private Map<AlertConditionCategory, String> createCategoryMap() {
-        Map<AlertConditionCategory, String> categoryMap = new HashMap<AlertConditionCategory, String>();
-
-        for (AlertConditionCategory category : AlertConditionCategory.values()) {
-            categoryMap.put(category, category.getName());
-        }
-
-        categoryMap.remove(AlertConditionCategory.ALERT);
+    private Map<String, String> createCategories() {
+        Map<String, String> categoryMap = new HashMap<String, String>();
+        List<AlertConditionCategory> categoryList = new ArrayList(Arrays.asList(AlertConditionCategory.values()));
+        categoryList.remove(AlertConditionCategory.ALERT);
 
         if (configurationManager.getResourceConfigurationDefinitionForResourceType(subject, resourceType.getId()) == null) {
-            categoryMap.remove(AlertConditionCategory.RESOURCE_CONFIG);
+            categoryList.remove(AlertConditionCategory.RESOURCE_CONFIG);
+        }
+
+        for (AlertConditionCategory category : categoryList) {
+            categoryMap.put(category.toString(), category.getName());
         }
 
         return categoryMap;

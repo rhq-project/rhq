@@ -30,7 +30,7 @@
  import java.util.HashSet;
  import java.util.Set;
 
- public class MeasurementConverter {
+ public class MeasurementConverterClient {
     private static final int MAX_PRECISION_DIGITS = 4;
     private static final String NULL_OR_NAN_FORMATTED_VALUE = "--no data available--";
 

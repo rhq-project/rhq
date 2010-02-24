@@ -18,7 +18,6 @@
  */
 package org.rhq.core.server;
 
-import org.rhq.core.domain.measurement.MeasurementConverter;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;

@@ -22,7 +22,7 @@
   */
 package org.rhq.core.domain.util.units.test;
 
- import org.rhq.core.domain.measurement.MeasurementConverter;
+ import org.rhq.core.domain.measurement.MeasurementConverterClient;
  import org.rhq.core.domain.measurement.MeasurementUnits;
  import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
  import org.rhq.core.domain.measurement.util.MeasurementConversionException;
@@ -95,7 +95,7 @@ package org.rhq.core.domain.util.units.test;
         MeasurementUnits expectedUnits) {
         incrementPrecisionScalingTestCount();
 
-        String[] results = MeasurementConverter.formatToSignificantPrecision(values, units, true);
+        String[] results = MeasurementConverterClient.formatToSignificantPrecision(values, units, true);
         for (int i = 0; i < results.length; i++) {
             String expected = expectedResults[i];
             String actual = results[i];
@@ -106,7 +106,7 @@ package org.rhq.core.domain.util.units.test;
                 Locale.setDefault(Locale.US);
                 MeasurementNumericValueAndUnits vu = MeasurementParser.parse(expected, expectedUnits);
                 Locale.setDefault(defaultLocale);
-                expected = MeasurementConverter.format(vu.getValue(), expectedUnits, false, null, 4);
+                expected = MeasurementConverterClient.format(vu.getValue(), expectedUnits, false, null, 4);
             }
 
             assert actual.equals(expected) : "Test " + precisionScalingTestCount.get() + ": " + "Index " + i + ", "
@@ -146,7 +146,7 @@ package org.rhq.core.domain.util.units.test;
                     }
 
                     for (String unitVariation : unitsVariations) {
-                        String original = MeasurementConverter.format(POSITIVE, units, false);
+                        String original = MeasurementConverterClient.format(POSITIVE, units, false);
                         String toBeTested = magnitudeVariation.trim() + unitVariation.trim();
 
                         assert original.equals(toBeTested) : "Error constructing whitespace string: " + "Expected '"
@@ -170,7 +170,7 @@ package org.rhq.core.domain.util.units.test;
                     }
 
                     for (String unitVariation : unitsVariations) {
-                        String original = MeasurementConverter.format(-POSITIVE, units, false);
+                        String original = MeasurementConverterClient.format(-POSITIVE, units, false);
                         String toBeTested = "-" + magnitudeVariation.trim() + unitVariation.trim();
 
                         assert original.equals(toBeTested) : "Error constructing whitespace string: " + "Expected '"
@@ -255,7 +255,7 @@ package org.rhq.core.domain.util.units.test;
     private void validateScale(double fromValue, MeasurementUnits fromUnits, double toValue, MeasurementUnits toUnits) {
         MeasurementNumericValueAndUnits valueAndUnits = new MeasurementNumericValueAndUnits(fromValue, fromUnits);
         try {
-            double derived = MeasurementConverter.scale(valueAndUnits, toUnits);
+            double derived = MeasurementConverterClient.scale(valueAndUnits, toUnits);
             assert Math.abs(toValue - derived) < 1e-9 : "Scale conversion error: " +
 
             "From value '" + fromValue + "', " + "with units of '" + fromUnits.name() + "', " + "displayed as '"
@@ -283,7 +283,7 @@ package org.rhq.core.domain.util.units.test;
 
     private void validateFormatConvert(double passedValue, double expectedValue, MeasurementUnits units) {
         try {
-            String intermediate = MeasurementConverter.format(passedValue, units, false);
+            String intermediate = MeasurementConverterClient.format(passedValue, units, false);
             MeasurementNumericValueAndUnits results = MeasurementParser.parse(intermediate, units);
 
             assert (Math.abs(results.getValue() - expectedValue) < 1e-9 && results.getUnits() == units) : "double input was '"

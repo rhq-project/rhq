@@ -2204,7 +2204,10 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         for (T r : results) {
             MutableDisambiguationReport<T> value = new MutableDisambiguationReport<T>();
             value.original = r;
-            reportByResourceId.put(extractor.extract(r), value);
+            int resourceId = extractor.extract(r);
+            if (resourceId > 0) {
+                reportByResourceId.put(resourceId, value);
+            }
         }
 
         //k, now let's construct the JPQL query to get the parents and type infos...
@@ -2247,10 +2250,18 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         //now we have all the information to create the result.
         //first create the immutable reports.
-        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(reportByResourceId.size());
+        List<DisambiguationReport<T>> resolution = new ArrayList<DisambiguationReport<T>>(results.size());
 
-        for (Map.Entry<Integer, MutableDisambiguationReport<T>> entry : reportByResourceId.entrySet()) {
-            resolution.add(entry.getValue().getReport());
+        for(T result : results) {
+            int resourceId = extractor.extract(result);
+            if (resourceId > 0) {
+                MutableDisambiguationReport<T> report = reportByResourceId.get(resourceId);
+                resolution.add(report.getReport());
+            } else {
+                //this result doesn't correspond to any resource, need to handle it specially
+                DisambiguationReport<T> report = new DisambiguationReport<T>(result, Collections.<ResourceParentFlyweight>emptyList(), null, null);
+                resolution.add(report);
+            }
         }
 
         return new ResourceNamesDisambiguationResult<T>(resolution, typeResolutionNeeded, parentResolutionNeeded,

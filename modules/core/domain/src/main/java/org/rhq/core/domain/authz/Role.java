@@ -106,8 +106,7 @@ public class Role implements Serializable {
     @Column(name = "FSYSTEM")
     private Boolean fsystem;
 
-    @OneToMany
-    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "ROLE_ID") })
+    @OneToMany(mappedBy = "role")
     private java.util.Set<SubjectRoleEntity> roleSubjects;
 
     @ManyToMany(mappedBy = "roles")

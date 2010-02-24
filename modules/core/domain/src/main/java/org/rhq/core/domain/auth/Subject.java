@@ -36,7 +36,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
@@ -227,8 +226,7 @@ public class Subject implements Externalizable {
     @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE })
     private Configuration configuration;
 
-    @OneToMany
-    @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") })
+    @OneToMany(mappedBy = "user")
     private Set<SubjectRoleEntity> subjectRoles;
 
     @Transient

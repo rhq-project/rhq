@@ -25,20 +25,22 @@ package org.rhq.core.domain.auth;
 import java.io.Serializable;
 
 import javax.persistence.Column;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.authz.Role;
 
+@Entity
+@IdClass(SubjectRolePK.class)
 @Table(name = "RHQ_SUBJECT_ROLE_MAP")
 public class SubjectRoleEntity implements Serializable {
-    @ManyToOne
-    @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID")
+
+    @Id
     private Subject subject;
 
-    @ManyToOne
-    @JoinColumn(name = "ROLE_ID", referencedColumnName = "ID")
+    @Id
     private Role role;
 
     @Column(name = "IS_LDAP")

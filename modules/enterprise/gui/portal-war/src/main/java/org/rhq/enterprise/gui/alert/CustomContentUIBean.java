@@ -73,7 +73,12 @@ public class CustomContentUIBean {
      * name of bean, but this class is not an "official" seam component.
      */
     private void outjectBean(String name, CustomAlertSenderBackingBean bean) {
-        Context pageContext = Contexts.getPageContext();
-        pageContext.set(name, bean);
+
+        Context context = Contexts.getSessionContext();
+
+        CustomAlertSenderBackingBean csb = (CustomAlertSenderBackingBean) context.get(name);
+        if (csb ==null)
+            context.set(name,bean);
+
     }
 }

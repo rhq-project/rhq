@@ -35,7 +35,16 @@
         </ui:define>
 
         <ui:define name="body">
-            <a4j:form id="alertConditionsForm">
+
+            <rich:messages showSummary="true"
+                       infoClass="InfoBlock"
+                       warnClass="WarnBlock"
+                       errorClass="ErrorBlock"
+                       fatalClass="FatalBlock"
+                       layout="table"
+                       width="100%" />
+
+            <h:form id="alertConditionsForm">
                 <ui:insert name="formTop" />
 
                 <rich:panel id="conditionsPanel">
@@ -44,19 +53,17 @@
                     </f:facet>
 
                     <rich:panel id="conditionExpression">
-                            <h:outputText value="#{messages['alert.config.props.CB.ExpressionDetails.1']} " />
-                            <h:selectOneMenu value="#{alertDefinition.conditionExpression}">
-                                <f:selectItems value="#{alertConditionUIBean.conditionExpressions}" />
-                            </h:selectOneMenu>
-                            <h:outputText value=" #{messages['alert.config.props.CB.ExpressionDetails.2']}" />
+                        <h:outputText value="#{messages['alert.config.props.CB.ExpressionDetails.1']} " />
+                        <h:selectOneMenu value="#{alertDefinition.conditionExpression}">
+                            <f:selectItems value="#{alertConditionUIBean.conditionExpressions}" />
+                        </h:selectOneMenu>
+                        <h:outputText value=" #{messages['alert.config.props.CB.ExpressionDetails.2']}" />
                     </rich:panel>
 
                     <rich:panel id="conditionSet">
                         <f:facet name="header">
                             <h:outputText value="Condition Set"/>
                         </f:facet>
-
-                        <h:messages />
 
                         <rich:dataTable id="categoryTable" value="#{alertConditionsUIBean.conditionDescriptions}" var="conditionDescription">
                             <rich:column>
@@ -71,6 +78,7 @@
 
                                     <f:setPropertyActionListener value="#{conditionDescription.condition}" target="#{alertConditionsUIBean.currentCondition}" />
                                     <rich:componentControl for="categoryModalPanel" attachTo="editButton" operation="show" event="onclick" />
+                                    <a4j:support event="onclick" reRender="categoryOptionOkButton" />
                                 </a4j:commandButton>
                             </rich:column>
 
@@ -93,7 +101,7 @@
                                         action="#{alertConditionsUIBean.createCondition}"
                                         styleClass="buttonmed">
                             <rich:componentControl for="categoryModalPanel" attachTo="addConditionButton" operation="show" event="onclick" />
-                            <a4j:support event="onclick" reRender="categoryOptionsPanel"  />
+                            <a4j:support event="onclick" reRender="categoryOptionsPanel,categoryOptionOkButton" />
                         </a4j:commandButton>
 
                     </rich:panel>
@@ -107,13 +115,20 @@
                         <h:outputText value="#{messages['alert.config.props.CB.Recovery']} " />
                         <h:outputText value="#{messages['alert.config.props.CB.RecoveryFor']}" />
 
-                        <h:selectOneMenu value="#{alertDefinition.recoveryId}">
+                        <h:selectOneMenu id="recoveryForAlertSelectBox"
+                                      value="#{alertDefinition.recoveryId}"
+                                      disabled="#{alertDefinition.willRecover}">
                             <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" itemValue="0" />
                             <f:selectItems value="#{alertConditionUIBean.existingAlerts}" />
+                            <a4j:support event="onchange" reRender="willRecoverCheckbox"  />
                         </h:selectOneMenu>
                         <br />
 
-                        <h:selectBooleanCheckbox id="willRecoverCheckbox" value="#{alertDefinition.willRecover}" />
+                        <h:selectBooleanCheckbox id="willRecoverCheckbox" 
+                                              value="#{alertDefinition.willRecover}"
+                                              disabled="#{alertDefinition.recoveryId != 0}">
+                            <a4j:support event="onchange" reRender="recoveryForAlertSelectBox" />
+                        </h:selectBooleanCheckbox>
                         <h:outputLabel for="willRecoverCheckbox" value="#{messages['alert.config.props.CB.Content.UntilRecovered']}" />
 
                         <br />
@@ -151,28 +166,63 @@
 
                                     <ui:fragment rendered="#{alertDefinition.alertDampening.category == 'CONSECUTIVE_COUNT'}">
                                         <h:outputText value="#{messages['alert.config.props.CB.Content.DampenConsecutiveCount.1']} " />
-                                        <h:inputText value="#{alertDefinition.alertDampening.value}"
-                                                  required="true"
-                                                  maxlength="5"/>
+                                        <h:inputText id="consecutiveCount"
+                                                 value="#{alertDefinition.alertDampening.value}"
+                                                 size="4"
+                                                 required="true"
+                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
+                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
+                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                            <f:validateDoubleRange minimum="0" />
+                                        </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenConsecutiveCount.2']}" />
                                     </ui:fragment>
 
                                     <ui:fragment rendered="#{alertDefinition.alertDampening.category == 'PARTIAL_COUNT'}">
                                         <h:outputText value="#{messages['alert.config.props.CB.Content.DampenPartialCount.1']} " />
-                                        <h:inputText value="#{alertDefinition.alertDampening.value}"
-                                                  required="true"
-                                                  maxlength="5"/>
+                                        <h:inputText id="partialCount"
+                                                 value="#{alertDefinition.alertDampening.value}"
+                                                 size="4"
+                                                 required="true"
+                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
+                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
+                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                            <f:validateLongRange minimum="0" />
+                                        </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenPartialCount.2']} " />
-                                        <h:inputText value="#{alertDefinition.alertDampening.period}" />
+                                        <h:inputText id="partialCountPeriod"
+                                                 value="#{alertDefinition.alertDampening.period}"
+                                                 size="4"
+                                                 required="true"
+                                                 requiredMessage="#{alertConditionMessages.dampeningEvaluation}"
+                                                 validatorMessage="#{alertConditionMessages.dampeningEvaluation}"
+                                                 converterMessage="#{alertConditionMessages.dampeningEvaluation}">
+                                            <f:validateLongRange minimum="0" />
+                                        </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenPartialCount.3']}" />
                                     </ui:fragment>
 
                                     <ui:fragment rendered="#{alertDefinition.alertDampening.category == 'DURATION_COUNT'}">
                                         <h:outputText value="#{messages['alert.config.props.CB.Content.DampenDurationCount.1']} " />
-                                        <h:inputText value="#{alertDefinition.alertDampening.value}" />
+                                        <h:inputText id="durationCount"
+                                                 value="#{alertDefinition.alertDampening.value}"
+                                                 size="4"
+                                                 required="true"
+                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
+                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
+                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                            <f:validateLongRange minimum="0" />
+                                        </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenDurationCount.2']} " />
-                                        <h:inputText value="#{alertDefinition.alertDampening.period}" />
-
+                                        <h:inputText id="durationCountPeriod"
+                                                 value="#{alertDefinition.alertDampening.period}"
+                                                 size="4"
+                                                 required="true"
+                                                 requiredMessage="#{alertConditionMessages.timePeriod}"
+                                                 validatorMessage="#{alertConditionMessages.timePeriod}"
+                                                 converterMessage="#{alertConditionMessages.timePeriod}">
+                                            <f:validateLongRange minimum="0" />
+                                        </h:inputText>
                                         <h:selectOneMenu value="#{alertDefinition.alertDampening.periodUnits}">
                                             <f:selectItems value="#{alertConditionUIBean.timeUnits}" />
                                         </h:selectOneMenu>
@@ -190,7 +240,7 @@
                                    styleClass="buttonmed"
                                    style="margin: 10px;" />
                 </ui:insert>
-            </a4j:form>
+            </h:form>
 
             <rich:modalPanel id="categoryModalPanel" moveable="false" autosized="true" width="400">
 
@@ -199,8 +249,8 @@
                         <h:form id="categoryForm">
                             <h:selectOneMenu value="#{alertConditionsUIBean.currentCondition.category}">
                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
-                                <s:selectItems value="#{alertConditionsUIBean.categories}" />
-                                <a4j:support event="onchange" reRender="categoryOptions" status="categoryLoadStatus" />
+                                <f:selectItems value="#{alertConditionsUIBean.categories}" />
+                                <a4j:support event="onchange" reRender="EditConditionForm" status="categoryLoadStatus" />
                             </h:selectOneMenu>
                          </h:form>
 
@@ -221,14 +271,20 @@
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'CONTROL'}">
                                             <h:outputLabel for="operationSelection" value="#{messages['alert.config.props.CB.Content.ControlAction']} " />
 
-                                            <h:selectOneMenu id="operationSelection" value="#{alertConditionsUIBean.currentCondition.name}">
+                                            <h:selectOneMenu id="operationSelection"
+                                                        value="#{alertConditionsUIBean.currentCondition.name}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoControlActionSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.operations}" />
                                             </h:selectOneMenu>
 
                                             <h:outputText value=" #{messages['alert.config.props.CB.Content.Comparator.=']} " />
 
-                                            <h:selectOneMenu id="operationStatusSelection" value="#{alertConditionsUIBean.currentCondition.option}">
+                                            <h:selectOneMenu id="operationStatusSelection"
+                                                        value="#{alertConditionsUIBean.currentCondition.option}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoControlActionStatusSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.operationStatuses}" />
                                             </h:selectOneMenu>
@@ -238,7 +294,10 @@
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'AVAILABILITY'}">
                                             <h:outputLabel for="availabilitySelection" value="#{messages['alert.config.props.CB.Content.Availability']} " />
 
-                                            <h:selectOneMenu id="availabilitySelection" value="#{alertConditionsUIBean.currentCondition.option}">
+                                            <h:selectOneMenu id="availabilitySelection" 
+                                                        value="#{alertConditionsUIBean.currentCondition.option}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoAvailabilityStatusSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.availabilities}" />
                                             </h:selectOneMenu>
@@ -248,7 +307,10 @@
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'CHANGE'}">
                                             <h:outputLabel for="metricChangeSelection" value="#{messages['alert.config.props.CB.Content.Metric']} " />
 
-                                            <h:selectOneMenu id="metricChangeSelection" value="#{alertConditionsUIBean.measurementDefinitionId}">
+                                            <h:selectOneMenu id="metricChangeSelection" 
+                                                        value="#{alertConditionsUIBean.measurementDefinitionId}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoMetricSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.measurements}" />
                                             </h:selectOneMenu>
@@ -260,7 +322,10 @@
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'THRESHOLD'}">
                                             <h:outputLabel for="metricThresholdSelection" value="#{messages['alert.config.props.CB.Content.Metric']}" />
 
-                                            <h:selectOneMenu id="metricThresholdSelection" value="#{alertConditionsUIBean.measurementDefinitionId}">
+                                            <h:selectOneMenu id="metricThresholdSelection" 
+                                                        value="#{alertConditionsUIBean.measurementDefinitionId}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoMetricSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.measurements}" />
                                             </h:selectOneMenu>
@@ -273,14 +338,23 @@
                                             <br />
                                             <br />
 
-                                            <h:inputText id="metricThresholdAbsolute" value="#{alertConditionsUIBean.threshold}" />
+                                            <h:inputText id="metricThresholdAbsolute" 
+                                                    value="#{alertConditionsUIBean.threshold}"
+                                                    required="true"
+                                                    requiredMessage="#{alertConditionMessages.threshold}"
+                                                    validatorMessage="#{alertConditionMessages.threshold}">
+                                                <f:validateDoubleRange minimum="0.0" />
+                                            </h:inputText>
                                             <h:outputLabel for="metricThresholdAbsolute" value="#{messages['alert.config.props.CB.Content.AbsoluteValue']}" />
                                         </ui:fragment>
 
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'BASELINE'}">
                                             <h:outputLabel for="metricBaselineSelection" value="#{messages['alert.config.props.CB.Content.Metric']} " />
 
-                                            <h:selectOneMenu id="metricBaselineSelection" value="#{alertConditionsUIBean.measurementDefinitionId}">
+                                            <h:selectOneMenu id="metricBaselineSelection" 
+                                                        value="#{alertConditionsUIBean.measurementDefinitionId}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoMetricSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.measurements}" />
                                             </h:selectOneMenu>
@@ -293,10 +367,20 @@
                                             <br />
                                             <br />
 
-                                            <h:inputText id="metricBaselinePercent" value="#{alertConditionsUIBean.currentCondition.threshold}" converter="#{metricPercentConverter}" />
+                                            <h:inputText id="metricBaselinePercent" 
+                                                    value="#{alertConditionsUIBean.currentCondition.threshold}"
+                                                    converter="#{metricPercentConverter}"
+                                                    required="true"
+                                                    requiredMessage="#{alertConditionMessages.percentRange}"
+                                                    validatorMessage="#{alertConditionMessages.percentRange}">
+                                                <f:validateDoubleRange minimum="0.0" maximum="1000.0" />
+                                            </h:inputText>
                                             <h:outputLabel for="metricBaselinePercent" value=" #{messages['alert.config.props.CB.Content.Percent']} " />
 
-                                            <h:selectOneMenu id="metricBaselineBaselineSelection" value="#{alertConditionsUIBean.currentCondition.option}">
+                                            <h:selectOneMenu id="metricBaselineBaselineSelection" 
+                                                        value="#{alertConditionsUIBean.currentCondition.option}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoBaselineOptionSelected']}">
                                                 <f:selectItems value="#{alertConditionUIBean.baselines}" />
                                             </h:selectOneMenu>
                                         </ui:fragment>
@@ -305,20 +389,29 @@
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'EVENT'}">
                                             <h:outputLabel for="eventSelection" value="#{messages['alert.config.props.CB.Content.EventSeverity']} " />
 
-                                            <h:selectOneMenu id="eventSelection" value="#{alertConditionsUIBean.currentCondition.name}">
+                                            <h:selectOneMenu id="eventSelection" 
+                                                        value="#{alertConditionsUIBean.currentCondition.name}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoEventSeveritySelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.severities}" />
                                             </h:selectOneMenu>
 
                                             <h:outputText value=" #{messages['alert.config.props.CB.Content.Match']}" />
-                                            <h:inputText id="eventExpression" value="#{alertConditionsUIBean.currentCondition.option}" />
+                                            <h:inputText id="eventExpression" 
+                                                    value="#{alertConditionsUIBean.currentCondition.option}">
+                                                <f:validator validatorId="eventRegexValidator" />
+                                            </h:inputText>
                                         </ui:fragment>
 
 
                                         <ui:fragment rendered="#{alertConditionsUIBean.currentCondition.category == 'TRAIT'}">
                                             <h:outputLabel for="traitSelection" value="#{messages['alert.config.props.CB.Content.Trait']} " />
 
-                                            <h:selectOneMenu id="traitSelection" value="#{alertConditionsUIBean.measurementDefinitionId}">
+                                            <h:selectOneMenu id="traitSelection"
+                                                        value="#{alertConditionsUIBean.measurementDefinitionId}"
+                                                        required="true"
+                                                        requiredMessage="#{messages['alert.config.error.NoTraitSelected']}">
                                                 <f:selectItem itemLabel="#{messages['alert.dropdown.SelectOption']}" />
                                                 <f:selectItems value="#{alertConditionUIBean.traits}" />
                                             </h:selectOneMenu>
@@ -335,10 +428,11 @@
                                     </rich:panel>
 
                                     <h:commandButton id="categoryOptionOkButton"
-                                                   value="OK"
-                                                   action="#{alertConditionsUIBean.updateCondition}"
-                                                   styleClass="buttonmed"
-                                                   style="margin: 5px;">
+                                                 value="OK"
+                                                 rendered="#{not empty alertConditionsUIBean.currentCondition.category}"
+                                                 action="#{alertConditionsUIBean.updateCondition}"
+                                                 styleClass="buttonmed"
+                                                 style="margin: 5px;">
                                         <rich:componentControl for="categoryModalPanel" attachTo="categoryOptionOkButton" operation="hide" event="onclick" />
                                         <a4j:support event="onclick" reRender="categoryTable" />
                                     </h:commandButton>

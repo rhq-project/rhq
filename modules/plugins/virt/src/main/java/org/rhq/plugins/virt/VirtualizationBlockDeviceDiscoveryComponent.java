@@ -49,7 +49,7 @@ public class VirtualizationBlockDeviceDiscoveryComponent implements ResourceDisc
                 String device = intf.getSimple("targetDevice").getStringValue();
 
                 DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    device, device + " virtual device", null, "Virtual block device", null, null);
+                    device, device, null, "Virtual block device", null, null);
                 details.add(detail);
             }
         }

@@ -26,11 +26,21 @@ import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
 
 @Scope(ScopeType.APPLICATION)
-@Name("alertConditionMessages")
-public class AlertConditionMessages {
+@Name("alertMessages")
+public class AlertMessages {
 
     @In
     private Map<String, String> messages;
+
+    public String getNameRequired() {
+        String name = translate("alerts.config.DefinitionList.ListHeader.AlertName");
+        return translate("errors.required", name);
+    }
+
+    public String getNameLength() {
+        String name = translate("alerts.config.DefinitionList.ListHeader.AlertName");
+        return translate("errors.maxlength", name);
+    }
 
     public String getThreshold() {
         return translate("errors.double", "Threshold");

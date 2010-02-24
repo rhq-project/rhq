@@ -170,9 +170,9 @@
                                                  value="#{alertDefinition.alertDampening.value}"
                                                  size="4"
                                                  required="true"
-                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
-                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
-                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                                 requiredMessage="#{alertMessages.dampeningCount}"
+                                                 validatorMessage="#{alertMessages.dampeningCount}"
+                                                 converterMessage="#{alertMessages.dampeningCount}">
                                             <f:validateDoubleRange minimum="0" />
                                         </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenConsecutiveCount.2']}" />
@@ -184,9 +184,9 @@
                                                  value="#{alertDefinition.alertDampening.value}"
                                                  size="4"
                                                  required="true"
-                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
-                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
-                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                                 requiredMessage="#{alertMessages.dampeningCount}"
+                                                 validatorMessage="#{alertMessages.dampeningCount}"
+                                                 converterMessage="#{alertMessages.dampeningCount}">
                                             <f:validateLongRange minimum="0" />
                                         </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenPartialCount.2']} " />
@@ -194,9 +194,9 @@
                                                  value="#{alertDefinition.alertDampening.period}"
                                                  size="4"
                                                  required="true"
-                                                 requiredMessage="#{alertConditionMessages.dampeningEvaluation}"
-                                                 validatorMessage="#{alertConditionMessages.dampeningEvaluation}"
-                                                 converterMessage="#{alertConditionMessages.dampeningEvaluation}">
+                                                 requiredMessage="#{alertMessages.dampeningEvaluation}"
+                                                 validatorMessage="#{alertMessages.dampeningEvaluation}"
+                                                 converterMessage="#{alertMessages.dampeningEvaluation}">
                                             <f:validateLongRange minimum="0" />
                                         </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenPartialCount.3']}" />
@@ -208,9 +208,9 @@
                                                  value="#{alertDefinition.alertDampening.value}"
                                                  size="4"
                                                  required="true"
-                                                 requiredMessage="#{alertConditionMessages.dampeningCount}"
-                                                 validatorMessage="#{alertConditionMessages.dampeningCount}"
-                                                 converterMessage="#{alertConditionMessages.dampeningCount}">
+                                                 requiredMessage="#{alertMessages.dampeningCount}"
+                                                 validatorMessage="#{alertMessages.dampeningCount}"
+                                                 converterMessage="#{alertMessages.dampeningCount}">
                                             <f:validateLongRange minimum="0" />
                                         </h:inputText>
                                         <h:outputText value=" #{messages['alert.config.props.CB.Content.DampenDurationCount.2']} " />
@@ -218,9 +218,9 @@
                                                  value="#{alertDefinition.alertDampening.period}"
                                                  size="4"
                                                  required="true"
-                                                 requiredMessage="#{alertConditionMessages.timePeriod}"
-                                                 validatorMessage="#{alertConditionMessages.timePeriod}"
-                                                 converterMessage="#{alertConditionMessages.timePeriod}">
+                                                 requiredMessage="#{alertMessages.timePeriod}"
+                                                 validatorMessage="#{alertMessages.timePeriod}"
+                                                 converterMessage="#{alertMessages.timePeriod}">
                                             <f:validateLongRange minimum="0" />
                                         </h:inputText>
                                         <h:selectOneMenu value="#{alertDefinition.alertDampening.periodUnits}">
@@ -341,8 +341,8 @@
                                             <h:inputText id="metricThresholdAbsolute" 
                                                     value="#{alertConditionsUIBean.threshold}"
                                                     required="true"
-                                                    requiredMessage="#{alertConditionMessages.threshold}"
-                                                    validatorMessage="#{alertConditionMessages.threshold}">
+                                                    requiredMessage="#{alertMessages.threshold}"
+                                                    validatorMessage="#{alertMessages.threshold}">
                                                 <f:validateDoubleRange minimum="0.0" />
                                             </h:inputText>
                                             <h:outputLabel for="metricThresholdAbsolute" value="#{messages['alert.config.props.CB.Content.AbsoluteValue']}" />
@@ -371,8 +371,8 @@
                                                     value="#{alertConditionsUIBean.currentCondition.threshold}"
                                                     converter="#{metricPercentConverter}"
                                                     required="true"
-                                                    requiredMessage="#{alertConditionMessages.percentRange}"
-                                                    validatorMessage="#{alertConditionMessages.percentRange}">
+                                                    requiredMessage="#{alertMessages.percentRange}"
+                                                    validatorMessage="#{alertMessages.percentRange}">
                                                 <f:validateDoubleRange minimum="0.0" maximum="1000.0" />
                                             </h:inputText>
                                             <h:outputLabel for="metricBaselinePercent" value=" #{messages['alert.config.props.CB.Content.Percent']} " />

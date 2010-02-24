@@ -47,6 +47,7 @@ public class RHQConstants {
     public static final String LDAPLoginProperty = "CAM_LDAP_LOGIN_PROPERTY";
     public static final String LDAPFilter = "CAM_LDAP_FILTER";
     public static final String LDAPGroupFilter = "CAM_LDAP_GROUP_FILTER";
+    public static final String LDAPGroupMember = "CAM_LDAP_GROUP_MEMBER";
     public static final String LDAPBaseDN = "CAM_LDAP_BASE_DN";
     public static final String LDAPBindDN = "CAM_LDAP_BIND_DN";
     public static final String LDAPBindPW = "CAM_LDAP_BIND_PW";

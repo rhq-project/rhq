@@ -61,6 +61,7 @@ public class SystemConfigForm extends BaseValidatorForm {
     private String ldapSearchBase = "";
     private String ldapSearchFilter = "";
     private String ldapGroupFilter = "";
+    private String ldapGroupMember = "";
     private String ldapUsername = "";
     private String ldapPassword = "";
     private Boolean ldapEnabled = null;
@@ -85,6 +86,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         buf.append(" ldapUsername=").append(ldapUsername);
         buf.append(" ldapPassword=").append(ldapPassword);
         buf.append(" ldapGroupFilter=").append(ldapGroupFilter);
+        buf.append(" ldapGroupMember=").append(ldapGroupMember);
 
         return buf.toString();
     }
@@ -128,6 +130,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapUsername = "";
         ldapPassword = "";
         ldapGroupFilter = "";
+        ldapGroupMember = "";
 
         super.reset(mapping, request);
     }
@@ -217,6 +220,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         ldapSearchBase = prop.getProperty(RHQConstants.LDAPBaseDN);
         ldapSearchFilter = prop.getProperty(RHQConstants.LDAPFilter);
         ldapGroupFilter = prop.getProperty(RHQConstants.LDAPGroupFilter);
+        ldapGroupMember = prop.getProperty(RHQConstants.LDAPGroupMember);
         ldapUsername = prop.getProperty(RHQConstants.LDAPBindDN);
         ldapPassword = prop.getProperty(RHQConstants.LDAPBindPW);
 
@@ -317,6 +321,7 @@ public class SystemConfigForm extends BaseValidatorForm {
         prop.setProperty(RHQConstants.LDAPBaseDN, ldapSearchBase);
         prop.setProperty(RHQConstants.LDAPFilter, ldapSearchFilter);
         prop.setProperty(RHQConstants.LDAPGroupFilter, ldapGroupFilter);
+        prop.setProperty(RHQConstants.LDAPGroupMember, ldapGroupMember);
         prop.setProperty(RHQConstants.LDAPBindDN, ldapUsername);
         prop.setProperty(RHQConstants.LDAPBindPW, ldapPassword);
         prop.setProperty(RHQConstants.LDAPProtocol, ldapSsl ? "ssl" : "");
@@ -570,6 +575,14 @@ public class SystemConfigForm extends BaseValidatorForm {
 
     public void setLdapGroupFilter(String s) {
         ldapGroupFilter = s;
+    }
+
+    public String getLdapGroupMember() {
+        return ldapGroupFilter;
+    }
+
+    public void setLdapGroupMember(String s) {
+        ldapGroupMember = s;
     }
 
     public String getLdapUsername() {

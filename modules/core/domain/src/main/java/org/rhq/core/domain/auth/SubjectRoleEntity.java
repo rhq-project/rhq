@@ -37,6 +37,11 @@ import org.rhq.core.domain.authz.Role;
 @Table(name = "RHQ_SUBJECT_ROLE_MAP")
 public class SubjectRoleEntity implements Serializable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     @Id
     private Subject subject;
 

@@ -19,6 +19,8 @@
 
 package org.rhq.core.domain.auth;
 
+import java.io.Serializable;
+
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 
@@ -28,7 +30,12 @@ import org.rhq.core.domain.authz.Role;
  * @author paji
  *
  */
-public class SubjectRolePK {
+public class SubjectRolePK implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     @ManyToOne
     @JoinColumn(name = "USER_ID", referencedColumnName = "ID")
     private Subject subject;

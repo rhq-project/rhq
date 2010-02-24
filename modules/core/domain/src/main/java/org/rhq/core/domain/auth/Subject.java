@@ -226,7 +226,7 @@ public class Subject implements Externalizable {
     @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE })
     private Configuration configuration;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "subject")
     private Set<SubjectRoleEntity> subjectRoles;
 
     @Transient

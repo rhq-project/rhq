@@ -41,7 +41,6 @@ import org.rhq.core.domain.alert.notification.AlertNotification;
 import org.rhq.core.domain.alert.notification.NotificationTemplate;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.plugin.PluginKey;
@@ -151,6 +150,18 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             if (notificationIdSet.contains(notification.getId())) {
                 toBeRemoved.add(notification);
                 removed--;
+            }
+        }
+
+        // Before we delete the notification, check if has a custom backing bean
+        // and give it the possibility to clean up
+        for (AlertNotification notification : toBeRemoved) {
+            CustomAlertSenderBackingBean bb = getBackingBeanForSender(notification.getSenderName(),notification.getId());
+            try {
+                bb.internalCleanup();
+            }
+            catch (Throwable t ) {
+                LOG.error("removeNotifications, calling backingBean.internalCleanup() resulted in " + t.getMessage());
             }
         }
 

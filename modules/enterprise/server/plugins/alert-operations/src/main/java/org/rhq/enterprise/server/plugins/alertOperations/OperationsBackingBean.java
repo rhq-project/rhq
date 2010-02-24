@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.plugins.alertOperations;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,17 @@ public class OperationsBackingBean extends CustomAlertSenderBackingBean {
         log.info("init");
     }
 
+    @Override
+    public void internalCleanup() {
+        PropertySimple parameterConfigProp = alertParameters.getSimple(OperationsSender.PARAMETERS_CONFIG);
+        if (parameterConfigProp!=null) {
+            Integer paramId = parameterConfigProp.getIntegerValue();
+            if (paramId!=null) {
+                ConfigurationManagerLocal cmgr = LookupUtil.getConfigurationManager();
+                cmgr.deleteConfigurations(Arrays.asList(paramId));
+            }
+        }
+    }
 
     public String selectResource() {
 

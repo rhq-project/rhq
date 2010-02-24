@@ -44,7 +44,7 @@ public class CustomAlertSenderBackingBean {
      * This method is called when the alert notification that uses this backing bean
      * is removed, so that the backing bean can do some cleanup work
      */
-    protected void cleanup() {}
+    public void internalCleanup() {}
 
     /**
      * Persist the passed configuration object. This can be a new object or one

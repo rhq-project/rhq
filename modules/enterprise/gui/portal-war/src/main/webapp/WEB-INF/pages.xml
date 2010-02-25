@@ -12,6 +12,8 @@
     </navigation>
   </page>
 
+  <page view-id="/rhq/resource/configuration/history.xhtml" action="#{configurationViewer.initialize}"/>
+
   <page view-id="/rhq/resource/configuration/view-map.xhtml" action="#{configurationViewer.initialize}"/>
 
   <page view-id="/rhq/resource/configuration/edit.xhtml" concurrent-request-timeout="15000" timeout="180000">

@@ -11,7 +11,8 @@
       xmlns:c="http://java.sun.com/jstl/core"
       xmlns:onc="http://jboss.org/on/component"
       xmlns:onf="http://jboss.org/on/function"
-      xmlns:rich="http://richfaces.ajax4jsf.org/rich" xmlns:a4j="https://ajax4jsf.dev.java.net/ajax">
+      xmlns:rich="http://richfaces.ajax4jsf.org/rich" xmlns:a4j="https://ajax4jsf.dev.java.net/ajax"
+      xmlns:s="http://jboss.com/products/seam/taglib">
 
 <ui:composition template="/rhq/resource/layout/main.xhtml">
 
@@ -21,6 +22,18 @@
 <ui:define name="content">
 
 <ui:param name="latestConfig" value="#{GetLatestConfigurationUpdateUIBean.latestConfigurationUpdate}"/>
+
+  <script type="text/javascript">
+      function cursor_wait() {
+        document.body.style.cursor = 'wait';
+        return true;
+      }
+
+      function cursor_clear() {
+        document.body.style.cursor = 'default';
+        return true;
+      }
+    </script>
 
 <h:form id="historyForm">
     <input type="hidden" name="id" value="${ResourceUIBean.id}"/>
@@ -224,12 +237,58 @@
         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
         <input type="hidden" name="configId" value="#{param.configId}"/>
 
+        <ui:remove>
         <onc:config configurationDefinition="#{ViewResourceConfigurationUpdateUIBean.configurationDefinition}"
                     configuration="#{ViewResourceConfigurationUpdateUIBean.configuration}"
                     readOnly="true"
                     nullConfigurationDefinitionMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationDefinitionMessage}"
                     nullConfigurationMessage="#{ViewResourceConfigurationUpdateUIBean.nullConfigurationMessage}"
                     prevalidate="true"/>
+        </ui:remove>
+
+
+      <c:choose>
+        <c:when test="${configurationViewer.rawSupported}">
+          <rich:tabPanel>
+            <rich:tab label="Advanced Mode">
+              <ui:include src="raw.xhtml"/>
+            </rich:tab>
+          </rich:tabPanel>
+        </c:when>
+
+        <c:when test="${configurationViewer.structuredSupported}">
+          <rich:tabPanel>
+            <rich:tab label="Basic Mode">
+              <ui:include src="structured.xhtml"/>
+            </rich:tab>
+          </rich:tabPanel>
+        </c:when>
+
+        <c:when test="${configurationViewer.structuredAndRawSupported}">
+          <rich:tabPanel id="resourceConfigurationTabPanel"
+                         switchType="ajax"
+                         valueChangeListener="#{configurationViewer.changeTabs}">
+            <rich:tab id="structuredTab"
+                      label="Basic Mode"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();"
+                      limitToList="true"
+                      reRender="upperEditButton,lowerEditButton,modalEditor">
+              <ui:include src="structured.xhtml"/>
+            </rich:tab>
+            <rich:tab id="rawTab"
+                      label="Advanced Mode"
+                      onlabelclick="cursor_wait();"
+                      oncomplete="cursor_clear();"
+                      limitToList="true"
+                      reRender="upperEditButton,lowerEditButton,modalEditor">
+              <ui:include src="raw.xhtml"/>
+            </rich:tab>
+          </rich:tabPanel>
+        </c:when>
+      </c:choose>
+
+      <ui:include src="view-raw-modal.xhtml"/>
 
     </h:form>
 

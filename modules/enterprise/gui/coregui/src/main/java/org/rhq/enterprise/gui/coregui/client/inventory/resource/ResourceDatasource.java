@@ -21,33 +21,27 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
-import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.fields.DataSourceImageField;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
-import com.smartgwt.client.types.DSDataFormat;
-import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 
 /**
  * @author Greg Hinkle
  */
-public class ResourceDatasource extends DataSource {
-    private boolean initialized = false;
-
+public class ResourceDatasource extends RPCDataSource {
 
     private String query;
 
@@ -55,9 +49,6 @@ public class ResourceDatasource extends DataSource {
 
 
     public ResourceDatasource() {
-        setClientOnly(false);
-        setDataProtocol(DSProtocol.CLIENTCUSTOM);
-        setDataFormat(DSDataFormat.CUSTOM);
 
         DataSourceField idDataField = new DataSourceIntegerField("id", "ID", 20);
         idDataField.setPrimaryKey(true);
@@ -71,8 +62,6 @@ public class ResourceDatasource extends DataSource {
         DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability", 20);
         availabilityDataField.setCanEdit(false);
 
-//        nameDataField.setType(FieldType.);
-
         setFields(idDataField, nameDataField, descriptionDataField, availabilityDataField);
     }
 
@@ -84,43 +73,13 @@ public class ResourceDatasource extends DataSource {
         this.query = query;
     }
 
-    @Override
-    protected Object transformRequest(DSRequest request) {
-        String requestId = request.getRequestId();
-        DSResponse response = new DSResponse();
-        response.setAttribute("clientContext", request.getAttributeAsObject("clientContext"));
-        // Asume success
-        response.setStatus(0);
-        switch (request.getOperationType()) {
-            case ADD:
-                //executeAdd(lstRec, true);
-                break;
-            case FETCH:
-                executeFetch(requestId, request, response);
-                break;
-            case REMOVE:
-                //executeRemove(lstRec);
-                break;
-            case UPDATE:
-                //executeAdd(lstRec, false);
-                break;
-
-            default:
-                break;
-        }
-
-        return request.getData();
-    }
 
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-
         ResourceCriteria criteria = new ResourceCriteria();
+        criteria.setPageControl(getPageControl(request));
         criteria.addFilterName(query);
-        criteria.setPageControl(PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow()));
-
-//        criteria.addSortAgentName(PageOrdering.ASC);
 
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
@@ -132,21 +91,6 @@ public class ResourceDatasource extends DataSource {
             }
 
             public void onSuccess(PageList<Resource> result) {
-//                mainPanel.clear();
-//
-//                FlexTable table = new FlexTable();
-//                mainPanel.add(table);
-//
-//                int r = 0;
-//                int c = 0;
-//
-//                table.setText(r,c++,"id");
-//                table.setText(r,c++,"name");
-//                table.setText(r,c++,"description");
-//                table.setText(r,c++,"type");
-//                table.setText(r,c++,"availability");
-//
-//                mainPanel.add(table);
 
                 System.out.println("Data retrieved in: " + (System.currentTimeMillis() - start));
 
@@ -168,48 +112,7 @@ public class ResourceDatasource extends DataSource {
                 response.setData(records);
                 response.setTotalRows(result.getTotalSize());	// for paging to work we have to specify size of full result set
                 processResponse(requestId, response);
-
-
-//                for (Resource res : result) {
-//                    if (initialized) {
-//                        updateData(new ResourceRow(res));
-//                    } else {
-//                        addData(new ResourceRow(res));
-//                    }
-//
-//                    if (!initialized) initialized = true;
-//                    r++;
-//                    c=0;
-//                    table.setText(r,c++, String.valueOf(res.getId()));
-//                    table.setText(r,c++, res.getName());
-//                    table.setText(r,c++, res.getDescription());
-//                    table.setText(r,c++, String.valueOf(res.getResourceType().getId()));
-//                    table.setText(r,c++, String.valueOf(res.getCurrentAvailability().getAvailabilityType().getName()));
-
-//                }
             }
         });
-    }
-
-    private static class ResourceRow extends ListGridRecord {
-
-        private Resource resource;
-
-        private ResourceRow(Resource resource) {
-            this.resource = resource;
-//             DataTools.setProperties
-
-        }
-
-
-        public Resource getResource() {
-            return resource;
-        }
-
-        public void setResource(Resource resource) {
-            this.resource = resource;
-        }
-
-        
     }
 }

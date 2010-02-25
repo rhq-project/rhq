@@ -93,15 +93,7 @@ public class UsersDataSource extends RPCDataSource {
         final long start = System.currentTimeMillis();
         
         SubjectCriteria criteria = new SubjectCriteria();
-        // criteria.addFilterName(query);
-
-        if (request.getStartRow() != null && request.getEndRow() != null) {
-            criteria.setPageControl(PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow()));
-        } else {
-            criteria.setPageControl(PageControl.getSingleRowInstance());
-        }
-
-        // criteria.addSortAgentName(PageOrdering.ASC);
+        criteria.setPageControl(getPageControl(request));
 
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {

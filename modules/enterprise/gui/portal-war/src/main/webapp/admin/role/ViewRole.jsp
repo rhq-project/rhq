@@ -173,6 +173,43 @@ groupWidgetProperties = getWidgetProperties('<c:out value="${groupWidgetInstance
 </c:if>
 </c:if>
 
+<c:if test="${not Role.fsystem}">
+<c:if test="${useroperations['MANAGE_SECURITY']}">
+
+<html:form method="POST" action="/admin/role/RemoveLdapGroups">
+
+<tiles:insert definition=".header.tab">
+  <tiles:put name="tabKey" value="admin.role.groups.AssignedGroupsTab"/>
+</tiles:insert>
+
+<display:table items="${RoleLdapGrps}" var="group" action="${selfPgAction}"
+               postfix="g"
+               width="100%" cellpadding="0" cellspacing="0">
+
+  <display:column width="1%" property="id" title="<input type=\"checkbox\" onclick=\"ToggleAll(this, groupWidgetProperties, true)\" name=\"listToggleAll\">" isLocalizedTitle="false" styleClass="ListCellCheckbox" headerStyleClass="ListHeaderCheckbox" >
+    <display:checkboxdecorator name="g" onclick="ToggleSelection(this, groupWidgetProperties, true)" styleClass="listMember"/>
+  </display:column>
+
+  <display:column width="25%" property="name" href="/rhq/group/inventory/view.xhtml?category=${group.groupCategory.name}&groupId=${group.id}" title="common.header.Group"
+                  sortAttr="r.name"/>
+  <display:column width="75%" property="description" title="common.header.Description"/>
+</display:table>
+
+<tiles:insert definition=".toolbar.addToList">
+  <tiles:put name="addToListUrl" value="/admin/role/RoleAdmin.do?mode=addLdapGroups"/>
+  <tiles:put name="widgetInstanceName" beanName="groupWidgetInstanceName"/>
+  <tiles:put name="addToListParamName" value="r"/>
+  <tiles:put name="addToListParamValue" beanName="Role" beanProperty="id"/>
+  <tiles:put name="pageList" beanName="RoleLdapGrps"/>
+  <tiles:put name="pageAction" beanName="selfPgAction"/>
+  <tiles:put name="postfix" value="g"/>
+</tiles:insert>
+
+<html:hidden property="r"/>
+</html:form>
+</c:if>
+</c:if>
+
 <tiles:insert definition=".page.return">
   <tiles:put name="returnUrl" value="/admin/role/RoleAdmin.do?mode=list"/>
   <tiles:put name="returnKey" value="admin.role.view.ReturnToRoles"/>

@@ -22,21 +22,15 @@ package org.rhq.enterprise.gui.alert;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.EntityManager;
 import org.jboss.seam.ScopeType;
 import org.jboss.seam.annotations.Create;
 import org.jboss.seam.annotations.In;
-import org.jboss.seam.annotations.Logger;
 import org.jboss.seam.annotations.Name;
 import org.jboss.seam.annotations.Scope;
-import org.jboss.seam.faces.FacesMessages;
-import org.jboss.seam.log.Log;
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
-import org.rhq.enterprise.server.alert.AlertDefinitionUpdateException;
-import org.rhq.enterprise.server.alert.InvalidAlertDefinitionException;
 
 /**
  *
@@ -46,18 +40,12 @@ import org.rhq.enterprise.server.alert.InvalidAlertDefinitionException;
 @Name("alertUIBean")
 public class AlertUIBean implements Serializable {
 
-    @Logger
-    private Log log;
-    @In("#{webUser.subject}")
-    private Subject subject;
-    @In
-    private FacesMessages facesMessages;
     @In
     private AlertDescriber alertDescriber;
     @In
-    private AlertDefinitionManagerLocal alertDefinitionManager;
-    @In
     private AlertDefinition alertDefinition;
+    @In
+    private EntityManager entityManager;
     private List<String> alertConditions;
     private String alertDampening;
 
@@ -78,16 +66,8 @@ public class AlertUIBean implements Serializable {
     }
 
     public String saveAlertDefinition() {
-        try {
-            alertDefinitionManager.updateAlertDefinition(this.subject,
-                    this.alertDefinition.getId(), this.alertDefinition, false);
-        } catch (InvalidAlertDefinitionException e) {
-            facesMessages.add("There was an error finding the requested alert definition.");
-            log.error("Invalid alert definition:  " + this.alertDefinition.toSimpleString(), e);
-        } catch (AlertDefinitionUpdateException e) {
-            facesMessages.add("There was an error updating the definition for " + this.alertDefinition.getName());
-            log.error("Error updating alert definition:  " + this.alertDefinition.toSimpleString(), e);
-        }
+        AlertDefinition def = entityManager.merge(this.alertDefinition);
+        entityManager.persist(def);
 
         return null;
     }

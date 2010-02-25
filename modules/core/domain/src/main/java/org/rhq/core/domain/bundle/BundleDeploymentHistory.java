@@ -68,7 +68,7 @@ public class BundleDeploymentHistory implements Serializable {
 
     @Column(name = "AUDIT_ACTION", nullable = false)
     @Enumerated(EnumType.STRING)
-    private BundleDeploymentHistory auditAction;
+    private BundleDeploymentAction auditAction;
 
     @Column(name = "AUDIT_MESSAGE", nullable = true)
     private String auditMessage;
@@ -78,7 +78,7 @@ public class BundleDeploymentHistory implements Serializable {
     }
 
     public BundleDeploymentHistory(BundleDeployment bundleDeployment, String subjectName, Long auditTime,
-        BundleDeploymentHistory auditAction, String auditMessage) {
+        BundleDeploymentAction auditAction, String auditMessage) {
 
         this.bundleDeployment = bundleDeployment;
         this.subjectName = subjectName;
@@ -119,11 +119,11 @@ public class BundleDeploymentHistory implements Serializable {
         this.auditTime = auditTime;
     }
 
-    public BundleDeploymentHistory getAuditAction() {
+    public BundleDeploymentAction getAuditAction() {
         return auditAction;
     }
 
-    public void setAuditAction(BundleDeploymentHistory auditAction) {
+    public void setAuditAction(BundleDeploymentAction auditAction) {
         this.auditAction = auditAction;
     }
 

@@ -37,7 +37,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -47,7 +46,6 @@ import org.hibernate.annotations.CollectionOfElements;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.auth.SubjectRoleEntity;
 
 /**
  * A role has zero or more {@link org.rhq.core.domain.resource.group.ResourceGroup}s assigned to it. You can assign a
@@ -106,11 +104,11 @@ public class Role implements Serializable {
     @Column(name = "FSYSTEM")
     private Boolean fsystem;
 
-    @OneToMany(mappedBy = "role")
-    private java.util.Set<SubjectRoleEntity> roleSubjects;
-
     @ManyToMany(mappedBy = "roles")
-    private Set<Subject> subjects = new HashSet<Subject>();
+    private java.util.Set<Subject> subjects = new HashSet<Subject>();
+
+    @ManyToMany(mappedBy = "ldapRoles")
+    private java.util.Set<Subject> ldapSubjects = new HashSet<Subject>();
 
     @ManyToMany(mappedBy = "roles")
     private java.util.Set<org.rhq.core.domain.resource.group.ResourceGroup> resourceGroups = new HashSet<org.rhq.core.domain.resource.group.ResourceGroup>();
@@ -183,21 +181,7 @@ public class Role implements Serializable {
         return this.permissions.remove(permission);
     }
 
-    public Set<SubjectRoleEntity> getRoleSubjects() {
-        if (roleSubjects == null) {
-            roleSubjects = new HashSet<SubjectRoleEntity>();
-        }
-        return roleSubjects;
-    }
-
-    public void setRoleSubjects(Set<SubjectRoleEntity> subjectsIn) {
-        roleSubjects = subjectsIn;
-    }
-
     public java.util.Set<Subject> getSubjects() {
-        if (subjects == null) {
-            subjects = new HashSet<Subject>();
-        }
         return subjects;
     }
 
@@ -205,30 +189,48 @@ public class Role implements Serializable {
         this.subjects = subjects;
     }
 
-    public void addSubject(Subject subject, boolean ldap) {
-        SubjectRoleEntity s = new SubjectRoleEntity();
-        s.setSubject(subject);
-        s.setRole(this);
-        s.setLdap(ldap);
-        getRoleSubjects().add(s);
-    }
-
     public void addSubject(Subject subject) {
-        addSubject(subject, false);
+        if (this.subjects == null) {
+            this.subjects = new HashSet<Subject>();
+        }
+
+        subject.addRole(this);
+        this.subjects.add(subject);
     }
 
     public void removeSubject(Subject subject) {
-        SubjectRoleEntity toRemove = null;
-        for (SubjectRoleEntity s : getRoleSubjects()) {
-            if (s.getSubject().equals(subject) && s.getRole().equals(this)) {
-                toRemove = s;
-                break;
-            }
+        if (this.subjects == null) {
+            this.subjects = new HashSet<Subject>();
         }
-        if (toRemove != null) {
-            getRoleSubjects().remove(toRemove);
-            subject.removeRole(this);
+
+        subject.removeRole(this);
+        this.subjects.remove(subject);
+    }
+
+    public java.util.Set<Subject> getLdapSubjects() {
+        return ldapSubjects;
+    }
+
+    public void setLdapSubjects(Set<Subject> subjects) {
+        this.ldapSubjects = subjects;
+    }
+
+    public void addLdapSubject(Subject subject) {
+        if (this.ldapSubjects == null) {
+            this.ldapSubjects = new HashSet<Subject>();
         }
+
+        subject.addLdapRole(this);
+        this.ldapSubjects.add(subject);
+    }
+
+    public void removeLdapSubject(Subject subject) {
+        if (this.ldapSubjects == null) {
+            this.ldapSubjects = new HashSet<Subject>();
+        }
+
+        subject.removeLdapRole(this);
+        this.ldapSubjects.remove(subject);
     }
 
     public Set<org.rhq.core.domain.resource.group.ResourceGroup> getResourceGroups() {

@@ -40,7 +40,6 @@ import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.SequenceGenerator;
@@ -228,18 +227,19 @@ public class Subject implements Externalizable {
     @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.REMOVE, CascadeType.MERGE })
     private Configuration configuration;
 
-    @OneToMany(mappedBy = "subject")
-    private Set<SubjectRoleEntity> subjectRoles;
-
-    @ManyToMany
     @JoinTable(name = "RHQ_SUBJECT_ROLE_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
-    private Set<Role> roles = new HashSet<Role>();
+    @ManyToMany
+    private java.util.Set<Role> roles;
+
+    @JoinTable(name = "RHQ_SUBJECT_ROLE_LDAP_MAP", joinColumns = { @JoinColumn(name = "SUBJECT_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
+    @ManyToMany
+    private java.util.Set<Role> ldapRoles;
 
     @Transient
     private Integer sessionId = null;
 
     private void init() {
-        subjectRoles = new HashSet<SubjectRoleEntity>();
+        roles = new HashSet<Role>();
     }
 
     /**
@@ -364,51 +364,44 @@ public class Subject implements Externalizable {
         this.configuration = configuration;
     }
 
-    public Set<SubjectRoleEntity> getSubjectRoles() {
-        if (subjectRoles == null) {
-            subjectRoles = new HashSet<SubjectRoleEntity>();
+    public java.util.Set<Role> getRoles() {
+        if (this.roles == null) {
+            this.roles = new HashSet<Role>();
         }
-        return subjectRoles;
-    }
 
-    public void setSubjectRoles(Set<SubjectRoleEntity> subjectRolesIn) {
-        subjectRoles = subjectRolesIn;
-    }
-
-    public Set<Role> getRoles() {
-        if (roles == null) {
-            roles = new HashSet<Role>();
-        }
-        return roles;
+        return this.roles;
     }
 
     public void setRoles(Set<Role> roles) {
         this.roles = roles;
     }
 
-    public void addRole(Role role, boolean ldap) {
-        SubjectRoleEntity s = new SubjectRoleEntity();
-        s.setSubject(this);
-        s.setRole(role);
-        s.setLdap(ldap);
-        getSubjectRoles().add(s);
-    }
-
     public void addRole(Role role) {
-        addRole(role, false);
+        getRoles().add(role);
     }
 
     public void removeRole(Role role) {
-        SubjectRoleEntity toRemove = null;
-        for (SubjectRoleEntity s : getSubjectRoles()) {
-            if (s.getSubject().equals(this) && s.getRole().equals(role)) {
-                toRemove = s;
-                break;
-            }
+        getRoles().remove(role);
+    }
+
+    public java.util.Set<Role> getLdapRoles() {
+        if (this.ldapRoles == null) {
+            this.ldapRoles = new HashSet<Role>();
         }
-        if (toRemove != null) {
-            getSubjectRoles().remove(toRemove);
-        }
+
+        return this.ldapRoles;
+    }
+
+    public void setLdapRoles(Set<Role> roles) {
+        this.ldapRoles = roles;
+    }
+
+    public void addLdapRole(Role role) {
+        getLdapRoles().add(role);
+    }
+
+    public void removeLdapRole(Role role) {
+        getLdapRoles().remove(role);
     }
 
     @Override
@@ -517,7 +510,7 @@ public class Subject implements Externalizable {
         this.factive = in.readBoolean();
         this.fsystem = in.readBoolean();
         this.configuration = (Configuration) in.readObject();
-        setRoles((Set<Role>) in.readObject());
+        this.roles = (Set<Role>) in.readObject();
         this.sessionId = in.readInt();
     }
 

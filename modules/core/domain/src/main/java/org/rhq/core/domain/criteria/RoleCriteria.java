@@ -94,7 +94,7 @@ public class RoleCriteria extends Criteria {
 
     /**
      * Requires MANAGE_SECURITY
-     * @param fetchSubjects
+     * @param fetchResourceGroups
      */
     public void setFetchResourceGroups(boolean fetchResourceGroups) {
         this.fetchResourceGroups = fetchResourceGroups;

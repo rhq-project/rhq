@@ -37,7 +37,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
-
 /**
  * @author Greg Hinkle
  */
@@ -59,7 +58,8 @@ public class ResourceDatasource extends RPCDataSource {
         DataSourceTextField descriptionDataField = new DataSourceTextField("description", "Description");
         descriptionDataField.setCanEdit(false);
 
-        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability", "Availability", 20);
+        DataSourceImageField availabilityDataField = new DataSourceImageField("currentAvailability.availabilityType", 
+                "Availability", 20);
         availabilityDataField.setCanEdit(false);
 
         setFields(idDataField, nameDataField, descriptionDataField, availabilityDataField);
@@ -78,9 +78,8 @@ public class ResourceDatasource extends RPCDataSource {
         final long start = System.currentTimeMillis();
 
         ResourceCriteria criteria = new ResourceCriteria();
-        criteria.setPageControl(getPageControl(request));
-        criteria.addFilterName(query);
-
+        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
+        criteria.addFilterName(this.query);
 
         resourceService.findResourcesByCriteria(criteria, new AsyncCallback<PageList<Resource>>() {
             public void onFailure(Throwable caught) {
@@ -98,11 +97,11 @@ public class ResourceDatasource extends RPCDataSource {
                 for (int x=0; x<result.size(); x++) {
                     Resource res = result.get(x);
                     ListGridRecord record = new ListGridRecord();
-                    record.setAttribute("resouce",res);
+                    record.setAttribute("resource",res);
                     record.setAttribute("id",res.getId());
                     record.setAttribute("name",res.getName());
                     record.setAttribute("description",res.getDescription());
-                    record.setAttribute("currentAvailability",
+                    record.setAttribute("currentAvailability.availabilityType",
                             res.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP
                             ? "/images/icons/availability_green_16.png" 
                             : "/images/icons/availability_red_16.png");

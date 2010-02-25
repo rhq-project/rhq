@@ -20,9 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.roles;
 
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.RoleCriteria;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -75,9 +73,8 @@ public class RolesDataSource extends RPCDataSource {
     public void executeFetch(final String requestId, final DSRequest request, final DSResponse response) {
         final long start = System.currentTimeMillis();
 
-
         RoleCriteria criteria = new RoleCriteria();
-        criteria.setPageControl(getPageControl(request));
+        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
  
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
@@ -97,8 +94,6 @@ public class RolesDataSource extends RPCDataSource {
                     ListGridRecord record = new ListGridRecord();
                     record.setAttribute("id", role.getId());
                     record.setAttribute("name", role.getName());
-
-
                     record.setAttribute("permissions", role.getPermissions());
 
                     records[x] = record;

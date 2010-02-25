@@ -32,14 +32,11 @@ import com.smartgwt.client.types.DSProtocol;
  */
 public abstract class RPCDataSource extends DataSource {
 
-
     public RPCDataSource() {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-
     }
-
 
     public RPCDataSource(String name) {
         System.out.println("Trying to build DS: " + name);
@@ -47,10 +44,7 @@ public abstract class RPCDataSource extends DataSource {
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
         setDataFormat(DSDataFormat.CUSTOM);
-
-
     }
-
 
     @Override
     protected Object transformRequest(DSRequest request) {
@@ -88,22 +82,22 @@ public abstract class RPCDataSource extends DataSource {
      * @param request the request to turn into a page control
      * @return the page control for passing to criteria and other queries
      */
-    protected PageControl getPageControl(DSRequest request) {
-
+    protected PageControl getPageControl(DSRequest request, String alias) {
+        // Initialize paging.
         PageControl pageControl = PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow());
 
+        // Initialize sorting.
         String sortBy = request.getAttribute("sortBy");
         if (sortBy != null) {
             String[] sorts = sortBy.split(",");
-
             for (String sort : sorts) {
-                if (sort.startsWith("-")) {
-                    pageControl.addDefaultOrderingField(sort.substring(1), PageOrdering.DESC);
-                } else {
-                    pageControl.addDefaultOrderingField(sort, PageOrdering.ASC);
-                }
+                PageOrdering ordering = (sort.startsWith("-")) ? PageOrdering.DESC : PageOrdering.ASC;
+                String columnName = (ordering == PageOrdering.DESC) ? sort.substring(1) : sort;
+                String fieldName = alias + "." + columnName;
+                pageControl.addDefaultOrderingField(fieldName, ordering);
             }
         }
+
         return pageControl;
     }
 

@@ -20,9 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.users;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SubjectGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -93,8 +91,7 @@ public class UsersDataSource extends RPCDataSource {
         final long start = System.currentTimeMillis();
         
         SubjectCriteria criteria = new SubjectCriteria();
-        criteria.setPageControl(getPageControl(request));
-
+        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
 
         subjectService.findSubjectsByCriteria(criteria, new AsyncCallback<PageList<Subject>>() {
             public void onFailure(Throwable caught) {

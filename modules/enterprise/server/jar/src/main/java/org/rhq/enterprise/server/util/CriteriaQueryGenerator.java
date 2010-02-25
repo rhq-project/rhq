@@ -76,17 +76,8 @@ public final class CriteriaQueryGenerator {
 
     public CriteriaQueryGenerator(Criteria criteria) {
         this.criteria = criteria;
-
-        String criteriaClassName = criteria.getClass().getSimpleName();
-        className = criteriaClassName.substring(0, criteriaClassName.length() - 8);
-
-        StringBuilder aliasBuilder = new StringBuilder();
-        for (char c : this.className.toCharArray()) {
-            if (Character.isUpperCase(c)) {
-                aliasBuilder.append(Character.toLowerCase(c));
-            }
-        }
-        this.alias = aliasBuilder.toString();
+        this.className = criteria.getPersistentClass().getSimpleName();        
+        this.alias = this.criteria.getAlias();
     }
 
     public void setAuthorizationResourceFragment(AuthorizationTokenType type, int subjectId) {

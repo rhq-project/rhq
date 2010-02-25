@@ -220,5 +220,9 @@ public abstract class Criteria implements Serializable {
         return pc;
     }
 
-
+    public String getAlias() {
+        String className = getPersistentClass().getName();
+        String simpleClassName = className.substring(className.lastIndexOf(".") + 1);
+        return simpleClassName.toLowerCase();
+    }
 }

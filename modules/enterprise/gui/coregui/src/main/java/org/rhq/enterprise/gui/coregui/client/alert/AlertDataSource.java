@@ -30,7 +30,6 @@ import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -45,9 +44,9 @@ public class AlertDataSource extends RPCDataSource {
     private static final String NAME = "Alert";
     private static final DateTimeFormat DATE_TIME_FORMAT = DateTimeFormat.getMediumDateTimeFormat();
 
-    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
-
     private static AlertDataSource INSTANCE;
+
+    private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
     public static AlertDataSource getInstance() {
         if (INSTANCE == null) {
@@ -63,9 +62,10 @@ public class AlertDataSource extends RPCDataSource {
         idDataField.setPrimaryKey(true);
         idDataField.setHidden(true);
 
-        DataSourceTextField nameField = new DataSourceTextField("name", "Name");
+        DataSourceTextField nameField = new DataSourceTextField("alertDefinition.name", "Name", 100);
 
-        DataSourceTextField priorityField = new DataSourceTextField("priority", "Priority");
+        // TODO: Use DataSourceEnumField here?
+        DataSourceTextField priorityField = new DataSourceTextField("alertDefinition.priority", "Priority", 15);
 
         DataSourceTextField ctimeField = new DataSourceTextField("ctime", "Creation Time");
 
@@ -78,14 +78,7 @@ public class AlertDataSource extends RPCDataSource {
         AlertCriteria criteria = new AlertCriteria();
         criteria.fetchAlertDefinition(true);
 
-        PageControl pageControl;
-        if (request.getStartRow() != null && request.getEndRow() != null) {
-            pageControl = PageControl.getExplicitPageControl(request.getStartRow(),
-                    request.getEndRow() - request.getStartRow());
-        } else {
-            pageControl = PageControl.getSingleRowInstance();
-        }
-        criteria.setPageControl(pageControl);
+        criteria.setPageControl(getPageControl(request, criteria.getAlias()));
 
         this.alertService.findAlertsByCriteria(criteria, new AsyncCallback<PageList<Alert>>() {
             public void onFailure(Throwable caught) {
@@ -103,14 +96,15 @@ public class AlertDataSource extends RPCDataSource {
                     Alert alert = result.get(i);
                     ListGridRecord record = new ListGridRecord();
                     record.setAttribute("id", alert.getId());
-                    record.setAttribute("name", alert.getAlertDefinition().getName());
-                    record.setAttribute("priority", alert.getAlertDefinition().getPriority().name());
+                    record.setAttribute("alertDefinition.name", alert.getAlertDefinition().getName());
+                    record.setAttribute("alertDefinition.priority", alert.getAlertDefinition().getPriority().name());
                     record.setAttribute("ctime", DATE_TIME_FORMAT.format(new Date(alert.getCtime())));
                     records[i] = record;
                 }
 
                 response.setData(records);
-                response.setTotalRows(result.getTotalSize());    // for paging to work we have to specify size of full result set
+                // For paging to work, we have to specify size of full result set.
+                response.setTotalRows(result.getTotalSize());
                 processResponse(requestId, response);
             }
         });

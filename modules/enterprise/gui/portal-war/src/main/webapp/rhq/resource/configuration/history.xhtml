@@ -235,6 +235,7 @@
     <h:form id="viewResourceConfigurationForm">
 
         <input type="hidden" name="id" value="#{ResourceUIBean.id}"/>
+        <input type="hidden" name="configId" value="#{param.configId}"/>
 
       <c:choose>
         <c:when test="${configurationViewer.rawSupported}">

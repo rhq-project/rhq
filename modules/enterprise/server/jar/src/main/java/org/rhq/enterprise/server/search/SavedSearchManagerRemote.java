@@ -112,6 +112,7 @@ public interface SavedSearchManagerRemote {
      * @return the {@link PageList} of {@link SavedSearch} entities that match the criteria filters, an empty list
      *         will be returned if no results were found or none matches the given filters
      */
+    @WebMethod
     public PageList<SavedSearch> findSavedSearchesByCriteria( //
         @WebParam(name = "subject") Subject subject, //
         @WebParam(name = "criteria") SavedSearchCriteria criteria);

@@ -77,16 +77,8 @@ public class RolesDataSource extends RPCDataSource {
 
 
         RoleCriteria criteria = new RoleCriteria();
-//        criteria.addFilterName(query);
-
-        if (request.getStartRow() != null && request.getEndRow() != null) {
-            criteria.setPageControl(PageControl.getExplicitPageControl(request.getStartRow(), request.getEndRow() - request.getStartRow()));
-        } else {
-            criteria.setPageControl(PageControl.getSingleRowInstance());
-        }
-
-//        criteria.addSortAgentName(PageOrdering.ASC);
-
+        criteria.setPageControl(getPageControl(request));
+ 
         roleService.findRolesByCriteria(criteria, new AsyncCallback<PageList<Role>>() {
             public void onFailure(Throwable caught) {
                 Window.alert("Failed to load " + caught.getMessage());
